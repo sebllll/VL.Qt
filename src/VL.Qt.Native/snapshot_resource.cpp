@@ -1,3 +1,5 @@
+// Private Qt API: QWindowPrivate::visible (grab of an offscreen scene), QQuickShaderEffectSource (frame grab of a Group);
+// check on Qt updates (list: elements/elements.h).
 #include "snapshot_resource.h"
 
 #include "app/exports.h"
@@ -175,7 +177,7 @@ QQuickItem* target(Scene& scene, unsigned elementId, QRectF& frame, std::string&
         xf = it->second.xf.get();
     }
     if (item)
-        frame = xf ? itemFrame(*xf, item) : QRectF(0, 0, item->width(), item->height());
+        frame = xf ? itemBounds(*xf, item) : QRectF(0, 0, item->width(), item->height());
     if (!item) {
         error = "snapshot: element " + std::to_string(elementId) + " has no item";
         return nullptr;

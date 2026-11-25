@@ -54,13 +54,20 @@ QString softwareAdapterName(const QRhiDriverInfo& info)
 
 } // namespace
 
+bool isSoftwareBackend(QQuickWindow* window)
+{
+    if (QQuickWindow::sceneGraphBackend() == QLatin1String("software"))
+        return true;
+    const QSGRendererInterface* ri = window ? window->rendererInterface() : nullptr;
+    return ri && ri->graphicsApi() == QSGRendererInterface::Software;
+}
+
 RendererInfo describeRenderer(QQuickWindow* window)
 {
     RendererInfo r;
     if (!window)
         return r;
-    const QSGRendererInterface* ri = window->rendererInterface();
-    r.quickSoftware = ri && ri->graphicsApi() == QSGRendererInterface::Software;
+    r.quickSoftware = isSoftwareBackend(window);
     QRhi* rhi = window->rhi();
     if (rhi) {
         const QRhiDriverInfo info = rhi->driverInfo();

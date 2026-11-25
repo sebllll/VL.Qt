@@ -1,14 +1,15 @@
 #include "diagnostics/debug_overlay.h"
+#include "app/scene_change.h"
+#include "diagnostics/overlay_geometry.h"
+#include "diagnostics/overlay_software.h"
+#include "elements/group_item.h"
 #include "scene/scene.h"
 
 #include <QtGui/QFont>
 #include <QtGui/QFontMetricsF>
-#include <QtGui/QPainter>
-#include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGGeometryNode>
-#include <QtQuick/QSGImageNode>
-#include <QtQuick/QSGRendererInterface>
 #include <QtQuick/QSGVertexColorMaterial>
+#include <QtQuick/private/qquicktext_p.h>
 
 #include <algorithm>
 #include <cmath>
@@ -39,13 +40,11 @@ constexpr float kDotOff = 2.5f;
 enum class Stroke { Solid, Dash, Dot };
 constexpr float kHatch = 6.f;  // hatch distance of spacing gaps, item space
 
-using Vertex = QSGGeometry::ColoredPoint2D;
-
 // Two layers: areas (padding, spacing hatch) of all nodes go first, lines and marks of all nodes on top, so a fill of a
 // later node never covers a line of an earlier one.
 struct Painter {
-    std::vector<Vertex>& fills;
-    std::vector<Vertex>& lines;
+    std::vector<OverlayVertex>& fills;
+    std::vector<OverlayVertex>& lines;
     const QQuickItem* item = nullptr; // current item: local points are mapped with its mapToScene
     qreal dpr = 1;
     bool area = false; // true: write into the fill layer
@@ -54,8 +53,8 @@ struct Painter {
 
     void vert(const QPointF& p, QRgb c)
     {
-        Vertex x;
-        x.set(float(p.x()), float(p.y()), uchar(qRed(c)), uchar(qGreen(c)), uchar(qBlue(c)), uchar(qAlpha(c)));
+        OverlayVertex x;
+        setVertex(x, float(p.x()), float(p.y()), c);
         (area ? fills : lines).push_back(x);
     }
     // Device pixel grid (scene units): a line of whole device pixels whose edges lie on pixel boundaries. Without it a
@@ -154,18 +153,6 @@ struct Painter {
     }
 };
 
-qreal prop(const QQuickItem* item, const char* name) { return item->property(name).toReal(); }
-
-QRectF padded(const QQuickItem* item, const QRectF& r)
-{
-    return r.adjusted(prop(item, "leftPadding"), prop(item, "topPadding"), -prop(item, "rightPadding"), -prop(item, "bottomPadding"));
-}
-
-bool isContainer(quint16 type)
-{
-    return type == VLQT_ELEMENT_TYPE_GROUP || type == VLQT_ELEMENT_TYPE_ROW || type == VLQT_ELEMENT_TYPE_COLUMN;
-}
-
 // Equal up to half a logical pixel (layout rounding): a line drawn twice on top of each other only hides the first.
 bool same(const QRectF& a, const QRectF& b)
 {
@@ -177,6 +164,7 @@ bool same(const QRectF& a, const QRectF& b)
 
 DebugOverlay::DebugOverlay(QQuickItem* contentItem, const Scene& scene) : QQuickItem(contentItem), m_scene(scene)
 {
+    setObjectName(QLatin1String(overlayObjectName)); // not counted as a scene change (app/scene_change.h)
     setFlag(ItemHasContents, true);
     setEnabled(false);
     setAcceptedMouseButtons(Qt::NoButton);
@@ -194,7 +182,30 @@ void DebugOverlay::setActive(bool on)
         return;
     m_active = on;
     setVisible(on);
+    follow(window());
     refresh();
+}
+
+// While active, repaint in every frame whose polish left an item of the scene to sync (afterAnimating: after polish,
+// before sync, GUI thread in both the basic loop and the render control of an offscreen scene). The overlay's own
+// repaint is no such item, so a static scene renders nothing.
+void DebugOverlay::follow(QQuickWindow* win)
+{
+    QObject::disconnect(m_follow);
+    if (m_active && win) {
+        m_follow = QObject::connect(win, &QQuickWindow::afterAnimating, this, [this, win] {
+            if (SceneChangeCounter::itemsDirty(win))
+                update();
+        }, Qt::DirectConnection);
+    }
+}
+
+// A window swap (Scene::moveToWindow) moves the overlay to the new window.
+void DebugOverlay::itemChange(ItemChange change, const ItemChangeData& data)
+{
+    if (change == ItemSceneChange)
+        follow(data.window);
+    QQuickItem::itemChange(change, data);
 }
 
 void DebugOverlay::refresh()
@@ -210,20 +221,40 @@ void DebugOverlay::drawNode(const ElementEntry& n)
     const qreal w = item->width(), h = item->height();
     // Frame = actual size: (0, 0, w, h) = SIZE, or the Auto Size result; for an auto-sized Group with children in
     // negative coordinates it starts there. Everything else is drawn relative to it.
-    const QRectF frame = itemFrame(*n.xf, item);
-    const bool container = isContainer(n.type);
+    const QRectF frame = itemBounds(*n.xf, item);
+    const bool container = n.def->container;
 
-    // Children extent (tracked, visible, non-empty children incl. their x/y and TRANSFORM; like the Group frame, not
-    // Qt's childrenRect; internals like the MultiEffect inner item are not tracked).
+    // Padding of a Row/Column into the fill layer (under the lines of all nodes), relative to the frame. A Text has none:
+    // QtNative never sets it. The value comes from the entry (set with PADDING), not from a property lookup by name.
+    const qreal pad = n.def->layout ? n.padding : 0;
+    p.area = true;
+    if (pad != 0)
+        p.ring(frame, frame.adjusted(pad, pad, -pad, -pad), kPadding);
+
+    // One pass over the children: the children extent (tracked, visible, non-empty children incl. their x/y and
+    // TRANSFORM; like the Group frame, not Qt's childrenRect; internals like the MultiEffect inner item are not tracked)
+    // and, in a Row/Column, the gaps between consecutive laid-out children (Qt skips invisible and zero-size ones).
+    // A child Group counts with its group bounds (itemBounds, as GroupItem::updatePolish), every other child with (0, 0, w, h).
     QRectF children;
     bool any = false;
     if (container) {
+        const bool column = n.type == VLQT_ELEMENT_TYPE_COLUMN;
+        const QRectF inner = frame.adjusted(pad, pad, -pad, -pad);
+        const QQuickItem* prev = nullptr;
         for (const QQuickItem* c : item->childItems()) {
             if (!m_scene.ids.count(c) || !c->isVisible() || c->width() <= 0 || c->height() <= 0)
                 continue;
-            const QRectF r = c->mapRectToItem(item, QRectF(0, 0, c->width(), c->height()));
+            const auto* g = isGroup(c) ? static_cast<const GroupItem*>(c) : nullptr;
+            const QRectF local = g && g->xf ? itemBounds(*g->xf, c) : QRectF(0, 0, c->width(), c->height());
+            const QRectF r = c->mapRectToItem(item, local);
             children = any ? children.united(r) : r;
             any = true;
+            if (n.def->layout && prev) {
+                const QRectF gap = column ? QRectF(inner.left(), prev->y() + prev->height(), inner.width(), c->y() - prev->y() - prev->height())
+                                          : QRectF(prev->x() + prev->width(), inner.top(), c->x() - prev->x() - prev->width(), inner.height());
+                p.hatch(gap.intersected(frame), kSpacing); // children overflowing the frame: no spacing outside
+            }
+            prev = c;
         }
     }
     // Implicit size = what Auto Size gives. Group: extent of the children and its origin (the frame it would get,
@@ -234,26 +265,6 @@ void DebugOverlay::drawNode(const ElementEntry& n)
                           QPointF(std::max<qreal>(0, children.right()), std::max<qreal>(0, children.bottom())));
     }
 
-    // Padding, spacing and overflow into the fill layer (under the lines of all nodes), all relative to the frame.
-    p.area = true;
-    if (n.type == VLQT_ELEMENT_TYPE_ROW || n.type == VLQT_ELEMENT_TYPE_COLUMN || n.type == VLQT_ELEMENT_TYPE_TEXT)
-        p.ring(frame, padded(item, frame), kPadding);
-    if (n.type == VLQT_ELEMENT_TYPE_ROW || n.type == VLQT_ELEMENT_TYPE_COLUMN) {
-        // Gaps between consecutive laid-out children (Qt skips invisible and zero-size ones).
-        const bool column = n.type == VLQT_ELEMENT_TYPE_COLUMN;
-        const QRectF inner = padded(item, frame);
-        const QQuickItem* prev = nullptr;
-        for (const QQuickItem* c : item->childItems()) {
-            if (!m_scene.ids.count(c) || !c->isVisible() || c->width() <= 0 || c->height() <= 0)
-                continue;
-            if (prev) {
-                const QRectF gap = column ? QRectF(inner.left(), prev->y() + prev->height(), inner.width(), c->y() - prev->y() - prev->height())
-                                          : QRectF(prev->x() + prev->width(), inner.top(), c->x() - prev->x() - prev->width(), inner.height());
-                p.hatch(gap.intersected(frame), kSpacing); // children overflowing the frame: no spacing outside
-            }
-            prev = c;
-        }
-    }
     // Overflow: the part of the children extent outside the frame.
     if (any) {
         const QRectF inside = children.intersected(frame);
@@ -270,9 +281,15 @@ void DebugOverlay::drawNode(const ElementEntry& n)
         p.rect(implicit, kImplicit);
     if (n.type == VLQT_ELEMENT_TYPE_TEXT) {
         const qreal base = item->baselineOffset();
-        const QFontMetricsF fm(item->property("font").value<QFont>());
-        p.line(0, base - fm.ascent(), w, base - fm.ascent(), kAscent, Stroke::Dash);
-        p.line(0, base + fm.descent(), w, base + fm.descent(), kDescent, Stroke::Dash);
+        // Metrics once per font change (the setters of the entry's Text reset the cache), not per build.
+        if (!n.fontMetricsValid) {
+            const QFontMetricsF fm(static_cast<const QQuickText*>(item)->font());
+            n.fontAscent = float(fm.ascent());
+            n.fontDescent = float(fm.descent());
+            n.fontMetricsValid = true;
+        }
+        p.line(0, base - n.fontAscent, w, base - n.fontAscent, kAscent, Stroke::Dash);
+        p.line(0, base + n.fontDescent, w, base + n.fontDescent, kDescent, Stroke::Dash);
         p.line(0, base, w, base, kBaseline);
     }
 
@@ -309,8 +326,7 @@ QSGNode* DebugOverlay::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
         return nullptr;
     }
     build();
-    const QSGRendererInterface* ri = window() ? window()->rendererInterface() : nullptr;
-    if (ri && ri->graphicsApi() == QSGRendererInterface::Software)
+    if (isSoftwareBackend(window()))
         return paintSoftware(old);
     auto* node = static_cast<QSGGeometryNode*>(old);
     if (!node) {
@@ -328,39 +344,23 @@ QSGNode* DebugOverlay::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
     if (g->vertexCount() != count)
         g->allocate(count);
     if (count)
-        std::memcpy(g->vertexData(), m_verts.data(), size_t(count) * sizeof(Vertex));
+        std::memcpy(g->vertexData(), m_verts.data(), size_t(count) * sizeof(OverlayVertex));
     node->markDirty(QSGNode::DirtyGeometry);
     return node;
 }
 
-// Software backend: custom geometry is not drawn there, so the triangles go into one image (like PerfGraph).
+// Software backend: custom geometry is not drawn there, so the triangles go into one image (overlay_software.h).
 QSGNode* DebugOverlay::paintSoftware(QSGNode* old)
 {
-    auto* node = static_cast<QSGImageNode*>(old);
-    if (!node) {
-        node = window()->createImageNode();
-        node->setOwnsTexture(true);
-    }
-    const qreal dpr = window()->effectiveDevicePixelRatio();
-    const QSize px(std::max(1, qRound(width() * dpr)), std::max(1, qRound(height() * dpr)));
-    if (m_image.size() != px)
-        m_image = QImage(px, QImage::Format_ARGB32_Premultiplied);
-    m_image.fill(Qt::transparent);
-    {
-        QPainter painter(&m_image);
-        painter.scale(dpr, dpr);
+    return paintToImageNode(this, old, m_image, [&](QPainter& painter) {
         painter.setPen(Qt::NoPen);
         for (size_t i = 0; i + 2 < m_verts.size(); i += 3) {
-            const Vertex& a = m_verts[i];
+            const OverlayVertex& a = m_verts[i];
             const QPointF tri[3] = {{a.x, a.y}, {m_verts[i + 1].x, m_verts[i + 1].y}, {m_verts[i + 2].x, m_verts[i + 2].y}};
-            painter.setBrush(QColor::fromRgba(qUnpremultiply(qRgba(a.r, a.g, a.b, a.a))));
+            painter.setBrush(QColor::fromRgba(vertexColor(a)));
             painter.drawPolygon(tri, 3);
         }
-    }
-    node->setTexture(window()->createTextureFromImage(m_image));
-    node->setRect(QRectF(0, 0, width(), height()));
-    node->markDirty(QSGNode::DirtyMaterial);
-    return node;
+    });
 }
 
 } // namespace vlqt

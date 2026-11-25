@@ -22,26 +22,17 @@ namespace VL.Qt.Nodes
             TextHorizontalAlignment HAlign, VerticalAlignment VAlign, TextWrap Wrap, TextElide Elide,
             float LineHeight, float LetterSpacing, TextAutofit Autofit);
 
-        private readonly ElementNode<Text, Props> _node;
+        private readonly ElementNodeCore<Text, Props> _node;
 
         public TextNode(NodeContext nodeContext)
-            => _node = new ElementNode<Text, Props>(nodeContext, Create);
+            => _node = new ElementNodeCore<Text, Props>(nodeContext, s_create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal TextNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<Text, Props>(addWarning, Create);
+            => _node = new ElementNodeCore<Text, Props>(addWarning, s_create);
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, Text> Create = static (c, p, slot) => new Text
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Text> s_create = static (c, p, slot) => new Text(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
-                Feedback = slot,
                 Content = p.Content,
                 FontFamily = p.FontFamily,
                 FontSize = p.FontSize,
@@ -57,7 +48,7 @@ namespace VL.Qt.Nodes
                 Autofit = p.Autofit,
             };
 
-        internal ElementNode<Text, Props> Core => _node;
+        internal ElementNodeCore<Text, Props> Core => _node;
 
         /// <summary>Describes the text. A new description is only created when an input changes.</summary>
         /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor. The size is the box for alignment, wrapping and eliding.</param>
@@ -81,12 +72,13 @@ namespace VL.Qt.Nodes
         /// <param name="debug">Debug overlay for this element only (not its children; the Renderer's Debug shows all). Does not affect layout or hit-testing. Cyan frame = actual size (solid: Size, dashed: Auto Size on), orange = implicit size, i.e. what Auto Size would give (only where it differs), blue dotted = children extent, translucent red = children outside the frame (overflow), translucent green = padding and hatched violet = Row/Column spacing (both inside the frame), magenta cross = origin, yellow diamond = anchor. Text: green line = baseline, dashed green = ascent, dashed red = descent.</param>
         /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
         /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
+        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
         /// <param name="measuredSize">Size of the laid-out text reported by Qt, in units (last frame).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         // Pin defaults: see RectangleNode (string-valued [DefaultValue] for Color4/Vector2). Default text color is
         // white (readable on the Renderer's #202020 clear color), Size 100 x 100 DIP.
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [DefaultValue("1, 1")] Vector2 size,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
@@ -108,15 +100,15 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            var element = _node.Describe(
-                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
+            return _node.Describe(
+                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
                 new Props(text ?? string.Empty, fontFamily ?? string.Empty, fontSize, weight, italic, color,
-                    horizontalAlignment, verticalAlignment, wrap, elide, lineHeight, letterSpacing, autofit));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+                    horizontalAlignment, verticalAlignment, wrap, elide, lineHeight, letterSpacing, autofit),
+                out measuredSize, out sceneBounds);
         }
 
         public void Dispose() => _node.Dispose();

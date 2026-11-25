@@ -168,7 +168,7 @@ namespace VL.Qt
 
         /// <summary>
         /// the failing object id (vlqt_scene_get_apply_error) resolved to its feedback slot shows the error at the
-        /// element node; returns the text for the renderer's Error output, empty if the element took it.
+        /// element node; returns the text for the renderer, empty if the element took it.
         /// </summary>
         private string ReportApplyError()
         {
@@ -224,7 +224,7 @@ namespace VL.Qt
             var rc = Native.Poll(_handle, _poll, out var n, out var required);
             if (rc == Native.Result.BufferTooSmall)
             {
-                // The events stay queued; once more with the size QtNative asked for.
+                // The events stay queued and QtNative collects nothing more: the retry needs exactly `required`.
                 _poll = new byte[Math.Max(required, _poll.Length * 2)];
                 rc = Native.Poll(_handle, _poll, out n, out _);
             }

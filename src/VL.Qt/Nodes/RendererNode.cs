@@ -19,19 +19,23 @@ namespace VL.Qt.Nodes
     /// <summary>
     /// Opens a Qt Quick window and shows the element tree at Input (Qt.Elements: Rectangle, Text, Group, ...).
     /// The tree is diffed against the last frame; only changes go to Qt (once per frame, in the global pump).
-    /// In the Qt window: F2 toggles the perfmeter panel, F5 the timing stats.
+    /// In the Qt window: F2 toggles the perfmeter panel, F5 the timing stats (see Enable Keyboard Shortcuts).
     /// </summary>
     [ProcessNode(Name = "Renderer", Category = Categories.Qt)]
     public sealed class RendererNode : IDisposable, IQtFrameParticipant
     {
         private const string IconPhase = "Window Icon";
         private const string SamplesPhase = "Multisample Count";
+        private const string BuildPhase = "Build";
+        private const string QtPhase = "Qt";
 
         // Pump and scene registry of this vvvv app (new per F8/F5); QtApp itself is process-wide.
         private readonly QtPump _pump;
         private readonly QtApp _app;
         private readonly NodeContext _nodeContext;
-        private readonly NodeErrors _errors; // node logger + pump exceptions at the node
+        private readonly NodeErrors _errors; // the messages at the node: warnings, QtNative errors, pump exceptions
+        private readonly NodeMessage _qtError;
+        private readonly ElementInput _input;
         private readonly bool _boundToDocument;
         private readonly bool _dialogIfDocumentChanged;
         private readonly RectangleF _bounds;
@@ -43,6 +47,7 @@ namespace VL.Qt.Nodes
         private WindowScene? _view; // created in the first Update (Title/Size are update pins)
         private bool _disposed;
         private bool _debug; // last Debug pin value sent to the window
+        private bool _keys = true; // last Enable Keyboard Shortcuts pin value sent to the window (QtNative default: on)
         private bool _borderless; // last Borderless pin value sent to the window
         private MultisampleCount _samples; // last Multisample Count pin value sent to the window
         private string? _iconPath; // last window icon sent to the window (full path, null = default)
@@ -76,6 +81,8 @@ namespace VL.Qt.Nodes
         {
             _nodeContext = nodeContext;
             _errors = new NodeErrors(nodeContext);
+            _qtError = new NodeMessage(_errors, QtPhase, MessageSeverity.Error);
+            _input = new ElementInput(_errors);
             _bounds = WindowPlacement.CreateBounds(bounds, nodeContext.AppHost.GetDefaultValue<RectangleF>());
             _vSync = vSync;
             _boundToDocument = boundToDocument;
@@ -144,9 +151,6 @@ namespace VL.Qt.Nodes
         /// frame), empty until the window reported its first geometry. Minimized: the last value Qt reports (Windows:
         /// -32000 position). Unlike Bounds (position = outer top-left), so not meant to be fed back into
         /// Bounds.</param>
-        /// <param name="error">Last error (window creation, apply or poll in QtNative, or an exception in the pump),
-        /// empty if ok. Apply errors of an element node (e.g. a value Qt rejected) are shown at that node instead. Also
-        /// logged (once per distinct error) in the Log window; pump exceptions are shown at the node as well.</param>
         /// <param name="debug">Debug overlay for all elements of the window (an element's own Debug pin shows only that
         /// element). Does not affect layout or hit-testing. Cyan frame = actual size (solid: Size, dashed: Auto Size
         /// on), orange = implicit size, i.e. what Auto Size would give (only where it differs), blue dotted = children
@@ -169,14 +173,17 @@ namespace VL.Qt.Nodes
         /// shapes); a count the device does not support is lowered to the next supported one, with a warning at the
         /// node. Effect layers and snapshots in the window use the same count. A change recreates the window on screen
         /// once (tens of ms).</param>
+        /// <param name="enableKeyboardShortcuts">On: the window takes the diagnostic keys F2 (perfmeter), F5 and Shift+F5
+        /// (timing stats), F6 (freeze) and F7 (host segments of the timeline); the scene never sees them. Off: none of
+        /// them is taken, the keys reach the elements and handlers of the scene (e.g. a TextField or your own F5
+        /// shortcut); an overlay that is open stays open. Live. F11 / Alt+Enter (Fullscreen) are not affected.</param>
         // Pin defaults: string-valued [DefaultValue] (Color4/RectangleF have no TypeConverter, so the (Type, string) form is
         // silently ignored by vvvvc and the pin becomes default(T)); no C# defaults on the pins. #202020 = 0.1254902.
         public void Update(
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] out bool isVisible,
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] out PerfStats perf,
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] out RectangleF clientBounds,
-            out string error,
-            Element? input,
+            IElement? input,
             [DefaultValue(typeof(Space), nameof(Space.DIPTopLeft))] Space space,
             [DefaultValue("0.1254902, 0.1254902, 0.1254902, 1")] Color4 clearColor,
             [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(true)] bool clear,
@@ -186,7 +193,8 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(false)] bool fullscreen,
             [Pin(Visibility = VL.Model.PinVisibility.Optional), DefaultValue(false)] bool debug,
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] WindowSettings? window,
-            [Pin(Name = "Multisample Count", Visibility = VL.Model.PinVisibility.Optional), DefaultValue(typeof(MultisampleCount), nameof(MultisampleCount.X4))] MultisampleCount multisampleCount)
+            [Pin(Name = "Multisample Count", Visibility = VL.Model.PinVisibility.Optional), DefaultValue(typeof(MultisampleCount), nameof(MultisampleCount.X4))] MultisampleCount multisampleCount,
+            [Pin(Name = "Enable Keyboard Shortcuts", Visibility = VL.Model.PinVisibility.Optional), DefaultValue(true)] bool enableKeyboardShortcuts)
         {
             Debug.Assert(_app.IsQtThread, "VL.Qt must be used from the thread that created the QGuiApplication");
 
@@ -236,16 +244,30 @@ namespace VL.Qt.Nodes
                 _debug = debug;
                 _view.SetDebug(debug);
             }
+            if (enableKeyboardShortcuts != _keys && _view is not null)
+            {
+                _keys = enableKeyboardShortcuts;
+                _view.SetKeys(enableKeyboardShortcuts);
+            }
             // Only written here; the pump applies the buffer once per frame (ApplyCommands) after all node updates.
-            _view?.Update(input, space, clearColor, clear, enabled, title);
+            _view?.Update(_input.Update(input), space, clearColor, clear, enabled, title);
+            ReportBuild(_view?.Reconciler.RootBuildError);
 
-            // Is Visible is live; Perf, Client Bounds and Error reflect the last pump (previous frame).
+            // Is Visible is live; Perf, Client Bounds and the QtNative error reflect the last pump (previous frame).
             isVisible = _view?.IsVisible ?? false;
             perf = _view?.Perf ?? PerfStats.Empty;
             clientBounds = _view?.Geometry?.ClientBounds ?? default;
-            var qtNativeError = _view?.Error ?? "";
-            _errors.LogOnly(qtNativeError);
-            error = _errors.Current ?? qtNativeError;
+            // Window creation, apply or poll in QtNative; apply errors of an element are shown at its element node instead.
+            _qtError.Set(_view?.Error);
+        }
+
+        // A stylable linked to Input failed to build (exception, cycle, foreign result): warning until a Build succeeds.
+        private void ReportBuild(string? error)
+        {
+            if (error is not null)
+                _errors.Warn(error, BuildPhase);
+            else
+                _errors.Clear(BuildPhase);
         }
 
         // Not loadable (Io): QtNative keeps the default icon, the node shows a warning until the next icon applies.
@@ -268,38 +290,20 @@ namespace VL.Qt.Nodes
                 _errors.Clear(SamplesPhase);
         }
 
-        // Pump phases: an exception is logged with this node's logger (once per distinct error), shown at the node
-        // and on Error, and cleared when the same phase succeeds again. Never left to the global pump catch.
+        // Pump phases: an exception is logged with this node's logger and shown at the node until the same phase succeeds
+        // again. Never left to the global pump catch.
         void IQtFrameParticipant.ApplyCommands()
         {
-            if (_disposed)
-                return;
-            try
-            {
-                _view?.ApplyCommands();
-                _errors.Clear(nameof(IQtFrameParticipant.ApplyCommands));
-            }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                _errors.Report(e, nameof(IQtFrameParticipant.ApplyCommands));
-            }
+            if (!_disposed)
+                _errors.Run(nameof(IQtFrameParticipant.ApplyCommands), _view, static v => v?.ApplyCommands());
         }
 
         SceneHandle IQtFrameParticipant.Window => _disposed ? SceneHandle.Null : _view?.Window ?? SceneHandle.Null;
 
         void IQtFrameParticipant.ReportHostFrame(Native.vlqt_host_pump frame)
         {
-            if (_disposed)
-                return;
-            try
-            {
-                _view?.ReportHostFrame(frame);
-                _errors.Clear(nameof(IQtFrameParticipant.ReportHostFrame));
-            }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                _errors.Report(e, nameof(IQtFrameParticipant.ReportHostFrame));
-            }
+            if (!_disposed)
+                _errors.Run(nameof(IQtFrameParticipant.ReportHostFrame), (_view, frame), static s => s._view?.ReportHostFrame(s.frame));
         }
 
         bool IQtFrameParticipant.TryGetLastSample(out Native.vlqt_perf_sample sample)
@@ -310,34 +314,21 @@ namespace VL.Qt.Nodes
 
         void IQtFrameParticipant.PollInput()
         {
-            if (_disposed)
-                return;
-            try
-            {
-                _view?.PollInput();
-                _errors.Clear(nameof(IQtFrameParticipant.PollInput));
-            }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                _errors.Report(e, nameof(IQtFrameParticipant.PollInput));
-            }
+            if (!_disposed)
+                _errors.Run(nameof(IQtFrameParticipant.PollInput), _view, static v => v?.PollInput());
         }
 
         void IQtFrameParticipant.AfterEvents()
         {
-            if (_disposed)
-                return;
-            try
-            {
-                _view?.AfterEvents();
-                if (_boundsSaver is { } saver && saver.TryTake(_clock.Elapsed, out var r))
-                    SaveBounds(r);
-                _errors.Clear(nameof(IQtFrameParticipant.AfterEvents));
-            }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                _errors.Report(e, nameof(IQtFrameParticipant.AfterEvents));
-            }
+            if (!_disposed)
+                _errors.Run(nameof(IQtFrameParticipant.AfterEvents), this, static n => n.AfterEvents());
+        }
+
+        private void AfterEvents()
+        {
+            _view?.AfterEvents();
+            if (_boundsSaver is { } saver && saver.TryTake(_clock.Elapsed, out var r))
+                SaveBounds(r);
         }
 
         // Like VL.Skia's SkiaRendererNode: SetPinValue on this node's Bounds pin, DontCompile so the node is not recreated
@@ -352,15 +343,8 @@ namespace VL.Qt.Nodes
             {
                 if (_disposed)
                     return;
-                try
-                {
-                    session.CurrentSolution.SetPinValue(stack, "Bounds", bounds).Confirm(VL.Model.SolutionUpdateKind.DontCompile);
-                    _errors.Clear("Save Bounds");
-                }
-                catch (Exception e) when (e is not OperationCanceledException)
-                {
-                    _errors.Report(e, "Save Bounds");
-                }
+                _errors.Run("Save Bounds", (session, stack, bounds),
+                    static s => s.session.CurrentSolution.SetPinValue(s.stack, "Bounds", s.bounds).Confirm(VL.Model.SolutionUpdateKind.DontCompile));
             }
             if (SynchronizationContext.Current is { } sc)
                 sc.Post(Write, null);
@@ -402,6 +386,8 @@ namespace VL.Qt.Nodes
             _view?.Dispose();
             _view = null;
             _pump.Unregister(this);
+            _input.Dispose();
+            _qtError.Dispose();
             _errors.Dispose();
             _keepAlive?.Dispose();
             _keepAlive = null;

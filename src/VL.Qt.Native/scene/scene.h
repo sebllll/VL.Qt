@@ -43,9 +43,12 @@ public:
     /* Applies all commands; stops at the first bad one (earlier ones stay applied). err names index + reason. */
     int apply(const unsigned char* buf, int len, std::string& err);
     /* Queues changed measured values of bound items (scene/measure.h) and the events of the bound input handlers
-     * (scene/handlers.h), then copies queued events into out and clears the queue: a buffer export (vlqt.h); on
-     * VLQT_ERR_BUFFER_TOO_SMALL the events stay queued. */
+     * (scene/handlers.h), then copies queued events into out and clears the queue: a buffer export (vlqt.h). On
+     * VLQT_ERR_BUFFER_TOO_SMALL the events stay queued and eventsCollected stays set: the next poll only drains
+     * (no collecting, no polish), so *required of the failed call is what the retry needs. */
     int poll(unsigned char* out, int cap, int* written, int* required);
+    /* True between a poll that collected and the drain that succeeded. */
+    bool eventsCollected = false;
     /* Runs pending polish (layouts/positioners) of all scene items without a render, so poll measures current
      * geometry also when Qt did not render this pump. Skipped when nothing changed since the last poll:
      * no apply, no marked geometry, no window geometry change and no polish request pending in the window. */
@@ -54,7 +57,7 @@ public:
     bool appliedSincePoll = true;
 
     /* Debug overlay (diagnostics/debug_overlay.h): window-wide switch (vlqt_scene_set_debug) and the refresh after commands. The
-     * overlay is created on first use and shown while debugAll is on or any node has DEBUG (Elements::debugCount). */
+     * overlay is created on first use and shown while debugAll is on or any node has DEBUG (Elements::anyDebug). */
     void setDebugAll(bool on);
     void updateDebug();
     const QQuickItem* debugOverlay() const; // nullptr until first used (perf: skipped in the item count)
@@ -82,9 +85,10 @@ public:
 private:
     // Structural ops (scene/scene.cpp).
     int create(quint32 id, quint16 type, std::string& err);
-    /* The one creation point of an ElementEntry (scene/scene.cpp create): item and type, the geometry state (xf, never
-     * null in the table) and the poll flag. The caller inserts it into nodes and ids and calls watchGeometry. */
-    ElementEntry makeEntry(QQuickItem* item, quint16 type);
+    /* The one creation point of an ElementEntry (scene/scene.cpp create): item and type (def, never null in the table),
+     * the geometry state (xf, never null in the table) and the poll flag. The caller inserts it into nodes and ids and
+     * calls watchGeometry. */
+    ElementEntry makeEntry(QQuickItem* item, const TypeDef& def);
     int destroy(quint32 id, std::string& err);
     int reparent(quint32 id, quint32 parent, quint32 index, std::string& err);
     void reset();
@@ -102,7 +106,7 @@ private:
     int opBind(WireReader& payload, std::string& err);
     int opSetClearColor(WireReader& payload, std::string& err);
     int opReset(WireReader& payload, std::string& err);
-    int opSetStyle(WireReader& payload, std::string& err); // vlstyle.h
+    int opSetStyle(WireReader& payload, std::string& err); // style/vl_style.h
     int opSetClear(WireReader& payload, std::string& err);
     int opSetSpace(WireReader& payload, std::string& err);
     int opSetUniforms(WireReader& payload, std::string& err); // ShaderEffect
@@ -111,8 +115,8 @@ private:
     /* root under window's content item, size follow, window-geometry watch (constructor, moveToWindow). */
     void attachRoot();
     void destroySubtree(QQuickItem* item);
-    /* A Video: stops the player and releases its audio tap before the item is deleted; other types: nothing. */
-    void releaseVideo(ElementEntry& node);
+    /* The type's beforeDestroy hook (Video: stops the player, releases the audio tap) before the item is deleted. */
+    void beforeDestroy(ElementEntry& node);
     void destroyHandlersOf(ElementEntry& node);
     /* Detaches mask from the link of host's chain that uses it (DESTROY of the mask); the mask stays parked hidden
      * under the root until REPARENT or DESTROY. Masks are attached by SET_EFFECT_CHAIN (protocol.h "Effect chain"). */

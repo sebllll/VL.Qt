@@ -12,6 +12,8 @@ namespace VL.Qt.Interop
             public double sync_ms, render_ms, present_ms, gpu_ms, gpu_ms_max, swaps_per_pump;
             public int samples;
             public double vsync_ms;
+            /// <summary>Qt work per pump, average (vlqt_perf_sample.work).</summary>
+            public double work_ms;
         }
 
         /// <summary>One pump of a window (vlqt.h vlqt_perf_sample), ms.</summary>
@@ -21,6 +23,9 @@ namespace VL.Qt.Interop
             public float frame_interval, pump, sync, render, present, gpu, events;
             public int swaps;
             public float vsync;
+            /// <summary>Qt work = events + sync + render = pump - vsync - present (>= 0), filled by QtNative: the one
+            /// definition behind over budget and the slow-frame warning.</summary>
+            public float work;
         }
 
         /// <summary>Percentiles over the ring, counters since start and over the last 10 s, budget (vlqt.h vlqt_perf_stats).</summary>
@@ -39,7 +44,7 @@ namespace VL.Qt.Interop
         [StructLayout(LayoutKind.Sequential)]
         public struct vlqt_host_pump
         {
-            public float apply, reconcile, host, interval, gc_pause;
+            public float apply, reconcile, interval, gc_pause;
             public int ops, gc0, gc1, gc2;
             public long alloc_bytes;
             /// <summary>vvvv frame start → pump start; end of previous pump → vvvv frame start (0 = unknown).</summary>
@@ -50,9 +55,9 @@ namespace VL.Qt.Interop
         [StructLayout(LayoutKind.Sequential)]
         public struct vlqt_host_pump_stats
         {
-            public double apply_ms, apply_ms_max, reconcile_ms, reconcile_ms_max, host_ms, host_ms_max;
+            public double apply_ms, apply_ms_max, reconcile_ms, reconcile_ms_max;
             public double ops, ops_max, gc0_per_s, gc1_per_s, gc2_per_s, gc_pause_ms_per_s;
-            public double alloc_bytes, alloc_bytes_max;
+            public double alloc_bytes;
             public int samples;
             public double vvvv_ms, vvvv_ms_max, wait_ms, wait_ms_max;
         }

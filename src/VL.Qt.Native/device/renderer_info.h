@@ -12,7 +12,7 @@ namespace vlqt {
 struct RendererInfo
 {
     bool hasRhi = false;           // false: no QRhi (not initialized yet, or the Qt Quick software backend)
-    bool quickSoftware = false;    // Qt Quick software backend (2D renderer, no QRhi)
+    bool quickSoftware = false;    // isSoftwareBackend(): Qt Quick software backend (2D renderer, no QRhi)
     QRhi::Implementation backend = QRhi::Null; // only if hasRhi
     QString backendName;           // QRhi::backendName(), empty without QRhi
     QString adapter;               // QRhiDriverInfo::deviceName, empty if unknown
@@ -23,6 +23,10 @@ struct RendererInfo
     // Direct3D 11 only: the system supports DXGI_FEATURE_PRESENT_ALLOW_TEARING; false elsewhere.
     bool allowTearingSupported = false;
 };
+
+// True if the window renders with the Qt Quick software backend (no QRhi). sceneGraphBackend() already tells before the
+// window has a renderer interface (an item that is set up before the scene graph starts).
+bool isSoftwareBackend(QQuickWindow* window);
 
 // Reads the window's rendering state. Call it where QQuickWindow::rhi() is valid: the GUI thread, or the render thread
 // inside a frame signal of the window (sceneGraphInitialized, frameSwapped).

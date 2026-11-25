@@ -1,3 +1,4 @@
+// Private Qt API: QQuickShaderEffectSource (layer properties); check on Qt updates (list: elements/elements.h).
 #include "effects/layer_requests.h"
 
 #include <QtCore/QMetaObject>

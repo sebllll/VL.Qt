@@ -6,7 +6,7 @@ Design of the nodes that build, merge and read styles for interactive elements (
 - A style is an immutable C# record. Every field is `Optional<T>`; "not set" means inherit from the parent. It holds a shared set (colours per state, font, radius, padding, border) plus sub-objects per control type.
 - Widgets and Group have a `Style` pin. A Group passes its style on, and a style on a child overrides only the fields it sets. Primitives (Rectangle, Text) have no style pin.
 - Resolution (base style → groups → element) happens entirely in C# in the reconciler. QtNative only receives fully resolved values.
-- Hand-patched widgets implement `IStylable` with `Build(Style resolved) → Element`.
+- Hand-patched widgets implement `IStylable` with `Build(Style resolved) → IElement`.
 
 ## Design
 ### Chain form

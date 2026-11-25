@@ -86,4 +86,15 @@ internal static class NativeCalls
         }
         return "";
     }
+
+    /// <summary>
+    /// Refresh period of the window's screen in ms, from the "refresh" row of the F5 System page (QScreen::refreshRate);
+    /// null = unknown. The perf budget (budget_ms) is vvvv's frame interval, not the screen's.
+    /// </summary>
+    public static double? ScreenRefreshMs(SceneHandle w)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(PerfPageText(w, 3), @"refresh\s+(\d+(?:\.\d+)?) Hz");
+        return m.Success && double.TryParse(m.Groups[1].Value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var hz)
+            && hz >= 1 ? 1000.0 / hz : null;
+    }
 }

@@ -12,7 +12,7 @@ Conventions shared by all elements: geometry pins, coordinate space, colours, im
 - **`Size`** (Stride `Vector2`, units), **`Transform`** (Stride `Matrix`, 4×4) and **`Anchor`** (vvvv enum `RectangleAnchor`, default TopLeft). The vvvv transform nodes plug in directly, and the anchor points are the familiar ones.
 - `Size` is the layout value; the position comes from `Transform`. A point v of the element lands at (v − anchor) · `Transform` in its parent, as in VL.Skia. Inside Row/Column the layout places the element.
 - `Anchor` is the pivot of `Transform`: rotation and scale act around it. The reconciler folds the anchor in, because Qt matrix transforms rotate around the top-left corner. This is why there are no separate rotation, scale or transform-origin pins.
-- There is no `Visible` pin. The optional `Enabled` pin (default true, the last input pin, as on a VL.Skia layer) removes the element from the scene, which also stops its input; `Opacity` 0 still costs and still takes input.
+- There is no `Visible` pin. The optional `Enabled` pin (default true, the last input pin, as on a VL.Skia layer) removes the element from the scene, which also stops its input; in Row/Column it takes no space and the siblings move up. `Opacity` 0 still costs, still takes input and keeps the gap. The widgets do not have it yet: their `Enabled` pin greys the control out (Qt's `enabled`), and a second pin of the same name is not possible.
 - The transform is a pin on the element rather than a set of transform wrapper nodes. Qt supports it natively per item, so no wrapper items are needed, and the type is compatible with the vvvv transform nodes.
 
 ### Coordinate space

@@ -22,34 +22,25 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(string Text, bool Enabled, bool AutoRepeat, bool AutoSize, Style? Style);
 
-        private readonly ElementNode<Button, Props> _node;
+        private readonly ElementNodeCore<Button, Props> _node;
 
         public ButtonNode(NodeContext nodeContext)
-            => _node = new ElementNode<Button, Props>(nodeContext, Create);
+            => _node = new ElementNodeCore<Button, Props>(nodeContext, s_create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal ButtonNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<Button, Props>(addWarning, Create);
+            => _node = new ElementNodeCore<Button, Props>(addWarning, s_create);
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, Button> Create = static (c, p, slot) => new Button
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, Button> s_create = static (c, p, slot) => new Button(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
                 Style = p.Style,
-                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Text = p.Text,
                 Enabled = p.Enabled,
                 AutoRepeat = p.AutoRepeat,
             };
 
-        internal ElementNode<Button, Props> Core => _node;
+        internal ElementNodeCore<Button, Props> Core => _node;
 
         /// <summary>Describes the button. A new description is only created when an input changes.</summary>
         /// <param name="size">Size of the element (width, height), only with Auto Size off. The position comes from Transform and Anchor.</param>
@@ -70,7 +61,7 @@ namespace VL.Qt.Nodes
         /// <param name="measuredSize">Implicit size reported by Qt (text + padding of the style), in units.</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [DefaultValue("1, 0.4")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
             Matrix transform,
@@ -91,11 +82,10 @@ namespace VL.Qt.Nodes
         {
             // Clicks come from Qt clicked (EVENT_CLICK for every bound Button).
             bang = _node.TakeClicks(isClicked) > 0;
-            var element = _node.Describe(
+            return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(text ?? string.Empty, enabled, autoRepeat, autoSize, style));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+                new Props(text ?? string.Empty, enabled, autoRepeat, autoSize, style),
+                out measuredSize, out sceneBounds);
         }
 
         public void Dispose() => _node.Dispose();

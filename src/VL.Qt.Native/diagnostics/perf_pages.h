@@ -3,11 +3,28 @@
 
 #include "diagnostics/perf_monitor.h"
 
+#include <QtGui/QRgb>
+
 namespace vlqt {
 
-struct Rgb { int r, g, b; const char* html; };
-inline constexpr Rgb kGpuColor{80, 220, 120, "#50dc78"};
-inline constexpr Rgb kBudgetColor{255, 208, 64, "#ffd040"};
+// A colour for the items (rgba()) and the text of the pages (html, derived: "#rrggbb"). Declare it constexpr with static
+// storage (html is read as a const char*).
+struct Rgb {
+    int r, g, b;
+    char html[8];
+    constexpr Rgb(int red, int green, int blue)
+        : r(red), g(green), b(blue), html{'#', hex(red >> 4), hex(red), hex(green >> 4), hex(green), hex(blue >> 4), hex(blue), 0} {}
+    constexpr QRgb rgba(int a = 255) const { return qRgba(r, g, b, a); }
+private:
+    static constexpr char hex(int v) { return "0123456789abcdef"[v & 15]; }
+};
+
+// The series of the F2 meter and the F5 timeline; the meter text uses the same colours as its legend.
+inline constexpr Rgb kVvvvColor{255, 110, 180};
+inline constexpr Rgb kWorkColor{255, 160, 40}; // Qt work (the render phase of the timeline has this colour too)
+inline constexpr Rgb kGpuColor{80, 220, 120};
+inline constexpr Rgb kFrameColor{255, 255, 255};
+inline constexpr Rgb kBudgetColor{255, 208, 64};
 
 // Timeline segments, in frame order bottom -> top: the host side of the frame before the Qt pump (vvvv
 // update, .NET GC pause, apply), then the Qt phases (PerfMonitor::Phase in kPhaseOrder). Host values come from

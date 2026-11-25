@@ -8,7 +8,7 @@ using VL.Qt.Elements;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Shared core of all interaction nodes (Hover, Click, Point, Wheel, …), the counterpart of <see cref="ElementNode{TElement, TProps}"/>.
+    /// Shared core of all interaction nodes (Hover, Click, Point, Wheel, …), the counterpart of <see cref="ElementNodeCore{TElement, TProps}"/>.
     /// Held as a field by the public <c>[ProcessNode]</c> class.
     /// <list type="bullet">
     /// <item>one <see cref="ElementFeedback"/> per node instance (slot 0): key of the handler in the reconciler and

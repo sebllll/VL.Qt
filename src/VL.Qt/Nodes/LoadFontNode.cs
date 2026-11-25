@@ -15,6 +15,7 @@ namespace VL.Qt.Nodes
     public sealed class LoadFontNode : IDisposable
     {
         private readonly NodeErrors _errors;
+        private readonly ResourceNodeReport _report;
         private readonly QtApp _app;
         private string? _path;
         private ulong _handle;
@@ -24,21 +25,21 @@ namespace VL.Qt.Nodes
         public LoadFontNode(NodeContext nodeContext)
         {
             _errors = new NodeErrors(nodeContext);
+            _report = new ResourceNodeReport(_errors, lasting: true);
             // Creates the QGuiApplication on first use: QFontDatabase needs it, so a LoadFont before any renderer works.
             _app = QtApp.Get(nodeContext.AppHost.LoggerFactory);
         }
 
         /// <summary>Registers the font file when Path changes.</summary>
         /// <param name="path">Font file (TTF, OTF, TTC). Empty = no font.</param>
-        /// <param name="error">Why the file could not be registered, empty otherwise.</param>
-        /// <returns>The family name of the font (the first one of a font collection), empty when nothing is registered.</returns>
+        /// <returns>The family name of the font (the first one of a font collection), empty when nothing is registered. A file that cannot be registered is shown at the node and logged.</returns>
         [return: Pin(Name = "Family")]
-        public string Update(Path path, out string error)
+        public string Update(Path path)
         {
             var p = path?.Value ?? string.Empty;
             if (p != _path)
                 Load(p);
-            error = _error;
+            _report.Update(null, _error);
             return _family;
         }
 
@@ -64,10 +65,6 @@ namespace VL.Qt.Nodes
                     _error = Native.LastError();
             }
             Release(previous);
-            if (_error.Length > 0)
-                _errors.Warn(_error, "LoadFont");
-            else
-                _errors.Clear("LoadFont");
         }
 
         private void Release(ulong handle)
@@ -80,7 +77,7 @@ namespace VL.Qt.Nodes
         {
             Release(_handle);
             _handle = 0;
-            _errors.Dispose();
+            _report.Dispose();
         }
     }
 }

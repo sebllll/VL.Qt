@@ -175,12 +175,11 @@ void main() { fragColor = vec4(phase); }
             Assert.That(layout.Padding, Is.EqualTo(new RectangleF(4, 8, 12, 16)));
 
             var chain = layout.ForChain(NullLogger.Instance, "Test.frag");
-            // map (image) and its sampler pin first, then the uniforms; texelSize and weight are QtNative's, glow is reserved.
+            // map (image) and its sampler pin first, then the uniforms; texelSize and weight are QtNative's, glow is reserved (an error at the node).
             Assert.That(chain.Pins.Select(p => p.UniformName), Is.EqualTo(new[] { "map", "map", "amount" }));
             Assert.That(chain.Padding, Is.EqualTo(layout.Padding));
-            var warnings = chain.Messages.Where(m => m.Type == MessageType.Warning).Select(m => m.Text).ToArray();
-            Assert.That(warnings.Single(), Does.Contain("'glow'").And.Contain("reserved"));
-            Assert.That(chain.Messages.Any(m => m.Type == MessageType.Error), Is.False);
+            Assert.That(chain.Messages.Where(m => m.Type == MessageType.Warning), Is.Empty);
+            Assert.That(chain.Messages.Single(m => m.Type == MessageType.Error).Text, Does.Contain("'glow'").And.Contain("reserved"));
         }
 
         [Test]

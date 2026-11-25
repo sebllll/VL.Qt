@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
 using Stride.Core.Mathematics;
@@ -23,33 +22,30 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(ImmutableArray<Element> Children, bool AutoSize, Style? Style);
 
-        private readonly ElementNode<Group, Props> _node;
-        private readonly ChildrenInput _children = new();
+        private readonly ElementNodeCore<Group, Props> _node;
+        private readonly ChildrenInput _children;
 
         public GroupNode(NodeContext nodeContext)
-            => _node = new ElementNode<Group, Props>(nodeContext, Create);
+        {
+            _node = new ElementNodeCore<Group, Props>(nodeContext, Create);
+            _children = new ChildrenInput(_node.Messages);
+        }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal GroupNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<Group, Props>(addWarning, Create);
+        {
+            _node = new ElementNodeCore<Group, Props>(addWarning, Create);
+            _children = new ChildrenInput(_node.Messages);
+        }
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, Group> Create = static (c, p, slot) => new Group
+        internal static readonly Func<CommonInputs, Props, FeedbackSlot, Group> Create = static (c, p, slot) => new Group(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
                 Style = p.Style,
-                Feedback = slot,
                 Children = p.Children,
                 AutoSize = p.AutoSize,
             };
 
-        internal ElementNode<Group, Props> Core => _node;
+        internal ElementNodeCore<Group, Props> Core => _node;
         internal ChildrenInput Children => _children;
 
         /// <summary>Describes the group. A new description is only created when an input changes.</summary>
@@ -64,10 +60,11 @@ namespace VL.Qt.Nodes
         /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
         /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
         /// <param name="style">Style passed on to the widgets inside (field by field; a widget's own style overrides it). The group itself draws nothing.</param>
+        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
         /// <param name="measuredSize">Implicit size reported by Qt, in units (Group: size of its frame, see Auto Size).</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [Pin(Name = "Input", PinGroupKind = PinGroupKind.Collection, PinGroupDefaultCount = 2)] Spread<IElement?> children,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
@@ -79,23 +76,20 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
             [Pin(Visibility = PinVisibility.Optional)] Style? style,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
-            => Describe(children, size, autoSize, transform, anchor, opacity, clip, debug, interaction, effect, style, out measuredSize, out sceneBounds);
-
-        /// <summary>Update with the children as any sequence (also used by the Spectral node).</summary>
-        internal Element Describe(
-            IEnumerable<IElement?>? children, Vector2 size, bool autoSize, Matrix transform,
-            RectangleAnchor anchor, float opacity, bool clip, bool debug, Interaction? interaction,
-            Effect? effect, Style? style, out Vector2 measuredSize, out RectangleF sceneBounds)
         {
-            var element = _node.Describe(
-                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(_children.Update(children), autoSize, style));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+            return _node.Describe(
+                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
+                new Props(_children.Update(children), autoSize, style),
+                out measuredSize, out sceneBounds);
         }
 
-        public void Dispose() => _node.Dispose();
+        public void Dispose()
+        {
+            _children.Dispose();
+            _node.Dispose();
+        }
     }
 }

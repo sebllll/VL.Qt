@@ -31,9 +31,17 @@ namespace VL.Qt.Interop
 
         /// <summary>
         /// One pump: only <paramref name="windows"/>[0..count) may render (the scenes of one vvvv app); null/0 = every window.
+        /// <see cref="Result.Unsupported"/> when called inside the pump (a host callback in processEvents): the nested call does nothing.
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Result vlqt_app_process_events_for(SceneHandle[]? windows, int count);
+
+        /// <summary>
+        /// The frame budget (vvvv's frame interval, ms) the windows of the next pumps judge their Qt work against.
+        /// <see cref="Result.BadArgument"/> = not in (0, 1000).
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Result vlqt_app_set_frame_budget(double ms);
 
         /// <summary>
         /// delivers the queued window system events (input) without rendering, at the start of the host frame.

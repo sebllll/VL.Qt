@@ -1,12 +1,14 @@
 #include "diagnostics/perf_monitor.h"
 #include "device/renderer_info.h"
+#include "diagnostics/overlay_software.h"
 #include "diagnostics/perf.h"
 #include "diagnostics/perf_items.h"
 #include "diagnostics/perf_pages.h"
+#include "app/scene_change.h"
 
 #include <QtCore/QThread>
+#include <QtGui/QFontDatabase>
 #include <QtGui/QKeyEvent>
-#include <QtGui/QScreen>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickWindow>
@@ -26,73 +28,6 @@ std::vector<PerfMonitor*> s_monitors;
 constexpr double kTextIntervalMs = 250;
 constexpr double kTimelineIntervalMs = 50;
 
-const char* kOverlayQml = R"(import QtQuick
-import VLQt.Perf
-Item {
-  id: root
-  property int flags: 0
-  property string meterText: ""
-  property string statsText: ""
-  property string bodyText: ""
-  property string footText: ""
-  property int page: 0
-  property real barUse: 0
-  property real barP95: 0
-  property color barColor: "#50dc78"
-  property int rendering: 0
-  property bool layered: true
-  enabled: false // display only, never takes input
-  Item {
-    id: meter; visible: root.flags & 1
-    x: 8; y: 8; width: 340; height: 72
-    Rectangle { // background, text, badge: own texture like the F5 panel, re-rendered only when the text changes
-      anchors.fill: parent; radius: 3; color: "#c0000000"
-      layer.enabled: root.layered
-      Text { x: 6; y: 3; text: root.meterText; textFormat: Text.StyledText; color: "white"; font.family: "Consolas"; font.pixelSize: 11 }
-      Rectangle { // 1 = GPU (hardware), 2 = CPU (software rendering); 0 = not known yet
-        visible: root.rendering > 0
-        anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 4
-        width: badge.implicitWidth + 6; height: badge.implicitHeight + 2
-        color: root.rendering === 2 ? "#e03030" : "#30a050"
-        Text { id: badge; anchors.centerIn: parent; text: root.rendering === 2 ? "CPU" : "GPU"
-               color: "white"; font.family: "Consolas"; font.pixelSize: 9; font.bold: true }
-      }
-    }
-    PerfGraph { objectName: "graph"; anchors.fill: parent; anchors.margins: 4; anchors.topMargin: 18 }
-  }
-  Rectangle { // F5 pages: 0 Summary, 1 Timeline, 2 Scene, 3 System, 4 Resources
-    id: panel
-    visible: root.flags & 2
-    x: 8; y: (root.flags & 1) ? meter.y + meter.height + 6 : 8
-    width: col.width + 12; height: col.height + 8; radius: 3; color: "#d0000000"
-    // Own texture, re-rendered only when the text changes (4 Hz): the scene's per-frame batch updates then see one
-    // quad instead of the glyphs. Off on the Qt Quick software backend (layered = false): there the layer draws
-    // its content shifted up plus an opaque white area.
-    layer.enabled: root.layered
-    Column {
-      id: col; x: 6; y: 4; spacing: 4
-      Text { text: root.statsText; textFormat: Text.StyledText; color: "white"; font.family: "Consolas"; font.pixelSize: 11 }
-      Item { // Summary: pump avg against the budget, white tick = p95
-        visible: root.page === 0
-        width: 300; height: 6
-        Rectangle { anchors.fill: parent; color: "#40ffffff" }
-        Rectangle { width: Math.min(root.barUse, 1) * parent.width; height: parent.height; color: root.barColor }
-        Rectangle { visible: root.barP95 > 0; x: Math.min(root.barP95, 1) * (parent.width - 2); width: 2; height: parent.height; color: "white" }
-      }
-      Text { visible: text !== ""; text: root.bodyText; textFormat: Text.StyledText; color: "white"; font.family: "Consolas"; font.pixelSize: 11 }
-      Item { id: slot; visible: root.page === 1; width: 480; height: 140 } // the timeline's place
-      Text { visible: root.page === 1 && text !== ""; text: root.footText; textFormat: Text.StyledText; color: "white"; font.family: "Consolas"; font.pixelSize: 11 }
-    }
-  }
-  // Outside the panel layer: a timeline update only rewrites its vertex buffers, no layer render pass and no text
-  // re-render.
-  PerfTimeline {
-    objectName: "timeline"; visible: panel.visible && root.page === 1
-    x: panel.x + col.x + slot.x; y: panel.y + col.y + slot.y; width: slot.width; height: slot.height
-  }
-}
-)";
-
 int s_lastPage = 0; // F5 page shown last (any window); new windows open on it
 
 } // namespace
@@ -104,6 +39,8 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
     s_monitors.push_back(this);
     window->installEventFilter(this);
 
+    // GPU rendering is the supported mode; the software backends (Qt Quick software renderer, Mesa llvmpipe, WARP) are
+    // a fallback that gets this warning and, on the Qt Quick one, the reduced drawing of overlay_software.h.
     // sceneGraphInitialized alone is not enough: the Qt Quick software render loop shares one render context and
     // emits it only for the first window, so later windows detect on their first swap.
     connect(window, &QQuickWindow::sceneGraphInitialized, this, &PerfMonitor::detectRenderer, Qt::DirectConnection);
@@ -211,7 +148,8 @@ void PerfMonitor::endPump(float pumpMs)
     }
     m_cur.pump = pumpMs;
     m_cur.events = std::max(0.0f, pumpMs - m_cur.vsync - m_cur.sync - m_cur.render - m_cur.present);
-    m_counters.add(m_cur, nowMs(), budgetMs());
+    m_budgetMs = s_frameBudgetMs;
+    m_counters.add(m_cur, nowMs(), m_budgetMs);
     m_ring[(m_head + m_count) % kHistory] = m_cur;
     if (m_count < kHistory)
         m_count++;
@@ -224,59 +162,12 @@ void PerfMonitor::endPump(float pumpMs)
 
 void PerfMonitor::summary(vlqt_perf* out) const
 {
-    *out = vlqt_perf{};
-    const int n = std::min(m_count, kSummaryPumps);
-    int frames = 0, gpus = 0, swaps = 0;
-    for (int i = m_count - n; i < m_count; i++) {
-        const PerfSample& s = sample(i);
-        out->pump_ms += s.pump;
-        out->pump_ms_max = std::max(out->pump_ms_max, double(s.pump));
-        swaps += s.swaps;
-        if (s.swaps == 0)
-            continue;
-        if (s.frameInterval > 0) {
-            out->frame_ms += s.frameInterval;
-            out->frame_ms_max = std::max(out->frame_ms_max, double(s.frameInterval));
-            frames++;
-        }
-        out->sync_ms += s.sync / s.swaps;
-        out->render_ms += s.render / s.swaps;
-        out->present_ms += s.present / s.swaps;
-        out->vsync_ms += s.vsync / s.swaps;
-        if (s.gpu > 0) {
-            out->gpu_ms += s.gpu;
-            out->gpu_ms_max = std::max(out->gpu_ms_max, double(s.gpu));
-            gpus++;
-        }
-    }
-    out->samples = n;
-    if (n == 0)
-        return;
-    out->pump_ms /= n;
-    out->swaps_per_pump = double(swaps) / n;
-    int pumpsWithSwap = 0;
-    for (int i = m_count - n; i < m_count; i++)
-        pumpsWithSwap += sample(i).swaps > 0;
-    if (pumpsWithSwap) {
-        out->sync_ms /= pumpsWithSwap;
-        out->render_ms /= pumpsWithSwap;
-        out->present_ms /= pumpsWithSwap;
-        out->vsync_ms /= pumpsWithSwap;
-    }
-    if (frames) {
-        out->frame_ms /= frames;
-        out->fps = 1000.0 / out->frame_ms;
-    }
-    if (gpus)
-        out->gpu_ms /= gpus;
-}
-
-double PerfMonitor::budgetMs() const
-{
-    // QScreen::refreshRate is a cached value; cheap enough per pump.
-    const QScreen* screen = m_window->screen();
-    const double hz = screen ? screen->refreshRate() : 0;
-    return 1000.0 / (hz >= 1 && hz <= 1000 ? hz : 60.0);
+    // One more sample than the window: it decides whether the window's first interval is a consecutive one.
+    const int n = std::min(m_count, kSummaryPumps + 1);
+    std::array<PerfSample, kSummaryPumps + 1> s;
+    for (int i = 0; i < n; i++)
+        s[i] = sample(m_count - n + i);
+    perfSummary(perfWindow(s.data(), n, kSummaryPumps), out);
 }
 
 bool PerfMonitor::lastSample(PerfSample* out) const
@@ -347,6 +238,17 @@ void PerfMonitor::setOverlay(int flags)
     if (m_overlay && m_timeline)
         m_timeline->update();
     m_window->update();
+}
+
+void PerfMonitor::setKeysEnabled(bool on)
+{
+    if (on == m_keys)
+        return;
+    m_keys = on;
+    if (on)
+        m_window->installEventFilter(this);
+    else
+        m_window->removeEventFilter(this);
 }
 
 void PerfMonitor::setFrozen(bool on)
@@ -424,7 +326,7 @@ void PerfMonitor::ensureOverlay()
     if (m_overlay)
         return;
     QQmlComponent comp(m_engine);
-    comp.setData(QByteArray(kOverlayQml), QUrl(QStringLiteral("vlqt-perf-overlay.qml")));
+    comp.loadUrl(QUrl(QStringLiteral("qrc:/vlqt/qml/perf/perf_overlay.qml")));
     QObject* obj = comp.isError() ? nullptr : comp.create();
     auto* item = qobject_cast<QQuickItem*>(obj);
     if (!item) {
@@ -434,12 +336,12 @@ void PerfMonitor::ensureOverlay()
         return;
     }
     QQmlEngine::setObjectOwnership(item, QQmlEngine::CppOwnership);
-    // Before the item joins the scene: no layers on the Qt Quick software backend (see kOverlayQml).
-    const QSGRendererInterface* ri = m_window->rendererInterface();
-    if (QQuickWindow::sceneGraphBackend() == QLatin1String("software")
-        || (ri && ri->graphicsApi() == QSGRendererInterface::Software))
+    // Before the item joins the scene: no layers on the Qt Quick software backend (see qml/perf/perf_overlay.qml).
+    if (isSoftwareBackend(m_window))
         item->setProperty("layered", false);
-    item->setObjectName(QLatin1String(vlqt::perfOverlayName)); // not counted as a scene change (app/render_gate.cpp)
+    // Monospaced: Consolas where it exists (Windows), else the system fixed font (the columns are aligned with spaces).
+    item->setProperty("fontFamilies", QStringList{QStringLiteral("Consolas"), QFontDatabase::systemFont(QFontDatabase::FixedFont).family()});
+    item->setObjectName(QLatin1String(vlqt::overlayObjectName)); // not counted as a scene change (app/scene_change.h)
     item->setParentItem(m_window->contentItem());
     item->setZ(1e9); // above the user root
     auto* graph = item->findChild<PerfGraph*>(QStringLiteral("graph"));
@@ -490,11 +392,14 @@ void PerfMonitor::updateOverlay()
         hostStats(&hs);
         auto f = [](double v, int prec = 2) { return QString::number(v, 'f', prec); };
         auto opt = [&f](double v) { return v > 0 ? f(v, 1) : QStringLiteral("-"); };
-        // Colors double as the graph legend (kGraphSeries).
-        m_overlay->setProperty("meterText", QStringLiteral(
-            "%1 fps  frame %2  <font color='#ff6eb4'>vvvv %3</font>  <font color='#50dc78'>gpu %4</font>  "
-            "<font color='#ffa028'>cpu %5</font>")
-            .arg(f(p.fps, 1), f(p.frame_ms, 1), opt(hs.vvvv_ms), opt(p.gpu_ms), f(p.pump_ms, 1)));
+        // The colours are the legend of the graph series (kGraphSeries in perf_items.cpp).
+        auto col = [](const Rgb& c, const QString& text) {
+            return QStringLiteral("<font color='%1'>%2</font>").arg(QLatin1String(c.html), text);
+        };
+        m_overlay->setProperty("meterText", QStringLiteral("%1 fps  frame %2  ").arg(opt(p.fps), opt(p.frame_ms))
+            + col(kVvvvColor, QStringLiteral("vvvv ") + opt(hs.vvvv_ms)) + QStringLiteral("  ")
+            + col(kGpuColor, QStringLiteral("gpu ") + opt(p.gpu_ms)) + QStringLiteral("  ")
+            + col(kWorkColor, QStringLiteral("work ") + f(p.work_ms, 1)));
     }
 
     if (!stats || (m_frozen && !forced))

@@ -18,7 +18,8 @@ namespace vlqt {
 class Scene;
 class CloseFilter;
 class PerfMonitor;
-class UpdateGate;
+class RenderGate;
+class SceneChangeCounter;
 
 struct OffscreenScene;
 
@@ -39,15 +40,15 @@ struct FullscreenRestore {
 };
 
 // What a vlqt_scene* points to: a window, or an offscreen scene (offscreen/offscreen_scene.h) whose QQuickWindow is
-// driven by a QQuickRenderControl. Both own engine, window, scene and perf and have a gate; a scene has only the
-// FocusRelease input filter (closeFilter stays null) and its own part in offscreen. Created by vlqt_window_create or
-// offscreen::createHandle, deleted by vlqt_scene_destroy.
+// driven by a QQuickRenderControl. Both own engine, window, scene and perf and have a change counter; a scene has
+// only the FocusRelease input filter (closeFilter and gate stay null) and its own part in offscreen. Created by
+// vlqt_window_create or offscreen::createHandle, deleted by vlqt_scene_destroy.
 //
 // Destruction order: the destructor first releases the binding of an offscreen scene (offscreen::release), whose render
 // target and opened texture belong to the QRhi of its render control. The members then go in reverse declaration
 // order: perf before scene (the overlay's Scene page reads it), scene before window (its items are in the window),
 // window before engine (the engine created the QML objects in it), the render control of offscreen after the window.
-// closeFilter and gate are children of the window and die with it.
+// closeFilter, gate and changes are children of the window and die with it.
 struct SceneHandle {
     // Both in window/window.cpp, where the owned types are complete.
     SceneHandle();
@@ -63,21 +64,23 @@ struct SceneHandle {
     std::unique_ptr<Scene> scene;      // apply/poll
     std::unique_ptr<PerfMonitor> perf; // child of window, deleted before it
     QPointer<CloseFilter> closeFilter; // child of window; null for an offscreen scene
-    QPointer<UpdateGate> gate;         // child of window
+    QPointer<RenderGate> gate;         // child of window; null for an offscreen scene
+    QPointer<SceneChangeCounter> changes; // child of window
     std::unique_ptr<test::TestInput> testInput; // test hook: synthetic input state, created by test/test_input.cpp
     unsigned mode = 0;                          // vlqt_window_set_mode: requested vlqt_window_mode bits
     std::optional<FullscreenRestore> fullscreenRestore; // set while fullscreen
 };
 
-// The C handle: a vlqt_scene* points to a SceneHandle.
-inline SceneHandle* asWindow(vlqt_scene* handle)
+// The C handle: a vlqt_scene* points to a SceneHandle, of a window or of an offscreen scene. Exports reach it through
+// withScene / withWindow / withOffscreen (app/exports.h), which check it and the thread.
+inline SceneHandle* asSceneHandle(vlqt_scene* handle)
 {
     return reinterpret_cast<SceneHandle*>(handle);
 }
 
-inline vlqt_scene* asHandle(SceneHandle* window)
+inline vlqt_scene* asHandle(SceneHandle* scene)
 {
-    return reinterpret_cast<vlqt_scene*>(window);
+    return reinterpret_cast<vlqt_scene*>(scene);
 }
 
 } // namespace vlqt

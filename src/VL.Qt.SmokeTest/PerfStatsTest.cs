@@ -36,7 +36,7 @@ public static class PerfStatsTest
         // Frames: 1..100 without x1 and x2 (80 values, 8 per decade): ranks 40 / 76 / 80 -> 50 / 96 / 100.
         s.Check(st.frame_p50 == 50 && st.frame_p95 == 96 && st.frame_p99 == 100 && st.frame_max == 100,
             $"perfstats: frame p50/p95/p99/max = 50/96/100/100 ({st.frame_p50}/{st.frame_p95}/{st.frame_p99}/{st.frame_max})");
-        // Over budget: pump 17..100 = 84 (recent 51..100 = 50). Long frames (> 25 ms, swap in this and the previous
+        // Over budget (Qt work = pump here: no vsync wait, no present): pump 17..100 = 84 (recent 51..100 = 50). Long frames (> 25 ms, swap in this and the previous
         // pump): i 25..99 minus i % 10 == 0 or 1 = 61 (recent i 50..99: 40). Idle / multi: 10 each (recent 5).
         s.Check(st.pumps == 100 && st.over_budget == 84 && st.long_frames == 61 && st.idle == 10 && st.multi_swap == 10,
             $"perfstats: counters since start 100/84/61/10/10 ({st.pumps}/{st.over_budget}/{st.long_frames}/{st.idle}/{st.multi_swap})");
@@ -57,6 +57,33 @@ public static class PerfStatsTest
         rc = NativeTest.vlqt_test_perf_eval(samples, t, samples.Length, budget, out st);
         s.Check(rc == 0 && st.long_frames == 0 && st.idle == 56 && st.frames == 16 && st.frame_max == 16,
             $"perfstats: on demand -> long frames 0, idle 56, 16 consecutive frames, frame max 16 (long {st.long_frames}, idle {st.idle}, frames {st.frames}, max {st.frame_max})");
+
+        // NDIAG-02: frame statistics (vlqt_perf: fps, frame_ms) only from consecutive frames. 60 pumps of 16 ms frames,
+        // with and without a 2 s idle gap (the frame after it has interval 2000 and a previous pump without a frame).
+        var anim = new Native.vlqt_perf_sample[60];
+        for (int i = 0; i < 60; i++)
+            anim[i] = new Native.vlqt_perf_sample { pump = 1, sync = 0.2f, render = 0.4f, present = 0.1f, frame_interval = 16, swaps = 1 };
+        rc = NativeTest.vlqt_test_perf_summary_eval(anim, anim.Length, out var pf);
+        s.Check(rc == 0 && pf.samples == 60 && pf.frame_ms == 16 && pf.frame_ms_max == 16 && Math.Abs(pf.fps - 62.5) < 1e-9,
+            $"perfstats: summary of 60 frames of 16 ms -> 16 ms, 62.5 fps (rc {rc}, frame {pf.frame_ms}, max {pf.frame_ms_max}, fps {pf.fps})");
+        var gap = (Native.vlqt_perf_sample[])anim.Clone();
+        for (int i = 30; i < 40; i++) gap[i] = new Native.vlqt_perf_sample { pump = 0.1f, swaps = 0 }; // idle pumps
+        gap[40] = gap[40] with { frame_interval = 2000 }; // first frame after the idle pumps
+        rc = NativeTest.vlqt_test_perf_summary_eval(gap, gap.Length, out var pg);
+        s.Check(rc == 0 && pg.frame_ms == 16 && pg.frame_ms_max == 16 && Math.Abs(pg.fps - 62.5) < 1e-9,
+            $"perfstats: an idle gap does not change frame_ms, frame_ms_max or fps (rc {rc}, frame {pg.frame_ms}, max {pg.frame_ms_max}, fps {pg.fps})");
+        // Phases per pump that rendered: render 0.4 in 50 of the 60 pumps -> 0.4, not 0.4 * 50 / 60.
+        s.Check(Math.Abs(pg.render_ms - 0.4) < 1e-6 && Math.Abs(pg.sync_ms - 0.2) < 1e-6 && Math.Abs(pg.present_ms - 0.1) < 1e-6,
+            $"perfstats: phase averages per pump that rendered (render {pg.render_ms}, sync {pg.sync_ms}, present {pg.present_ms})");
+        // Idle scene: a frame every 8th pump only (on demand) -> no consecutive frame, fps 0.
+        var demand = new Native.vlqt_perf_sample[60];
+        for (int i = 0; i < 60; i++)
+            demand[i] = i % 8 == 7 ? new Native.vlqt_perf_sample { pump = 1, frame_interval = 128, swaps = 1 } : new Native.vlqt_perf_sample { pump = 0.1f };
+        rc = NativeTest.vlqt_test_perf_summary_eval(demand, demand.Length, out var pd);
+        s.Check(rc == 0 && pd.fps == 0 && pd.frame_ms == 0 && pd.frame_ms_max == 0,
+            $"perfstats: an idle / on-demand scene has fps 0, frame_ms 0 (rc {rc}, fps {pd.fps}, frame {pd.frame_ms}, max {pd.frame_ms_max})");
+        rc = NativeTest.vlqt_test_perf_summary_eval(anim, 0, out pd);
+        s.Check(rc == 0 && pd.samples == 0 && pd.fps == 0, "perfstats: summary without samples -> zeros");
 
         // Ring limit: 300 samples -> percentiles over the last 240 (pump 60..299), counters over all.
         samples = new Native.vlqt_perf_sample[300];
@@ -87,20 +114,20 @@ public static class PerfStatsTest
         // host frames. Eval: 4 frames of 250 ms, apply 1..4, ops 10..40, alloc 100..400, gen0 1 each, gen2 once.
         var hf = new Native.vlqt_host_pump[4];
         for (int i = 0; i < 4; i++)
-            hf[i] = new Native.vlqt_host_pump { apply = i + 1, reconcile = 2 * (i + 1), host = 5, interval = 250, gc_pause = 0.5f,
+            hf[i] = new Native.vlqt_host_pump { apply = i + 1, reconcile = 2 * (i + 1), interval = 250, gc_pause = 0.5f,
                 ops = 10 * (i + 1), gc0 = 1, gc2 = i == 3 ? 1 : 0, alloc_bytes = 100 * (i + 1),
                 vvvv = 2 * (i + 1), wait = i == 2 ? 10 : 1 }; // vvvv 2..8, wait 1,1,10,1
         rc = NativeTest.vlqt_test_perf_host_eval(hf, 4, out var hs);
         s.Check(rc == 0 && hs.samples == 4 && hs.apply_ms == 2.5 && hs.apply_ms_max == 4 && hs.reconcile_ms == 5 && hs.reconcile_ms_max == 8
-              && hs.host_ms == 5 && hs.ops == 25 && hs.ops_max == 40 && hs.gc0_per_s == 4 && hs.gc1_per_s == 0 && hs.gc2_per_s == 1
-              && hs.gc_pause_ms_per_s == 2 && hs.alloc_bytes == 250 && hs.alloc_bytes_max == 400
+              && hs.ops == 25 && hs.ops_max == 40 && hs.gc0_per_s == 4 && hs.gc1_per_s == 0 && hs.gc2_per_s == 1
+              && hs.gc_pause_ms_per_s == 2 && hs.alloc_bytes == 250
               && hs.vvvv_ms == 5 && hs.vvvv_ms_max == 8 && hs.wait_ms == 3.25 && hs.wait_ms_max == 10,
-            $"perfstats: host eval (rc {rc}, n {hs.samples}, apply {hs.apply_ms}/{hs.apply_ms_max}, ops {hs.ops}/{hs.ops_max}, gen0/1/2 per s {hs.gc0_per_s}/{hs.gc1_per_s}/{hs.gc2_per_s}, pause/s {hs.gc_pause_ms_per_s}, alloc {hs.alloc_bytes}/{hs.alloc_bytes_max}, vvvv {hs.vvvv_ms}/{hs.vvvv_ms_max}, wait {hs.wait_ms}/{hs.wait_ms_max})");
+            $"perfstats: host eval (rc {rc}, n {hs.samples}, apply {hs.apply_ms}/{hs.apply_ms_max}, ops {hs.ops}/{hs.ops_max}, gen0/1/2 per s {hs.gc0_per_s}/{hs.gc1_per_s}/{hs.gc2_per_s}, pause/s {hs.gc_pause_ms_per_s}, alloc {hs.alloc_bytes}, vvvv {hs.vvvv_ms}/{hs.vvvv_ms_max}, wait {hs.wait_ms}/{hs.wait_ms_max})");
         rc = NativeTest.vlqt_test_perf_host_eval(hf, 0, out hs);
         s.Check(rc == 0 && hs.samples == 0 && hs.gc0_per_s == 0, "perfstats: host eval, no frames -> zeros");
 
         // Live: report after a pump, read back; the next pump without a report has none.
-        var f = new Native.vlqt_host_pump { apply = 0.5f, host = 3, interval = 16, ops = 7, gc0 = 1, alloc_bytes = 1234, vvvv = 10.5f, wait = 2.25f };
+        var f = new Native.vlqt_host_pump { apply = 0.5f, interval = 16, ops = 7, gc0 = 1, alloc_bytes = 1234, vvvv = 10.5f, wait = 2.25f };
         rc = Native.vlqt_scene_report_host_pump(w, f);
         var rc2 = Native.vlqt_scene_get_host_pump(w, out var back);
         Native.vlqt_scene_get_host_pump_stats(w, out hs);

@@ -1,4 +1,6 @@
-﻿namespace VL.Qt.Elements
+﻿using VL.Qt.Nodes;
+
+namespace VL.Qt.Elements
 {
     /// <summary>
     /// Check box without text (QtQuick.Controls CheckBox, style Basic). The Toggle node with look Checkbox.
@@ -7,6 +9,7 @@
     internal sealed class CheckBox : Element
     {
         public CheckBox() : base(ElementType.CheckBox) { }
+        internal CheckBox(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.CheckBox, common, feedback) { }
 
         /// <summary>On (default): Size is ignored and the implicit size applies. Off: Size counts.</summary>
         public bool AutoSize { get; init; } = true;

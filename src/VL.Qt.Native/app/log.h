@@ -12,7 +12,8 @@ namespace vlqt::log {
 void attach(vlqt_log_fn log);
 // Levels: 0 debug, 1 info, 2 warning, 3 critical, 4 fatal (C# maps them to LogLevel); the category is passed verbatim.
 void emitLog(int level, const char* category, const QByteArray& msg);
-// Cuts the callback at unload (DllMain / ELF destructor, platform/platform_*.cpp).
-void detach();
+// Cuts the callback at unload (DllMain / ELF destructor, platform/platform_*.cpp). libraryUnload: the library is being
+// unmapped (FreeLibrary, dlclose), so Qt's default message handler replaces ours too.
+void detach(bool libraryUnload);
 
 } // namespace vlqt::log

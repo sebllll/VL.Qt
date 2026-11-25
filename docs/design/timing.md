@@ -14,7 +14,7 @@ Each phase is the time between two `QQuickWindow` signals, taken with a monotoni
 
 ### Vsync wait
 
-The wait for the refresh happens in `QRhi::beginFrame`. Qt emits `beforeFrameBegin` right before it and `beforeSynchronizing` right after it, and has no signal at the end of `beginFrame`, so the vsync wait is `beforeFrameBegin` to `beforeSynchronizing`. With D3D11, `beginFrame` waits on the frame latency waitable object (maximum frame latency 2): with VSync on that is where the wait for the refresh lands, and `Present(1)` itself hardly blocks. With VSync off the same wait shows that the GPU is behind. The segment also holds the rest of `beginFrame` (reading back the timestamps of the previous frame), `prepareSync` and the `beforeSynchronizing` slots connected before the monitor's (the update gate's dirty check, which is short). The software backend has no `beforeFrameBegin`, so the segment is 0 there.
+The wait for the refresh happens in `QRhi::beginFrame`. Qt emits `beforeFrameBegin` right before it and `beforeSynchronizing` right after it, and has no signal at the end of `beginFrame`, so the vsync wait is `beforeFrameBegin` to `beforeSynchronizing`. With D3D11, `beginFrame` waits on the frame latency waitable object (maximum frame latency 2): with VSync on that is where the wait for the refresh lands, and `Present(1)` itself hardly blocks. With VSync off the same wait shows that the GPU is behind. The segment also holds the rest of `beginFrame` (reading back the timestamps of the previous frame), `prepareSync` and the `beforeSynchronizing` slots connected before the monitor's (the dirty check of the scene change counter, which is short). The software backend has no `beforeFrameBegin`, so the segment is 0 there.
 
 ### Frame hand-off
 

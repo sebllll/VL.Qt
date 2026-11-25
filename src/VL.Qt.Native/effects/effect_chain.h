@@ -25,6 +25,7 @@
 
 class QQmlComponent;
 class QQmlEngine;
+class QQuickMatrix4x4; // QtQuick/private/qquicktranslate_p.h
 
 Q_DECLARE_LOGGING_CATEGORY(lcEffectChain)
 
@@ -86,7 +87,7 @@ public:
         QVariant values[kEffectMultiKeys]; // values as written to the MultiEffect (Qt defaults if unset)
         QQuickItem* mask = nullptr;        // attached mask element's item (Elements, Scene::setEffectChain)
         QQuickItem* maskFrame = nullptr;   // hidden layer item holding mask in the element's parent coordinates
-        QObject* maskFrameXf = nullptr;    // Matrix4x4 of the frame's inner item (Elements::updateMaskFrame)
+        QQuickMatrix4x4* maskFrameXf = nullptr; // Matrix4x4 of the frame's inner item (Elements::updateMaskFrame)
     };
 
     /* SHADER (every template): shaders, uniform table and the link's own problems. */

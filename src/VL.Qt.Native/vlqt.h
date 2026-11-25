@@ -29,6 +29,13 @@
  * Exceptions never cross the ABI: an exception inside QtNative returns VLQT_ERR_INTERNAL (NULL for a pointer) with its
  * text in vlqt_last_error.
  *
+ * Threads. Every export runs on the Qt GUI thread, the thread that called vlqt_app_init ("main thread" in this file; the
+ * vvvv main thread), except the six marked "any thread": vlqt_app_get_abi_version, vlqt_last_error,
+ * vlqt_image_write_file, vlqt_shader_reflect, vlqt_audio_tap_read and vlqt_audio_tap_now_ns. On another thread a
+ * main-thread export does nothing and returns VLQT_ERR_WRONG_THREAD (NULL for a pointer; a void export only sets
+ * vlqt_last_error). A null handle is VLQT_ERR_NULL_HANDLE on every thread. Before vlqt_app_init the main thread is not
+ * known yet and every thread passes the check.
+ *
  * Startup: Qt may abort the process at vlqt_app_init when no platform plugin can be loaded (qFatal); the log then has
  * the reason. */
 #pragma once
@@ -81,7 +88,7 @@ typedef enum vlqt_result {
 /* A window or an offscreen scene (see "Handles" at the top). Opaque. */
 typedef struct vlqt_scene vlqt_scene;
 
-/* ===== app ===== */
+/* ===== app: main thread, except vlqt_app_get_abi_version and vlqt_last_error ===== */
 
 /* Log callback of vlqt_app_init: a plain cdecl function the host keeps alive for the life of the process (from .NET a
  * static [UnmanagedCallersOnly] method, no delegate). Called on any thread (Qt messages of render threads and workers
@@ -90,19 +97,27 @@ typedef struct vlqt_scene vlqt_scene;
 typedef void (*vlqt_log_fn)(int level, const char* category, const char* message);
 
 /* ABI version of this library (VLQT_ABI_VERSION, protocol.h): protocol constants, struct layouts and signatures of this
- * header. Needs no vlqt_app_init; the host reads it first and refuses a library with another number. */
+ * header. Needs no vlqt_app_init; the host reads it first and refuses a library with another number. Any thread. */
 VLQT_API int         vlqt_app_get_abi_version(void);
 /* Starts Qt on the calling thread, which is the Qt GUI thread ("main thread") from then on. log may be NULL; it is set
- * once (idempotent: a second call changes nothing). */
+ * once (idempotent: a second call changes nothing; from another thread it is VLQT_ERR_WRONG_THREAD). */
 VLQT_API int         vlqt_app_init(const char* nativeDir, vlqt_log_fn log);
-/* Pipeline cache: call before the first window. Sets load + save file of the QQuickGraphicsConfiguration of
- * every window created afterwards (driver compiled pipelines survive restarts). utf8Path NULL or empty = off (the
- * default). A cache of another GPU/driver is dropped by Qt; a file that cannot be written only logs a warning. 0. */
+/* Pipeline cache: sets load + save file of the QQuickGraphicsConfiguration of every window created afterwards
+ * (driver compiled pipelines survive restarts). utf8Path NULL or empty = off (the default). A call after the first
+ * window has no effect on the windows that exist. A cache of another GPU/driver is dropped by Qt; a file that cannot
+ * be written only logs a warning. Always 0. */
 VLQT_API int         vlqt_app_set_pipeline_cache(const char* utf8Path);
 /* One pump: resources, posted and window events, rendering. Only the given windows (those of one vvvv app) may render
  * in this pump; update requests of other windows stay pending until their own app's pump. windows NULL = all windows
- * (count ignored). 0, VLQT_ERR_NOT_INITIALIZED. */
+ * (count ignored). 0, VLQT_ERR_NOT_INITIALIZED, VLQT_ERR_UNSUPPORTED when called inside the pump (from a host callback
+ * that processEvents dispatched): the nested call does nothing, the outer pump goes on (a warning is logged once). */
 VLQT_API int         vlqt_app_process_events_for(vlqt_scene* const* windows, int count);
+/* The frame budget in ms: vvvv's frame interval, which QtNative renders in step with. Each window of a pump takes it at
+ * the end of the pump and judges that pump's Qt work against it (vlqt_perf_stats: budget_ms, over_budget, long_frames;
+ * the colours and the red highlight of the F2/F5 overlay). VL.Qt calls it before each vlqt_app_process_events_for with
+ * the interval of its frame clock; 1000 / 60 until the first call. Process-wide, needs no vlqt_app_init. Qt GUI thread.
+ * 0, VLQT_ERR_BAD_ARGUMENT (ms not in (0, 1000), NaN), VLQT_ERR_WRONG_THREAD. */
+VLQT_API int         vlqt_app_set_frame_budget(double ms);
 /* delivers the window system events Qt has queued (input of all windows, also geometry and close) without
  * rendering: update requests stay pending and an Expose is deferred, both render in the next pump. Call at the start
  * of the host frame, then vlqt_scene_poll, so input that arrived between two frames reaches the host in this frame.
@@ -116,18 +131,25 @@ VLQT_API int         vlqt_app_advance_animations(double seconds);
 /* Text of the last failing call on the calling thread (top of this file). Any thread. */
 VLQT_API const char* vlqt_last_error(void);
 
-/* ===== scene: a window or an offscreen scene ===== */
+/* ===== scene: a window or an offscreen scene; main thread ===== */
 
-/* Averages/maxima over the last ~1 s of pumps, all times in ms. */
+/* Averages/maxima over the last ~1 s of pumps (the last 60), all times in ms. Frame statistics (fps, frame_ms,
+ * frame_ms_max) come only from consecutive frames, like the percentiles of vlqt_perf_stats: pumps with a swap whose
+ * previous pump also had one. After idle pumps the interval spans the idle time and is not a frame time. Without a
+ * consecutive frame in the range (an idle or on-demand scene) all three are 0. The phases (sync_ms, render_ms,
+ * present_ms, vsync_ms) are averages per pump that rendered (swaps > 0), summed over its swaps; pump_ms, work_ms and
+ * swaps_per_pump are per pump of the range, gpu_ms per pump with a GPU timestamp. The F2 meter and the F5 Summary
+ * page use the same computation. */
 typedef struct vlqt_perf {
-    double fps;            /* from the average interval between swaps */
+    double fps;            /* 1000 / frame_ms, 0 = no consecutive frame */
     double frame_ms, frame_ms_max; /* average/max frame interval (vlqt_perf_sample.frame_interval) */
-    double pump_ms, pump_ms_max;   /* processEvents incl. rendering, on the vvvv thread */
+    double pump_ms, pump_ms_max;   /* processEvents incl. rendering, vsync wait and present, on the vvvv thread */
     double sync_ms, render_ms, present_ms;
     double gpu_ms, gpu_ms_max;     /* 0 = GPU timestamps unavailable */
     double swaps_per_pump;
     int samples;
     double vsync_ms;               /* QRhi::beginFrame, see vlqt_perf_sample.vsync (appended) */
+    double work_ms;                /* Qt work per pump, see vlqt_perf_sample.work (appended) */
 } vlqt_perf;
 
 /* One pump (vlqt_app_process_events_for) of a scene, times in ms. */
@@ -142,18 +164,22 @@ typedef struct vlqt_perf_sample {
      * D3D11 waits there for the refresh (frame latency waitable object), not in Present; without VSync it waits there
      * when the GPU is behind. F5 segment "vsync wait". 0 on the software backend. */
     float vsync;
+    /* Appended: Qt work = events + sync + render, i.e. pump - vsync - present (>= 0): the pump without the waits for the
+     * display refresh or the GPU. The one definition of Qt work: over_budget, the F2 series "work" and the slow-frame
+     * warning of VL.Qt judge it. Filled by QtNative; vlqt_test_perf_eval computes it from pump, vsync and present. */
+    float work;
 } vlqt_perf_sample;
 
 /* Percentiles over the ring (last up to 240 pumps; frame only over pumps with a swap whose previous pump also had one,
  * i.e. intervals between consecutive frames), nearest rank, and counters.
  * Computed at query time only. Counters: since scene creation and over the last 10 s (1 s buckets).
- *   over_budget   pump > budget_ms
+ *   over_budget   Qt work > budget_ms (vlqt_perf_sample.work: the pump without the vsync wait and the present)
  *   long_frames   frame interval > 1.5 x budget_ms and the previous pump also had a frame (a refresh was skipped =
  *                 missed frame; the interval after idle pumps of on-demand rendering does not count)
  *   idle          swaps == 0 (no frame in the pump, mostly because nothing changed)
  *   multi_swap    swaps > 1 */
 typedef struct vlqt_perf_stats {
-    double budget_ms;   /* 1000 / refresh rate of the window's screen, fallback 60 Hz */
+    double budget_ms;   /* vvvv's frame interval (vlqt_app_set_frame_budget) at the window's last pump, 1000 / 60 until set */
     double frame_p50, frame_p95, frame_p99, frame_max;
     double pump_p50, pump_p95, pump_p99, pump_max;
     int samples;        /* pumps in the ring */
@@ -167,7 +193,6 @@ typedef struct vlqt_perf_stats {
 typedef struct vlqt_host_pump {
     float apply;       /* vlqt_scene_apply of this scene in this pump (incl. resync) */
     float reconcile;   /* reconcile + command writing in the node updates since the previous host pump */
-    float host;        /* the whole host pump (all scenes: apply, advance, processEvents, poll) */
     float interval;    /* since the previous host pump of the same vvvv app (0 = first) */
     float gc_pause;    /* .NET GC pause since the previous host pump */
     int ops;           /* commands applied to this scene in this pump */
@@ -183,11 +208,10 @@ typedef struct vlqt_host_pump {
 typedef struct vlqt_host_pump_stats {
     double apply_ms, apply_ms_max;
     double reconcile_ms, reconcile_ms_max;
-    double host_ms, host_ms_max;
     double ops, ops_max;               /* per pump */
     double gc0_per_s, gc1_per_s, gc2_per_s;
     double gc_pause_ms_per_s;
-    double alloc_bytes, alloc_bytes_max; /* per host pump */
+    double alloc_bytes;                /* per host pump */
     int samples;
     double vvvv_ms, vvvv_ms_max;       /* vlqt_host_pump.vvvv, average/max */
     double wait_ms, wait_ms_max;       /* vlqt_host_pump.wait, average/max */
@@ -222,7 +246,8 @@ VLQT_API int       vlqt_scene_apply(vlqt_scene* scene, const unsigned char* buf,
  * 0, VLQT_ERR_NULL_HANDLE, VLQT_ERR_BAD_ARGUMENT null out. */
 VLQT_API int       vlqt_scene_get_apply_error(vlqt_scene* scene, vlqt_apply_error* out);
 /* Copies the queued events into out (a buffer export, top of this file; 0 bytes = none) and clears the queue; on
- * VLQT_ERR_BUFFER_TOO_SMALL they stay queued. VLQT_ERR_NULL_HANDLE. Call once per frame after
+ * VLQT_ERR_BUFFER_TOO_SMALL they stay queued and *required is exact: the call that follows only copies (it collects
+ * nothing new, new changes come with the poll after it). VLQT_ERR_NULL_HANDLE. Call once per frame after
  * vlqt_app_process_events_for: the poll first queues EVENT_MEASURED / EVENT_SCENE_BOUNDS of bound items whose value
  * changed and EVENT_WINDOW_GEOMETRY of a window after a move/resize/state change (events.h). */
 VLQT_API int       vlqt_scene_poll(vlqt_scene* scene, unsigned char* out, int cap, int* written, int* required);
@@ -238,9 +263,8 @@ VLQT_API long long vlqt_scene_get_change_count(vlqt_scene* scene);
  * 0 = off; both VLQT_ERR_NULL_HANDLE. */
 VLQT_API int       vlqt_scene_set_debug(vlqt_scene* scene, int on);
 VLQT_API int       vlqt_scene_get_debug(vlqt_scene* scene);
-/* bit0 = perfmeter panel (F2), bit1 = stats (F5); the keys toggle the same flags in a window. set: 0, get: the flags
- * (>= 0); both VLQT_ERR_NULL_HANDLE. */
-VLQT_API int       vlqt_scene_set_overlay(vlqt_scene* scene, int flags);
+/* The perf overlay flags: bit0 = perfmeter panel (F2), bit1 = stats (F5), bit3 = freeze (F6), bits 4..6 = stats page + 1;
+ * the keys of a window change them (vlqt_window_set_keys). >= 0, VLQT_ERR_NULL_HANDLE. */
 VLQT_API int       vlqt_scene_get_overlay(vlqt_scene* scene);
 /* The perf getters: 0, VLQT_ERR_NULL_HANDLE, VLQT_ERR_BAD_ARGUMENT null out/in. */
 VLQT_API int       vlqt_scene_get_perf(vlqt_scene* scene, vlqt_perf* out);
@@ -256,7 +280,8 @@ VLQT_API int       vlqt_scene_get_host_pump(vlqt_scene* scene, vlqt_host_pump* o
 /* Averages/maxima/rates over the last ~1 s (see vlqt_host_pump_stats). */
 VLQT_API int       vlqt_scene_get_host_pump_stats(vlqt_scene* scene, vlqt_host_pump_stats* out);
 
-/* ===== window: only windows; on an offscreen scene a no-op or VLQT_ERR_UNSUPPORTED as each function says ===== */
+/* ===== window: only windows; on an offscreen scene a no-op or VLQT_ERR_UNSUPPORTED as each function says; main
+ * thread ===== */
 
 /* Creates the window (hidden; vlqt_window_show shows it). NULL = error (vlqt_last_error). Geometry in Qt logical pixels
  * (DIP), the convention of the Renderer's Bounds pin and of EVENT_WINDOW_GEOMETRY (round trip stable):
@@ -314,6 +339,12 @@ VLQT_API int   vlqt_window_set_samples(vlqt_scene* window, int requested);
 /* Sample count of the window: of its swap chain once it has one, else the count it will be created with. 0 on an
  * offscreen scene, VLQT_ERR_NULL_HANDLE. */
 VLQT_API int   vlqt_window_get_samples(vlqt_scene* window);
+/* The diagnostic keys of the window (Renderer [Qt] Enable Keyboard Shortcuts): on != 0 (default) = F2 (perfmeter), F5 and
+ * Shift+F5 (stats), F6 (freeze), F7 (host segments) are taken by QtNative and never reach the scene; 0 = none of them is
+ * taken, the keys reach the scene, and an open overlay stays as it is. Kept when the window is replaced by
+ * vlqt_window_set_samples. 0, VLQT_ERR_NULL_HANDLE; a no-op on an offscreen scene (it gets no keyboard focus). Main
+ * thread. */
+VLQT_API int   vlqt_window_set_keys(vlqt_scene* window, int on);
 
 /* ===== offscreen: only offscreen scenes (VLQT_ERR_NULL_HANDLE for a window) =====
  * QtTexture; design: docs/decisions/render-texture.md. A Qt scene without a native window (QQuickRenderControl) on
@@ -470,7 +501,7 @@ VLQT_API int vlqt_res_list(vlqt_res_info* out, int cap);
  * vlqt_last_error. */
 VLQT_API void vlqt_res_shutdown(void);
 
-/* ===== image ===== */
+/* ===== image: main thread, except vlqt_image_write_file ===== */
 
 /* Pixels of vlqt_image_set_pixels and vlqt_image_write_file. */
 typedef struct vlqt_pixel_desc {
@@ -513,7 +544,7 @@ VLQT_API int vlqt_image_read_preview(unsigned long long id, unsigned char* dst, 
 VLQT_API int vlqt_image_write_file(const vlqt_pixel_desc* desc, const void* data, int len, const char* utf8Path,
                                    int quality);
 
-/* ===== shader ===== */
+/* ===== shader: main thread, except vlqt_shader_reflect ===== */
 
 /* Shader resources (shader_resource.h, protocol.h "ShaderEffect"): start or replace the content of a
  * VLQT_RESOURCE_KIND_SHADER resource. utf8Path: a .qsb file or "builtin:<name>" (shaders/<name>.frag|.vert.qsb next to
@@ -542,7 +573,7 @@ VLQT_API int vlqt_shader_load_source(unsigned long long id, const char* utf8Sour
  *           sampler2D, anything else "other". */
 VLQT_API int vlqt_shader_reflect(const char* utf8Source, int stage, char* buf, int bufLen, int* written, int* required);
 
-/* ===== snapshot ===== */
+/* ===== snapshot: main thread ===== */
 
 /* Snapshot resources (protocol.h): main thread. Starts grabbing element elementId of scene (scale > 0:
  * pixel size = item size in DIP * scale, ignoring the screen's device pixel ratio) into a VLQT_RESOURCE_KIND_SNAPSHOT
@@ -571,7 +602,7 @@ VLQT_API int vlqt_snapshot_start_fit(unsigned long long id, vlqt_scene* scene, u
 VLQT_API int vlqt_snapshot_read(unsigned long long id, void* dst, int cap, vlqt_pixel_desc* out, int* written,
                                 int* required);
 
-/* ===== audio tap ===== */
+/* ===== audio tap: main thread, except vlqt_audio_tap_read and vlqt_audio_tap_now_ns ===== */
 
 /* State of an audio tap, filled by vlqt_audio_tap_read (protocol.h "Audio tap"). 96 bytes, mirrored in Native.cs.
  * Times in ns of vlqt_audio_tap_now_ns, media times in us on Qt's audio startTime axis (keeps counting across loop
@@ -613,7 +644,7 @@ VLQT_API int vlqt_audio_tap_read(unsigned long long id, float* dst, int maxFrame
  * Linux: CLOCK_MONOTONIC). Any thread, no Qt needed. */
 VLQT_API long long vlqt_audio_tap_now_ns(void);
 
-/* ===== font ===== */
+/* ===== font: main thread ===== */
 
 /* App fonts (LoadFont node): font files for Text/Style FontFamily without installing them. Qt GUI thread only (the
  * vvvv main thread, after vlqt_app_init); other threads get VLQT_ERR_WRONG_THREAD. One QFontDatabase registration per

@@ -22,28 +22,19 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(string Value, string Placeholder, bool Editable, bool Enabled, bool AutoSize, Style? Style);
 
-        private readonly ElementNode<TextField, Props> _node;
+        private readonly ElementNodeCore<TextField, Props> _node;
         private readonly ValueChannel<string> _value = new(string.Empty);
 
         public TextInputNode(NodeContext nodeContext)
-            => _node = new ElementNode<TextField, Props>(nodeContext, Create);
+            => _node = new ElementNodeCore<TextField, Props>(nodeContext, s_create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal TextInputNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNode<TextField, Props>(addWarning, Create);
+            => _node = new ElementNodeCore<TextField, Props>(addWarning, s_create);
 
-        private static readonly Func<CommonInputs, Props, FeedbackSlot, TextField> Create = static (c, p, slot) => new TextField
+        private static readonly Func<CommonInputs, Props, FeedbackSlot, TextField> s_create = static (c, p, slot) => new TextField(c, slot)
             {
-                Size = c.Size,
-                Transform = c.Transform,
-                Anchor = c.Anchor,
-                Opacity = c.Opacity,
-                Clip = c.Clip,
-                Debug = c.Debug,
-                Interaction = c.Interaction,
-                Effect = c.Effect,
                 Style = p.Style,
-                Feedback = slot,
                 AutoSize = p.AutoSize,
                 Value = p.Value,
                 Placeholder = p.Placeholder,
@@ -51,7 +42,7 @@ namespace VL.Qt.Nodes
                 Enabled = p.Enabled,
             };
 
-        internal ElementNode<TextField, Props> Core => _node;
+        internal ElementNodeCore<TextField, Props> Core => _node;
 
         /// <summary>Describes the text input. A new description is only created when an input or the text changes.</summary>
         /// <param name="size">Size of the element (width, height), only with Auto Size off. The position comes from Transform and Anchor.</param>
@@ -73,7 +64,7 @@ namespace VL.Qt.Nodes
         /// <param name="measuredSize">Implicit size reported by Qt, in units.</param>
         /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [DefaultValue("2, 0.4")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
             Matrix transform,
@@ -95,11 +86,10 @@ namespace VL.Qt.Nodes
         {
             value = _value.Update(channel, _node.Feedback) ?? string.Empty;
             bang = _value.Bang;
-            var element = _node.Describe(
+            return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new Props(value, placeholder ?? string.Empty, editable, enabled, autoSize, style));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            return element;
+                new Props(value, placeholder ?? string.Empty, editable, enabled, autoSize, style),
+                out measuredSize, out sceneBounds);
         }
 
         public void Dispose() => _node.Dispose();

@@ -7,6 +7,7 @@
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickItem>
 
+#include <cmath>
 #include <cstring>
 
 Q_LOGGING_CATEGORY(lcElements, "vlqt.elements")
@@ -22,6 +23,8 @@ const PropDef* findProp(const TypeDef& type, quint16 prop)
 {
     if (isEffectProp(prop))
         return nullptr; // only via SET_EFFECT_CHAIN
+    if (prop == VLQT_PROPERTY_AUTO_SIZE)
+        return type.autoSize != AutoSize::None ? &autoSizeProp() : nullptr;
     const auto& list = prop >= 256 ? type.props : commonProps();
     for (const PropDef& p : list)
         if (p.id == prop)
@@ -29,17 +32,24 @@ const PropDef* findProp(const TypeDef& type, quint16 prop)
     return nullptr;
 }
 
+// Number of float components of a float value type that Qt would take unchecked (0 = no float value).
+int floatComponents(quint16 valueType)
+{
+    switch (valueType) {
+    case VLQT_VALUE_TYPE_F32: return 1;
+    case VLQT_VALUE_TYPE_VEC2: return 2;
+    case VLQT_VALUE_TYPE_COLOR:
+    case VLQT_VALUE_TYPE_RECTF: return 4;
+    case VLQT_VALUE_TYPE_MAT4: return 16;
+    default: return 0;
+    }
+}
+
 } // namespace
 
 Elements::Elements(QQmlEngine* e) : engine(e) {}
 
-Elements::~Elements()
-{
-    // Items are deleted by the Scene before; components only hold compiled QML.
-    for (auto& kv : types)
-        delete kv.second.component;
-    delete matrixComponent;
-}
+Elements::~Elements() = default;
 
 QQuickItem* Elements::create(const TypeDef& type, std::string& err)
 {
@@ -47,14 +57,12 @@ QQuickItem* Elements::create(const TypeDef& type, std::string& err)
     QQuickItem* item = nullptr;
     if (type.make) {
         item = type.make();
-    } else if (!type.qml) {
+    } else if (!type.qmlUrl) {
         item = new QQuickItem();
     } else {
-        if (!cache.component) {
-            cache.component = new QQmlComponent(engine);
-            cache.component->setData(QByteArray(type.qml), QUrl(QStringLiteral("vlqt_type_%1.qml").arg(type.id)));
-        }
-        QQmlComponent* comp = cache.component;
+        if (!cache.component)
+            cache.component = std::make_unique<QQmlComponent>(engine, QUrl(QString::fromLatin1(type.qmlUrl)));
+        QQmlComponent* comp = cache.component.get();
         QObject* obj = comp->isError() ? nullptr : comp->create();
         item = qobject_cast<QQuickItem*>(obj);
         if (!item) {
@@ -66,24 +74,25 @@ QQuickItem* Elements::create(const TypeDef& type, std::string& err)
     }
     if (!cache.resolved)
         resolve(type, cache, item);
-    if (type.id == VLQT_ELEMENT_TYPE_VIDEO && !mediaPosition.isValid()) {
-        const QMetaObject* mo = item->metaObject();
-        const int ip = mo->indexOfProperty("vlqtPosition"), idur = mo->indexOfProperty("vlqtDuration");
-        if (ip >= 0 && idur >= 0) {
-            mediaPosition = mo->property(ip);
-            mediaDuration = mo->property(idur);
-        }
-    }
     return item;
+}
+
+void Elements::setDebug(ElementEntry& node, bool on)
+{
+    if (node.debug != on)
+        debugCount += on ? 1 : -1;
+    node.debug = on;
 }
 
 bool Elements::readMedia(const ElementEntry& node, float out[2]) const
 {
-    if (node.type != VLQT_ELEMENT_TYPE_VIDEO || !mediaPosition.isValid())
+    const auto it = types.find(node.type);
+    if (it == types.end() || !it->second.position.isValid() || !it->second.duration.isValid())
         return false;
+    const TypeCache& c = it->second;
     // MediaPlayer reports milliseconds (qint64); 0 until the media is loaded.
-    out[0] = float(mediaPosition.read(node.item).toLongLong() / 1000.0);
-    out[1] = float(mediaDuration.read(node.item).toLongLong() / 1000.0);
+    out[0] = float(c.position.read(node.item).toLongLong() / 1000.0);
+    out[1] = float(c.duration.read(node.item).toLongLong() / 1000.0);
     return true;
 }
 
@@ -112,13 +121,11 @@ quint32 Elements::takeClicks(const ElementEntry& node)
 
 bool Elements::pollsState(quint16 type) const
 {
-    if (type == VLQT_ELEMENT_TYPE_VIDEO)
-        return true;
     const auto it = types.find(type);
     if (it == types.end())
         return false;
     const TypeCache& c = it->second;
-    return c.error.isValid() || c.clicks.isValid() || (c.userCount.isValid() && c.userValue.isValid());
+    return (c.position.isValid() && c.duration.isValid()) || c.error.isValid() || c.clicks.isValid() || (c.userCount.isValid() && c.userValue.isValid());
 }
 
 bool Elements::takeUserValue(const ElementEntry& node, QVariant& out)
@@ -140,6 +147,10 @@ void Elements::resolve(const TypeDef& type, TypeCache& cache, QQuickItem* first)
     // property once, on the first item.
     cache.resolved = true;
     const QMetaObject* mo = first->metaObject();
+    if (const int ip = mo->indexOfProperty("vlqtPosition"); ip >= 0)
+        cache.position = mo->property(ip);
+    if (const int idur = mo->indexOfProperty("vlqtDuration"); idur >= 0)
+        cache.duration = mo->property(idur);
     if (const int ie = mo->indexOfProperty("vlqtError"); ie >= 0)
         cache.error = mo->property(ie);
     if (const int ic = mo->indexOfProperty("vlqtClicks"); ic >= 0)
@@ -153,19 +164,9 @@ void Elements::resolve(const TypeDef& type, TypeCache& cache, QQuickItem* first)
             continue;
         ResolvedProp rp;
         rp.def = &p;
-        const char* dot = std::strchr(p.qmlName, '.');
-        const QByteArray head = dot ? QByteArray(p.qmlName, int(dot - p.qmlName)) : QByteArray(p.qmlName);
-        const int idx = mo->indexOfProperty(head.constData());
+        const int idx = mo->indexOfProperty(p.qmlName);
         if (idx >= 0)
             rp.prop = mo->property(idx);
-        if (rp.prop.isValid() && dot) {
-            QObject* group = rp.prop.read(first).value<QObject*>();
-            const int sidx = group ? group->metaObject()->indexOfProperty(dot + 1) : -1;
-            if (sidx >= 0)
-                rp.sub = group->metaObject()->property(sidx);
-            else
-                rp.prop = QMetaProperty();
-        }
         if (rp.prop.isValid())
             cache.props[p.id] = rp;
         else
@@ -175,8 +176,8 @@ void Elements::resolve(const TypeDef& type, TypeCache& cache, QQuickItem* first)
 
 int Elements::set(ElementEntry& node, quint16 prop, const Value& v, std::string& err)
 {
-    const TypeDef* type = findType(node.type);
-    const PropDef* def = type ? findProp(*type, prop) : nullptr;
+    const TypeDef* type = node.def;
+    const PropDef* def = findProp(*type, prop);
     TypeCache& cache = types[node.type];
     const ResolvedProp* rp = nullptr;
     ResolvedProp api; // properties without a QML name (C++ API): only def is set
@@ -189,7 +190,7 @@ int Elements::set(ElementEntry& node, quint16 prop, const Value& v, std::string&
         rp = &api;
     }
     if (!rp) {
-        err = "property " + std::to_string(prop) + " not supported by type " + (type ? type->name : "?")
+        err = "property " + std::to_string(prop) + " not supported by type " + type->name
             + (isEffectProp(prop) ? " (EFFECT_* only via SET_EFFECT_CHAIN)" : "");
         if (cache.warned.insert(prop).second)
             qCWarning(lcElements, "%s", err.c_str());
@@ -200,6 +201,12 @@ int Elements::set(ElementEntry& node, quint16 prop, const Value& v, std::string&
             + ", got " + std::to_string(v.type);
         return ApplyBadValue;
     }
+    // One rule for every float value: NaN/inf never reach a setter (Qt takes them unchecked, qRound is undefined for them).
+    for (int i = 0, n = floatComponents(v.type); i < n; ++i)
+        if (!std::isfinite(v.f[i])) {
+            err = "property " + std::to_string(prop) + ": value must be finite";
+            return ApplyBadValue;
+        }
     std::string reason;
     if (!def->set(*this, node, *rp, v, reason)) {
         err = "property " + std::to_string(prop) + ": " + reason;

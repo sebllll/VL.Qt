@@ -68,7 +68,7 @@ public static class PerfOverlayTest
         cmd.Reparent(1, 0, 0);
         Native.Apply(v, cmd.EndFrame());
         Native.vlqt_window_show(v);
-        Native.vlqt_scene_set_overlay(v, Stats | ((Summary + 1) << PageShift));
+        NativeTest.vlqt_test_set_overlay(v, Stats | ((Summary + 1) << PageShift));
         for (var i = 0; i < 40; i++)
         {
             cmd.Reset();
@@ -108,7 +108,7 @@ public static class PerfOverlayTest
             $"perfoverlay: VSync on: swap int. 1, {tearOn} ({Line(sys, "swap int.")} | {Line(sys, "allow tearing")} | {Line(sys, "backend")})");
         foreach (var (page, name) in new[] { (Summary, "summary"), (Timeline, "timeline"), (SystemPage, "system") })
         {
-            Native.vlqt_scene_set_overlay(v, Stats | ((page + 1) << PageShift));
+            NativeTest.vlqt_test_set_overlay(v, Stats | ((page + 1) << PageShift));
             s.Pump(3);
             using var a = s.Grab(v, Path.Combine(s.OutDir, $"perf_f5_{name}_vsync.png"));
             s.Check(a.Width > 0, $"perfoverlay: {name} grabbed with VSync");
@@ -165,7 +165,7 @@ public static class PerfOverlayTest
         var sw = s.QuickSoftware ? "_sw" : ""; // known after the first frame
 
         // Pages via the API: bits 4..6 = page + 1.
-        Native.vlqt_scene_set_overlay(w, Stats | ((Summary + 1) << PageShift));
+        NativeTest.vlqt_test_set_overlay(w, Stats | ((Summary + 1) << PageShift));
         s.Check(Visible(w) && Page(w) == Summary, $"perfoverlay: API opens Summary ({Native.vlqt_scene_get_overlay(w)})");
         Run(30);
 
@@ -244,7 +244,7 @@ public static class PerfOverlayTest
             s.Check(a.Width > 0, "perfoverlay: summary grabbed");
         s.Check(PageText(w, 0).Contains("fps") && !PageText(w, 0).Contains("on demand"), "perfoverlay: animated summary is not 'on demand'");
 
-        Native.vlqt_scene_set_overlay(w, Stats | ((Timeline + 1) << PageShift));
+        NativeTest.vlqt_test_set_overlay(w, Stats | ((Timeline + 1) << PageShift));
         Run(5);
         using (var a = s.Grab(w, Path.Combine(s.OutDir, $"perf_f5_timeline{sw}.png")))
             s.Check(Page(w) == Timeline, "perfoverlay: timeline grabbed");
@@ -263,11 +263,27 @@ public static class PerfOverlayTest
         Run(2);
         s.Check(Visible(w) && Page(w) == Scene, $"perfoverlay: F5 -> Scene (page {Page(w)})");
         using (var a = s.Grab(w, Path.Combine(s.OutDir, $"perf_f5_scene{sw}.png"))) { }
-        // element count from the reconciler (1 rect), ops/apply from the reported host frames (ops = 1),
+        // element count from the reconciler (1 rectangle), ops/apply from the reported host frames (ops = 1),
         // draw calls n/a; GPU memory and pipelines n/a without QRhi.
         var scene = PageText(w, Scene);
-        s.Check(scene.Contains("elements 1 rect 1"), $"perfoverlay: scene counts 1 rect element ({Line(scene, "elements")})");
-        s.Check(scene.Contains("QML items") && scene.Contains("animations 0"), $"perfoverlay: scene items/animations ({Line(scene, "QML items")} | {Line(scene, "animations")})");
+        s.Check(scene.Contains("elements 1 rectangle 1"), $"perfoverlay: scene counts 1 rectangle element ({Line(scene, "elements")})");
+        s.Check(scene.Contains("QML items") && !scene.Contains("animations"), $"perfoverlay: scene items, no animations row ({Line(scene, "QML items")})");
+        // Every element type is counted by its own name (Shape, Shader), none in "other".
+        cmd.Reset();
+        cmd.Create(2, Protocol.ElementType.Shape);
+        cmd.Create(3, Protocol.ElementType.Shader);
+        cmd.Reparent(2, 0, 1);
+        cmd.Reparent(3, 0, 2);
+        Native.Apply(w, cmd.EndFrame());
+        Run(2);
+        var typed = PageText(w, Scene);
+        s.Check(typed.Contains("elements 3") && typed.Contains("shape 1") && typed.Contains("shader 1") && typed.Contains("rectangle 1") && !typed.Contains("other"),
+            $"perfoverlay: scene names every element type ({Line(typed, "elements")})");
+        cmd.Reset();
+        cmd.Destroy(2);
+        cmd.Destroy(3);
+        Native.Apply(w, cmd.EndFrame());
+        Run(1);
         s.Check(scene.Contains("last 1"), $"perfoverlay: scene ops/apply from host frames ({Line(scene, "ops/apply")})");
         s.Check(scene.Contains("draw calls n/a"), "perfoverlay: scene draw calls n/a");
         if (s.QuickSoftware)
@@ -317,7 +333,7 @@ public static class PerfOverlayTest
         NativeTest.vlqt_test_send_key(w, KeyF5, Shift);
         s.Check(Visible(w) && Page(w) == Timeline, $"perfoverlay: Shift+F5 shows the remembered page (page {Page(w)})");
         // F6 without the stats is not consumed / changes nothing.
-        Native.vlqt_scene_set_overlay(w, 0);
+        NativeTest.vlqt_test_set_overlay(w, 0);
         NativeTest.vlqt_test_send_key(w, KeyF6, 0);
         s.Check((Native.vlqt_scene_get_overlay(w) & (Stats | Freeze)) == 0, "perfoverlay: F6 ignored while hidden");
 
@@ -328,7 +344,7 @@ public static class PerfOverlayTest
         // (drawn later, on top) at the bottom of the graph and fewer than 40 px stay orange. Every pump therefore gets a
         // sync spike of 8 ms, so the line runs clearly above the baseline (~20 % of the graph height) over the whole 240-pump
         // ring (filled once before the grab) and the 40 px (~14 % of the 282 columns) mean a continuous line, as intended.
-        Native.vlqt_scene_set_overlay(w, 1);
+        NativeTest.vlqt_test_set_overlay(w, 1);
         Run(250, 8);
         Retry(s, "perfoverlay: F2 meter draws the pump line", () =>
         {
@@ -343,17 +359,17 @@ public static class PerfOverlayTest
                 }
             return (line >= 40, $"{line} px");
         });
-        Native.vlqt_scene_set_overlay(w, 0);
+        NativeTest.vlqt_test_set_overlay(w, 0);
 
         // A new window opens on the remembered page.
         var w2 = NativeCalls.CreateWindow(320, 240, "VL.Qt perf overlay 2");
-        Native.vlqt_scene_set_overlay(w2, Stats);
+        NativeTest.vlqt_test_set_overlay(w2, Stats);
         s.Check(Page(w2) == Timeline, $"perfoverlay: new window opens the remembered page (page {Page(w2)})");
         Native.vlqt_scene_destroy(w2);
 
         // static scene -> Qt renders only on changes (here: the 4 Hz overlay text). The intervals after idle
         // pumps are no missed frames, and the Summary shows "on demand" instead of a red fps.
-        Native.vlqt_scene_set_overlay(w, Stats | ((Summary + 1) << PageShift));
+        NativeTest.vlqt_test_set_overlay(w, Stats | ((Summary + 1) << PageShift));
         for (int i = 0; i < 10; i++) { s.Pump(1); Thread.Sleep(15); } // settle: switching pages renders
         // A regression (idle gaps counted as missed frames) flags ~one long frame per overlay text update, i.e. a
         // systematic count over the 150 pumps; a single OS stall adds at most a few. Tolerate a few, retry the window.
@@ -427,7 +443,7 @@ public static class PerfOverlayTest
         // The 60 s decode last: decodes run FIFO, and with a single worker (2-core CI runners: min(4, cores - 1) = 1)
         // it would hold back the two decodes above.
         var stuckDecode = Start(60000, Mb, 0); // Decoding, stuck after 2 s
-        Native.vlqt_scene_set_overlay(w, Stats | ((ResourcesPage + 1) << PageShift));
+        NativeTest.vlqt_test_set_overlay(w, Stats | ((ResourcesPage + 1) << PageShift));
         // Wait for the states instead of assuming a time: the decode and the upload count as stuck after 2 s in their state.
         const string Expected = "live 5 pending 1 decoding 1 uploading 1 ready 1 failed 1 released 0 stuck 2";
         var text = "";
@@ -522,7 +538,7 @@ public static class PerfOverlayTest
         for (int round = 0; round <= rounds; round++) // round 0 = warmup
             for (int m = 0; m < modes.Length; m++)
             {
-                Native.vlqt_scene_set_overlay(w, modes[m].Item1);
+                NativeTest.vlqt_test_set_overlay(w, modes[m].Item1);
                 for (int i = 0; i < 120; i++, frame++)
                 {
                     deadline += period;
