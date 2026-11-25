@@ -10,7 +10,7 @@
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
 
-#include <algorithm>
+#include <array>
 #include <exception>
 #include <vector>
 
@@ -53,17 +53,20 @@ void render(OffscreenScene* s, ID3D11DeviceContext4* foreign)
 
 // The scenes of one render thread in one batch, with the write value each one signals. Two lists per thread: the
 // main thread fills one while the render thread may still render the other (at most one batch is in flight per
-// thread, see renderThreaded). Main thread; the render thread reads the list of its jobs.
+// thread, see renderThreaded). Main thread; the render thread reads the list of its jobs, which captures its address:
+// the batches live in a fixed array (s_threadBatches), so no later batch moves them.
 struct ThreadBatch
 {
-    render_thread::RenderThread* thread = nullptr;
+    render_thread::RenderThread* thread = nullptr; // set the first time a scene of it renders
     std::vector<std::pair<OffscreenScene*, unsigned long long>> lists[2];
     int current = 0;
     bool used = false;     // in the batch being built
     bool software = false; // a scene of it is bound to a software device
     bool posted = false;   // its render job of the last batch may still run (finishPostedRenders)
 };
-std::vector<ThreadBatch> s_threadBatches; // one per render thread that ever rendered
+// One per render thread, at the index of the thread in the pool (RenderThread::index). A fixed address: a posted render
+// job may run after the next batch began, which never adds or moves a batch.
+std::array<ThreadBatch, render_thread::maxThreads> s_threadBatches;
 
 // Waits until every render job posted by the last batch ran. The scenes of all threads share Qt's immediate context,
 // and the foreign context waits for the write values of the last batch before it signals the read values of the next
@@ -143,21 +146,16 @@ void renderThreaded(const std::vector<OffscreenScene*>& scenes, ID3D11DeviceCont
     for (ThreadBatch& b : s_threadBatches)
         b.used = false;
     for (OffscreenScene* s : scenes) {
-        auto it = std::find_if(s_threadBatches.begin(), s_threadBatches.end(),
-            [s](const ThreadBatch& b) { return b.thread == s->thread; });
-        if (it == s_threadBatches.end()) {
-            s_threadBatches.emplace_back();
-            it = s_threadBatches.end() - 1;
-            it->thread = s->thread;
+        ThreadBatch& b = s_threadBatches[s->thread->index()];
+        b.thread = s->thread;
+        if (!b.used) {
+            b.used = true;
+            b.software = false;
+            b.current ^= 1;
+            b.lists[b.current].clear();
         }
-        if (!it->used) {
-            it->used = true;
-            it->software = false;
-            it->current ^= 1;
-            it->lists[it->current].clear();
-        }
-        it->lists[it->current].push_back({ s, ++s->writeValue });
-        it->software = it->software || s->software;
+        b.lists[b.current].push_back({ s, ++s->writeValue });
+        b.software = b.software || s->software;
     }
 
     for (ThreadBatch& b : s_threadBatches) {

@@ -39,6 +39,7 @@ int fromEnvironment()
 } // namespace
 
 RenderThread::RenderThread(int index)
+    : m_index(index)
 {
     // The same name for Qt and for the OS (profilers, dumps): app/thread_name.h, docs/profiling.md.
     const QByteArray name = "vlqt-render-" + QByteArray::number(index);

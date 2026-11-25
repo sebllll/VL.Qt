@@ -36,6 +36,8 @@ public:
     RenderThread(const RenderThread&) = delete;
     RenderThread& operator=(const RenderThread&) = delete;
 
+    // Position in the pool, the one the constructor got: 0 ... maxThreads - 1.
+    int index() const { return m_index; }
     QThread* thread() { return &m_thread; }
     bool isCurrent() const { return QThread::currentThread() == &m_thread; }
 
@@ -79,6 +81,7 @@ public:
 private:
     static void logError(std::exception_ptr error);
 
+    int m_index;
     QThread m_thread;
     QObject* m_context = nullptr; // lives on m_thread: the receiver of the jobs
 };
