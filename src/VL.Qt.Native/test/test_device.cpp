@@ -19,6 +19,8 @@ namespace vlqt::device::test {
 
 namespace {
 
+using Microsoft::WRL::ComPtr;
+
 Q_LOGGING_CATEGORY(lcDevice, "vlqt.device")
 
 bool s_failNextCreation = false; // failNextCreation, main thread
@@ -64,19 +66,16 @@ HRESULT createOn12(IDXGIAdapter1* adapter, UINT flags, ID3D11Device** dev, ID3D1
     // a window QRhi still holds it. A device factory that stores no singleton creates a fresh device every time.
     // Without the factory (before Windows 11 24H2, e.g. Windows Server 2022 on the CI runner) only the singleton.
     HRESULT hr = E_NOTIMPL;
-    ID3D12DeviceFactory* factory = nullptr;
-    if (getInterface && SUCCEEDED(getInterface(clsidDeviceFactory, __uuidof(ID3D12DeviceFactory),
-            reinterpret_cast<void**>(&factory)))) {
+    ComPtr<ID3D12DeviceFactory> factory;
+    if (getInterface && SUCCEEDED(getInterface(clsidDeviceFactory, IID_PPV_ARGS(factory.GetAddressOf())))) {
         factory->SetFlags(D3D12_DEVICE_FACTORY_FLAG_DISALLOW_STORING_NEW_DEVICE_AS_SINGLETON);
-        hr = factory->CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device),
-            reinterpret_cast<void**>(&out.dev12));
-        factory->Release();
+        hr = factory->CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(out.dev12.GetAddressOf()));
         if (FAILED(hr))
             qCWarning(lcDevice, "VLQT_TEST_D3D11ON12: ID3D12DeviceFactory::CreateDevice failed (0x%08lx)", long(hr));
     }
     const char* path = SUCCEEDED(hr) ? "device factory" : "D3D12CreateDevice (singleton)";
     if (FAILED(hr) && create12)
-        hr = create12(adapter, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), reinterpret_cast<void**>(&out.dev12));
+        hr = create12(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(out.dev12.GetAddressOf()));
     if (SUCCEEDED(hr)) {
         // A removed singleton comes back as a valid pointer: only its removed reason tells.
         const HRESULT removed = out.dev12->GetDeviceRemovedReason();
@@ -86,13 +85,13 @@ HRESULT createOn12(IDXGIAdapter1* adapter, UINT flags, ID3D11Device** dev, ID3D1
     if (SUCCEEDED(hr)) {
         D3D12_COMMAND_QUEUE_DESC desc{};
         desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-        hr = out.dev12->CreateCommandQueue(&desc, __uuidof(ID3D12CommandQueue), reinterpret_cast<void**>(&out.queue12));
+        hr = out.dev12->CreateCommandQueue(&desc, IID_PPV_ARGS(out.queue12.GetAddressOf()));
     }
     if (SUCCEEDED(hr)) {
-        IUnknown* queues[] = { out.queue12 };
-        hr = create11on12(out.dev12, flags, nullptr, 0, queues, 1, 0, dev, ctx, level);
+        IUnknown* queues[] = { out.queue12.Get() };
+        hr = create11on12(out.dev12.Get(), flags, nullptr, 0, queues, 1, 0, dev, ctx, level);
     }
-    qCInfo(lcDevice, "VLQT_TEST_D3D11ON12: D3D12 device %p via %s: 0x%08lx", static_cast<void*>(out.dev12), path,
+    qCInfo(lcDevice, "VLQT_TEST_D3D11ON12: D3D12 device %p via %s: 0x%08lx", static_cast<void*>(out.dev12.Get()), path,
         long(hr));
     if (FAILED(hr))
         release(out);
@@ -124,23 +123,19 @@ int dropWindowRhisOn(const std::vector<void*>& devices)
 
 unsigned long release(On12& on12)
 {
-    if (on12.queue12)
-        on12.queue12->Release();
-    const unsigned long left = on12.dev12 ? on12.dev12->Release() : 0;
-    on12 = {};
-    return left;
+    on12.queue12.Reset();
+    return on12.dev12.Reset();
 }
 
 int removeDevice(ID3D12Device* dev12)
 {
-    ID3D12Device5* dev5 = nullptr;
-    if (!dev12 || FAILED(dev12->QueryInterface(__uuidof(ID3D12Device5), reinterpret_cast<void**>(&dev5)))) {
+    ComPtr<ID3D12Device5> dev5;
+    if (!dev12 || FAILED(dev12->QueryInterface(IID_PPV_ARGS(dev5.GetAddressOf())))) {
         return vlqt::fail(VLQT_ERR_UNSUPPORTED, "test_device_lost(REMOVE) needs the shared device on D3D11On12 "
                                                 "(VLQT_TEST_D3D11ON12=1 before the first window or resource)");
     }
     qCInfo(lcDevice, "test: removing the D3D12 device %p of the shared device", static_cast<void*>(dev12));
     dev5->RemoveDevice();
-    dev5->Release();
     return 0;
 }
 

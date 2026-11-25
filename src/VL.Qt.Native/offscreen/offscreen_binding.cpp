@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <utility>
 
 #include <d3d11_4.h>
 #include <windows.h>
@@ -23,14 +24,6 @@ namespace vlqt::offscreen {
 namespace {
 
 using Microsoft::WRL::ComPtr;
-
-template <class T> void releaseCom(T*& p)
-{
-    if (p) {
-        p->Release();
-        p = nullptr;
-    }
-}
 
 // The adapters of the foreign device and of QtNative's device differ: move QtNative's device to the foreign adapter
 // if nothing renders on it yet (no on-screen window with a QRhi on it, no other scene bound), else ADAPTER_MISMATCH.
@@ -127,7 +120,7 @@ ID3D11Device* qtDevice(const OffscreenScene* s)
 void unbind(OffscreenScene* s)
 {
     if (s->texture) {
-        vlqt::device::ContextLock lock(s->qtContext);
+        vlqt::device::ContextLock lock(s->qtContext.Get());
         s->window->setRenderTarget(QQuickRenderTarget());
         // Qt turns a render target into QRhi wrappers (texture, render target view) only at the next frame
         // (ensureCustomRenderTarget); drop them now, else their view keeps the opened texture alive.
@@ -136,13 +129,13 @@ void unbind(OffscreenScene* s)
         // render pass of QRhi binds its own targets, so clearing them here changes nothing for the windows.
         s->qtContext->OMSetRenderTargets(0, nullptr, nullptr);
     }
-    vlqt::linear_pass::release(s->linearPass);
-    releaseCom(s->texture);
-    releaseCom(s->foreignRead);
-    releaseCom(s->foreignWrite);
-    releaseCom(s->qtRead);
-    releaseCom(s->qtWrite);
-    releaseCom(s->qtContext);
+    s->linearPass = {};
+    s->texture.Reset();
+    s->foreignRead.Reset();
+    s->foreignWrite.Reset();
+    s->qtRead.Reset();
+    s->qtWrite.Reset();
+    s->qtContext.Reset();
     s->bound = false;
 }
 
@@ -228,19 +221,19 @@ int bind(OffscreenScene* s, void* device, void* ntHandle, int width, int height,
     const int used = vlqt::device::clampSamples(samples, int(targetFormat), s->window->rhi());
     const QQuickRenderTarget::Flags msaa = used > 1 ? QQuickRenderTarget::Flag::MultisampleResolve : QQuickRenderTarget::Flags();
     // 1 DIP = 1 texture pixel, also on a high-DPI screen.
-    auto target = QQuickRenderTarget::fromD3D11Texture(linearPass.source ? linearPass.source : texture.Get(), uint(targetFormat),
+    auto target = QQuickRenderTarget::fromD3D11Texture(linearPass.source ? linearPass.source.Get() : texture.Get(), uint(targetFormat),
         QSize(width, height), used, msaa);
     target.setDevicePixelRatio(1.0);
     s->window->setGeometry(0, 0, width, height);
     s->window->setRenderTarget(target);
 
-    s->texture = texture.Detach();
-    s->linearPass = linearPass;
-    s->qtContext = qtContext.Detach();
-    s->qtRead = qtRead.Detach();
-    s->qtWrite = qtWrite.Detach();
-    s->foreignRead = foreignRead.Detach();
-    s->foreignWrite = foreignWrite.Detach();
+    s->texture = std::move(texture);
+    s->linearPass = std::move(linearPass);
+    s->qtContext = std::move(qtContext);
+    s->qtRead = std::move(qtRead);
+    s->qtWrite = std::move(qtWrite);
+    s->foreignRead = std::move(foreignRead);
+    s->foreignWrite = std::move(foreignWrite);
     s->readValue = 0;
     s->writeValue = 0;
     s->renders = 0;

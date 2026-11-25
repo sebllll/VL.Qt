@@ -7,6 +7,7 @@
 #include <d3d11_4.h> // ID3D11Multithread
 #include <dxgi1_4.h>
 #include <windows.h>
+#include <wrl/client.h>
 
 #include <climits>
 #include <cstdio>
@@ -15,25 +16,10 @@
 
 namespace {
 
+using Microsoft::WRL::ComPtr;
+
 // Per thread, as vlqt_last_error (vlqt.h).
 thread_local std::string t_lastError;
-
-// Releases a COM pointer on scope exit.
-template <class T> struct ComPtr
-{
-    T* p = nullptr;
-    ComPtr() = default;
-    ComPtr(const ComPtr&) = delete;
-    ComPtr& operator=(const ComPtr&) = delete;
-    ~ComPtr()
-    {
-        if (p)
-            p->Release();
-    }
-    T** put() { return &p; }
-    T* operator->() const { return p; }
-    explicit operator bool() const { return p != nullptr; }
-};
 
 // Holds the immediate context of a device for a stateful sequence (ID3D11Multithread::Enter/Leave): the critical
 // section QtNative's ContextLock (device.h) takes on a context its render threads share.
@@ -43,7 +29,7 @@ public:
     explicit ContextLock(ID3D11DeviceContext* context)
     {
         if (context)
-            context->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(m_multithread.put()));
+            context->QueryInterface(IID_PPV_ARGS(m_multithread.GetAddressOf()));
         if (m_multithread)
             m_multithread->Enter();
     }
@@ -114,17 +100,17 @@ int bytesPerPixel(DXGI_FORMAT f)
     }
 }
 
-// The adapter with this LUID (LowPart | HighPart << 32), null if there is none. Carries one reference.
-IDXGIAdapter* adapterByLuid(unsigned long long luid)
+// The adapter with this LUID (LowPart | HighPart << 32), empty if there is none.
+ComPtr<IDXGIAdapter> adapterByLuid(unsigned long long luid)
 {
     ComPtr<IDXGIFactory4> factory;
-    if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory4), reinterpret_cast<void**>(factory.put()))))
+    if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(factory.GetAddressOf()))))
         return nullptr;
     LUID l{};
     l.LowPart = DWORD(luid & 0xffffffffu);
     l.HighPart = LONG(luid >> 32);
-    IDXGIAdapter* adapter = nullptr;
-    factory->EnumAdapterByLuid(l, __uuidof(IDXGIAdapter), reinterpret_cast<void**>(&adapter));
+    ComPtr<IDXGIAdapter> adapter;
+    factory->EnumAdapterByLuid(l, IID_PPV_ARGS(adapter.GetAddressOf()));
     return adapter;
 }
 
@@ -147,27 +133,28 @@ VLQT_TESTKIT_API int vlqt_test_d3d11_create_device(int adapter, unsigned long lo
         return fail(VLQT_ERR_BAD_ARGUMENT, "create_device: null out or unknown adapter");
 
     static const D3D_FEATURE_LEVEL levels[] = {D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0};
-    ID3D11Device* dev = nullptr;
-    ID3D11DeviceContext* ctx = nullptr;
+    ComPtr<ID3D11Device> dev;
+    ComPtr<ID3D11DeviceContext> ctx;
     HRESULT hr;
     if (adapter == 1) {
         hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_WARP, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT, levels,
-                               _countof(levels), D3D11_SDK_VERSION, &dev, nullptr, &ctx);
+                               _countof(levels), D3D11_SDK_VERSION, dev.GetAddressOf(), nullptr, ctx.GetAddressOf());
     } else {
         ComPtr<IDXGIAdapter> byLuid;
         if (adapterLuid) {
-            byLuid.p = adapterByLuid(adapterLuid);
+            byLuid = adapterByLuid(adapterLuid);
             if (!byLuid)
                 return fail(VLQT_ERR_BAD_ARGUMENT, "create_device: no adapter with LUID " + std::to_string(adapterLuid));
         }
-        hr = D3D11CreateDevice(byLuid.p, byLuid ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE, nullptr,
-                               D3D11_CREATE_DEVICE_BGRA_SUPPORT, levels, _countof(levels), D3D11_SDK_VERSION, &dev,
-                               nullptr, &ctx);
+        hr = D3D11CreateDevice(byLuid.Get(), byLuid ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE, nullptr,
+                               D3D11_CREATE_DEVICE_BGRA_SUPPORT, levels, _countof(levels), D3D11_SDK_VERSION,
+                               dev.GetAddressOf(), nullptr, ctx.GetAddressOf());
     }
     if (FAILED(hr))
         return failHr("D3D11CreateDevice", hr);
-    *device = dev;
-    *context = ctx;
+    // The caller owns the references.
+    *device = dev.Detach();
+    *context = ctx.Detach();
     return 0;
 }
 
@@ -202,11 +189,11 @@ VLQT_TESTKIT_API int vlqt_test_d3d11_create_shared_texture(void* device, int wid
     desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE;
 
     ComPtr<ID3D11Texture2D> tex;
-    HRESULT hr = static_cast<ID3D11Device*>(device)->CreateTexture2D(&desc, nullptr, tex.put());
+    HRESULT hr = static_cast<ID3D11Device*>(device)->CreateTexture2D(&desc, nullptr, tex.GetAddressOf());
     if (FAILED(hr))
         return failHr("CreateTexture2D", hr);
     ComPtr<IDXGIResource1> resource;
-    hr = tex->QueryInterface(__uuidof(IDXGIResource1), reinterpret_cast<void**>(resource.put()));
+    hr = tex.As(&resource);
     if (FAILED(hr))
         return failHr("QueryInterface(IDXGIResource1)", hr);
     HANDLE handle = nullptr;
@@ -214,8 +201,7 @@ VLQT_TESTKIT_API int vlqt_test_d3d11_create_shared_texture(void* device, int wid
     if (FAILED(hr))
         return failHr("CreateSharedHandle", hr);
     *ntHandle = handle;
-    *texture = tex.p;
-    tex.p = nullptr; // the caller owns the reference
+    *texture = tex.Detach(); // the caller owns the reference
     return 0;
 }
 
@@ -247,9 +233,9 @@ VLQT_TESTKIT_API int vlqt_test_d3d11_read_texture(void* texture, unsigned char* 
         return fail(VLQT_ERR_BUFFER_TOO_SMALL, "read_texture: buffer too small: *required holds the size");
 
     ComPtr<ID3D11Device> device;
-    tex->GetDevice(device.put());
+    tex->GetDevice(device.GetAddressOf());
     ComPtr<ID3D11DeviceContext> context;
-    device->GetImmediateContext(context.put());
+    device->GetImmediateContext(context.GetAddressOf());
 
     D3D11_TEXTURE2D_DESC stagingDesc = desc;
     stagingDesc.Usage = D3D11_USAGE_STAGING;
@@ -257,21 +243,21 @@ VLQT_TESTKIT_API int vlqt_test_d3d11_read_texture(void* texture, unsigned char* 
     stagingDesc.MiscFlags = 0;
     stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
     ComPtr<ID3D11Texture2D> staging;
-    HRESULT hr = device->CreateTexture2D(&stagingDesc, nullptr, staging.put());
+    HRESULT hr = device->CreateTexture2D(&stagingDesc, nullptr, staging.GetAddressOf());
     if (FAILED(hr))
         return failHr("CreateTexture2D(staging)", hr);
     // Copy, Map and Unmap as one sequence on a context QtNative's render threads may share (device.h).
-    ContextLock lock(context.p);
-    context->CopyResource(staging.p, tex);
+    ContextLock lock(context.Get());
+    context->CopyResource(staging.Get(), tex);
     D3D11_MAPPED_SUBRESOURCE mapped;
     // Blocks until the GPU has finished the copy (and everything queued before it).
-    hr = context->Map(staging.p, 0, D3D11_MAP_READ, 0, &mapped);
+    hr = context->Map(staging.Get(), 0, D3D11_MAP_READ, 0, &mapped);
     if (FAILED(hr))
         return failHr("Map(staging)", hr);
     const size_t rowBytes = static_cast<size_t>(desc.Width) * bpp;
     for (UINT y = 0; y < desc.Height; y++)
         std::memcpy(out + y * rowBytes, static_cast<const unsigned char*>(mapped.pData) + y * mapped.RowPitch, rowBytes);
-    context->Unmap(staging.p, 0);
+    context->Unmap(staging.Get(), 0);
     if (written)
         *written = static_cast<int>(size);
     return VLQT_OK;

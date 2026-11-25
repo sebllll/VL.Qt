@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <optional>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #ifdef Q_OS_WIN
@@ -20,6 +21,7 @@
 
 #include <d3d11_4.h>
 #include <dxgi1_4.h>
+#include <wrl/client.h>
 #endif
 
 namespace vlqt::device {
@@ -29,9 +31,12 @@ namespace {
 Q_LOGGING_CATEGORY(lcDevice, "vlqt.device")
 
 #ifdef Q_OS_WIN
-// Never released at process end (see device.h); only rebuild replaces them.
-ID3D11Device* s_dev = nullptr;
-ID3D11DeviceContext* s_ctx = nullptr;
+using Microsoft::WRL::ComPtr;
+
+// Never released at process end (see device.h): these live in objects that are never destroyed, so no static destructor
+// releases a device after Qt is gone. Only rebuild replaces them.
+ComPtr<ID3D11Device>& s_dev = *new ComPtr<ID3D11Device>;
+ComPtr<ID3D11DeviceContext>& s_ctx = *new ComPtr<ID3D11DeviceContext>;
 QRhi* s_upload = nullptr;
 bool s_attempted = false;   // the first creation ran (ensureDevice); later ones come from rebuild and the retry
 bool s_lostReported = false;
@@ -39,16 +44,16 @@ bool s_lostReported = false;
 QElapsedTimer s_retry;
 constexpr qint64 retryMs = 1000;
 // test hook: the D3D12 device and queue under a D3D11On12 device (VLQT_TEST_D3D11ON12=1, test/test_device.h).
-test::On12 s_on12;
+test::On12& s_on12 = *new test::On12;
 // Old devices after a rebuild: released once no window's QRhi uses them any more (Qt drops the window QRhi at its
 // next render), so a window QRhi never points to a released device. Main thread.
 struct Retired
 {
-    ID3D11Device* dev = nullptr;
-    ID3D11DeviceContext* ctx = nullptr;
+    ComPtr<ID3D11Device> dev;
+    ComPtr<ID3D11DeviceContext> ctx;
     test::On12 on12; // test hook: empty for a plain D3D11 device
 };
-std::vector<Retired> s_retired;
+std::vector<Retired>& s_retired = *new std::vector<Retired>;
 #endif
 unsigned long long s_requestedLuid = 0; // adapter of moveTo, kept for later rebuilds (chooseAdapter)
 unsigned s_generation = 0;           // generation()
@@ -85,45 +90,38 @@ private:
 
 // The adapter Qt's D3D11 backend would pick: QT_D3D_ADAPTER_INDEX, with QSG_RHI_PREFER_SOFTWARE_RENDERER the first
 // software adapter (WARP), else the first one DXGI enumerates. nullptr = let D3D11CreateDevice choose.
-IDXGIAdapter1* chooseAdapter()
+ComPtr<IDXGIAdapter1> chooseAdapter()
 {
-    IDXGIFactory1* factory = nullptr;
-    if (FAILED(CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&factory))))
+    ComPtr<IDXGIFactory1> factory;
+    if (FAILED(CreateDXGIFactory1(IID_PPV_ARGS(factory.GetAddressOf()))))
         return nullptr;
     // moveTo: the requested adapter, found by LUID (also WARP, which EnumAdapters1 may not list).
     if (s_requestedLuid) {
-        IDXGIFactory4* factory4 = nullptr;
-        IDXGIAdapter1* byLuid = nullptr;
+        ComPtr<IDXGIFactory4> factory4;
+        ComPtr<IDXGIAdapter1> byLuid;
         LUID luid{};
         luid.LowPart = DWORD(s_requestedLuid & 0xffffffffu);
         luid.HighPart = LONG(s_requestedLuid >> 32);
-        if (SUCCEEDED(factory->QueryInterface(__uuidof(IDXGIFactory4), reinterpret_cast<void**>(&factory4)))) {
-            factory4->EnumAdapterByLuid(luid, __uuidof(IDXGIAdapter1), reinterpret_cast<void**>(&byLuid));
-            factory4->Release();
-        }
-        if (byLuid) {
-            factory->Release();
+        if (SUCCEEDED(factory.As(&factory4)))
+            factory4->EnumAdapterByLuid(luid, IID_PPV_ARGS(byLuid.GetAddressOf()));
+        if (byLuid)
             return byLuid;
-        }
         qCWarning(lcDevice, "adapter %08lx:%08lx of the last move not found, choosing as at the start",
             long(luid.HighPart), long(luid.LowPart));
     }
     const int requested = qEnvironmentVariableIsSet("QT_D3D_ADAPTER_INDEX") ? qEnvironmentVariableIntValue("QT_D3D_ADAPTER_INDEX") : -1;
     const bool software = qEnvironmentVariableIntValue("QSG_RHI_PREFER_SOFTWARE_RENDERER") != 0;
-    IDXGIAdapter1* chosen = nullptr;
-    IDXGIAdapter1* adapter = nullptr;
-    for (UINT i = 0; !chosen && factory->EnumAdapters1(i, &adapter) != DXGI_ERROR_NOT_FOUND; i++) {
+    ComPtr<IDXGIAdapter1> chosen;
+    ComPtr<IDXGIAdapter1> adapter;
+    for (UINT i = 0; !chosen && factory->EnumAdapters1(i, adapter.ReleaseAndGetAddressOf()) != DXGI_ERROR_NOT_FOUND; i++) {
         DXGI_ADAPTER_DESC1 desc{};
         adapter->GetDesc1(&desc);
         const bool match = requested >= 0 ? int(i) == requested
                          : software       ? (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) != 0
                                           : true;
         if (match)
-            chosen = adapter;
-        else
-            adapter->Release();
+            chosen = std::move(adapter);
     }
-    factory->Release();
     return chosen;
 }
 
@@ -135,7 +133,7 @@ void dropWindowRhisOnRetired()
 {
     std::vector<void*> devices;
     for (const Retired& r : s_retired)
-        devices.push_back(r.dev);
+        devices.push_back(r.dev.Get());
     const int dropped = test::dropWindowRhisOn(devices);
     releaseRetired();
     qCInfo(lcDevice, "VLQT_TEST_D3D11ON12: %d window QRhi(s) dropped, %d retired device(s) left", dropped,
@@ -151,7 +149,7 @@ bool createDevice()
         return false;
     }
 
-    IDXGIAdapter1* adapter = chooseAdapter();
+    ComPtr<IDXGIAdapter1> adapter = chooseAdapter();
     UINT flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
     if (qEnvironmentVariableIntValue("QSG_RHI_DEBUG_LAYER"))
         flags |= D3D11_CREATE_DEVICE_DEBUG;
@@ -161,28 +159,28 @@ bool createDevice()
     if (failForTest)
         qCInfo(lcDevice, "test: this creation of the shared device fails");
     else if (test::isOn12Requested()) { // test hook: the device of vlqt_test_device_lost REMOVE (test/test_device.h)
-        hr = test::createOn12(adapter, flags, &s_dev, &s_ctx, &level, s_on12);
+        hr = test::createOn12(adapter.Get(), flags, s_dev.GetAddressOf(), s_ctx.GetAddressOf(), &level, s_on12);
         if (hr == DXGI_ERROR_DEVICE_REMOVED && !s_retired.empty()) {
             dropWindowRhisOnRetired();
-            hr = test::createOn12(adapter, flags, &s_dev, &s_ctx, &level, s_on12);
+            hr = test::createOn12(adapter.Get(), flags, s_dev.GetAddressOf(), s_ctx.GetAddressOf(), &level, s_on12);
         }
         if (FAILED(hr))
             qCWarning(lcDevice, "VLQT_TEST_D3D11ON12: D3D11On12 device failed (0x%08lx), plain D3D11 device instead",
                 long(hr));
     }
     if (FAILED(hr) && !failForTest)
-        hr = D3D11CreateDevice(adapter, adapter ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE, nullptr, flags,
-            nullptr, 0, D3D11_SDK_VERSION, &s_dev, &level, &s_ctx);
+        hr = D3D11CreateDevice(adapter.Get(), adapter ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE, nullptr, flags,
+            nullptr, 0, D3D11_SDK_VERSION, s_dev.GetAddressOf(), &level, s_ctx.GetAddressOf());
     QString name;
     if (adapter) {
         DXGI_ADAPTER_DESC1 desc{};
         adapter->GetDesc1(&desc);
         name = QString::fromWCharArray(desc.Description);
-        adapter->Release();
+        adapter.Reset();
     }
     if (FAILED(hr)) {
-        s_dev = nullptr;
-        s_ctx = nullptr;
+        s_dev.Reset();
+        s_ctx.Reset();
         if (!s_retry.isValid())
             qCWarning(lcDevice, "D3D11CreateDevice failed (0x%08lx) on '%s': no shared device, retried once per second; "
                 "meanwhile windows create their own device, images are not uploaded and offscreen scenes report DEVICE_LOST "
@@ -192,10 +190,9 @@ bool createDevice()
     }
 
     // The render threads of offscreen scenes use this context too (ContextLock); protection serializes single calls.
-    ID3D11Multithread* multithread = nullptr;
-    if (SUCCEEDED(s_ctx->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread)))) {
+    ComPtr<ID3D11Multithread> multithread;
+    if (SUCCEEDED(s_ctx.As(&multithread))) {
         multithread->SetMultithreadProtected(TRUE);
-        multithread->Release();
     } else {
         qCWarning(lcDevice, "the shared device's context has no ID3D11Multithread: offscreen render threads are unsafe");
     }
@@ -203,15 +200,15 @@ bool createDevice()
     QRhiD3D11InitParams params;
     params.enableDebugLayer = (flags & D3D11_CREATE_DEVICE_DEBUG) != 0;
     QRhiD3D11NativeHandles handles;
-    handles.dev = s_dev;
-    handles.context = s_ctx;
+    handles.dev = s_dev.Get();
+    handles.context = s_ctx.Get();
     s_upload = QRhi::create(QRhi::D3D11, &params, QRhi::EnableTimestamps, &handles);
     if (!s_upload)
         qCWarning(lcDevice, "upload QRhi on the shared device could not be created");
     s_generation++;
     s_retry.invalidate();
     qCInfo(lcDevice, "shared D3D11 device %p%s on '%s' (feature level 0x%x), upload QRhi %p, generation %u",
-        static_cast<void*>(s_dev), s_on12.dev12 ? " (D3D11On12, test)" : "", qPrintable(name), unsigned(level),
+        static_cast<void*>(s_dev.Get()), s_on12.dev12 ? " (D3D11On12, test)" : "", qPrintable(name), unsigned(level),
         static_cast<void*>(s_upload), s_generation);
     return true;
 }
@@ -229,7 +226,7 @@ bool ensureDevice()
 
 bool isRetired(const void* dev)
 {
-    return std::any_of(s_retired.begin(), s_retired.end(), [dev](const Retired& r) { return r.dev == dev; });
+    return std::any_of(s_retired.begin(), s_retired.end(), [dev](const Retired& r) { return r.dev.Get() == dev; });
 }
 
 // Steps 4 and 5 of rebuild, also after a successful retry. Every QQuickWindow whose QRhi is on a retired device imports
@@ -239,7 +236,7 @@ bool isRetired(const void* dev)
 // upload again. Returns the windows handed over.
 int handOver()
 {
-    const bool ok = s_dev != nullptr;
+    const bool ok = s_dev.Get() != nullptr;
     int moved = 0;
     for (QWindow* w : QGuiApplication::topLevelWindows()) {
         auto* q = qobject_cast<QQuickWindow*>(w);
@@ -248,7 +245,7 @@ int handOver()
         const bool onOld = q->rhi() ? isRetired(nativeDevice(q->rhi())) : ok || isOnSharedDevice(q);
         if (!onOld)
             continue;
-        q->setGraphicsDevice(ok ? QQuickGraphicsDevice::fromDeviceAndContext(s_dev, s_ctx) : QQuickGraphicsDevice());
+        q->setGraphicsDevice(ok ? QQuickGraphicsDevice::fromDeviceAndContext(s_dev.Get(), s_ctx.Get()) : QQuickGraphicsDevice());
         markOnSharedDevice(q, ok);
         q->update();
         moved++;
@@ -272,22 +269,20 @@ void retryIfDue()
     releaseFrameLocks();
     const int moved = handOver();
     qCInfo(lcDevice, "shared device created again in %.1f ms: generation %u, %d window(s) handed over to device %p",
-        t.nsecsElapsed() / 1e6, s_generation, moved, static_cast<void*>(s_dev));
+        t.nsecsElapsed() / 1e6, s_generation, moved, static_cast<void*>(s_dev.Get()));
 }
 
 // Remaining references after the last own Release point to a leak (an object of the old device still alive).
 void release(Retired& r)
 {
-    if (r.ctx) {
+    void* const old = r.dev.Get();
+    if (r.ctx)
         r.ctx->ClearState();
-        r.ctx->Release();
-    }
-    const ULONG dev = r.dev ? r.dev->Release() : 0;
+    r.ctx.Reset();
+    const ULONG dev = r.dev.Reset();
     const ULONG dev12 = test::release(r.on12);
     if (dev || dev12)
-        qCWarning(lcDevice, "old D3D11 device %p still has %lu reference(s) (D3D12 device %lu): leak",
-            static_cast<void*>(r.dev), dev, dev12);
-    r = {};
+        qCWarning(lcDevice, "old D3D11 device %p still has %lu reference(s) (D3D12 device %lu): leak", old, dev, dev12);
 }
 
 // Releases retired devices that no window's QRhi uses any more. Cheap while nothing is retired.
@@ -299,13 +294,13 @@ void releaseRetired()
     for (auto it = s_retired.begin(); it != s_retired.end();) {
         bool used = false;
         for (QWindow* w : windows)
-            if (auto* q = qobject_cast<QQuickWindow*>(w); q && nativeDevice(q->rhi()) == it->dev)
+            if (auto* q = qobject_cast<QQuickWindow*>(w); q && nativeDevice(q->rhi()) == it->dev.Get())
                 used = true;
         if (used) {
             ++it;
             continue;
         }
-        qCInfo(lcDevice, "old D3D11 device %p released", static_cast<void*>(it->dev));
+        qCInfo(lcDevice, "old D3D11 device %p released", static_cast<void*>(it->dev.Get()));
         release(*it);
         it = s_retired.erase(it);
     }
@@ -319,7 +314,7 @@ void attach(QQuickWindow* window)
 #ifdef Q_OS_WIN
     if (QQuickWindow::graphicsApi() != QSGRendererInterface::Direct3D11 || !ensureDevice())
         return;
-    window->setGraphicsDevice(QQuickGraphicsDevice::fromDeviceAndContext(s_dev, s_ctx));
+    window->setGraphicsDevice(QQuickGraphicsDevice::fromDeviceAndContext(s_dev.Get(), s_ctx.Get()));
     markOnSharedDevice(window, true); // rebuild: also windows without a QRhi yet
 #else
     Q_UNUSED(window);
@@ -438,15 +433,12 @@ unsigned long long adapterLuidOf(void* d3d11Device)
 #ifdef Q_OS_WIN
     if (!d3d11Device)
         return 0;
-    IDXGIDevice* dxgi = nullptr;
-    if (FAILED(static_cast<IUnknown*>(d3d11Device)->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(&dxgi))))
+    ComPtr<IDXGIDevice> dxgi;
+    if (FAILED(static_cast<IUnknown*>(d3d11Device)->QueryInterface(IID_PPV_ARGS(dxgi.GetAddressOf()))))
         return 0;
-    IDXGIAdapter* adapter = nullptr;
+    ComPtr<IDXGIAdapter> adapter;
     DXGI_ADAPTER_DESC desc{};
-    const bool ok = SUCCEEDED(dxgi->GetAdapter(&adapter)) && SUCCEEDED(adapter->GetDesc(&desc));
-    if (adapter)
-        adapter->Release();
-    dxgi->Release();
+    const bool ok = SUCCEEDED(dxgi->GetAdapter(adapter.GetAddressOf())) && SUCCEEDED(adapter->GetDesc(&desc));
     return ok ? (static_cast<unsigned long long>(static_cast<DWORD>(desc.AdapterLuid.HighPart)) << 32)
             | desc.AdapterLuid.LowPart : 0;
 #else
@@ -458,7 +450,7 @@ unsigned long long adapterLuidOf(void* d3d11Device)
 unsigned long long adapterLuid()
 {
 #ifdef Q_OS_WIN
-    return adapterLuidOf(s_dev);
+    return adapterLuidOf(s_dev.Get());
 #else
     return 0;
 #endif
@@ -471,7 +463,7 @@ bool canMove()
         return false;
     for (QWindow* w : QGuiApplication::topLevelWindows()) {
         auto* q = qobject_cast<QQuickWindow*>(w);
-        if (q && !QQuickWindowPrivate::get(q)->renderControl && nativeDevice(q->rhi()) == s_dev)
+        if (q && !QQuickWindowPrivate::get(q)->renderControl && nativeDevice(q->rhi()) == s_dev.Get())
             return false;
     }
     return true;
@@ -519,9 +511,7 @@ void rebuild()
     delete s_upload;
     s_upload = nullptr;
     if (s_dev)
-        s_retired.push_back({ s_dev, s_ctx, s_on12 });
-    s_dev = nullptr;
-    s_ctx = nullptr;
+        s_retired.push_back({ std::move(s_dev), std::move(s_ctx), std::move(s_on12) }); // leaves the three empty
     s_on12 = {};
 
     // 3. New device (generation + 1; D3D11On12 again with VLQT_TEST_D3D11ON12). A failure arms the retry (checkLost).
@@ -534,7 +524,7 @@ void rebuild()
     s_lostReported = false;
     if (ok)
         qCInfo(lcDevice, "device rebuilt in %.1f ms: generation %u, %d window(s) moved to device %p",
-            t.nsecsElapsed() / 1e6, s_generation, moved, static_cast<void*>(s_dev));
+            t.nsecsElapsed() / 1e6, s_generation, moved, static_cast<void*>(s_dev.Get()));
     else
         qCWarning(lcDevice, "no new shared device after the loss (retried once per second): %d window(s) create their own "
             "device and keep it until their next loss", moved);
@@ -549,7 +539,7 @@ void addListener(Listener listener)
 void* testDevice12()
 {
 #ifdef Q_OS_WIN
-    return s_on12.dev12;
+    return s_on12.dev12.Get();
 #else
     return nullptr;
 #endif
@@ -557,7 +547,7 @@ void* testDevice12()
 
 ContextLock::ContextLock()
 #ifdef Q_OS_WIN
-    : ContextLock(s_ctx)
+    : ContextLock(s_ctx.Get())
 #endif
 {
 }
@@ -566,11 +556,8 @@ ContextLock::ContextLock(void* d3d11Context)
 {
 #ifdef Q_OS_WIN
     auto* const context = static_cast<ID3D11DeviceContext*>(d3d11Context);
-    ID3D11Multithread* multithread = nullptr;
-    if (context && SUCCEEDED(context->QueryInterface(__uuidof(ID3D11Multithread), reinterpret_cast<void**>(&multithread)))) {
-        multithread->Enter();
-        m_multithread = multithread;
-    }
+    if (context && SUCCEEDED(context->QueryInterface(IID_PPV_ARGS(m_multithread.GetAddressOf()))))
+        m_multithread->Enter();
 #else
     Q_UNUSED(d3d11Context);
 #endif
@@ -579,10 +566,8 @@ ContextLock::ContextLock(void* d3d11Context)
 ContextLock::~ContextLock()
 {
 #ifdef Q_OS_WIN
-    if (auto* const multithread = static_cast<ID3D11Multithread*>(m_multithread)) {
-        multithread->Leave();
-        multithread->Release();
-    }
+    if (m_multithread)
+        m_multithread->Leave();
 #endif
 }
 

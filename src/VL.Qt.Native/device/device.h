@@ -35,6 +35,11 @@
  */
 #pragma once
 
+#ifdef _WIN32
+#include <d3d11_4.h> // ID3D11Multithread
+#include <wrl/client.h>
+#endif
+
 class QQuickWindow;
 class QRhi;
 
@@ -136,7 +141,9 @@ public:
     ContextLock& operator=(const ContextLock&) = delete;
 
 private:
-    void* m_multithread = nullptr; // ID3D11Multithread*, entered
+#ifdef _WIN32
+    Microsoft::WRL::ComPtr<ID3D11Multithread> m_multithread; // entered; empty without a context
+#endif
 };
 
 } // namespace vlqt::device

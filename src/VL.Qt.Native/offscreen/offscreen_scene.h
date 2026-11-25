@@ -20,6 +20,7 @@
 #include "offscreen/linear_pass.h"
 
 #include <d3d11_4.h>
+#include <wrl/client.h>
 #endif
 
 class QPointingDevice;
@@ -82,15 +83,15 @@ struct OffscreenScene
     QPointF lastPressPos;
     Qt::MouseButton lastPressButton = Qt::NoButton;
 #ifdef _WIN32
-    ID3D11Texture2D* texture = nullptr;        // the foreign texture, opened on QtNative's device
+    Microsoft::WRL::ComPtr<ID3D11Texture2D> texture; // the foreign texture, opened on QtNative's device
     // A consumer that samples linear values (SRGB view, float): Qt renders into the pass's source, the pass writes the
     // texture after each frame. Empty for a UNORM view: Qt renders into the texture itself.
     vlqt::linear_pass::Pass linearPass;
-    ID3D11DeviceContext4* qtContext = nullptr; // immediate context of QtNative's device
-    ID3D11Fence* qtRead = nullptr;             // the fences on QtNative's device ...
-    ID3D11Fence* qtWrite = nullptr;
-    ID3D11Fence* foreignRead = nullptr;        // ... and opened on the foreign device
-    ID3D11Fence* foreignWrite = nullptr;
+    Microsoft::WRL::ComPtr<ID3D11DeviceContext4> qtContext; // immediate context of QtNative's device
+    Microsoft::WRL::ComPtr<ID3D11Fence> qtRead;             // the fences on QtNative's device ...
+    Microsoft::WRL::ComPtr<ID3D11Fence> qtWrite;
+    Microsoft::WRL::ComPtr<ID3D11Fence> foreignRead;        // ... and opened on the foreign device
+    Microsoft::WRL::ComPtr<ID3D11Fence> foreignWrite;
     // A device of the binding is a software adapter (WARP): its context deadlocks waiting for a value that is signalled
     // only later (spike 5.1), so render_batch waits until the render thread submitted the signal.
     bool software = false;
