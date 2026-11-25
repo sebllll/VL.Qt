@@ -15,7 +15,7 @@ namespace VL.Qt.Nodes
         /// <param name="input2">Upper style, e.g. overrides from another branch.</param>
         /// <returns>The merged style. The same style as in the last frame while no input changed.</returns>
         [return: Pin(Name = "Output")]
-        public Style Update(Style? input, Style? input2)
+        public Style Update(Style? input, [Pin(Name = "Input 2")] Style? input2)
         {
             if (_output is null || !ReferenceEquals(input, _input) || !ReferenceEquals(input2, _input2))
             {

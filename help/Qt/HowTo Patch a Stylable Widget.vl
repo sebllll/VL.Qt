@@ -461,7 +461,7 @@
                 <Node Bounds="95,480,105,19" Id="LNw9BaNweECMPbNA3yU4B7">
                   <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
                     <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-                    <Choice Kind="OperationCallFlag" Name="GetColors" />
+                    <Choice Kind="OperationCallFlag" Name="Colors" />
                   </p:NodeReference>
                   <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                   <Pin Id="EpdTkpCP2zNMlZapQgzNU1" Name="Input" Kind="InputPin" />
@@ -476,7 +476,7 @@
                 <Node Bounds="329,480,105,19" Id="JQWNVwNyG6dP5VdXiFfSWs">
                   <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
                     <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-                    <Choice Kind="OperationCallFlag" Name="GetFrame" />
+                    <Choice Kind="OperationCallFlag" Name="Frame" />
                   </p:NodeReference>
                   <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                   <Pin Id="NkSc1xFWEF8QGVewKYCY0j" Name="Input" Kind="InputPin" />
@@ -491,7 +491,7 @@
                 <Node Bounds="1304,650,52,19" Id="VZ3PW5lj5eAMB0vZWaj4zn">
                   <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
                     <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-                    <Choice Kind="OperationCallFlag" Name="GetText" />
+                    <Choice Kind="OperationCallFlag" Name="Text" />
                   </p:NodeReference>
                   <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                   <Pin Id="GQVylKP2DIRLSvSuqXIsxo" Name="Input" Kind="InputPin" />

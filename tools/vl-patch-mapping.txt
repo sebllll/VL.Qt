@@ -78,3 +78,87 @@ W4-98 | node | Qt.Interaction                    | Touch Points | TouchPoints
 W4-98 | pin  | Snapshot                         | Element | Input
 W4-98 | pin  | FileWriter (Element)             | Element | Input
 W4-98 | pin  | VideoSourceToQtImage             | Output  | Image
+
+# W4-122: the style nodes follow the vvvv convention (a record property reads as Radius, writes as SetRadius). The setters (the
+# five bundles and the 20 single setters) become Set<Name> and their pin State becomes States (a set of states) in step a; the
+# getters Get<Name> take the plain name in step b, after the setters have left the names (a swap in one step cannot tell a
+# setter Frame from a getter Frame). The six bundles are process nodes now (Nodes/Style); the getters keep State.
+W4-122a | node | Qt.Style | Colors | SetColors
+W4-122a | node | Qt.Style.Frame | Frame | SetFrame
+W4-122a | node | Qt.Style.Frame | Color | SetColor
+W4-122a | node | Qt.Style.Frame | BorderColor | SetBorderColor
+W4-122a | node | Qt.Style.Frame | Radius | SetRadius
+W4-122a | node | Qt.Style.Frame | BorderWidth | SetBorderWidth
+W4-122a | node | Qt.Style.Frame | PaddingX | SetPaddingX
+W4-122a | node | Qt.Style.Frame | PaddingY | SetPaddingY
+W4-122a | node | Qt.Style.Frame | MinWidth | SetMinWidth
+W4-122a | node | Qt.Style.Frame | MinHeight | SetMinHeight
+W4-122a | node | Qt.Style.Text | Text | SetText
+W4-122a | node | Qt.Style.Text | Color | SetColor
+W4-122a | node | Qt.Style.Text | FontFamily | SetFontFamily
+W4-122a | node | Qt.Style.Text | FontSize | SetFontSize
+W4-122a | node | Qt.Style.Text | FontWeight | SetFontWeight
+W4-122a | node | Qt.Style.Indicator | Indicator | SetIndicator
+W4-122a | node | Qt.Style.Indicator | Color | SetColor
+W4-122a | node | Qt.Style.Indicator | Size | SetSize
+W4-122a | node | Qt.Style.Indicator | Radius | SetRadius
+W4-122a | node | Qt.Style.Indicator | BorderWidth | SetBorderWidth
+W4-122a | node | Qt.Style.Track | Track | SetTrack
+W4-122a | node | Qt.Style.Track | Color | SetColor
+W4-122a | node | Qt.Style.Track | FillColor | SetFillColor
+W4-122a | node | Qt.Style.Track | Thickness | SetThickness
+W4-122a | node | Qt.Style.Track | Radius | SetRadius
+W4-122a | pin | Qt.Style/Colors | State | States
+W4-122a | pin | Qt.Style.Frame/Frame | State | States
+W4-122a | pin | Qt.Style.Frame/Color | State | States
+W4-122a | pin | Qt.Style.Frame/BorderColor | State | States
+W4-122a | pin | Qt.Style.Frame/Radius | State | States
+W4-122a | pin | Qt.Style.Frame/BorderWidth | State | States
+W4-122a | pin | Qt.Style.Frame/PaddingX | State | States
+W4-122a | pin | Qt.Style.Frame/PaddingY | State | States
+W4-122a | pin | Qt.Style.Frame/MinWidth | State | States
+W4-122a | pin | Qt.Style.Frame/MinHeight | State | States
+W4-122a | pin | Qt.Style.Text/Text | State | States
+W4-122a | pin | Qt.Style.Text/Color | State | States
+W4-122a | pin | Qt.Style.Text/FontFamily | State | States
+W4-122a | pin | Qt.Style.Text/FontSize | State | States
+W4-122a | pin | Qt.Style.Text/FontWeight | State | States
+W4-122a | pin | Qt.Style.Indicator/Indicator | State | States
+W4-122a | pin | Qt.Style.Indicator/Color | State | States
+W4-122a | pin | Qt.Style.Indicator/Size | State | States
+W4-122a | pin | Qt.Style.Indicator/Radius | State | States
+W4-122a | pin | Qt.Style.Indicator/BorderWidth | State | States
+W4-122a | pin | Qt.Style.Track/Track | State | States
+W4-122a | pin | Qt.Style.Track/Color | State | States
+W4-122a | pin | Qt.Style.Track/FillColor | State | States
+W4-122a | pin | Qt.Style.Track/Thickness | State | States
+W4-122a | pin | Qt.Style.Track/Radius | State | States
+
+W4-122b | node | Qt.Style | GetColors | Colors
+# HowTo Patch a Stylable Widget refers to GetFrame and GetText by the category Qt.Style (resolved by name, see the patch).
+W4-122b | node | Qt.Style | GetFrame | Frame
+W4-122b | node | Qt.Style | GetText | Text
+W4-122b | node | Qt.Style.Frame | GetFrame | Frame
+W4-122b | node | Qt.Style.Frame | GetColor | Color
+W4-122b | node | Qt.Style.Frame | GetBorderColor | BorderColor
+W4-122b | node | Qt.Style.Frame | GetRadius | Radius
+W4-122b | node | Qt.Style.Frame | GetBorderWidth | BorderWidth
+W4-122b | node | Qt.Style.Frame | GetPaddingX | PaddingX
+W4-122b | node | Qt.Style.Frame | GetPaddingY | PaddingY
+W4-122b | node | Qt.Style.Frame | GetMinWidth | MinWidth
+W4-122b | node | Qt.Style.Frame | GetMinHeight | MinHeight
+W4-122b | node | Qt.Style.Text | GetText | Text
+W4-122b | node | Qt.Style.Text | GetColor | Color
+W4-122b | node | Qt.Style.Text | GetFontFamily | FontFamily
+W4-122b | node | Qt.Style.Text | GetFontSize | FontSize
+W4-122b | node | Qt.Style.Text | GetFontWeight | FontWeight
+W4-122b | node | Qt.Style.Indicator | GetIndicator | Indicator
+W4-122b | node | Qt.Style.Indicator | GetColor | Color
+W4-122b | node | Qt.Style.Indicator | GetSize | Size
+W4-122b | node | Qt.Style.Indicator | GetRadius | Radius
+W4-122b | node | Qt.Style.Indicator | GetBorderWidth | BorderWidth
+W4-122b | node | Qt.Style.Track | GetTrack | Track
+W4-122b | node | Qt.Style.Track | GetColor | Color
+W4-122b | node | Qt.Style.Track | GetFillColor | FillColor
+W4-122b | node | Qt.Style.Track | GetThickness | Thickness
+W4-122b | node | Qt.Style.Track | GetRadius | Radius

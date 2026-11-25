@@ -1095,9 +1095,9 @@ VL.Qt | VL.Qt.Nodes.MaskNode | type sealed class
 VL.Qt | VL.Qt.Nodes.MergeNode | attr ProcessNode(Name = "Merge", Category = "Qt.Style")
 VL.Qt | VL.Qt.Nodes.MergeNode | ctor | new
 VL.Qt | VL.Qt.Nodes.MergeNode | method Update | VL.Qt.Styles.Style
-VL.Qt | VL.Qt.Nodes.MergeNode | method Update | order Input, Input2, Output
+VL.Qt | VL.Qt.Nodes.MergeNode | method Update | order Input, Input 2, Output
+VL.Qt | VL.Qt.Nodes.MergeNode | method Update | pin Input 2 | in VL.Qt.Styles.Style | Pin(Name = "Input 2") | (input2)
 VL.Qt | VL.Qt.Nodes.MergeNode | method Update | pin Input | in VL.Qt.Styles.Style | (input)
-VL.Qt | VL.Qt.Nodes.MergeNode | method Update | pin Input2 | in VL.Qt.Styles.Style | (input2)
 VL.Qt | VL.Qt.Nodes.MergeNode | method Update | pin Output | out VL.Qt.Styles.Style | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.MergeNode | type sealed class
 VL.Qt | VL.Qt.Nodes.MoveToNode | attr ProcessNode(Name = "MoveTo", Category = "Qt.Paths")

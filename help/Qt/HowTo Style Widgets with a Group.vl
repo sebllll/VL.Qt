@@ -65,7 +65,7 @@
           <Node Bounds="440,410,145,19" Id="A2JbFGxw3BcT8h25mLmnK6">
             <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <Choice Kind="OperationCallFlag" Name="Colors" />
+              <Choice Kind="ProcessAppFlag" Name="SetColors" />
             </p:NodeReference>
             <Pin Id="tvsSGUwBwrHG2VdqDelzjO" Name="Input" Kind="InputPin" />
             <Pin Id="B7XF1lyqtPCpIkpYjclUXy" Name="Frame" Kind="InputPin" />
@@ -74,7 +74,7 @@
             <Pin Id="tDpcBP967uZuV1ULfJi4KK" Name="Indicator" Kind="InputPin" />
             <Pin Id="UTO4HW2M6Djdk3h9fXuemS" Name="Track" Kind="InputPin" />
             <Pin Id="ltW4HkFiy3Dl4HcKnVK8aW" Name="Track Fill" Kind="InputPin" />
-            <Pin Id="f8oIAlv5wXKO07boZm5kxm" Name="State" Kind="InputPin" />
+            <Pin Id="f8oIAlv5wXKO07boZm5kxm" Name="States" Kind="InputPin" />
             <Pin Id="5XAzgkNzL3UMz0ns0JNob9" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="AoBjE23QIafmIuTy8fWa8C" Comment="Frame" Bounds="462,330,136,15" ShowValueBox="true" isIOBox="true" Value="0.9098, 0.5686, 0.2275, 1">

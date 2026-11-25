@@ -12,6 +12,8 @@ folder and runs the script on them:
   - category moves: same depth, a deeper chain rebuilt, a short chain, a type reference, one node by name;
   - errors (exit code 2, nothing written): conflicting rows, an unknown kind, rows of a step apart, a new name missing
     from the snapshot, a node whose names do not tell the steps apart;
+  - an operation that becomes a process node gets the Kind ProcessAppFlag, and a setter and the getter that takes its name
+    (Foo -> SetFoo, GetFoo -> Foo in a later step) are told apart by their pins, also on a second run;
   - all patches of the repository copied: a move applied, applied again (no change) and moved back in a second step
     gives the original bytes.
 """
@@ -258,6 +260,40 @@ def test_errors(fx):
     expect(code == 2 and lines_with(out, 'no step of the mapping fits'), 'errors: old and new names on one node are reported')
 
 
+def test_process_node_and_swapped_names(tmp):
+    # A setter operation Foo becomes the process node SetFoo (pin State -> States); the getter GetFoo takes the name Foo.
+    api = os.path.join(tmp, 'style-api.txt')
+    open(api, 'w', encoding='utf-8', newline='\n').write('''VL.Qt | VL.Qt.Nodes.SetFooNode | attr ProcessNode(Name = "SetFoo", Category = "Qt.Style")
+VL.Qt | VL.Qt.Nodes.SetFooNode | method Update | pin Input | in Style | (input)
+VL.Qt | VL.Qt.Nodes.SetFooNode | method Update | pin Radius | in float | (radius)
+VL.Qt | VL.Qt.Nodes.SetFooNode | method Update | pin States | in StyleStates | (states)
+VL.Qt | VL.Qt.Nodes.SetFooNode | method Update | pin Output | out Style | (return)
+VL.Qt | VL.Qt.Styles.FooNodes | attr Category("Qt.Style")
+VL.Qt | VL.Qt.Styles.FooNodes | method Foo | pin Input | in Style | (input)
+VL.Qt | VL.Qt.Styles.FooNodes | method Foo | pin State | in StyleState | (state)
+VL.Qt | VL.Qt.Styles.FooNodes | method Foo | pin Radius | out float | (radius)
+''')
+    rows = ['A | node | Qt.Style | Foo | SetFoo', 'A | pin | Qt.Style/Foo | State | States', 'B | node | Qt.Style | GetFoo | Foo']
+    mapping = os.path.join(tmp, 'style-mapping.txt')
+    open(mapping, 'w', encoding='utf-8', newline='\n').write('# test\n' + ''.join(r + '\n' for r in rows))
+
+    def operation(nid, name, pins):
+        xml = node(nid, name, 'Qt.Style', [(f'{nid}{i}', p, k) for i, (p, k) in enumerate(pins)], ['Style', 'Qt'])
+        return xml.replace('Kind="ProcessAppFlag"', 'Kind="OperationCallFlag"')                   .replace(f'\n        <Pin Id="{nid}ctx" Name="Node Context" Kind="InputPin" IsHidden="true" />', '')
+
+    setter = operation('S', 'Foo', [('Input', 'InputPin'), ('Radius', 'InputPin'), ('State', 'InputPin'), ('Output', 'OutputPin')])
+    getter = operation('G', 'Foo', [('Input', 'InputPin'), ('State', 'InputPin'), ('Radius', 'OutputPin')])
+    path = os.path.join(tmp, 'style.vl')
+    open(path, 'wb').write(document(setter + getter))
+    code, out = run(f'--mapping={mapping}', f'--api={api}', path)
+    text = open(path, 'rb').read().decode('utf-8')
+    expect(code == 0 and 'Kind="ProcessAppFlag" Name="SetFoo"' in text and 'Id="S2" Name="States"' in text
+           and 'Kind="OperationCallFlag" Name="Foo"' in text and 'Id="G1" Name="State"' in text,
+           'process node: the setter becomes SetFoo (ProcessAppFlag, States), the getter Foo stays')
+    code, out = run(f'--mapping={mapping}', f'--api={api}', path, '--check')
+    expect(code == 0, 'process node: a second run changes nothing (a getter Foo is not taken for the old setter)')
+
+
 def test_repository(fx):
     copy = os.path.join(fx.tmp, 'repo')
     files = [os.path.relpath(f, ROOT) for f in glob.glob(os.path.join(ROOT, '**', '*.vl'), recursive=True)
@@ -289,6 +325,7 @@ def main():
         test_node_rename(fx)
         test_categories(fx)
         test_errors(fx)
+        test_process_node_and_swapped_names(tmp)
         test_repository(fx)
     print(f'{len(FAILED)} failed' if FAILED else 'all passed')
     return 1 if FAILED else 0

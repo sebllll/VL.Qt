@@ -148,7 +148,7 @@
               <CategoryReference Kind="Category" Name="Style" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="OperationCallFlag" Name="Colors" />
+              <Choice Kind="ProcessAppFlag" Name="SetColors" />
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="Xhapk54lqD5uBKKiFd75P7" Name="Input" Kind="InputPin" />
@@ -158,7 +158,7 @@
             <Pin Id="AwHVlIAd6myWGug3QSHBz6" Name="Indicator" Kind="InputPin" />
             <Pin Id="3gljGHNan1RnKDa93DMgep" Name="Track" Kind="InputPin" />
             <Pin Id="VTLN8zi0cOmIVWULCCzKSk" Name="Track Fill" Kind="InputPin" />
-            <Pin Id="bBPVJwqnxbejKui8QXxCZX" Name="State" Kind="InputPin" />
+            <Pin Id="bBPVJwqnxbejKui8QXxCZX" Name="States" Kind="InputPin" />
             <Pin Id="3VCMNkWaQqBjS69SMTjdxN" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="FdPSQ89jjyBZlNhvYXRWON" Comment="Frame" Bounds="242,390,136,15" ShowValueBox="true" isIOBox="true" Value="0.9098, 0.5686, 0.2275, 1">
@@ -179,7 +179,7 @@
                   <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
                 </p:OuterCategoryReference>
               </CategoryReference>
-              <Choice Kind="OperationCallFlag" Name="Frame" />
+              <Choice Kind="ProcessAppFlag" Name="SetFrame" />
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="qKgsgV904dy6EpnK4tFMLf" Name="Input" Kind="InputPin" />
@@ -189,7 +189,7 @@
             <Pin Id="ongSFm2clWEzUVf9Lc6x63" Name="Padding Y" Kind="InputPin" />
             <Pin Id="cFoPcVmFcTioaEKBSwjcpk" Name="Min Width" Kind="InputPin" />
             <Pin Id="GXTeKqaWqZK6kW7o2Twl1l" Name="Min Height" Kind="InputPin" />
-            <Pin Id="oCGq4cdEPcQEk8UgJAJXAK" Name="State" Kind="InputPin" />
+            <Pin Id="oCGq4cdEPcQEk8UgJAJXAK" Name="States" Kind="InputPin" />
             <Pin Id="Yq0ibPwqeVrZ23NuBvv13y" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="qgDSwoywPvOWBDcNtrZnL7" Comment="Radius" Bounds="242,485,35,15" ShowValueBox="true" isIOBox="true" Value="35">
@@ -205,14 +205,14 @@
                   <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
                 </p:OuterCategoryReference>
               </CategoryReference>
-              <Choice Kind="OperationCallFlag" Name="Text" />
+              <Choice Kind="ProcessAppFlag" Name="SetText" />
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="Bo0hrBY77x65r856pHWtAh" Name="Input" Kind="InputPin" />
             <Pin Id="AIF9OFsar3RNu7VUitbujF" Name="Font Family" Kind="InputPin" />
             <Pin Id="W7ivwCz5EXjYuf441UY15K" Name="Font Size" Kind="InputPin" />
             <Pin Id="zEZeVSI0cPD1y2skv0cxlO" Name="Font Weight" Kind="InputPin" />
-            <Pin Id="sgbeMCbAxQqk83YTutqPLb" Name="State" Kind="InputPin" />
+            <Pin Id="sgbeMCbAxQqk83YTutqPLb" Name="States" Kind="InputPin" />
             <Pin Id="WQzCuJPcRKbt4GxH7PTPSn" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="mjfVh2u7VeSOGrEUc5bra2" Comment="Font Size" Bounds="242,555,35,15" ShowValueBox="true" isIOBox="true" Value="28">
@@ -235,7 +235,7 @@
               <CategoryReference Kind="Category" Name="Style" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="OperationCallFlag" Name="Colors" />
+              <Choice Kind="ProcessAppFlag" Name="SetColors" />
             </p:NodeReference>
             <Pin Id="FLK8RvjuTRbsMe3sDMvVA4" Name="Input" Kind="InputPin" />
             <Pin Id="IgJE6aLO3IPgj3yck3AaKY" Name="Frame" Kind="InputPin" />
@@ -244,7 +244,7 @@
             <Pin Id="4b9dEAcvG5cdGLMurzaZBq" Name="Indicator" Kind="InputPin" />
             <Pin Id="1CqENZU7MQ4ZqXDN0RicUs" Name="Track" Kind="InputPin" />
             <Pin Id="CLP273tAvf2wS3tlgRz1QM" Name="Track Fill" Kind="InputPin" />
-            <Pin Id="3n7hPkNhXTZXePauZIHSLp" Name="State" Kind="InputPin" DefaultValue="Normal" />
+            <Pin Id="3n7hPkNhXTZXePauZIHSLp" Name="States" Kind="InputPin" DefaultValue="Normal" />
             <Pin Id="plC3ew2StfVT3QEYkPDqEW" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="p0fQ1WeHMb96dFRBxQM6rt" Comment="Frame (Normal)" Bounds="712,395,136,15" ShowValueBox="true" isIOBox="true" Value="0.1137, 0.3059, 0.6, 1">
@@ -258,7 +258,7 @@
               <CategoryReference Kind="Category" Name="Style" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="OperationCallFlag" Name="Colors" />
+              <Choice Kind="ProcessAppFlag" Name="SetColors" />
             </p:NodeReference>
             <Pin Id="Mt68qgUYFEH2PMOZ1sBCtd" Name="Input" Kind="InputPin" />
             <Pin Id="Xq3BDkDrqSUj8EzP20M3x6" Name="Frame" Kind="InputPin" />
@@ -267,7 +267,7 @@
             <Pin Id="QQIGQTjl7rvxrNh7wtWhNt" Name="Indicator" Kind="InputPin" />
             <Pin Id="XmI8dXmpuZDWAv4KlyJXTh" Name="Track" Kind="InputPin" />
             <Pin Id="dPWoqJSjxWqYOjXLmRPwzD" Name="Track Fill" Kind="InputPin" />
-            <Pin Id="qH8byvm3OmKz7wJAnprefK" Name="State" Kind="InputPin" DefaultValue="Hovered" />
+            <Pin Id="qH8byvm3OmKz7wJAnprefK" Name="States" Kind="InputPin" DefaultValue="Hovered" />
             <Pin Id="2KGuOOB5LEhcaqhqUPXIZU" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="KdyIXwkMIjVITHRQ87I7f3" Comment="Frame (Hovered)" Bounds="712,475,136,15" ShowValueBox="true" isIOBox="true" Value="0.1686, 0.7176, 0.3529, 1">
@@ -281,7 +281,7 @@
               <CategoryReference Kind="Category" Name="Style" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="OperationCallFlag" Name="Colors" />
+              <Choice Kind="ProcessAppFlag" Name="SetColors" />
             </p:NodeReference>
             <Pin Id="3bEZfAcxnivvPHVQBnZJ6z" Name="Input" Kind="InputPin" />
             <Pin Id="GAyTAI4SALjZmBaID87eVD" Name="Frame" Kind="InputPin" />
@@ -290,7 +290,7 @@
             <Pin Id="CIdXQXXuCKTFCU6tm8XhyE" Name="Indicator" Kind="InputPin" />
             <Pin Id="czWeONAg480irHnfLK85pn" Name="Track" Kind="InputPin" />
             <Pin Id="mv4jABeUIxrucHzcciOeGM" Name="Track Fill" Kind="InputPin" />
-            <Pin Id="tKVI6OYmhQ9ryLQ0KZJ8aF" Name="State" Kind="InputPin" DefaultValue="Pressed" />
+            <Pin Id="tKVI6OYmhQ9ryLQ0KZJ8aF" Name="States" Kind="InputPin" DefaultValue="Pressed" />
             <Pin Id="7aArxLpVy00arFwjl3HcQf" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="cCWhxlonbo8T78vVMob0Pd" Comment="Frame (Pressed)" Bounds="712,545,136,15" ShowValueBox="true" isIOBox="true" Value="0.9, 0.2392, 0.2, 1">
@@ -315,12 +315,12 @@
                   <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
                 </p:OuterCategoryReference>
               </CategoryReference>
-              <Choice Kind="OperationCallFlag" Name="Radius" />
+              <Choice Kind="OperationCallFlag" Name="SetRadius" />
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="5cERLeHzWvNTSP3kx4YhHl" Name="Input" Kind="InputPin" />
             <Pin Id="YH10d5JmmMHmWjvU7bIApt" Name="Radius" Kind="InputPin" />
-            <Pin Id="OBAvg3GxgJShDFwadjGPDl" Name="State" Kind="InputPin" />
+            <Pin Id="OBAvg3GxgJShDFwadjGPDl" Name="States" Kind="InputPin" />
             <Pin Id="h9Y0t9So89u1fuCUTyPVdc" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="6Nopxy4C1fwPWpZCPfPTob" Comment="Radius" Bounds="1183,540,35,15" ShowValueBox="true" isIOBox="true" Value="12">

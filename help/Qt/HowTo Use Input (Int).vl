@@ -403,7 +403,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="RecordType" Name="Style" />
               <CategoryReference Kind="Category" Name="Frame" />
-              <Choice Kind="OperationCallFlag" Name="Frame" />
+              <Choice Kind="ProcessAppFlag" Name="SetFrame" />
             </p:NodeReference>
             <Pin Id="BH8YYfz0EjJMnZIq69VfVn" Name="Input" Kind="InputPin" />
             <Pin Id="EbvE7EPuGzaPuxejM3xqOY" Name="Radius" Kind="InputPin" />
@@ -412,7 +412,7 @@
             <Pin Id="VPq0ya3en1QQKWhYOVwYta" Name="Padding Y" Kind="InputPin" />
             <Pin Id="I4foyXcxkH0LPoCLuVwuci" Name="Min Width" Kind="InputPin" />
             <Pin Id="HPf9X50LPIaLoW7l4qwP8O" Name="Min Height" Kind="InputPin" />
-            <Pin Id="Lnjstq0nojhNQoiGsxUWih" Name="State" Kind="InputPin" />
+            <Pin Id="Lnjstq0nojhNQoiGsxUWih" Name="States" Kind="InputPin" />
             <Pin Id="Hb0InkOfkOsQVdgZp0WdsD" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="LuLmRe2X6yXNtcrm0oDng3" Comment="Radius" Bounds="1240,199,35,15" ShowValueBox="true" isIOBox="true" Value="10">
