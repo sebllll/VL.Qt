@@ -10,5 +10,5 @@ namespace VL.Qt.Elements
     /// <param name="Position">Position local to the element in units.</param>
     /// <param name="Pressure">Pressure 0..1. Device dependent: many touchscreens always report 0.5.</param>
     /// <param name="Size">Contact area (ellipse diameters) in units. Device dependent: many touchscreens report 0 x 0.</param>
-    public sealed record TouchPoint(int Id, Vector2 Position, float Pressure, Vector2 Size);
+    public readonly record struct TouchPoint(int Id, Vector2 Position, float Pressure, Vector2 Size);
 }
