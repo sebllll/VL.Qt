@@ -14,11 +14,11 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "ArcTo", Category = Categories.Paths)]
     public sealed class ArcToTangentNode
     {
-        private QtPath? _input;
-        private Vector2 _corner;
-        private Vector2 _destinationPoint;
-        private float _cornerRadius;
-        private QtPath? _output;
+        internal readonly record struct Props(Vector2 Corner, Vector2 DestinationPoint, float CornerRadius);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => ArcGeometry.TangentArcTo(input ?? QtPath.Empty, p.Corner, p.DestinationPoint, p.CornerRadius);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with a rounded corner added: a line from the last point towards the corner, rounded by a circle that touches the line to the destination point.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>
@@ -32,30 +32,18 @@ namespace VL.Qt.Nodes
             Vector2 corner,
             [Pin(Name = "Destination Point")] Vector2 destinationPoint,
             [Pin(Name = "Corner Radius")] float cornerRadius)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || corner != _corner || destinationPoint != _destinationPoint || cornerRadius != _cornerRadius)
-            {
-                _input = input;
-                _corner = corner;
-                _destinationPoint = destinationPoint;
-                _cornerRadius = cornerRadius;
-                _output = ArcGeometry.TangentArcTo(input, corner, destinationPoint, cornerRadius);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(corner, destinationPoint, cornerRadius), s_create);
     }
 
     /// <summary>Adds the arc of an oval (Skia ArcTo, oval form).</summary>
     [ProcessNode(Name = "ArcTo", Category = Categories.Paths)]
     public sealed class ArcToOvalNode
     {
-        private QtPath? _input;
-        private RectangleF _bounds;
-        private float _startAngle;
-        private float _sweepAngle;
-        private bool _forceMoveTo;
-        private QtPath? _output;
+        internal readonly record struct Props(RectangleF Bounds, float StartAngle, float SweepAngle, bool ForceMoveTo);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => ArcGeometry.ArcTo(input ?? QtPath.Empty, p.Bounds, p.StartAngle, p.SweepAngle, p.ForceMoveTo);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with an arc of the oval added. A line connects the last point to the start of the arc, unless a new contour is forced.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -71,32 +59,18 @@ namespace VL.Qt.Nodes
             [Pin(Name = "Start Angle")] float startAngle,
             [Pin(Name = "Sweep Angle")] float sweepAngle,
             [Pin(Name = "Force Move To")] bool forceMoveTo)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || bounds != _bounds || startAngle != _startAngle || sweepAngle != _sweepAngle || forceMoveTo != _forceMoveTo)
-            {
-                _input = input;
-                _bounds = bounds;
-                _startAngle = startAngle;
-                _sweepAngle = sweepAngle;
-                _forceMoveTo = forceMoveTo;
-                _output = ArcGeometry.ArcTo(input, bounds, startAngle, sweepAngle, forceMoveTo);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(bounds, startAngle, sweepAngle, forceMoveTo), s_create);
     }
 
     /// <summary>Adds an elliptical arc from the last point to a destination point, defined like the SVG arc command (Skia ArcTo, SVG form).</summary>
     [ProcessNode(Name = "ArcTo", Category = Categories.Paths)]
     public sealed class ArcToSvgNode
     {
-        private QtPath? _input;
-        private Vector2 _radius;
-        private float _xAxisRotate;
-        private bool _largeArc;
-        private bool _sweep;
-        private Vector2 _destinationPoint;
-        private QtPath? _output;
+        internal readonly record struct Props(Vector2 Radius, float XAxisRotate, bool LargeArc, bool Sweep, Vector2 DestinationPoint);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => ArcGeometry.SvgArcTo(input ?? QtPath.Empty, p.Radius, p.XAxisRotate, p.LargeArc, p.Sweep, p.DestinationPoint);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with an elliptical arc to the destination point added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>
@@ -114,33 +88,21 @@ namespace VL.Qt.Nodes
             [Pin(Name = "Large Arc")] bool largeArc,
             bool sweep,
             [Pin(Name = "Destination Point")] Vector2 destinationPoint)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || radius != _radius || xAxisRotate != _xAxisRotate || largeArc != _largeArc || sweep != _sweep || destinationPoint != _destinationPoint)
-            {
-                _input = input;
-                _radius = radius;
-                _xAxisRotate = xAxisRotate;
-                _largeArc = largeArc;
-                _sweep = sweep;
-                _destinationPoint = destinationPoint;
-                _output = ArcGeometry.SvgArcTo(input, radius, xAxisRotate, largeArc, sweep, destinationPoint);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(radius, xAxisRotate, largeArc, sweep, destinationPoint), s_create);
     }
 
     /// <summary>Adds an elliptical arc to a destination point relative to the last point, defined like the SVG arc command (Skia ArcTo (Relative)).</summary>
     [ProcessNode(Name = "ArcTo (Relative)", Category = Categories.Paths)]
     public sealed class ArcToRelativeNode
     {
-        private QtPath? _input;
-        private Vector2 _radius;
-        private float _xAxisRotate;
-        private bool _largeArc;
-        private bool _sweep;
-        private Vector2 _destinationPoint;
-        private QtPath? _output;
+        internal readonly record struct Props(Vector2 Radius, float XAxisRotate, bool LargeArc, bool Sweep, Vector2 DestinationPoint);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => {
+            var path = input ?? QtPath.Empty;
+            return ArcGeometry.SvgArcTo(path, p.Radius, p.XAxisRotate, p.LargeArc, p.Sweep, path.LastPoint + p.DestinationPoint);
+        };
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with an elliptical arc to the last point plus the offset added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>
@@ -158,20 +120,6 @@ namespace VL.Qt.Nodes
             [Pin(Name = "Large Arc")] bool largeArc,
             bool sweep,
             [Pin(Name = "Destination Point")] Vector2 destinationPoint)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || radius != _radius || xAxisRotate != _xAxisRotate || largeArc != _largeArc || sweep != _sweep || destinationPoint != _destinationPoint)
-            {
-                _input = input;
-                _radius = radius;
-                _xAxisRotate = xAxisRotate;
-                _largeArc = largeArc;
-                _sweep = sweep;
-                _destinationPoint = destinationPoint;
-                var last = input.LastPoint;
-                _output = ArcGeometry.SvgArcTo(input, radius, xAxisRotate, largeArc, sweep, last + destinationPoint);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(radius, xAxisRotate, largeArc, sweep, destinationPoint), s_create);
     }
 }

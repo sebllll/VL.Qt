@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using Stride.Core.Mathematics;
 using VL.Core.Import;
 using VL.Model;
@@ -18,9 +19,11 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Color4 Color, float Amount);
 
-        private readonly EffectNode<Props> _node = new(static (previous, p) => new ColorizeEffect(previous, p.Color, p.Amount));
+        private static readonly Func<Effect?, Props, Effect> s_create = static (previous, p) => new ColorizeEffect(previous, p.Color, p.Amount);
 
-        internal EffectNode<Props> Core => _node;
+        private ChainMemo<Effect, Props> _memo;
+
+        internal ChainMemo<Effect, Props> Core => _memo;
 
         /// <summary>Adds a colorization to the effect chain.</summary>
         /// <param name="input">Effect chain to extend (other effect nodes).</param>
@@ -33,6 +36,6 @@ namespace VL.Qt.Nodes
             [DefaultValue("1, 0, 0, 1")] Color4 color,
             [DefaultValue(1f)] float amount,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
-            => apply ? _node.Describe(input, new Props(color, amount)) : input;
+            => apply ? _memo.Get(input, new Props(color, amount), s_create) : input;
     }
 }

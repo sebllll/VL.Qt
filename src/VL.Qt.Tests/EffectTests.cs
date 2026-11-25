@@ -68,9 +68,9 @@ namespace VL.Qt.Tests
         public void Nodes_UnchangedInputs_KeepInstance()
         {
             var node = new BlurNode();
-            var first = node.Core.Describe(null, new BlurNode.Props(0.5f, 32, 0));
-            Assert.That(node.Core.Describe(null, new BlurNode.Props(0.5f, 32, 0)), Is.SameAs(first));
-            Assert.That(node.Core.Describe(null, new BlurNode.Props(0.6f, 32, 0)), Is.Not.SameAs(first));
+            var first = node.Update(null, 0.5f, 32, 0, true, default, true);
+            Assert.That(node.Update(null, 0.5f, 32, 0, true, default, true), Is.SameAs(first));
+            Assert.That(node.Update(null, 0.6f, 32, 0, true, default, true), Is.Not.SameAs(first));
             Assert.That(node.Core.Created, Is.EqualTo(2));
         }
 

@@ -27,7 +27,7 @@ namespace VL.Qt.Nodes
 
         private const string limitsError = "Minimum must not be greater than Maximum. The limits are ignored.";
 
-        private readonly InteractionNode<Props> _node;
+        private readonly InteractionNodeCore<Props> _node;
         private readonly Func<string, IDisposable> _addError;
         private IChannel<bool>? _dragging;
         private IChannel<Vector2>? _delta;
@@ -37,21 +37,21 @@ namespace VL.Qt.Nodes
 
         public DragNode(NodeContext nodeContext)
         {
-            _node = new InteractionNode<Props>(nodeContext, Create);
+            _node = new InteractionNodeCore<Props>(nodeContext, Create);
             _addError = e => nodeContext.AddPersistentMessage(MessageSeverity.Error, e);
         }
 
         /// <summary>For tests: warnings and input errors go to <paramref name="addMessage"/> instead of a NodeContext.</summary>
         internal DragNode(Func<string, IDisposable> addMessage)
         {
-            _node = new InteractionNode<Props>(addMessage, Create);
+            _node = new InteractionNodeCore<Props>(addMessage, Create);
             _addError = addMessage;
         }
 
         private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new DragInteraction(previous, slot, p.MovesElement, p.Axis, p.Limits, p.Buttons, p.Devices);
 
-        internal InteractionNode<Props> Core => _node;
+        internal InteractionNodeCore<Props> Core => _node;
 
         /// <summary>Error about the inputs currently shown at the node (Minimum greater than Maximum), null if none.</summary>
         internal string? InputError { get; private set; }
@@ -83,7 +83,7 @@ namespace VL.Qt.Nodes
             // Pull: state of the last pump (1 frame latency).
             var feedback = _node.Feedback;
             if (isDragging.IsValid())
-                InteractionNode<Props>.Write(isDragging, ref _dragging, ref _lastDragging, feedback.IsActive());
+                InteractionNodeCore<Props>.Write(isDragging, ref _dragging, ref _lastDragging, feedback.IsActive());
             else
                 _dragging = null;
 

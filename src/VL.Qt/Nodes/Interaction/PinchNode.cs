@@ -29,7 +29,7 @@ namespace VL.Qt.Nodes
 
         private const string countError = "Minimum and Maximum Point Count must be at least 2, and Minimum must not be greater than Maximum. 2 and 2 are used.";
 
-        private readonly InteractionNode<Props> _node;
+        private readonly InteractionNodeCore<Props> _node;
         private readonly Func<string, IDisposable> _addError;
         private IChannel<bool>? _active;
         private IChannel<float>? _scale;
@@ -45,21 +45,21 @@ namespace VL.Qt.Nodes
 
         public PinchNode(NodeContext nodeContext)
         {
-            _node = new InteractionNode<Props>(nodeContext, Create);
+            _node = new InteractionNodeCore<Props>(nodeContext, Create);
             _addError = e => nodeContext.AddPersistentMessage(MessageSeverity.Error, e);
         }
 
         /// <summary>For tests: warnings and input errors go to <paramref name="addMessage"/> instead of a NodeContext.</summary>
         internal PinchNode(Func<string, IDisposable> addMessage)
         {
-            _node = new InteractionNode<Props>(addMessage, Create);
+            _node = new InteractionNodeCore<Props>(addMessage, Create);
             _addError = addMessage;
         }
 
         private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new PinchInteraction(previous, slot, p.MinimumPointCount, p.MaximumPointCount, p.Devices);
 
-        internal InteractionNode<Props> Core => _node;
+        internal InteractionNodeCore<Props> Core => _node;
 
         /// <summary>Error about the inputs currently shown at the node (point counts), null if none.</summary>
         internal string? InputError { get; private set; }
@@ -96,7 +96,7 @@ namespace VL.Qt.Nodes
             // connected later gets the current value only if a gesture happened (the channel's own value stays otherwise).
             var feedback = _node.Feedback;
             if (isActive.IsValid())
-                InteractionNode<Props>.Write(isActive, ref _active, ref _lastActive, feedback.IsActive());
+                InteractionNodeCore<Props>.Write(isActive, ref _active, ref _lastActive, feedback.IsActive());
             else
                 _active = null;
 

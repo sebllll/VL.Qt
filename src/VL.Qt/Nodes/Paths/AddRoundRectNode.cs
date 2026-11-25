@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
@@ -10,11 +11,11 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "AddRoundRect", Category = Categories.Paths)]
     public sealed class AddRoundRectNode
     {
-        private QtPath? _input;
-        private RectangleF _rectangle;
-        private Vector2 _radius;
-        private PathDirection _direction;
-        private QtPath? _output;
+        internal readonly record struct Props(RectangleF Rectangle, Vector2 Radius, PathDirection Direction);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => ArcGeometry.AddRoundRect(input ?? QtPath.Empty, p.Rectangle, p.Radius.X, p.Radius.Y, p.Direction == PathDirection.Clockwise);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with a rectangle whose corners are quarter ellipses.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -28,17 +29,6 @@ namespace VL.Qt.Nodes
             [DefaultValue("0, 0, 1, 1")] RectangleF rectangle,
             [DefaultValue("0.1, 0.1")] Vector2 radius,
             [Pin(Name = "Dir")] PathDirection dir = PathDirection.Clockwise)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || rectangle != _rectangle || radius != _radius || dir != _direction)
-            {
-                _input = input;
-                _rectangle = rectangle;
-                _radius = radius;
-                _direction = dir;
-                _output = ArcGeometry.AddRoundRect(input, rectangle, radius.X, radius.Y, dir == PathDirection.Clockwise);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(rectangle, radius, dir), s_create);
     }
 }

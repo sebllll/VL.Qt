@@ -1,4 +1,5 @@
-﻿using Stride.Core.Mathematics;
+﻿using System;
+using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
@@ -9,11 +10,11 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "AddArc", Category = Categories.Paths)]
     public sealed class AddArcNode
     {
-        private QtPath? _input;
-        private RectangleF _bounds;
-        private float _startAngle;
-        private float _sweepAngle;
-        private QtPath? _output;
+        internal readonly record struct Props(RectangleF Bounds, float StartAngle, float SweepAngle);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => ArcGeometry.AddArc(input ?? QtPath.Empty, p.Bounds, p.StartAngle, p.SweepAngle);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with an open contour that follows part of the outline of an oval.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -23,17 +24,6 @@ namespace VL.Qt.Nodes
         /// <returns>The path with the contour added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
         public QtPath Update(QtPath? input, RectangleF bounds = default, float startAngle = 0f, float sweepAngle = 0f)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || bounds != _bounds || startAngle != _startAngle || sweepAngle != _sweepAngle)
-            {
-                _input = input;
-                _bounds = bounds;
-                _startAngle = startAngle;
-                _sweepAngle = sweepAngle;
-                _output = ArcGeometry.AddArc(input, bounds, startAngle, sweepAngle);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(bounds, startAngle, sweepAngle), s_create);
     }
 }

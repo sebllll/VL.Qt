@@ -219,7 +219,7 @@ namespace VL.Qt.Reconciliation
                     SendShapePath(id, path);
             }
             else if (_rescale || p.Path is not null
-                || (!ReferenceEquals(p.Points, n.Points) && !SameContent(p.Points, n.Points)))
+                || (!ReferenceEquals(p.Points, n.Points) && !SpreadEquality.SameContent(p.Points, n.Points)))
                 SendShapePoints(id, n.Points);
 
             if (p.Closed != n.Closed)
@@ -243,7 +243,7 @@ namespace VL.Qt.Reconciliation
             // Without a stroke the divisor is irrelevant; it is 1 so that the pattern stays finite.
             float unit = n.StrokeWidth > 0 ? n.StrokeWidth : 1;
             if ((widthChanged && (n.Dash.Count > 0 || p.Dash.Count > 0))
-                || (!ReferenceEquals(p.Dash, n.Dash) && !SameContent(p.Dash, n.Dash)))
+                || (!ReferenceEquals(p.Dash, n.Dash) && !SpreadEquality.SameContent(p.Dash, n.Dash)))
                 SendShapeDash(id, n.Dash, unit);
             if (widthChanged || p.DashOffset != n.DashOffset)
                 _sink.SetF32(id, P.ShapeDashOffset, n.DashOffset / unit);
@@ -296,31 +296,6 @@ namespace VL.Qt.Reconciliation
             if (_shapeBuffer.Length < length)
                 _shapeBuffer = new float[Math.Max(length, _shapeBuffer.Length * 2)];
             return _shapeBuffer;
-        }
-
-        // float.Equals instead of ==, so that NaN equals itself and an unchanged list is not sent again.
-        private static bool SameContent(Spread<Vector2> a, Spread<Vector2> b)
-        {
-            if (a.Count != b.Count)
-                return false;
-            for (int i = 0; i < a.Count; i++)
-            {
-                if (!a[i].X.Equals(b[i].X) || !a[i].Y.Equals(b[i].Y))
-                    return false;
-            }
-            return true;
-        }
-
-        private static bool SameContent(Spread<float> a, Spread<float> b)
-        {
-            if (a.Count != b.Count)
-                return false;
-            for (int i = 0; i < a.Count; i++)
-            {
-                if (!a[i].Equals(b[i]))
-                    return false;
-            }
-            return true;
         }
 
         /// <summary>Font size is always sent on creation: Qt's default font size is platform dependent.</summary>

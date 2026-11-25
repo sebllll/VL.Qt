@@ -25,8 +25,10 @@ namespace VL.Qt.Nodes
         internal readonly record struct Props(Element? Mask, float ThresholdMin, float SpreadAtMin, float ThresholdMax,
             float SpreadAtMax, bool Inverted);
 
-        private readonly EffectNode<Props> _node = new(static (previous, p)
-            => new MaskEffect(previous, p.Mask, p.ThresholdMin, p.SpreadAtMin, p.ThresholdMax, p.SpreadAtMax, p.Inverted));
+        private static readonly Func<Effect?, Props, Effect> s_create = static (previous, p)
+            => new MaskEffect(previous, p.Mask, p.ThresholdMin, p.SpreadAtMin, p.ThresholdMax, p.SpreadAtMax, p.Inverted);
+
+        private ChainMemo<Effect, Props> _memo;
 
         private readonly NodeErrors? _messages;
         private readonly ElementInput _mask;
@@ -43,7 +45,7 @@ namespace VL.Qt.Nodes
             _mask = new ElementInput(messages, "Mask");
         }
 
-        internal EffectNode<Props> Core => _node;
+        internal ChainMemo<Effect, Props> Core => _memo;
 
         /// <summary>Adds a mask to the effect chain.</summary>
         /// <param name="input">Effect chain to extend (other effect nodes).</param>
@@ -66,7 +68,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
         {
             var element = _mask.Update(mask);
-            return apply ? _node.Describe(input, new Props(element, thresholdMin, spreadAtMin, thresholdMax, spreadAtMax, inverted)) : input;
+            return apply ? _memo.Get(input, new Props(element, thresholdMin, spreadAtMin, thresholdMax, spreadAtMax, inverted), s_create) : input;
         }
 
         public void Dispose()

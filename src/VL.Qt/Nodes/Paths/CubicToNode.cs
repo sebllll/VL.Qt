@@ -11,11 +11,11 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "CubicTo", Category = Categories.Paths)]
     public sealed class CubicToNode
     {
-        private QtPath? _input;
-        private Vector2 _controlPoint1;
-        private Vector2 _controlPoint2;
-        private Vector2 _endPoint;
-        private QtPath? _output;
+        internal readonly record struct Props(Vector2 ControlPoint1, Vector2 ControlPoint2, Vector2 EndPoint);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => (input ?? QtPath.Empty).CubicTo(p.ControlPoint1.X, p.ControlPoint1.Y, p.ControlPoint2.X, p.ControlPoint2.Y, p.EndPoint.X, p.EndPoint.Y);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with a cubic curve added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -29,29 +29,25 @@ namespace VL.Qt.Nodes
             [Pin(Name = "Control Point 1")] Vector2 controlPoint1,
             [Pin(Name = "Control Point 2")] Vector2 controlPoint2,
             [Pin(Name = "EndPoint")] Vector2 endPoint)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || controlPoint1 != _controlPoint1 || controlPoint2 != _controlPoint2 || endPoint != _endPoint)
-            {
-                _input = input;
-                _controlPoint1 = controlPoint1;
-                _controlPoint2 = controlPoint2;
-                _endPoint = endPoint;
-                _output = input.CubicTo(controlPoint1.X, controlPoint1.Y, controlPoint2.X, controlPoint2.Y, endPoint.X, endPoint.Y);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(controlPoint1, controlPoint2, endPoint), s_create);
     }
 
     /// <summary>Adds a cubic Bézier curve with control and end points relative to the last point (Skia CubicTo (Relative)).</summary>
     [ProcessNode(Name = "CubicTo (Relative)", Category = Categories.Paths)]
     public sealed class CubicToRelativeNode
     {
-        private QtPath? _input;
-        private Vector2 _controlPoint1;
-        private Vector2 _controlPoint2;
-        private Vector2 _endPoint;
-        private QtPath? _output;
+        internal readonly record struct Props(Vector2 ControlPoint1, Vector2 ControlPoint2, Vector2 EndPoint);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => {
+            var path = input ?? QtPath.Empty;
+            var last = path.LastPoint;
+            return path.CubicTo(
+                last.X + p.ControlPoint1.X, last.Y + p.ControlPoint1.Y,
+                last.X + p.ControlPoint2.X, last.Y + p.ControlPoint2.Y,
+                last.X + p.EndPoint.X, last.Y + p.EndPoint.Y);
+        };
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with a cubic curve added, its points offset by the last point.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>
@@ -65,21 +61,6 @@ namespace VL.Qt.Nodes
             [Pin(Name = "Control Point 1")] Vector2 controlPoint1,
             [Pin(Name = "Control Point 2")] Vector2 controlPoint2,
             [Pin(Name = "EndPoint")] Vector2 endPoint)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || controlPoint1 != _controlPoint1 || controlPoint2 != _controlPoint2 || endPoint != _endPoint)
-            {
-                _input = input;
-                _controlPoint1 = controlPoint1;
-                _controlPoint2 = controlPoint2;
-                _endPoint = endPoint;
-                var last = input.LastPoint;
-                _output = input.CubicTo(
-                    last.X + controlPoint1.X, last.Y + controlPoint1.Y,
-                    last.X + controlPoint2.X, last.Y + controlPoint2.Y,
-                    last.X + endPoint.X, last.Y + endPoint.Y);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(controlPoint1, controlPoint2, endPoint), s_create);
     }
 }

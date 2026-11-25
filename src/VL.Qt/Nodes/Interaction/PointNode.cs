@@ -22,23 +22,23 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(PointerButtons Buttons, PointerDevices Devices);
 
-        private readonly InteractionNode<Props> _node;
+        private readonly InteractionNodeCore<Props> _node;
         private IChannel<bool>? _active;
         private IChannel<Vector2>? _position;
         private bool _lastActive;
         private Vector2 _lastPosition;
 
         public PointNode(NodeContext nodeContext)
-            => _node = new InteractionNode<Props>(nodeContext, Create);
+            => _node = new InteractionNodeCore<Props>(nodeContext, Create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal PointNode(Func<string, IDisposable> addWarning)
-            => _node = new InteractionNode<Props>(addWarning, Create);
+            => _node = new InteractionNodeCore<Props>(addWarning, Create);
 
         private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new PointInteraction(previous, slot, p.Buttons, p.Devices);
 
-        internal InteractionNode<Props> Core => _node;
+        internal InteractionNodeCore<Props> Core => _node;
 
         /// <summary>Adds a point handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
@@ -59,12 +59,12 @@ namespace VL.Qt.Nodes
             // Pull: state of the last pump (1 frame latency); writes only on change.
             var feedback = _node.Feedback;
             if (isActive.IsValid())
-                InteractionNode<Props>.Write(isActive, ref _active, ref _lastActive, feedback.IsActive());
+                InteractionNodeCore<Props>.Write(isActive, ref _active, ref _lastActive, feedback.IsActive());
             else
                 _active = null;
 
             if (position.IsValid())
-                InteractionNode<Props>.Write(position, ref _position, ref _lastPosition, feedback.PointerPosition());
+                InteractionNodeCore<Props>.Write(position, ref _position, ref _lastPosition, feedback.PointerPosition());
             else
                 _position = null;
 

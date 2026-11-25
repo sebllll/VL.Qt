@@ -1,4 +1,5 @@
-﻿using Stride.Core.Mathematics;
+﻿using System;
+using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
 using VL.Lib.Collections;
@@ -11,13 +12,21 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Bezier (Handles)", Category = Categories.Paths)]
     public sealed class BezierHandlesNode
     {
-        private QtPath? _input;
-        private Spread<Vector2>? _anchors;
-        private Spread<Vector2>? _inHandles;
-        private Spread<Vector2>? _outHandles;
-        private Spread<HandleMode>? _handleModes;
-        private bool _closed;
-        private QtPath? _output;
+        internal readonly record struct Props(Spread<Vector2> Anchors, Spread<Vector2> InHandles, Spread<Vector2> OutHandles, Spread<HandleMode> HandleModes, bool Closed)
+        {
+            public bool Equals(Props other)
+                => Closed == other.Closed
+                    && SpreadEquality.SameContent(Anchors, other.Anchors)
+                    && SpreadEquality.SameContent(InHandles, other.InHandles)
+                    && SpreadEquality.SameContent(OutHandles, other.OutHandles)
+                    && SpreadEquality.SameContent(HandleModes, other.HandleModes);
+
+            public override int GetHashCode() => HashCode.Combine(Anchors.Count, InHandles.Count, OutHandles.Count, HandleModes.Count, Closed);
+        }
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => BezierGeometry.Build(input ?? QtPath.Empty, p.Anchors.AsSpan(), p.InHandles.AsSpan(), p.OutHandles.AsSpan(), p.HandleModes.AsSpan(), p.Closed);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with a curve through the anchors, bent by the handles.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -35,42 +44,6 @@ namespace VL.Qt.Nodes
             Spread<Vector2>? outHandles,
             bool closed = false,
             [Pin(Visibility = PinVisibility.Optional)] Spread<HandleMode>? handleModes = null)
-        {
-            input ??= QtPath.Empty;
-            anchors ??= Spread<Vector2>.Empty;
-            inHandles ??= Spread<Vector2>.Empty;
-            outHandles ??= Spread<Vector2>.Empty;
-            handleModes ??= Spread<HandleMode>.Empty;
-            // A new spread with the same content (VL may rebuild it every frame) is not a change.
-            if (_output == null || !ReferenceEquals(input, _input) || closed != _closed
-                || !ShapeNodeCore.SameContent(anchors, _anchors!)
-                || !ShapeNodeCore.SameContent(inHandles, _inHandles!)
-                || !ShapeNodeCore.SameContent(outHandles, _outHandles!)
-                || !SameModes(handleModes, _handleModes))
-            {
-                _input = input;
-                _anchors = anchors;
-                _inHandles = inHandles;
-                _outHandles = outHandles;
-                _handleModes = handleModes;
-                _closed = closed;
-                _output = BezierGeometry.Build(input, anchors.AsSpan(), inHandles.AsSpan(), outHandles.AsSpan(), handleModes.AsSpan(), closed);
-            }
-            return _output;
-        }
-
-        private static bool SameModes(Spread<HandleMode> a, Spread<HandleMode>? b)
-        {
-            if (ReferenceEquals(a, b))
-                return true;
-            if (b == null || a.Count != b.Count)
-                return false;
-            for (var i = 0; i < a.Count; i++)
-            {
-                if (a[i] != b[i])
-                    return false;
-            }
-            return true;
-        }
+            => _memo.Get(input, new Props(anchors ?? Spread<Vector2>.Empty, inHandles ?? Spread<Vector2>.Empty, outHandles ?? Spread<Vector2>.Empty, handleModes ?? Spread<HandleMode>.Empty, closed), s_create);
     }
 }

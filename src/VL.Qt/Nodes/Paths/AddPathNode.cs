@@ -1,4 +1,5 @@
-﻿using VL.Core;
+﻿using System;
+using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
 using VL.Qt.Wire;
@@ -9,10 +10,17 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "AddPath", Category = Categories.Paths)]
     public sealed class AddPathNode
     {
-        private QtPath? _input;
-        private QtPath? _other;
-        private PathAddMode _mode;
-        private QtPath? _output;
+        internal readonly record struct Props(QtPath Other, PathAddMode Mode)
+        {
+            public bool Equals(Props other)
+                => ReferenceEquals(Other, other.Other) && Mode == other.Mode;
+
+            public override int GetHashCode() => HashCode.Combine(Other, Mode);
+        }
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => Build(input ?? QtPath.Empty, p.Other, p.Mode);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with the segments of the other path added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -21,18 +29,7 @@ namespace VL.Qt.Nodes
         /// <returns>The path with the segments added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
         public QtPath Update(QtPath? input, QtPath? other, PathAddMode mode = PathAddMode.Append)
-        {
-            input ??= QtPath.Empty;
-            other ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || !ReferenceEquals(other, _other) || mode != _mode)
-            {
-                _input = input;
-                _other = other;
-                _mode = mode;
-                _output = Build(input, other, mode);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(other ?? QtPath.Empty, mode), s_create);
 
         private static QtPath Build(QtPath path, QtPath other, PathAddMode mode)
         {

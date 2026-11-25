@@ -35,10 +35,10 @@ namespace VL.Qt.Nodes
         private readonly ShaderEffectSource[] _sources;
         private readonly Func<Effect?, ImmutableArray<ulong>, TProps, ShaderEffect> _create;
         private readonly NodeErrors? _errors;
-        private ShaderEffect? _last;
-        private Effect? _lastInput;
-        private ulong _id0, _id1;
-        private TProps _props;
+        private ChainMemo<Effect, Key> _memo;
+
+        // The shader ids belong to the comparison: a recreated shader gives the link a new id.
+        private readonly record struct Key(ulong Id0, ulong Id1, TProps Props);
 
         /// <param name="client">Creates the shader resources, may be null (tests): the chain then passes on unchanged.</param>
         /// <param name="shaders">The shaders by role (see <see cref="ShaderEffect.ShaderIds"/>).</param>
@@ -56,7 +56,7 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>Number of links created so far (tests).</summary>
-        public int Created { get; private set; }
+        public int Created => _memo.Created;
 
         /// <summary>The link for the inputs: the last instance if nothing changed, else a new one; <paramref name="input"/> while a shader is missing. Call once per Update.</summary>
         public Effect? Describe(Effect? input, in TProps props)
@@ -66,19 +66,11 @@ namespace VL.Qt.Nodes
             ReportErrors();
             if (id0 == 0 || id1 == 0)
             {
-                _last = null;
+                _memo.Reset();
                 return input;
             }
-            if (_last is null || !ReferenceEquals(input, _lastInput) || id0 != _id0 || id1 != _id1 || !_props.Equals(props))
-            {
-                _last = _create(input, _slots.Length > 1 ? ImmutableArray.Create(id0, id1) : ImmutableArray.Create(id0), props);
-                _lastInput = input;
-                _id0 = id0;
-                _id1 = id1;
-                _props = props;
-                Created++;
-            }
-            return _last;
+            return _memo.Get(input, new Key(id0, id1, props), this, static (previous, key, self) => self._create(
+                previous, self._slots.Length > 1 ? ImmutableArray.Create(key.Id0, key.Id1) : ImmutableArray.Create(key.Id0), key.Props));
         }
 
         private void ReportErrors()

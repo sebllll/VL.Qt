@@ -1,4 +1,5 @@
-﻿using Stride.Core.Mathematics;
+﻿using System;
+using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
@@ -9,11 +10,11 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "AddCircle", Category = Categories.Paths)]
     public sealed class AddCircleNode
     {
-        private QtPath? _input;
-        private Vector2 _center;
-        private PathDirection _direction;
-        private float _radius;
-        private QtPath? _output;
+        internal readonly record struct Props(Vector2 Center, PathDirection Direction, float Radius);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => ArcGeometry.AddCircle(input ?? QtPath.Empty, p.Center.X, p.Center.Y, p.Radius, p.Direction == PathDirection.Clockwise);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with a circle that starts at the right of its center.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -23,17 +24,6 @@ namespace VL.Qt.Nodes
         /// <returns>The path with the contour added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
         public QtPath Update(QtPath? input, Vector2 center = default, [Pin(Name = "Dir")] PathDirection dir = PathDirection.Clockwise, float radius = 0.5f)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || center != _center || dir != _direction || radius != _radius)
-            {
-                _input = input;
-                _center = center;
-                _direction = dir;
-                _radius = radius;
-                _output = ArcGeometry.AddCircle(input, center.X, center.Y, radius, dir == PathDirection.Clockwise);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(center, dir, radius), s_create);
     }
 }
