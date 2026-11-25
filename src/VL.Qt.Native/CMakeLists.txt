@@ -178,6 +178,8 @@ target_sources(vlqt PRIVATE
     # diagnostics/: perf monitor (statistics, hooks, pages, graph and timeline items) and debug overlay
     diagnostics/debug_overlay.cpp
     diagnostics/debug_overlay.h
+    diagnostics/overlay_geometry.h
+    diagnostics/overlay_software.h
     diagnostics/perf.h
     diagnostics/perf_exports.cpp
     diagnostics/perf_items.cpp

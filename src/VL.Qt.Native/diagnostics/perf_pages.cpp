@@ -1,5 +1,6 @@
 // Private Qt API: QUnifiedTimer::runningAnimationCount (perf page); check on Qt updates (list: elements/elements.h).
 #include "diagnostics/perf_pages.h"
+#include "diagnostics/overlay_software.h"
 #include "diagnostics/perf_items.h"
 #include "scene/scene.h"
 #include "snapshot_resource.h"
@@ -27,16 +28,18 @@ constexpr double kOnDemandIdleShare = 0.25; // Summary shows "on demand" above t
 
 // Colors: phases (timeline bars + summary rows) and thresholds against the budget.
 constexpr Rgb kPhaseColor[PerfMonitor::PhaseCount] = {
-    {90, 156, 255, "#5a9cff"},  // events
-    {192, 128, 255, "#c080ff"}, // sync
-    {255, 160, 40, "#ffa028"},  // render
-    {64, 208, 208, "#40d0d0"},  // present
-    {176, 196, 222, "#b0c4de"}, // vsync wait
+    {90, 156, 255},  // events
+    {192, 128, 255}, // sync
+    kWorkColor,      // render
+    {64, 208, 208},  // present
+    {176, 196, 222}, // vsync wait
 };
-const char* const kGreen = "#50dc78";
-const char* const kYellow = "#ffd040";
-const char* const kRed = "#ff5050";
-const char* const kGrey = "#909090";
+constexpr Rgb kRedColor{255, 80, 80};
+constexpr Rgb kGreyColor{144, 144, 144};
+constexpr const char* kGreen = kGpuColor.html;
+constexpr const char* kYellow = kBudgetColor.html;
+constexpr const char* kRed = kRedColor.html;
+constexpr const char* kGrey = kGreyColor.html;
 const char* const kPhaseName[PerfMonitor::PhaseCount] = {"events", "sync", "render", "present", "vsync wait"};
 // Frame order of the phases (timeline bottom -> top, summary rows): the vsync wait sits between the events and the
 // sync. The enum keeps vsync last, so the phase numbers of vlqt_test_perf_spike stay.
@@ -81,9 +84,9 @@ float phaseMs(const PerfSample& s, int phase)
 
 // Host segments of the timeline (vvvv update, .NET GC pause, apply).
 constexpr Rgb kHostColor[SegQt] = {
-    {255, 110, 180, "#ff6eb4"}, // vvvv (same as the F2 line)
-    {176, 112, 64, "#b07040"},  // GC
-    {160, 160, 184, "#a0a0b8"}, // apply
+    kVvvvColor,      // vvvv (same as the F2 line)
+    {176, 112, 64},  // GC
+    {160, 160, 184}, // apply
 };
 const char* const kHostName[SegQt] = {"vvvv", "GC", "apply"};
 
@@ -311,11 +314,12 @@ QString PerfMonitor::summaryPage(QString* body) const
 QString PerfMonitor::timelinePage(QString* foot) const
 {
     const double budget = budgetMs();
-    const int n = viewCount();
+    const TimelineView view = analyze(*this);
+    const int n = view.count;
     Html h;
     pageHeader(h, Timeline, m_frozen);
     h.br().c(kGrey, QStringLiteral("%1 pumps, newest right, scale 0-%2 ms   F7 vvvv/GC/apply %3").arg(n)
-        .arg(num(PerfTimeline::scaleFor(this), 0, 1), QLatin1String(s_hostSegments ? "on" : "off")));
+        .arg(num(view.top, 0, 1), QLatin1String(s_hostSegments ? "on" : "off")));
 
     Html f;
     for (int seg = firstSeg(); seg < SegCount; seg++)
@@ -323,25 +327,14 @@ QString PerfMonitor::timelinePage(QString* foot) const
     f.br().c(kGpuColor.html, "- GPU  ").c(kBudgetColor.html, QStringLiteral("- budget %1 (work > budget: red)").arg(num(budget, 0)));
     f.t("  ").c(kGrey, "- max").br();
     // Peaks: the 3 largest bars (shown segments) with their dominant segment and age.
-    int peaks[3] = {-1, -1, -1};
-    for (int i = 0; i < n; i++) {
-        const float v = stackMs(viewSample(i));
-        for (int k = 0; k < 3; k++) {
-            if (peaks[k] < 0 || v > stackMs(viewSample(peaks[k]))) {
-                for (int j = 2; j > k; j--)
-                    peaks[j] = peaks[j - 1];
-                peaks[k] = i;
-                break;
-            }
-        }
-    }
+    const auto& peaks = view.peaks;
     for (int k = 0; k < 3 && peaks[k] >= 0; k++) {
         const PerfSample& s = viewSample(peaks[k]);
         int dom = firstSeg();
         for (int seg = dom + 1; seg < SegCount; seg++)
             if (segMs(s, seg) > segMs(s, dom))
                 dom = seg;
-        const float total = stackMs(s);
+        const float total = view.stack[size_t(peaks[k])];
         // The colour judges the pump's Qt work, like the red highlight; the bar total also holds the waits (and vvvv).
         f.t(k == 0 ? "peaks " : "      ").c(budgetColor(s.workMs(), budget), num(total, 6) + QStringLiteral(" ms"));
         f.t("  ").c(segColor(dom).html, lab(segName(dom), 10)).t(num(segMs(s, dom), 6));
@@ -443,8 +436,7 @@ QString PerfMonitor::systemPage() const
     pageHeader(h, System, m_frozen);
     constexpr int L = 14; // "allow tearing" + 1
     QRhi* rhi = m_window->rhi();
-    const QSGRendererInterface* ri = m_window->rendererInterface();
-    const bool quickSoftware = ri && ri->graphicsApi() == QSGRendererInterface::Software;
+    const bool quickSoftware = isSoftwareBackend(m_window);
     h.br().t(lab("backend", L));
     if (rhi)
         h.t(QString::fromLatin1(rhi->backendName())).c(kGrey, "  QRhi");

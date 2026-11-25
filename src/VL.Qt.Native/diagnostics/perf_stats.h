@@ -43,6 +43,7 @@ struct PerfSample {
 class PerfCounters
 {
 public:
+    PerfCounters() { m_bucketSec.fill(-1); }
     static constexpr int kRecentSeconds = 10;
     struct Counts {
         long long pumps = 0;
@@ -59,7 +60,7 @@ public:
 private:
     Counts m_total;
     std::array<Counts, kRecentSeconds> m_buckets{};
-    std::array<long long, kRecentSeconds> m_bucketSec{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+    std::array<long long, kRecentSeconds> m_bucketSec; // second of each bucket, -1 = unused
     bool m_prevSwap = false; // previous pump had a frame
 };
 
@@ -100,8 +101,8 @@ void perfSummary(const PerfWindow& w, vlqt_perf* out);
 // The same on given samples, the last kSummaryPumps of them (vlqt_test_perf_summary_eval).
 void perfSummaryEval(const vlqt_perf_sample* samples, int n, vlqt_perf* out);
 
-// Fills out from n samples (oldest to newest, the last up to kPerfHistory are used for the percentiles)
-// and the counters. Percentiles are nearest-rank; sorts copies on the stack, so call it at query time only.
+// Fills out from n <= kPerfHistory samples (oldest to newest) and the counters. Percentiles are nearest-rank; sorts
+// copies on the stack, so call it at query time only.
 void perfStats(const PerfSample* samples, int n, const PerfCounters& counters, double nowMs, double budgetMs,
     vlqt_perf_stats* out);
 

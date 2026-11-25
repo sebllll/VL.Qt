@@ -41,8 +41,8 @@ static_assert(sizeof(vlqt_perf) == 112 && offsetof(vlqt_perf, work_ms) == 104, "
 static_assert(sizeof(vlqt_perf_sample) == 40 && offsetof(vlqt_perf_sample, work) == 36, "vlqt_perf_sample layout");
 static_assert(sizeof(vlqt_perf_stats) == 160 && offsetof(vlqt_perf_stats, recent_multi_swap) == 152, "vlqt_perf_stats layout");
 static_assert(sizeof(vlqt_apply_error) == 24 && offsetof(vlqt_apply_error, reason) == 16, "vlqt_apply_error layout");
-static_assert(sizeof(vlqt_host_pump) == 56 && offsetof(vlqt_host_pump, wait) == 52, "vlqt_host_pump layout");
-static_assert(sizeof(vlqt_host_pump_stats) == 152 && offsetof(vlqt_host_pump_stats, wait_ms_max) == 144, "vlqt_host_pump_stats layout");
+static_assert(sizeof(vlqt_host_pump) == 48 && offsetof(vlqt_host_pump, wait) == 44, "vlqt_host_pump layout");
+static_assert(sizeof(vlqt_host_pump_stats) == 128 && offsetof(vlqt_host_pump_stats, wait_ms_max) == 120, "vlqt_host_pump_stats layout");
 static_assert(sizeof(vlqt_res_info) == 32 && offsetof(vlqt_res_info, element_refs) == 28, "vlqt_res_info layout");
 static_assert(sizeof(vlqt_pixel_desc) == 24 && offsetof(vlqt_pixel_desc, flags) == 20, "vlqt_pixel_desc layout");
 static_assert(sizeof(vlqt_audio_tap_state) == 96 && offsetof(vlqt_audio_tap_state, reserved) == 88, "vlqt_audio_tap_state layout");

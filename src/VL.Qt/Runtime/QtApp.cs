@@ -144,7 +144,7 @@ namespace VL.Qt
             var tEnd = Stopwatch.GetTimestamp();
 
             // Host frame to every window's PerfMonitor.
-            var host = meter.End(vvvvStart, _prevPumpEnd, tEnd);
+            var host = meter.End(vvvvStart, _prevPumpEnd);
             _prevPumpEnd = tEnd;
             for (int i = 0; i < participants.Length; i++)
             {
