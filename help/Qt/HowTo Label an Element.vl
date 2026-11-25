@@ -80,7 +80,7 @@
             <Pin Id="UevtNhN0DWaOoN0BtntSOI" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="TrgyGrhVhRZN8PEwVd3MCr" Name="Style" Kind="InputPin" IsHidden="true" />
             <Pin Id="Kenaxhb3T5WLs6CsuxrW4s" Name="Value" Kind="OutputPin" />
-            <Pin Id="Rju7UXdZBO9OGbwFftbC4B" Name="Bang" Kind="OutputPin" />
+            <Pin Id="Rju7UXdZBO9OGbwFftbC4B" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="GkIa6vINXRcPFGy5e8njfi" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="COhljXn5CyhNLJHJKWdybl" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
@@ -141,7 +141,7 @@
             <Pin Id="OKEukunoFXtLfZ1WLGaN8Q" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="FEIO0SRrQrkQIGtstA8QFx" Name="Style" Kind="InputPin" IsHidden="true" />
             <Pin Id="K4UCzTunjoBN5mQHASf61o" Name="Value" Kind="OutputPin" />
-            <Pin Id="AzsDijJyel8PAdzgx8U5Vo" Name="Bang" Kind="OutputPin" />
+            <Pin Id="AzsDijJyel8PAdzgx8U5Vo" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="GAGeCQCNk70QB2udEmxWfb" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="SD8LIZwIkGoLkMdRPb2eDl" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
@@ -201,7 +201,7 @@
             <Pin Id="IxvQ2bALgg5LEZjkoTcTU3" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="TU7KZzK7MvROUB5KOrwUka" Name="Style" Kind="InputPin" IsHidden="true" />
             <Pin Id="J9cCCELnR8DQQJuXSZZzCY" Name="Value" Kind="OutputPin" />
-            <Pin Id="SMW9hf5og4KPp55pycw2jf" Name="Bang" Kind="OutputPin" />
+            <Pin Id="SMW9hf5og4KPp55pycw2jf" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="UAzIEjjOH9NP2E1XWMwPmD" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="V480M1HQUn2MM66OZ1T9ou" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
@@ -259,7 +259,7 @@
             <Pin Id="QaqBGUt0ss8N3du3Cm9ABw" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="TviLna0mAh3PEuGbNscQnF" Name="Style" Kind="InputPin" IsHidden="true" />
             <Pin Id="IkBdq1XAFipOLgI3z3eVRK" Name="Value" Kind="OutputPin" />
-            <Pin Id="O1rjVl1hqmHOQ54wdr9zgE" Name="Bang" Kind="OutputPin" />
+            <Pin Id="O1rjVl1hqmHOQ54wdr9zgE" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="DWhnzr9k0kqLzavo9OSgCp" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="IOJLUsvtHjwQUHYXeqczMH" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>

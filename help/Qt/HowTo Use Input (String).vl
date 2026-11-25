@@ -33,7 +33,7 @@
             <Pin Id="7XlXWrTQqmtFIpgL7j1qMy" Name="Channel" Kind="InputPin" />
             <Pin Id="ITnZLuEeP4qUrZdDQimW5x" Name="Output" Kind="OutputPin" />
             <Pin Id="ePEair5M3CQlbsktvBSLdQ" Name="Value" Kind="OutputPin" />
-            <Pin Id="VeULIm728UrXSQdRpAEE4H" Name="Bang" Kind="OutputPin" />
+            <Pin Id="VeULIm728UrXSQdRpAEE4H" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="A69L537uB2RPeNwnq3l1sI" Name="Placeholder" Kind="InputPin" />
             <Pin Id="CSz1O73w2HzMYwxy9bUU9A" Name="Editable" Kind="InputPin" IsHidden="true" />
             <Pin Id="VCCdZknTGx4LuKBqUHiBp2" Name="Enabled" Kind="InputPin" IsHidden="true" />
@@ -56,7 +56,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="XM9PxRLOg6fIdLqMNj3J7V" Comment="Bang" Bounds="162,591,35,35" ShowValueBox="true" isIOBox="true">
+          <Pad Id="XM9PxRLOg6fIdLqMNj3J7V" Comment="Has Changed" Bounds="162,591,35,35" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -74,7 +74,7 @@
             <Pin Id="CaDq5TG9yZcMIQYkzTNMv0" Name="Down" Kind="InputPin" />
             <Pin Id="VLCevBfPTLyQTvK2RLEV5M" Name="Reset" Kind="InputPin" />
           </Node>
-          <Pad Id="XvqtxBw31TNK26tuoWqD59" Comment="Change Count (Bang)" Bounds="122,670,50,19" ShowValueBox="true" isIOBox="true">
+          <Pad Id="XvqtxBw31TNK26tuoWqD59" Comment="Change Count (Has Changed)" Bounds="122,670,50,19" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer32" />
             </p:TypeAnnotation>
@@ -102,7 +102,7 @@
             <Pin Id="N7FFSriLuVRPuq04bAe94O" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="S5X40Clm6GROiFoPiBA09k" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="AhwSuSLi0r0McvDtUDDuFq" Name="Interaction" Kind="InputPin" IsHidden="true" />
-            <Pin Id="G7apYBwQIFTQA7jO4y2SLE" Name="Bang" Kind="OutputPin" />
+            <Pin Id="G7apYBwQIFTQA7jO4y2SLE" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="DJNIpa12680ODB4hVcd37e" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="CG35hLFy07JPzyVy4CswRS" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="OusquB1mEf4PuYBRvspFa7" Name="Effect" Kind="InputPin" IsHidden="true" />
@@ -146,7 +146,7 @@
             <Pin Id="P3JUYgUviD9M3WWUAhu5iP" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="HqnWWfx0ByVNvB2A0cnkN4" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="JJRRHNuvUkwLS7HU4u3wvb" Name="Value" Kind="OutputPin" />
-            <Pin Id="PlSyG0mWt5VPQ9YUGJr9qN" Name="Bang" Kind="OutputPin" />
+            <Pin Id="PlSyG0mWt5VPQ9YUGJr9qN" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="LT5tKlZZMpFPCCcU7pguqJ" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="FsGJmJSGTApMTPnQUzZ3aQ" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="LNNkjIXTamZNPjk2NroYFm" Name="Effect" Kind="InputPin" IsHidden="true" />
@@ -227,7 +227,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="vEzKwlC5CfjgXyrqpEstsk" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Input (String) [Qt]&#xD;&#xA;- Channel: binds the text, the user writes back (IOBox &quot;Hello&quot; = start value)&#xD;&#xA;- Placeholder: shown while the field is empty&#xD;&#xA;- Editable: off makes the field read-only&#xD;&#xA;- Value: current text; Bang: true for one frame when the user committed a change">
+          <Pad Id="vEzKwlC5CfjgXyrqpEstsk" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Input (String) [Qt]&#xD;&#xA;- Channel: binds the text, the user writes back (IOBox &quot;Hello&quot; = start value)&#xD;&#xA;- Placeholder: shown while the field is empty&#xD;&#xA;- Editable: off makes the field read-only&#xD;&#xA;- Value: current text; Has Changed: true for one frame when the user committed a change">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

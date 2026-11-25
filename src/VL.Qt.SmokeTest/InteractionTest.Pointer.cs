@@ -152,7 +152,7 @@ public static partial class InteractionTest
         while (longs == 0 && held.ElapsedMilliseconds < 4000) { Thread.Sleep(50); rig.Frames(); }
         Thread.Sleep(400); // still held: a second long press would show up here
         rig.Frames();
-        s.Check(longs == 1, $"click: long press -> one Long Pressed value ({longs})");
+        s.Check(longs == 1, $"click: long press -> one On Long Press value ({longs})");
         rig.Mouse(TestProtocol.Mouse.Release, 150, 150);
         rig.Frames();
         s.Check(longs == 1 && clicks == before, $"click: no second long press, no click after it ({longs}, {clicks})");

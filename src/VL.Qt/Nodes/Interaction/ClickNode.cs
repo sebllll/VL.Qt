@@ -42,18 +42,18 @@ namespace VL.Qt.Nodes
         /// <summary>Adds a click (tap) handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
         /// <param name="isPressed">Optional channel: true while the element is pressed (written by Qt, author "Qt").</param>
-        /// <param name="isClicked">Optional channel: receives one value per click, i.e. a release inside the element (author "Qt").</param>
-        /// <param name="tapCount">Optional channel: number of quick successive clicks of the last click (1 = single click, 2 = double click, 3 = triple click, ...). A click after a pause (longer than the double click interval) starts again at 1. Written on change; keeps its value until the next click (never written as 0). For a total number of clicks, count the values of Is Clicked. Only reported while connected.</param>
-        /// <param name="longPressed">Optional channel: receives one value when the press is held long enough (Qt's long press time).</param>
+        /// <param name="onClick">Optional channel: receives one value per click, i.e. a release inside the element (author "Qt").</param>
+        /// <param name="tapCount">Optional channel: number of quick successive clicks of the last click (1 = single click, 2 = double click, 3 = triple click, ...). A click after a pause (longer than the double click interval) starts again at 1. Written on change; keeps its value until the next click (never written as 0). For a total number of clicks, count the values of On Click. Only reported while connected.</param>
+        /// <param name="onLongPress">Optional channel: receives one value when the press is held long enough (Qt's long press time).</param>
         /// <param name="buttons">Mouse buttons that count. None reacts to touch and pen only.</param>
         /// <param name="devices">Input devices that count.</param>
         [return: Pin(Name = "Output")]
         public Interaction Update(
             Interaction? input,
             [DefaultValue(null)] IChannel<bool>? isPressed,
-            [DefaultValue(null)] IChannel<Unit>? isClicked,
+            [DefaultValue(null)] IChannel<Unit>? onClick,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(null)] IChannel<int>? tapCount,
-            [Pin(Visibility = PinVisibility.Optional), DefaultValue(null)] IChannel<Unit>? longPressed,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(null)] IChannel<Unit>? onLongPress,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(PointerButtons), nameof(PointerButtons.Left))] PointerButtons buttons,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(PointerDevices), nameof(PointerDevices.All))] PointerDevices devices)
         {
@@ -63,8 +63,8 @@ namespace VL.Qt.Nodes
             // without a channel, so they do not pile up; states are written only on change.
             var feedback = _node.Feedback;
             FeedbackChannels.WriteState(isPressed, ref _pressed, ref _lastPressed, feedback.IsPressed());
-            FeedbackChannels.WriteEvents(isClicked, feedback.TakeClicks());
-            FeedbackChannels.WriteEvents(longPressed, feedback.TakeLongPresses());
+            FeedbackChannels.WriteEvents(onClick, feedback.TakeClicks());
+            FeedbackChannels.WriteEvents(onLongPress, feedback.TakeLongPresses());
 
             // 0 = no tap yet for this feedback (new node, new handler, released handle): not written, the channel keeps
             // the count of the last click until the next one.

@@ -45,12 +45,12 @@
               <Pin Id="wuChpUpoiOGBqTrcxTefeD" Name="Node Context" Kind="InputPin" IsHidden="true" />
               <Pin Id="ALh3fWzh9vGbCkliUM0KtA" Name="Input" Kind="InputPin" />
               <Pin Id="lc7aB0uJFjG2iyNsn00nkH" Name="Is Dragging" Kind="InputPin" />
-              <Pin Id="DQxWqwNcOGGLSsWc1SDaOD" Name="Delta" Kind="InputPin" />
+              <Pin Id="DQxWqwNcOGGLSsWc1SDaOD" Name="Translation" Kind="InputPin" />
               <Pin Id="ewsGsy7rvnFWx17gA1jPaV" Name="Moves Element" Kind="InputPin" />
               <Pin Id="jvuumlNhwcGMNpJb8KRe5G" Name="Axis" Kind="InputPin" />
               <Pin Id="whSh7jCcyeFqhkajqphbpS" Name="Output" Kind="OutputPin" />
-              <Pin Id="A1QJk2DU4HG0iLgQDkJ3ZJ" Name="Minimum" Kind="InputPin" IsHidden="true" />
-              <Pin Id="jjLEjmQJ9vGl3AbElsJoAD" Name="Maximum" Kind="InputPin" IsHidden="true" />
+              <Pin Id="A1QJk2DU4HG0iLgQDkJ3ZJ" Name="Min" Kind="InputPin" IsHidden="true" />
+              <Pin Id="jjLEjmQJ9vGl3AbElsJoAD" Name="Max" Kind="InputPin" IsHidden="true" />
               <Pin Id="lgSRLrjoslFcK1YqMiXLtS" Name="Buttons" Kind="InputPin" IsHidden="true" />
               <Pin Id="Jl8B2dkHRPG2ZdDito76EK" Name="Devices" Kind="InputPin" IsHidden="true" />
             </Node>

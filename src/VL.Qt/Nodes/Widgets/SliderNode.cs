@@ -13,7 +13,7 @@ namespace VL.Qt.Nodes
 {
     /// <summary>
     /// Slider for a number. Dragging, the arrow keys and the mouse wheel change the value at once. The value goes into
-    /// Channel (author "Qt") and to Value; Bang reports a change by the user. Connect to Renderer [Qt] or a Group.
+    /// Channel (author "Qt") and to Value; Has Changed reports a change by the user. Connect to Renderer [Qt] or a Group.
     /// </summary>
     /// <remarks>QtQuick.Controls Slider, style Basic.</remarks>
     [ProcessNode(Name = "Slider (Float)", Category = Categories.Widgets)]
@@ -62,7 +62,7 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
         /// <param name="style">Look of the widget. Unset fields come from the enclosing Group's style, else from the base style.</param>
         /// <param name="value">The value shown, clamped to Min…Max (the channel keeps the patch's value). Works without a channel too.</param>
-        /// <param name="bang">True for one frame when the user changed the value since the last frame.</param>
+        /// <param name="hasChanged">True for one frame when the user changed the value since the last frame.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='measuredSize']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
@@ -85,7 +85,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
             [Pin(Visibility = PinVisibility.Optional)] Style? style,
             out float value,
-            out bool bang,
+            out bool hasChanged,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
@@ -93,7 +93,7 @@ namespace VL.Qt.Nodes
             float minimum = _value.Min(min, 0f);
             float maximum = _value.Max(max, 1f);
             value = _value.Clamped(minimum, maximum);
-            bang = _value.Bang;
+            hasChanged = _value.Bang;
             return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
                 new Props(value, minimum, maximum, step, orientation, enabled, autoSize, style),

@@ -169,3 +169,19 @@ W4-103 | pin | Qt.Effects/Blur       | Max        | Max Radius
 W4-103 | pin | Qt.Effects/Blur       | Multiplier | Radius Multiplier
 W4-103 | pin | Qt.Effects/DropShadow | Blur       | Blur Amount
 W4-103 | pin | Qt.Effects/Blend      | Mode       | Blend Mode
+
+# W4-107: one vocabulary for event and state pins. "Has Changed" (Skia's word) is the user-changed-the-value event of the
+# four value widgets; Button keeps Bang. "On ..." for events, "Is ..." for states; Drag's offset since the press is
+# Translation like Pinch's (Delta stays per-frame motion on Wheel); Min/Max like the widgets and ImGui.
+W4-107 | pin | Slider (Float)  | Bang                  | Has Changed
+W4-107 | pin | Toggle          | Bang                  | Has Changed
+W4-107 | pin | Input (Int)     | Bang                  | Has Changed
+W4-107 | pin | Input (String)  | Bang                  | Has Changed
+W4-107 | pin | Click           | Is Clicked            | On Click
+W4-107 | pin | Click           | Long Pressed          | On Long Press
+W4-107 | pin | Drag            | Delta                 | Translation
+W4-107 | pin | Drag            | Minimum               | Min
+W4-107 | pin | Drag            | Maximum               | Max
+W4-107 | pin | Pinch           | Is Active             | Is Pinching
+W4-107 | pin | Pinch           | Minimum Point Count   | Min Point Count
+W4-107 | pin | Pinch           | Maximum Point Count   | Max Point Count

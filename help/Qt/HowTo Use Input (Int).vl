@@ -36,7 +36,7 @@
             <Pin Id="tJMextXUE0aSPcrR1lMxzZ" Name="Step" Kind="InputPin" IsHidden="true" />
             <Pin Id="W4FVspjTafmKVfApSkdRIC" Name="Output" Kind="OutputPin" />
             <Pin Id="euXSvb5WXwWCSEsMi4NEaY" Name="Value" Kind="OutputPin" />
-            <Pin Id="BMTlUVrULeQYsJxm0f1geV" Name="Bang" Kind="OutputPin" />
+            <Pin Id="BMTlUVrULeQYsJxm0f1geV" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="MezPM0jffW9PfUdU41L2pX" Name="Editable" Kind="InputPin" IsHidden="true" />
             <Pin Id="Ui5LuelG3laQPYJaRO76XI" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="JyRghlTHCjtN3SnExVtYV2" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -67,7 +67,7 @@
             <Pin Id="iOas7i8EYGvB3meY8x9ksd" Name="Step" Kind="InputPin" />
             <Pin Id="um5f8OIrlyXx6INpdceX3n" Name="Output" Kind="OutputPin" />
             <Pin Id="EkeTkf7mkVkEh94Jw9Wf8I" Name="Value" Kind="OutputPin" />
-            <Pin Id="0nFhR4XzkMhvoN37SoSeJs" Name="Bang" Kind="OutputPin" />
+            <Pin Id="0nFhR4XzkMhvoN37SoSeJs" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="PdiZ4xve9UZOcCiHSqq4ZR" Name="Editable" Kind="InputPin" IsHidden="true" />
             <Pin Id="JyHkoxDU4hAOg0vAWnQW2n" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="AYcLFFWNaDIQTMmkBTsSPU" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -98,7 +98,7 @@
             <Pin Id="par719TJvJdbtptQ0N1kUk" Name="Step" Kind="InputPin" IsHidden="true" />
             <Pin Id="iSIP0arhJsRht303pvY6aZ" Name="Output" Kind="OutputPin" />
             <Pin Id="DJ4bPyGGgiVJDjoBVllHTE" Name="Value" Kind="OutputPin" />
-            <Pin Id="D2xpFqL4VjJVA6O4C8hpby" Name="Bang" Kind="OutputPin" />
+            <Pin Id="D2xpFqL4VjJVA6O4C8hpby" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="QyxWRLtT1WBPM9oGHwOV4J" Name="Editable" Kind="InputPin" IsHidden="true" />
             <Pin Id="GFPxZpbzGi0NP6aIeDwHwk" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="MQVijseboBoOnhpaebzQU9" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -129,7 +129,7 @@
             <Pin Id="FmjSapH6TLEjeXmDEtoNdk" Name="Step" Kind="InputPin" IsHidden="true" />
             <Pin Id="2lSQpOWsTjiUy3VoUhwE7d" Name="Output" Kind="OutputPin" />
             <Pin Id="OT7Qf0uTLselamgn5E9rXO" Name="Value" Kind="OutputPin" />
-            <Pin Id="n4HjU4VWzK8pi9V24A6d3z" Name="Bang" Kind="OutputPin" />
+            <Pin Id="n4HjU4VWzK8pi9V24A6d3z" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="LxCcQ6S82rLMp6acK02ZW7" Name="Editable" Kind="InputPin" IsHidden="true" />
             <Pin Id="MyEfftq9bjGPtzf228obUR" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="M9rdfbPoSeyMzW2oClIm1L" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -246,12 +246,12 @@
               <Choice Kind="TypeFlag" Name="Integer32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="ptxWYVRkPtpFBoIdw2ewNm" Comment="Bang" Bounds="302,435,35,35" ShowValueBox="true" isIOBox="true">
+          <Pad Id="ptxWYVRkPtpFBoIdw2ewNm" Comment="Has Changed" Bounds="302,435,35,35" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="Ctf4dBv6ysnEMBBYOqm5Zo" Comment="Change Count (Bang)" Bounds="262,570,50,19" ShowValueBox="true" isIOBox="true">
+          <Pad Id="Ctf4dBv6ysnEMBBYOqm5Zo" Comment="Change Count (Has Changed)" Bounds="262,570,50,19" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer32" />
             </p:TypeAnnotation>
@@ -275,7 +275,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="uG6B3ZHhomi58CcI8Z41BY" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="Input (Int) [Qt]&#xD;&#xA;- Number field with +/- buttons&#xD;&#xA;- Channel: binds the value, the user writes back&#xD;&#xA;- Min, Max: default is the full int range, or the Min/Max attributes of the channel&#xD;&#xA;- Value: current value; Bang: true for one frame when the user changed it">
+          <Pad Id="uG6B3ZHhomi58CcI8Z41BY" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="Input (Int) [Qt]&#xD;&#xA;- Number field with +/- buttons&#xD;&#xA;- Channel: binds the value, the user writes back&#xD;&#xA;- Min, Max: default is the full int range, or the Min/Max attributes of the channel&#xD;&#xA;- Value: current value; Has Changed: true for one frame when the user changed it">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

@@ -33,7 +33,7 @@
             <Pin Id="ahj2Be80bJ2xN7AL972YaK" Name="Channel" Kind="InputPin" />
             <Pin Id="46J3gKu7dkln3rhywRle0n" Name="Output" Kind="OutputPin" />
             <Pin Id="vPBx2svWmIIVvepTTvvXhc" Name="Value" Kind="OutputPin" />
-            <Pin Id="EYKdE3En7FkflojuEql5ep" Name="Bang" Kind="OutputPin" />
+            <Pin Id="EYKdE3En7FkflojuEql5ep" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="OH9QtczurAWNVlg9831hVZ" Name="Look" Kind="InputPin" />
             <Pin Id="PsyK9qgCpwVNgnxLmPOCcv" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="PJKfZEz7gdvMlxD0mrTr4w" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -55,7 +55,7 @@
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="tkItJeMEvddNUm1xV3ipwc" Comment="Bang" Bounds="242,375,35,35" ShowValueBox="true" isIOBox="true">
+          <Pad Id="tkItJeMEvddNUm1xV3ipwc" Comment="Has Changed" Bounds="242,375,35,35" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -73,7 +73,7 @@
             <Pin Id="IBBuA1GyyFgPHpZDW3B4Cq" Name="Down" Kind="InputPin" />
             <Pin Id="HJAHLdAU6FnNGOViA7uKJX" Name="Reset" Kind="InputPin" />
           </Node>
-          <Pad Id="bFkn6kkdZ48k6MizRVscag" Comment="Change Count (Bang)" Bounds="202,520,50,19" ShowValueBox="true" isIOBox="true">
+          <Pad Id="bFkn6kkdZ48k6MizRVscag" Comment="Change Count (Has Changed)" Bounds="202,520,50,19" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer32" />
             </p:TypeAnnotation>
@@ -100,7 +100,7 @@
             <Pin Id="PzaOkuQlMlEQKWtoy1UOE4" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="JSEVC40tMRmMAGr9R3vwEh" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="U7lYY0zXLt4NKSPybIlkjP" Name="Interaction" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Uwq7sdtEwEHPvsAfiBViXj" Name="Bang" Kind="OutputPin" />
+            <Pin Id="Uwq7sdtEwEHPvsAfiBViXj" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="RV1sKDbZgsUPM0VxNTYXvE" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="RHdGO18MpSNNBnwiBpWhvU" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="S5FdUEs007TNz4OuALBvDB" Name="Effect" Kind="InputPin" IsHidden="true" />
@@ -173,7 +173,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="e6ZNsoG4nAVjOBJ2KGkgAr" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Toggle [Qt]&#xD;&#xA;- Channel: binds the state, the user writes back (IOBox true = start value)&#xD;&#xA;- Value: current state&#xD;&#xA;- Bang: true for one frame when the user flipped it&#xD;&#xA;- Look: Checkbox (default) or Switch">
+          <Pad Id="e6ZNsoG4nAVjOBJ2KGkgAr" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Toggle [Qt]&#xD;&#xA;- Channel: binds the state, the user writes back (IOBox true = start value)&#xD;&#xA;- Value: current state&#xD;&#xA;- Has Changed: true for one frame when the user flipped it&#xD;&#xA;- Look: Checkbox (default) or Switch">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -182,7 +182,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="J9IBOYBZK3ydysbeadZGeS" Bounds="85,910,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A plain value or an IOBox on Channel is the start value and sets the state from the patch. The state survives a Look change.&#xD;&#xA;- A Counter counts the flips (Bang).&#xD;&#xA;- Labels are not part of the toggle: wrap it in a Labeled element (here a Column stacks the Labeled toggles).">
+          <Pad Id="J9IBOYBZK3ydysbeadZGeS" Bounds="85,910,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A plain value or an IOBox on Channel is the start value and sets the state from the patch. The state survives a Look change.&#xD;&#xA;- A Counter counts the flips (Has Changed).&#xD;&#xA;- Labels are not part of the toggle: wrap it in a Labeled element (here a Column stacks the Labeled toggles).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

@@ -70,7 +70,7 @@ public static partial class InteractionTest
     private static string Describe(Spread<TouchPoint> p)
         => "[" + string.Join(" ", p.Select(x => $"{x.Id}:{x.Position.X:F2},{x.Position.Y:F2}")) + "]";
 
-    // Scenario "pinch-node": spread -> Scale > 1, rotate -> Rotation in cycles (clockwise positive), Is Active, the last
+    // Scenario "pinch-node": spread -> Scale > 1, rotate -> Rotation in cycles (clockwise positive), Is Pinching, the last
     // value stays after the release, the channel's own value is not overwritten before a gesture.
     private static void RunPinchNode(Scenario s)
     {
@@ -98,7 +98,7 @@ public static partial class InteractionTest
             rig.Frames(2);
         }
         rig.Frames(2);
-        s.Check(active.Value && active.LatestAuthor == "Qt", $"pinch-node: Is Active while two fingers pinch ({active.Value})");
+        s.Check(active.Value && active.LatestAuthor == "Qt", $"pinch-node: Is Pinching while two fingers pinch ({active.Value})");
         s.Check(scale.Value > 1.5f && scale.Value < 1.8f, $"pinch-node: spread 100 -> 160 px -> Scale about 1.6 ({scale.Value})");
         s.Check(MathF.Abs(rotation.Value) < 0.05f, $"pinch-node: no rotation ({rotation.Value})");
 
@@ -106,7 +106,7 @@ public static partial class InteractionTest
         rig.Touch(TestProtocol.Touch.Release, 2, 280, 150);
         rig.Frames(3);
         float lastScale = scale.Value;
-        s.Check(!active.Value && lastScale > 1.5f, $"pinch-node: release -> Is Active false, Scale keeps the last value ({active.Value}, {lastScale})");
+        s.Check(!active.Value && lastScale > 1.5f, $"pinch-node: release -> Is Pinching false, Scale keeps the last value ({active.Value}, {lastScale})");
         rig.Frames(3);
         s.Check(scale.Value == lastScale, "pinch-node: nothing more at rest");
 
