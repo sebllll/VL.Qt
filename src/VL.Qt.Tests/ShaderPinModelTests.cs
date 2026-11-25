@@ -101,6 +101,40 @@ layout(std140, binding = 0) uniform buf {
         }
 
         [Test]
+        public void Annotations_FileHead_TagsAndRemarks()
+        {
+            var a = ShaderAnnotations.Parse("// @tags rgb, split,\n// glitch ,, \n// @remarks First line\n// second line.\n#version 440\n");
+            Assert.That(a.Tags, Is.EqualTo(new[] { "rgb", "split", "glitch" }));
+            Assert.That(a.Remarks, Is.EqualTo("First line second line."));
+            Assert.That(a.Warnings, Is.Empty);
+        }
+
+        [Test]
+        public void Annotations_TagsAndRemarksAtUniform_Warn_OptionalInHead_Warns()
+        {
+            var a = ShaderAnnotations.Parse("// @optional\n#version 440\nlayout(std140, binding = 0) uniform buf {\n    float a; // @tags x\n};\n");
+            Assert.That(a.Warnings.Select(w => w.Line), Is.EqualTo(new[] { 1, 4 }));
+        }
+
+        [Test]
+        public void Annotations_Optional_AtUniform()
+        {
+            var a = ShaderAnnotations.Parse("#version 440\nlayout(std140, binding = 0) uniform buf {\n    // @optional\n    float a;\n    float b; // @optional @min 1\n    float c;\n};\n");
+            Assert.That(a.Warnings, Is.Empty);
+            Assert.That(a.Uniforms["a"].IsOptional, Is.True);
+            Assert.That(a.Uniforms["b"].IsOptional, Is.True);
+            Assert.That(a.Uniforms["b"].Min, Is.EqualTo("1"));
+            Assert.That(a.Uniforms.ContainsKey("c"), Is.False);
+        }
+
+        [Test]
+        public void Pins_Optional_MarksImageAndUniformPins_PinNamesSplitDigits()
+        {
+            var m = Build("uniform pass1 float 0\nuniform b float 0\nsampler lut 2\n", blockStart + "    float pass1; // @optional\n    float b;\n};\nlayout(binding = 2) uniform sampler2D lut; // @optional\n");
+            Assert.That(m.Pins.Where(p => p.Type != ShaderPinType.Sampler).Select(p => (p.Name, p.IsOptional)), Is.EqualTo(new[] { ("Lut", true), ("Pass 1", true), ("B", false) }));
+        }
+
+        [Test]
         public void Annotations_UnknownTag_WarnsWithLine()
         {
             var a = ShaderAnnotations.Parse("#version 440\nlayout(std140, binding = 0) uniform buf {\n    float a; // @foo 1\n};\n");

@@ -113,12 +113,16 @@ namespace VL.Qt.Shaders
                     null,
                     isFilter,
                     annotations.ChainOnly,
-                    chainCategory));
+                    chainCategory,
+                    annotations.Remarks,
+                    TagsOf(annotations)));
             }
 
             var errors = DuplicateErrors(files);
             return files.Select(f => errors.TryGetValue(f.FragmentPath, out var error) ? f with { DuplicateError = error } : f).ToImmutableArray();
         }
+
+        private static string TagsOf(ShaderAnnotations annotations) => string.Join(",", annotations.Tags);
 
         /// <summary>
         /// Categories of the element node and of the effect chain node. An @category that starts with "Qt." is absolute and
@@ -195,7 +199,7 @@ namespace VL.Qt.Shaders
 
         /// <summary>
         /// True if a content change turned a generator into a filter or back, or changed @chainonly or @category: that
-        /// adds, removes or moves a node. False if the file cannot be read now.
+        /// adds, removes or moves a node; or @tags (the node browser reads them from the node description). False if the file cannot be read now.
         /// </summary>
         internal static bool HeadChanged(ShaderFile file)
         {
@@ -205,7 +209,8 @@ namespace VL.Qt.Shaders
             return head.IsFilter != file.IsFilter
                 || head.Annotations.ChainOnly != file.ChainOnly
                 || category != file.Category
-                || chainCategory != file.LinkCategory;
+                || chainCategory != file.LinkCategory
+                || TagsOf(head.Annotations) != file.Tags;
         }
 
         /// <summary>Content change of <paramref name="file"/>'s own .frag/.vert (filtered NodeBuilding.WatchDir of its folder).</summary>

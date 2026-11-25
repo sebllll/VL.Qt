@@ -44,5 +44,15 @@ namespace VL.Qt.Tests
             Assert.That(PinNames.FromIdentifier("RGBShift"), Is.EqualTo("RGB Shift"));
             Assert.That(PinNames.FromIdentifier("tint_color"), Is.EqualTo("Tint Color"));
         }
+
+        [Test]
+        public void PinNames_SplitDigits_ForShaderFiles()
+        {
+            Assert.That(PinNames.FromIdentifier("pass1", splitDigits: true), Is.EqualTo("Pass 1"));
+            Assert.That(PinNames.FromIdentifier("uvOffset2", splitDigits: true), Is.EqualTo("Uv Offset 2"));
+            Assert.That(PinNames.FromIdentifier("RGB2", splitDigits: true), Is.EqualTo("RGB 2"));
+            Assert.That(PinNames.FromIdentifier("tint_2", splitDigits: true), Is.EqualTo("Tint 2"));
+            Assert.That(PinNames.FromIdentifier("amount", splitDigits: true), Is.EqualTo("Amount"));
+        }
     }
 }

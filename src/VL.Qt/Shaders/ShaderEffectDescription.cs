@@ -27,7 +27,7 @@ namespace VL.Qt.Shaders
         {
             var inputs = new List<IVLPinDescription> { new FilePinDescription("Input", typeof(Effect), null, inputSummary) };
             foreach (var pin in layout.Pins)
-                inputs.Add(new FilePinDescription(pin.Name, UniformPin.ClrType(pin.Type), pin.Default, pin.Summary, isVisible: pin.Type != ShaderPinType.Sampler));
+                inputs.Add(new FilePinDescription(pin.Name, UniformPin.ClrType(pin.Type), pin.Default, pin.Summary, isVisible: pin.Type != ShaderPinType.Sampler && !pin.IsOptional));
             inputs.Add(new FilePinDescription("Apply", typeof(bool), true, applySummary, isVisible: false));
             return inputs;
         }
@@ -51,7 +51,9 @@ namespace VL.Qt.Shaders
                         messages: layout.Messages,
                         openEditorAction: () => ShaderDescription.OpenEditor(file, logger),
                         summary: layout.Summary ?? file.Summary,
+                        remarks: layout.Remarks ?? file.Remarks,
                         filePath: file.FragmentPath);
-                });
+                },
+                tags: file.Tags);
     }
 }

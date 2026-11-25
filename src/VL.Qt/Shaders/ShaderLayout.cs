@@ -15,6 +15,7 @@ namespace VL.Qt.Shaders
     /// <param name="Pins">Image and uniform pins in pin order, names unique.</param>
     /// <param name="Messages">Messages of the node description (errors first).</param>
     /// <param name="Summary">@summary of the file head, null if not given.</param>
+    /// <param name="Remarks">@remarks of the file head, null if not given.</param>
     /// <param name="FragmentSource">Content of the .frag (empty if not readable).</param>
     /// <param name="VertexSource">Content of the .vert, null without .vert.</param>
     internal sealed record ShaderLayout(
@@ -22,6 +23,7 @@ namespace VL.Qt.Shaders
         ImmutableArray<ShaderPin> Pins,
         ImmutableArray<Message> Messages,
         string? Summary,
+        string? Remarks,
         string FragmentSource,
         string? VertexSource)
     {
@@ -34,7 +36,7 @@ namespace VL.Qt.Shaders
             AddKeptError(source, errors, warnings);
             // Input and Input Sampler are pins of the node only with an Input.
             var reserved = hasInput ? ShaderElementPins.Names : ShaderElementPins.Names.Remove(ShaderElementPins.Input.Name).Remove(ShaderElementPins.InputSampler.Name);
-            return new ShaderLayout(hasInput, UniquePinNames(pins, reserved, warnings), ToMessages(errors, warnings), source.FragmentAnnotations.Summary, source.FragmentSource, source.VertexSource);
+            return new ShaderLayout(hasInput, UniquePinNames(pins, reserved, warnings), ToMessages(errors, warnings), source.FragmentAnnotations.Summary, source.FragmentAnnotations.Remarks, source.FragmentSource, source.VertexSource);
         }
 
         /// <summary>

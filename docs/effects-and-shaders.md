@@ -68,8 +68,8 @@ Every `.frag` file in a folder named `qtshaders` next to the patch becomes a nod
 
 - `RGBSplit.frag` gives the node `RGBSplit`, a `.vert` with the same name belongs to it. Subfolders count too.
 - A `sampler2D source` becomes the `Input` pin: the shader is a filter. Without it, it is a generator without Input pin. Further `sampler2D` become image pins.
-- Uniforms become pins in the order of the file, the name split into words (`pixelSize` → `Pixel Size`). Types: `float`, `vec2`, `vec3`, `vec4`, `int`, `bool`, `mat4`.
-- Annotations as `//` comments, see [Annotations](#annotations): file head tags (`@category`, `@summary`, `@padding`, `@passes`, `@chainonly`) and uniform tags (`@default`, `@min`, `@max`, `@color`, `@summary`).
+- Uniforms become pins in the order of the file, the name split into words at a lower-to-upper case change, at `_` and before a digit (`pixelSize` → `Pixel Size`, `pass1` → `Pass 1`, `tint_color` → `Tint Color`). Types: `float`, `vec2`, `vec3`, `vec4`, `int`, `bool`, `mat4`.
+- Annotations as `//` comments, see [Annotations](#annotations): file head tags (`@category`, `@summary`, `@remarks`, `@tags`, `@padding`, `@passes`, `@chainonly`) and uniform tags (`@default`, `@min`, `@max`, `@color`, `@optional`, `@summary`).
 - Pins with the same name keep their links and values when the file changes. Compile errors, unknown annotations and unsupported uniform types (`uint`, `ivec`, `mat3`, arrays) show at the node. While a file does not compile or cannot be read, the node keeps the pins and the shader of its last version that worked, so a typo loses no links or values; the error shows at the node and in the log.
 - A filter shader is also a node of the effect chain, see [Shaders in the effect chain](#shaders-in-the-effect-chain).
 
@@ -125,12 +125,14 @@ Annotations are `//` comments. Unknown tags show at the node.
 |---|---|
 | `@category <path>` | node category. A path that starts with `Qt.` is absolute and moves the element node (with `@chainonly` the effect chain node, default `Qt.Effects`). Any other path is relative and is appended to the default category of each node: `@category Examples` gives `Qt.Elements.Shaders.Examples` and `Qt.Effects.Examples`. A change takes effect at once |
 | `@summary <text>` | node help; goes on in the following comment lines until the next blank line |
+| `@remarks <text>` | longer node help below the summary; goes on in the following comment lines like `@summary` |
+| `@tags <a, b, ...>` | search words of the node browser, separated by commas (`@tags hue, saturation, contrast`); goes on in the following comment lines. A change takes effect at once |
 | `@padding <left, top, right, bottom>` | room around the element in DIP (like the shader's pixel uniforms: no conversion by the renderer's space) that the shader may draw into as an effect chain node; one number for all four sides, or four numbers. Without it the shader stays inside the element |
 | `@padding <uniform> [factor]` | all four sides = `abs(value of that float uniform pin) * factor` (factor default 1), recomputed when the pin value changes. A uniform that does not exist or is not a `float` is an error at the node |
 | `@passes 1\|2` | `2`: the effect chain node runs the shader twice, the second pass on the result of the first (default 1, other numbers are an error at the node) |
 | `@chainonly` | the file makes only the effect chain node, no element node; without `sampler2D source` the node shows the "not a filter" error |
 
-**Uniform** (directly above it or at the end of its line): `@default`, `@min`, `@max` (limits of the pad only), `@color` (a `vec4` becomes a color), `@summary`.
+**Uniform** (directly above it or at the end of its line): `@default`, `@min`, `@max` (limits of the pad only), `@color` (a `vec4` becomes a color), `@optional` (the pin is hidden until shown, like an optional pin of a C# node; its default still applies; on a `sampler2D` it hides the image pin), `@summary`.
 
 **Units:** a uniform of a file shader reaches the shader as it is, so a length uniform is in DIP (the renderer's space does not scale it), like `@padding`. Document it as DIP in its `@summary`; `dpr` turns DIP into device pixels.
 

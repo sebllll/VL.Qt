@@ -22,6 +22,8 @@ namespace VL.Qt.Shaders
     /// </param>
     /// <param name="ChainOnly">The file head has <c>@chainonly</c>: only the link node of a filter is created, no element node.</param>
     /// <param name="ChainCategory">Category of the effect chain node, null = <see cref="ShaderNodeFactory.LinkCategory"/>.</param>
+    /// <param name="Remarks">@remarks of the file head (node help below the summary), null if not given.</param>
+    /// <param name="Tags">@tags of the file head, comma separated (node browser search words), empty if not given.</param>
     internal sealed record ShaderFile(
         string FragmentPath,
         string? VertexPath,
@@ -32,7 +34,9 @@ namespace VL.Qt.Shaders
         string? DuplicateError,
         bool IsFilter = false,
         bool ChainOnly = false,
-        string? ChainCategory = null)
+        string? ChainCategory = null,
+        string? Remarks = null,
+        string Tags = "")
     {
         /// <summary>Name as vvvv shows it: "Glitch (RGB)", or just "Glitch" without variant.</summary>
         public string FullName => FileNodeNames.FullName(Name, Version);

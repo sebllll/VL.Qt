@@ -1,12 +1,13 @@
 #version 440
 // @category Qt.Elements.Shaders.Examples
 // @padding 40
+// @tags rgb, chromatic aberration, glitch, print
 // @summary Shifts the red and blue channel of the Input in opposite directions, like a misaligned print.
 //   Optional scanlines darken every second pixel row.
 
 // Example of a shader file that becomes a node (folder qtshaders/ next to the patch).
 // The file name is the node name: RGBSplit.frag -> node "RGBSplit".
-// The head above (comments before the first code line) holds the node's annotations: category and summary.
+// The head above (comments before the first code line) holds the node's annotations: category, summary and tags (search words of the node browser, separated by commas); @remarks adds longer help.
 // A summary goes on in the following comment lines until the next blank line.
 // The padding line is the space around the element (DIP) that the shader may draw into when it is used as a node of an
 // effect chain (Qt.Effects, see HowTo Chain Effects): the shifted colors reach beyond the element.
@@ -19,6 +20,7 @@
 // Annotations are // comments directly above the uniform or at the end of its line:
 //   default / min / max   value as in the patch, vectors separated by commas; min and max only limit the pad
 //   color                 a vec4 becomes a color pin (white without default, components 0..1)
+//   optional              the pin is hidden until shown
 //   summary               help text of the pin
 // A sampler2D named "source" becomes the Input pin. Without it the shader is a generator (see Stripes.frag).
 

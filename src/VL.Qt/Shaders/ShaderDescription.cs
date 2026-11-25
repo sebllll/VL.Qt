@@ -33,7 +33,7 @@ namespace VL.Qt.Shaders
                 inputs.Add(Describe(ShaderElementPins.InputSampler));
             }
             foreach (var pin in layout.Pins)
-                inputs.Add(new FilePinDescription(pin.Name, UniformPin.ClrType(pin.Type), pin.Default, pin.Summary, isVisible: pin.Type != ShaderPinType.Sampler));
+                inputs.Add(new FilePinDescription(pin.Name, UniformPin.ClrType(pin.Type), pin.Default, pin.Summary, isVisible: pin.Type != ShaderPinType.Sampler && !pin.IsOptional));
             foreach (var pin in ShaderElementPins.FixedInputs)
                 inputs.Add(Describe(pin));
             return inputs;
@@ -61,8 +61,10 @@ namespace VL.Qt.Shaders
                         messages: layout.Messages,
                         openEditorAction: () => OpenEditor(file, logger),
                         summary: layout.Summary ?? file.Summary,
+                        remarks: layout.Remarks ?? file.Remarks,
                         filePath: file.FragmentPath);
-                });
+                },
+                tags: file.Tags);
 
         /// <summary>
         /// Middle click / Definition > Open: opens the .frag and, if there is one, the .vert next to it in the

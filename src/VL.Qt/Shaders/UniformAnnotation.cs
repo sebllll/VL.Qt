@@ -10,7 +10,8 @@
     /// <param name="Min">Raw text of @min (IOBox limit only, no clamping), null if not given.</param>
     /// <param name="Max">Raw text of @max (IOBox limit only, no clamping), null if not given.</param>
     /// <param name="IsColor">@color given: vec4 becomes a Color4 pin (default white).</param>
+    /// <param name="IsOptional">@optional given: the pin is optional (hidden until shown).</param>
     /// <param name="Summary">@summary incl. continuation lines without tag, null if not given.</param>
     /// <param name="Line">1-based line of the uniform declaration (for warnings of the pin model).</param>
-    internal sealed record UniformAnnotation(string? Default, string? Min, string? Max, bool IsColor, string? Summary, int Line);
+    internal sealed record UniformAnnotation(string? Default, string? Min, string? Max, bool IsColor, bool IsOptional, string? Summary, int Line);
 }
