@@ -119,7 +119,7 @@ All widgets (Button, Toggle, Slider (Float), Input (String), Input (Int)) are dr
 - A style only holds what you set; everything else is inherited: base style → each Group on the way → the widget's own Style pin.
 - A Group passes its style to everything inside, also to Row/Column and nested Groups.
 - Each field has a value per state: Normal, Hovered, Pressed, Disabled, Checked.
-- Build a style by chaining the nodes `Colors`, `Frame`, `Text`, `Indicator` and `Track` (namespace `Qt.Style`); `Dark` and `Light` are complete presets, `Merge` combines two styles.
+- Build a style by chaining the nodes `SetColors`, `SetFrame`, `SetText`, `SetIndicator` and `SetTrack` (namespace `Qt.Style`); `Dark` and `Light` are complete presets, `Merge` combines two styles.
 - A patched class that implements `IStylable` follows the surrounding style like a built-in widget.
 
 <img src="docs/images/styles.png" width="820" alt="The same widgets in the VLQt base style and in a light style">
