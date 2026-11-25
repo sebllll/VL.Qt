@@ -15,11 +15,29 @@ namespace VL.Qt.Elements
         BuildError,
     }
 
-    /// <summary>State of one feedback slot (one element instance of a spread output). Main thread only.</summary>
+    /// <summary>
+    /// State of one feedback slot (one element instance of a spread output). Main thread only.
+    /// Every section has one writer: the <see cref="Reconciliation.FeedbackRouter"/> writes what Qt reports (setters are internal), the node
+    /// only resets what it took through <see cref="ElementFeedback"/> (<c>Take*</c>, <c>ResetQml</c>); the messages have their own
+    /// owners (see there).
+    /// </summary>
     internal sealed class FeedbackState
     {
-        public bool IsHovered { get; set; }
-        public bool IsPressed { get; set; }
+        // --- Item state (router; only the primary occurrence of an element writes it) ---
+
+        public Vector2 MeasuredSize { get; internal set; }
+        public RectangleF SceneBounds { get; internal set; }
+
+        /// <summary>Video: playback position in seconds (0 until loaded).</summary>
+        public float MediaPosition { get; internal set; }
+
+        /// <summary>Video: media duration in seconds (0 until loaded).</summary>
+        public float MediaDuration { get; internal set; }
+
+        // --- Pointer (router; hover and press combine the bits of all feedback ids of the slot) ---
+
+        public bool IsHovered { get; internal set; }
+        public bool IsPressed { get; internal set; }
 
         /// <summary>Number of feedback ids bound to this slot whose Qt object is hovered; <see cref="IsHovered"/> is true while it is above 0.</summary>
         internal int HoverCount { get; set; }
@@ -27,61 +45,59 @@ namespace VL.Qt.Elements
         /// <summary>Number of feedback ids bound to this slot whose Qt object is pressed; <see cref="IsPressed"/> is true while it is above 0.</summary>
         internal int PressCount { get; set; }
 
-        public Vector2 PointerPosition { get; set; }
-        public Vector2 MeasuredSize { get; set; }
-        public RectangleF SceneBounds { get; set; }
-        /// <summary>Video: playback position in seconds (0 until loaded).</summary>
-        public float MediaPosition { get; set; }
-        /// <summary>Video: media duration in seconds (0 until loaded).</summary>
-        public float MediaDuration { get; set; }
-
-        /// <summary>Clicks not yet taken by <see cref="ElementFeedback.TakeClicks"/>.</summary>
-        public int PendingClicks { get; set; }
-
-        /// <summary>Tap handler: tap count of the last tap (2 = double click), 0 before the first tap.</summary>
-        public int TapCount { get; set; }
-
-        /// <summary>Tap handler: long presses not yet taken by <see cref="ElementFeedback.TakeLongPresses"/>.</summary>
-        public int PendingLongPresses { get; set; }
+        public Vector2 PointerPosition { get; internal set; }
 
         /// <summary>Point handler: a point (mouse button, finger, pen) is down on the item.</summary>
-        public bool IsActive { get; set; }
+        public bool IsActive { get; internal set; }
+
+        // --- Handler events (router writes, the node takes the pending ones) ---
+
+        /// <summary>Clicks not yet taken by <see cref="ElementFeedback.TakeClicks"/>.</summary>
+        public int PendingClicks { get; internal set; }
+
+        /// <summary>Tap handler: tap count of the last tap (2 = double click), 0 before the first tap.</summary>
+        public int TapCount { get; internal set; }
+
+        /// <summary>Tap handler: long presses not yet taken by <see cref="ElementFeedback.TakeLongPresses"/>.</summary>
+        public int PendingLongPresses { get; internal set; }
 
         /// <summary>Wheel handler: notches not yet taken by <see cref="ElementFeedback.TakeWheel"/>.</summary>
-        public Vector2 PendingWheel { get; set; }
+        public Vector2 PendingWheel { get; internal set; }
 
         /// <summary>
         /// Drag handler: translation of the running (or last) drag in units; kept after the release until the next
         /// drag.
         /// </summary>
-        public Vector2 DragDelta { get; set; }
+        public Vector2 DragDelta { get; internal set; }
 
         /// <summary>Drag handler: number of EVENT_DRAG received, so a value equal to the last one (new drag) is still seen as new.</summary>
-        public int DragUpdates { get; set; }
+        public int DragUpdates { get; internal set; }
 
         /// <summary>Touch Points handler: points currently pressed in the item, sorted by id, in units. Empty when none.</summary>
-        public Spread<TouchPoint> TouchPoints { get; set; } = Spread<TouchPoint>.Empty;
+        public Spread<TouchPoint> TouchPoints { get; internal set; } = Spread<TouchPoint>.Empty;
 
         /// <summary>Touch Points handler: number of EVENT_TOUCH_POINTS received (changes with every event).</summary>
-        public int TouchUpdates { get; set; }
+        public int TouchUpdates { get; internal set; }
 
         /// <summary>Pinch handler: scale factor of the running (or last) gesture, 1 before the first one.</summary>
-        public float PinchScale { get; set; } = 1f;
+        public float PinchScale { get; internal set; } = 1f;
 
         /// <summary>Pinch handler: rotation of the running (or last) gesture in cycles, clockwise positive.</summary>
-        public float PinchRotation { get; set; }
+        public float PinchRotation { get; internal set; }
 
         /// <summary>Pinch handler: translation of the running (or last) gesture in units, parent space.</summary>
-        public Vector2 PinchTranslation { get; set; }
+        public Vector2 PinchTranslation { get; internal set; }
 
         /// <summary>Pinch handler: pivot of scale and rotation (the fingers' centroid when the gesture began) in units, parent space.</summary>
-        public Vector2 PinchPivot { get; set; }
+        public Vector2 PinchPivot { get; internal set; }
 
         /// <summary>Pinch handler: number of EVENT_PINCH received, so an equal value (new gesture) is still seen as new.</summary>
-        public int PinchUpdates { get; set; }
+        public int PinchUpdates { get; internal set; }
+
+        // --- Value input (router writes, the node takes it) ---
 
         /// <summary>
-        /// Value input: the last user change (EVENT_VALUE) not yet taken by <see cref="ElementFeedback.TakeValue{T}"/>.
+        /// The last user change (EVENT_VALUE) not yet taken by <see cref="ElementFeedback.TakeValue{T}"/>.
         /// Several changes between two takes keep the last one.
         /// </summary>
         internal bool HasPendingValue { get; set; }
@@ -98,6 +114,8 @@ namespace VL.Qt.Elements
         /// <summary>Pending user value for <see cref="Protocol.ValueType.String"/>.</summary>
         internal string? PendingString { get; set; }
 
+        // --- QML (router writes, the node takes the signals and resets) ---
+
         /// <summary>
         /// QmlElement: last value of each root property that QML changed, by name; null until the first change. Cleared by <see
         /// cref="ElementFeedback.ResetQml"/>.
@@ -113,20 +131,22 @@ namespace VL.Qt.Elements
         /// <summary>QmlElement: signals not yet taken by <see cref="ElementFeedback.TakeQmlSignals"/>, in order of arrival.</summary>
         internal List<QmlSignal>? PendingQmlSignals { get; set; }
 
+        // --- Messages (shown at the element node; Warning and BuildError keep one message per source, Error and ApplyError have one writer each) ---
+
         /// <summary>
         /// Warnings of every writer (effect fold warning, Video and interaction duplicate), joined with a space in the order
         /// they were set; null if none.
         /// </summary>
         public string? Warning => Joined(MessageKind.Warning);
 
-        /// <summary>Error reported by Qt for the element (e.g. file not found), null if none.</summary>
-        public string? Error { get; set; }
+        /// <summary>Error reported by Qt for the element (e.g. file not found), null if none. Written by the router only.</summary>
+        public string? Error { get; internal set; }
 
         /// <summary>
         /// Error of the last failed apply that addressed this element (e.g. a value Qt rejected), null if none.
-        /// Set and cleared by the renderer; kept across the resync, unlike <see cref="Error"/>.
+        /// Set and cleared by the scene after an apply; kept across the resync, unlike <see cref="Error"/>.
         /// </summary>
-        public string? ApplyError { get; set; }
+        public string? ApplyError { get; internal set; }
 
         /// <summary>
         /// Containers: errors of the last failed <see cref="Styles.IStylable.Build"/> of the children (one per child, joined

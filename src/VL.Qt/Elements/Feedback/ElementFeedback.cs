@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
@@ -31,15 +32,15 @@ namespace VL.Qt.Elements
         }
 
         /// <summary>Returns the state if the slot exists, without allocating.</summary>
-        public bool TryGet(int index, out FeedbackState state)
+        public bool TryGet(int index, [NotNullWhen(true)] out FeedbackState? state)
         {
             if (index >= 0 && index < _states.Count) { state = _states[index]; return true; }
-            state = null!;
+            state = null;
             return false;
         }
 
-        /// <summary>Shrinks to <paramref name="count"/> slots (spread got shorter).</summary>
-        public void Resize(int count)
+        /// <summary>Shrinks to <paramref name="count"/> slots (spread got shorter); never grows.</summary>
+        public void TrimTo(int count)
         {
             if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
             if (count < _states.Count) _states.RemoveRange(count, _states.Count - count);
