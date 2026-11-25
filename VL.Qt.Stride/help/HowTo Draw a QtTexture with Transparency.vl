@@ -241,11 +241,9 @@
             <Pin Id="qsLMkcPtJai5vgsnQkrpqE" Name="Clear Color" Kind="InputPin" DefaultValue="0, 0, 0, 0" />
             <Pin Id="NOHH9ejypr44ghQQEZdsqj" Name="Format" Kind="InputPin" />
             <Pin Id="D9MektQBYnhFH5LCPWGw0x" Name="Output" Kind="OutputPin" />
-            <Pin Id="mac19lJeQMo2ROKMWJmipD" Name="Error" Kind="OutputPin" />
             <Pin Id="Uyt9QIdGW5EP8uudOU1WXm" Name="Enabled" Kind="InputPin" />
             <Pin Id="AmrdJrUIUKvMPPU3b1ceA3" Name="Input Notifications" Kind="InputPin" IsHidden="true" />
             <Pin Id="RE5m8qo0BfhOy5ZFRKcmtc" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="QoLLvvoHiM2QCMqzQWpuj3" Name="Perf" Kind="OutputPin" IsHidden="true" />
           </Node>
           <Node Bounds="80,615,145,19" Id="9ZuryzZ7vjFdWhCgWj3BSA">
             <p:NodeReference LastCategoryFullName="Stride.Rendering" LastDependency="VL.Stride.Rendering.ShaderFX.vl">

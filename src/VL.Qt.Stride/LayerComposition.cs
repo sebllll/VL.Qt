@@ -40,7 +40,7 @@ namespace VL.Qt.Stride
             return new LayerComposition(false, core, viewFormat);
         }
 
-        /// <summary>Returns the hint for a fallback (shown at Error, logged once per change), empty for Direct.</summary>
+        /// <summary>Returns the hint for a fallback (shown at the node, logged once per change), empty for Direct.</summary>
         public string Hint(PixelFormat resourceFormat) => Direct ? ""
             : $"QtRenderer draws into a target without a UNorm view (resource {resourceFormat}, view {ViewFormat}): half-transparent colours blend in linear light as with QtTexture. Draw it into a window or a typeless 8-bit render texture to blend like a Qt window.";
 

@@ -14,7 +14,8 @@ namespace VL.Qt.Stride
 {
     /// <summary>
     /// Renders the element tree at Input offscreen into a Stride texture (no window), on the GPU and in the same frame:
-    /// Stride waits GPU-side until Qt has written the texture. The output is premultiplied alpha; 1 DIP = 1 pixel.
+    /// Stride waits GPU-side until Qt has written the texture. The output is premultiplied alpha; 1 DIP = 1 pixel. Errors
+    /// (texture, binding, apply, poll or render in QtNative) show at the node and in the log.
     /// </summary>
     [ProcessNode(Name = "QtTexture", Category = "Stride.Textures.Source")]
     [Smell(SymbolSmell.Experimental)]
@@ -30,9 +31,7 @@ namespace VL.Qt.Stride
             => _nodeContext = nodeContext;
 
         /// <summary>Renders the element tree into the texture at Output.</summary>
-        /// <param name="output">The texture Qt renders into (premultiplied alpha). The same instance until Size or Format change; do not dispose it. Null while the texture cannot be created or bound (see Error).</param>
-        /// <param name="error">Last error (texture, binding, apply, poll or render in QtNative), empty if ok. Also logged once per distinct error. An invalid Format or a texture that cannot be created gives the error and a null Output.</param>
-        /// <param name="perf">Timings of the scene. Not measured yet for textures: always empty.</param>
+        /// <param name="output">The texture Qt renders into (premultiplied alpha). The same instance until Size or Format change; do not dispose it. Null while the texture cannot be created or bound: the node shows the reason.</param>
         /// <param name="input">Root element (null = empty scene).</param>
         /// <param name="size">Size of the texture in pixels (1 DIP = 1 pixel), clamped to 1x1 ... the largest Texture2D of Stride's device (16384 on feature level 11).</param>
         /// <param name="space">Coordinate space of the elements: origin and size of one unit, see <see cref="Space"/>.</param>
@@ -46,8 +45,6 @@ namespace VL.Qt.Stride
         /// <param name="renderThreads">Number of Qt render threads that render the QtTextures and QtRenderers of the process (0 ... 16; 0 renders them on the main thread, for diagnosis). The largest value of all these nodes counts. A scene keeps the thread it got when it was created: a larger value adds threads at once, a smaller value and 0 apply to scenes created afterwards.</param>
         public void Update(
             out Texture? output,
-            out string error,
-            [Pin(Visibility = PinVisibility.Optional)] out PerfStats perf,
             IElement? input,
             [DefaultValue(typeof(Int2), "1920, 1080")] Int2 size,
             [DefaultValue(typeof(Space), nameof(Space.DIPTopLeft))] Space space,
@@ -68,9 +65,6 @@ namespace VL.Qt.Stride
             _scene.Update(input, size, format, space, clearColor, clear, enabled, debug, multisampleCount);
 
             output = _scene.Texture;
-            error = _scene.Error;
-            // TODO: Perf of offscreen scenes: QtNative has no perf ring for them (vlqt_scene_get_perf needs a window).
-            perf = PerfStats.Empty;
         }
 
         public void Dispose() => _scene?.Dispose();
