@@ -134,9 +134,9 @@ public static class QtImageTest
             s.Check(ImageTest.IsBlue(Px(a, 50, 370)), $"ToQtImage pixels drawn ({Px(a, 50, 370)})");
         }
 
-        // 4) ToQtImage with a new instance: new QtImage, same resource, content replaced (red).
+        // 4) ToQtImage with a new instance: the same QtImage (one per node, NODW-06), content replaced (red) and drawn.
         var red = toQt.Update(new SolidImage(16, 16, 0, 0, 255), ImageUpload.Auto);
-        s.Check(red != blue && red?.Id == blue?.Id, "ToQtImage new input = new QtImage on the same resource");
+        s.Check(ReferenceEquals(red, blue), "ToQtImage new input = the same QtImage, content replaced");
         Frame(image, red);
         Pump(3);
         using (var a = s.Grab(w, "362_qtimage_replaced.png"))

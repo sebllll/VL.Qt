@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Reactive.Subjects;
 using System.Threading;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -48,6 +49,7 @@ namespace VL.Qt.Tests
             public int Created, Released, Started, Stopped;
             public int Ticket;
             public bool InMemory = true;
+            public int FrameWidth = 4, FrameHeight = 2;
             public Exception? GrabError;
             public int ChangedTicket => Ticket;
 
@@ -67,7 +69,7 @@ namespace VL.Qt.Tests
                     if (_source.GrabError is { } e)
                         throw e;
                     Interlocked.Increment(ref _source.Created);
-                    return ResourceProvider.Return<VideoFrame>(new MemoryFrame(4, 2, _source.InMemory), _ => Interlocked.Increment(ref _source.Released));
+                    return ResourceProvider.Return<VideoFrame>(new MemoryFrame(_source.FrameWidth, _source.FrameHeight, _source.InMemory), _ => Interlocked.Increment(ref _source.Released));
                 }
 
                 public void Dispose() => Interlocked.Increment(ref _source.Stopped);
@@ -212,6 +214,28 @@ namespace VL.Qt.Tests
             Assert.That(messages.Shown, Does.Contain("not in CPU memory"));
             Assert.That(source.Released, Is.EqualTo(source.Created));
             Assert.That(_api.Calls.Any(c => c.StartsWith("pixels")), Is.False);
+        }
+
+        [Test]
+        public void FrameNotInMemory_TheTextIsNotFormattedForEveryFrame()
+        {
+            var source = new FakeSource { InMemory = false };
+            var messages = new RecordingMessages();
+            using var node = new VideoSourceToQtImageNode(_client, _ctx, messages.Errors);
+            var error = typeof(VideoSourceToQtImageNode).GetField("_error", BindingFlags.Instance | BindingFlags.NonPublic)!;
+
+            node.Update(source, null, preferPush: false, upload: ImageUpload.Auto);
+            var first = (string)error.GetValue(node)!;
+            Assert.That(first, Does.Contain("4 x 2"));
+            for (int i = 0; i < 10; i++)
+                node.Update(source, null, preferPush: false, upload: ImageUpload.Auto);
+            Assert.That(error.GetValue(node), Is.SameAs(first), "same size: the same string, not a new one per frame");
+            Assert.That(messages.Logged, Has.Count.EqualTo(1));
+
+            source.FrameWidth = 8;
+            node.Update(source, null, preferPush: false, upload: ImageUpload.Auto);
+            Assert.That(messages.Shown, Does.Contain("8 x 2"), "a new size is a new text");
+            Assert.That(messages.Logged, Has.Count.EqualTo(2));
         }
     }
 }

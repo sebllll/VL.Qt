@@ -29,6 +29,7 @@ namespace VL.Qt.Nodes
         private QtImage? _image;
         private bool _hasFrame;
         private string _error = string.Empty;
+        private int _errorWidth, _errorHeight;
 
         public VideoSourceToQtImageNode(NodeContext nodeContext)
         {
@@ -109,7 +110,13 @@ namespace VL.Qt.Nodes
                 if (!frame.TryGetMemory(out var memory))
                 {
                     // Texture-backed frames only come with a graphics device in the context; their zero-copy path is #368.
-                    _error = $"The video frame ({frame.Width} x {frame.Height}) is not in CPU memory";
+                    // The text is formatted when the size changes, not for every frame.
+                    if (_error.Length == 0 || frame.Width != _errorWidth || frame.Height != _errorHeight)
+                    {
+                        _errorWidth = frame.Width;
+                        _errorHeight = frame.Height;
+                        _error = $"The video frame ({frame.Width} x {frame.Height}) is not in CPU memory";
+                    }
                     return;
                 }
                 _resource ??= _client.CreateImage();
