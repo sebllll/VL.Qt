@@ -14,7 +14,7 @@ using static Pixels;
 // explicit test `update-refs` writes the references. docs/images is not touched. Dark ground, the text "VL.Qt", one cell of
 // 410 x 230 DIP per picture (scaled by s, the label at the bottom), same values in the collage and in the single pictures.
 //   effect-chain.png            Blur -> RGBSplit -> DropShadow (left) against the reverse order (right); RGBSplit baked from
-//                               help/Qt/qtshaders/RGBSplit.frag, padding from its "@padding" line
+//                               help/Qt/qtshaders/RGBSplit.frag, padding = its amount (DIP)
 //   effect-glow / -directional-blur / -zoom-blur / -radial-blur / -innershadow / -displace .png
 //                               one effect each, as links with the builtin shaders (values as in EffectPassesTest/MotionBlurTest)
 //   effects-collage.png         all of them as a 4 x 2 grid, 1640 px wide
@@ -79,7 +79,8 @@ public static class ReadmeImagesTest
         if (splitFile == null) return;
         var splitCode = File.ReadAllText(splitFile);
         var split = Baked(splitCode, "RGBSplit.frag");
-        var splitPad = float.Parse(Regex.Match(splitCode, @"//\s*@padding\s+([\d.]+)").Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+        s.Check(Regex.IsMatch(splitCode, @"//\s*@padding\s+amount"), "readme-images: RGBSplit.frag takes its padding from the uniform amount");
+        const float splitAmount = 8; // DIP, the distance of the shifted copies (also the padding, as in the file head)
 
         var cmd = new CommandWriter();
         uint next = 1;
@@ -105,9 +106,9 @@ public static class ReadmeImagesTest
         }
         void Split(CommandWriter c, float s)
         {
-            var p = splitPad * s;
+            var p = splitAmount * s;
             c.BeginEffectChainLink(Protocol.EffectTemplate.Single, [split], p, p, p, p, 0);
-            c.UniformF32("amount", 0.022f);
+            c.UniformF32("amount", splitAmount * s);
             c.UniformVec2("direction", 1, 0);
             c.UniformColor("tint", 1, 1, 1, 1);
             c.UniformBool("scanlines", false);

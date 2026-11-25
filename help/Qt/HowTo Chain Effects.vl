@@ -74,7 +74,7 @@
             <Pin Id="MONRn60p648UeBpGdzjSty" Name="Auto Padding" Kind="InputPin" IsHidden="true" />
             <Pin Id="xVpRU91rSCrkuFo1a9ald2" Name="Padding" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="tt4kZPNP2ReJmsoVdlwgTe" Comment="Amount" Bounds="242,420,35,15" ShowValueBox="true" isIOBox="true" Value="0.05">
+          <Pad Id="tt4kZPNP2ReJmsoVdlwgTe" Comment="Amount" Bounds="242,420,35,15" ShowValueBox="true" isIOBox="true" Value="20">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
@@ -136,7 +136,7 @@
             <Pin Id="mF4hG0T3baRoA0VFUGSS2j" Name="Auto Padding" Kind="InputPin" IsHidden="true" />
             <Pin Id="XOmi24V9fUo7sQOz01zVuE" Name="Padding" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="mL9C4icBciXstxkbw4tkN3" Comment="Amount" Bounds="609,420,35,15" ShowValueBox="true" isIOBox="true" Value="0.05">
+          <Pad Id="mL9C4icBciXstxkbw4tkN3" Comment="Amount" Bounds="609,420,35,15" ShowValueBox="true" isIOBox="true" Value="20">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>

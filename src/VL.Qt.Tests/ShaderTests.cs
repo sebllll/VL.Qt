@@ -394,12 +394,13 @@ namespace VL.Qt.Tests
         public void Node_ReservedUniformNames_AreErrors()
         {
             CreateNode();
-            Update("a.qsb", null, U(Uniform.Float("qt_Opacity", 1), Uniform.Float("source", 2), Uniform.Float("qt_Opacity", 3), Uniform.Float("texelSize", 4)), out var error);
+            Update("a.qsb", null, U(Uniform.Float("qt_Opacity", 1), Uniform.Float("source", 2), Uniform.Float("qt_Opacity", 3), Uniform.Float("texelSize", 4), Uniform.Float("weight", 5)), out var error);
             Assert.That(error, Does.Contain("'qt_Opacity' is reserved"));
             Assert.That(error, Does.Contain("'source' is reserved (use the Input pin)"));
-            // Said once per name; texelSize is only set by the effect chain, so a ShaderEffect may use it.
-            Assert.That(error.Split('\n').Count(l => l.Contains("is reserved")), Is.EqualTo(2));
-            Assert.That(error, Does.Not.Contain("texelSize"));
+            Assert.That(error, Does.Contain("'texelSize' is reserved (set by VL.Qt)"));
+            // Said once per name; weight is only set by the effect chain, so a ShaderEffect may use it.
+            Assert.That(error.Split('\n').Count(l => l.Contains("is reserved")), Is.EqualTo(3));
+            Assert.That(error, Does.Not.Contain("weight"));
             Update("a.qsb", null, U(Uniform.Float("a", 1)), out error);
             Assert.That(error, Is.Empty);
         }

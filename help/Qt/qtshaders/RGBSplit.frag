@@ -1,6 +1,6 @@
 #version 440
 // @category Qt.Elements.Shaders.Examples
-// @padding 40
+// @padding amount
 // @tags rgb, chromatic aberration, glitch, print
 // @summary Shifts the red and blue channel of the Input in opposite directions, like a misaligned print.
 //   Optional scanlines darken every second pixel row.
@@ -10,9 +10,10 @@
 // The head above (comments before the first code line) holds the node's annotations: category, summary and tags (search words of the node browser, separated by commas); @remarks adds longer help.
 // A summary goes on in the following comment lines until the next blank line.
 // The padding line is the space around the element (DIP) that the shader may draw into when it is used as a node of an
-// effect chain (Qt.Effects, see HowTo Chain Effects): the shifted colors reach beyond the element.
+// effect chain (Qt.Effects, see HowTo Chain Effects): the shifted colors reach beyond the element. Here it follows the
+// uniform "amount" (a distance in DIP), so the room grows with the shift.
 // More file head tags for effect chain nodes (docs/effects-and-shaders.md, Annotations), written with a leading @:
-//   padding <uniform> [factor]   padding from a float uniform instead of a fixed number
+//   padding <uniform> [factor]   padding from a float uniform instead of a fixed number (used here)
 //   passes 2                     run the shader twice, the pass number is in the uniform passIndex (0, 1)
 //   chainonly                    only the effect chain node, no element node (templates: Example*.frag)
 //
@@ -23,6 +24,10 @@
 //   optional              the pin is hidden until shown
 //   summary               help text of the pin
 // A sampler2D named "source" becomes the Input pin. Without it the shader is a generator (see Stripes.frag).
+//
+// Lengths are in DIP, like the element's size, so the shift looks the same on every screen. VL.Qt sets three uniforms
+// for you when a shader declares them (no pins): texelSize (1 / pixel size of source), dpr (device pixels per DIP)
+// and viewSize (size of the element in DIP). DIP * dpr * texelSize is a length in texture coordinates (UV).
 
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
@@ -32,10 +37,16 @@ layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
 
-    // @summary Distance of the shifted copies, as a fraction of the element size.
-    // @default 0.02
+    // Set by VL.Qt, no pin. 1 / pixel width, 1 / pixel height of source.
+    vec2 texelSize;
+
+    // Set by VL.Qt, no pin. Device pixels per DIP.
+    float dpr;
+
+    // @summary Distance of the shifted copies in DIP.
+    // @default 10
     // @min 0
-    // @max 0.2
+    // @max 200
     float amount;
 
     // @summary Direction of the shift (x to the right, y down).
@@ -54,7 +65,8 @@ layout(binding = 1) uniform sampler2D source;
 void main()
 {
     vec2 uv = qt_TexCoord0;
-    vec2 offset = direction * amount;
+    // DIP -> pixels -> UV
+    vec2 offset = direction * amount * dpr * texelSize;
 
     // Three lookups of the premultiplied input: red from one side, blue from the other.
     vec4 a = texture(source, uv + offset);

@@ -451,7 +451,7 @@ void ShaderItem::rebuild()
     m_samplers.clear();
     m_ubufSize = 0;
     m_matrixOffset = m_opacityOffset = -1;
-    m_texelOffset = m_dprOffset = m_texelBinding = -1;
+    m_texelOffset = m_dprOffset = m_viewSizeOffset = m_texelBinding = -1;
     m_declared.clear();
     m_shaderChanged = true;
     QStringList errors;
@@ -517,16 +517,21 @@ void ShaderItem::rebuild()
                 m_matrixOffset = m.offset;
             else if (m.name == "qt_Opacity")
                 m_opacityOffset = m.offset;
-            else if (m_chain && m.name == "texelSize") {
+            else if (m.name == "texelSize") {
                 if (m.type == QShaderDescription::Vec2 && !m.array && m.offset + 8 <= m_ubufSize)
                     m_texelOffset = m.offset;
                 else
                     errors << QStringLiteral("uniform 'texelSize' must be a vec2 (set by VL.Qt)");
-            } else if (m_chain && m.name == "dpr") {
+            } else if (m.name == "dpr") {
                 if (m.type == QShaderDescription::Float && !m.array && m.offset + 4 <= m_ubufSize)
                     m_dprOffset = m.offset;
                 else
                     errors << QStringLiteral("uniform 'dpr' must be a float (set by VL.Qt)");
+            } else if (m.name == "viewSize") {
+                if (m.type == QShaderDescription::Vec2 && !m.array && m.offset + 8 <= m_ubufSize)
+                    m_viewSizeOffset = m.offset;
+                else
+                    errors << QStringLiteral("uniform 'viewSize' must be a vec2 (set by VL.Qt)");
             }
         }
         for (const SamplerDesc& s : samplers) {
@@ -757,7 +762,7 @@ void ShaderItem::itemChange(ItemChange change, const ItemChangeData& data)
 {
     QQuickItem::itemChange(change, data);
     if (change == ItemDevicePixelRatioHasChanged || change == ItemSceneChange) {
-        update(); // dpr of a chain pass
+        update(); // dpr uniform
         emit devicePixelRatioChanged();
     }
 }
@@ -815,6 +820,11 @@ QSGNode* ShaderItem::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
     if (m_dprOffset >= 0) {
         const float dpr = float(window()->effectiveDevicePixelRatio());
         std::memcpy(ub + m_dprOffset, &dpr, 4);
+    }
+    // Drawn size in DIP (the item, not the texture): w, h are floats of width() / height().
+    if (m_viewSizeOffset >= 0) {
+        const float v[2] = {w, h};
+        std::memcpy(ub + m_viewSizeOffset, v, 8);
     }
     writeTexelSize(mat); // again in preprocess, after a layer updated its texture
 

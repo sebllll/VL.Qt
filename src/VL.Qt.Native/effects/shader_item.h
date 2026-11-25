@@ -21,9 +21,12 @@
  * enabled), U64 = image resource (resources/image_texture_cache.h). A sampler without texture samples a 1x1
  * transparent texture. Dynamic textures (layers) are updated in the node's preprocess like Qt's ShaderEffect does.
  *
- * Chain pass (setChainPass, effect chain, effects/effect_chain.cpp): the item is a pass of a SHADER link. QtNative sets
- * texelSize (vec2, 1 / pixel size of the source texture, read from the texture itself, also after the layer resized it in
- * preprocess) and dpr (float, effectiveDevicePixelRatio) when the fragment shader declares them; while the fragment slot has
+ * Automatic uniforms (every item, written when a shader declares them): texelSize (vec2, 1 / pixel size of the source
+ * texture, read from the texture itself, also after the layer resized it in preprocess), dpr (float,
+ * effectiveDevicePixelRatio) and viewSize (vec2, size of the item in DIP). With the DIP lengths of a shader these three
+ * give the pixel size of a length: length * dpr * texelSize is a length in texture coordinates.
+ *
+ * Chain pass (setChainPass, effect chain, effects/effect_chain.cpp): the item is a pass of a SHADER link. While the fragment slot has
  * no Ready content (id 0, loading, Failed without an earlier Ready one) Qt's default ShaderEffect fragment shader passes
  * source through unchanged (no table checks then). Reserved names of the chain are filtered by the chain, not here. A
  * PYRAMID link also uses setTexelSamplers (texelSize of the composite = the glow / shadow texture, not source),
@@ -62,11 +65,12 @@ namespace vlqt {
 
 // Uniform names VL.Qt sets itself: THE one list (the C# mirror is VL.Qt.Shaders.ReservedUniforms, ReservedUniformsDriftTests
 // compares the three arrays below). An entry of that name from C# is an error line; shader files get no pin for them.
-// - item: every ShaderEffect (qt_Matrix and qt_Opacity from the render state, source = Input);
+// - item: every ShaderEffect (qt_Matrix and qt_Opacity from the render state, source = Input; texelSize, dpr and
+//   viewSize written into the uniform block if the shader declares them);
 // - chain automatic: written by the effect chain into the passes of a SHADER link if the shader declares them;
 // - chain reserved: names of the Blur-Pyramide textures, no uniform of a shader link may have them.
-inline constexpr std::string_view kItemReservedUniforms[] = {"qt_Matrix", "qt_Opacity", "source"};
-inline constexpr std::string_view kChainAutomaticUniforms[] = {"texelSize", "dpr", "weight", "elementRect", "passIndex"};
+inline constexpr std::string_view kItemReservedUniforms[] = {"qt_Matrix", "qt_Opacity", "source", "texelSize", "dpr", "viewSize"};
+inline constexpr std::string_view kChainAutomaticUniforms[] = {"weight", "elementRect", "passIndex"};
 inline constexpr std::string_view kChainReservedUniforms[] = {"base", "glow", "shadow"};
 
 // A name of kItemReservedUniforms.
@@ -100,9 +104,9 @@ public:
     bool setShader(int stage, uint64_t id, std::string& err);
     void setBlending(bool on);
     void setMeshResolution(int x, int y);
-    // Pass of an effect chain link (see the head comment): auto uniforms texelSize/dpr, pass-through while not Ready.
+    // Pass of an effect chain link (see the head comment): pass-through while not Ready.
     void setChainPass(bool on);
-    // Chain pass: texelSize from the first of these samplers the fragment shader declares (none: source).
+    // texelSize from the first of these samplers the fragment shader declares (none: source).
     void setTexelSamplers(std::vector<QByteArray> names);
     // Names of the table that are not reported as unknown when the shaders do not declare them.
     void setOptionalUniforms(const std::vector<QByteArray>& names);
@@ -208,8 +212,8 @@ private:
     std::vector<Write> m_writes;
     std::vector<Sampler> m_samplers;
     int m_ubufSize = 0, m_matrixOffset = -1, m_opacityOffset = -1;
-    int m_texelOffset = -1, m_dprOffset = -1; // chain pass: auto uniforms (-1 = not declared)
-    int m_texelBinding = -1;                  // chain pass: sampler binding texelSize is read from
+    int m_texelOffset = -1, m_dprOffset = -1, m_viewSizeOffset = -1; // auto uniforms (-1 = not declared)
+    int m_texelBinding = -1;                  // sampler binding texelSize is read from
     std::vector<QByteArray> m_texelSamplers;  // setTexelSamplers
     std::vector<QByteArray> m_optional;       // setOptionalUniforms
     std::vector<QByteArray> m_declared;       // uniform and sampler names of the shown shaders (rebuild)

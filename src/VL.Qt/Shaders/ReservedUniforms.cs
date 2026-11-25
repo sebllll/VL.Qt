@@ -14,11 +14,14 @@ namespace VL.Qt.Shaders
         /// <summary>Name of the sampler2D that becomes the Input pin (and the Input of an effect chain link).</summary>
         public const string InputSampler = "source";
 
-        /// <summary>Set for every ShaderEffect: qt_Matrix and qt_Opacity from the render state, source is the Input.</summary>
-        public static readonly ImmutableHashSet<string> Item = ImmutableHashSet.Create(StringComparer.Ordinal, "qt_Matrix", "qt_Opacity", InputSampler);
+        /// <summary>
+        /// Set for every ShaderEffect: qt_Matrix and qt_Opacity from the render state, source is the Input, texelSize (1 / pixel size
+        /// of the Input), dpr and viewSize (size in DIP) when the shader declares them.
+        /// </summary>
+        public static readonly ImmutableHashSet<string> Item = ImmutableHashSet.Create(StringComparer.Ordinal, "qt_Matrix", "qt_Opacity", InputSampler, "texelSize", "dpr", "viewSize");
 
         /// <summary>Written by the effect chain into the passes of a shader link if the shader declares them.</summary>
-        public static readonly ImmutableHashSet<string> ChainAutomatic = ImmutableHashSet.Create(StringComparer.Ordinal, "texelSize", "dpr", "weight", "elementRect", "passIndex");
+        public static readonly ImmutableHashSet<string> ChainAutomatic = ImmutableHashSet.Create(StringComparer.Ordinal, "weight", "elementRect", "passIndex");
 
         /// <summary>Names of the textures of the Blur-Pyramide: no uniform of a shader link may have them.</summary>
         public static readonly ImmutableHashSet<string> ChainReserved = ImmutableHashSet.Create(StringComparer.Ordinal, "base", "glow", "shadow");

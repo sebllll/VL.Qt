@@ -567,7 +567,7 @@ VLQT_API int vlqt_shader_load_source(unsigned long long id, const char* utf8Sour
  * top of this file; a bake error is VLQT_OK with the text "error ..."). VLQT_ERR_BAD_ARGUMENT: empty source, stage not
  * VLQT_SHADER_STAGE_*. No QGuiApplication needed.
  * Thread: any, and it is synchronous on the calling thread (there is no async variant). The node factory calls it
- * from the description of a shader node (ShaderNodeLayout.Load, a thread of vvvv's choosing): a source not seen
+ * from ShaderSourceCache.Get (a thread of vvvv's choosing, while it describes a shader node): a source not seen
  * before blocks the caller for one
  * bake (and for a runtime bake that holds the mutex), the same source again is answered from the bake cache of
  * QtNative (64 entries, a bake error too) without a bake.

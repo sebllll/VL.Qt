@@ -89,10 +89,12 @@ layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
 
-    // @summary Distance of the shifted copies, as a fraction of the element size.
-    // @default 0.02
+    vec2 texelSize; // set by VL.Qt, no pin
+    float dpr;      // set by VL.Qt, no pin
+
+    // @summary Distance of the shifted copies in DIP.
+    // @default 10
     // @min 0
-    // @max 0.2
     float amount;
 
     // @default 1, 0
@@ -105,7 +107,7 @@ layout(binding = 1) uniform sampler2D source;
 
 void main()
 {
-    vec2 offset = direction * amount;
+    vec2 offset = direction * amount * dpr * texelSize; // DIP -> pixels -> UV
     vec4 a = texture(source, qt_TexCoord0 + offset);
     vec4 b = texture(source, qt_TexCoord0);
     vec4 c = texture(source, qt_TexCoord0 - offset);
@@ -134,9 +136,17 @@ Annotations are `//` comments. Unknown tags show at the node.
 
 **Uniform** (directly above it or at the end of its line): `@default`, `@min`, `@max` (limits of the pad only), `@color` (a `vec4` becomes a color), `@optional` (the pin is hidden until shown, like an optional pin of a C# node; its default still applies; on a `sampler2D` it hides the image pin), `@summary`.
 
-**Units:** a uniform of a file shader reaches the shader as it is, so a length uniform is in DIP (the renderer's space does not scale it), like `@padding`. Document it as DIP in its `@summary`; `dpr` turns DIP into device pixels.
+**Units:** a uniform of a file shader reaches the shader as it is, so a length uniform is in DIP (the renderer's space does not scale it), like `@padding`. Document it as DIP in its `@summary`. To turn a length in DIP into texture coordinates, multiply it by `dpr * texelSize` (see the next paragraph); the same value then looks the same at every device pixel ratio and on a scaled element.
 
-**Names set by VL.Qt** (no pin, an own entry of that name is an error): `qt_Matrix`, `qt_Opacity`, and in the effect chain `source`, `texelSize` (1 / pixel size of the sampled texture), `dpr`, `weight`, `elementRect` and `passIndex`. `base`, `glow` and `shadow` are reserved there too: a shader file with a uniform of that name gets no pin and an error at its effect chain node. The same goes for an entry of such a name in the Uniforms of a ShaderEffect (`qt_Matrix`, `qt_Opacity`, `source`): an error at the node, the entry is ignored. The list lives once, in `effects/shader_item.h` (`kItemReservedUniforms`, `kChainAutomaticUniforms`, `kChainReservedUniforms`), and `ReservedUniforms` in C# mirrors it (a unit test compares them). `passIndex` is a `float` that VL.Qt writes into the uniform block if the shader declares it: 0 in a single pass and in pass 1, 1 in pass 2.
+**Names set by VL.Qt** (no pin, an own entry of that name is an error): `qt_Matrix`, `qt_Opacity`, `source` (the Input), and, in the uniform block of every shader that declares them (element and effect chain node alike):
+
+| Uniform | Type | Value |
+|---|---|---|
+| `texelSize` | `vec2` | 1 / pixel width, 1 / pixel height of `source` (the layer of the element: its size in DIP x device pixel ratio; in a chain pass the texture of that pass, padding included) |
+| `dpr` | `float` | device pixels per DIP of the window (1 for an offscreen scene) |
+| `viewSize` | `vec2` | drawn size of the element in DIP (in a chain pass: of the pass, padding included) |
+
+`length_in_dip * dpr * texelSize` is a length in texture coordinates, `length_in_dip * dpr` one in device pixels, and `viewSize` in DIP: `qt_TexCoord0 * viewSize` is the position in DIP. A shader that blurs by a radius in DIP looks the same at device pixel ratios 1 and 2. In the effect chain `weight`, `elementRect` and `passIndex` are set too. `base`, `glow` and `shadow` are reserved there as well: a shader file with a uniform of that name gets no pin and an error at its effect chain node. The same goes for an entry of such a name in the Uniforms of a ShaderEffect (`qt_Matrix`, `qt_Opacity`, `source`, `texelSize`, `dpr`, `viewSize`): an error at the node, the entry is ignored. The list lives once, in `effects/shader_item.h` (`kItemReservedUniforms`, `kChainAutomaticUniforms`, `kChainReservedUniforms`), and `ReservedUniforms` in C# mirrors it (a unit test compares them). `passIndex` is a `float` that VL.Qt writes into the uniform block if the shader declares it: 0 in a single pass and in pass 1, 1 in pass 2.
 
 ### Two-pass effects
 

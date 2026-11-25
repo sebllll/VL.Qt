@@ -30,7 +30,9 @@ namespace VL.Qt.Tests
             foreach (var name in ReservedUniforms.Item.Concat(ReservedUniforms.ChainAutomatic).Concat(ReservedUniforms.ChainReserved))
                 Assert.That(ReservedUniforms.IsChainReserved(name), Is.True, name);
             Assert.That(ReservedUniforms.IsChainReserved("amount"), Is.False);
-            Assert.That(ReservedUniforms.IsItemReserved("texelSize"), Is.False, "texelSize is only reserved in an effect chain");
+            foreach (var name in new[] { "texelSize", "dpr", "viewSize" })
+                Assert.That(ReservedUniforms.IsItemReserved(name), Is.True, name);
+            Assert.That(ReservedUniforms.IsItemReserved("weight"), Is.False, "weight is only reserved in an effect chain");
         }
 
         // The string literals of "inline constexpr std::string_view <name>[] = {...};".
