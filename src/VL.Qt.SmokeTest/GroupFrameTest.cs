@@ -56,7 +56,7 @@ public static class GroupFrameTest
 
         void Frame(Element tree, bool clear = false)
         {
-            cmd.Reset();
+            cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
             rec.Update(tree, Space.DIPTopLeft);
             if (cmd.Length > 0)
@@ -197,7 +197,7 @@ public static class GroupFrameTest
         node.Dispose();
         Pump(3);
         s.Check(client.LiveCount == 0, $"snapshot resource released (live {client.LiveCount})");
-        cmd.Reset();
+        cmd.Clear();
         rec.Clear();
         Native.Apply(w, cmd.EndFrame());
         Native.vlqt_scene_destroy(w);
@@ -228,7 +228,7 @@ public static class GroupFrameTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
 
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
@@ -251,9 +251,9 @@ public static class GroupFrameTest
         // Blur on the child: the MultiEffect grows the child's effect item by its padding (Blur Max 32).
         cmd.BeginEffectChain(r);
         cmd.BeginMultiLink();
-        cmd.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
-        cmd.EffectF32(Protocol.MultiEffectKey.Blur, 1f);
-        cmd.EffectI32(Protocol.MultiEffectKey.BlurMax, 32);
+        cmd.MultiEffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+        cmd.MultiEffectF32(Protocol.MultiEffectKey.Blur, 1f);
+        cmd.MultiEffectI32(Protocol.MultiEffectKey.BlurMax, 32);
         cmd.EndLink();
         cmd.EndEffectChain();
         Apply("Blur chain on the child");
@@ -300,7 +300,7 @@ public static class GroupFrameTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         void Expect(float x, float y, float width, float height, string what)
         {

@@ -91,7 +91,7 @@ public static class ImageTest
             cmd.Reparent(id, 0, 1000);
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         Image(Stretch, stripes, 20, 20, 300, 100, 0, smooth: false);
         Image(Smooth, stripes, 20, 140, 300, 100, 0, smooth: true);
@@ -130,7 +130,7 @@ public static class ImageTest
         }
 
         // Updates: image 0, fillMode change, failed -> Ready resource.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetU64(Smooth, Protocol.PropertyId.Image, 0);
         cmd.SetI32(Crop, Protocol.PropertyId.FillMode, 0);
         cmd.SetU64(Missing, Protocol.PropertyId.Image, stripes);
@@ -150,22 +150,22 @@ public static class ImageTest
             var rc = Apply();
             s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
         }
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetI32(Fit, Protocol.PropertyId.FillMode, 4);
         Expect(Native.Result.BadArgument, "fillMode 4");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetI32(Fit, Protocol.PropertyId.Smooth, 1);
         Expect(Native.Result.BadArgument, "smooth as i32");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetF32(Fit, Protocol.PropertyId.Radius, 1);
         Expect(Native.Result.UnknownProperty, "radius on image");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetString(Fit, Protocol.PropertyId.Source, asset);
         Expect(Native.Result.UnknownProperty, "source on image");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetU64(Fit, Protocol.PropertyId.Image, 0xDEAD_0000_BEEFUL);
         Expect(Native.Result.BadArgument, "unknown resource id");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetI32(Fit, Protocol.PropertyId.Image, 1);
         Expect(Native.Result.BadArgument, "image as i32");
 

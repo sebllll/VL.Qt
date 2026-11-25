@@ -84,18 +84,25 @@ namespace VL.Qt.Tests
         public void EndUniforms() => _inner.EndUniforms();
 
         public void BeginQmlProperties(uint id, ushort flags) { Tick(); _inner.BeginQmlProperties(id, flags); }
-        public void QmlRect(ReadOnlySpan<char> name, float x, float y, float width, float height) => _inner.QmlRect(name, x, y, width, height);
-        public void QmlString(ReadOnlySpan<char> name, ReadOnlySpan<char> value) => _inner.QmlString(name, value);
+        public void QmlPropertyF32(ReadOnlySpan<char> name, float value) => _inner.QmlPropertyF32(name, value);
+        public void QmlPropertyI32(ReadOnlySpan<char> name, int value) => _inner.QmlPropertyI32(name, value);
+        public void QmlPropertyBool(ReadOnlySpan<char> name, bool value) => _inner.QmlPropertyBool(name, value);
+        public void QmlPropertyColor(ReadOnlySpan<char> name, float r, float g, float b, float a) => _inner.QmlPropertyColor(name, r, g, b, a);
+        public void QmlPropertyVec2(ReadOnlySpan<char> name, float x, float y) => _inner.QmlPropertyVec2(name, x, y);
+        public void QmlPropertyVec3(ReadOnlySpan<char> name, float x, float y, float z) => _inner.QmlPropertyVec3(name, x, y, z);
+        public void QmlPropertyVec4(ReadOnlySpan<char> name, float x, float y, float z, float w) => _inner.QmlPropertyVec4(name, x, y, z, w);
+        public void QmlPropertyRect(ReadOnlySpan<char> name, float x, float y, float width, float height) => _inner.QmlPropertyRect(name, x, y, width, height);
+        public void QmlPropertyString(ReadOnlySpan<char> name, ReadOnlySpan<char> value) => _inner.QmlPropertyString(name, value);
         public void EndQmlProperties() => _inner.EndQmlProperties();
 
         public void BeginEffectChain(uint id) { Tick(); _inner.BeginEffectChain(id); }
         public void BeginMultiLink() => _inner.BeginMultiLink();
-        public void EffectBool(ushort prop, bool value) => _inner.EffectBool(prop, value);
-        public void EffectF32(ushort prop, float value) => _inner.EffectF32(prop, value);
-        public void EffectI32(ushort prop, int value) => _inner.EffectI32(prop, value);
-        public void EffectColor(ushort prop, float r, float g, float b, float a) => _inner.EffectColor(prop, r, g, b, a);
-        public void EffectRect(ushort prop, float x, float y, float width, float height) => _inner.EffectRect(prop, x, y, width, height);
-        public void EffectRef(ushort prop, uint refId) => _inner.EffectRef(prop, refId);
+        public void MultiEffectBool(ushort prop, bool value) => _inner.MultiEffectBool(prop, value);
+        public void MultiEffectF32(ushort prop, float value) => _inner.MultiEffectF32(prop, value);
+        public void MultiEffectI32(ushort prop, int value) => _inner.MultiEffectI32(prop, value);
+        public void MultiEffectColor(ushort prop, float r, float g, float b, float a) => _inner.MultiEffectColor(prop, r, g, b, a);
+        public void MultiEffectRect(ushort prop, float x, float y, float width, float height) => _inner.MultiEffectRect(prop, x, y, width, height);
+        public void MultiEffectRef(ushort prop, uint refId) => _inner.MultiEffectRef(prop, refId);
         public void BeginEffectChainLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
             float paddingRight, float paddingBottom, float strength)
             => _inner.BeginEffectChainLink(template, shaderIds, paddingLeft, paddingTop, paddingRight, paddingBottom, strength);

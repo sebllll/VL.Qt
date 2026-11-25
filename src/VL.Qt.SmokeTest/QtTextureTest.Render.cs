@@ -53,7 +53,7 @@ public static partial class QtTextureTest
         if (scene == SceneHandle.Null)
             return scene;
         var cmd = new CommandWriter();
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(clear.R, clear.G, clear.B, clear.A);
         for (uint i = 0; i < boxes.Length; i++)
         {
@@ -72,7 +72,7 @@ public static partial class QtTextureTest
     private static void Recolor(SceneHandle scene, uint id, float r, float g, float b, float a, Scenario s, string label)
     {
         var cmd = new CommandWriter();
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetColor(id, Protocol.PropertyId.Color, r, g, b, a);
         int rc = (int)Native.Apply(scene, cmd.EndFrame());
         s.Check(rc == 0, $"{label}: apply colour ({rc}) {(rc != 0 ? Native.LastError() : "")}");
@@ -434,7 +434,7 @@ public static partial class QtTextureTest
         }
         // The window gets the same scene.
         var cmd = new CommandWriter();
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(clear.Item1, clear.Item2, clear.Item3, clear.Item4);
         for (uint i = 0; i < boxes.Length; i++)
         {

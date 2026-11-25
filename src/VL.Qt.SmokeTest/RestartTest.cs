@@ -54,7 +54,7 @@ public static class RestartTest
     {
         var w = NativeCalls.CreateWindow(400, 300, "VL.Qt shader restart test");
         Native.vlqt_window_show(w);
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(Effect, Protocol.ElementType.Shader);
         cmd.SetPlace(Effect, 0, 0, 400, 300);
         cmd.SetU64(Effect, Protocol.PropertyId.FragmentShader, shader);
@@ -148,7 +148,7 @@ public static class RestartTest
 
             // Live edit: text B with one more uniform, set while it bakes.
             var b = Load(true, round);
-            cmd.Reset();
+            cmd.Clear();
             cmd.SetU64(Effect, Protocol.PropertyId.FragmentShader, b);
             cmd.BeginUniforms(Effect, Protocol.UniformSet.Clear);
             cmd.UniformF32("time", 0.25f);
@@ -160,7 +160,7 @@ public static class RestartTest
             switch (round % 3)
             {
                 case 0:
-                    cmd.Reset();
+                    cmd.Clear();
                     cmd.Destroy(Effect);
                     Native.Apply(w, cmd.EndFrame());
                     Native.vlqt_res_release(a);
@@ -175,7 +175,7 @@ public static class RestartTest
                 default:
                     Native.vlqt_res_release(b);
                     Native.vlqt_res_release(a);
-                    cmd.Reset();
+                    cmd.Clear();
                     cmd.Destroy(Effect);
                     Native.Apply(w, cmd.EndFrame());
                     Native.vlqt_scene_destroy(w);

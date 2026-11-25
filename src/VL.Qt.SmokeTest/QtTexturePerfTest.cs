@@ -120,7 +120,7 @@ public static class QtTexturePerfTest
         for (int k = 0; k < count; k++)
         {
             scenes[k] = Native.vlqt_offscreen_create(W, H);
-            cmd.Reset();
+            cmd.Clear();
             cmd.ClearColor(0, 0, 0, 0);
             // id 1: marker (frame number in red); 2..: rounded rectangles; then texts.
             cmd.Create(1, Protocol.ElementType.Rectangle);
@@ -200,7 +200,7 @@ public static class QtTexturePerfTest
             byte marker = (byte)(f % 251 + 1);
             for (int k = 0; k < count; k++)
             {
-                cmd.Reset();
+                cmd.Clear();
                 cmd.SetColor(1, Protocol.PropertyId.Color, marker / 255f, 0, 0, 1);
                 for (int i = 0; i < Math.Min(50, rects); i++)
                 {

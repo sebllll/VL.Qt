@@ -5,6 +5,9 @@ namespace VL.Qt.Wire
 {
     /// <summary>
     /// Target of the reconciler: the item commands of the protocol (see protocol.h), one SET method per value type.
+    /// A command with entries (SET_STYLE, SET_UNIFORMS, SET_QML_PROPERTIES, SET_EFFECT_CHAIN) is a <c>Begin*</c>, its entries
+    /// (<c>Style*</c>, <c>Uniform*</c>, <c>QmlProperty*</c>, <c>MultiEffect*</c> and the links) and its <c>End*</c>; no other command
+    /// and no other <c>Begin*</c> in between. <see cref="CommandWriter"/> throws if a caller breaks this.
     /// Implemented by <see cref="CommandWriter"/> (byte buffer for vlqt_scene_apply) and by a recording fake in the tests.
     /// Implementations must not allocate per call in the steady state.
     /// </summary>
@@ -99,25 +102,34 @@ namespace VL.Qt.Wire
         void EndUniforms();
 
         /// <summary>
-        /// SET_QML_PROPERTIES: starts the command for the QmlElement <paramref name="id"/> (flags 0). The entries are encoded
-        /// like those of SET_UNIFORMS and written with the Uniform* methods (<see cref="UniformF32"/>, <see cref="UniformI32"/>,
-        /// <see cref="UniformBool"/>, <see cref="UniformVec2"/>, <see cref="UniformVec3"/>, <see cref="UniformVec4"/>,
-        /// <see cref="UniformColor"/>) and <see cref="QmlRect"/>, then <see cref="EndQmlProperties"/>; no other command in between.
+        /// SET_QML_PROPERTIES: starts the command for the QmlElement <paramref name="id"/> (flags 0). Followed by QmlProperty*
+        /// entries (name 1..<see cref="Protocol.UniformNameMax"/> UTF-8 bytes) and <see cref="EndQmlProperties"/>; no other command in between.
         /// </summary>
         void BeginQmlProperties(uint id, ushort flags);
 
-        /// <summary>QML entry of value type rect (x, y, width, height); between <see cref="BeginQmlProperties"/> and <see cref="EndQmlProperties"/>.</summary>
-        void QmlRect(ReadOnlySpan<char> name, float x, float y, float width, float height);
+        void QmlPropertyF32(ReadOnlySpan<char> name, float value);
+        void QmlPropertyI32(ReadOnlySpan<char> name, int value);
+        void QmlPropertyBool(ReadOnlySpan<char> name, bool value);
 
-        /// <summary>QML entry of value type string (u32 length + UTF-8); between <see cref="BeginQmlProperties"/> and <see cref="EndQmlProperties"/>.</summary>
-        void QmlString(ReadOnlySpan<char> name, ReadOnlySpan<char> value);
+        /// <summary>Color with straight alpha.</summary>
+        void QmlPropertyColor(ReadOnlySpan<char> name, float r, float g, float b, float a);
+
+        void QmlPropertyVec2(ReadOnlySpan<char> name, float x, float y);
+        void QmlPropertyVec3(ReadOnlySpan<char> name, float x, float y, float z);
+        void QmlPropertyVec4(ReadOnlySpan<char> name, float x, float y, float z, float w);
+
+        /// <summary>rect (x, y, width, height).</summary>
+        void QmlPropertyRect(ReadOnlySpan<char> name, float x, float y, float width, float height);
+
+        /// <summary>string (u32 length + UTF-8).</summary>
+        void QmlPropertyString(ReadOnlySpan<char> name, ReadOnlySpan<char> value);
 
         /// <summary>Closes the SET_QML_PROPERTIES started by <see cref="BeginQmlProperties"/> (entry count, payload length).</summary>
         void EndQmlProperties();
 
         /// <summary>
         /// SET_EFFECT_CHAIN: starts the whole Effect chain of element <paramref name="id"/>. Followed by the links in
-        /// application order (first = applied first), each <see cref="BeginMultiLink"/> + Effect* entries or
+        /// application order (first = applied first), each <see cref="BeginMultiLink"/> + MultiEffect* entries or
         /// <see cref="BeginEffectChainLink"/> + Uniform* entries, then <see cref="EndLink"/>; closed by <see cref="EndEffectChain"/>.
         /// No links = no chain. No other command in between.
         /// </summary>
@@ -126,18 +138,18 @@ namespace VL.Qt.Wire
         /// <summary>Starts a MULTI link: one MultiEffect run, entries keyed by <see cref="Protocol.MultiEffectKey"/> BlurEnabled..MaskInverted.</summary>
         void BeginMultiLink();
 
-        void EffectBool(ushort prop, bool value);
-        void EffectF32(ushort prop, float value);
-        void EffectI32(ushort prop, int value);
+        void MultiEffectBool(ushort prop, bool value);
+        void MultiEffectF32(ushort prop, float value);
+        void MultiEffectI32(ushort prop, int value);
 
         /// <summary>Color with straight alpha.</summary>
-        void EffectColor(ushort prop, float r, float g, float b, float a);
+        void MultiEffectColor(ushort prop, float r, float g, float b, float a);
 
         /// <summary>x = left, y = top, width = right, height = bottom (<see cref="Protocol.MultiEffectKey.PaddingRect"/>).</summary>
-        void EffectRect(ushort prop, float x, float y, float width, float height);
+        void MultiEffectRect(ushort prop, float x, float y, float width, float height);
 
         /// <summary>MaskSource: id of the mask element object (0 = none).</summary>
-        void EffectRef(ushort prop, uint refId);
+        void MultiEffectRef(ushort prop, uint refId);
 
         /// <summary>
         /// Starts a SHADER link: <paramref name="template"/> = <see cref="Protocol.EffectTemplate"/>, shader resource ids by

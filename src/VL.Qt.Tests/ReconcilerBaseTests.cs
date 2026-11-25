@@ -155,11 +155,11 @@ namespace VL.Qt.Tests
             var writer = new CommandWriter();
             ICommandSink sink = writer;
             WriteAll(sink); // warm-up: grow the buffer
-            writer.Reset();
+            writer.Clear();
 
             Assert.That(Allocations.Fewest(() =>
             {
-                writer.Reset();
+                writer.Clear();
                 for (int i = 0; i < 10; i++)
                     WriteAll(sink);
             }), Is.EqualTo(0));

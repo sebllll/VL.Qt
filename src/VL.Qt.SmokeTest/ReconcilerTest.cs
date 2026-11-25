@@ -56,7 +56,7 @@ public static class ReconcilerTest
         // One renderer frame: Reset, Update, apply (skipped when the reconciler wrote nothing, like Renderer).
         int Frame(Element? root, string what, bool clear = false)
         {
-            cmd.Reset();
+            cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
             rec.Update(root, Space.DIPTopLeft);
             int count = cmd.Count - (clear ? 1 : 0);
@@ -115,7 +115,7 @@ public static class ReconcilerTest
         n = Frame(scene, "remove last child");
         s.Check(n == 1 && rec.Root!.Children.Count == 2, $"last child removed → 1 command ({n})");
         // Clear (renderer dispose): 1 DESTROY for the column.
-        cmd.Reset();
+        cmd.Clear();
         rec.Clear();
         n = cmd.Count;
         var rcClear = Native.Apply(w, cmd.EndFrame());
@@ -156,7 +156,7 @@ public static class ReconcilerTest
         int errors = 0;
         void Step(int i)
         {
-            cmd.Reset();
+            cmd.Clear();
             rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
             if (Native.Apply(w, cmd.EndFrame()) != 0) errors++;
         }
@@ -169,7 +169,7 @@ public static class ReconcilerTest
         for (int i = 0; i < Frames; i++)
         {
             long t0 = Stopwatch.GetTimestamp();
-            cmd.Reset();
+            cmd.Clear();
             rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
             var buf = cmd.EndFrame();
             long t1 = Stopwatch.GetTimestamp();
@@ -195,7 +195,7 @@ public static class ReconcilerTest
         PerfLimits.Below(s, applyMs[Frames / 2], 1.0, $"perf: apply median < 1 ms ({applyMs[Frames / 2]:F4} ms)");
         s.Check(alloc < 1024, $"perf: {Frames} frames reconcile + apply allocate < 1 KB ({alloc} bytes)");
 
-        cmd.Reset();
+        cmd.Clear();
         rec.Clear();
         s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "perf: Clear");
     }

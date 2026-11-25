@@ -88,7 +88,7 @@ public static class GroupShaderSourceTest
             cmd.Reparent(g, parent, index);
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // A) Group as Input (Auto Size on: the effect takes the frame size; the SIZE 10 x 10 must not count).
         cmd.Create(FxA, Protocol.ElementType.Shader);
@@ -132,7 +132,7 @@ public static class GroupShaderSourceTest
         }
 
         // C) live: orange moves further left; the frame (220 x 130) and the effect size follow without a new SOURCE.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetMat4(OrangeA, Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation(-60, -30, 0));
         cmd.SetMat4(OrangeB, Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation(-60, -30, 0));
         CheckApply("move orange");
@@ -147,12 +147,12 @@ public static class GroupShaderSourceTest
         }
 
         // D) switching away and destroying: Input off, then the Groups go (uniform still pointing at GB); no crash, no error.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetRef(FxA, Protocol.PropertyId.Source, 0);
         cmd.Destroy(GB);
         CheckApply("source off, texture group destroyed");
         s.Pump(3);
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetRef(FxA, Protocol.PropertyId.Source, GA);
         CheckApply("source again");
         s.Pump(3);
@@ -163,7 +163,7 @@ public static class GroupShaderSourceTest
         }
 
         // E) empty Group (frame 0 x 0) as Input and as texture uniform: draws nothing, no crash; a child added later shows up.
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(FxE, Protocol.ElementType.Shader);
         cmd.SetPlace(FxE, 50, 350, 10, 10);
         cmd.SetU64(FxE, Protocol.PropertyId.FragmentShader, dual);
@@ -180,7 +180,7 @@ public static class GroupShaderSourceTest
         s.Pump(3);
         using (var a = s.Grab(w, "486_group_source_empty.png"))
             s.Check(IsBg(Px(a, 55, 355)), $"empty group: nothing drawn ({Px(a, 55, 355)})");
-        cmd.Reset();
+        cmd.Clear();
         Rect(OrangeE, -20, -20, 60, 60, 1, 0.6f, 0, GE, 0);
         CheckApply("child into the empty group");
         s.Pump(3);
@@ -188,7 +188,7 @@ public static class GroupShaderSourceTest
             gpu(IsOrange(Px(a, 55, 355)) && IsOrange(Px(a, 105, 405)) && IsBg(Px(a, 115, 415)),
                 $"empty group gets a child at (-20, -20): effect 60 x 60 shows it ({Px(a, 55, 355)}, {Px(a, 105, 405)}, {Px(a, 115, 415)})");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.Destroy(FxA);
         cmd.Destroy(FxB);
         cmd.Destroy(FxE);

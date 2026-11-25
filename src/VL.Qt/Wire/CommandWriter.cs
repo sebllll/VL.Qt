@@ -9,12 +9,17 @@ namespace VL.Qt.Wire
 {
     /// <summary>
     /// Reusable byte buffer holding the commands of one window for one frame (format: see protocol.h).
-    /// Usage per frame: <see cref="Reset"/>, write commands, <see cref="EndFrame"/> → span for vlqt_scene_apply.
+    /// Usage per frame: <see cref="Clear"/>, write commands, <see cref="EndFrame"/> → span for vlqt_scene_apply.
     /// The buffer only grows; writing does not allocate on the managed heap once it has reached its working size.
     /// Every command is little-endian (header: u16 op, u16 flags 0, u32 payloadLen) and padded with zeros to
     /// <see cref="Protocol.CommandAlign"/> bytes; payloadLen excludes that padding.
     /// Tracing: if the environment variable VLQT_TRACE_COMMANDS is set (non-empty, not "0"), <see cref="EndFrame"/>
     /// appends every frame buffer as <c>u32 length + bytes</c> to <c>%TEMP%/vlqt-trace-&lt;pid&gt;.bin</c>.
+    /// Compound commands (SET_STYLE, SET_UNIFORMS, SET_QML_PROPERTIES, SET_EFFECT_CHAIN with its links) are written between a
+    /// <c>Begin*</c> and its <c>End*</c>; the writer knows which one is open (<see cref="Open"/>) and throws an
+    /// <see cref="InvalidOperationException"/> for every call that does not belong there: a plain command or a second
+    /// <c>Begin*</c> inside an open one, an entry of another command, an <c>End*</c> that does not match. A call that throws
+    /// changes nothing; <see cref="Clear"/> and <see cref="Abort"/> leave an open command.
     /// Not thread-safe; one writer per window, used from the main thread.
     /// </summary>
     internal sealed class CommandWriter : ICommandSink
@@ -30,24 +35,59 @@ namespace VL.Qt.Wire
             _buffer = new byte[Math.Max(initialCapacity, 64)];
         }
 
-        /// <summary>Bytes written since the last <see cref="Reset"/>.</summary>
+        /// <summary>Bytes written since the last <see cref="Clear"/>.</summary>
         public int Length => _length;
 
-        /// <summary>Number of commands written since the last <see cref="Reset"/>.</summary>
+        /// <summary>Number of commands written since the last <see cref="Clear"/>.</summary>
         public int Count => _count;
 
         /// <summary>Current capacity of the internal buffer (grows, never shrinks).</summary>
         public int Capacity => _buffer.Length;
 
-        /// <summary>The commands written since the last <see cref="Reset"/> (no side effects).</summary>
+        /// <summary>The commands written since the last <see cref="Clear"/> (no side effects).</summary>
         public ReadOnlySpan<byte> Written => new ReadOnlySpan<byte>(_buffer, 0, _length);
 
-        /// <summary>Clears the buffer for the next frame, keeping its capacity.</summary>
-        public void Reset()
+        /// <summary>Clears the buffer for the next frame, keeping its capacity. Also drops an open compound command.</summary>
+        public void Clear()
         {
             _length = 0;
             _count = 0;
+            _open = Open.None;
         }
+
+        /// <summary>
+        /// Drops the open compound command (and its open link) as if it had never been begun; no-op if none is open.
+        /// For callers that cannot guarantee valid entries: <c>try { ... } catch { writer.Abort(); throw; }</c>.
+        /// </summary>
+        public void Abort()
+        {
+            if (_open == Open.None)
+                return;
+            _length = _openStart;
+            _count--;
+            _open = Open.None;
+        }
+
+        /// <summary>The compound command being written: which <c>Begin*</c> is open and which <c>End*</c> or entries are allowed.</summary>
+        private enum Open
+        {
+            None,
+            Style,
+            Uniforms,
+            QmlProperties,
+            /// <summary>SET_EFFECT_CHAIN between its links.</summary>
+            EffectChain,
+            /// <summary>A MULTI link inside the SET_EFFECT_CHAIN.</summary>
+            MultiLink,
+            /// <summary>A SHADER link inside the SET_EFFECT_CHAIN.</summary>
+            ShaderLink,
+        }
+
+        private Open _open;
+        private int _openStart; // offset of the open command's header
+        private int _openCount; // its entries (style, uniforms, QML properties) or closed links (effect chain)
+        private int _linkStart; // offset of the open link's header (MultiLink, ShaderLink)
+        private int _linkCount; // entries of the open link
 
         /// <summary>Finishes the frame: traces the buffer if enabled and returns it for vlqt_scene_apply.</summary>
         public ReadOnlySpan<byte> EndFrame()
@@ -153,11 +193,7 @@ namespace VL.Qt.Wire
         /// </summary>
         public void SetMat4(uint id, ushort prop, in Matrix m)
         {
-            var p = BeginSet(id, prop, Protocol.ValueType.Mat4, 64);
-            WriteF32x4(p, m.M11, m.M12, m.M13, m.M14);
-            WriteF32x4(p.Slice(16), m.M21, m.M22, m.M23, m.M24);
-            WriteF32x4(p.Slice(32), m.M31, m.M32, m.M33, m.M34);
-            WriteF32x4(p.Slice(48), m.M41, m.M42, m.M43, m.M44);
+            WriteMatrix(BeginSet(id, prop, Protocol.ValueType.Mat4, 64), m);
         }
 
         /// <summary>string: u32 byte length + UTF-8 (no terminator). Payload incl. SET fields must fit in <see cref="Protocol.MaxCommandPayload"/>.</summary>
@@ -224,21 +260,8 @@ namespace VL.Qt.Wire
 
         // --- SET_STYLE: u32 id, u16 count, u16 flags, entries (u16 field, u8 state, u8 valueType, value), each 4-byte aligned ---
 
-        private int _styleStart = -1; // offset of the open SET_STYLE command, -1 = none
-        private int _styleEntries;
-
         /// <summary>Starts a SET_STYLE; entries follow, <see cref="EndStyle"/> patches count and payload length.</summary>
-        public void BeginStyle(uint id, ushort flags)
-        {
-            if (_styleStart >= 0)
-                throw new InvalidOperationException("SET_STYLE already open, call EndStyle first.");
-            _styleStart = _length;
-            _styleEntries = 0;
-            var p = Begin(Protocol.Op.SetStyle, Protocol.ListFieldsSize);
-            WriteU32(p, id);
-            WriteU16(p.Slice(4), 0);
-            WriteU16(p.Slice(6), flags);
-        }
+        public void BeginStyle(uint id, ushort flags) => BeginList(Open.Style, Protocol.Op.SetStyle, id, flags);
 
         public void StyleColor(ushort field, byte state, float r, float g, float b, float a)
         {
@@ -264,28 +287,12 @@ namespace VL.Qt.Wire
         }
 
         /// <summary>Closes the SET_STYLE: writes the entry count and the payload length (entries incl. their padding).</summary>
-        public void EndStyle()
-        {
-            if (_styleStart < 0)
-                throw new InvalidOperationException("EndStyle without BeginStyle.");
-            int payload = _length - _styleStart - Protocol.HeaderSize;
-            int start = _styleStart;
-            _styleStart = -1;
-            if (payload > Protocol.MaxCommandPayload || _styleEntries > ushort.MaxValue)
-            {
-                _length = start; // drop the half written command
-                _count--;
-                throw new InvalidOperationException($"SET_STYLE payload exceeds {Protocol.MaxCommandPayload} bytes.");
-            }
-            WriteU32(new Span<byte>(_buffer, start + 4, 4), (uint)payload);
-            WriteU16(new Span<byte>(_buffer, start + Protocol.HeaderSize + 4, 2), (ushort)_styleEntries);
-        }
+        public void EndStyle() => EndList(Open.Style, "SET_STYLE", "EndStyle", "BeginStyle");
 
         /// <summary>Appends one 4-byte aligned entry (zero padded) to the open SET_STYLE and returns the value span.</summary>
         private Span<byte> StyleEntry(ushort field, byte state, ushort valueType, int valueSize)
         {
-            if (_styleStart < 0)
-                throw new InvalidOperationException("Style entry without BeginStyle.");
+            RequireOpen(Open.Style, "Style entry", "BeginStyle");
             int total = Align(Protocol.EntryHeaderSize + valueSize);
             EnsureCapacity(_length + total);
             var e = new Span<byte>(_buffer, _length, total);
@@ -294,38 +301,14 @@ namespace VL.Qt.Wire
             e[2] = state;
             e[3] = (byte)valueType;
             _length += total;
-            _styleEntries++;
+            _openCount++;
             return e.Slice(Protocol.EntryHeaderSize, valueSize);
         }
 
         // --- SET_UNIFORMS: u32 id, u16 count, u16 flags, entries (u16 valueType, u16 nameLen, name, pad 4, value, pad 4) ---
 
-        private int _uniformsStart = -1; // offset of the open SET_UNIFORMS command, -1 = none
-        private int _uniformEntries;
-
-        /// <summary>Starts a SET_UNIFORMS; entries follow, <see cref="EndUniforms"/> patches count and payload length.</summary>
-        public void BeginUniforms(uint id, ushort flags) => BeginEntries(Protocol.Op.SetUniforms, id, flags);
-
-        /// <summary>
-        /// Starts a SET_QML_PROPERTIES; the entries are encoded exactly like those of SET_UNIFORMS, so they are written
-        /// with the Uniform* methods and the command is closed by <see cref="EndUniforms"/> (or <see cref="EndQmlProperties"/>).
-        /// </summary>
-        public void BeginQmlProperties(uint id, ushort flags) => BeginEntries(Protocol.Op.SetQmlProperties, id, flags);
-
-        /// <summary>Closes the SET_QML_PROPERTIES started by <see cref="BeginQmlProperties"/> (entry count, payload length).</summary>
-        public void EndQmlProperties() => EndUniforms();
-
-        private void BeginEntries(ushort op, uint id, ushort flags)
-        {
-            if (_uniformsStart >= 0)
-                throw new InvalidOperationException("SET_UNIFORMS or SET_QML_PROPERTIES already open, call EndUniforms first.");
-            _uniformsStart = _length;
-            _uniformEntries = 0;
-            var p = Begin(op, Protocol.ListFieldsSize);
-            WriteU32(p, id);
-            WriteU16(p.Slice(4), 0);
-            WriteU16(p.Slice(6), flags);
-        }
+        /// <summary>Starts a SET_UNIFORMS; Uniform* entries follow, <see cref="EndUniforms"/> patches count and payload length.</summary>
+        public void BeginUniforms(uint id, ushort flags) => BeginList(Open.Uniforms, Protocol.Op.SetUniforms, id, flags);
 
         public void UniformF32(ReadOnlySpan<char> name, float value) => WriteF32(UniformEntry(name, Protocol.ValueType.F32, 4), value);
 
@@ -334,20 +317,9 @@ namespace VL.Qt.Wire
 
         public void UniformBool(ReadOnlySpan<char> name, bool value) => UniformEntry(name, Protocol.ValueType.Bool, 1)[0] = value ? (byte)1 : (byte)0;
 
-        public void UniformVec2(ReadOnlySpan<char> name, float x, float y)
-        {
-            var p = UniformEntry(name, Protocol.ValueType.Vec2, 8);
-            WriteF32(p, x);
-            WriteF32(p.Slice(4), y);
-        }
+        public void UniformVec2(ReadOnlySpan<char> name, float x, float y) => WriteF32x2(UniformEntry(name, Protocol.ValueType.Vec2, 8), x, y);
 
-        public void UniformVec3(ReadOnlySpan<char> name, float x, float y, float z)
-        {
-            var p = UniformEntry(name, Protocol.ValueType.Vec3, 12);
-            WriteF32(p, x);
-            WriteF32(p.Slice(4), y);
-            WriteF32(p.Slice(8), z);
-        }
+        public void UniformVec3(ReadOnlySpan<char> name, float x, float y, float z) => WriteF32x3(UniformEntry(name, Protocol.ValueType.Vec3, 12), x, y, z);
 
         public void UniformVec4(ReadOnlySpan<char> name, float x, float y, float z, float w)
             => WriteF32x4(UniformEntry(name, Protocol.ValueType.Vec4, 16), x, y, z, w);
@@ -355,34 +327,9 @@ namespace VL.Qt.Wire
         public void UniformColor(ReadOnlySpan<char> name, float r, float g, float b, float a)
             => WriteF32x4(UniformEntry(name, Protocol.ValueType.Color, 16), r, g, b, a);
 
-        /// <summary>Entry of value type rect (x, y, width, height) of an open SET_QML_PROPERTIES.</summary>
-        public void QmlRect(ReadOnlySpan<char> name, float x, float y, float width, float height)
-            => WriteF32x4(UniformEntry(name, Protocol.ValueType.Rectf, 16), x, y, width, height);
+        public void UniformIvec2(ReadOnlySpan<char> name, int x, int y) => WriteI32x2(UniformEntry(name, Protocol.ValueType.Ivec2, 8), x, y);
 
-        /// <summary>Entry of value type string (u32 byte length + UTF-8) of an open SET_QML_PROPERTIES.</summary>
-        public void QmlString(ReadOnlySpan<char> name, ReadOnlySpan<char> value)
-        {
-            int byteCount = Encoding.UTF8.GetByteCount(value);
-            var p = UniformEntry(name, Protocol.ValueType.String, 4 + byteCount);
-            WriteU32(p, (uint)byteCount);
-            Encoding.UTF8.GetBytes(value, p.Slice(4));
-        }
-
-        public void UniformIvec2(ReadOnlySpan<char> name, int x, int y)
-        {
-            var p = UniformEntry(name, Protocol.ValueType.Ivec2, 8);
-            BinaryPrimitives.WriteInt32LittleEndian(p, x);
-            BinaryPrimitives.WriteInt32LittleEndian(p.Slice(4), y);
-        }
-
-        public void UniformMat4(ReadOnlySpan<char> name, in Matrix m)
-        {
-            var p = UniformEntry(name, Protocol.ValueType.Mat4, 64);
-            WriteF32x4(p, m.M11, m.M12, m.M13, m.M14);
-            WriteF32x4(p.Slice(16), m.M21, m.M22, m.M23, m.M24);
-            WriteF32x4(p.Slice(32), m.M31, m.M32, m.M33, m.M34);
-            WriteF32x4(p.Slice(48), m.M41, m.M42, m.M43, m.M44);
-        }
+        public void UniformMat4(ReadOnlySpan<char> name, in Matrix m) => WriteMatrix(UniformEntry(name, Protocol.ValueType.Mat4, 64), m);
 
         public void UniformRef(ReadOnlySpan<char> name, uint refId) => WriteU32(UniformEntry(name, Protocol.ValueType.Ref, 4), refId);
 
@@ -393,35 +340,76 @@ namespace VL.Qt.Wire
             => BinaryPrimitives.WriteUInt64LittleEndian(UniformEntry(name, Protocol.ValueType.Sampler, 8), packed);
 
         /// <summary>Closes the SET_UNIFORMS: writes the entry count and the payload length (entries incl. their padding).</summary>
-        public void EndUniforms()
-        {
-            if (_uniformsStart < 0)
-                throw new InvalidOperationException("EndUniforms without BeginUniforms.");
-            int payload = _length - _uniformsStart - Protocol.HeaderSize;
-            int start = _uniformsStart;
-            _uniformsStart = -1;
-            if (payload > Protocol.MaxCommandPayload || _uniformEntries > ushort.MaxValue)
-            {
-                _length = start; // drop the half written command
-                _count--;
-                throw new InvalidOperationException($"SET_UNIFORMS or SET_QML_PROPERTIES payload exceeds {Protocol.MaxCommandPayload} bytes.");
-            }
-            WriteU32(new Span<byte>(_buffer, start + 4, 4), (uint)payload);
-            WriteU16(new Span<byte>(_buffer, start + Protocol.HeaderSize + 4, 2), (ushort)_uniformEntries);
-        }
+        public void EndUniforms() => EndList(Open.Uniforms, "SET_UNIFORMS", "EndUniforms", "BeginUniforms");
 
-        /// <summary>
-        /// Appends one entry (name and value each 4-byte aligned, zero padded) to the open SET_UNIFORMS or the open shader
-        /// link of a SET_EFFECT_CHAIN and returns the value span.
-        /// </summary>
+        /// <summary>Appends one entry to the open SET_UNIFORMS or to the open SHADER link of a SET_EFFECT_CHAIN and returns the value span.</summary>
         private Span<byte> UniformEntry(ReadOnlySpan<char> name, ushort valueType, int valueSize)
         {
-            var inLink = _uniformsStart < 0;
-            if (inLink && _linkKind != Protocol.EffectChainLink.Shader)
-                throw new InvalidOperationException("Uniform entry without BeginUniforms or BeginEffectChainLink.");
+            if (_open != Open.Uniforms && _open != Open.ShaderLink)
+                throw new InvalidOperationException($"Uniform entry without BeginUniforms or BeginEffectChainLink (open: {_open}).");
+            var value = NamedEntry(name, valueType, valueSize);
+            if (_open == Open.ShaderLink)
+                _linkCount++;
+            else
+                _openCount++;
+            return value;
+        }
+
+        // --- SET_QML_PROPERTIES: the list of SET_UNIFORMS, but with strings and rects instead of refs, samplers and matrices ---
+
+        /// <summary>Starts a SET_QML_PROPERTIES; QmlProperty* entries follow, <see cref="EndQmlProperties"/> patches count and payload length.</summary>
+        public void BeginQmlProperties(uint id, ushort flags) => BeginList(Open.QmlProperties, Protocol.Op.SetQmlProperties, id, flags);
+
+        public void QmlPropertyF32(ReadOnlySpan<char> name, float value) => WriteF32(QmlPropertyEntry(name, Protocol.ValueType.F32, 4), value);
+
+        public void QmlPropertyI32(ReadOnlySpan<char> name, int value)
+            => BinaryPrimitives.WriteInt32LittleEndian(QmlPropertyEntry(name, Protocol.ValueType.I32, 4), value);
+
+        public void QmlPropertyBool(ReadOnlySpan<char> name, bool value)
+            => QmlPropertyEntry(name, Protocol.ValueType.Bool, 1)[0] = value ? (byte)1 : (byte)0;
+
+        /// <summary>Color with straight alpha.</summary>
+        public void QmlPropertyColor(ReadOnlySpan<char> name, float r, float g, float b, float a)
+            => WriteF32x4(QmlPropertyEntry(name, Protocol.ValueType.Color, 16), r, g, b, a);
+
+        public void QmlPropertyVec2(ReadOnlySpan<char> name, float x, float y) => WriteF32x2(QmlPropertyEntry(name, Protocol.ValueType.Vec2, 8), x, y);
+
+        public void QmlPropertyVec3(ReadOnlySpan<char> name, float x, float y, float z)
+            => WriteF32x3(QmlPropertyEntry(name, Protocol.ValueType.Vec3, 12), x, y, z);
+
+        public void QmlPropertyVec4(ReadOnlySpan<char> name, float x, float y, float z, float w)
+            => WriteF32x4(QmlPropertyEntry(name, Protocol.ValueType.Vec4, 16), x, y, z, w);
+
+        public void QmlPropertyRect(ReadOnlySpan<char> name, float x, float y, float width, float height)
+            => WriteF32x4(QmlPropertyEntry(name, Protocol.ValueType.Rectf, 16), x, y, width, height);
+
+        /// <summary>string: u32 byte length + UTF-8.</summary>
+        public void QmlPropertyString(ReadOnlySpan<char> name, ReadOnlySpan<char> value)
+        {
+            int byteCount = Encoding.UTF8.GetByteCount(value);
+            var p = QmlPropertyEntry(name, Protocol.ValueType.String, 4 + byteCount);
+            WriteU32(p, (uint)byteCount);
+            Encoding.UTF8.GetBytes(value, p.Slice(4));
+        }
+
+        /// <summary>Closes the SET_QML_PROPERTIES started by <see cref="BeginQmlProperties"/> (entry count, payload length).</summary>
+        public void EndQmlProperties() => EndList(Open.QmlProperties, "SET_QML_PROPERTIES", "EndQmlProperties", "BeginQmlProperties");
+
+        /// <summary>Appends one entry to the open SET_QML_PROPERTIES and returns the value span.</summary>
+        private Span<byte> QmlPropertyEntry(ReadOnlySpan<char> name, ushort valueType, int valueSize)
+        {
+            RequireOpen(Open.QmlProperties, "QML property entry", "BeginQmlProperties");
+            var value = NamedEntry(name, valueType, valueSize);
+            _openCount++;
+            return value;
+        }
+
+        /// <summary>Appends one named entry (name and value each 4-byte aligned, zero padded) and returns the value span. The caller counts it.</summary>
+        private Span<byte> NamedEntry(ReadOnlySpan<char> name, ushort valueType, int valueSize)
+        {
             int nameBytes = Encoding.UTF8.GetByteCount(name);
             if (nameBytes < 1 || nameBytes > Protocol.UniformNameMax)
-                throw new ArgumentException($"Uniform name must be 1..{Protocol.UniformNameMax} UTF-8 bytes, got {nameBytes}.", nameof(name));
+                throw new ArgumentException($"Name must be 1..{Protocol.UniformNameMax} UTF-8 bytes, got {nameBytes}.", nameof(name));
             int nameBlock = Align(Protocol.EntryHeaderSize + nameBytes);
             int total = nameBlock + Align(valueSize);
             EnsureCapacity(_length + total);
@@ -431,51 +419,31 @@ namespace VL.Qt.Wire
             WriteU16(e.Slice(2), (ushort)nameBytes);
             Encoding.UTF8.GetBytes(name, e.Slice(4));
             _length += total;
-            if (inLink)
-                _linkEntries++;
-            else
-                _uniformEntries++;
             return e.Slice(nameBlock, valueSize);
         }
 
         // --- SET_EFFECT_CHAIN: u32 id, u16 linkCount, u16 flags, links (u16 kind, u16 count, u32 bodyLen, body) ---
 
-        private int _chainStart = -1; // offset of the open SET_EFFECT_CHAIN command, -1 = none
-        private int _chainLinks;
-        private int _linkStart = -1; // offset of the open link header, -1 = none
-        private ushort _linkKind; // kind of the open link, 0 = none
-        private int _linkEntries;
-
         /// <summary>Starts a SET_EFFECT_CHAIN; links follow, <see cref="EndEffectChain"/> patches count and payload length.</summary>
-        public void BeginEffectChain(uint id)
-        {
-            if (_chainStart >= 0)
-                throw new InvalidOperationException("SET_EFFECT_CHAIN already open, call EndEffectChain first.");
-            _chainStart = _length;
-            _chainLinks = 0;
-            var p = Begin(Protocol.Op.SetEffectChain, Protocol.ListFieldsSize);
-            WriteU32(p, id);
-            WriteU16(p.Slice(4), 0);
-            WriteU16(p.Slice(6), 0);
-        }
+        public void BeginEffectChain(uint id) => BeginList(Open.EffectChain, Protocol.Op.SetEffectChain, id, 0);
 
-        /// <summary>Starts a MULTI link (one MultiEffect run); Effect* entries follow, then <see cref="EndLink"/>.</summary>
-        public void BeginMultiLink() => BeginLink(Protocol.EffectChainLink.Multi, 0);
+        /// <summary>Starts a MULTI link (one MultiEffect run); MultiEffect* entries follow, then <see cref="EndLink"/>.</summary>
+        public void BeginMultiLink() => BeginLink(Open.MultiLink, Protocol.EffectChainLink.Multi, 0);
 
-        public void EffectBool(ushort prop, bool value) => EffectEntry(prop, Protocol.ValueType.Bool, 1)[0] = value ? (byte)1 : (byte)0;
+        public void MultiEffectBool(ushort prop, bool value) => MultiEffectEntry(prop, Protocol.ValueType.Bool, 1)[0] = value ? (byte)1 : (byte)0;
 
-        public void EffectF32(ushort prop, float value) => WriteF32(EffectEntry(prop, Protocol.ValueType.F32, 4), value);
+        public void MultiEffectF32(ushort prop, float value) => WriteF32(MultiEffectEntry(prop, Protocol.ValueType.F32, 4), value);
 
-        public void EffectI32(ushort prop, int value)
-            => BinaryPrimitives.WriteInt32LittleEndian(EffectEntry(prop, Protocol.ValueType.I32, 4), value);
+        public void MultiEffectI32(ushort prop, int value)
+            => BinaryPrimitives.WriteInt32LittleEndian(MultiEffectEntry(prop, Protocol.ValueType.I32, 4), value);
 
-        public void EffectColor(ushort prop, float r, float g, float b, float a)
-            => WriteF32x4(EffectEntry(prop, Protocol.ValueType.Color, 16), r, g, b, a);
+        public void MultiEffectColor(ushort prop, float r, float g, float b, float a)
+            => WriteF32x4(MultiEffectEntry(prop, Protocol.ValueType.Color, 16), r, g, b, a);
 
-        public void EffectRect(ushort prop, float x, float y, float width, float height)
-            => WriteF32x4(EffectEntry(prop, Protocol.ValueType.Rectf, 16), x, y, width, height);
+        public void MultiEffectRect(ushort prop, float x, float y, float width, float height)
+            => WriteF32x4(MultiEffectEntry(prop, Protocol.ValueType.Rectf, 16), x, y, width, height);
 
-        public void EffectRef(ushort prop, uint refId) => WriteU32(EffectEntry(prop, Protocol.ValueType.Ref, 4), refId);
+        public void MultiEffectRef(ushort prop, uint refId) => WriteU32(MultiEffectEntry(prop, Protocol.ValueType.Ref, 4), refId);
 
         /// <summary>
         /// Starts a SHADER link: template (<see cref="Protocol.EffectTemplate"/>), shader resource ids by role, padding in DIP,
@@ -485,7 +453,7 @@ namespace VL.Qt.Wire
             float paddingRight, float paddingBottom, float strength)
         {
             int ids = shaderIds.Length * 8;
-            var head = BeginLink(Protocol.EffectChainLink.Shader, 4 + ids + Protocol.EffectChainLinkShaderFixedSize);
+            var head = BeginLink(Open.ShaderLink, Protocol.EffectChainLink.Shader, 4 + ids + Protocol.EffectChainLinkShaderFixedSize);
             WriteU16(head, template);
             WriteU16(head.Slice(2), (ushort)shaderIds.Length);
             for (int i = 0; i < shaderIds.Length; i++)
@@ -498,59 +466,44 @@ namespace VL.Qt.Wire
         /// <summary>Closes the open link: writes its entry count and body length.</summary>
         public void EndLink()
         {
-            if (_linkStart < 0)
-                throw new InvalidOperationException("EndLink without BeginMultiLink or BeginEffectChainLink.");
-            WriteU16(new Span<byte>(_buffer, _linkStart + 2, 2), (ushort)_linkEntries);
+            if (_open != Open.MultiLink && _open != Open.ShaderLink)
+                throw new InvalidOperationException($"EndLink without BeginMultiLink or BeginEffectChainLink (open: {_open}).");
+            WriteU16(new Span<byte>(_buffer, _linkStart + 2, 2), (ushort)_linkCount);
             WriteU32(new Span<byte>(_buffer, _linkStart + 4, 4), (uint)(_length - _linkStart - Protocol.EffectChainLinkHeaderSize));
-            _linkStart = -1;
-            _linkKind = 0;
-            _chainLinks++;
+            _open = Open.EffectChain;
+            _openCount++;
         }
 
         /// <summary>Closes the SET_EFFECT_CHAIN: writes the link count and the payload length.</summary>
         public void EndEffectChain()
         {
-            if (_chainStart < 0)
-                throw new InvalidOperationException("EndEffectChain without BeginEffectChain.");
-            if (_linkStart >= 0)
+            if (_open == Open.MultiLink || _open == Open.ShaderLink)
                 throw new InvalidOperationException("Effect link still open, call EndLink first.");
-            int payload = _length - _chainStart - Protocol.HeaderSize;
-            int start = _chainStart;
-            _chainStart = -1;
-            if (payload > Protocol.MaxCommandPayload || _chainLinks > ushort.MaxValue)
-            {
-                _length = start; // drop the half written command
-                _count--;
-                throw new InvalidOperationException($"SET_EFFECT_CHAIN payload exceeds {Protocol.MaxCommandPayload} bytes.");
-            }
-            WriteU32(new Span<byte>(_buffer, start + 4, 4), (uint)payload);
-            WriteU16(new Span<byte>(_buffer, start + Protocol.HeaderSize + 4, 2), (ushort)_chainLinks);
+            EndList(Open.EffectChain, "SET_EFFECT_CHAIN", "EndEffectChain", "BeginEffectChain");
         }
 
         /// <summary>Appends a link header plus a zeroed head of <paramref name="headSize"/> bytes (multiple of 4) and returns the head.</summary>
-        private Span<byte> BeginLink(ushort kind, int headSize)
+        private Span<byte> BeginLink(Open link, ushort kind, int headSize)
         {
-            if (_chainStart < 0)
-                throw new InvalidOperationException("Effect link without BeginEffectChain.");
-            if (_linkStart >= 0)
+            if (_open == Open.MultiLink || _open == Open.ShaderLink)
                 throw new InvalidOperationException("Effect link still open, call EndLink first.");
+            RequireOpen(Open.EffectChain, "Effect link", "BeginEffectChain");
             int total = Protocol.EffectChainLinkHeaderSize + headSize;
             EnsureCapacity(_length + total);
             var e = new Span<byte>(_buffer, _length, total);
             e.Clear();
             WriteU16(e, kind);
+            _open = link;
             _linkStart = _length;
-            _linkKind = kind;
-            _linkEntries = 0;
+            _linkCount = 0;
             _length += total;
             return e.Slice(Protocol.EffectChainLinkHeaderSize, headSize);
         }
 
         /// <summary>Appends one MULTI entry (u16 prop, u16 value type, value, zero padded to 4) and returns the value span.</summary>
-        private Span<byte> EffectEntry(ushort prop, ushort valueType, int valueSize)
+        private Span<byte> MultiEffectEntry(ushort prop, ushort valueType, int valueSize)
         {
-            if (_linkKind != Protocol.EffectChainLink.Multi)
-                throw new InvalidOperationException("Effect entry without BeginMultiLink.");
+            RequireOpen(Open.MultiLink, "MultiEffect entry", "BeginMultiLink");
             int total = 4 + Align(valueSize);
             EnsureCapacity(_length + total);
             var e = new Span<byte>(_buffer, _length, total);
@@ -558,8 +511,44 @@ namespace VL.Qt.Wire
             WriteU16(e, prop);
             WriteU16(e.Slice(2), valueType);
             _length += total;
-            _linkEntries++;
+            _linkCount++;
             return e.Slice(4, valueSize);
+        }
+
+        // --- compound commands ---
+
+        /// <summary>Writes the header of a compound command with the list fields (u32 id, u16 count 0, u16 flags) and opens it.</summary>
+        private void BeginList(Open kind, ushort op, uint id, ushort flags)
+        {
+            int start = _length;
+            var p = Begin(op, Protocol.ListFieldsSize); // throws if a compound command is open
+            _open = kind;
+            _openStart = start;
+            _openCount = 0;
+            WriteU32(p, id);
+            WriteU16(p.Slice(4), 0);
+            WriteU16(p.Slice(6), flags);
+        }
+
+        /// <summary>Closes the compound command <paramref name="kind"/>: patches the payload length and the count in the list fields.</summary>
+        private void EndList(Open kind, string command, string end, string begin)
+        {
+            RequireOpen(kind, end, begin);
+            int payload = _length - _openStart - Protocol.HeaderSize;
+            if (payload > Protocol.MaxCommandPayload || _openCount > ushort.MaxValue)
+            {
+                Abort(); // drop the half written command
+                throw new InvalidOperationException($"{command} payload exceeds {Protocol.MaxCommandPayload} bytes.");
+            }
+            WriteU32(new Span<byte>(_buffer, _openStart + 4, 4), (uint)payload);
+            WriteU16(new Span<byte>(_buffer, _openStart + Protocol.HeaderSize + 4, 2), (ushort)_openCount);
+            _open = Open.None;
+        }
+
+        private void RequireOpen(Open kind, string what, string begin)
+        {
+            if (_open != kind)
+                throw new InvalidOperationException($"{what} without {begin} (open: {_open}).");
         }
 
         // --- encoding ---
@@ -576,6 +565,8 @@ namespace VL.Qt.Wire
         /// <summary>Writes the header, reserves payload + padding (zeroed) and returns the payload span.</summary>
         private Span<byte> Begin(ushort op, int payloadLen)
         {
+            if (_open != Open.None)
+                throw new InvalidOperationException($"Command (op {op}) inside an open {_open} command, call its End* first.");
             if ((uint)payloadLen > Protocol.MaxCommandPayload)
                 throw new ArgumentOutOfRangeException(nameof(payloadLen), payloadLen, $"Command payload exceeds {Protocol.MaxCommandPayload} bytes (op {op}).");
 
@@ -606,6 +597,32 @@ namespace VL.Qt.Wire
         private static void WriteU16(Span<byte> s, ushort v) => BinaryPrimitives.WriteUInt16LittleEndian(s, v);
         private static void WriteU32(Span<byte> s, uint v) => BinaryPrimitives.WriteUInt32LittleEndian(s, v);
         private static void WriteF32(Span<byte> s, float v) => BinaryPrimitives.WriteSingleLittleEndian(s, v);
+
+        private static void WriteF32x2(Span<byte> s, float a, float b)
+        {
+            WriteF32(s, a);
+            WriteF32(s.Slice(4), b);
+        }
+
+        private static void WriteF32x3(Span<byte> s, float a, float b, float c)
+        {
+            WriteF32x2(s, a, b);
+            WriteF32(s.Slice(8), c);
+        }
+
+        private static void WriteI32x2(Span<byte> s, int a, int b)
+        {
+            BinaryPrimitives.WriteInt32LittleEndian(s, a);
+            BinaryPrimitives.WriteInt32LittleEndian(s.Slice(4), b);
+        }
+
+        private static void WriteMatrix(Span<byte> s, in Matrix m)
+        {
+            WriteF32x4(s, m.M11, m.M12, m.M13, m.M14);
+            WriteF32x4(s.Slice(16), m.M21, m.M22, m.M23, m.M24);
+            WriteF32x4(s.Slice(32), m.M31, m.M32, m.M33, m.M34);
+            WriteF32x4(s.Slice(48), m.M41, m.M42, m.M43, m.M44);
+        }
 
         private static void WriteF32x4(Span<byte> s, float a, float b, float c, float d)
         {

@@ -93,7 +93,7 @@ public static class SamplerTest
         var effects = new List<uint>();
         void Teardown()
         {
-            cmd.Reset();
+            cmd.Clear();
             foreach (var fx in effects)
                 cmd.Destroy(fx);
             ApplyRc();
@@ -167,7 +167,7 @@ public static class SamplerTest
             return img;
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // row 0: zoom at the red | blue edge
         uint[] edge = new uint[3];
@@ -250,7 +250,7 @@ public static class SamplerTest
         }
 
         // --- live: Point -> Linear (diff entry), back by CLEAR; a name the shader does not have; out of range ---
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(edge[0], 0);
         cmd.UniformSampler("source", S(0, 0, 0, 0));
         cmd.EndUniforms();
@@ -262,7 +262,7 @@ public static class SamplerTest
             var c = Px(a, (int)Cell(0, 0).x + 80 - 3, cy);
             gpu(c.B > 25 && c.R < 240, $"live change Point -> Linear without rebuild ({c})");
         }
-        cmd.Reset();
+        cmd.Clear();
         Uniforms(edge[0], Protocol.UniformSet.Clear, 0.5f, 0.5f, 0.04f, null, 0);
         Apply("sampler removed (CLEAR)");
         s.Pump(6);
@@ -272,7 +272,7 @@ public static class SamplerTest
             var c = Px(a, (int)Cell(0, 0).x + 80 - 3, cy);
             gpu(Near(c, 255, 0, 0), $"sampler removed: back to the layer as it is ({c})");
         }
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(edge[0], 0);
         cmd.UniformSampler("nope", S(0, 0, 0, 0));
         cmd.EndUniforms();
@@ -280,7 +280,7 @@ public static class SamplerTest
         s.Pump(4);
         var err = Err(1);
         s.Check(err.Contains("nope") && err.Contains("sampler2D"), $"unknown sampler name -> EVENT_ERROR ({err})");
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(edge[0], Protocol.UniformSet.Clear);
         cmd.UniformSampler("source", S(0, 3, 0, 0));
         cmd.EndUniforms();

@@ -124,7 +124,7 @@ public static class AnimationScrubTest
         }
         s.Check(Native.vlqt_app_advance_animations(time) == Native.Result.Ok, "the clock still advances after a refused time");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.Destroy(Q);
         Native.Apply(w, cmd.EndFrame());
         // Later scenarios go on from the latest time used here: their clock never goes back.

@@ -34,15 +34,15 @@ namespace VL.Qt.Reconciliation
         {
             switch (v.ValueType)
             {
-                case Protocol.ValueType.F32: sink.UniformF32(name, v.A); break;
-                case Protocol.ValueType.I32: sink.UniformI32(name, v.Integer); break;
-                case Protocol.ValueType.Bool: sink.UniformBool(name, v.Integer != 0); break;
-                case Protocol.ValueType.Color: sink.UniformColor(name, v.A, v.B, v.C, v.D); break;
-                case Protocol.ValueType.Vec2: sink.UniformVec2(name, v.A, v.B); break;
-                case Protocol.ValueType.Vec3: sink.UniformVec3(name, v.A, v.B, v.C); break;
-                case Protocol.ValueType.Vec4: sink.UniformVec4(name, v.A, v.B, v.C, v.D); break;
-                case Protocol.ValueType.Rectf: sink.QmlRect(name, v.A, v.B, v.C, v.D); break;
-                case Protocol.ValueType.String: sink.QmlString(name, v.Text ?? string.Empty); break;
+                case Protocol.ValueType.F32: sink.QmlPropertyF32(name, v.A); break;
+                case Protocol.ValueType.I32: sink.QmlPropertyI32(name, v.Integer); break;
+                case Protocol.ValueType.Bool: sink.QmlPropertyBool(name, v.Integer != 0); break;
+                case Protocol.ValueType.Color: sink.QmlPropertyColor(name, v.A, v.B, v.C, v.D); break;
+                case Protocol.ValueType.Vec2: sink.QmlPropertyVec2(name, v.A, v.B); break;
+                case Protocol.ValueType.Vec3: sink.QmlPropertyVec3(name, v.A, v.B, v.C); break;
+                case Protocol.ValueType.Vec4: sink.QmlPropertyVec4(name, v.A, v.B, v.C, v.D); break;
+                case Protocol.ValueType.Rectf: sink.QmlPropertyRect(name, v.A, v.B, v.C, v.D); break;
+                case Protocol.ValueType.String: sink.QmlPropertyString(name, v.Text ?? string.Empty); break;
             }
         }
     }

@@ -187,7 +187,7 @@ public static class ShaderEffectTest
             cmd.EndUniforms();
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // 1) wave on the stripes image at (50, 50) 300 x 200: stripes red 50..150 | green 150..250 | blue 250..350
         Effect(Wave, 50, 50, 300, 200, wave);
@@ -241,12 +241,12 @@ public static class ShaderEffectTest
             $"wave amplitude 0 shows the input stripes ({Px(baseline, 100, 150)}, {Px(baseline, 200, 150)}, {Px(baseline, 300, 150)})");
         gpu(IsBg(Px(baseline, 100, 100)) == false, "input itself hidden (only the effect output is drawn)");
 
-        cmd.Reset();
+        cmd.Clear();
         Waves(0, 0.05f, 2);
         CheckApply("wave time 0");
         s.Pump(5);
         using var waveA = s.Grab(w, "shader-effect_wave_a.png");
-        cmd.Reset();
+        cmd.Clear();
         Waves(1.5f, 0.05f, 2);
         CheckApply("wave time 1.5");
         s.Pump(5);
@@ -281,17 +281,17 @@ public static class ShaderEffectTest
             gpu(ImageTest.IsGreen(m) || Near(m, 0, 255, 0, 60), $"mesh resolution 8 x 8 with wave renders ({m})");
         }
         // Mesh resolution changes at runtime (and back) must not crash.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetIvec2(Mesh, Protocol.PropertyId.MeshResolution, 1, 1);
         CheckApply("mesh resolution 1 x 1");
         s.Pump(3);
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetIvec2(Mesh, Protocol.PropertyId.MeshResolution, 32, 4);
         CheckApply("mesh resolution 32 x 4");
         s.Pump(3);
         using (var a = s.Grab(w, "shader-effect_mesh.png"))
             gpu(!IsBg(Px(a, 650, 375)), $"mesh resolution switched 1x1 / 32x4 keeps drawing ({Px(a, 650, 375)})");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetIvec2(Mesh, Protocol.PropertyId.MeshResolution, 0, 3);
         var rcMesh = Apply();
         s.Check(rcMesh == Native.Result.BadArgument, $"mesh resolution < 1 -> BadArgument ({rcMesh}: {Native.LastError()})");
@@ -304,7 +304,7 @@ public static class ShaderEffectTest
             s.Check(ResError(missing).Length > 0 && Err(HBroken) is var e0 && e0.Length == 0, $"the shader error comes by the resource, not as EVENT_ERROR of the element ('{Err(HBroken)}')");
         }
         // Recovery: the element gets a good shader later (and the uniforms stay by name): now it draws.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetU64(Broken, Protocol.PropertyId.FragmentShader, wave);
         cmd.BeginUniforms(Broken, Protocol.UniformSet.Clear);
         cmd.UniformF32("time", 0);
@@ -317,7 +317,7 @@ public static class ShaderEffectTest
             gpu(ImageTest.IsRed(Px(a, 70, 520)) && ImageTest.IsGreen(Px(a, 125, 520)) && ImageTest.IsBlue(Px(a, 180, 520)),
                 $"a good shader replaces the failed one ({Px(a, 70, 520)}, {Px(a, 125, 520)}, {Px(a, 180, 520)})");
         // And back to a failed one: the last good version keeps drawing (live editing never goes black).
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetU64(Broken, Protocol.PropertyId.FragmentShader, missing);
         CheckApply("good -> failed shader");
         s.Pump(5);
@@ -326,7 +326,7 @@ public static class ShaderEffectTest
                 $"a failed new shader keeps the last good version drawing ({Px(a, 70, 520)}, {Px(a, 125, 520)}, {Px(a, 180, 520)})");
 
         // --- 5) unknown uniform name / wrong type -> EVENT_ERROR, correction clears it ---
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(Grad, 0);
         cmd.UniformF32("noSuchUniform", 1);
         cmd.EndUniforms();
@@ -335,13 +335,13 @@ public static class ShaderEffectTest
         var unknown = Err(HGrad);
         gpu(unknown.Contains("noSuchUniform"), $"unknown uniform name -> EVENT_ERROR ('{unknown}')");
 
-        cmd.Reset();
+        cmd.Clear();
         Gradient(); // full send (Clear): valid again
         CheckApply("correction (full send)");
         s.Pump(3);
         gpu(Err(HGrad).Length == 0, $"correction clears the error ('{Err(HGrad)}')");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(Grad, 0);
         cmd.UniformVec2("time", 1, 2); // time is a float
         cmd.EndUniforms();
@@ -352,7 +352,7 @@ public static class ShaderEffectTest
         using (var a = s.Grab(w, "shader-effect_error.png"))
             gpu(!IsBg(Px(a, 550, 150)), $"element keeps drawing with the previous values while it has an error ({Px(a, 550, 150)})");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(Grad, 0);
         cmd.UniformF32("time", gradientTime); // diff: just the corrected entry
         cmd.EndUniforms();
@@ -360,7 +360,7 @@ public static class ShaderEffectTest
         s.Pump(3);
         gpu(Err(HGrad).Length == 0, $"corrected entry clears the error ('{Err(HGrad)}')");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(Grad, 0);
         cmd.UniformF32("qt_Opacity", 0.5f); // reserved
         cmd.UniformColor("color", 1, 0.5f, 0, 0.5f);
@@ -369,20 +369,20 @@ public static class ShaderEffectTest
         s.Pump(3);
         var reserved = Err(HGrad);
         gpu(reserved.Contains("qt_Opacity"), $"reserved name -> EVENT_ERROR ('{reserved}')");
-        cmd.Reset();
+        cmd.Clear();
         Gradient();
         CheckApply("correction (full send) 2");
         s.Pump(3);
         gpu(Err(HGrad).Length == 0, "second correction clears the error");
 
         // Not a Shader: SET_UNIFORMS on a rectangle -> UnknownProperty; unknown ref -> UnknownObject.
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(WaveIn, 0);
         cmd.UniformF32("time", 1);
         cmd.EndUniforms();
         var rc6 = Apply();
         s.Check(rc6 == Native.Result.UnknownProperty, $"SET_UNIFORMS on an image -> UnknownProperty ({rc6}: {Native.LastError()})");
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(DualTex, 0);
         cmd.UniformRef("overlay", 999);
         cmd.EndUniforms();
@@ -390,7 +390,7 @@ public static class ShaderEffectTest
         s.Check(rc4 == Native.Result.UnknownObject, $"texture uniform with an unknown element id -> UnknownObject ({rc4}: {Native.LastError()})");
 
         // Lifetime: destroy the effects with children, release the resources, window down (no crash, no leak message).
-        cmd.Reset();
+        cmd.Clear();
         foreach (var id in new[] { Wave, Grad, DualTex, DualImg, Mesh, Broken, NoShader }) cmd.Destroy(id);
         CheckApply("destroy all effects");
         s.Pump(3);

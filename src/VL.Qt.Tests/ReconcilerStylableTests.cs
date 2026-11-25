@@ -495,7 +495,7 @@ namespace VL.Qt.Tests
             var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             for (int i = 0; i < 50; i++)
             {
-                writer.Reset();
+                writer.Clear();
                 rec.Update(root, Space.DIPTopLeft);
                 writer.EndFrame();
             }
@@ -503,7 +503,7 @@ namespace VL.Qt.Tests
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < 1000; i++)
             {
-                writer.Reset();
+                writer.Clear();
                 rec.Update(root, Space.DIPTopLeft);
                 writer.EndFrame();
             }

@@ -81,7 +81,7 @@ public static class KeyRouteTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             Check(rc == 0, $"key route {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         List<Rec> Frame()
         {
@@ -98,7 +98,7 @@ public static class KeyRouteTest
         static List<Rec> Values(List<Rec> recs, uint handle) => recs.FindAll(r => r.Event == Protocol.EventId.Value && r.Handle == handle);
         static string S(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(T, Protocol.ElementType.TextField);
         VL.Qt.Styles.BaseStyle.Write(cmd, T); // like the Reconciler
         cmd.SetBool(T, Protocol.PropertyId.AutoSize, false);

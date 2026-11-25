@@ -62,7 +62,7 @@ public static class OpacityZeroTest
             // Row at (50, 100) DIP, spacing 0.5: A 50..250, B 300..500, C 550..750 (y 100..300).
             var e = row.Update(Spread.Create<IElement?>(a, b, c), new Vector2(0, 0), true, Matrix.Translation(0.5f, 1, 0), RectangleAnchor.TopLeft,
                 0.5f, 0, VerticalAlignment.Top, 1, false, false, null, null, true, out _, out _);
-            cmd.Reset();
+            cmd.Clear();
             if (clear)
             {
                 cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
@@ -135,7 +135,7 @@ public static class OpacityZeroTest
             s.Check(Near(Px(img, 650, 200), 0, 255, 0) && !Near(Px(img, 400, 200), 0, 255, 0),
                 $"opacity-zero: B enabled again, C back after it ({Px(img, 650, 200)}, {Px(img, 400, 200)})");
 
-        cmd.Reset();
+        cmd.Clear();
         rec.Update(null, Space.DIPTopLeft);
         if (cmd.Length > 0)
             s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "opacity-zero: clear");

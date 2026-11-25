@@ -46,7 +46,7 @@ public static class EffectChainRejectTest
         {
             cmd.BeginEffectChain(R);
             cmd.BeginMultiLink();
-            cmd.EffectRef(Protocol.MultiEffectKey.MaskSource, M);
+            cmd.MultiEffectRef(Protocol.MultiEffectKey.MaskSource, M);
             cmd.EndLink();
             cmd.BeginEffectChainLink(Protocol.EffectTemplate.Single, [blend], 0, 0, 0, 0, 0);
             cmd.UniformI32("mode", 0);
@@ -56,7 +56,7 @@ public static class EffectChainRejectTest
             if (withP)
             {
                 cmd.BeginMultiLink();
-                cmd.EffectRef(Protocol.MultiEffectKey.MaskSource, P);
+                cmd.MultiEffectRef(Protocol.MultiEffectKey.MaskSource, P);
                 cmd.EndLink();
             }
             cmd.EndEffectChain();
@@ -83,7 +83,7 @@ public static class EffectChainRejectTest
         var itemsBefore = Items(w);
 
         // The third link's mask P has a parent: the command is rejected after links 1 and 2 passed.
-        cmd.Reset();
+        cmd.Clear();
         WriteChain(withP: true);
         rc = Native.Apply(w, cmd.EndFrame());
         var message = rc != 0 ? Native.LastError() : "";
@@ -102,7 +102,7 @@ public static class EffectChainRejectTest
         }
 
         // The same chain without the third link is taken, and parks M and T (so the item count above can tell).
-        cmd.Reset();
+        cmd.Clear();
         WriteChain(withP: false);
         rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"the chain without the mask in the tree ({rc}) {(rc != 0 ? Native.LastError() : "")}");
@@ -110,7 +110,7 @@ public static class EffectChainRejectTest
         var itemsTaken = Items(w);
         s.Check(itemsTaken > itemsBefore, $"the taken chain parks its mask and texture (items {itemsTaken} vs {itemsBefore})");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginEffectChain(R);
         cmd.EndEffectChain();
         cmd.Destroy(R);

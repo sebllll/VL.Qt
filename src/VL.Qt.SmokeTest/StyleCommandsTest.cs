@@ -44,7 +44,7 @@ public static class StyleCommandsTest
         }
 
         // Button 200 x 60 at (100, 100); the probe (110, 110) lies in the frame, away from the text.
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(BgGray, BgGray, BgGray, 1);
         cmd.Create(Btn, Protocol.ElementType.Button);
         cmd.SetBool(Btn, Protocol.PropertyId.AutoSize, false);
@@ -57,7 +57,7 @@ public static class StyleCommandsTest
 
         void BaseStyleAgain(string what)
         {
-            cmd.Reset();
+            cmd.Clear();
             BaseStyle.Write(cmd, Btn);
             CheckApply(what);
         }
@@ -74,7 +74,7 @@ public static class StyleCommandsTest
         // SET_STYLE with the red FrameColor entry, then what the case adds; patch edits the command bytes; returns the apply result.
         Native.Result Send(Action<CommandWriter> entries, Func<byte[], byte[]>? patch = null, ushort flags = 0)
         {
-            cmd.Reset();
+            cmd.Clear();
             cmd.BeginStyle(Btn, flags);
             cmd.StyleColor(Protocol.StyleField.FrameColor, Protocol.StyleState.Normal, 1, 0, 0, 1);
             entries(cmd);
@@ -155,7 +155,7 @@ public static class StyleCommandsTest
             return b;
         });
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.Destroy(Btn);
         CheckApply("destroy button");
         s.Pump(3);

@@ -35,7 +35,7 @@ public static partial class QtTextureTest
         {
             int rc = (int)Native.Apply(scene, cmd.EndFrame());
             check(rc == 0, $"poll polish: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         // The y of the three children (SCENE_BOUNDS of handles 11 ... 13) in this poll; NaN = no record.
         float[] Ys()
@@ -62,7 +62,7 @@ public static partial class QtTextureTest
         string Show(float[] ys) => string.Join(", ", ys);
 
         // Column at (20, 10), padding 5, spacing 10: child i at y = 15 + 50 i.
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0, 0, 0, 0);
         cmd.Create(column, Protocol.ElementType.Column);
         cmd.SetPlace(column, 20, 10, 0, 0);

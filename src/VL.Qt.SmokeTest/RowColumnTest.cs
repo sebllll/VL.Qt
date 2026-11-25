@@ -62,7 +62,7 @@ public static class RowColumnTest
             cmd.Reparent(id, parent, 1000);
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // A: Column without size (implicit), padding 10, spacing 20, Left.
         Container(ColA, Protocol.ElementType.Column, new RectangleF(20, 20, 0, 0), 20, 10, 0);
@@ -115,7 +115,7 @@ public static class RowColumnTest
         }
 
         // Updates: alignment Right, child size change, spacing/padding change, appended child.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetI32(ColB, Protocol.PropertyId.ChildAlignment, 0x2);
         cmd.SetPlace(Child(ColB, 1), 0, 0, 20, 40);
         cmd.SetPlace(Child(ColA, 1), 0, 0, 120, 40);
@@ -139,7 +139,7 @@ public static class RowColumnTest
         // Hidden child: a Column 200 x 200 at (450, 300), padding 10, HCenter, with red (100 wide), green (60 wide) and
         // blue (140 wide), each 40 high. Green is hidden: it takes no space, blue moves up under red and both stay
         // centered; the alignment follows a width change of the Column; green coming back shifts blue down again.
-        cmd.Reset();
+        cmd.Clear();
         Container(ColE, Protocol.ElementType.Column, new RectangleF(450, 300, 200, 200), 0, 10, 0x4);
         Rect(Child(ColE, 0), ColE, 100, 40, 1, 0, 0);
         Rect(Child(ColE, 1), ColE, 60, 40, 0, 1, 0);
@@ -157,7 +157,7 @@ public static class RowColumnTest
             s.Check(IsBg(Px(a, 550, 410)), $"hidden child takes no space ({Px(a, 550, 410)})");
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetPlace(ColE, 450, 300, 300, 200);
         CheckApply("hidden child, wider column");
         s.Pump(2);
@@ -170,7 +170,7 @@ public static class RowColumnTest
                 $"hidden sibling, wider column: blue follows ({Px(a, 525, 370)}, {Px(a, 535, 370)}, {Px(a, 665, 370)}, {Px(a, 675, 370)})");
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetBool(Child(ColE, 1), Protocol.PropertyId.Visible, true);
         CheckApply("hidden child shown again");
         s.Pump(2);
@@ -187,9 +187,9 @@ public static class RowColumnTest
         {
             var rc = Apply();
             s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
-            cmd.Reset();
+            cmd.Clear();
         }
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetI32(ColA, Protocol.PropertyId.ChildAlignment, 0x20);
         Expect(Native.Result.BadArgument, "column alignment AlignTop");
         cmd.SetI32(RowC, Protocol.PropertyId.ChildAlignment, 0x1);

@@ -71,7 +71,7 @@ public static class PerfOverlayTest
         NativeTest.vlqt_test_set_overlay(v, Stats | ((Summary + 1) << PageShift));
         for (var i = 0; i < 40; i++)
         {
-            cmd.Reset();
+            cmd.Clear();
             cmd.SetPlace(1, 100 + 50 * MathF.Sin(i * 0.2f), 200, 100, 60);
             Native.Apply(v, cmd.EndFrame());
             s.Pump(1);
@@ -86,7 +86,7 @@ public static class PerfOverlayTest
         Retry(s, "perfoverlay: VSync on: vsync spike in the vsync wait segment", () =>
         {
             if (NativeTest.vlqt_test_perf_spike(v, PhaseVsync, 10) != 0) return (false, "inject failed");
-            cmd.Reset();
+            cmd.Clear();
             cmd.SetPlace(1, 120, 200, 100, 60);
             Native.Apply(v, cmd.EndFrame());
             // With VSync not every pump renders (the update request comes from Qt's VBlank thread): the sample to read
@@ -145,7 +145,7 @@ public static class PerfOverlayTest
             long lastEnd = 0;
             for (int i = 0; i < frames; i++, frame++)
             {
-                cmd.Reset();
+                cmd.Clear();
                 cmd.SetPlace(1, 500 + 100 * MathF.Sin(frame * 0.1f), 400, 100, 60);
                 var t0 = Stopwatch.GetTimestamp();
                 if (lastEnd != 0 && Stopwatch.GetElapsedTime(lastEnd, t0).TotalMilliseconds > stallMs) bigStalls.Add(frame);
@@ -269,7 +269,7 @@ public static class PerfOverlayTest
         s.Check(scene.Contains("elements 1 rectangle 1"), $"perfoverlay: scene counts 1 rectangle element ({Line(scene, "elements")})");
         s.Check(scene.Contains("QML items") && !scene.Contains("animations"), $"perfoverlay: scene items, no animations row ({Line(scene, "QML items")})");
         // Every element type is counted by its own name (Shape, Shader), none in "other".
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(2, Protocol.ElementType.Shape);
         cmd.Create(3, Protocol.ElementType.Shader);
         cmd.Reparent(2, 0, 1);
@@ -279,7 +279,7 @@ public static class PerfOverlayTest
         var typed = PageText(w, Scene);
         s.Check(typed.Contains("elements 3") && typed.Contains("shape 1") && typed.Contains("shader 1") && typed.Contains("rectangle 1") && !typed.Contains("other"),
             $"perfoverlay: scene names every element type ({Line(typed, "elements")})");
-        cmd.Reset();
+        cmd.Clear();
         cmd.Destroy(2);
         cmd.Destroy(3);
         Native.Apply(w, cmd.EndFrame());
@@ -544,7 +544,7 @@ public static class PerfOverlayTest
                     deadline += period;
                     PumpTest.ForeignMessageLoopUntil(deadline);
                     if (Stopwatch.GetElapsedTime(deadline).TotalMilliseconds > 16.7) deadline = Stopwatch.GetTimestamp();
-                    cmd.Reset();
+                    cmd.Clear();
                     for (uint k = 0; k < 20; k++)
                         cmd.SetPlace(1 + k, 300 + 250 * MathF.Sin(frame * 0.05f + k), 30 * k, 80, 25);
                     Native.Apply(w, cmd.EndFrame());

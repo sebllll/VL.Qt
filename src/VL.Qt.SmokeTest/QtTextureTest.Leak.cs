@@ -90,7 +90,7 @@ public static partial class QtTextureTest
                 return false;
             }
             var cmd = new CommandWriter();
-            cmd.Reset();
+            cmd.Clear();
             cmd.ClearColor(0, 0, 0, 0);
             cmd.Create(1, Protocol.ElementType.Rectangle);
             cmd.SetPlace(1, 2, 2, 12, 8);
@@ -245,7 +245,7 @@ public static partial class QtTextureTest
                 var f = s_leakFormats[k];
                 scenes[k] = Native.vlqt_offscreen_create(32, 24);
                 var cmd = new CommandWriter();
-                cmd.Reset();
+                cmd.Clear();
                 cmd.ClearColor(0, 0, 0, 0);
                 cmd.Create(1, Protocol.ElementType.Rectangle);
                 cmd.SetPlace(1, 2, 2, 16, 12);

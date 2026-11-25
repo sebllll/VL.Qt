@@ -71,7 +71,7 @@ public static class VideoAudioOwnedTapTest
         void Apply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            cmd.Reset();
+            cmd.Clear();
             s.Check(rc == 0, $"videoaudio-owned: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
         // Frames for ms; the highest process peak seen meanwhile.
@@ -134,7 +134,7 @@ public static class VideoAudioOwnedTapTest
         // A second Video on the owned tap, Volume 1 like VideoAudioNode sends: refused (ApplyBadValue) and muted.
         CreateVideo(Video2Id, tap, 1f, 200, tapLast: true);
         var rc2 = Native.Apply(w, cmd.EndFrame());
-        cmd.Reset();
+        cmd.Clear();
         var err2 = rc2 != 0 ? Native.LastError() : "";
         s.Check(rc2 == Native.Result.BadArgument && err2.Contains("already used by another Video"),
             $"videoaudio-owned: the owned tap is refused on the second Video ({rc2}) {err2}");

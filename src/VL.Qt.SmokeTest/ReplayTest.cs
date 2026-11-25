@@ -310,7 +310,7 @@ public static class ReplayTest
             c.Reparent(id, 0, (uint)rects + t);
         }
         frames.Add(c.EndFrame().ToArray());
-        c.Reset();
+        c.Clear();
         for (int f = 0; f < count; f++)
         {
             var time = f / 60f;
@@ -326,7 +326,7 @@ public static class ReplayTest
                 c.SetString(id, Protocol.PropertyId.Text, $"frame {f} · line {t} · {time:F3} s");
             }
             frames.Add(c.EndFrame().ToArray());
-            c.Reset();
+            c.Clear();
         }
         return frames;
     }
@@ -342,7 +342,7 @@ public static class ReplayTest
         c.SetColor(1, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
         c.Reparent(1, 0, 0);
         frames.Add(c.EndFrame().ToArray());
-        c.Reset(); // empty frame
+        c.Clear(); // empty frame
         frames.Add(c.EndFrame().ToArray());
         c.Create(2, Protocol.ElementType.Group);
         c.SetPlace(2, 4 * U, 3 * U, 3 * U, 2 * U);

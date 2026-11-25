@@ -79,7 +79,7 @@ public static class VideoTest
         Native.Result Apply()
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            cmd.Reset();
+            cmd.Clear();
             return rc;
         }
         void CheckApply(string what)
@@ -119,7 +119,7 @@ public static class VideoTest
         void Run(int ms) => WaitFor(() => false, ms);
 
         // --- 1) Load + play: duration after the asynchronous load, natural size, pixels change, position rises.
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         cmd.Create(VideoId, Protocol.ElementType.Video);
         cmd.SetPlace(VideoId, 20, 20, 320, 180);
@@ -368,7 +368,7 @@ public static class VideoTest
         {
             var e = node.Update(new Vector2(3.2f, 1.8f), Matrix.Translation(0.2f, 0.2f, 0), RectangleAnchor.TopLeft, new VPath(path), play, true, true, 1, 1,
                 FillMode.Fit, 1, false, false, null, null, true, out pos, out dur, out size, out _);
-            cmd.Reset();
+            cmd.Clear();
             rec.Update((Element)e, Space.DIPTopLeft);
             if (cmd.Length > 0)
             {
@@ -396,7 +396,7 @@ public static class VideoTest
         s.Check(WaitFor(b, () => Math.Abs(dur - 1f) < 0.1f, 5000), $"node: file change via Path pin ({dur:F3})");
 
         node.Dispose();
-        cmd.Reset();
+        cmd.Clear();
         rec.Clear();
         Native.Apply(w, cmd.EndFrame());
         Native.vlqt_scene_destroy(w);

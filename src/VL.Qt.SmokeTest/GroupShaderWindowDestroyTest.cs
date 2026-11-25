@@ -36,7 +36,7 @@ public static class GroupShaderWindowDestroyTest
             s.Check(w != SceneHandle.Null, "window_create");
             Native.vlqt_window_show(w);
             var cmd = new CommandWriter();
-            cmd.Reset();
+            cmd.Clear();
             uint id = 100;
             for (var i = 0; i < 11; i++)
             {
@@ -66,13 +66,13 @@ public static class GroupShaderWindowDestroyTest
             {
                 // Runtime path of the same bug: Input released and its Group destroyed in one apply. The Group goes at once,
                 // its proxy only at the next apply (frameDelete) and used the deleted Group in its destructor.
-                cmd.Reset();
+                cmd.Clear();
                 cmd.SetRef(100, Protocol.PropertyId.Source, 0);
                 cmd.Destroy(101);
                 rc = Native.Apply(w, cmd.EndFrame());
                 s.Check(rc == 0, $"Input released + Group destroyed in one apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
                 s.Pump(3);
-                cmd.Reset();
+                cmd.Clear();
                 rc = Native.Apply(w, cmd.EndFrame()); // flushes the retired proxy
                 s.Pump(2);
                 s.Check(rc == 0, "next apply after the Group went: no crash");

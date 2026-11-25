@@ -58,7 +58,7 @@ public static class SpinBoxTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         List<Rec> Frame()
         {
@@ -92,7 +92,7 @@ public static class SpinBoxTest
         void ExpectNone(List<Rec> recs, string what) => s.Check(Values(recs, H).Count == 0, $"{what} -> no EVENT_VALUE ({S(recs)})");
 
         // Created with a large range and a value, bound without flags; AUTO_SIZE default on -> implicit size; SET no echo.
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(S1, Protocol.ElementType.SpinBox);
         VL.Qt.Styles.BaseStyle.Write(cmd, S1); // like the Reconciler
         cmd.SetPlace(S1, 100, 100, 0, 0);

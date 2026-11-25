@@ -23,7 +23,7 @@ namespace VL.Qt.Tests
         // Written commands of the next Update, without a native handle (Apply does not run; the scene is 0 x 0 DIP, dpr 1).
         private static int Written(Scene core, Space space)
         {
-            core.Commands.Reset();
+            core.Commands.Clear();
             core.Update(tree, space, c, true);
             return core.Commands.Length;
         }

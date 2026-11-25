@@ -35,13 +35,13 @@ public static class SizeResetTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         void Expect(Native.Result expected, string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
-            cmd.Reset();
+            cmd.Clear();
         }
         MeasureTest.Rec? Bounds(uint handle)
         {
@@ -62,7 +62,7 @@ public static class SizeResetTest
         }
         void RowSize(float rw, float rh) => cmd.SetPlace(RowId, 100, 100, rw, rh);
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // Row at (100, 100), size 0, Auto Size default (on), spacing 10, VCenter (0x80): implicit 110 x 50; red 40x30, green 60x50.
         cmd.Create(RowId, Protocol.ElementType.Row);

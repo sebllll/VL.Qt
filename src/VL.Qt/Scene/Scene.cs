@@ -123,7 +123,7 @@ namespace VL.Qt
                 {
                     // Mirror and buffer are half written (e.g. a value above Protocol.MaxCommandPayload): neither may reach QtNative.
                     ReconcileFault = e;
-                    _commands.Reset();
+                    _commands.Clear();
                     _resync.OnReconcileFailed();
                     ForgetSentState();
                 }
@@ -146,7 +146,7 @@ namespace VL.Qt
         {
             if (_handle.IsNull)
                 return 0;
-            _wipe.Reset();
+            _wipe.Clear();
             _wipe.ResetScene();
             return (int)Native.Apply(_handle, _wipe.EndFrame());
         }
@@ -159,7 +159,7 @@ namespace VL.Qt
                 return;
             _appliedOps = _commands.Count;
             var rc = Native.Apply(_handle, _commands.EndFrame());
-            _commands.Reset();
+            _commands.Clear();
             if (rc == Native.Result.Ok)
             {
                 ApplyError = "";
@@ -292,7 +292,7 @@ namespace VL.Qt
                     Native.Apply(handle, _commands.EndFrame());
                 _handle = SceneHandle.Null;
             }
-            _commands.Reset();
+            _commands.Clear();
             ClearApplyErrors(); // the element nodes may outlive the scene
             if (!handle.IsNull)
                 Native.vlqt_scene_destroy(handle);

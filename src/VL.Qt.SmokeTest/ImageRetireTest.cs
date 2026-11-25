@@ -87,7 +87,7 @@ public static class ImageRetireTest
         // Image (1) in the left half, Shader (2, with its hidden input 3) in the right half, both showing the stripes.
         bool CreateElements(SceneHandle scene)
         {
-            cmd.Reset();
+            cmd.Clear();
             cmd.Create(1, Protocol.ElementType.Image);
             cmd.SetPlace(1, 0, 0, W / 2, H);
             cmd.SetBool(1, Protocol.PropertyId.Smooth, false);
@@ -110,7 +110,7 @@ public static class ImageRetireTest
         }
         bool DestroyElements(SceneHandle scene)
         {
-            cmd.Reset();
+            cmd.Clear();
             cmd.Destroy(1);
             cmd.Destroy(2);
             return Native.Apply(scene, cmd.EndFrame()) == 0;
@@ -125,7 +125,7 @@ public static class ImageRetireTest
             s.Check(rc == Native.Result.Ok, $"image-retire: scene {i} created and bound ({rc}) {(rc != Native.Result.Ok ? Native.LastError() : "")}");
             if (scenes[i] != SceneHandle.Null)
             {
-                cmd.Reset();
+                cmd.Clear();
                 cmd.ClearColor(0, 0, 0, 0);
                 Native.Apply(scenes[i], cmd.EndFrame());
             }

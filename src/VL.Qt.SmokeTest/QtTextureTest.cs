@@ -144,7 +144,7 @@ public static partial class QtTextureTest
         if (scene == SceneHandle.Null)
             return scene;
         var cmd = new CommandWriter();
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0, 0, 0, 0);
         cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetPlace(1, 16, 12, 32, 24);
@@ -363,7 +363,7 @@ public static partial class QtTextureTest
         check(NativeTest.vlqt_test_offscreen_state(scene, out _, out _, out _) == Native.Result.Unbound, "scene: state of an unbound scene = unbound");
 
         var cmd = new CommandWriter();
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0, 0, 0, 0);
         cmd.Create(rect, Protocol.ElementType.Rectangle);
         cmd.SetPlace(rect, rx, ry, rw, rh);

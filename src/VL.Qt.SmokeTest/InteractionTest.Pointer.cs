@@ -48,7 +48,7 @@ public static partial class InteractionTest
         {
             var e = _rect.Update(Bounds.Sz(), Bounds.Tr(), RectangleAnchor.TopLeft, new Color4(0.2f, 0.4f, 0.8f, 1), 0,
                 new Color4(0, 0, 0, 1), 0, 1, false, false, Chain(), null, true, out _, out SceneBounds);
-            _cmd.Reset();
+            _cmd.Clear();
             _rec.Update((Element)e, Space.DIPTopLeft);
             if (_cmd.Length > 0)
             {
@@ -71,7 +71,7 @@ public static partial class InteractionTest
 
         public void Dispose()
         {
-            _cmd.Reset();
+            _cmd.Clear();
             _rec.Update(null, Space.DIPTopLeft);
             if (_cmd.Length > 0)
                 _s.Check(Native.Apply(W, _cmd.EndFrame()) == 0, _tag + ": clear");

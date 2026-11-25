@@ -45,7 +45,7 @@ public static class KeyboardShortcutsTest
         var buf = new byte[1 << 16];
         long count = 0, lastKey = 0; // of KeyProbe.qml, from its EVENT_QML_PROPERTY
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0.125f, 0.125f, 0.125f, 1);
         cmd.Create(Probe, Protocol.ElementType.Qml);
         cmd.SetString(Probe, Protocol.PropertyId.QmlSource, qml);
@@ -54,7 +54,7 @@ public static class KeyboardShortcutsTest
         cmd.Bind(Probe, ProbeHandle);
         var rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"keyshortcuts: create KeyProbe ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-        cmd.Reset();
+        cmd.Clear();
 
         void Poll()
         {

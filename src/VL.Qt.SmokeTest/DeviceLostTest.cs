@@ -92,7 +92,7 @@ public static class DeviceLostTest
         {
             var w = Native.vlqt_window_create(x, 100, 400, 400, title, 0);
             s.Check(w != SceneHandle.Null, $"create {title} " + (w == SceneHandle.Null ? Native.LastError() : ""));
-            cmd.Reset();
+            cmd.Clear();
             cmd.ClearColor(0.1f, 0.1f, 0.1f, 1);
             cmd.Create(Rect, Protocol.ElementType.Rectangle);
             cmd.SetPlace(Rect, 20, 20, 100, 60);

@@ -195,7 +195,7 @@ public static class VideoAudioTest
         void Apply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            cmd.Reset();
+            cmd.Clear();
             s.Check(rc == 0, $"videoaudio: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
         void Frames(int ms, Func<bool>? until = null)
@@ -226,7 +226,7 @@ public static class VideoAudioTest
         s.Check(st0.flags == 0 && st0.capacity == 24000 && st0.available == 0, $"videoaudio: fresh tap not attached, 500 ms ring (flags {st0.flags}, capacity {st0.capacity})");
         using var reader = new Reader { Id = tap1 };
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(VideoId, Protocol.ElementType.Video);
         cmd.SetPlace(VideoId, 0, 0, 640, 360);
         cmd.SetString(VideoId, Protocol.PropertyId.Source, a);
@@ -305,7 +305,7 @@ public static class VideoAudioTest
         cmd.Reparent(Video2Id, 0, 1);
         cmd.SetU64(Video2Id, Protocol.PropertyId.AudioTap, tap2);
         var rcShared = Native.Apply(w, cmd.EndFrame());
-        cmd.Reset();
+        cmd.Clear();
         var errShared = rcShared != 0 ? Native.LastError() : "";
         s.Check(rcShared == Native.Result.BadArgument && errShared.Contains("already used by another Video"),
             $"videoaudio: the tap is refused on a second Video ({rcShared}) {errShared}");

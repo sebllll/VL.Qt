@@ -111,7 +111,7 @@ public static class ReadmeGalleryTest
 
         void Render(string name, int width, float winW, float winH, Action build)
         {
-            cmd.Reset();
+            cmd.Clear();
             next = 1;
             order = 0;
             var w = NativeCalls.CreateWindow((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme gallery");
@@ -122,7 +122,7 @@ public static class ReadmeGalleryTest
             build();
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"readme-gallery {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
             s.Pump(10);
             var grabPath = Path.Combine(s.OutDir, $"readme-gallery_{name}.png");
             using (var a = s.Grab(w, grabPath))
@@ -230,27 +230,27 @@ public static class ReadmeGalleryTest
         // --- effects-basic.png: 3 x 2 cells of 410 x 230
         static void Blur(CommandWriter c)
         {
-            c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
-            c.EffectF32(Protocol.MultiEffectKey.Blur, 0.3f);
-            c.EffectI32(Protocol.MultiEffectKey.BlurMax, 24);
+            c.MultiEffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Blur, 0.3f);
+            c.MultiEffectI32(Protocol.MultiEffectKey.BlurMax, 24);
         }
         static void Shadow(CommandWriter c)
         {
-            c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
-            c.EffectColor(Protocol.MultiEffectKey.ShadowColor, 0, 0, 0, 0.9f);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 10);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 12);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowBlur, 0.45f);
+            c.MultiEffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.MultiEffectColor(Protocol.MultiEffectKey.ShadowColor, 0, 0, 0, 0.9f);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 10);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 12);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowBlur, 0.45f);
         }
         static void Adjust(CommandWriter c)
         {
-            c.EffectF32(Protocol.MultiEffectKey.Saturation, -1);
-            c.EffectF32(Protocol.MultiEffectKey.Contrast, 0.25f);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Saturation, -1);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Contrast, 0.25f);
         }
         static void Colorize(CommandWriter c)
         {
-            c.EffectF32(Protocol.MultiEffectKey.Colorization, 0.75f);
-            c.EffectColor(Protocol.MultiEffectKey.ColorizationColor, 0.2f, 0.45f, 1, 1);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Colorization, 0.75f);
+            c.MultiEffectColor(Protocol.MultiEffectKey.ColorizationColor, 0.2f, 0.45f, 1, 1);
         }
         Render("effects-basic", 820, 1230, 460, () =>
         {
@@ -264,7 +264,7 @@ public static class ReadmeGalleryTest
                 {
                     var masked = Rect(ox + 55, oy + 45, 300, 110, cyan, 12);
                     var mask = Label("VL.Qt", ox + 55, oy + 45, 300, 110, 90, 0xFFFFFF, 700, 4, reparent: false);
-                    cmd.Chain(masked, c => c.EffectRef(Protocol.MultiEffectKey.MaskSource, mask));
+                    cmd.Chain(masked, c => c.MultiEffectRef(Protocol.MultiEffectKey.MaskSource, mask));
                     continue;
                 }
                 var target = Container(Protocol.ElementType.Row, ox + 75, oy + 55, 260, 100, 10, 0, 0);

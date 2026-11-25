@@ -55,9 +55,9 @@ public static class BlendChainTest
         static void Blur(CommandWriter c)
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
-            c.EffectF32(Protocol.MultiEffectKey.Blur, 1f);
-            c.EffectI32(Protocol.MultiEffectKey.BlurMax, 32);
+            c.MultiEffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Blur, 1f);
+            c.MultiEffectI32(Protocol.MultiEffectKey.BlurMax, 32);
             c.EndLink();
         }
         void Blend(CommandWriter c)
@@ -99,7 +99,7 @@ public static class BlendChainTest
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
                 s.Check(rc == 0, $"chain: {name}: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-                cmd.Reset();
+                cmd.Clear();
             }
             cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
             cmd.Create(R, Protocol.ElementType.Rectangle);

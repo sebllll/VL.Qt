@@ -68,7 +68,7 @@ public static class MultiPlacementTest
                 null, null, null, true, out _, out _);
             var e = root.Update(both ? Spread.Create<IElement?>(a, b) : Spread.Create<IElement?>(b), default, true, Matrix.Identity,
                 RectangleAnchor.TopLeft, 1, false, false, null, null, null, true, out _, out _);
-            cmd.Reset();
+            cmd.Clear();
             cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
             rec.Update((Element)e, Space.DIPTopLeft);
             var rc = Native.Apply(w, cmd.EndFrame());

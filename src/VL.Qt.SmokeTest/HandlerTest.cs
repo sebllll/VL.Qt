@@ -106,7 +106,7 @@ public static partial class HandlerTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"handlers: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         // One failing command (after optional setup in the same buffer): expected rc and a reason in vlqt_last_error.
         void ExpectApply(Native.Result expected, string what, string reasonPart)
@@ -114,7 +114,7 @@ public static partial class HandlerTest
             var rc = Native.Apply(w, cmd.EndFrame());
             var err = Native.LastError();
             s.Check(rc == expected && err.Contains(reasonPart, StringComparison.Ordinal), $"handlers: {what} -> {expected} ({rc}: {err})");
-            cmd.Reset();
+            cmd.Clear();
         }
         List<Rec> Frame()
         {
@@ -180,7 +180,7 @@ public static partial class HandlerTest
         cmd.SetBool(B, reportPosition, true);
         var rcElem = Native.Apply(w, cmd.EndFrame());
         s.Check(rcElem == Native.Result.UnknownProperty, $"handlers: handler property on an element -> UnknownProperty ({rcElem}: {Native.LastError()})");
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(H1, Protocol.ElementType.HoverHandler);
         ExpectApply(Native.Result.Invalid, "CREATE handler with an existing id", "already exists");
         cmd.Create(HB, Protocol.ElementType.Rectangle);
@@ -368,7 +368,7 @@ public static partial class HandlerTest
         cmd.Bind(TE, SE);
         var rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"touch: scene ({rc}) {Native.LastError()}");
-        cmd.Reset();
+        cmd.Clear();
         frame();
 
         s.Check(NativeTest.vlqt_test_send_touch(SceneHandle.Null, TestProtocol.Touch.Press, 1, 0, 0) == Native.Result.NullHandle, "touch: null window -> NullHandle");
@@ -397,7 +397,7 @@ public static partial class HandlerTest
         cmd.ResetScene();
         rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"touch: reset ({rc})");
-        cmd.Reset();
+        cmd.Clear();
         frame();
     }
 ﻿
@@ -423,13 +423,13 @@ public static partial class HandlerTest
         {
             var rc = Native.Apply(W, Cmd.EndFrame());
             _s.Check(rc == 0, $"{_tag}: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            Cmd.Reset();
+            Cmd.Clear();
         }
 
         public Native.Result ApplyRc()
         {
             var rc = Native.Apply(W, Cmd.EndFrame());
-            Cmd.Reset();
+            Cmd.Clear();
             return rc;
         }
 

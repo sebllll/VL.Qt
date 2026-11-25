@@ -208,7 +208,7 @@ namespace VL.Qt.Tests
                 Is.EqualTo(SetHdr(4, 6, 300, Protocol.ValueType.Ref) + U32(11)));
 
         [Test]
-        public void EveryCommandIsAligned_AndResetKeepsCapacity()
+        public void EveryCommandIsAligned_AndClearKeepsCapacity()
         {
             var w = new CommandWriter(64);
             w.Create(1, Protocol.ElementType.Group);
@@ -219,7 +219,7 @@ namespace VL.Qt.Tests
             Assert.That(w.Count, Is.EqualTo(4));
             for (int i = 0; i < 100; i++) w.SetF32(1, 1, i); // forces growth
             int cap = w.Capacity;
-            w.Reset();
+            w.Clear();
             Assert.That(w.Length, Is.Zero);
             Assert.That(w.Capacity, Is.EqualTo(cap));
         }
@@ -245,6 +245,254 @@ namespace VL.Qt.Tests
             Assert.That(w.Length, Is.Zero, "failed command must not leave partial bytes");
         }
 
+        // --- compound commands: what the writer lets through while one is open ---
+
+        /// <summary>The compound commands (and open links) a writer can be in, each with the call that closes it.</summary>
+        private static readonly (string Name, Action<CommandWriter> Begin, Action<CommandWriter> End)[] s_open =
+        {
+            ("style", w => w.BeginStyle(1, 0), w => w.EndStyle()),
+            ("uniforms", w => w.BeginUniforms(1, 0), w => w.EndUniforms()),
+            ("qml", w => w.BeginQmlProperties(1, 0), w => w.EndQmlProperties()),
+            ("chain", w => w.BeginEffectChain(1), w => w.EndEffectChain()),
+            ("multi", w => { w.BeginEffectChain(1); w.BeginMultiLink(); }, w => { w.EndLink(); w.EndEffectChain(); }),
+            ("shader", w => { w.BeginEffectChain(1); w.BeginEffectChainLink(Protocol.EffectTemplate.Single, new ulong[] { 5 }, 0, 0, 0, 0, 0); }, w => { w.EndLink(); w.EndEffectChain(); }),
+        };
+
+        public static readonly string[] OpenNames = Array.ConvertAll(s_open, o => o.Name);
+
+        private static (Action<CommandWriter> Begin, Action<CommandWriter> End) OpenOf(string name)
+        {
+            foreach (var o in s_open)
+                if (o.Name == name)
+                    return (o.Begin, o.End);
+            throw new ArgumentException(name);
+        }
+
+        [TestCaseSource(nameof(OpenNames))]
+        public void PlainCommandInsideOpenCommand_ThrowsAndChangesNothing(string open)
+        {
+            var (begin, end) = OpenOf(open);
+            var w = new CommandWriter();
+            begin(w);
+            int length = w.Length, count = w.Count;
+
+            Assert.Throws<InvalidOperationException>(() => w.Create(2, Protocol.ElementType.Rectangle));
+            Assert.Throws<InvalidOperationException>(() => w.Destroy(2));
+            Assert.Throws<InvalidOperationException>(() => w.SetF32(2, Protocol.PropertyId.Opacity, 1));
+            Assert.Throws<InvalidOperationException>(() => w.SetString(2, 257, "x"));
+            Assert.Throws<InvalidOperationException>(() => w.ClearColor(0, 0, 0, 1));
+            Assert.Throws<InvalidOperationException>(() => w.ResetScene());
+            Assert.That(w.Length, Is.EqualTo(length));
+            Assert.That(w.Count, Is.EqualTo(count));
+
+            end(w);
+            w.SetF32(2, Protocol.PropertyId.Opacity, 1); // after the End* it is a plain writer again
+            Assert.That(w.Count, Is.EqualTo(count + 1));
+        }
+
+        [TestCaseSource(nameof(OpenNames))]
+        public void BeginInsideOpenCommand_Throws(string open)
+        {
+            var (begin, end) = OpenOf(open);
+            var w = new CommandWriter();
+            begin(w);
+            int length = w.Length;
+
+            Assert.Throws<InvalidOperationException>(() => w.BeginStyle(2, 0));
+            Assert.Throws<InvalidOperationException>(() => w.BeginUniforms(2, 0));
+            Assert.Throws<InvalidOperationException>(() => w.BeginQmlProperties(2, 0));
+            Assert.Throws<InvalidOperationException>(() => w.BeginEffectChain(2));
+            Assert.That(w.Length, Is.EqualTo(length));
+
+            end(w);
+        }
+
+        [Test]
+        public void LinkInsideALink_Throws()
+        {
+            var w = new CommandWriter();
+            w.BeginEffectChain(1);
+            w.BeginMultiLink();
+            Assert.Throws<InvalidOperationException>(() => w.BeginMultiLink());
+            Assert.Throws<InvalidOperationException>(() => w.BeginEffectChainLink(Protocol.EffectTemplate.Single, new ulong[] { 5 }, 0, 0, 0, 0, 0));
+            w.EndLink();
+            Assert.Throws<InvalidOperationException>(() => w.EndLink());
+            w.EndEffectChain();
+        }
+
+        [Test]
+        public void EntriesOfAnotherCommand_Throw()
+        {
+            var w = new CommandWriter();
+
+            w.BeginStyle(1, 0);
+            Assert.Throws<InvalidOperationException>(() => w.UniformF32("a", 1));
+            Assert.Throws<InvalidOperationException>(() => w.QmlPropertyF32("a", 1));
+            Assert.Throws<InvalidOperationException>(() => w.MultiEffectF32(Protocol.MultiEffectKey.Blur, 1));
+            w.EndStyle();
+
+            w.BeginUniforms(1, 0);
+            Assert.Throws<InvalidOperationException>(() => w.StyleF32(1, 0, 1));
+            Assert.Throws<InvalidOperationException>(() => w.QmlPropertyF32("a", 1));
+            Assert.Throws<InvalidOperationException>(() => w.QmlPropertyString("a", "x"));
+            Assert.Throws<InvalidOperationException>(() => w.MultiEffectF32(Protocol.MultiEffectKey.Blur, 1));
+            w.EndUniforms();
+
+            w.BeginQmlProperties(1, 0);
+            Assert.Throws<InvalidOperationException>(() => w.StyleF32(1, 0, 1));
+            Assert.Throws<InvalidOperationException>(() => w.UniformF32("a", 1));
+            Assert.Throws<InvalidOperationException>(() => w.UniformMat4("a", Matrix.Identity));
+            Assert.Throws<InvalidOperationException>(() => w.MultiEffectF32(Protocol.MultiEffectKey.Blur, 1));
+            w.EndQmlProperties();
+
+            w.BeginEffectChain(1);
+            w.BeginEffectChainLink(Protocol.EffectTemplate.Single, new ulong[] { 5 }, 0, 0, 0, 0, 0);
+            Assert.Throws<InvalidOperationException>(() => w.QmlPropertyString("a", "x"));
+            Assert.Throws<InvalidOperationException>(() => w.QmlPropertyRect("a", 0, 0, 1, 1));
+            Assert.Throws<InvalidOperationException>(() => w.MultiEffectF32(Protocol.MultiEffectKey.Blur, 1));
+            Assert.Throws<InvalidOperationException>(() => w.StyleF32(1, 0, 1));
+            w.UniformF32("a", 1); // the one entry kind a SHADER link takes
+            w.EndLink();
+            w.EndEffectChain();
+        }
+
+        [Test]
+        public void EndOfAnotherCommand_Throws()
+        {
+            var w = new CommandWriter();
+            Assert.Throws<InvalidOperationException>(() => w.EndUniforms());
+            Assert.Throws<InvalidOperationException>(() => w.EndQmlProperties());
+            Assert.Throws<InvalidOperationException>(() => w.EndLink());
+
+            w.BeginUniforms(1, 0);
+            Assert.Throws<InvalidOperationException>(() => w.EndQmlProperties()); // no alias of EndUniforms
+            Assert.Throws<InvalidOperationException>(() => w.EndStyle());
+            Assert.Throws<InvalidOperationException>(() => w.EndEffectChain());
+            w.EndUniforms();
+
+            w.BeginQmlProperties(1, 0);
+            Assert.Throws<InvalidOperationException>(() => w.EndUniforms());
+            w.EndQmlProperties();
+        }
+
+        [Test]
+        public void QmlPropertyEntries_AreEncodedLikeUniformEntries()
+        {
+            void Entries(CommandWriter w, bool qml)
+            {
+                if (qml)
+                {
+                    w.QmlPropertyF32("f", 1.5f);
+                    w.QmlPropertyI32("i", -3);
+                    w.QmlPropertyBool("b", true);
+                    w.QmlPropertyColor("c", 1, 0.5f, 0.25f, 0.75f);
+                    w.QmlPropertyVec2("v2", 1, 2);
+                    w.QmlPropertyVec3("v3", 1, 2, 3);
+                    w.QmlPropertyVec4("v4", 1, 2, 3, 4);
+                }
+                else
+                {
+                    w.UniformF32("f", 1.5f);
+                    w.UniformI32("i", -3);
+                    w.UniformBool("b", true);
+                    w.UniformColor("c", 1, 0.5f, 0.25f, 0.75f);
+                    w.UniformVec2("v2", 1, 2);
+                    w.UniformVec3("v3", 1, 2, 3);
+                    w.UniformVec4("v4", 1, 2, 3, 4);
+                }
+            }
+
+            var uniforms = Write(w => { w.BeginUniforms(7, 0); Entries(w, false); w.EndUniforms(); });
+            var qml = Write(w => { w.BeginQmlProperties(7, 0); Entries(w, true); w.EndQmlProperties(); });
+            Assert.That(uniforms[0] | uniforms[1] << 8, Is.EqualTo((int)Protocol.Op.SetUniforms));
+            Assert.That(qml[0] | qml[1] << 8, Is.EqualTo((int)Protocol.Op.SetQmlProperties));
+            Assert.That(qml[2..], Is.EqualTo(uniforms[2..]), "everything but the op is the same");
+        }
+
+        [Test]
+        public void QmlPropertyRectAndString()
+        {
+            var hex = Write(w =>
+            {
+                w.BeginQmlProperties(7, 0);
+                w.QmlPropertyRect("r", 1, 2, 3, 4);
+                w.QmlPropertyString("s", "hä");
+                w.EndQmlProperties();
+            });
+            var rect = U16(Protocol.ValueType.Rectf) + U16(1) + "72" + "000000" + F32(1) + F32(2) + F32(3) + F32(4);
+            var text = U16(Protocol.ValueType.String) + U16(1) + "73" + "000000" + U32(3) + "68C3A4" + "00";
+            Assert.That(Hex(hex), Is.EqualTo(Hdr(Protocol.Op.SetQmlProperties, 8 + 24 + 16) + U32(7) + U16(2) + U16(0) + rect + text));
+        }
+
+        [Test]
+        public void ThrowingEntry_LeavesTheOpenCommandAsItWas()
+        {
+            var expected = Write(w => { w.BeginUniforms(1, 0); w.UniformF32("a", 1); w.UniformF32("b", 2); w.EndUniforms(); });
+            var actual = Write(w =>
+            {
+                w.BeginUniforms(1, 0);
+                w.UniformF32("a", 1);
+                Assert.Throws<ArgumentException>(() => w.UniformF32("", 9));
+                Assert.Throws<ArgumentException>(() => w.UniformF32(new string('x', Protocol.UniformNameMax + 1), 9));
+                w.UniformF32("b", 2);
+                w.EndUniforms();
+            });
+            Assert.That(Hex(actual), Is.EqualTo(Hex(expected)));
+        }
+
+        [Test]
+        public void Clear_AfterAThrownEntry_AllowsANewCommand()
+        {
+            var w = new CommandWriter();
+            w.BeginUniforms(1, 0);
+            Assert.Throws<ArgumentException>(() => w.UniformF32("", 1));
+            Assert.Throws<InvalidOperationException>(() => w.BeginUniforms(2, 0)); // still open
+
+            w.Clear();
+            Assert.That(w.Length, Is.Zero);
+            Assert.That(w.Count, Is.Zero);
+            w.BeginUniforms(2, 0);
+            w.UniformF32("a", 1);
+            w.EndUniforms();
+            Assert.That(Hex(w.Written.ToArray()), Is.EqualTo(Hex(Write(x => { x.BeginUniforms(2, 0); x.UniformF32("a", 1); x.EndUniforms(); }))));
+        }
+
+        [TestCaseSource(nameof(OpenNames))]
+        public void Abort_DropsTheOpenCommand(string open)
+        {
+            var (begin, _) = OpenOf(open);
+            var w = new CommandWriter();
+            w.Create(1, Protocol.ElementType.Rectangle);
+            var created = w.Written.ToArray();
+
+            begin(w);
+            w.Abort();
+            Assert.That(w.Written.ToArray(), Is.EqualTo(created));
+            Assert.That(w.Count, Is.EqualTo(1));
+
+            w.Abort(); // nothing open: no-op
+            Assert.That(w.Written.ToArray(), Is.EqualTo(created));
+            Assert.That(w.Count, Is.EqualTo(1));
+
+            w.BeginStyle(2, 0); // and the writer is usable again
+            w.EndStyle();
+            Assert.That(w.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void EntryCountOverflow_DropsTheCommandAndClosesIt()
+        {
+            var w = new CommandWriter();
+            w.BeginStyle(1, 0);
+            for (int i = 0; i <= ushort.MaxValue; i++)
+                w.StyleF32(1, 0, i);
+            Assert.Throws<InvalidOperationException>(() => w.EndStyle());
+            Assert.That(w.Length, Is.Zero);
+            Assert.That(w.Count, Is.Zero);
+            w.Create(1, Protocol.ElementType.Rectangle); // not open any more
+            Assert.That(w.Count, Is.EqualTo(1));
+        }
+
         [Test]
         public void NoManagedAllocationPerFrame()
         {
@@ -254,7 +502,7 @@ namespace VL.Qt.Tests
 
             void Frame(int f)
             {
-                w.Reset();
+                w.Clear();
                 for (uint i = 1; i <= 10; i++)
                 {
                     w.SetVec2(i, Protocol.PropertyId.Size, 100, 50 + f);
@@ -354,7 +602,7 @@ namespace VL.Qt.Tests
             var w = new CommandWriter();
             w.Destroy(77);
             var frame = w.EndFrame().ToArray();
-            w.Reset();
+            w.Clear();
             w.EndFrame(); // empty frame is traced too
 
             byte[] file;

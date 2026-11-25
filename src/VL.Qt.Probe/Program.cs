@@ -55,7 +55,7 @@ internal static class Program
 
         // #202020 background, orange rounded rectangle, white text (DIP, top-left).
         var cmd = new CommandWriter();
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetVec2(1, Protocol.PropertyId.Size, 300, 200);

@@ -131,7 +131,7 @@ public static class SnapshotTest
 
         void Frame(Element tree, bool clear = false)
         {
-            cmd.Reset();
+            cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
             rec.Update(tree, Space.DIPTopLeft);
             if (cmd.Length > 0)
@@ -342,7 +342,7 @@ public static class SnapshotTest
         // new grab on the same id works.
         var w2 = NativeCalls.CreateWindow(320, 200, "VL.Qt snapshot test 2");
         Native.vlqt_window_show(w2);
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0.2f, 0.2f, 0.2f, 1);
         cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetPlace(1, 10, 10, 100, 100);
@@ -456,7 +456,7 @@ public static class SnapshotTest
             node.Dispose();
             Pump(3);
             s.Check(client.LiveCount == 0, $"all snapshot resources released (live {client.LiveCount})");
-            cmd.Reset();
+            cmd.Clear();
             rec.Clear();
             Native.Apply(w, cmd.EndFrame());
             Native.vlqt_scene_destroy(w);

@@ -199,7 +199,7 @@ public static class MotionBlurTest
             Uniforms(id, row, amount, angle, width);
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         foreach (var (row, shader, small, large) in new[] { (Dir, directional, 6f, 60f), (Zoom, zoom, 8f, 60f), (Radial, radial, 4f, 40f) })
         {
@@ -251,7 +251,7 @@ public static class MotionBlurTest
         }
 
         // Length 0 / angle 0 = unblurred: the shape edge (x = +100) is sharp in all rows.
-        cmd.Reset();
+        cmd.Clear();
         foreach (var row in new[] { Dir, Zoom, Radial })
             Uniforms(Fx(row, 1), row, 0);
         CheckApply("amount 0");
@@ -274,7 +274,7 @@ public static class MotionBlurTest
         var means = new double[13];
         for (var i = 0; i < means.Length; i++)
         {
-            cmd.Reset();
+            cmd.Clear();
             Uniforms(Fx(Dir, 1), Dir, 40 + i);
             CheckApply($"directional length {40 + i}");
             s.Pump(3);
@@ -294,18 +294,18 @@ public static class MotionBlurTest
         // Long lengths: directional 400 DIP, zoom 400 DIP, radial 90 degrees on text, cells 780 x 190 (centre at 400, text from
         // 410). First with pass 2 off (a single pass, 64 samples: copies), then the two passes. The second difference along
         // the rows must drop clearly; the smear reaches far and stays inside the directions of the effects.
-        cmd.Reset();
+        cmd.Clear();
         foreach (var row in new[] { Dir, Zoom, Radial })
             for (var col = 0; col < 2; col++)
                 cmd.Destroy(Fx(row, col));
         CheckApply("destroy short cells");
         s.Pump(2);
         var longAmount = new Dictionary<uint, float> { [Dir] = 400, [Zoom] = 400, [Radial] = 90 };
-        cmd.Reset();
+        cmd.Clear();
         foreach (var (row, shader) in new[] { (Dir, directional), (Zoom, zoom), (Radial, radial) })
             Cell(LongId + row, row, 10, CellY(row), LongW, LongTextX, shader, longAmount[row], shape: false);
         CheckApply("long cells");
-        cmd.Reset();
+        cmd.Clear();
         for (var row = Dir; row <= Radial; row += 20) Uniforms(LongId + row, row, longAmount[row], width: LongW, second: false);
         CheckApply("long single pass");
         s.Pump(6);
@@ -313,7 +313,7 @@ public static class MotionBlurTest
         using (var a = s.Grab(w, "motion-blur_long_single.png"))
             foreach (var row in new[] { Dir, Zoom, Radial })
                 rough[row] = Rough(a, row);
-        cmd.Reset();
+        cmd.Clear();
         foreach (var row in new[] { Dir, Zoom, Radial })
             Uniforms(LongId + row, row, longAmount[row], width: LongW);
         CheckApply("long two passes");
@@ -335,7 +335,7 @@ public static class MotionBlurTest
             gpu(arcMean > 0.01, $"radial 90: arcs reach 35 degrees up from the text ({arcMean:F3})");
         }
 
-        cmd.Reset();
+        cmd.Clear();
         foreach (var row in new[] { Dir, Zoom, Radial })
             cmd.Destroy(LongId + row);
         CheckApply("destroy");

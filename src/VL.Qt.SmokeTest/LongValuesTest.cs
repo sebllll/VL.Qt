@@ -35,13 +35,13 @@ public static class LongValuesTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"long values: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
 
         // One character per line: the implicit height of a Text grows with the number of lines. 40,000 lines are 79,999 bytes of
         // UTF-8 (more than the 65,527 a command could carry with a u16 length), 20,000 lines are 39,999 bytes.
         static string Lines(int n) => string.Join("\n", Enumerable.Repeat("a", n));
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         foreach (var (id, handle, lines) in new[] { (LongText, HText, 40_000), (LongTextHalf, HHalf, 20_000) })
         {

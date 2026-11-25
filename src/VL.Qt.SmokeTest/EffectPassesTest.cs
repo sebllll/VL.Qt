@@ -129,7 +129,7 @@ public static class EffectPassesTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"effect-passes: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         string? PollError()
         {
@@ -143,19 +143,19 @@ public static class EffectPassesTest
         static void Blur(CommandWriter c)
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
-            c.EffectF32(Protocol.MultiEffectKey.Blur, 0.5f);
-            c.EffectI32(Protocol.MultiEffectKey.BlurMax, 16);
+            c.MultiEffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Blur, 0.5f);
+            c.MultiEffectI32(Protocol.MultiEffectKey.BlurMax, 16);
             c.EndLink();
         }
         static void Shadow(CommandWriter c)
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
-            c.EffectColor(Protocol.MultiEffectKey.ShadowColor, 1, 0, 0, 1);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 30);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 30);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowBlur, 0);
+            c.MultiEffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.MultiEffectColor(Protocol.MultiEffectKey.ShadowColor, 1, 0, 0, 1);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 30);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 30);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowBlur, 0);
             c.EndLink();
         }
         void Wave(CommandWriter c, float amplitude = 0.05f, string? extra = null)
@@ -417,7 +417,7 @@ public static class EffectPassesTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"effect-passes pyramid: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         string? PollError()
         {
@@ -589,9 +589,9 @@ public static class EffectPassesTest
         Chain(c =>
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
-            c.EffectF32(Protocol.MultiEffectKey.Blur, 0.3f);
-            c.EffectI32(Protocol.MultiEffectKey.BlurMax, 8);
+            c.MultiEffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Blur, 0.3f);
+            c.MultiEffectI32(Protocol.MultiEffectKey.BlurMax, 8);
             c.EndLink();
         }, GlowLink(24), c =>
         {

@@ -41,7 +41,7 @@ public static class ShapeTest
             cmd.Reparent(id, 0, 1000);
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
 
         // Open polyline (50,50) - (150,110) - (250,50), red stroke 10; no closing segment, no fill.
@@ -130,23 +130,23 @@ public static class ShapeTest
             s.Check(ok, $"shapes: {what} -> {rc} (expected {expected}) \"{Native.LastError()}\"");
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetPath(Polyline, Protocol.PropertyId.ShapePath, [7], [0, 0]);
         Reject("PATH with unknown verb 7", Native.Result.BadArgument);
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetPath(Polyline, Protocol.PropertyId.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Line], [0, 0, 10, 10, 20, 20]);
         Reject("PATH with 3 points for MOVE + LINE", Native.Result.BadArgument);
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetPath(Polyline, Protocol.PropertyId.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Cubic], [0, 0, 10, 10]);
         Reject("PATH with CUBIC and too few points", Native.Result.BadArgument);
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetF32Array(Polyline, Protocol.PropertyId.ShapePath, [0, 0, 10, 10]);
         Reject("F32_ARRAY on the PATH property", Native.Result.BadArgument);
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetPath(Polyline, Protocol.PropertyId.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Line], [0, 0, 10, 10]);
         var good = cmd.EndFrame().ToArray();
         // SET payload after the header: id u32, prop u16, vt u16, then verbCount u32, pointCount u32.
@@ -155,23 +155,23 @@ public static class ShapeTest
         var rcLen = Native.Apply(w, badLength);
         s.Check(rcLen == Native.Result.BadLength, $"shapes: PATH with a point count that does not match the payload length -> {rcLen} (expected -2) \"{Native.LastError()}\"");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetF32Array(Polyline, Protocol.PropertyId.ShapePoints, [0, 0, 10, 10]);
         var badArray = cmd.EndFrame().ToArray();
         badArray[Protocol.HeaderSize + 8] = 9; // the count follows id, prop and value type
         rcLen = Native.Apply(w, badArray);
         s.Check(rcLen == Native.Result.BadLength, $"shapes: F32_ARRAY with a count that does not match the payload length -> {rcLen} (expected -2) \"{Native.LastError()}\"");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetF32Array(Rect, Protocol.PropertyId.ShapePoints, [0, 0, 10, 10]);
         Reject("valid F32_ARRAY on a Rectangle (no Shape property)", Native.Result.UnknownProperty, Native.Result.BadArgument);
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetPath(Rect, Protocol.PropertyId.ShapePath, [Protocol.Verb.Move, Protocol.Verb.Line], [0, 0, 10, 10]);
         Reject("valid PATH on a Rectangle (no Shape property)", Native.Result.UnknownProperty, Native.Result.BadArgument);
 
         // Scene still renders and the shape still shows the old geometry.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetF32(Polyline, Protocol.PropertyId.ShapeStrokeWidth, 10);
         CheckApply("apply after rejected payloads");
         s.Pump(3);

@@ -30,7 +30,7 @@ public static class ClearPinTest
     private static Native.Result SetClearColor(SceneHandle w, float grey, float alpha)
     {
         var cmd = new CommandWriter();
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(grey, grey, grey, alpha);
         s_bg = ExpectedBg(alpha);
         return Native.Apply(w, cmd.EndFrame());
@@ -40,7 +40,7 @@ public static class ClearPinTest
     private static Native.Result SetMode(SceneHandle w, float grey, bool clear, float alpha)
     {
         var cmd = new CommandWriter();
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(grey, grey, grey, alpha);
         cmd.SetClear(clear);
         s_bg = ExpectedBg(alpha);
@@ -141,7 +141,7 @@ public static class ClearPinTest
         bool first = true;
         void Frame()
         {
-            cmd.Reset();
+            cmd.Clear();
             if (first) cmd.ClearColor(WindowGrey, WindowGrey, WindowGrey, 1);
             first = false;
             rec.Update(Tree(), Space.DIPTopLeft);
@@ -403,7 +403,7 @@ public static class ClearPinTest
         }
         void MsaaFrame()
         {
-            cmd.Reset();
+            cmd.Clear();
             rec.Update(Msaa(), Space.DIPTopLeft);
             if (cmd.Length > 0)
                 s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"clear-pin: apply {Native.LastError()}");
@@ -468,7 +468,7 @@ public static class ClearPinTest
         }
         SetMode(w, WindowGrey, true, 1);
 
-        cmd.Reset();
+        cmd.Clear();
         rec.Update(null, Space.DIPTopLeft);
         if (cmd.Length > 0)
             Native.Apply(w, cmd.EndFrame());
@@ -486,7 +486,7 @@ public static class ClearPinTest
         int w = 64, h = 48;
         var scene = Native.vlqt_offscreen_create(w, h);
         var cmd = new CommandWriter();
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(OffscreenGrey, OffscreenGrey, OffscreenGrey, 1);
         cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetPlace(1, 0, 4, 8, 8);
@@ -517,7 +517,7 @@ public static class ClearPinTest
         (int R, int G, int B, int A) At(byte[] px, int x, int y) { int i = (y * w + x) * 4; return (px[i + 2], px[i + 1], px[i], px[i + 3]); }
         void Move(float x)
         {
-            cmd.Reset();
+            cmd.Clear();
             cmd.SetPlace(1, x, 4, 8, 8);
             Native.Apply(scene, cmd.EndFrame());
         }
@@ -583,7 +583,7 @@ public static class ClearPinTest
         Render();
         Move(40);
         Render();
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(3, Protocol.ElementType.Rectangle);
         cmd.SetPlace(3, 0, 0, w, h);
         cmd.SetColor(3, Protocol.PropertyId.Color, 0, 0, 0, 0.25f);
@@ -594,7 +594,7 @@ public static class ClearPinTest
         QtTextureTest.WritePng(Path.Combine(s.OutDir, "clear_pin_offscreen_fade.png"), pxFade, w, h);
         s.Check(At(pxFade, 12, 8).R < 20 && At(pxFade, 70, 30).R < 10 && At(pxFade, 44, 8).R == 255,
             $"clear-pin offscreen: fade: trail and clear colour fade to black, the box stays ({At(pxFade, 12, 8)}, {At(pxFade, 70, 30)}, {At(pxFade, 44, 8)})");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetColor(3, Protocol.PropertyId.Color, 0, 0, 0, 0);
         Native.Apply(scene, cmd.EndFrame());
         s.Check(SetMode(scene, OffscreenGrey, true, 1) == 0, "clear-pin offscreen: set_clear 1 (after fade)");
@@ -667,7 +667,7 @@ public static class ClearPinTest
 
         // MSAA: the render target of a scene has 1 sample, the layer inherits it. A rotated white square on the grey clear
         // colour: distinct grey values on its edges, Clear on vs. Clear off.
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(2, Protocol.ElementType.Rectangle);
         cmd.SetPlace(2, 0, 0, 20, 20);
         cmd.SetColor(2, Protocol.PropertyId.Color, 1, 1, 1, 1);

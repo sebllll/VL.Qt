@@ -40,7 +40,7 @@ public static class ImageResourceTest
         // itself never waits for VSync); a frame whose interval exceeds 1.5 x 16.7 ms is a hitch.
         var w = Native.vlqt_window_create(60, 60, 480, 270, "VL.Qt image resources", 0);
         s.Check(w != SceneHandle.Null, "window " + (w == SceneHandle.Null ? Native.LastError() : ""));
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0.1f, 0.1f, 0.1f, 1);
         cmd.Create(Rect, Protocol.ElementType.Rectangle);
         cmd.SetPlace(Rect, 20, 20, 80, 60);
@@ -66,7 +66,7 @@ public static class ImageResourceTest
                 if (sw.Elapsed.TotalMilliseconds > next) next = sw.Elapsed.TotalMilliseconds; // behind: no catch-up burst
                 while (sw.Elapsed.TotalMilliseconds < next) Thread.SpinWait(50);
             }
-            cmd.Reset();
+            cmd.Clear();
             cmd.SetPlace(Rect, 20 + frame++ % 300, 20, 80, 60);
             Native.Apply(w, cmd.EndFrame());
             s.Pump(1);

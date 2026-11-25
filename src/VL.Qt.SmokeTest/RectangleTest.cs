@@ -37,7 +37,7 @@ public static class RectangleTest
             cmd.Reparent(id, 0, 1000);
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // Blue fill, red border 10 (drawn inside the bounds).
         Rect(Stroked, 100, 100, 0, 0, 1);
@@ -66,7 +66,7 @@ public static class RectangleTest
         }
 
         // Change border/radius later; width 0 removes the border again.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetF32(Stroked, Protocol.PropertyId.BorderWidth, 0);
         cmd.SetF32(Rounded, Protocol.PropertyId.Radius, 0);
         cmd.SetColor(ColorOnly, Protocol.PropertyId.BorderColor, 0, 0, 1, 1);
@@ -79,13 +79,13 @@ public static class RectangleTest
                 $"border width 0 / radius 0 / new border ({Px(a, 105, 175)}, {Px(a, 104, 354)}, {Px(a, 410, 175)}, {Px(a, 430, 175)})");
 
         // Wrong value type -> BadArgument, no crash.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetColor(Rounded, Protocol.PropertyId.Radius, 1, 1, 1, 1);
         var rcv = Apply();
         s.Check(rcv == Native.Result.BadArgument, $"radius as color -> BadArgument ({rcv}: {Native.LastError()})");
 
         // Perf: 1000 rectangles (QQmlComponent::create) + bounds + color + reparent, then the first frame.
-        cmd.Reset();
+        cmd.Clear();
         for (uint i = 0; i < 1000; i++)
         {
             uint id = 100 + i;
@@ -111,7 +111,7 @@ public static class RectangleTest
         var times = new double[20];
         for (int run = 0; run < times.Length; run++)
         {
-            cmd.Reset();
+            cmd.Clear();
             float r = (run % 2) * 0.5f;
             for (uint i = 0; i < 1000; i++)
                 cmd.SetColor(100 + i, Protocol.PropertyId.Color, r, 0, 1, 1);

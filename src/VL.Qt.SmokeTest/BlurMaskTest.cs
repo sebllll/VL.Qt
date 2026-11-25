@@ -174,7 +174,7 @@ public static class BlurMaskTest
         // blur = false: the image element directly in the window (reference). Dot: small rectangle that moves to force frames.
         void Build(float ew, float eh, float dpr, ulong image, ulong mask, float radius, bool blur)
         {
-            cmd.Reset();
+            cmd.Clear();
             Teardown();
             cmd.Create(Img, Protocol.ElementType.Image);
             cmd.SetU64(Img, Protocol.PropertyId.Image, image);
@@ -237,7 +237,7 @@ public static class BlurMaskTest
             s.Info($"blur-mask: result grab {a.Width}x{a.Height}, {grey} soft pixels of 80 sampled on the right");
         }
         // radius 0 returns the original pixels
-        cmd.Reset();
+        cmd.Clear();
         SetRadius(0);
         Apply("radius 0");
         s.Pump(4);
@@ -246,7 +246,7 @@ public static class BlurMaskTest
             Color P(int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
             gpuCheck(P(597, 300).R < 30 && P(603, 300).R > 225, $"radius 0 -> original pixels ({P(597, 300).R} | {P(603, 300).R})");
         }
-        cmd.Reset();
+        cmd.Clear();
         Teardown();
         Apply("destroy");
         built = 0;
@@ -277,7 +277,7 @@ public static class BlurMaskTest
                 var wall = new List<double>(); var cpu = new List<double>(); var gpu = new List<double>();
                 for (int i = 0; i < Warmup + Frames; i++)
                 {
-                    cmd.Reset();
+                    cmd.Clear();
                     cmd.SetPlace(Dot, i % 50, 0, 4, 4);
                     if (blur && dirty) SetRadius(radius + (i % 2) * 0.01f);
                     Apply("frame");
@@ -299,7 +299,7 @@ public static class BlurMaskTest
             foreach (var mode in new[] { "dirty", "cached" })
                 foreach (var r in new[] { 0f, 8f, 32f, 64f })
                     rows.Add(Measure(mode, $"r{r:0}", r, true, mode == "dirty"));
-            cmd.Reset();
+            cmd.Clear();
             Teardown();
             Apply("destroy");
             built = 0;

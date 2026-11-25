@@ -82,7 +82,7 @@ public static partial class InteractionTest
             // (1, 1, 2, 1) units = (100, 100, 200, 100) DIP.
             var e = rect.Update(new Vector2(2, 1), Matrix.Translation(1, 1, 0), RectangleAnchor.TopLeft, new Color4(0.2f, 0.4f, 0.8f, 1), 0,
                 new Color4(0, 0, 0, 1), 0, 1, false, false, attach ? chain : null, null, true, out _, out _);
-            cmd.Reset();
+            cmd.Clear();
             rec.Update((Element)e, Space.DIPTopLeft);
             if (cmd.Length > 0)
             {
@@ -138,7 +138,7 @@ public static partial class InteractionTest
         Frames(2);
         s.Check(Handlers() == 2 && hovered.Value, $"chain: re-attached -> handlers + hovered ({Handlers()}, {hovered.Value})");
 
-        cmd.Reset();
+        cmd.Clear();
         rec.Update(null, Space.DIPTopLeft);
         if (cmd.Length > 0)
             s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "chain: clear");
@@ -180,7 +180,7 @@ public static partial class InteractionTest
         {
             void Frame(bool attach)
             {
-                cmd.Reset();
+                cmd.Clear();
                 rec.Update(make(hover.Update(null, hovered) is var chain && attach ? chain : null), Space.DIPTopLeft);
                 if (cmd.Length > 0)
                 {
@@ -204,7 +204,7 @@ public static partial class InteractionTest
             Frame(false);
             Frame(false);
             s.Check(!hovered.Value, $"elements {name}: Interaction removed -> Is Hovered false");
-            cmd.Reset();
+            cmd.Clear();
             rec.Update(null, Space.DIPTopLeft);
             if (cmd.Length > 0)
                 s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"elements {name}: clear");

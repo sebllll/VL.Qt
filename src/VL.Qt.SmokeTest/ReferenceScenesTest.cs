@@ -85,7 +85,7 @@ public static class ReferenceScenesTest
 
         void Render(string name, Action build)
         {
-            cmd.Reset();
+            cmd.Clear();
             next = 1;
             order = 0;
             var w = NativeCalls.CreateWindow(Width, Height, "VL.Qt reference scene");
@@ -96,7 +96,7 @@ public static class ReferenceScenesTest
             build();
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"reference-{name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
             s.Pump(10);
             var grabPath = Path.Combine(s.OutDir, $"reference-{name}.png");
             using (var a = s.Grab(w, grabPath))

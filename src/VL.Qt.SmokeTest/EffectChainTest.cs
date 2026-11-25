@@ -93,7 +93,7 @@ public static class EffectChainTest
 
         void Frame(Element root, string what, bool clear = false)
         {
-            cmd.Reset();
+            cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
             rec.Update(root, Space.DIPTopLeft);
             if (cmd.Length > 0)
@@ -149,7 +149,7 @@ public static class EffectChainTest
         int sent = 0;
         for (int i = 0; i < 5; i++)
         {
-            cmd.Reset();
+            cmd.Clear();
             rec.Update(Text(text, "Fx", textBounds, 1.5f, Chain(true)), Space.DIPTopLeft);
             sent += cmd.Length;
             s.Pump(1);
@@ -257,7 +257,7 @@ public static class EffectChainTest
         s.Check(warnings.Count == 0, $"effect-chain: warning gone with the duplicate ({warnings.Count})");
 
         text.Dispose(); rectA.Dispose(); rectB.Dispose(); rectM.Dispose(); maskText.Dispose(); row.Dispose();
-        cmd.Reset();
+        cmd.Clear();
         rec.Clear();
         Native.Apply(w, cmd.EndFrame());
         Native.vlqt_scene_destroy(w);

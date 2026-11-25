@@ -133,7 +133,7 @@ public static class GlowTest
             }
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         Rect(Src, 0, 0, 800, 600, 0, 0, 0, 0);
         Rect(Box, 320, 250, 160, 100, 1, 0.6f, 0, 1);
@@ -181,7 +181,7 @@ public static class GlowTest
         const int y0 = 300;
         Bitmap Shot(string name, float radius, float spread = 0, float intensity = 1.5f, bool additive = false)
         {
-            cmd.Reset();
+            cmd.Clear();
             SetGlow(radius, spread, intensity, additive);
             CheckApply($"glow {name}");
             s.Pump(4);
@@ -240,7 +240,7 @@ public static class GlowTest
         {
             var level = 4.5f + i * 0.1f;
             var radius = RadiusOf(level, dpr);
-            cmd.Reset();
+            cmd.Clear();
             SetGlow(radius);
             CheckApply("glow sweep");
             s.Pump(3);
@@ -263,7 +263,7 @@ public static class GlowTest
         DrainErrors();
         s.Check(errors.Count == 0, $"no EVENT_ERROR from the passes ({string.Join("; ", errors)})");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.Destroy(Fx);
         CheckApply("destroy");
         s.Pump(3);

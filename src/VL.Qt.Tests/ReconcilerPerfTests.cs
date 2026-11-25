@@ -39,7 +39,7 @@ namespace VL.Qt.Tests
             int frame = 0;
             Action step = () =>
             {
-                writer.Reset();
+                writer.Clear();
                 rec.Update((frame++ & 1) == 0 ? b : a, Space.DIPTopLeft);
                 writer.EndFrame();
             };
@@ -158,7 +158,7 @@ namespace VL.Qt.Tests
             {
                 int i = f++ % N;
                 builder[i] = ReferenceEquals(builder[i], children[i]) ? alt[i] : children[i];
-                writer.Reset();
+                writer.Clear();
                 rec.Update(new Group { Children = builder.ToImmutable() }, Space.DIPTopLeft);
                 writer.EndFrame();
             };
@@ -235,8 +235,8 @@ namespace VL.Qt.Tests
             Action step = () =>
             {
                 var root = (frame++ & 1) == 0 ? b : a;
-                wa.Reset();
-                wb.Reset();
+                wa.Clear();
+                wb.Clear();
                 if (aFirst)
                 {
                     ra.Update(root, Space.DIPTopLeft);

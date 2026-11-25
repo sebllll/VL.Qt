@@ -146,7 +146,7 @@ public static class ShaderSourceTest
             cmd.Reparent(id, 0, 1000);
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // Solid green (text shader) at (50, 50) 300 x 200
         Effect(Solid, 50, 50, 300, 200, green);
@@ -189,7 +189,7 @@ public static class ShaderSourceTest
         var error = ResError(broken);
         s.Check(sBroken == Protocol.ResourceState.Failed && error.Length > 0, $"syntax error -> Failed with a message ('{error}')");
         s.Check(Regex.IsMatch(error, @"line\s+\d+") && error.Contains("foo"), $"the message names the line and the identifier ('{error}')");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetU64(Solid, Protocol.PropertyId.FragmentShader, broken);
         CheckApply("good -> broken text");
         s.Pump(6);
@@ -203,7 +203,7 @@ public static class ShaderSourceTest
         // --- a fix: red text replaces green, then back to the green text (bake cache) ---
         var red = Source(SolidSource("1.0, 0.0, 0.0"), out var sRed, out _, out var bakeRed);
         s.Check(sRed == Protocol.ResourceState.Ready, $"corrected text bakes -> Ready ({sRed}; {ResError(red)})");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetU64(Solid, Protocol.PropertyId.FragmentShader, red);
         CheckApply("broken -> red text");
         s.Pump(6);
@@ -213,7 +213,7 @@ public static class ShaderSourceTest
         var greenAgain = Source(SolidSource("0.0, 1.0, 0.0"), out var sAgain, out _, out var cached);
         s.Check(sAgain == Protocol.ResourceState.Ready, $"the earlier text is Ready again ({sAgain})");
         s.Check(cached < bakeGreen * 0.6 || cached < 30, $"back to an earlier text comes from the cache (first bake {bakeGreen:F1} ms, again {cached:F1} ms, red {bakeRed:F1} ms)");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetU64(Solid, Protocol.PropertyId.FragmentShader, greenAgain);
         CheckApply("red -> earlier green text");
         s.Pump(6);
@@ -221,14 +221,14 @@ public static class ShaderSourceTest
             gpu(Near(Px(a, 200, 150), 0, 255, 0), $"the earlier text draws again ({Px(a, 200, 150)})");
 
         // --- a failed text without an earlier Ready version draws nothing ---
-        cmd.Reset();
+        cmd.Clear();
         Effect(Fresh, 400, 300, 200, 150, broken);
         CheckApply("element with a failed text only");
         s.Pump(6);
         using (var a = s.Grab(w, "shader-source_failed_first.png"))
             gpu(IsBg(Px(a, 500, 375)), $"a failed text without an earlier Ready version draws nothing ({Px(a, 500, 375)})");
 
-        cmd.Reset();
+        cmd.Clear();
         foreach (var id in new[] { Solid, Wave, Template, Fresh }) cmd.Destroy(id);
         CheckApply("destroy all effects");
         s.Pump(3);
