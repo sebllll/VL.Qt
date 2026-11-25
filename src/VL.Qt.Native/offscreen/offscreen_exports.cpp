@@ -2,7 +2,7 @@
 // thread.
 #include "offscreen/offscreen_scene.h"
 #include "app/exports.h"
-#include "render_thread.h"
+#include "device/render_thread.h"
 #include "vlqt.h"
 
 #include <QtCore/QPointF>

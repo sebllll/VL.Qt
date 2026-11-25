@@ -7,6 +7,7 @@
 #include "resources/pixel_format.h"
 
 #include "app/exports.h"
+#include "device/context_lock.h"
 #include "device/device.h"
 #include "protocol.h"
 #include "vlqt.h"

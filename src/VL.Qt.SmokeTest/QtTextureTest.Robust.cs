@@ -147,6 +147,53 @@ public static partial class QtTextureTest
         check(NativeTest.vlqt_test_d3d11_release_device(hw, hwCtx) == 0, "warp: hardware device freed");
     }
 
+    // A host that recreated its device without binding again passes the context of the new one: render_batch must refuse
+    // (BAD_ARGUMENT, nothing rendered) instead of letting D3D11 use a fence of the first device on the second one, and the
+    // scene stays bound and renders with the context of its own device.
+    private static void WrongContext(Scenario s)
+    {
+        bool check(bool ok, string what)
+        {
+            s.Check(ok, what);
+            return ok;
+        }
+        const int w = 64, h = 48;
+        if (!check(NativeTest.CreateDevice(0, out var device1, out var context1) == 0, "wrong context: create device 1"))
+            return;
+        if (!check(NativeTest.CreateDevice(0, out var device2, out var context2) == 0, "wrong context: create device 2"))
+        {
+            NativeTest.vlqt_test_d3d11_release_device(device1, context1);
+            return;
+        }
+        var scene = RectScene(w, h, s, "wrong context");
+        if (scene != SceneHandle.Null && NewTarget(device1, w, h, B8G8R8A8Typeless, out var tex, out var handle))
+        {
+            int rc = (int)Native.vlqt_offscreen_bind(scene, device1, handle, w, h, B8G8R8A8Unorm, 1, out _);
+            NativeTest.vlqt_test_close_handle(handle);
+            if (check(rc == 0, $"wrong context: bind on device 1 ({rc}) {ErrIf(rc != 0)}"))
+            {
+                int wrong = Native.OffscreenRenderBatch(context2, new[] { scene }, 0);
+                string message = Native.LastError();
+                check(wrong == (int)Native.Result.BadArgument && message.Contains("another device"),
+                    $"wrong context: render_batch with the context of device 2 = BAD_ARGUMENT ({wrong}, \"{message}\")");
+                check(Native.vlqt_offscreen_is_bound(scene) == 1 && Centre(tex, w, h) != "255,0,0,255",
+                    "wrong context: the scene stays bound and nothing was rendered");
+                int rendered = Native.OffscreenRenderBatch(context1, new[] { scene }, 0);
+                check(rendered == 1 && Centre(tex, w, h) == "255,0,0,255",
+                    $"wrong context: the scene renders red with the context of its own device ({rendered}) {ErrIf(rendered != 1)}");
+            }
+            Native.vlqt_offscreen_unbind(scene);
+            NativeTest.vlqt_test_com_release(tex);
+        }
+        else
+            check(false, "wrong context: setup " + Native.LastError());
+        if (scene != SceneHandle.Null)
+            Native.vlqt_scene_destroy(scene);
+        s.Pump(2);
+        check(NativeTest.vlqt_test_d3d11_release_device(device1, context1) == 0, "wrong context: device 1 freed");
+        check(NativeTest.vlqt_test_d3d11_release_device(device2, context2) == 0, "wrong context: device 2 freed");
+    }
+
     // (3) QtNative's device removed right after render_batch queued a wait for the write value on the foreign context:
     // the foreign side must not hang. The readback on the foreign device (copy + Map READ) queues behind that wait, so it
     // would block for ever if the value never came; it runs on a worker thread with a limit. Whether the render still

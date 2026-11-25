@@ -249,8 +249,7 @@ src/VL.Qt.Native/           # QtNative (C++)
   test/                     # the test exports of vlqt_test.h
   testkit/                  # vlqt_testkit, the stand-in D3D11 device of the SmokeTest (not packed)
   tools/glprobe.c           # vlqt-glprobe, the OpenGL check under WSLg (Linux)
-  device/                   # shared D3D11 device, device loss
-  render_thread.h/cpp       # Qt render threads of the QtTexture scenes
+  device/                   # shared D3D11 device and device loss, its context lock (context_lock), Qt render threads of the QtTexture scenes (render_thread)
   *_resource.h/cpp          # shaders, snapshots
   image_writer.h/cpp        # writes pixels to an image file (vlqt_image_write_file)
 src/VL.Qt.Tests/            # C# unit tests

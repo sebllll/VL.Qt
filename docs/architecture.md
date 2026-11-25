@@ -88,7 +88,7 @@ QtNative runs on the thread that calls `vlqt_app_init`, the Qt GUI thread (in vv
 | Last error (`app/last_error.cpp`) | any thread | one text per thread |
 | Pump state (`RenderGate`, the window lists of `vlqt_app_process_events_for`) | GUI thread | a nested pump (a host callback inside `processEvents`) is refused with `VLQT_ERR_UNSUPPORTED` |
 | Change counter of a scene (`app/scene_change.cpp`) | its sync hook runs on the scene's render thread in the threaded mode | the GUI thread waits in the blocking sync job of the batch; a counter shares no state with another |
-| Resources, offscreen render threads | own workers and render threads | their own locks and queues (`resources/`, `render_thread.cpp`) |
+| Resources, offscreen render threads | own workers and render threads | their own locks and queues (`resources/`, `device/render_thread.cpp`) |
 
 ## Rendering
 

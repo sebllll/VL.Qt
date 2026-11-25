@@ -22,7 +22,7 @@ An offscreen scene (`QtTexture`, `QtRenderer`) has no render loop; `QQuickRender
 
 - The state of an item changes on the GUI thread only. Its node, the node's material and the textures the material points to are touched only in `updatePaintNode`, in `preprocess` and by the material shader.
 - A GPU object a material points to belongs to the node and is freed with it by the scene graph, never deleted from the GUI side. Example: the 1×1 transparent texture of the ShaderEffect element is owned by `EffectNode` (`shader_material.h`), not by `ShaderItem`.
-- A texture an item shares beyond one node (the image texture cache of `resources/image_texture_cache.*`) is let go from the GUI side only through `render_thread::retire` (`render_thread.h`): in an offscreen scene on a render thread the reference drops there, after the render still running with it; in a window and in the main thread mode at once. `invalidateSceneGraph` and `updatePaintNode` run on the render thread and drop it directly.
+- A texture an item shares beyond one node (the image texture cache of `resources/image_texture_cache.*`) is let go from the GUI side only through `render_thread::retire` (`device/render_thread.h`): in an offscreen scene on a render thread the reference drops there, after the render still running with it; in a window and in the main thread mode at once. `invalidateSceneGraph` and `updatePaintNode` run on the render thread and drop it directly.
 - Code that is cheap to make correct under the `threaded` loop too is written that way; the rest relies on the basic loop and is listed below.
 
 ### Places that rely on the basic loop
@@ -30,7 +30,7 @@ An offscreen scene (`QtTexture`, `QtRenderer`) has no render loop; `QQuickRender
 - **Texture providers of `ShaderItem`** (`ShaderItem::watchProvider`): the `destroyed` signal of a provider is connected directly to `update()`. In a window the provider dies on the GUI thread between two frames, and the update makes the next sync drop its texture from the material before anything renders.
 - **Render gate** (`render_gate.h`): with the basic loop Qt renders a window on `UpdateRequest`, which vvvv's message loop also delivers between two pumps; the gate keeps every render inside the pump.
 - **Window sample count** (`window.cpp`, `vlqt_window_set_samples`): the basic loop fixes the MSAA count of a window when it creates the window's QRhi, so a new count needs a new `QQuickWindow`.
-- **Frame lock of the shared device** (`device.h`, `lockFrames`): a window frame holds the device context on the main thread from `beforeRendering` to `afterFrameEnd`.
+- **Frame lock of the shared device** (`device/context_lock.h`, `lockFrames`): a window frame holds the device context on the main thread from `beforeRendering` to `afterFrameEnd`.
 - **App fonts** (`fonts.cpp`): fonts are added on the GUI thread, which is also where every text layout of a window runs.
 
 ## Consequences

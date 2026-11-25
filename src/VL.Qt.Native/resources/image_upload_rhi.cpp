@@ -5,6 +5,7 @@
 #include "resources/gpu_texture.h"
 #include "resources/image_upload_d3d11.h"
 
+#include "device/context_lock.h"
 #include "device/device.h"
 #include "protocol.h"
 

@@ -169,12 +169,14 @@ target_sources(vlqt PRIVATE
     shader_resource.h
 
     # device/
+    device/context_lock.cpp
+    device/context_lock.h
     device/device.cpp
     device/device.h
+    device/render_thread.cpp
+    device/render_thread.h
     device/renderer_info.cpp
     device/renderer_info.h
-    render_thread.cpp
-    render_thread.h
 
     # offscreen/
     offscreen/offscreen.h
