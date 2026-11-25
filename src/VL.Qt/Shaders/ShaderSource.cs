@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.IO;
 using System.Text.RegularExpressions;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Shaders
 {
@@ -30,7 +31,7 @@ namespace VL.Qt.Shaders
         string? KeptError = null)
     {
         // Used only when the shader does not compile: keeps the Input pin (and its link) through a typo.
-        private static readonly Regex s_sourceSampler = new(@"\buniform\s+sampler2D\s+source\b", RegexOptions.CultureInvariant);
+        private static readonly Regex s_sourceSampler = new(@"\buniform\s+sampler2D\s+" + ReservedUniforms.InputSampler + @"\b", RegexOptions.CultureInvariant);
 
         /// <summary>
         /// The shader declares <c>sampler2D source</c> (comments ignored): a filter, which also becomes a node of the effect
@@ -62,7 +63,7 @@ namespace VL.Qt.Shaders
         /// Reads, annotates and reflects (<paramref name="reflect"/>, normally <see cref="ShaderReflection.Reflect"/>) the files of
         /// <paramref name="file"/>. Problems are in <see cref="ReadError"/> and <see cref="ShaderPinModel.Error"/>, nothing is thrown.
         /// </summary>
-        public static ShaderSource Load(ShaderFile file, Func<string, ShaderStage, ShaderReflection> reflect)
+        public static ShaderSource Load(ShaderFile file, Func<string, int, ShaderReflection> reflect)
         {
             string fragmentSource;
             string? vertexSource = null;
@@ -85,9 +86,9 @@ namespace VL.Qt.Shaders
             ShaderPinModel model;
             try
             {
-                var fragment = reflect(fragmentSource, ShaderStage.Fragment);
-                var vertex = vertexSource is null ? null : reflect(vertexSource, ShaderStage.Vertex);
-                model = ShaderPinModel.Build(file.FullName, fragment, vertex, fragmentAnnotations, vertexAnnotations);
+                var fragment = reflect(fragmentSource, Protocol.ShaderStage.Fragment);
+                var vertex = vertexSource is null ? null : reflect(vertexSource, Protocol.ShaderStage.Vertex);
+                model = ShaderPinModel.Build(fragment, vertex, fragmentAnnotations, vertexAnnotations);
             }
             catch (Exception e)
             {

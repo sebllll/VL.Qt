@@ -6,9 +6,8 @@ using VL.Qt.Nodes;
 namespace VL.Qt.Elements
 {
     /// <summary>
-    /// Draws a pre-baked .qsb fragment shader (optionally with a vertex shader) over its bounds, optionally sampling
-    /// an <see cref="Input"/> element as sampler2D "source". Uniforms are matched by name through the shader's
-    /// reflection (protocol.h "ShaderEffect").
+    /// Draws a fragment shader (and an optional vertex shader) over its bounds; <see cref="Input"/> is sampled as
+    /// sampler2D "source". Uniforms are matched by name through the shader's reflection (protocol.h "ShaderEffect").
     /// </summary>
     internal sealed class Shader : Element
     {

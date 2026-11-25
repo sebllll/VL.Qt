@@ -37,7 +37,13 @@ namespace VL.Qt.Shaders
         /// <summary>Name as vvvv shows it: "Glitch (RGB)", or just "Glitch" without variant.</summary>
         public string FullName => FileNodeNames.FullName(Name, Version);
 
-        /// <summary>Category of the effect chain node (only a filter has one).</summary>
+        /// <summary>
+        /// The file makes an effect chain node: every filter, and a @chainonly file even without <c>sampler2D source</c>,
+        /// so that the "not a filter" error shows at a node and not only in the log.
+        /// </summary>
+        public bool HasLinkNode => IsFilter || ChainOnly;
+
+        /// <summary>Category of the effect chain node (only a file with a link node has one).</summary>
         public string LinkCategory => ChainCategory ?? ShaderNodeFactory.LinkCategory;
     }
 }

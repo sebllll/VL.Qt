@@ -632,7 +632,8 @@ void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
                 ("Both", "Qt.Elements.Shaders"),
                 ("Both", "Qt.Effects"),
                 ("Chain", "Qt.Effects"),
-            }), "a chainonly generator has no node at all");
+                ("Gen", "Qt.Effects"),
+            }), "a chainonly generator still has the link node, which shows the 'not a filter' error");
         }
 
         [Test]

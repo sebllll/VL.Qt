@@ -11,8 +11,11 @@ namespace VL.Qt.Shaders
     /// </summary>
     internal static class ReservedUniforms
     {
+        /// <summary>Name of the sampler2D that becomes the Input pin (and the Input of an effect chain link).</summary>
+        public const string InputSampler = "source";
+
         /// <summary>Set for every ShaderEffect: qt_Matrix and qt_Opacity from the render state, source is the Input.</summary>
-        public static readonly ImmutableHashSet<string> Item = ImmutableHashSet.Create(StringComparer.Ordinal, "qt_Matrix", "qt_Opacity", "source");
+        public static readonly ImmutableHashSet<string> Item = ImmutableHashSet.Create(StringComparer.Ordinal, "qt_Matrix", "qt_Opacity", InputSampler);
 
         /// <summary>Written by the effect chain into the passes of a shader link if the shader declares them.</summary>
         public static readonly ImmutableHashSet<string> ChainAutomatic = ImmutableHashSet.Create(StringComparer.Ordinal, "texelSize", "dpr", "weight", "elementRect", "passIndex");
@@ -28,6 +31,6 @@ namespace VL.Qt.Shaders
 
         /// <summary>Text of the error for the reserved <paramref name="name"/> in a table of uniform values.</summary>
         public static string Describe(string name) =>
-            $"Uniform '{name}' is reserved ({(name == "source" ? "use the Input pin" : "set by VL.Qt")}), the entry is ignored";
+            $"Uniform '{name}' is reserved ({(name == InputSampler ? "use the Input pin" : "set by VL.Qt")}), the entry is ignored";
     }
 }

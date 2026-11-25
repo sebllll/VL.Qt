@@ -18,7 +18,7 @@ namespace VL.Qt.Shaders
     /// <param name="Passes">@passes of the file head: 1 (default, template Single) or 2 (template TwoPass); only the effect chain node uses it.</param>
     /// <param name="Padding">@padding of the file head (only the effect chain node uses it): none, fixed DIP or from a uniform.</param>
     /// <param name="Uniforms">Annotations per uniform name (ordinal), only uniforms that have at least one tag.</param>
-    /// <param name="BoolUniforms">Names of uniforms declared as bool (regex on the source; SPIR-V reflects bool as uint).</param>
+    /// <param name="DeclaredTypes">Declared GLSL type per uniform name, from the declaration in the source (QtNative reflects an unknown type as "other" and bool as uint).</param>
     /// <param name="Warnings">Unknown tags, tags in the wrong place, values that do not parse syntactically.</param>
     /// <param name="Errors">
     /// Head tags of the effect chain node that are wrong (@passes not 1 or 2, a broken @padding with a uniform), shown red at
@@ -31,7 +31,7 @@ namespace VL.Qt.Shaders
         int Passes,
         ShaderPadding Padding,
         ImmutableDictionary<string, UniformAnnotation> Uniforms,
-        ImmutableHashSet<string> BoolUniforms,
+        ImmutableDictionary<string, string> DeclaredTypes,
         ImmutableArray<ShaderMessage> Warnings,
         ImmutableArray<ShaderMessage> Errors)
     {
@@ -39,7 +39,7 @@ namespace VL.Qt.Shaders
         public static readonly ShaderAnnotations Empty = new(
             null, null, false, 1, ShaderPadding.None,
             ImmutableDictionary<string, UniformAnnotation>.Empty,
-            ImmutableHashSet<string>.Empty,
+            ImmutableDictionary<string, string>.Empty,
             ImmutableArray<ShaderMessage>.Empty,
             ImmutableArray<ShaderMessage>.Empty);
 
@@ -51,7 +51,7 @@ namespace VL.Qt.Shaders
         {
             var warnings = ImmutableArray.CreateBuilder<ShaderMessage>();
             var uniforms = ImmutableDictionary.CreateBuilder<string, UniformAnnotation>(StringComparer.Ordinal);
-            var bools = ImmutableHashSet.CreateBuilder<string>(StringComparer.Ordinal);
+            var declaredTypes = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.Ordinal);
             var lines = source.Split('\n');
 
             // File head: comments (and #version/blank lines) before the first code line.
@@ -124,8 +124,7 @@ namespace VL.Qt.Shaders
                         if (inBlock)
                         {
                             isDeclaration = true;
-                            if (type == "bool")
-                                bools.Add(name);
+                            declaredTypes[name] = type;
                         }
                         else if (type == "sampler2D" && uniformWord.IsMatch(code))
                             isDeclaration = true;
@@ -151,7 +150,7 @@ namespace VL.Qt.Shaders
             }
             ReadOrphans(above, null, 0, warnings);
 
-            return new ShaderAnnotations(category, summary, chainOnly, passes, padding, uniforms.ToImmutable(), bools.ToImmutable(), warnings.ToImmutable(),
+            return new ShaderAnnotations(category, summary, chainOnly, passes, padding, uniforms.ToImmutable(), declaredTypes.ToImmutable(), warnings.ToImmutable(),
                 errors.ToImmutable());
         }
 
