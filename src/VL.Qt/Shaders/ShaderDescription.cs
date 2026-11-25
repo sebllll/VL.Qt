@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using Microsoft.Extensions.Logging;
 using Stride.Core.Mathematics;
 using VL.Core;
+using VL.Core.Diagnostics;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.NodeFactories;
@@ -16,7 +18,7 @@ namespace VL.Qt.Shaders
     /// pins), errors and warnings as messages of the description. invalidated: content change of the own .frag/.vert;
     /// vvvv then asks for a new description and keeps links on pins with the same name.
     /// </summary>
-    internal static class ShaderNodeDescription
+    internal static class ShaderDescription
     {
         // Fixed pins like the Shader node (without Fragment/Vertex Code/Shader and Uniforms), help texts from there.
         private static readonly IVLPinDescription[] s_fixedInputs =
@@ -46,7 +48,7 @@ namespace VL.Qt.Shaders
         private const string inputSummary = "Element sampled as sampler2D \"source\" (hidden itself, only the effect output is drawn).";
 
         /// <summary>Input pins: Input (if the shader samples source), image and uniform pins, fixed Shader pins.</summary>
-        internal static List<IVLPinDescription> Inputs(ShaderNodeLayout layout)
+        internal static List<IVLPinDescription> Inputs(ShaderLayout layout)
         {
             var inputs = new List<IVLPinDescription>();
             if (layout.HasInput)
@@ -73,16 +75,31 @@ namespace VL.Qt.Shaders
                 invalidated: ShaderNodeFactory.WatchContent(file),
                 init: context =>
                 {
-                    var layout = ShaderNodeLayout.Load(file, ShaderReflection.Reflect, logger);
+                    var layout = ShaderLayout.From(ShaderSource.Load(file, ShaderReflection.Reflect), file);
+                    LogMessages(logger, file, layout.Messages);
                     return context.Node(
                         Inputs(layout),
                         Outputs,
-                        newNode: c => new ShaderNodeInstance(c.NodeContext, layout).CreateNode(c),
+                        newNode: c => new ShaderInstance(c.NodeContext, layout).CreateNode(c),
                         messages: layout.Messages,
                         openEditorAction: () => OpenEditor(file, logger),
                         summary: layout.Summary ?? file.Summary,
                         filePath: file.FragmentPath);
                 });
+
+        /// <summary>Logs what the node shows (errors, warnings), except the duplicate error that the factory logs once per scan.</summary>
+        internal static void LogMessages(ILogger logger, ShaderFile file, ImmutableArray<Message> messages)
+        {
+            foreach (var m in messages)
+            {
+                if (m.Text == file.DuplicateError)
+                    continue;
+                if (m.Type == MessageType.Error)
+                    logger.LogError("{Shader}: {Error}", file.FragmentPath, m.Text);
+                else
+                    logger.LogWarning("{Shader}: {Warning}", file.FragmentPath, m.Text);
+            }
+        }
 
         /// <summary>
         /// Middle click / Definition > Open: opens the .frag and, if there is one, the .vert next to it in the

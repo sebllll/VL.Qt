@@ -119,7 +119,7 @@ namespace VL.Qt.Tests
             Assert.That(ShaderEffectDescription.Inputs(layout).Select(p => p.Name), Is.EqualTo(node.Pins));
             Assert.That(layout.Pins.Select(p => p.UniformName), Has.None.AnyOf("texelSize", "dpr", "passIndex", "elementRect", "weight"),
                 "VL.Qt sets these itself, they get no pin");
-            Assert.That(layout.Passes, Is.EqualTo(node.TwoPass ? 2 : 1));
+            Assert.That(layout.Template, Is.EqualTo(node.TwoPass ? Protocol.EffectTemplate.TwoPass : Protocol.EffectTemplate.Single));
         }
 
         [TestCaseSource(nameof(s_nodes))]
@@ -151,12 +151,12 @@ namespace VL.Qt.Tests
                 MathF.Abs(a.X - b.X) < 1e-4f && MathF.Abs(a.Y - b.Y) < 1e-4f && MathF.Abs(a.Width - b.Width) < 1e-4f && MathF.Abs(a.Height - b.Height) < 1e-4f));
         }
 
-        private ShaderNodeLayout LoadChainLayout(string template)
+        private ShaderEffectLayout LoadChainLayout(string template)
         {
             var path = Path.Combine(_dir, template + ".frag");
             File.Copy(TemplatePath(template), path, overwrite: true);
             var file = ShaderNodeFactory.Scan(_dir).Single(f => f.Name == template);
-            return ShaderNodeLayout.Load(file, ShaderReflection.Reflect, NullLogger.Instance).ForChain(NullLogger.Instance, path);
+            return ShaderEffectLayout.From(ShaderSource.Load(file, ShaderReflection.Reflect), file);
         }
 
         private sealed class FakeNodeFactory : VL.Core.IVLNodeDescriptionFactory

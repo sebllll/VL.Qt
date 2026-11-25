@@ -8,7 +8,7 @@ namespace VL.Qt.Shaders
 {
     /// <summary>
     /// Node description of the effect chain link of one filter shader file: same name as the element node, category
-    /// <see cref="ShaderFile.LinkCategory"/>. Same lifecycle as <see cref="ShaderNodeDescription"/> (lazy init, content
+    /// <see cref="ShaderFile.LinkCategory"/>. Same lifecycle as <see cref="ShaderDescription"/> (lazy init, content
     /// change invalidates the node and keeps links on pins with the same name, shader problems at the node).
     /// </summary>
     internal static class ShaderEffectDescription
@@ -23,7 +23,7 @@ namespace VL.Qt.Shaders
         private const string applySummary = "On: the effect is applied. Off: the effect chain passes on unchanged, as if this node was not there.";
 
         /// <summary>Input pins: Input (the chain before), image and uniform pins, Apply last (hidden).</summary>
-        internal static List<IVLPinDescription> Inputs(ShaderNodeLayout layout)
+        internal static List<IVLPinDescription> Inputs(ShaderEffectLayout layout)
         {
             var inputs = new List<IVLPinDescription> { new FilePinDescription("Input", typeof(Effect), null, inputSummary) };
             foreach (var pin in layout.Pins)
@@ -42,13 +42,14 @@ namespace VL.Qt.Shaders
                 invalidated: ShaderNodeFactory.WatchContent(file),
                 init: context =>
                 {
-                    var layout = ShaderNodeLayout.Load(file, ShaderReflection.Reflect, logger).ForChain(logger, file.FragmentPath);
+                    var layout = ShaderEffectLayout.From(ShaderSource.Load(file, ShaderReflection.Reflect), file);
+                    ShaderDescription.LogMessages(logger, file, layout.Messages);
                     return context.Node(
                         Inputs(layout),
                         Outputs,
                         newNode: c => new ShaderEffectInstance(c.NodeContext, layout).CreateNode(c),
                         messages: layout.Messages,
-                        openEditorAction: () => ShaderNodeDescription.OpenEditor(file, logger),
+                        openEditorAction: () => ShaderDescription.OpenEditor(file, logger),
                         summary: layout.Summary ?? file.Summary,
                         filePath: file.FragmentPath);
                 });
