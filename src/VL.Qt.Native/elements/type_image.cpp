@@ -16,12 +16,22 @@ bool setImageResource(Elements&, ElementEntry& n, const ResolvedProp&, const Val
     return static_cast<QtImageItem*>(n.item)->setResource(v.u, err);
 }
 
+/* PROP_FILL_MODE: every vlqt_fill_mode. */
+bool setImageFillMode(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
+{
+    if (v.i < VLQT_FILL_MODE_STRETCH || v.i > VLQT_FILL_MODE_TILE) {
+        err = "invalid fill mode " + std::to_string(v.i);
+        return false;
+    }
+    static_cast<QtImageItem*>(n.item)->setFillMode(static_cast<vlqt_fill_mode>(v.i));
+    return true;
+}
+
 std::vector<PropDef> imageProps()
 {
     return {
         {VLQT_PROPERTY_IMAGE, VLQT_VALUE_TYPE_U64, setImageResource, nullptr},
-        // Stretch/PreserveAspectFit/PreserveAspectCrop/Tile (= C# ImageFillMode, values of QML Image.fillMode)
-        {VLQT_PROPERTY_FILL_MODE, VLQT_VALUE_TYPE_I32, setQmlEnum<0, 1, 2, 3>, "fillMode"},
+        {VLQT_PROPERTY_FILL_MODE, VLQT_VALUE_TYPE_I32, setImageFillMode, nullptr},
         {VLQT_PROPERTY_SMOOTH, VLQT_VALUE_TYPE_BOOL, setQmlBool, "smooth"},
     };
 }

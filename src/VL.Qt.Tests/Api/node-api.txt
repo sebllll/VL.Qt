@@ -21,26 +21,16 @@ VL.Qt | VL.Qt.Elements.DragAxis | member Vertical = 2
 VL.Qt | VL.Qt.Elements.DragAxis | type enum
 VL.Qt | VL.Qt.Elements.Effect | property Previous | VL.Qt.Elements.Effect { get }
 VL.Qt | VL.Qt.Elements.Effect | type abstract class
-VL.Qt | VL.Qt.Elements.FontWeight | member Black = 900
-VL.Qt | VL.Qt.Elements.FontWeight | member Bold = 700
-VL.Qt | VL.Qt.Elements.FontWeight | member DemiBold = 600
-VL.Qt | VL.Qt.Elements.FontWeight | member ExtraBold = 800
-VL.Qt | VL.Qt.Elements.FontWeight | member ExtraLight = 200
-VL.Qt | VL.Qt.Elements.FontWeight | member Light = 300
-VL.Qt | VL.Qt.Elements.FontWeight | member Medium = 500
-VL.Qt | VL.Qt.Elements.FontWeight | member Normal = 400
-VL.Qt | VL.Qt.Elements.FontWeight | member Thin = 100
-VL.Qt | VL.Qt.Elements.FontWeight | type enum
+VL.Qt | VL.Qt.Elements.FillMode | member Crop = 2
+VL.Qt | VL.Qt.Elements.FillMode | member Fit = 1
+VL.Qt | VL.Qt.Elements.FillMode | member Stretch = 0
+VL.Qt | VL.Qt.Elements.FillMode | member Tile = 3
+VL.Qt | VL.Qt.Elements.FillMode | type enum
 VL.Qt | VL.Qt.Elements.HorizontalAlignment | member Center = 4
 VL.Qt | VL.Qt.Elements.HorizontalAlignment | member Left = 1
 VL.Qt | VL.Qt.Elements.HorizontalAlignment | member Right = 2
 VL.Qt | VL.Qt.Elements.HorizontalAlignment | type enum
 VL.Qt | VL.Qt.Elements.IElement | type interface
-VL.Qt | VL.Qt.Elements.ImageFillMode | member Crop = 2
-VL.Qt | VL.Qt.Elements.ImageFillMode | member Fit = 1
-VL.Qt | VL.Qt.Elements.ImageFillMode | member Stretch = 0
-VL.Qt | VL.Qt.Elements.ImageFillMode | member Tile = 3
-VL.Qt | VL.Qt.Elements.ImageFillMode | type enum
 VL.Qt | VL.Qt.Elements.Interaction | property Previous | VL.Qt.Elements.Interaction { get }
 VL.Qt | VL.Qt.Elements.Interaction | type abstract class
 VL.Qt | VL.Qt.Elements.LabelPosition | member Left = 0
@@ -250,10 +240,6 @@ VL.Qt | VL.Qt.Elements.VerticalAlignment | member Bottom = 64
 VL.Qt | VL.Qt.Elements.VerticalAlignment | member Center = 128
 VL.Qt | VL.Qt.Elements.VerticalAlignment | member Top = 32
 VL.Qt | VL.Qt.Elements.VerticalAlignment | type enum
-VL.Qt | VL.Qt.Elements.VideoFillMode | member Crop = 2
-VL.Qt | VL.Qt.Elements.VideoFillMode | member Fit = 1
-VL.Qt | VL.Qt.Elements.VideoFillMode | member Stretch = 0
-VL.Qt | VL.Qt.Elements.VideoFillMode | type enum
 VL.Qt | VL.Qt.Images.ImageUpload | member Auto = 0
 VL.Qt | VL.Qt.Images.ImageUpload | member MainThread = 1
 VL.Qt | VL.Qt.Images.ImageUpload | member Worker = 2
@@ -789,7 +775,7 @@ VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Clip | in bool | Pin(Visibil
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
-VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Fill Mode | in VL.Qt.Elements.ImageFillMode = Stretch | (fillMode)
+VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Fill Mode | in VL.Qt.Elements.FillMode = Stretch | (fillMode)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Image | in VL.Qt.Images.QtImage | (image)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.ImageNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
@@ -1457,7 +1443,7 @@ VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Size | in Stride.Core.Mathema
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Text | in string = "Text" | (text)
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Transform | in Stride.Core.Mathematics.Matrix | (transform)
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Vertical Alignment | in VL.Qt.Elements.VerticalAlignment = Top | Pin(Visibility = PinVisibility.Optional) | (verticalAlignment)
-VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Weight | in VL.Qt.Elements.FontWeight = Normal | Pin(Visibility = PinVisibility.Optional) | (weight)
+VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Weight | in int = 400 | Pin(Visibility = PinVisibility.Optional) | (weight)
 VL.Qt | VL.Qt.Nodes.TextNode | method Update | pin Wrap | in VL.Qt.Elements.TextWrap = NoWrap | Pin(Visibility = PinVisibility.Optional) | (wrap)
 VL.Qt | VL.Qt.Nodes.TextNode | type sealed class
 VL.Qt | VL.Qt.Nodes.ToQtImageNode | attr ProcessNode(Name = "ToQtImage", Category = "Qt.Images")
@@ -1592,7 +1578,7 @@ VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Debug | in bool | Pin(Visibi
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Duration | out float | (duration)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
-VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Fill Mode | in VL.Qt.Elements.VideoFillMode = Fit | (fillMode)
+VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Fill Mode | in VL.Qt.Elements.FillMode = Fit | (fillMode)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Keep Last Frame | in bool = true | Pin(Visibility = PinVisibility.Optional) | (keepLastFrame)
 VL.Qt | VL.Qt.Nodes.VideoNode | method Update | pin Loop | in bool = true | (loop)
@@ -2265,7 +2251,7 @@ VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Debug | in bool |
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Duration | out float | (duration)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
-VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Fill Mode | in VL.Qt.Elements.VideoFillMode = Fit | (fillMode)
+VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Fill Mode | in VL.Qt.Elements.FillMode = Fit | (fillMode)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Keep Last Frame | in bool = true | Pin(Visibility = PinVisibility.Optional) | (keepLastFrame)
 VL.Qt.Audio | VL.Qt.Audio.VideoAudioNode | method Update | pin Loop | in bool = true | (loop)
@@ -2319,7 +2305,7 @@ VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Enabled | in boo
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Format | in Stride.Graphics.PixelFormat = B8G8R8A8_UNorm_SRgb | (format)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Input Notifications | in System.IObservable<VL.Lib.IO.Notifications.INotification> | Pin(Visibility = PinVisibility.Optional) | (inputNotifications)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Input | in VL.Qt.Elements.IElement | (input)
-VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Multisample Count | in VL.Qt.MultisampleCount = None | Pin(Name = "Multisample Count", Visibility = PinVisibility.Optional) | (multisampleCount)
+VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Multisample Count | in Stride.Graphics.MultisampleCount = None | Pin(Name = "Multisample Count", Visibility = PinVisibility.Optional) | (multisampleCount)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Output | out Stride.Graphics.Texture | (output)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Render Threads | in int = 1 | Pin(Name = "Render Threads", Visibility = PinVisibility.Optional) | (renderThreads)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Size | in Stride.Core.Mathematics.Int2 = 1920, 1080 | (size)

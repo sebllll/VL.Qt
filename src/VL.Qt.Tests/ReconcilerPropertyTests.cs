@@ -55,12 +55,12 @@ namespace VL.Qt.Tests
                     Children = ImmutableArray.Create<Element>(
                         new Text
                         {
-                            Content = text, FontFamily = "Arial", FontSize = 0.2f, Weight = FontWeight.Bold, Italic = true,
+                            Content = text, FontFamily = "Arial", FontSize = 0.2f, Weight = 700, Italic = true,
                             Color = new Color4(0, 1, 0, 1), HAlign = TextHorizontalAlignment.Center,
                             VAlign = VerticalAlignment.Center, Wrap = TextWrap.Wrap, Elide = TextElide.Right,
                             LineHeight = 1.5f, LetterSpacing = 0.01f, Autofit = TextAutofit.Fit, Size = new Vector2(1, 0.5f),
                         },
-                        new Image { Source = new QtImage(new ImageResource(0x1_0000_0005UL)), FillMode = ImageFillMode.Crop, Smooth = false }),
+                        new Image { Source = new QtImage(new ImageResource(0x1_0000_0005UL)), FillMode = FillMode.Crop, Smooth = false }),
                 },
                 new Row { Spacing = 0.2f, Padding = 0.1f, ChildAlignment = VerticalAlignment.Center },
                 new Shader

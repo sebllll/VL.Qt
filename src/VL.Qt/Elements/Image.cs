@@ -11,7 +11,7 @@ namespace VL.Qt.Elements
 
         /// <summary>The image to draw, null = nothing. Compared by reference; QtNative gets its resource id.</summary>
         public QtImage? Source { get; init; }
-        public ImageFillMode FillMode { get; init; } = ImageFillMode.Stretch;
+        public FillMode FillMode { get; init; } = FillMode.Stretch;
         /// <summary>Qt default: true.</summary>
         public bool Smooth { get; init; } = true;
     }

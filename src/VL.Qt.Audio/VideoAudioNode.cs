@@ -53,7 +53,7 @@ namespace VL.Qt.Audio
         /// <param name="rate">Playback speed (1 = normal). Values below 0.01 are clamped (no reverse playback). The sound follows like tape: its pitch changes with the rate; a change of the rate may glitch once.</param>
         /// <param name="volume">Volume of the sound at Audio, 0..1 (linear, clamped).</param>
         /// <param name="audioOffset">Delay of the sound against the picture in ms (positive: the sound comes later). Calibrates the latency of display and audio device that VL.Qt cannot know. The sound cannot come earlier than VL.Audio's output latency (buffer + driver) allows; smaller values play as early as possible.</param>
-        /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill).</param>
+        /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill). Tile is not supported by a video: it is drawn as Stretch and the node shows a warning.</param>
         /// <param name="opacity">Opacity of the element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
         /// <param name="clip">Clip children to the element's size.</param>
         /// <param name="debug">Debug overlay for this element only (not its children; the Renderer's Debug shows all). Does not affect layout or hit-testing.</param>
@@ -80,7 +80,7 @@ namespace VL.Qt.Audio
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float rate,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float volume,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(0f)] float audioOffset,
-            [DefaultValue(typeof(VideoFillMode), nameof(VideoFillMode.Fit))] VideoFillMode fillMode,
+            [DefaultValue(typeof(FillMode), nameof(FillMode.Fit))] FillMode fillMode,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float opacity,
             [Pin(Visibility = PinVisibility.Optional)] bool clip,
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
@@ -103,7 +103,7 @@ namespace VL.Qt.Audio
             // muted, so the sound never comes out of two places.
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
-                new VideoNode.Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, _tap is null ? 0f : 1f, fillMode, _tap?.Id ?? 0),
+                new VideoNode.Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, _tap is null ? 0f : 1f, VideoNode.ResolveFillMode(fillMode, _node.Messages), _tap?.Id ?? 0),
                 out measuredSize, out sceneBounds);
             position = _node.Feedback.MediaPosition();
             duration = _node.Feedback.MediaDuration();

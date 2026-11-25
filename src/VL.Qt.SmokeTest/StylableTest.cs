@@ -88,7 +88,7 @@ public static class StylableTest
                 AutoSize = false,
                 Children = ImmutableArray.Create<Element>(
                     new VL.Qt.Elements.Rectangle { Size = new Vector2(Width, 0.5f), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0), Fill = fill, StrokeColor = border, StrokeWidth = borderWidth / 100, Radius = radius / 100 },
-                    new Text { Size = new Vector2(0, 0), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0.1f, 0.1f, 0), Content = Text, Color = textColor, FontSize = size / 100, Weight = (FontWeight)weight }),
+                    new Text { Size = new Vector2(0, 0), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0.1f, 0.1f, 0), Content = Text, Color = textColor, FontSize = size / 100, Weight = weight }),
             };
             return _element;
         }

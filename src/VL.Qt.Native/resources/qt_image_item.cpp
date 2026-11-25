@@ -28,22 +28,22 @@ struct Quad
     QRectF rect, source; // item coordinates, texture pixels
 };
 
-// Quads like QML Image (alignment centered) for fillMode 0..3.
-void layout(int fillMode, float w, float h, float iw, float ih, std::vector<Quad>& out)
+// Quads like QML Image (alignment centered) for each fill mode.
+void layout(vlqt_fill_mode fillMode, float w, float h, float iw, float ih, std::vector<Quad>& out)
 {
     out.clear();
     switch (fillMode) {
-    case 1: { // PreserveAspectFit
+    case VLQT_FILL_MODE_FIT: {
         const float s = std::min(w / iw, h / ih), dw = iw * s, dh = ih * s;
         out.push_back({QRectF((w - dw) / 2, (h - dh) / 2, dw, dh), QRectF(0, 0, iw, ih)});
         break;
     }
-    case 2: { // PreserveAspectCrop
+    case VLQT_FILL_MODE_CROP: {
         const float s = std::max(w / iw, h / ih), sw = w / s, sh = h / s;
         out.push_back({QRectF(0, 0, w, h), QRectF((iw - sw) / 2, (ih - sh) / 2, sw, sh)});
         break;
     }
-    case 3: { // Tile: natural size, one tile centered
+    case VLQT_FILL_MODE_TILE: { // natural size, one tile centered
         float x0 = std::fmod((w - iw) / 2, iw), y0 = std::fmod((h - ih) / 2, ih);
         if (x0 > 0)
             x0 -= iw;
@@ -66,7 +66,7 @@ void layout(int fillMode, float w, float h, float iw, float ih, std::vector<Quad
         }
         break;
     }
-    default: // Stretch
+    case VLQT_FILL_MODE_STRETCH:
         out.push_back({QRectF(0, 0, w, h), QRectF(0, 0, iw, ih)});
         break;
     }
@@ -90,13 +90,12 @@ QtImageItem::~QtImageItem()
         res::releaseElement(m_shownId);
 }
 
-void QtImageItem::setFillMode(int mode)
+void QtImageItem::setFillMode(vlqt_fill_mode mode)
 {
     if (mode == m_fillMode)
         return;
     m_fillMode = mode;
     update();
-    emit fillModeChanged();
 }
 
 bool QtImageItem::setResource(uint64_t id, std::string& err)

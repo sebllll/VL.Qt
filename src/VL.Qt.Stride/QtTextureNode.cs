@@ -9,6 +9,8 @@ using VL.Lang;
 using VL.Lib.IO.Notifications;
 using VL.Model;
 using VL.Qt.Elements;
+// VL.Qt.MultisampleCount (the namespace of this file) would win over the one of Stride.Graphics: the pin takes the Stride one.
+using StrideMultisampleCount = global::Stride.Graphics.MultisampleCount;
 
 namespace VL.Qt.Stride
 {
@@ -54,7 +56,7 @@ namespace VL.Qt.Stride
             [DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] IObservable<INotification>? inputNotifications,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(false)] bool debug,
-            [Pin(Name = "Multisample Count", Visibility = PinVisibility.Optional), DefaultValue(typeof(MultisampleCount), nameof(MultisampleCount.None))] MultisampleCount multisampleCount,
+            [Pin(Name = "Multisample Count", Visibility = PinVisibility.Optional), DefaultValue(typeof(StrideMultisampleCount), nameof(StrideMultisampleCount.None))] StrideMultisampleCount multisampleCount,
             [Pin(Name = "Render Threads", Visibility = PinVisibility.Optional), DefaultValue(1)] int renderThreads)
         {
             if (_scene is null)
@@ -62,7 +64,7 @@ namespace VL.Qt.Stride
             else
                 _scene.SetRenderThreads(renderThreads);
             _scene.Input.Subscribe(inputNotifications);
-            _scene.Update(input, size, format, space, clearColor, clear, enabled, debug, multisampleCount);
+            _scene.Update(input, size, format, space, clearColor, clear, enabled, debug, StrideInterop.ToQtSamples(multisampleCount));
 
             output = _scene.Texture;
         }

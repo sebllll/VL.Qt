@@ -233,7 +233,7 @@ namespace VL.Qt.Styles
         /// <param name="input">Style to add to. Empty if not connected.</param>
         /// <param name="fontFamily">Font family, "" = Qt's default font.</param>
         /// <param name="fontSize">Font size in px.</param>
-        /// <param name="fontWeight">Font weight 100–900 (400 normal, 700 bold).</param>
+        /// <param name="fontWeight">Font weight, 1..1000 (variable fonts take every value, other fonts the nearest face). Named steps: 100 Thin, 200 ExtraLight, 300 Light, 400 Normal, 500 Medium, 600 DemiBold, 700 Bold, 800 ExtraBold, 900 Black.</param>
         /// <param name="state">States the values apply to, combinable with |.</param>
         public static Style Text(
             Style? input,
@@ -287,7 +287,7 @@ namespace VL.Qt.Styles
         [Smell(SymbolSmell.Advanced)]
         public static Style FontSize(Style? input, Optional<float> fontSize = default, StyleStates state = StyleStates.All)
             => Apply(input, state, fontSize: fontSize);
-        /// <summary>Sets fontWeight for the given states.</summary>
+        /// <summary>Sets fontWeight (1..1000; 400 Normal, 700 Bold) for the given states.</summary>
         [Smell(SymbolSmell.Advanced)]
         public static Style FontWeight(Style? input, Optional<int> fontWeight = default, StyleStates state = StyleStates.All)
             => Apply(input, state, fontWeight: fontWeight);

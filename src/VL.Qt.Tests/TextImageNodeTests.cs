@@ -31,7 +31,7 @@ namespace VL.Qt.Tests
         public void TearDown() { _text.Dispose(); _image.Dispose(); }
 
         // Pin defaults as declared on Update.
-        private Element UpdateText(string text = "Text", string family = "", float fontSize = 0.12f, FontWeight weight = FontWeight.Normal,
+        private Element UpdateText(string text = "Text", string family = "", float fontSize = 0.12f, int weight = 400,
             bool italic = false, Color4? color = null, TextHorizontalAlignment h = TextHorizontalAlignment.Left,
             VerticalAlignment v = VerticalAlignment.Top, TextWrap wrap = TextWrap.NoWrap, TextElide elide = TextElide.None,
             float lineHeight = 1, float letterSpacing = 0, TextAutofit autofit = TextAutofit.Fixed, Vector2? size = null,
@@ -40,7 +40,7 @@ namespace VL.Qt.Tests
                 color ?? Color4.White, h, v, wrap, elide, lineHeight, letterSpacing, autofit, 1, false, false,
                 interaction, null, true, out _, out _);
 
-        private Element UpdateImage(QtImage? image = null, ImageFillMode fill = ImageFillMode.Stretch, bool smooth = true)
+        private Element UpdateImage(QtImage? image = null, FillMode fill = FillMode.Stretch, bool smooth = true)
             => (Element)_image.Update(DefaultSize, default, RectangleAnchor.Center, image, fill, smooth, 1, false, false, null, null, true, out _, out _);
 
         private static QtImage NewImage(ulong id) => new(new ImageResource(id));
@@ -61,7 +61,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Text_NullStrings_BecomeEmpty()
         {
-            var e = (Text)_text.Update(DefaultSize, default, RectangleAnchor.Center, null!, null!, 0.12f, FontWeight.Normal, false,
+            var e = (Text)_text.Update(DefaultSize, default, RectangleAnchor.Center, null!, null!, 0.12f, 400, false,
                 Color4.White, TextHorizontalAlignment.Left, VerticalAlignment.Top, TextWrap.NoWrap, TextElide.None, 1, 0,
                 TextAutofit.Fixed, 1, false, false, null, null, true, out _, out _);
             Assert.That(e.Content, Is.EqualTo(""));
@@ -95,7 +95,7 @@ namespace VL.Qt.Tests
             Changed(UpdateText(text: "Other"), t => t.Content == "Other", "text");
             Changed(UpdateText(family: "Arial"), t => t.FontFamily == "Arial", "family");
             Changed(UpdateText(fontSize: 0.2f), t => t.FontSize == 0.2f, "fontSize");
-            Changed(UpdateText(weight: FontWeight.Bold), t => t.Weight == FontWeight.Bold, "weight");
+            Changed(UpdateText(weight: 700), t => t.Weight == 700, "weight");
             Changed(UpdateText(italic: true), t => t.Italic, "italic");
             Changed(UpdateText(color: Color4.Black), t => t.Color == Color4.Black, "color");
             Changed(UpdateText(h: TextHorizontalAlignment.Center), t => t.HAlign == TextHorizontalAlignment.Center, "h");
@@ -115,7 +115,7 @@ namespace VL.Qt.Tests
         {
             UpdateText();
             _text.Core.Feedback[0].MeasuredSize = new Vector2(0.5f, 0.15f);
-            _text.Update(DefaultSize, default, RectangleAnchor.Center, "Text", "", 0.12f, FontWeight.Normal, false, Color4.White,
+            _text.Update(DefaultSize, default, RectangleAnchor.Center, "Text", "", 0.12f, 400, false, Color4.White,
                 TextHorizontalAlignment.Left, VerticalAlignment.Top, TextWrap.NoWrap, TextElide.None, 1, 0, TextAutofit.Fixed, 1,
                 false, false, null, null, true, out var measured, out _);
             Assert.That(measured, Is.EqualTo(new Vector2(0.5f, 0.15f)));
@@ -127,7 +127,7 @@ namespace VL.Qt.Tests
             var i = (Image)UpdateImage();
             Assert.That(i.Size, Is.EqualTo(DefaultSize));
             Assert.That(i.Source, Is.Null);
-            Assert.That(i.FillMode, Is.EqualTo(ImageFillMode.Stretch));
+            Assert.That(i.FillMode, Is.EqualTo(FillMode.Stretch));
             Assert.That(i.Smooth, Is.True);
             Assert.That(i.Feedback.Feedback, Is.SameAs(_image.Core.Feedback));
         }
@@ -141,7 +141,7 @@ namespace VL.Qt.Tests
             Assert.That(_image.Core.Created, Is.EqualTo(1));
             Assert.That(UpdateImage(NewImage(1)), Is.Not.SameAs(a), "another QtImage (same resource) = new image");
 
-            void Call() => _image.Update(DefaultSize, default, RectangleAnchor.Center, image, ImageFillMode.Stretch, true, 1,
+            void Call() => _image.Update(DefaultSize, default, RectangleAnchor.Center, image, FillMode.Stretch, true, 1,
                 false, false, null, null, true, out _, out _);
             for (int k = 0; k < 100; k++) Call();
             Assert.That(Allocations.Fewest(Call), Is.EqualTo(0));
@@ -160,8 +160,8 @@ namespace VL.Qt.Tests
 
             var x = NewImage(7);
             Changed(UpdateImage(x), i => i.Source == x, "image");
-            Changed(UpdateImage(x, ImageFillMode.Crop), i => i.FillMode == ImageFillMode.Crop, "fillMode");
-            Changed(UpdateImage(x, ImageFillMode.Crop, false), i => !i.Smooth, "smooth");
+            Changed(UpdateImage(x, FillMode.Crop), i => i.FillMode == FillMode.Crop, "fillMode");
+            Changed(UpdateImage(x, FillMode.Crop, false), i => !i.Smooth, "smooth");
             Changed(UpdateImage(), i => i.Source is null, "image cleared");
         }
     }

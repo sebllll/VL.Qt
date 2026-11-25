@@ -114,7 +114,7 @@ namespace VL.Qt.Tests
             Assert.That(t.Content, Is.EqualTo(string.Empty));
             Assert.That(t.FontFamily, Is.EqualTo(string.Empty));
             Assert.That(t.FontSize, Is.EqualTo(0.12f));
-            Assert.That(t.Weight, Is.EqualTo(FontWeight.Normal));
+            Assert.That(t.Weight, Is.EqualTo(400));
             Assert.That(t.Italic, Is.False);
             Assert.That(t.Color, Is.EqualTo(Color4.Black));
             Assert.That(t.HAlign, Is.EqualTo(TextHorizontalAlignment.Left));
@@ -129,8 +129,6 @@ namespace VL.Qt.Tests
         [Test]
         public void TextEnums_AreQtValues()
         {
-            Assert.That((int)FontWeight.Thin, Is.EqualTo(100));
-            Assert.That((int)FontWeight.Black, Is.EqualTo(900));
             Assert.That((int)TextWrap.Wrap, Is.EqualTo(4));
             Assert.That((int)TextElide.None, Is.EqualTo(3));
             Assert.That((int)TextAutofit.Fit, Is.EqualTo(3));
@@ -143,9 +141,19 @@ namespace VL.Qt.Tests
         {
             var i = new Image();
             Assert.That(i.Source, Is.Null);
-            Assert.That(i.FillMode, Is.EqualTo(ImageFillMode.Stretch));
+            Assert.That(i.FillMode, Is.EqualTo(FillMode.Stretch));
             Assert.That(i.Smooth, Is.True);
-            Assert.That((int)ImageFillMode.Tile, Is.EqualTo(3));
+            Assert.That((int)FillMode.Tile, Is.EqualTo(3));
+        }
+
+        /// <summary>The wire values of Fill Mode are the values of the C# enum (protocol.h vlqt_fill_mode).</summary>
+        [Test]
+        public void FillMode_ValuesAreTheWireValues()
+        {
+            Assert.That((int)FillMode.Stretch, Is.EqualTo(Protocol.FillMode.Stretch));
+            Assert.That((int)FillMode.Fit, Is.EqualTo(Protocol.FillMode.Fit));
+            Assert.That((int)FillMode.Crop, Is.EqualTo(Protocol.FillMode.Crop));
+            Assert.That((int)FillMode.Tile, Is.EqualTo(Protocol.FillMode.Tile));
         }
 
         [Test]
