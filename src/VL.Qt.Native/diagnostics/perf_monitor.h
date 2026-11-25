@@ -28,9 +28,6 @@ class Scene;
 // adapter (CpuDevice, e.g. WARP) or a Mesa software rasterizer (llvmpipe, softpipe). Valid after sceneGraphInitialized.
 QString softwareRendererName(QQuickWindow* window);
 
-// Pumps (about 1 s at 60 Hz) that the summary and the Summary page average over.
-inline constexpr int kSummaryPumps = 60;
-
 // Per-window measurement, overlay (F2 perfmeter, F5 stats pages) and key handling.
 // Keys (window focused, no other modifiers; setKeysEnabled(false) turns all of them off): F2 meter on/off; F5 Summary -> Timeline -> Scene -> System -> Resources -> off;
 // Shift+F5 hides/shows the stats keeping the page; F6 (only while the stats are visible) freezes the overlay; F7 (same)

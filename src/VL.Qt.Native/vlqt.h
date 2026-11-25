@@ -133,9 +133,15 @@ VLQT_API const char* vlqt_last_error(void);
 
 /* ===== scene: a window or an offscreen scene; main thread ===== */
 
-/* Averages/maxima over the last ~1 s of pumps, all times in ms. */
+/* Averages/maxima over the last ~1 s of pumps (the last 60), all times in ms. Frame statistics (fps, frame_ms,
+ * frame_ms_max) come only from consecutive frames, like the percentiles of vlqt_perf_stats: pumps with a swap whose
+ * previous pump also had one. After idle pumps the interval spans the idle time and is not a frame time. Without a
+ * consecutive frame in the range (an idle or on-demand scene) all three are 0. The phases (sync_ms, render_ms,
+ * present_ms, vsync_ms) are averages per pump that rendered (swaps > 0), summed over its swaps; pump_ms, work_ms and
+ * swaps_per_pump are per pump of the range, gpu_ms per pump with a GPU timestamp. The F2 meter and the F5 Summary
+ * page use the same computation. */
 typedef struct vlqt_perf {
-    double fps;            /* from the average interval between swaps */
+    double fps;            /* 1000 / frame_ms, 0 = no consecutive frame */
     double frame_ms, frame_ms_max; /* average/max frame interval (vlqt_perf_sample.frame_interval) */
     double pump_ms, pump_ms_max;   /* processEvents incl. rendering, vsync wait and present, on the vvvv thread */
     double sync_ms, render_ms, present_ms;

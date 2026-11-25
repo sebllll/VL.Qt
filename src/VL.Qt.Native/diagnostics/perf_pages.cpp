@@ -197,13 +197,12 @@ QString PerfMonitor::summaryPage(QString* body) const
     vlqt_perf_stats st;
     perfStats(ring.data(), n, m_counters, nowMs(), budget, &st);
 
-    // avg over the last ~1 s, max over the whole view (same window as the percentiles).
-    const int first = std::max(0, n - kSummaryPumps);
-    double frameSum = 0, pumpSum = 0, workSum = 0, workMax = 0, gpuSum = 0, gpuMax = 0, swaps = 0;
+    // avg over the last ~1 s (PerfWindow, the one computation of vlqt_perf and the F2 meter), max over the whole view (same
+    // range as the percentiles).
+    const PerfWindow win = perfWindow(ring.data(), n, kSummaryPumps);
+    double workMax = 0, gpuMax = 0;
     std::array<float, kHistory> work; // Qt work over the view, for the p95 tick of the bar
-    double phSum[PhaseCount] = {}, phMax[PhaseCount] = {};
-    double rowSum = 0; // frame row: consecutive frames only, like the percentiles
-    int frames = 0, rowFrames = 0, gpus = 0, idle = 0;
+    double phMax[PhaseCount] = {};
     for (int i = 0; i < n; i++) {
         const PerfSample& s = ring[i];
         for (int ph = 0; ph < PhaseCount; ph++)
@@ -211,23 +210,20 @@ QString PerfMonitor::summaryPage(QString* body) const
         gpuMax = std::max(gpuMax, double(s.gpu));
         work[i] = s.workMs();
         workMax = std::max(workMax, double(work[i]));
-        if (i < first)
-            continue;
-        pumpSum += s.pump;
-        workSum += work[i];
-        swaps += s.swaps;
-        for (int ph = 0; ph < PhaseCount; ph++)
-            phSum[ph] += phaseMs(s, ph);
-        if (s.swaps > 0 && s.frameInterval > 0) { frameSum += s.frameInterval; frames++; }
-        if (consecutiveFrame(ring.data(), i)) { rowSum += s.frameInterval; rowFrames++; }
-        if (s.gpu > 0) { gpuSum += s.gpu; gpus++; }
-        idle += s.swaps == 0;
     }
-    const int na = n - first;
-    const double frameAvg = frames ? frameSum / frames : 0;
-    const double rowAvg = rowFrames ? rowSum / rowFrames : 0;
-    const double pumpAvg = na ? pumpSum / na : 0;
-    const double workAvg = na ? workSum / na : 0;
+    const int na = win.pumps;
+    const double frameAvg = win.frameAvg;
+    const double pumpAvg = win.pumpAvg;
+    const double workAvg = win.workAvg;
+    auto phAvg = [&](int ph) { // per pump with a frame
+        switch (ph) {
+        case PerfMonitor::PhaseEvents: return win.eventsAvg;
+        case PerfMonitor::PhaseSync: return win.syncAvg;
+        case PerfMonitor::PhaseRender: return win.renderAvg;
+        case PerfMonitor::PhaseVsync: return win.vsyncAvg;
+        default: return win.presentAvg;
+        }
+    };
     double workP95 = 0; // nearest rank, as the percentiles of vlqt_perf_stats
     if (n > 0) {
         const int k = std::clamp(int(std::ceil(0.95 * n)) - 1, 0, n - 1);
@@ -235,13 +231,13 @@ QString PerfMonitor::summaryPage(QString* body) const
         workP95 = work[k];
     }
     // Qt renders only on changes; a low fps from idle pumps is not a slowdown -> neutral, no traffic light.
-    const bool onDemand = na > 0 && idle > kOnDemandIdleShare * na;
+    const bool onDemand = na > 0 && win.idle > kOnDemandIdleShare * na;
 
     Html h;
     pageHeader(h, Summary, m_frozen);
-    h.br().t("fps ").c(frameAvg > 0 && !onDemand ? frameColor(frameAvg, budget) : kGrey, frameAvg > 0 ? num(1000.0 / frameAvg, 5, 1) : QStringLiteral("    -"));
+    h.br().t("fps ").c(frameAvg > 0 && !onDemand ? frameColor(frameAvg, budget) : kGrey, win.fps > 0 ? num(win.fps, 5, 1) : QStringLiteral("    -"));
     if (onDemand)
-        h.c(kGrey, QStringLiteral(" (on demand, %1 % idle)").arg(qRound(100.0 * idle / na)));
+        h.c(kGrey, QStringLiteral(" (on demand, %1 % idle)").arg(qRound(100.0 * win.idle / na)));
     h.t(QStringLiteral("   budget %1 ms (%2 Hz)").arg(num(budget, 0), num(1000.0 / budget, 0, 0)));
     vlqt_host_pump_stats hs; // C# side (live, also while frozen); only when the host reports it
     hostStats(&hs);
@@ -266,7 +262,7 @@ QString PerfMonitor::summaryPage(QString* body) const
         b.t(lab(name, L)).c(color(avg), num(avg, W)).c(color(p50), num(p50, W)).c(color(p95), num(p95, W))
             .c(color(p99), num(p99, W)).c(color(max), num(max, W)).br();
     };
-    pRow("frame", rowAvg, st.frame_p50, st.frame_p95, st.frame_p99, st.frame_max,
+    pRow("frame", frameAvg, st.frame_p50, st.frame_p95, st.frame_p99, st.frame_max,
         [&](double v) { return onDemand ? kGrey : frameColor(v, budget); });
     // The pump includes the vsync wait and the present: what the frame costs on the host thread, not judged against the
     // budget. Qt work (PerfSample::workMs) is, like the over budget counter.
@@ -276,15 +272,15 @@ QString PerfMonitor::summaryPage(QString* body) const
         .c(budgetColor(workMax, budget), num(workMax, W)).br();
     for (int ph : kPhaseOrder) {
         b.t("  ").c(kPhaseColor[ph].html, lab(kPhaseName[ph], L - 2));
-        b.c(budgetColor(na ? phSum[ph] / na : 0, budget), num(na ? phSum[ph] / na : 0, W));
+        b.c(budgetColor(phAvg(ph), budget), num(phAvg(ph), W));
         b.t(QString(3 * W, u' ')).c(budgetColor(phMax[ph], budget), num(phMax[ph], W)).br();
     }
     b.c(kGpuColor.html, lab("GPU", L));
-    if (gpus)
-        b.t(num(gpuSum / gpus, W)).t(QString(3 * W, u' ')).t(num(gpuMax, W)).br();
+    if (win.gpus)
+        b.t(num(win.gpuAvg, W)).t(QString(3 * W, u' ')).t(num(gpuMax, W)).br();
     else
         b.c(kGrey, QStringLiteral("n/a").rightJustified(W)).br();
-    b.t(lab("swaps/pump", L)).t(num(na ? swaps / na : 0, W)).br();
+    b.t(lab("swaps/pump", L)).t(num(win.swapsPerPump, W)).br();
     if (hs.samples > 0) {
         if (vvvv) // the vvvv update before the pump, same columns as the phases (avg, max)
             b.c(kHostColor[SegVvvv].html, lab("vvvv", L)).c(budgetColor(hs.vvvv_ms, budget), num(hs.vvvv_ms, W))
@@ -296,7 +292,7 @@ QString PerfMonitor::summaryPage(QString* body) const
             QStringLiteral("gen0 %1  gen1 %2  gen2 %3  pause %4 ms").arg(num(hs.gc0_per_s, 0, 1), num(hs.gc1_per_s, 0, 1),
                 num(hs.gc2_per_s, 0, 1), num(hs.gc_pause_ms_per_s, 0))).br();
     }
-    b.c(kGrey, QStringLiteral("avg: last %1 pumps, p/max: last %2").arg(kSummaryPumps).arg(n)).br().br();
+    b.c(kGrey, QStringLiteral("avg: last %1 pumps (phases: pumps with a frame), p/max: last %2").arg(kSummaryPumps).arg(n)).br().br();
 
     b.c(kGrey, lab("counters", L + 2) + QStringLiteral("total").rightJustified(W) + QStringLiteral("10 s").rightJustified(W)).br();
     auto cRow = [&](const char* name, long long total, long long recent, bool bad) {
