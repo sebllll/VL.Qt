@@ -114,6 +114,9 @@ namespace VL.Qt.Reconciliation
             item.IsPrimary = false;
         }
 
+        /// <summary>Forgets the elements waiting for a new primary (resync: the registry no longer holds the owner's occurrences).</summary>
+        public void Reset() => _pendingPrimary.Clear();
+
         /// <summary>
         /// Picks the new primary occurrence of every element whose primary let go in this pass, or that was handed over to
         /// this renderer: the first of the remaining occurrences in traversal order (<see cref="IsBefore"/>), re-bound with

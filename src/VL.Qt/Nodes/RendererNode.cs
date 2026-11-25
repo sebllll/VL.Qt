@@ -27,6 +27,7 @@ namespace VL.Qt.Nodes
         private const string IconPhase = "Window Icon";
         private const string SamplesPhase = "Multisample Count";
         private const string BuildPhase = "Build";
+        private const string ReconcilePhase = "Reconcile";
         private const string QtPhase = "Qt";
 
         // Pump and scene registry of this vvvv app (new per F8/F5); QtApp itself is process-wide.
@@ -217,6 +218,8 @@ namespace VL.Qt.Nodes
             // Only written here; the pump applies the buffer once per frame (ApplyCommands) after all node updates.
             _view?.Update(_input.Update(input), space, clearColor, clear, enabled, title);
             ReportBuild(_view?.Reconciler.RootBuildError);
+            // The scene could not be written (e.g. a value too large for a command): logged, shown until a reconcile works.
+            _errors.Report(_view?.ReconcileFault, ReconcilePhase);
 
             // Is Visible is live; Perf, Client Bounds and the QtNative error reflect the last pump (previous frame).
             isVisible = _view?.IsVisible ?? false;

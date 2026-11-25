@@ -5,26 +5,35 @@ using VL.Qt.Reconciliation;
 namespace VL.Qt
 {
     /// <summary>
-    /// Resync after a failed <c>vlqt_scene_apply</c>. QtNative aborts a batch at the first bad command, so
-    /// the reconciler's mirror is ahead of QtNative. Recovery is always complete: one RESET wipes the window's
-    /// scene in QtNative, the mirror is dropped without commands (<see cref="Reconciler.Discard"/>) and the
-    /// next <c>Update</c> creates the scene from scratch, i.e. one frame later. (QtNative reports the failing id,
-    /// vlqt_scene_get_apply_error; it is used to show the error at the element node, not for a partial rebuild.)
+    /// Resync after a failed <c>vlqt_scene_apply</c> or a reconcile that threw. QtNative aborts a batch at the first bad
+    /// command, and an exception leaves the mirror half updated, so mirror and QtNative disagree. Recovery is always
+    /// complete: one RESET wipes the window's scene in QtNative, the mirror is dropped without commands
+    /// (<see cref="Reconciler.Discard"/>) and the next <c>Update</c> creates the scene from scratch, i.e. one frame later.
+    /// (QtNative reports the failing id, vlqt_scene_get_apply_error; it is used to show the error at the element node,
+    /// not for a partial rebuild.)
     /// <para>
-    /// No endless loop: if the rebuild fails as well (first apply after a resync), the controller gives up and
-    /// leaves the scene empty; <see cref="ShouldReconcile"/> stays false until the input changes (new reference),
-    /// which allows exactly one new attempt. The error stays visible meanwhile (the caller keeps it).
+    /// No endless loop: if the rebuild fails as well (the first attempt after a resync), the controller gives up and
+    /// leaves the scene empty; <see cref="ShouldReconcile"/> stays false until the input changes (new reference), which
+    /// allows exactly one new attempt, and not before a pause of 2 frames that doubles with every give-up up to 64 frames
+    /// (animated input is new every frame) and starts at 2 again after a successful apply. The error stays visible
+    /// meanwhile (the caller keeps it).
     /// </para>
     /// Main thread only; one per window.
     /// </summary>
     internal sealed class ResyncController
     {
+        // Frames between give-up and the next attempt: from firstPause, doubled per give-up, at most maxPause.
+        private const int firstPause = 2;
+        private const int maxPause = 64;
+
         private readonly Reconciler _reconciler;
         private readonly Func<int> _resetInQtNative;
         private Element? _lastInput;
         private bool _justResynced;
         private bool _gaveUp;
         private Element? _gaveUpInput;
+        private int _pause = firstPause; // pause after the next give-up
+        private int _wait;               // frames left of the current pause
 
         /// <param name="reconciler">Mirror of the window.</param>
         /// <param name="resetInQtNative">Sends one RESET to QtNative and returns the apply result (errors are ignored here).</param>
@@ -41,14 +50,17 @@ namespace VL.Qt
         public bool GaveUp => _gaveUp;
 
         /// <summary>
-        /// Call before reconciling <paramref name="input"/> in Update. False = skip the reconcile (gave up and the
-        /// input is still the one that failed). A changed input ends the pause and counts as a fresh attempt.
+        /// Call once per frame before reconciling <paramref name="input"/> in Update. False = skip the reconcile (gave up,
+        /// and the pause is not over or the input is still the one that failed). A changed input after the pause counts as
+        /// a fresh attempt.
         /// </summary>
         public bool ShouldReconcile(Element? input)
         {
             if (_gaveUp)
             {
-                if (ReferenceEquals(input, _gaveUpInput))
+                if (_wait > 0)
+                    _wait--;
+                if (_wait > 0 || ReferenceEquals(input, _gaveUpInput))
                     return false;
                 _gaveUp = false;
                 _gaveUpInput = null;
@@ -59,18 +71,32 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Call with every apply result. rc != 0: wipes QtNative, drops the mirror and returns true (the caller
-        /// must also forget what it sent besides the scene, e.g. the clear color). rc == 0 ends the "first apply
-        /// after a resync" state.
+        /// Call with every apply result. rc != 0: resyncs (<see cref="OnReconcileFailed"/>) and returns true (the caller
+        /// must also forget what it sent besides the scene, e.g. the clear color). rc == 0 ends the "first attempt after a
+        /// resync" state and, unless the controller gave up, the doubling of the pause.
         /// </summary>
         public bool OnApplyResult(int rc)
         {
             if (rc == 0)
             {
                 _justResynced = false;
+                if (!_gaveUp)
+                    _pause = firstPause;
                 return false;
             }
+            Resync();
+            return true;
+        }
 
+        /// <summary>
+        /// Call when the reconcile of the input passed to <see cref="ShouldReconcile"/> threw, after dropping the commands it
+        /// wrote: wipes QtNative and drops the mirror like a failed apply (the caller must also forget what it sent besides
+        /// the scene, e.g. the clear color).
+        /// </summary>
+        public void OnReconcileFailed() => Resync();
+
+        private void Resync()
+        {
             _resetInQtNative();
             _reconciler.Discard();
             Resyncs++;
@@ -80,10 +106,11 @@ namespace VL.Qt
                 _gaveUp = true;
                 _gaveUpInput = _lastInput;
                 _justResynced = false;
+                _wait = _pause;
+                _pause = Math.Min(_pause * 2, maxPause);
             }
             else
                 _justResynced = true;
-            return true;
         }
     }
 }

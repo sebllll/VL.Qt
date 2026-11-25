@@ -565,29 +565,40 @@ namespace VL.Qt.Tests
             Assert.DoesNotThrow(() => rec.Update(G(R(2)), Space.DIPTopLeft));
         }
 
-        [Test, Ignore("REC-01: the failed visit already registered the new instance, the retry registers it a second time (OccurrencesOf 2, node demoted)")]
-        public void Fault_AtSetOfAChangedElement_NextUpdateWithSameTree_SendsTheChangeAndStaysPrimary()
+        // The resync of Scene after a reconcile that threw; its RESET wipes QtNative, so the recording starts again.
+        private static ResyncController ResyncOf(Reconciler rec, ThrowingSink sink) => new(rec, () =>
+        {
+            sink.Restart();
+            return 0;
+        });
+
+        [Test]
+        public void Fault_AtSetOfAChangedElement_AfterTheResync_OneOccurrenceStaysPrimary()
         {
             var sink = new ThrowingSink();
             var scene = new OccurrenceRegistry();
-            var rec = new Reconciler(sink, new IdAllocator(), scene);
+            var ids = new IdAllocator();
+            var rec = new Reconciler(sink, ids, scene);
+            var resync = ResyncOf(rec, sink);
             var slot = new FeedbackSlot(new ElementFeedback(), 0);
-            var before = R(1, slot);
-            rec.Update(G(before), Space.DIPTopLeft);
-            var node = rec.Root!.Children[0];
+            rec.Update(G(R(1, slot)), Space.DIPTopLeft);
 
             var after = R(2, slot); // a new instance of the same node
             sink.Restart();
-            sink.ThrowAt = 1;
+            sink.ThrowAt = 1; // its Size SET: the instance is already registered at the old mirror
             Assert.Throws<ThrowingSink.InjectedFault>(() => rec.Update(G(after), Space.DIPTopLeft));
+            resync.OnReconcileFailed();
 
-            // The same tree again: the change that failed is sent now.
+            Assert.That(scene.Count, Is.Zero, "nothing of the cut-short visit stays registered");
+            Assert.That(ids.Count, Is.Zero);
+            Assert.That(rec.FeedbackRouter.Count, Is.Zero);
+
+            // The same tree again: built from scratch, one occurrence that reports state.
             sink.ThrowAt = 0;
-            sink.Restart();
-            rec.Update(G(after), Space.DIPTopLeft);
-            Assert.That(sink.Recorded.Commands, Is.EqualTo(new[] { $"SET {node.Id} Size vec2(200,100)" }));
-
-            // The registry shows one occurrence, and it still reports state (REC-01: registered twice, demoted).
+            var tree = G(after);
+            rec.Update(tree, Space.DIPTopLeft);
+            var node = rec.Root!.Children[0];
+            Assert.That(sink.Recorded.OfOp("CREATE").Select(c => c.Split(' ')[2]).ToArray(), Is.EqualTo(new[] { "Group", "Rectangle" }), sink.Recorded.ToString());
             Assert.That(scene.OccurrencesOf(after), Is.EqualTo(1));
             Assert.That(scene.OwnerOf(after), Is.SameAs(node));
             Assert.That(rec.FeedbackRouter.IsPrimary(node.BoundFeedbackId), Is.True);
@@ -595,30 +606,62 @@ namespace VL.Qt.Tests
 
             // And stays stable.
             sink.Restart();
-            rec.Update(G(after), Space.DIPTopLeft);
+            rec.Update(tree, Space.DIPTopLeft);
             Assert.That(sink.Recorded.Commands, Is.Empty);
         }
 
-        [Test, Ignore("REC-01: the failed visit registered the new node but never added it to its parent; the retry registers it again (OccurrencesOf 2)")]
-        public void Fault_AtANewElement_NextUpdate_LeavesNoOrphanObject()
+        [Test]
+        public void Fault_AtANewElement_AfterTheResync_LeavesNoOrphanObject()
+        {
+            var sink = new ThrowingSink();
+            var scene = new OccurrenceRegistry();
+            var ids = new IdAllocator();
+            var rec = new Reconciler(sink, ids, scene);
+            var resync = ResyncOf(rec, sink);
+            rec.Update(G(), Space.DIPTopLeft);
+            var added = R(1, new FeedbackSlot(new ElementFeedback(), 0));
+            sink.Restart();
+            sink.ThrowAt = 2; // CREATE of the rectangle is written, its first SET throws: it never reaches its parent
+
+            Assert.Throws<ThrowingSink.InjectedFault>(() => rec.Update(G(added), Space.DIPTopLeft));
+            resync.OnReconcileFailed();
+            Assert.That(scene.Count, Is.Zero);
+            Assert.That(ids.Count, Is.Zero);
+
+            sink.ThrowAt = 0;
+            var tree = G(added);
+            for (var frame = 0; frame < 3; frame++)
+                rec.Update(tree, Space.DIPTopLeft);
+
+            // Root and the rectangle are alive in QtNative, nothing else.
+            Assert.That(LiveObjects(sink.Recorded), Is.EqualTo(2), sink.Recorded.ToString());
+            Assert.That(scene.OccurrencesOf(added), Is.EqualTo(1));
+            Assert.That(scene.Count, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void Fault_AtANewHandler_AfterTheResync_TheHandlerIsCreatedAgain()
         {
             var sink = new ThrowingSink();
             var scene = new OccurrenceRegistry();
             var rec = new Reconciler(sink, new IdAllocator(), scene);
-            rec.Update(G(), Space.DIPTopLeft);
-            var added = R(1, new FeedbackSlot(new ElementFeedback(), 0));
-            sink.Restart();
-            sink.ThrowAt = 2; // CREATE of the rectangle is written, its first SET throws
+            var resync = ResyncOf(rec, sink);
+            var hover = new FeedbackSlot(new ElementFeedback(), 0);
+            var tree = G(new Rectangle { Size = new Vector2(1, 1), Interaction = new HoverInteraction(null, hover) });
+            // 1 CREATE Group, 2 REPARENT, 3 CREATE Rectangle, 4 SET Size, 5 REPARENT, 6 CREATE handler (owner registered), 7 its REPARENT
+            sink.ThrowAt = 7;
 
-            Assert.Throws<ThrowingSink.InjectedFault>(() => rec.Update(G(added), Space.DIPTopLeft));
+            Assert.Throws<ThrowingSink.InjectedFault>(() => rec.Update(tree, Space.DIPTopLeft));
+            Assert.That(scene.HandlerOwnerOf(hover), Is.Not.Null, "the cut-short visit registered the handler");
+            resync.OnReconcileFailed();
+            Assert.That(scene.HandlerCount, Is.Zero);
 
+            // Not a placeholder of an owner nobody reaches: the handler exists in QtNative again.
             sink.ThrowAt = 0;
-            for (var frame = 0; frame < 3; frame++)
-                rec.Update(G(added), Space.DIPTopLeft);
-
-            // Root and the rectangle are alive in QtNative, nothing else (REC-01: one orphan per frame).
-            Assert.That(LiveObjects(sink.Recorded), Is.EqualTo(2), sink.Recorded.ToString());
-            Assert.That(scene.OccurrencesOf(added), Is.EqualTo(1));
+            rec.Update(tree, Space.DIPTopLeft);
+            Assert.That(sink.Recorded.OfOp("CREATE").Select(c => c.Split(' ')[2]).ToArray(),
+                Is.EqualTo(new[] { "Group", "Rectangle", nameof(Protocol.ElementType.HoverHandler) }), sink.Recorded.ToString());
+            Assert.That(scene.HandlerOwnerOf(hover), Is.Not.Null);
         }
 
         [Test]

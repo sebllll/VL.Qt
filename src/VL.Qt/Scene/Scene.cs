@@ -12,7 +12,7 @@ namespace VL.Qt
 {
     /// <summary>
     /// The managed side of one native scene (<c>vlqt::Scene</c>), whether it is a window (<see cref="WindowScene"/>) or an
-    /// offscreen scene (<see cref="OffscreenScene"/>): reconciler, command buffer, resync after a failed apply,
+    /// offscreen scene (<see cref="OffscreenScene"/>): reconciler, command buffer, resync after a failed apply or reconcile,
     /// apply errors at the element nodes, event poll into the feedback and the clear color. Both kinds go through the
     /// same vlqt_scene_* functions. Main thread only.
     /// </summary>
@@ -72,6 +72,12 @@ namespace VL.Qt
         /// <summary>Error of the last poll, empty if ok.</summary>
         public string PollError => _pollError;
 
+        /// <summary>
+        /// Exception of the last reconcile, null if it worked; stays while the resync waits for another input. The caller
+        /// logs it and marks its node.
+        /// </summary>
+        public Exception? ReconcileFault { get; private set; }
+
         /// <summary>Number of commands of the last <see cref="Apply"/>.</summary>
         public int AppliedOps => _appliedOps;
 
@@ -80,7 +86,8 @@ namespace VL.Qt
         /// <see cref="Apply"/>). <paramref name="clear"/> = false keeps the previous frame and draws the new one over it.
         /// The lengths are converted with the <see cref="SpaceMapping"/> of <paramref name="space"/> and the size and device
         /// pixel ratio QtNative reports for the scene right now. Appends: the buffer is reset after
-        /// apply, so commands of a frame without apply go out with the next one.
+        /// apply, so commands of a frame without apply go out with the next one. A reconcile that throws drops the buffer,
+        /// sets <see cref="ReconcileFault"/> and resyncs: the scene is built again from the next frame on.
         /// </summary>
         public void Update(Element? input, Space space, Color4 clearColor, bool clear)
         {
@@ -106,7 +113,19 @@ namespace VL.Qt
             {
                 var mapping = CurrentMapping(space);
                 var t0 = Stopwatch.GetTimestamp();
-                _reconciler.Update(input, mapping);
+                try
+                {
+                    _reconciler.Update(input, mapping);
+                    ReconcileFault = null;
+                }
+                catch (Exception e)
+                {
+                    // Mirror and buffer are half written (e.g. a value above Protocol.MaxCommandPayload): neither may reach QtNative.
+                    ReconcileFault = e;
+                    _commands.Reset();
+                    _resync.OnReconcileFailed();
+                    ForgetSentState();
+                }
                 _reconcileMs += Stopwatch.GetElapsedTime(t0).TotalMilliseconds;
             }
         }
@@ -124,6 +143,8 @@ namespace VL.Qt
 
         private int ResetInQtNative()
         {
+            if (_handle.IsNull)
+                return 0;
             _wipe.Reset();
             _wipe.ResetScene();
             return (int)Native.Apply(_handle, _wipe.EndFrame());
@@ -150,12 +171,16 @@ namespace VL.Qt
                 // Before the resync: its RESET overwrites QtNative's last error, Discard drops the bindings.
                 ApplyError = ReportApplyError();
             if (_resync.OnApplyResult((int)rc))
-            {
-                // QtNative may have lost them with the aborted batch (RESET keeps them); sent again with the rebuild.
-                _hasClearColor = false;
-                _hasClear = false;
-                _hasSpace = false;
-            }
+                ForgetSentState();
+        }
+
+        // After a resync: QtNative may have lost them with the aborted batch, or they were in the dropped buffer (RESET
+        // keeps them); sent again with the rebuild.
+        private void ForgetSentState()
+        {
+            _hasClearColor = false;
+            _hasClear = false;
+            _hasSpace = false;
         }
 
         /// <summary>Reconcile time since the last call (host frame report).</summary>

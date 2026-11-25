@@ -109,6 +109,9 @@ namespace VL.Qt
 
         internal Reconciler Reconciler => _scene.Reconciler;
 
+        /// <summary>Exception of the last reconcile, null if it worked (<see cref="Scene.ReconcileFault"/>).</summary>
+        internal Exception? ReconcileFault => _scene.ReconcileFault;
+
         /// <summary>Command buffer of the next apply (test seam: SmokeTest injects an invalid command).</summary>
         internal CommandWriter Commands => _scene.Commands;
 

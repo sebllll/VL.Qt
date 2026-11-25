@@ -317,11 +317,99 @@ namespace VL.Qt.Reconciliation
             if (entry.Waiting.Count > 0)
                 return;
             entry.Waiting = null;
-            var slot = element.Feedback;
-            if (slot.Feedback is not null && slot.Feedback.TryGet(slot.Index, out var state) && state.Warning == VideoDuplicateWarning)
-                state.Warning = null;
+            ClearWarning(element.Feedback, VideoDuplicateWarning);
             if (entry.OwnerReconciler is null)
                 RemoveEntry(element);
+        }
+
+        /// <summary>
+        /// Removes every trace of <paramref name="reconciler"/>: its occurrences, its ignored occurrences (videos and
+        /// interactions) and the handlers it owns, also those a visit cut short by an exception registered but never linked
+        /// into its mirror. Elements it owned go to the next renderer that shows them (<see cref="HandOver"/>), waiting
+        /// duplicates of other renderers get their reconcilers invalidated. For the resync (<see cref="Reconciler.Discard"/>);
+        /// allocates.
+        /// </summary>
+        public void RemoveAll(Reconciler reconciler)
+        {
+            foreach (var element in new List<Element>(_entries.Keys))
+            {
+                ref var entry = ref CollectionsMarshal.GetValueRefOrNullRef(_entries, element);
+                if (RemoveWaiting(ref entry.Waiting, reconciler))
+                    ClearWarning(element.Feedback, VideoDuplicateWarning);
+                if (entry.Elsewhere is { } elsewhere)
+                {
+                    for (int i = elsewhere.Count - 1; i >= 0; i--)
+                    {
+                        if (!ReferenceEquals(elsewhere[i].Reconciler, reconciler))
+                            continue;
+                        ReturnList(elsewhere[i].Nodes);
+                        elsewhere.RemoveAt(i);
+                    }
+                    if (elsewhere.Count == 0)
+                        entry.Elsewhere = null;
+                }
+                if (ReferenceEquals(entry.OwnerReconciler, reconciler))
+                {
+                    entry.Primary = null;
+                    if (entry.Others is { } others)
+                    {
+                        ReturnList(others);
+                        entry.Others = null;
+                    }
+                    if (HandOver(element, reconciler))
+                        continue;
+                    entry.OwnerReconciler = null;
+                    if (entry.Waiting is { } waiting)
+                    {
+                        foreach (var r in waiting)
+                            r.Invalidate();
+                    }
+                }
+                if (entry.OwnerReconciler is null && entry.Waiting is null)
+                    RemoveEntry(element);
+            }
+
+            foreach (var key in new List<FeedbackSlot>(_handlers.Keys))
+            {
+                ref var entry = ref CollectionsMarshal.GetValueRefOrNullRef(_handlers, key);
+                if (RemoveWaiting(ref entry.Waiting, reconciler))
+                    ClearWarning(key, InteractionDuplicateWarning);
+                if (ReferenceEquals(entry.OwnerReconciler, reconciler))
+                {
+                    entry.Owner = null;
+                    entry.OwnerReconciler = null;
+                    if (entry.Waiting is { } waiting)
+                    {
+                        foreach (var r in waiting)
+                            r.Invalidate();
+                    }
+                }
+                if (entry.Owner is null && entry.Waiting is null)
+                    _handlers.Remove(key);
+            }
+        }
+
+        /// <summary>Removes every entry of <paramref name="reconciler"/> from <paramref name="waiting"/>; true if that emptied it (then null).</summary>
+        private static bool RemoveWaiting(ref List<Reconciler>? waiting, Reconciler reconciler)
+        {
+            if (waiting is null)
+                return false;
+            for (int i = waiting.Count - 1; i >= 0; i--)
+            {
+                if (ReferenceEquals(waiting[i], reconciler))
+                    waiting.RemoveAt(i);
+            }
+            if (waiting.Count > 0)
+                return false;
+            waiting = null;
+            return true;
+        }
+
+        /// <summary>Clears <paramref name="warning"/> in <paramref name="slot"/> if the slot still shows it.</summary>
+        private static void ClearWarning(FeedbackSlot slot, string warning)
+        {
+            if (slot.Feedback is not null && slot.Feedback.TryGet(slot.Index, out var state) && state.Warning == warning)
+                state.Warning = null;
         }
 
         /// <summary>Removes the entry of <paramref name="element"/> and its slot entry if the slot still points to it.</summary>
@@ -352,6 +440,7 @@ namespace VL.Qt.Reconciliation
         private struct HandlerEntry
         {
             public HandlerMirror? Owner;
+            public Reconciler? OwnerReconciler; // reconciler of Owner
             public List<Reconciler>? Waiting; // one entry per ignored occurrence (placeholder)
         }
 
@@ -363,11 +452,12 @@ namespace VL.Qt.Reconciliation
         /// <summary>Handler that currently serves the interaction with feedback <paramref name="key"/>, or null.</summary>
         public HandlerMirror? HandlerOwnerOf(FeedbackSlot key) => _handlers.TryGetValue(key, out var e) ? e.Owner : null;
 
-        /// <summary>Makes <paramref name="handler"/> the owner of its key (the caller checked that there is none).</summary>
-        public void SetHandlerOwner(HandlerMirror handler)
+        /// <summary>Makes <paramref name="handler"/> of <paramref name="reconciler"/> the owner of its key (the caller checked that there is none).</summary>
+        public void SetHandlerOwner(HandlerMirror handler, Reconciler reconciler)
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_handlers, handler.Key, out _);
             entry.Owner = handler;
+            entry.OwnerReconciler = reconciler;
         }
 
         /// <summary>Gives up the ownership of <paramref name="handler"/>; waiting duplicates get their reconcilers invalidated.</summary>
@@ -377,6 +467,7 @@ namespace VL.Qt.Reconciliation
             if (Unsafe.IsNullRef(ref entry) || !ReferenceEquals(entry.Owner, handler))
                 return;
             entry.Owner = null;
+            entry.OwnerReconciler = null;
             if (entry.Waiting is null)
             {
                 _handlers.Remove(handler.Key);
@@ -404,8 +495,7 @@ namespace VL.Qt.Reconciliation
             if (entry.Waiting.Count > 0)
                 return;
             entry.Waiting = null;
-            if (key.Feedback is not null && key.Feedback.TryGet(key.Index, out var state) && state.Warning == InteractionDuplicateWarning)
-                state.Warning = null;
+            ClearWarning(key, InteractionDuplicateWarning);
             if (entry.Owner is null)
                 _handlers.Remove(key);
         }

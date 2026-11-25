@@ -94,6 +94,9 @@ namespace VL.Qt
 
         internal Reconciler Reconciler => _scene.Reconciler;
 
+        /// <summary>Exception of the last reconcile, null if it worked (<see cref="Scene.ReconcileFault"/>).</summary>
+        internal Exception? ReconcileFault => _scene.ReconcileFault;
+
         /// <summary>
         /// Binds the scene to a shared texture. <paramref name="device"/> is the foreign ID3D11Device*,
         /// <paramref name="ntHandle"/> the texture's NT handle (the caller may close it afterwards), <paramref name="size"/>
