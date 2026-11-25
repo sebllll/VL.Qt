@@ -34,7 +34,7 @@ namespace VL.Qt.Shaders
 
         internal static IReadOnlyList<IVLPinDescription> Outputs => s_outputs;
 
-        public static IVLNodeDescription New(IVLNodeDescriptionFactory factory, ShaderFile file, ILogger logger) =>
+        public static IVLNodeDescription New(IVLNodeDescriptionFactory factory, ShaderFile file, ILogger logger, ShaderSourceCache cache) =>
             factory.NewNodeDescription(
                 file.FullName,
                 file.LinkCategory,
@@ -42,8 +42,8 @@ namespace VL.Qt.Shaders
                 invalidated: ShaderNodeFactory.WatchContent(file),
                 init: context =>
                 {
-                    var layout = ShaderEffectLayout.From(ShaderSource.Load(file, ShaderReflection.Reflect), file);
-                    ShaderDescription.LogMessages(logger, file, layout.Messages);
+                    var layout = ShaderEffectLayout.From(cache.Get(file), file);
+                    cache.LogOnce(file, layout.Messages);
                     return context.Node(
                         Inputs(layout),
                         Outputs,

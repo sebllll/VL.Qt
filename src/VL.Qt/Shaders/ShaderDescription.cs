@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.IO;
 using Microsoft.Extensions.Logging;
@@ -43,7 +42,7 @@ namespace VL.Qt.Shaders
         /// <summary>Output pins like the Shader node.</summary>
         internal static IReadOnlyList<IVLPinDescription> Outputs => s_outputs;
 
-        public static IVLNodeDescription New(IVLNodeDescriptionFactory factory, ShaderFile file, ILogger logger) =>
+        public static IVLNodeDescription New(IVLNodeDescriptionFactory factory, ShaderFile file, ILogger logger, ShaderSourceCache cache) =>
             factory.NewNodeDescription(
                 file.FullName,
                 file.Category,
@@ -53,8 +52,8 @@ namespace VL.Qt.Shaders
                 invalidated: ShaderNodeFactory.WatchContent(file),
                 init: context =>
                 {
-                    var layout = ShaderLayout.From(ShaderSource.Load(file, ShaderReflection.Reflect), file);
-                    LogMessages(logger, file, layout.Messages);
+                    var layout = ShaderLayout.From(cache.Get(file), file);
+                    cache.LogOnce(file, layout.Messages);
                     return context.Node(
                         Inputs(layout),
                         Outputs,
@@ -64,20 +63,6 @@ namespace VL.Qt.Shaders
                         summary: layout.Summary ?? file.Summary,
                         filePath: file.FragmentPath);
                 });
-
-        /// <summary>Logs what the node shows (errors, warnings), except the duplicate error that the factory logs once per scan.</summary>
-        internal static void LogMessages(ILogger logger, ShaderFile file, ImmutableArray<Message> messages)
-        {
-            foreach (var m in messages)
-            {
-                if (m.Text == file.DuplicateError)
-                    continue;
-                if (m.Type == MessageType.Error)
-                    logger.LogError("{Shader}: {Error}", file.FragmentPath, m.Text);
-                else
-                    logger.LogWarning("{Shader}: {Warning}", file.FragmentPath, m.Text);
-            }
-        }
 
         /// <summary>
         /// Middle click / Definition > Open: opens the .frag and, if there is one, the .vert next to it in the
