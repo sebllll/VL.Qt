@@ -52,6 +52,72 @@ namespace VL.Qt.Tests
             Assert.That(StyleMerge.Merge(Style.Empty, a), Is.SameAs(a));
         }
 
+        // Every field of every part, set alone: the merge must keep it and ToString must show it.
+        private static readonly (string Name, System.Func<StateValues<float>, StateValues<Color4>, StateValues<string>, StateValues<int>, Style> Make)[] fieldCases =
+        {
+            ("Frame.Color", (f, c, t, i) => new Style { Frame = new FrameStyle { Color = c } }),
+            ("Frame.BorderColor", (f, c, t, i) => new Style { Frame = new FrameStyle { BorderColor = c } }),
+            ("Frame.Radius", (f, c, t, i) => new Style { Frame = new FrameStyle { Radius = f } }),
+            ("Frame.BorderWidth", (f, c, t, i) => new Style { Frame = new FrameStyle { BorderWidth = f } }),
+            ("Frame.PaddingX", (f, c, t, i) => new Style { Frame = new FrameStyle { PaddingX = f } }),
+            ("Frame.PaddingY", (f, c, t, i) => new Style { Frame = new FrameStyle { PaddingY = f } }),
+            ("Frame.MinWidth", (f, c, t, i) => new Style { Frame = new FrameStyle { MinWidth = f } }),
+            ("Frame.MinHeight", (f, c, t, i) => new Style { Frame = new FrameStyle { MinHeight = f } }),
+            ("Text.Color", (f, c, t, i) => new Style { Text = new TextStyle { Color = c } }),
+            ("Text.FontFamily", (f, c, t, i) => new Style { Text = new TextStyle { FontFamily = t } }),
+            ("Text.FontSize", (f, c, t, i) => new Style { Text = new TextStyle { FontSize = f } }),
+            ("Text.FontWeight", (f, c, t, i) => new Style { Text = new TextStyle { FontWeight = i } }),
+            ("Indicator.Color", (f, c, t, i) => new Style { Indicator = new IndicatorStyle { Color = c } }),
+            ("Indicator.Size", (f, c, t, i) => new Style { Indicator = new IndicatorStyle { Size = f } }),
+            ("Indicator.Radius", (f, c, t, i) => new Style { Indicator = new IndicatorStyle { Radius = f } }),
+            ("Indicator.BorderWidth", (f, c, t, i) => new Style { Indicator = new IndicatorStyle { BorderWidth = f } }),
+            ("Track.Color", (f, c, t, i) => new Style { Track = new TrackStyle { Color = c } }),
+            ("Track.FillColor", (f, c, t, i) => new Style { Track = new TrackStyle { FillColor = c } }),
+            ("Track.Thickness", (f, c, t, i) => new Style { Track = new TrackStyle { Thickness = f } }),
+            ("Track.Radius", (f, c, t, i) => new Style { Track = new TrackStyle { Radius = f } }),
+        };
+
+        private static Style MakeField(int index, StyleStates states, bool second = false)
+        {
+            var n = second ? 2 : 1;
+            return fieldCases[index].Make(
+                V(states, n),
+                default(StateValues<Color4>).With(states, second ? green : red),
+                default(StateValues<string>).With(states, "font" + n),
+                default(StateValues<int>).With(states, 400 * n));
+        }
+
+        public static System.Collections.Generic.IEnumerable<int> FieldIndexes() => Enumerable.Range(0, fieldCases.Length);
+
+        [TestCaseSource(nameof(FieldIndexes))]
+        public void Merge_EachFieldSetAloneOnOver_IsKept(int index)
+        {
+            // Both parts exist on both sides, with another field set under, so that the part merge really runs.
+            var under = MakeField((index + 1) % fieldCases.Length, StyleStates.All);
+            var over = MakeField(index, StyleStates.All, second: true);
+            var merged = StyleMerge.Merge(under, over);
+            Assert.That(merged.ToString(), Does.Contain(fieldCases[index].Name + "[All]"));
+            Assert.That(merged.ToString(), Does.Contain(fieldCases[(index + 1) % fieldCases.Length].Name + "[All]"));
+
+            // Same part and same field on both sides: over wins, nothing of under is left.
+            var other = MakeField(index, StyleStates.All);
+            var m2 = StyleMerge.Merge(other, over);
+            Assert.That(m2, Is.EqualTo(over));
+        }
+
+        [Test]
+        public void ToString_ListsSetEntries_AndNamesTheEmptyStyle()
+        {
+            Assert.That(Style.Empty.ToString(), Is.EqualTo("Style (empty)"));
+            Assert.That(new Style { Frame = new FrameStyle() }.ToString(), Is.EqualTo("Style (empty)"));
+            var s = new Style
+            {
+                Frame = new FrameStyle { Color = default(StateValues<Color4>).With(StyleStates.Normal | StyleStates.Hovered, red) },
+                Text = new TextStyle { FontSize = V(StyleStates.All, 12) },
+            };
+            Assert.That(s.ToString(), Is.EqualTo("Frame.Color[Normal,Hovered], Text.FontSize[All]"));
+        }
+
         [Test]
         public void Merge_OverAddsNothing_ReturnsUnder()
         {
