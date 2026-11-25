@@ -134,7 +134,7 @@
             <Pin Id="BDzxQuSHMGCMLwxjVvwQ4I" Name="Value" Kind="OutputPin" />
             <Pin Id="H0Syzi6cY8aOO7RmXDpVbl" Name="On Data" Kind="OutputPin" />
           </Node>
-          <Pad Id="QZrXyHE8n6mLjpHryojzp9" Comment="Is Clicked" Bounds="433,614,35,35" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="QZrXyHE8n6mLjpHryojzp9" Comment="On Click" Bounds="433,614,35,35" ShowValueBox="true" isIOBox="true" />
           <Pad Id="MpNMynWrb6uP0dABLk2TZi" Comment="Rotation" Bounds="192,384,35,15" ShowValueBox="true" isIOBox="true" Value="0.125">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
@@ -173,7 +173,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="wtvdxmdjkxBs5VwBVtpimu" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Button [Qt]&#xD;&#xA;- Bang: true for one frame per click (here counted)&#xD;&#xA;- Is Clicked: channel pin, a Reactive Channel of Unit (shows as a bang)&#xD;&#xA;- Enabled, Auto Repeat, Auto Size">
+          <Pad Id="wtvdxmdjkxBs5VwBVtpimu" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Button [Qt]&#xD;&#xA;- Bang: true for one frame per click (here counted)&#xD;&#xA;- On Click: channel pin, a Reactive Channel of Unit (shows as a bang)&#xD;&#xA;- Enabled, Auto Repeat, Auto Size">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
