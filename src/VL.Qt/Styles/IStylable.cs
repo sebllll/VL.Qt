@@ -10,9 +10,13 @@ namespace VL.Qt.Styles
     /// <para>
     /// Build is called once per frame while the widget is part of a scene, after the patch was updated in that frame.
     /// Return the same element instance as long as nothing changed (element nodes do this by themselves), so the scene
-    /// stays untouched. A returned stylable is built in turn with the same style, so a widget may hand over to another;
-    /// one that returns itself or a cycle shows nothing. An exception is shown at the container node (at the Renderer
-    /// for a widget linked to it) and the element of the last successful call stays.
+    /// stays untouched. Build returns an <see cref="IElement"/> or null; a returned stylable is resolved in turn with the
+    /// same style, so a widget may hand over to another. One that returns itself or a cycle shows nothing and warns.
+    /// An exception is shown at the container node (at the Renderer for a widget linked to it) and the element of the
+    /// last successful call stays.
+    /// </para>
+    /// <para>
+    /// In a patched class the output pin of the Build operation must be named Result.
     /// </para>
     /// </summary>
     [Category("Qt.Style")]

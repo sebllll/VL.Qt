@@ -6,40 +6,42 @@ namespace VL.Qt.Styles
 {
     // Style nodeset (S5). Setters are a chain: Style in on top, Style out; a null input is an empty style and an
     // unconnected Optional pin means "not set". Getters return resolved values (unset → base style) for one state
-    // and never throw on a null input. Colors go through Colors (Qt.Style) or the per-part color setters (Advanced).
+    // and never throw on a null input. The six bundles (SetColors, SetFrame, SetText, SetIndicator, SetTrack, Merge)
+    // are process nodes in Nodes/Style/ that cache their output; the single setters (Set<Field>, Advanced) and all
+    // getters stay static nodes here. Colors go through SetColors or the per-part color setters.
 
-    /// <summary>Nodes that combine styles and the state helper of the style nodeset.</summary>
+    /// <summary>Nodes that read the colors of a style and the state helper of the style nodeset.</summary>
     [SkipCategory]
     [Category("Qt.Style")]
     public static class StyleNodes
     {
-        /// <summary>Sets the colors of all parts for the given states. Unconnected pins stay unset (inherited).</summary>
-        /// <param name="input">Style to add to. Empty if not connected.</param>
+        // Shared implementation of SetColors: the six colors of the four parts.
+        internal static Style ApplyColors(
+            Style? input,
+            StyleStates states,
+            Optional<Color4> frame,
+            Optional<Color4> border,
+            Optional<Color4> text,
+            Optional<Color4> indicator,
+            Optional<Color4> track,
+            Optional<Color4> trackFill)
+        {
+            var style = FrameNodes.Apply(input, states, color: frame, borderColor: border);
+            style = TextNodes.Apply(style, states, color: text);
+            style = IndicatorNodes.Apply(style, states, color: indicator);
+            return TrackNodes.Apply(style, states, color: track, fillColor: trackFill);
+        }
+
+        /// <summary>Returns the colors of all parts in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
         /// <param name="frame">Background of the control.</param>
         /// <param name="border">Border of the frame.</param>
         /// <param name="text">Text color.</param>
         /// <param name="indicator">Slider handle, check mark, switch knob, SpinBox -/+.</param>
         /// <param name="track">Slider groove, switch track, check box.</param>
         /// <param name="trackFill">Slider value, switch on, text selection.</param>
-        /// <param name="state">States the values apply to, combinable with |.</param>
-        public static Style Colors(
-            Style? input,
-            Optional<Color4> frame = default,
-            Optional<Color4> border = default,
-            Optional<Color4> text = default,
-            Optional<Color4> indicator = default,
-            Optional<Color4> track = default,
-            Optional<Color4> trackFill = default,
-            StyleStates state = StyleStates.All)
-        {
-            var style = FrameNodes.Apply(input, state, color: frame, borderColor: border);
-            style = TextNodes.Apply(style, state, color: text);
-            style = IndicatorNodes.Apply(style, state, color: indicator);
-            return TrackNodes.Apply(style, state, color: track, fillColor: trackFill);
-        }
-
-        /// <summary>Resolved colors of all parts in one state (unset → base style).</summary>
-        public static void GetColors(
+        public static void Colors(
             Style? input,
             StyleState state,
             out Color4 frame,
@@ -49,21 +51,20 @@ namespace VL.Qt.Styles
             out Color4 track,
             out Color4 trackFill)
         {
-            frame = FrameNodes.GetColor(input, state);
-            border = FrameNodes.GetBorderColor(input, state);
-            text = TextNodes.GetColor(input, state);
-            indicator = IndicatorNodes.GetColor(input, state);
-            track = TrackNodes.GetColor(input, state);
-            trackFill = TrackNodes.GetFillColor(input, state);
+            frame = FrameNodes.Color(input, state);
+            border = FrameNodes.BorderColor(input, state);
+            text = TextNodes.Color(input, state);
+            indicator = IndicatorNodes.Color(input, state);
+            track = TrackNodes.Color(input, state);
+            trackFill = TrackNodes.FillColor(input, state);
         }
 
-        /// <summary>Lays <paramref name="input2"/> over <paramref name="input"/>: field by field and state by state, a set value of Input 2 wins (the rule of Group and widget).</summary>
-        /// <param name="input">Lower style, e.g. a preset.</param>
-        /// <param name="input2">Upper style, e.g. overrides from another branch.</param>
-        public static Style Merge(Style? input, Style? input2)
-            => StyleMerge.Merge(input, input2);
-
-        /// <summary>The one state a widget shows, with the rank Disabled > Pressed > Hovered > Checked > Normal (like the built-in widgets).</summary>
+        /// <summary>Returns the one state a widget shows, with the rank Disabled > Pressed > Hovered > Checked > Normal (like the built-in widgets).</summary>
+        /// <param name="isHovered">True while the pointer is over the widget.</param>
+        /// <param name="isPressed">True while the widget is pressed.</param>
+        /// <param name="isDisabled">True if the widget is disabled.</param>
+        /// <param name="isChecked">True if the widget is checked or on.</param>
+        /// <returns>The state to read the style in.</returns>
         public static StyleState ResolveState(bool isHovered, bool isPressed, bool isDisabled, bool isChecked)
             => isDisabled ? StyleState.Disabled
                 : isPressed ? StyleState.Pressed
@@ -85,26 +86,6 @@ namespace VL.Qt.Styles
     [Category("Qt.Style.Frame")]
     public static class FrameNodes
     {
-        /// <summary>Sets the shape of the frame for the given states. Unconnected pins stay unset (inherited). Colors: Colors or Color/BorderColor.</summary>
-        /// <param name="input">Style to add to. Empty if not connected.</param>
-        /// <param name="radius">Corner radius.</param>
-        /// <param name="borderWidth">Border width, 0 = no border.</param>
-        /// <param name="paddingX">Space between frame and content, left and right.</param>
-        /// <param name="paddingY">Space between frame and content, top and bottom.</param>
-        /// <param name="minWidth">Minimum width of the control.</param>
-        /// <param name="minHeight">Minimum height of the control.</param>
-        /// <param name="state">States the values apply to, combinable with |.</param>
-        public static Style Frame(
-            Style? input,
-            Optional<float> radius = default,
-            Optional<float> borderWidth = default,
-            Optional<float> paddingX = default,
-            Optional<float> paddingY = default,
-            Optional<float> minWidth = default,
-            Optional<float> minHeight = default,
-            StyleStates state = StyleStates.All)
-            => Apply(input, state, radius: radius, borderWidth: borderWidth, paddingX: paddingX, paddingY: paddingY, minWidth: minWidth, minHeight: minHeight);
-
         internal static Style Apply(
             Style? input,
             StyleStates state,
@@ -138,8 +119,16 @@ namespace VL.Qt.Styles
             };
         }
 
-        /// <summary>Resolved frame shape in one state (unset → base style).</summary>
-        public static void GetFrame(
+        /// <summary>Returns the shape of the frame in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <param name="radius">Corner radius in DIP.</param>
+        /// <param name="borderWidth">Border width in DIP, 0 = no border.</param>
+        /// <param name="paddingX">Space between frame and content, left and right, in DIP.</param>
+        /// <param name="paddingY">Space between frame and content, top and bottom, in DIP.</param>
+        /// <param name="minWidth">Minimum width of the control in DIP.</param>
+        /// <param name="minHeight">Minimum height of the control in DIP.</param>
+        public static void Frame(
             Style? input,
             StyleState state,
             out float radius,
@@ -149,78 +138,133 @@ namespace VL.Qt.Styles
             out float minWidth,
             out float minHeight)
         {
-            radius = GetRadius(input, state);
-            borderWidth = GetBorderWidth(input, state);
-            paddingX = GetPaddingX(input, state);
-            paddingY = GetPaddingY(input, state);
-            minWidth = GetMinWidth(input, state);
-            minHeight = GetMinHeight(input, state);
+            radius = Radius(input, state);
+            borderWidth = BorderWidth(input, state);
+            paddingX = PaddingX(input, state);
+            paddingY = PaddingY(input, state);
+            minWidth = MinWidth(input, state);
+            minHeight = MinHeight(input, state);
         }
 
-        /// <summary>Sets color for the given states.</summary>
+        /// <summary>Sets the background color of the frame for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="color">The background color of the frame. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style Color(Style? input, Optional<Color4> color = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, color: color);
-        /// <summary>Sets borderColor for the given states.</summary>
+        public static Style SetColor(Style? input, Optional<Color4> color = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, color: color);
+        /// <summary>Sets the border color of the frame for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="borderColor">The border color of the frame. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style BorderColor(Style? input, Optional<Color4> borderColor = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, borderColor: borderColor);
-        /// <summary>Sets radius for the given states.</summary>
+        public static Style SetBorderColor(Style? input, Optional<Color4> borderColor = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, borderColor: borderColor);
+        /// <summary>Sets the corner radius of the frame in DIP for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="radius">The corner radius of the frame in DIP. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style Radius(Style? input, Optional<float> radius = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, radius: radius);
-        /// <summary>Sets borderWidth for the given states.</summary>
+        public static Style SetRadius(Style? input, Optional<float> radius = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, radius: radius);
+        /// <summary>Sets the border width of the frame in DIP, 0 = no border for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="borderWidth">The border width of the frame in DIP, 0 = no border. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style BorderWidth(Style? input, Optional<float> borderWidth = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, borderWidth: borderWidth);
-        /// <summary>Sets paddingX for the given states.</summary>
+        public static Style SetBorderWidth(Style? input, Optional<float> borderWidth = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, borderWidth: borderWidth);
+        /// <summary>Sets the horizontal padding between the frame and its content in DIP for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="paddingX">The horizontal padding between the frame and its content in DIP. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style PaddingX(Style? input, Optional<float> paddingX = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, paddingX: paddingX);
-        /// <summary>Sets paddingY for the given states.</summary>
+        public static Style SetPaddingX(Style? input, Optional<float> paddingX = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, paddingX: paddingX);
+        /// <summary>Sets the vertical padding between the frame and its content in DIP for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="paddingY">The vertical padding between the frame and its content in DIP. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style PaddingY(Style? input, Optional<float> paddingY = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, paddingY: paddingY);
-        /// <summary>Sets minWidth for the given states.</summary>
+        public static Style SetPaddingY(Style? input, Optional<float> paddingY = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, paddingY: paddingY);
+        /// <summary>Sets the minimum width of the control in DIP for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="minWidth">The minimum width of the control in DIP. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style MinWidth(Style? input, Optional<float> minWidth = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, minWidth: minWidth);
-        /// <summary>Sets minHeight for the given states.</summary>
+        public static Style SetMinWidth(Style? input, Optional<float> minWidth = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, minWidth: minWidth);
+        /// <summary>Sets the minimum height of the control in DIP for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="minHeight">The minimum height of the control in DIP. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style MinHeight(Style? input, Optional<float> minHeight = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, minHeight: minHeight);
-
-        /// <summary>Resolved color in one state (unset → base style).</summary>
+        public static Style SetMinHeight(Style? input, Optional<float> minHeight = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, minHeight: minHeight);
+        /// <summary>Returns the background color of the frame in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The background color of the frame.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Color4 GetColor(Style? input, StyleState state = StyleState.Normal)
+        public static Color4 Color(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Frame!.Color, input?.Frame?.Color ?? default, state, default);
-        /// <summary>Resolved borderColor in one state (unset → base style).</summary>
+        /// <summary>Returns the border color of the frame in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The border color of the frame.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Color4 GetBorderColor(Style? input, StyleState state = StyleState.Normal)
+        public static Color4 BorderColor(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Frame!.BorderColor, input?.Frame?.BorderColor ?? default, state, default);
-        /// <summary>Resolved radius in one state (unset → base style).</summary>
+        /// <summary>Returns the corner radius of the frame in DIP in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The corner radius of the frame in DIP.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static float GetRadius(Style? input, StyleState state = StyleState.Normal)
+        public static float Radius(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Frame!.Radius, input?.Frame?.Radius ?? default, state, 0);
-        /// <summary>Resolved borderWidth in one state (unset → base style).</summary>
+        /// <summary>Returns the border width of the frame in DIP, 0 = no border in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The border width of the frame in DIP, 0 = no border.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static float GetBorderWidth(Style? input, StyleState state = StyleState.Normal)
+        public static float BorderWidth(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Frame!.BorderWidth, input?.Frame?.BorderWidth ?? default, state, 0);
-        /// <summary>Resolved paddingX in one state (unset → base style).</summary>
+        /// <summary>Returns the horizontal padding between the frame and its content in DIP in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The horizontal padding between the frame and its content in DIP.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static float GetPaddingX(Style? input, StyleState state = StyleState.Normal)
+        public static float PaddingX(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Frame!.PaddingX, input?.Frame?.PaddingX ?? default, state, 0);
-        /// <summary>Resolved paddingY in one state (unset → base style).</summary>
+        /// <summary>Returns the vertical padding between the frame and its content in DIP in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The vertical padding between the frame and its content in DIP.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static float GetPaddingY(Style? input, StyleState state = StyleState.Normal)
+        public static float PaddingY(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Frame!.PaddingY, input?.Frame?.PaddingY ?? default, state, 0);
-        /// <summary>Resolved minWidth in one state (unset → base style).</summary>
+        /// <summary>Returns the minimum width of the control in DIP in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The minimum width of the control in DIP.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static float GetMinWidth(Style? input, StyleState state = StyleState.Normal)
+        public static float MinWidth(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Frame!.MinWidth, input?.Frame?.MinWidth ?? default, state, 0);
-        /// <summary>Resolved minHeight in one state (unset → base style).</summary>
+        /// <summary>Returns the minimum height of the control in DIP in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The minimum height of the control in DIP.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static float GetMinHeight(Style? input, StyleState state = StyleState.Normal)
+        public static float MinHeight(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Frame!.MinHeight, input?.Frame?.MinHeight ?? default, state, 0);
     }
 
@@ -229,20 +273,6 @@ namespace VL.Qt.Styles
     [Category("Qt.Style.Text")]
     public static class TextNodes
     {
-        /// <summary>Sets the font for the given states. Unconnected pins stay unset (inherited). Color: Colors or Color.</summary>
-        /// <param name="input">Style to add to. Empty if not connected.</param>
-        /// <param name="fontFamily">Font family, "" = Qt's default font.</param>
-        /// <param name="fontSize">Font size in px.</param>
-        /// <param name="fontWeight">Font weight, 1..1000 (variable fonts take every value, other fonts the nearest face). Named steps: 100 Thin, 200 ExtraLight, 300 Light, 400 Normal, 500 Medium, 600 DemiBold, 700 Bold, 800 ExtraBold, 900 Black.</param>
-        /// <param name="state">States the values apply to, combinable with |.</param>
-        public static Style Text(
-            Style? input,
-            Optional<string> fontFamily = default,
-            Optional<float> fontSize = default,
-            Optional<int> fontWeight = default,
-            StyleStates state = StyleStates.All)
-            => Apply(input, state, fontFamily: fontFamily, fontSize: fontSize, fontWeight: fontWeight);
-
         internal static Style Apply(
             Style? input,
             StyleStates state,
@@ -267,46 +297,78 @@ namespace VL.Qt.Styles
             };
         }
 
-        /// <summary>Resolved font in one state (unset → base style).</summary>
-        public static void GetText(Style? input, StyleState state, out string fontFamily, out float fontSize, out int fontWeight)
+        /// <summary>Returns the font of the text in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <param name="fontFamily">Font family, empty = the default font.</param>
+        /// <param name="fontSize">Font size in DIP.</param>
+        /// <param name="fontWeight">Font weight, 1..1000 (400 Normal, 700 Bold).</param>
+        public static void Text(Style? input, StyleState state, out string fontFamily, out float fontSize, out int fontWeight)
         {
-            fontFamily = GetFontFamily(input, state);
-            fontSize = GetFontSize(input, state);
-            fontWeight = GetFontWeight(input, state);
+            fontFamily = FontFamily(input, state);
+            fontSize = FontSize(input, state);
+            fontWeight = FontWeight(input, state);
         }
 
-        /// <summary>Sets color for the given states.</summary>
+        /// <summary>Sets the text color for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="color">The text color. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style Color(Style? input, Optional<Color4> color = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, color: color);
-        /// <summary>Sets fontFamily for the given states.</summary>
+        public static Style SetColor(Style? input, Optional<Color4> color = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, color: color);
+        /// <summary>Sets the font family of the text, empty = the default font for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="fontFamily">The font family of the text, empty = the default font. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style FontFamily(Style? input, Optional<string> fontFamily = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, fontFamily: fontFamily);
-        /// <summary>Sets fontSize for the given states.</summary>
+        public static Style SetFontFamily(Style? input, Optional<string> fontFamily = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, fontFamily: fontFamily);
+        /// <summary>Sets the font size of the text in DIP for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="fontSize">The font size of the text in DIP. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style FontSize(Style? input, Optional<float> fontSize = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, fontSize: fontSize);
-        /// <summary>Sets fontWeight (1..1000; 400 Normal, 700 Bold) for the given states.</summary>
+        public static Style SetFontSize(Style? input, Optional<float> fontSize = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, fontSize: fontSize);
+        /// <summary>Sets the font weight of the text, 1..1000 (400 Normal, 700 Bold) for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="fontWeight">The font weight of the text, 1..1000 (400 Normal, 700 Bold). Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style FontWeight(Style? input, Optional<int> fontWeight = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, fontWeight: fontWeight);
-
-        /// <summary>Resolved color in one state (unset → base style).</summary>
+        public static Style SetFontWeight(Style? input, Optional<int> fontWeight = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, fontWeight: fontWeight);
+        /// <summary>Returns the text color in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The text color.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Color4 GetColor(Style? input, StyleState state = StyleState.Normal)
+        public static Color4 Color(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Text!.Color, input?.Text?.Color ?? default, state, default);
-        /// <summary>Resolved fontFamily in one state (unset → base style).</summary>
+        /// <summary>Returns the font family of the text, empty = the default font in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The font family of the text, empty = the default font.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static string GetFontFamily(Style? input, StyleState state = StyleState.Normal)
+        public static string FontFamily(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Text!.FontFamily, input?.Text?.FontFamily ?? default, state, "");
-        /// <summary>Resolved fontSize in one state (unset → base style).</summary>
+        /// <summary>Returns the font size of the text in DIP in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The font size of the text in DIP.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static float GetFontSize(Style? input, StyleState state = StyleState.Normal)
+        public static float FontSize(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Text!.FontSize, input?.Text?.FontSize ?? default, state, 0);
-        /// <summary>Resolved fontWeight in one state (unset → base style).</summary>
+        /// <summary>Returns the font weight of the text, 1..1000 (400 Normal, 700 Bold) in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The font weight of the text, 1..1000 (400 Normal, 700 Bold).</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static int GetFontWeight(Style? input, StyleState state = StyleState.Normal)
+        public static int FontWeight(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Text!.FontWeight, input?.Text?.FontWeight ?? default, state, 0);
     }
 
@@ -315,20 +377,6 @@ namespace VL.Qt.Styles
     [Category("Qt.Style.Indicator")]
     public static class IndicatorNodes
     {
-        /// <summary>Sets the shape of the indicator for the given states. Unconnected pins stay unset (inherited). Color: Colors or Color.</summary>
-        /// <param name="input">Style to add to. Empty if not connected.</param>
-        /// <param name="size">Size of the handle or knob.</param>
-        /// <param name="radius">Corner radius.</param>
-        /// <param name="borderWidth">Border width, 0 = no border.</param>
-        /// <param name="state">States the values apply to, combinable with |.</param>
-        public static Style Indicator(
-            Style? input,
-            Optional<float> size = default,
-            Optional<float> radius = default,
-            Optional<float> borderWidth = default,
-            StyleStates state = StyleStates.All)
-            => Apply(input, state, size: size, radius: radius, borderWidth: borderWidth);
-
         internal static Style Apply(
             Style? input,
             StyleStates state,
@@ -353,46 +401,78 @@ namespace VL.Qt.Styles
             };
         }
 
-        /// <summary>Resolved indicator shape in one state (unset → base style).</summary>
-        public static void GetIndicator(Style? input, StyleState state, out float size, out float radius, out float borderWidth)
+        /// <summary>Returns the shape of the indicator in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <param name="size">Size of the handle or knob in DIP.</param>
+        /// <param name="radius">Corner radius in DIP.</param>
+        /// <param name="borderWidth">Border width in DIP, 0 = no border.</param>
+        public static void Indicator(Style? input, StyleState state, out float size, out float radius, out float borderWidth)
         {
-            size = GetSize(input, state);
-            radius = GetRadius(input, state);
-            borderWidth = GetBorderWidth(input, state);
+            size = Size(input, state);
+            radius = Radius(input, state);
+            borderWidth = BorderWidth(input, state);
         }
 
-        /// <summary>Sets color for the given states.</summary>
+        /// <summary>Sets the color of the indicator (slider handle, check mark, switch knob, SpinBox -/+) for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="color">The color of the indicator (slider handle, check mark, switch knob, SpinBox -/+). Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style Color(Style? input, Optional<Color4> color = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, color: color);
-        /// <summary>Sets size for the given states.</summary>
+        public static Style SetColor(Style? input, Optional<Color4> color = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, color: color);
+        /// <summary>Sets the size of the indicator in DIP for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="size">The size of the indicator in DIP. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style Size(Style? input, Optional<float> size = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, size: size);
-        /// <summary>Sets radius for the given states.</summary>
+        public static Style SetSize(Style? input, Optional<float> size = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, size: size);
+        /// <summary>Sets the corner radius of the indicator in DIP for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="radius">The corner radius of the indicator in DIP. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style Radius(Style? input, Optional<float> radius = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, radius: radius);
-        /// <summary>Sets borderWidth for the given states.</summary>
+        public static Style SetRadius(Style? input, Optional<float> radius = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, radius: radius);
+        /// <summary>Sets the border width of the indicator in DIP, 0 = no border for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="borderWidth">The border width of the indicator in DIP, 0 = no border. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style BorderWidth(Style? input, Optional<float> borderWidth = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, borderWidth: borderWidth);
-
-        /// <summary>Resolved color in one state (unset → base style).</summary>
+        public static Style SetBorderWidth(Style? input, Optional<float> borderWidth = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, borderWidth: borderWidth);
+        /// <summary>Returns the color of the indicator (slider handle, check mark, switch knob, SpinBox -/+) in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The color of the indicator (slider handle, check mark, switch knob, SpinBox -/+).</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Color4 GetColor(Style? input, StyleState state = StyleState.Normal)
+        public static Color4 Color(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Indicator!.Color, input?.Indicator?.Color ?? default, state, default);
-        /// <summary>Resolved size in one state (unset → base style).</summary>
+        /// <summary>Returns the size of the indicator in DIP in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The size of the indicator in DIP.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static float GetSize(Style? input, StyleState state = StyleState.Normal)
+        public static float Size(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Indicator!.Size, input?.Indicator?.Size ?? default, state, 0);
-        /// <summary>Resolved radius in one state (unset → base style).</summary>
+        /// <summary>Returns the corner radius of the indicator in DIP in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The corner radius of the indicator in DIP.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static float GetRadius(Style? input, StyleState state = StyleState.Normal)
+        public static float Radius(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Indicator!.Radius, input?.Indicator?.Radius ?? default, state, 0);
-        /// <summary>Resolved borderWidth in one state (unset → base style).</summary>
+        /// <summary>Returns the border width of the indicator in DIP, 0 = no border in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The border width of the indicator in DIP, 0 = no border.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static float GetBorderWidth(Style? input, StyleState state = StyleState.Normal)
+        public static float BorderWidth(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Indicator!.BorderWidth, input?.Indicator?.BorderWidth ?? default, state, 0);
     }
 
@@ -401,18 +481,6 @@ namespace VL.Qt.Styles
     [Category("Qt.Style.Track")]
     public static class TrackNodes
     {
-        /// <summary>Sets the shape of the track for the given states. Unconnected pins stay unset (inherited). Colors: Colors or Color/FillColor.</summary>
-        /// <param name="input">Style to add to. Empty if not connected.</param>
-        /// <param name="thickness">Thickness of the groove or track.</param>
-        /// <param name="radius">Corner radius.</param>
-        /// <param name="state">States the values apply to, combinable with |.</param>
-        public static Style Track(
-            Style? input,
-            Optional<float> thickness = default,
-            Optional<float> radius = default,
-            StyleStates state = StyleStates.All)
-            => Apply(input, state, thickness: thickness, radius: radius);
-
         internal static Style Apply(
             Style? input,
             StyleStates state,
@@ -437,45 +505,76 @@ namespace VL.Qt.Styles
             };
         }
 
-        /// <summary>Resolved track shape in one state (unset → base style).</summary>
-        public static void GetTrack(Style? input, StyleState state, out float thickness, out float radius)
+        /// <summary>Returns the shape of the track in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <param name="thickness">Thickness of the groove or track in DIP.</param>
+        /// <param name="radius">Corner radius in DIP.</param>
+        public static void Track(Style? input, StyleState state, out float thickness, out float radius)
         {
-            thickness = GetThickness(input, state);
-            radius = GetRadius(input, state);
+            thickness = Thickness(input, state);
+            radius = Radius(input, state);
         }
 
-        /// <summary>Sets color for the given states.</summary>
+        /// <summary>Sets the color of the track (slider groove, switch track, check box) for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="color">The color of the track (slider groove, switch track, check box). Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style Color(Style? input, Optional<Color4> color = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, color: color);
-        /// <summary>Sets fillColor for the given states.</summary>
+        public static Style SetColor(Style? input, Optional<Color4> color = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, color: color);
+        /// <summary>Sets the fill color of the track (slider value, switch on, text selection) for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="fillColor">The fill color of the track (slider value, switch on, text selection). Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style FillColor(Style? input, Optional<Color4> fillColor = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, fillColor: fillColor);
-        /// <summary>Sets thickness for the given states.</summary>
+        public static Style SetFillColor(Style? input, Optional<Color4> fillColor = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, fillColor: fillColor);
+        /// <summary>Sets the thickness of the track in DIP for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="thickness">The thickness of the track in DIP. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style Thickness(Style? input, Optional<float> thickness = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, thickness: thickness);
-        /// <summary>Sets radius for the given states.</summary>
+        public static Style SetThickness(Style? input, Optional<float> thickness = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, thickness: thickness);
+        /// <summary>Sets the corner radius of the track in DIP for the given states.</summary>
+        /// <param name="input">Style to add to. Empty if not connected.</param>
+        /// <param name="radius">The corner radius of the track in DIP. Unconnected stays unset (inherited).</param>
+        /// <param name="states">States the value applies to, combinable with |.</param>
+        /// <returns>The style with the value set.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Style Radius(Style? input, Optional<float> radius = default, StyleStates state = StyleStates.All)
-            => Apply(input, state, radius: radius);
-
-        /// <summary>Resolved color in one state (unset → base style).</summary>
+        public static Style SetRadius(Style? input, Optional<float> radius = default, StyleStates states = StyleStates.All)
+            => Apply(input, states, radius: radius);
+        /// <summary>Returns the color of the track (slider groove, switch track, check box) in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The color of the track (slider groove, switch track, check box).</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Color4 GetColor(Style? input, StyleState state = StyleState.Normal)
+        public static Color4 Color(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Track!.Color, input?.Track?.Color ?? default, state, default);
-        /// <summary>Resolved fillColor in one state (unset → base style).</summary>
+        /// <summary>Returns the fill color of the track (slider value, switch on, text selection) in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The fill color of the track (slider value, switch on, text selection).</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static Color4 GetFillColor(Style? input, StyleState state = StyleState.Normal)
+        public static Color4 FillColor(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Track!.FillColor, input?.Track?.FillColor ?? default, state, default);
-        /// <summary>Resolved thickness in one state (unset → base style).</summary>
+        /// <summary>Returns the thickness of the track in DIP in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The thickness of the track in DIP.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static float GetThickness(Style? input, StyleState state = StyleState.Normal)
+        public static float Thickness(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Track!.Thickness, input?.Track?.Thickness ?? default, state, 0);
-        /// <summary>Resolved radius in one state (unset → base style).</summary>
+        /// <summary>Returns the corner radius of the track in DIP in one state; unset fields come from the base style.</summary>
+        /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
+        /// <param name="state">State to read.</param>
+        /// <returns>The corner radius of the track in DIP.</returns>
         [Smell(SymbolSmell.Advanced)]
-        public static float GetRadius(Style? input, StyleState state = StyleState.Normal)
+        public static float Radius(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Track!.Radius, input?.Track?.Radius ?? default, state, 0);
     }
 }

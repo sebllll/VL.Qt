@@ -142,6 +142,18 @@ namespace VL.Qt.Tests.Paths
             }
         }
 
+        [TestCase(2f, 1f)]
+        [TestCase(-1f, 0f)]
+        [TestCase(float.NaN, 0f)]
+        public void CatmullRom_TensionIsClampedToZeroToOne(float tension, float clamped)
+        {
+            var actual = SplineGeometry.CatmullRom(QtPath.Empty, s_zigzag, false, 0.5f, tension);
+            var expected = SplineGeometry.CatmullRom(QtPath.Empty, s_zigzag, false, 0.5f, clamped);
+            Assert.That(actual.ContentEquals(expected), Is.True);
+            foreach (var f in actual.Flatten().Points)
+                Assert.That(float.IsFinite(f), Is.True);
+        }
+
         [TestCase(0f)]
         [TestCase(0.5f)]
         [TestCase(1f)]
