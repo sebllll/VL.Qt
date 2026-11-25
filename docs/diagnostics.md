@@ -93,12 +93,13 @@ On Windows, Qt Quick shares one Direct3D 11 device with all windows and images. 
 
 ## QtTexture render thread
 
-`QtTexture` scenes render on a Qt render thread, so the vvvv main thread spends only a fraction of a millisecond per scene (polish, hand-off) instead of the whole Qt render. The environment variable `VLQT_OFFSCREEN_THREAD` switches this for diagnosis:
+`QtTexture` and `QtRenderer` scenes render on a Qt render thread, so the vvvv main thread spends only a fraction of a millisecond per scene (polish, hand-off) instead of the whole Qt render. The hidden pin `Render Threads` of both nodes (show it from the node's pin menu) sets this:
 
-- **Values:** unset or empty = one render thread shared by all `QtTexture` scenes of the process (the default). `0` = render on the main thread, inside the draw start, as before the render thread existed. `n` (1 to 16) = a pool of n render threads, each scene gets one at creation, round robin. Anything else logs a Warning and uses 1.
-- **When to set it:** in the environment before vvvv starts, QtNative reads it once at the first `QtTexture` scene. Changing it later has no effect; restart vvvv.
-- **Which mode is running:** Info in the Log window, category `vlqt.offscreen`, once at the first scene: "offscreen scenes render on the main thread" or "offscreen scenes render on N Qt render thread(s)".
-- **0 to tell a render-thread problem from a scene problem:** if a `QtTexture` shows a wrong, stale or missing frame, a hang or a crash, start vvvv with `VLQT_OFFSCREEN_THREAD=0`. If the problem is gone, it is a render-thread problem (report it with the log line, GPU and driver); if it stays, it is the scene or the node. The frame time of the patch grows by the Qt render time of every changed scene, so use it for diagnosis only.
+- **Values:** 1 (the default) = one render thread shared by all `QtTexture` and `QtRenderer` scenes of the process. `0` = render on the main thread, inside the draw start, in the same order of steps. `n` (2 to 16) = a pool of n render threads, each scene gets one at creation, round robin. Values outside 0 … 16 are clamped.
+- **Several nodes:** there is one pool per process, so the largest value of all these nodes counts; 0 applies only when every node has 0.
+- **When it applies:** a scene gets its thread (or the main thread) when its node is created and keeps it. A larger value adds threads at once and applies to the scenes created afterwards; a smaller value and 0 apply only to scenes created afterwards. To move the existing scenes, save the patch with the new value and restart vvvv.
+- **Which mode is running:** Info in the Log window, category `vlqt.offscreen`, at each change: "offscreen scenes created from now on render on the main thread" or "... on N Qt render thread(s)".
+- **0 to tell a render-thread problem from a scene problem:** if a `QtTexture` shows a wrong, stale or missing frame, a hang or a crash, set `Render Threads` to 0 on every node, save and restart vvvv. If the problem is gone, it is a render-thread problem (report it with the log line, GPU and driver); if it stays, it is the scene or the node. The frame time of the patch grows by the Qt render time of every changed scene, so use it for diagnosis only.
 - **More than 1 for several heavy scenes:** with several `QtTexture` nodes whose scenes are heavy (thousands of items, many texts), a pool of 2 can shorten the frame because the scenes render side by side. Measured on one laptop: it pays with CPU (render time per scene grows by 1.4x with 2 threads) and brings nothing for light scenes or a single scene; keep 1 unless the frame time shows it (`docs/decisions/render-texture.md`, "Qt render thread").
 - **Windows only:** Qt windows are not affected, `QtTexture` needs Direct3D 11.
 

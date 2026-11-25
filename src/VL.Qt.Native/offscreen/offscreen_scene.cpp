@@ -43,7 +43,7 @@ void deviceLost()
 {
     for (OffscreenScene* s : s_scenes) {
         const bool wasBound = s->bound;
-        onRenderThread(s, [s] {
+        s->executor.call([s] {
             unbind(s);
             dropRhi(s);
         });
@@ -59,7 +59,7 @@ void deviceRestored()
 {
     for (OffscreenScene* s : s_scenes) {
         bool initialized = false;
-        onRenderThread(s, [s, &initialized] { initialized = s->renderControl->initialize(); });
+        s->executor.call([s, &initialized] { initialized = s->renderControl->initialize(); });
         if (!initialized)
             qCWarning(lcOffscreen, "offscreen scene %p: QQuickRenderControl::initialize failed after the device "
                 "rebuild, bind retries it", static_cast<void*>(s));
@@ -98,13 +98,13 @@ vlqt_scene* create(int width, int height)
         vlqt::setLastError("offscreen scene: QtNative has no shared D3D11 device (VLQT_SHARED_DEVICE=0 or creation failed, see the log)");
         return nullptr;
     }
-    // From here on the scene graph and the QRhi belong to the render thread (prepareThread before initialize).
-    state->thread = render_thread::assign();
-    if (state->thread)
-        state->renderControl->prepareThread(state->thread->thread());
+    // From here on the scene graph and the QRhi belong to the executor's thread (prepareThread before initialize).
+    state->executor = render_thread::assign();
+    if (render_thread::RenderThread* t = state->executor.thread())
+        state->renderControl->prepareThread(t->thread());
     // The QRhi now, not at bind: vlqt_test_device_info, snapshots and resources see the scene's device at once.
     bool initialized = false;
-    onRenderThread(state, [state, &initialized] { initialized = state->renderControl->initialize(); });
+    state->executor.call([state, &initialized] { initialized = state->renderControl->initialize(); });
     if (!initialized) {
         vlqt_scene_destroy(handle);
         vlqt::setLastError("offscreen scene: QQuickRenderControl::initialize failed (see the log)");
@@ -128,10 +128,10 @@ vlqt_scene* create(int width, int height)
 void release(OffscreenScene* state)
 {
 #ifdef _WIN32
-    onRenderThread(state, [state] {
+    state->executor.call([state] {
         unbind(state);
         // The render thread's scene graph and QRhi go there, before the main thread deletes window and render control.
-        if (state->thread)
+        if (state->executor.thread())
             dropRhi(state);
     });
 #else
@@ -160,7 +160,7 @@ bool isScene(const QQuickWindow* window)
 render_thread::RenderThread* renderThreadOf(const QQuickWindow* window)
 {
     const OffscreenScene* s = window ? sceneOf(window) : nullptr;
-    return s ? s->thread : nullptr;
+    return s ? s->executor.thread() : nullptr;
 }
 
 bool requestFrame(const QQuickWindow* window)
@@ -179,8 +179,7 @@ int testState(vlqt_scene* scene, unsigned long long* readFence, unsigned long lo
     if (!s)
         return vlqt::fail(VLQT_ERR_NULL_HANDLE, "test_offscreen_state: null handle or not an offscreen scene");
     // The renders posted by the last batch are counted.
-    if (s->thread)
-        s->thread->drain();
+    s->executor.drain();
     if (!s->bound)
         return vlqt::fail(VLQT_ERR_UNBOUND, "test_offscreen_state: the scene is not bound");
     if (readFence)

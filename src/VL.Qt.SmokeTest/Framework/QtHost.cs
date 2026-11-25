@@ -149,6 +149,9 @@ internal static class QtHost
         }
         InitResult = AppInit();
         InitError = InitResult == 0 ? "" : Native.LastError();
+        // The thread mode of an own-process run (OwnProcess), before the first offscreen scene.
+        if (InitResult == 0 && SmokeParameters.RenderThreads is { } threads)
+            Native.vlqt_offscreen_set_render_threads(threads);
     }
 
     /// <summary>Second vlqt_app_init: must be a no-op returning 0 (core-app check).</summary>

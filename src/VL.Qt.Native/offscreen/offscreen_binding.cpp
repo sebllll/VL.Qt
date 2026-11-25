@@ -123,7 +123,7 @@ ID3D11Device* qtDevice(const OffscreenScene* s)
 }
 
 // Frees the binding: render target -> opened texture -> fences. While the QRhi still exists (before the QQuickWindow
-// is deleted). On the scene's render thread (onRenderThread).
+// is deleted). Through the scene's executor (executor.call).
 void unbind(OffscreenScene* s)
 {
     if (s->texture) {
@@ -146,11 +146,11 @@ void unbind(OffscreenScene* s)
     s->bound = false;
 }
 
-// Main thread; the device calls are free-threaded. Unbind and initialize run on the render thread (drains it), so no
+// Main thread; the device calls are free-threaded. Unbind and initialize run through the executor (drains it), so no
 // render of the old binding is in flight when the render target changes.
 int bind(OffscreenScene* s, void* device, void* ntHandle, int width, int height, int format, int samples, int* usedSamples)
 {
-    onRenderThread(s, [s] { unbind(s); });
+    s->executor.call([s] { unbind(s); });
     if (!device || !ntHandle)
         return fail(VLQT_ERR_BAD_ARGUMENT, "bind: null device or handle");
     if (width < 1 || height < 1 || width > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION || height > D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION)
@@ -163,7 +163,7 @@ int bind(OffscreenScene* s, void* device, void* ntHandle, int width, int height,
         return fail(VLQT_ERR_BAD_ARGUMENT, "bind: device is no D3D11 device with a DXGI adapter");
     // A failed initialize after a device rebuild (deviceRestored) is retried here.
     if (!s->window->rhi() && vlqt::device::isOnSharedDevice(s->window))
-        onRenderThread(s, [s] { s->renderControl->initialize(); });
+        s->executor.call([s] { s->renderControl->initialize(); });
     ID3D11Device* qt = qtDevice(s);
     if (!qt)
         return fail(VLQT_ERR_DEVICE_LOST, "bind: the scene has no QtNative device");
@@ -246,7 +246,7 @@ int bind(OffscreenScene* s, void* device, void* ntHandle, int width, int height,
     s->renders = 0;
     s->software = isSoftware(qt) || isSoftware(foreign);
     static bool softwareLogged = false;
-    if (s->software && s->thread && !std::exchange(softwareLogged, true))
+    if (s->software && s->executor.thread() && !std::exchange(softwareLogged, true))
         qCInfo(lcOffscreen, "offscreen bind on a software adapter: render_batch waits for the render thread's submission "
             "(logged once)");
     s->bound = true;

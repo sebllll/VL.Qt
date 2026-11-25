@@ -25,6 +25,7 @@ namespace VL.Qt.Stride
         private readonly QtTextureRenderer _renderer;
         private readonly OffscreenScene _scene;
         private readonly NotificationQueue _input;
+        private readonly RenderThreadRequest _renderThreads;
         private Texture? _texture;
         private GraphicsDevice? _device;
         private Int2 _size;
@@ -40,11 +41,16 @@ namespace VL.Qt.Stride
         private const string BuildPhase = "Build";
         private readonly ElementInput _element;
 
-        public SharedTextureScene(NodeContext nodeContext)
+        /// <param name="nodeContext">Context of the node that owns the scene.</param>
+        /// <param name="renderThreads">The node's value of Render Threads when the scene is created: QtNative gives the scene
+        /// its executor (a render thread, or the main thread) at creation and the scene keeps it.</param>
+        public SharedTextureScene(NodeContext nodeContext, int renderThreads)
         {
             _errors = new NodeErrors(nodeContext);
             _element = new ElementInput(_errors);
+            // Starts the Qt app, which the render-thread setting and the scene need.
             _renderer = QtTextureRenderer.ForApp(nodeContext.AppHost);
+            _renderThreads = new RenderThreadRequest(renderThreads);
             _scene = new OffscreenScene(OccurrenceRegistry.ForApp(nodeContext.AppHost), 1920, 1080);
             _input = new NotificationQueue(_scene.Input.Notify);
             _renderer.StrideDeviceGone += OnStrideDeviceGone;
@@ -61,6 +67,12 @@ namespace VL.Qt.Stride
         /// enabled, the scene is not bound. Disabled it keeps the last content, also after QtNative unbound the scene.
         /// </summary>
         public Texture? Texture => _texture is not null && _textureError.Length == 0 && (_enabled ? _scene.IsBound : _hasContent) ? _texture : null;
+
+        /// <summary>
+        /// Sets the node's value of Render Threads (the largest value of all nodes sizes QtNative's pool). It applies to the
+        /// scenes created afterwards; this scene keeps its executor.
+        /// </summary>
+        public void SetRenderThreads(int renderThreads) => _renderThreads.Set(renderThreads);
 
         /// <summary>True if the scene is bound to the texture, so it renders into it.</summary>
         public bool IsBound => _scene.IsBound;
@@ -291,6 +303,7 @@ namespace VL.Qt.Stride
             _texture = null;
             _errors.Dispose();
             _element.Dispose();
+            _renderThreads.Dispose();
         }
     }
 }

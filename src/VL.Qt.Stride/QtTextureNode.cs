@@ -21,11 +21,13 @@ namespace VL.Qt.Stride
     [SupportedOSPlatform("windows")]
     public sealed class QtTextureNode : IDisposable
     {
-        private readonly SharedTextureScene _scene;
+        private readonly NodeContext _nodeContext;
+        // Created in the first Update, so the scene gets the executor of that Update's Render Threads.
+        private SharedTextureScene? _scene;
 
         /// <param name="nodeContext">Injected by vvvv.</param>
         public QtTextureNode(NodeContext nodeContext)
-            => _scene = new SharedTextureScene(nodeContext);
+            => _nodeContext = nodeContext;
 
         /// <summary>Renders the element tree into the texture at Output.</summary>
         /// <param name="output">The texture Qt renders into (premultiplied alpha). The same instance until Size or Format change; do not dispose it. Null while the texture cannot be created or bound (see Error).</param>
@@ -41,6 +43,7 @@ namespace VL.Qt.Stride
         /// <param name="inputNotifications">Mouse, touch and keyboard input for the scene (vvvv notifications) with positions in texture pixels, top-left origin. Map a window's input with ToTexturePixels. A press inside the texture gives the scene keyboard focus, a press outside takes it.</param>
         /// <param name="debug">Debug overlay for all elements of the scene (same as the Debug pin of Renderer [Qt]).</param>
         /// <param name="multisampleCount">Anti-aliasing of the edges (MSAA samples per pixel), resolved into the texture; live. More samples look smoother and cost GPU time and memory (X8 is several times the render time of None in a scene with many shapes); a count the device does not support is lowered to the next supported one, with a warning at the node. A change rebinds the scene to the texture. Effect layers in the scene render without MSAA.</param>
+        /// <param name="renderThreads">Number of Qt render threads that render the QtTextures and QtRenderers of the process (0 ... 16; 0 renders them on the main thread, for diagnosis). The largest value of all these nodes counts. A scene keeps the thread it got when it was created: a larger value adds threads at once, a smaller value and 0 apply to scenes created afterwards.</param>
         public void Update(
             out Texture? output,
             out string error,
@@ -54,8 +57,13 @@ namespace VL.Qt.Stride
             [DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] IObservable<INotification>? inputNotifications,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(false)] bool debug,
-            [Pin(Name = "Multisample Count", Visibility = PinVisibility.Optional), DefaultValue(typeof(MultisampleCount), nameof(MultisampleCount.None))] MultisampleCount multisampleCount)
+            [Pin(Name = "Multisample Count", Visibility = PinVisibility.Optional), DefaultValue(typeof(MultisampleCount), nameof(MultisampleCount.None))] MultisampleCount multisampleCount,
+            [Pin(Name = "Render Threads", Visibility = PinVisibility.Optional), DefaultValue(1)] int renderThreads)
         {
+            if (_scene is null)
+                _scene = new SharedTextureScene(_nodeContext, renderThreads);
+            else
+                _scene.SetRenderThreads(renderThreads);
             _scene.Input.Subscribe(inputNotifications);
             _scene.Update(input, size, format, space, clearColor, clear, enabled, debug, multisampleCount);
 
@@ -65,6 +73,6 @@ namespace VL.Qt.Stride
             perf = PerfStats.Empty;
         }
 
-        public void Dispose() => _scene.Dispose();
+        public void Dispose() => _scene?.Dispose();
     }
 }

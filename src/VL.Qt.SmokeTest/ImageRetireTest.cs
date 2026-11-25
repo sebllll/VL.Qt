@@ -32,11 +32,11 @@ public static class ImageRetireTest
 
     /// <summary>The same with a pool of 2 render threads (one scene per thread), in a process of its own.</summary>
     [Test, Category("image-retire-pool-2"), Category("pool-2"), Category("own-process")]
-    public static void ImageRetirePool2() => Scenario.RunLocal(s => RunMode(s, "2", "offscreen scenes render on 2 Qt render thread(s)"));
+    public static void ImageRetirePool2() => Scenario.RunLocal(s => RunMode(s, "2", "offscreen scenes created from now on render on 2 Qt render thread(s)"));
 
-    /// <summary>The same in the main thread mode (VLQT_OFFSCREEN_THREAD=0), in a process of its own.</summary>
+    /// <summary>The same in the main thread mode (Render Threads 0), in a process of its own.</summary>
     [Test, Category("image-retire-main-thread"), Category("own-process")]
-    public static void ImageRetireMainThread() => Scenario.RunLocal(s => RunMode(s, "0", "offscreen scenes render on the main thread"));
+    public static void ImageRetireMainThread() => Scenario.RunLocal(s => RunMode(s, "0", "offscreen scenes created from now on render on the main thread"));
 
     private static void RunMode(Scenario s, string threads, string modeLine)
     {
@@ -47,7 +47,7 @@ public static class ImageRetireTest
         }
         var env = new Dictionary<string, string>
         {
-            ["VLQT_OFFSCREEN_THREAD"] = threads,
+            ["VLQT_SMOKE_RENDERTHREADS"] = threads,
             ["VLQT_SMOKE_DEBUG_LAYER"] = QtTextureTest.DebugLayerAvailable() ? "1" : "0",
         };
         OwnProcess.Run(s, new[] { "image-retire" }, env, expectInQtLog: modeLine);

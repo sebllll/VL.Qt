@@ -7,8 +7,6 @@
 
 #include <QtCore/QLoggingCategory>
 
-#include <cstdlib>
-#include <cstring>
 #include <vector>
 
 namespace vlqt::render_thread {
@@ -17,24 +15,9 @@ namespace {
 
 Q_LOGGING_CATEGORY(lcRenderThread, "vlqt.offscreen")
 
-int s_count = -1;      // the pool size for new scenes, -1 = not chosen yet (no setThreadCount, no assign)
+int s_count = -1;      // the pool size for new scenes, -1 = not set yet (1 at the first scene)
 int s_next = 0;        // round robin
-std::vector<RenderThread*> s_pool; // created at the first use, never deleted (render_thread.h)
-
-// VLQT_OFFSCREEN_THREAD: 0 = main thread, n = n threads; unset or empty = 1.
-int fromEnvironment()
-{
-    const char* v = std::getenv("VLQT_OFFSCREEN_THREAD");
-    if (!v || !*v)
-        return 1;
-    char* end = nullptr;
-    const long n = std::strtol(v, &end, 10);
-    if (*end || n < 0 || n > maxThreads) {
-        qCWarning(lcRenderThread, "VLQT_OFFSCREEN_THREAD=%s is no thread count 0 ... %d, using 1 render thread", v, maxThreads);
-        return 1;
-    }
-    return int(n);
-}
+std::vector<RenderThread*> s_pool; // never deleted (render_thread.h)
 
 } // namespace
 
@@ -50,7 +33,7 @@ RenderThread::RenderThread(int index)
     post([name] { setCurrentThreadName(name.constData()); });
 }
 
-void RenderThread::logError(std::exception_ptr error)
+void logJobError(std::exception_ptr error)
 {
     try {
         std::rethrow_exception(error);
@@ -72,24 +55,18 @@ int setThreadCount(int count)
             qCInfo(lcRenderThread, "offscreen scenes created from now on render on %d Qt render thread(s)", count);
     }
     s_count = count;
+    while (int(s_pool.size()) < count)
+        s_pool.push_back(new RenderThread(int(s_pool.size())));
     return VLQT_OK;
 }
 
-RenderThread* assign()
+Executor assign()
 {
-    if (s_count < 0) {
-        s_count = fromEnvironment();
-        if (s_count == 0)
-            qCInfo(lcRenderThread, "offscreen scenes render on the main thread");
-        else
-            qCInfo(lcRenderThread, "offscreen scenes render on %d Qt render thread(s)", s_count);
-    }
+    if (s_count < 0)
+        setThreadCount(1);
     if (s_count == 0)
-        return nullptr;
-    const int index = s_next++ % s_count;
-    while (int(s_pool.size()) <= index)
-        s_pool.push_back(new RenderThread(int(s_pool.size())));
-    return s_pool[index];
+        return Executor();
+    return Executor(s_pool[s_next++ % s_count]);
 }
 
 void drainAll()

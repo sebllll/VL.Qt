@@ -37,8 +37,8 @@ public static partial class QtTextureTest
     // QtNative's last error text for the message of a failed check; nothing when the call went well (the text is not cleared).
     private static string ErrIf(bool failed) => failed ? Native.LastError() : "";
 
-    // The thread count QtNative uses: VLQT_OFFSCREEN_THREAD, unset = 1 (render-texture.md, "Qt render thread").
-    private static int ExpectedThreads => int.TryParse(Environment.GetEnvironmentVariable("VLQT_OFFSCREEN_THREAD"), out var n) ? n : 1;
+    // The thread count QtNative uses: the run's RenderThreads (QtHost sets it), else 1 (render-texture.md, "Qt render thread").
+    private static int ExpectedThreads => SmokeParameters.RenderThreads ?? 1;
 
     // The pool size may change at any time and applies to the scenes created afterwards (E7); the mode the suite runs in
     // is the log line of its first scene (RunMode). Here the export takes the count in use, another one and an out-of-range
@@ -53,7 +53,7 @@ public static partial class QtTextureTest
         bool range = Native.vlqt_offscreen_set_render_threads(17) == Native.Result.BadArgument
             && Native.vlqt_offscreen_set_render_threads(-1) == Native.Result.BadArgument;
         s.Check(same && otherOk && restored && range, $"mode: offscreen scenes render on {(expected == 0 ? "the main thread" : $"{expected} Qt render thread(s)")} (count in use {(same ? "accepted" : "refused")}, other {(otherOk ? "accepted" : "refused")}, restored {(restored ? "yes" : "no")}, 17 and -1 {(range ? "refused" : "accepted")})");
-        s.Info($"mode: {(expected == 0 ? "main thread" : $"{expected} Qt render thread(s)")} (VLQT_OFFSCREEN_THREAD={Environment.GetEnvironmentVariable("VLQT_OFFSCREEN_THREAD") ?? "unset"})");
+        s.Info($"mode: {(expected == 0 ? "main thread" : $"{expected} Qt render thread(s)")} (RenderThreads={SmokeParameters.RenderThreads?.ToString() ?? "unset"})");
     }
 
     // (4) QtNative's device moves to WARP and the scene renders against a software foreign device: 10 runs of three frames

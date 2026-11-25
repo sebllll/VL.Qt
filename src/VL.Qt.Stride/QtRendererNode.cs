@@ -29,7 +29,9 @@ namespace VL.Qt.Stride
     [SupportedOSPlatform("windows")]
     public sealed class QtRendererNode : RendererBase
     {
-        private readonly SharedTextureScene _scene;
+        private readonly NodeContext _nodeContext;
+        // Created in the first Update, so the scene gets the executor of that Update's Render Threads.
+        private SharedTextureScene? _scene;
         private readonly ILogger _logger;
         private readonly ViewportOffset _offset = new();
         private IInputSource? _inputSource;
@@ -49,7 +51,7 @@ namespace VL.Qt.Stride
         [Fragment]
         public QtRendererNode(NodeContext nodeContext)
         {
-            _scene = new SharedTextureScene(nodeContext);
+            _nodeContext = nodeContext;
             _logger = nodeContext.GetLogger();
         }
 
@@ -60,6 +62,7 @@ namespace VL.Qt.Stride
         /// <param name="clearColor">Background of the layer (straight alpha, premultiplied here). Alpha 0 shows the target through it.</param>
         /// <param name="enabled">False freezes the layer: no updates of Input, Space or Clear Color, nothing renders and no input reaches the scene; it keeps drawing the last content.</param>
         /// <param name="debug">Debug overlay for all elements of the scene (same as the Debug pin of Renderer [Qt]).</param>
+        /// <param name="renderThreads">Number of Qt render threads that render the QtTextures and QtRenderers of the process (0 ... 16; 0 renders them on the main thread, for diagnosis). The largest value of all these nodes counts. A scene keeps the thread it got when it was created: a larger value adds threads at once, a smaller value and 0 apply to scenes created afterwards.</param>
         /// <returns>The layer: connect it where a Stride renderer goes, e.g. after the scene of a window.</returns>
         [Fragment]
         [return: Pin(Name = "Output")]
@@ -69,8 +72,13 @@ namespace VL.Qt.Stride
             [DefaultValue(typeof(Space), nameof(Space.DIPTopLeft))] Space space,
             [DefaultValue("0, 0, 0, 0")] Color4 clearColor,
             [DefaultValue(true)] bool enabled,
-            [Pin(Visibility = PinVisibility.Optional), DefaultValue(false)] bool debug)
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(false)] bool debug,
+            [Pin(Name = "Render Threads", Visibility = PinVisibility.Optional), DefaultValue(1)] int renderThreads)
         {
+            if (_scene is null)
+                _scene = new SharedTextureScene(_nodeContext, renderThreads);
+            else
+                _scene.SetRenderThreads(renderThreads);
             // Size and format come from the last draw: before it nothing renders (render-texture.md, "Timing").
             if (_drawn)
                 _scene.Update(input, _drawSize, _composition.CoreFormat, space, clearColor, true, enabled, debug, MultisampleCount.None);
@@ -80,8 +88,11 @@ namespace VL.Qt.Stride
 
         protected override void DrawCore(RenderDrawContext context)
         {
+            // Drawn before the first Update: no scene yet.
+            if (_scene is null)
+                return;
             var commandList = context.CommandList;
-            SubscribeInput(context);
+            SubscribeInput(context, _scene);
 
             // Destroyed: the back buffer is resized or the target disposed; its view goes with it.
             var target = commandList.RenderTarget;
@@ -160,14 +171,14 @@ namespace VL.Qt.Stride
         }
 
         // Like SkiaRenderer: the window input source of the render context; a new source re-subscribes.
-        private void SubscribeInput(RenderDrawContext context)
+        private void SubscribeInput(RenderDrawContext context, SharedTextureScene scene)
         {
             var inputSource = context.RenderContext.GetWindowInputSource();
             if (inputSource == _inputSource)
                 return;
             _inputSource = inputSource;
             var inputManager = inputSource is null ? null : context.RenderContext.Services.GetService<InputManager>();
-            _scene.Input.Subscribe(inputManager is null ? null
+            scene.Input.Subscribe(inputManager is null ? null
                 : inputManager.GetNotifications(inputSource, sender: this).Select(n => n.Transform(_offset)));
         }
 
@@ -185,7 +196,7 @@ namespace VL.Qt.Stride
             _target?.Destroyed -= OnTargetDestroyed;
             _target = null;
             ReleaseView();
-            _scene.Dispose();
+            _scene?.Dispose();
             base.Destroy();
         }
 

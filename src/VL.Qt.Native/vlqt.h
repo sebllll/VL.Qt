@@ -398,27 +398,25 @@ VLQT_API int   vlqt_offscreen_is_bound(vlqt_scene* scene);
 /* Renders the scheduled scenes of one host frame; call once per frame per foreign device (Stride: VLGame.DrawStarted,
  * after all updates, before the first draw). context: the immediate ID3D11DeviceContext* of the device the scenes
  * are bound to. Advances the animation clock to driverSeconds once (as vlqt_app_advance_animations, idempotent per
- * value), then per bound scene, in this order:
- *   Signal(readFence, n) on context (the commands of the previous frame that read the texture were submitted before);
- *   Wait(readFence, n) on QtNative's context;
- *   if the scene changed (dirty) or was just bound: polish, sync, render into the texture; Signal(writeFence, n) and
- *   Flush on QtNative's context (without the flush the foreign GPU waits forever); Wait(writeFence, n) on context.
- * An unchanged scene costs no render and no fence signal. NULL entries and unbound scenes are skipped. Returns the
- * number of scenes rendered (>= 0), or VLQT_ERR_BAD_ARGUMENT (null context, null scenes with count > 0, count < 0),
- * VLQT_ERR_DEVICE_LOST, VLQT_ERR_UNSUPPORTED.
- * On a render thread (vlqt_offscreen_set_render_threads) the fence order is the same, the work splits: the read
- * signals and polish run here, then one Flush of context; beginFrame and sync run on the render thread while this call
- * waits; the Wait(writeFence, n) on context is queued before the render thread signals n; render, endFrame, Signal and
- * Flush run on the render thread after this call returned. context's GPU waits for Qt's frame, its CPU never does; this
- * call blocks only while a render thread is still busy with the previous batch. */
+ * value), then for every bound scene that changed (dirty) or was just bound, in this order:
+ *   Signal(readFence, n) on context (the commands of the previous frame that read the texture were submitted before)
+ *   and polish, here; then one Flush of context;
+ *   Wait(readFence, n) on QtNative's context, beginFrame and sync, on the scene's executor while this call waits;
+ *   Wait(writeFence, n) on context, queued before Qt signals n (after it on a software device);
+ *   render into the texture, endFrame, Signal(writeFence, n) and Flush on QtNative's context (without the flush the
+ *   foreign GPU waits forever), on the scene's executor after this call returned (blocking on a software device).
+ * The executor is the scene's render thread, or this thread with Render Threads 0 (vlqt_offscreen_set_render_threads):
+ * the same order in both modes. context's GPU waits for Qt's frame, its CPU never does; this call blocks only while a
+ * render thread is still busy with the previous batch. An unchanged scene costs no render and no fence signal. NULL
+ * entries and unbound scenes are skipped. Returns the number of scenes rendered (>= 0), or VLQT_ERR_BAD_ARGUMENT (null
+ * context, null scenes with count > 0, count < 0), VLQT_ERR_DEVICE_LOST, VLQT_ERR_UNSUPPORTED. */
 VLQT_API int   vlqt_offscreen_render_batch(void* context, vlqt_scene* const* scenes, int count, double driverSeconds);
 /* Size of the render-thread pool (pin Render Threads; docs/decisions/render-texture.md, "Qt render thread"). count
  * 0 = offscreen scenes render on the main thread, inside vlqt_offscreen_render_batch; n = 1 ... 16 = on a pool of Qt
  * render threads shared by every scene of the process, a scene assigned round robin at vlqt_offscreen_create. May be
  * called at any time; it applies to scenes created afterwards, a scene keeps the thread (or the main thread) it got.
- * The pool only grows: a larger count adds threads when a scene needs them, a smaller one (or 0) leaves the existing
- * threads to the scenes that have them. Without a call the environment variable VLQT_OFFSCREEN_THREAD decides (0 =
- * main thread, n = n threads), unset = 1 render thread. VLQT_OK, VLQT_ERR_BAD_ARGUMENT (count < 0 or > 16). */
+ * The pool only grows: a larger count adds threads at once, a smaller one (or 0) leaves the existing threads to the
+ * scenes that have them. Without a call: 1 render thread. VLQT_OK, VLQT_ERR_BAD_ARGUMENT (count < 0 or > 16). */
 VLQT_API int   vlqt_offscreen_set_render_threads(int count);
 
 /* Input into an offscreen scene (design: docs/decisions/render-texture.md, "Input"). The host maps its input to

@@ -41,6 +41,12 @@ internal static class SmokeParameters
     /// <summary>readme-images / readme-gallery: write the README pictures into docs/images (normal renderer) instead of comparing (1/true).</summary>
     public static bool DocsImages => Get("DocsImages") is "1" or "true";
 
+    /// <summary>
+    /// Size of QtNative's render-thread pool, set right after vlqt_app_init (vlqt_offscreen_set_render_threads, as the pin
+    /// Render Threads does): 0 = offscreen scenes render on the main thread; null = not set (1 render thread).
+    /// </summary>
+    public static int? RenderThreads => GetInt("RenderThreads");
+
     /// <summary>overlay-cost: rounds of 120 pumps per mode (default 8).</summary>
     public static int OverlayCostRounds => GetInt("OverlayCostRounds") ?? 8;
 
@@ -63,7 +69,7 @@ internal static class SmokeParameters
                 yield return new(EnvName(name), v);
     }
 
-    private static readonly string[] s_names = { "SmokeDir", "OutDir", "StressSeconds", "StressSeed", "ScenarioTimeoutSeconds", "TearingArgs", "ReplayTrace", "ReplayArgs", "OverlayCostRounds", "PerfWarnOnly", "PerfFactor", "UpdateRefs", "DocsImages" };
+    private static readonly string[] s_names = { "SmokeDir", "OutDir", "StressSeconds", "StressSeed", "ScenarioTimeoutSeconds", "TearingArgs", "ReplayTrace", "ReplayArgs", "OverlayCostRounds", "PerfWarnOnly", "PerfFactor", "UpdateRefs", "DocsImages", "RenderThreads" };
 
     private static string EnvName(string name) => "VLQT_SMOKE_" + name.ToUpperInvariant();
 

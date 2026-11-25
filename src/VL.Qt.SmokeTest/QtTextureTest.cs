@@ -39,11 +39,11 @@ public static partial class QtTextureTest
 
     /// <summary>QtTexture in the render thread mode, in a process of its own with D3D11On12 (device loss) and the debug layer (leak check).</summary>
     [Test, Category("qttexture-render-thread"), Category("own-process")]
-    public static void QtTextureRenderThread() => Scenario.RunLocal(s => RunMode(s, null, "qttexture-render-thread", "offscreen scenes render on 1 Qt render thread(s)"));
+    public static void QtTextureRenderThread() => Scenario.RunLocal(s => RunMode(s, null, "qttexture-render-thread", "offscreen scenes created from now on render on 1 Qt render thread(s)"));
 
-    /// <summary>QtTexture in the main thread mode (VLQT_OFFSCREEN_THREAD=0), in a process of its own with D3D11On12 and the debug layer.</summary>
+    /// <summary>QtTexture in the main thread mode (Render Threads 0), in a process of its own with D3D11On12 and the debug layer.</summary>
     [Test, Category("qttexture-main-thread"), Category("own-process")]
-    public static void QtTextureMainThread() => Scenario.RunLocal(s => RunMode(s, "0", "qttexture-main-thread", "offscreen scenes render on the main thread"));
+    public static void QtTextureMainThread() => Scenario.RunLocal(s => RunMode(s, "0", "qttexture-main-thread", "offscreen scenes created from now on render on the main thread"));
 
     // Both scenarios are D3D11 only (they SKIP elsewhere), so the helper would log no thread mode outside Windows; the former
     // runner ran the thread modes only from tools/build.ps1 (Windows), tools/test-linux.sh never did.
@@ -61,7 +61,7 @@ public static partial class QtTextureTest
     {
         var env = new Dictionary<string, string> { ["VLQT_TEST_D3D11ON12"] = "1", ["VLQT_SMOKE_DEBUG_LAYER"] = DebugLayerAvailable() ? "1" : "0" };
         if (threads != null)
-            env["VLQT_OFFSCREEN_THREAD"] = threads;
+            env["VLQT_SMOKE_RENDERTHREADS"] = threads;
         return env;
     }
 
