@@ -7,6 +7,7 @@ using System.Reactive.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using VL.Core;
+using VL.Core.Import;
 using VL.Qt.NodeFactories;
 
 namespace VL.Qt.Shaders
@@ -29,10 +30,11 @@ namespace VL.Qt.Shaders
         public const string DefaultCategory = Categories.Shaders;
 
         /// <summary>
-        /// Category of the effect chain node of a filter shader (same name as the element node). This one, @category
-        /// moves only the element node; a filter whose @category is this one too gets its element node in
-        /// <see cref="DefaultCategory"/>, so the two nodes never share name and category. Exception: with @chainonly there is
-        /// no element node and @category is the category of the chain node (default this one), see <see cref="ShaderFile.LinkCategory"/>.
+        /// Category of the effect chain node of a filter shader (same name as the element node). An absolute @category moves
+        /// only the element node (a filter whose @category is this one gets its element node in <see cref="DefaultCategory"/>,
+        /// so the two nodes never share name and category), a relative one is appended here and to <see cref="DefaultCategory"/>.
+        /// With @chainonly there is no element node and @category is the category of the chain node, see
+        /// <see cref="ShaderFile.LinkCategory"/>.
         /// </summary>
         public const string LinkCategory = Categories.Effects;
 
@@ -87,7 +89,10 @@ namespace VL.Qt.Shaders
             return nodes.ToImmutable();
         }
 
-        /// <summary>Scans a qtshaders/ tree: pairs .frag/.vert, reads the head annotations, marks duplicate file names.</summary>
+        /// <summary>
+        /// Scans a qtshaders/ tree: pairs .frag/.vert, reads the head annotations, marks files whose nodes have the same
+        /// identity (name and category) as the node of another file or, for the effect chain node, of a built-in effect node.
+        /// </summary>
         public static ImmutableArray<ShaderFile> Scan(string shadersPath)
         {
             var fragments = Directory.EnumerateFiles(shadersPath, "*" + fragmentExtension, SearchOption.AllDirectories)
@@ -95,15 +100,7 @@ namespace VL.Qt.Shaders
                 .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            var duplicates = fragments
-                .GroupBy(f => Path.GetFileName(f), StringComparer.OrdinalIgnoreCase)
-                .Where(g => g.Count() > 1)
-                .ToDictionary(
-                    g => g.Key,
-                    g => $"The shader file name '{g.Key}' exists more than once in {shadersPath}: {string.Join(", ", g)}. Rename one of them.",
-                    StringComparer.OrdinalIgnoreCase);
-
-            var result = ImmutableArray.CreateBuilder<ShaderFile>(fragments.Count);
+            var files = new List<ShaderFile>(fragments.Count);
             foreach (var fragment in fragments)
             {
                 var vertex = Path.ChangeExtension(fragment, vertexExtension);
@@ -111,34 +108,111 @@ namespace VL.Qt.Shaders
                 var head = ShaderFileHead.Read(fragment);
                 var annotations = head?.Annotations ?? ShaderAnnotations.Empty;
                 var isFilter = head?.IsFilter ?? false;
-                var hasCategory = !string.IsNullOrWhiteSpace(annotations.Category);
-                var category = hasCategory ? annotations.Category!.Trim() : DefaultCategory;
-                if (annotations.ChainOnly)
-                    category = hasCategory ? category : LinkCategory; // the only node is the chain node
-                else if (isFilter && string.Equals(category, LinkCategory, StringComparison.OrdinalIgnoreCase))
-                    category = DefaultCategory;
-                duplicates.TryGetValue(Path.GetFileName(fragment), out var duplicateError);
-                result.Add(new ShaderFile(
+                var (category, chainCategory) = ResolveCategories(annotations, isFilter);
+                files.Add(new ShaderFile(
                     fragment,
                     File.Exists(vertex) ? vertex : null,
                     name,
                     version,
                     category,
                     annotations.Summary,
-                    duplicateError,
+                    null,
                     isFilter,
-                    annotations.ChainOnly));
+                    annotations.ChainOnly,
+                    chainCategory));
             }
-            return result.MoveToImmutable();
+
+            var errors = DuplicateErrors(files);
+            return files.Select(f => errors.TryGetValue(f.FragmentPath, out var error) ? f with { DuplicateError = error } : f).ToImmutableArray();
         }
 
         /// <summary>
-        /// True if a content change turned a generator into a filter or back, or added or removed @chainonly: that adds or
-        /// removes a node. False if the file cannot be read now.
+        /// Categories of the element node and of the effect chain node. An @category that starts with "Qt." is absolute and
+        /// moves the element node (with @chainonly: the chain node, which is the only one). Any other path is relative and
+        /// is appended to the default category of each node kind, so one file keeps its two nodes together
+        /// (<c>@category Examples</c> gives <c>Qt.Elements.Shaders.Examples</c> and <c>Qt.Effects.Examples</c>).
         /// </summary>
-        private static bool HeadChanged(ShaderFile file) =>
-            ShaderFileHead.Read(file.FragmentPath) is { } head
-                && (head.IsFilter != file.IsFilter || head.Annotations.ChainOnly != file.ChainOnly);
+        internal static (string Category, string ChainCategory) ResolveCategories(ShaderAnnotations annotations, bool isFilter)
+        {
+            var path = annotations.Category?.Trim();
+            var relative = !string.IsNullOrEmpty(path)
+                && !path.StartsWith("Qt.", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(path, "Qt", StringComparison.OrdinalIgnoreCase);
+            if (relative)
+                path = path!.Trim('.', ' ');
+            if (string.IsNullOrEmpty(path))
+                return (annotations.ChainOnly ? LinkCategory : DefaultCategory, LinkCategory);
+
+            if (relative)
+                return (annotations.ChainOnly ? LinkCategory + "." + path : DefaultCategory + "." + path, LinkCategory + "." + path);
+
+            if (annotations.ChainOnly)
+                return (path, path);
+            // A filter's element node never shares name and category with its chain node.
+            if (isFilter && string.Equals(path, LinkCategory, StringComparison.OrdinalIgnoreCase))
+                return (DefaultCategory, LinkCategory);
+            return (path, LinkCategory);
+        }
+
+        /// <summary>
+        /// Error text per file path for the files whose node has the same name and category as the node of another file,
+        /// and for effect chain nodes that have the name of a built-in effect node in the same category.
+        /// </summary>
+        private static Dictionary<string, string> DuplicateErrors(List<ShaderFile> files)
+        {
+            var errors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var groups = files
+                .SelectMany(f => NodeIdentities(f).Select(identity => (identity, f.FragmentPath)))
+                .GroupBy(x => x.identity, StringComparer.OrdinalIgnoreCase);
+            foreach (var group in groups)
+            {
+                var paths = group.Select(x => x.FragmentPath).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                if (paths.Count < 2)
+                    continue;
+                var text = $"More than one shader file makes the node '{group.Key}': {string.Join(", ", paths)}. Rename one of them.";
+                foreach (var path in paths)
+                    errors[path] = text;
+            }
+
+            var builtIn = BuiltInEffectNames.Value;
+            foreach (var file in files)
+            {
+                if (file.IsFilter && string.Equals(file.LinkCategory, LinkCategory, StringComparison.OrdinalIgnoreCase) && builtIn.Contains(file.FullName))
+                    errors[file.FragmentPath] = $"The effect node '{file.FullName}' of {file.FragmentPath} has the name and category of the built-in node '{file.FullName}' ({LinkCategory}). Rename the file.";
+            }
+            return errors;
+        }
+
+        /// <summary>"Category/Name" of every node the file makes (the element node unless @chainonly, the chain node of a filter).</summary>
+        private static IEnumerable<string> NodeIdentities(ShaderFile file)
+        {
+            if (!file.ChainOnly)
+                yield return file.Category + "/" + file.FullName;
+            if (file.IsFilter)
+                yield return file.LinkCategory + "/" + file.FullName;
+        }
+
+        /// <summary>Names of the built-in effect nodes (C# nodes in <see cref="LinkCategory"/>), read once from the assembly.</summary>
+        private static readonly Lazy<HashSet<string>> BuiltInEffectNames = new(() => typeof(ShaderNodeFactory).Assembly.GetTypes()
+            .SelectMany(type => type.GetCustomAttributes(typeof(ProcessNodeAttribute), inherit: false).Cast<ProcessNodeAttribute>())
+            .Where(a => a.Name != null && string.Equals(a.Category, LinkCategory, StringComparison.OrdinalIgnoreCase))
+            .Select(a => a.Name!)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase));
+
+        /// <summary>
+        /// True if a content change turned a generator into a filter or back, or changed @chainonly or @category: that
+        /// adds, removes or moves a node. False if the file cannot be read now.
+        /// </summary>
+        internal static bool HeadChanged(ShaderFile file)
+        {
+            if (ShaderFileHead.Read(file.FragmentPath) is not { } head)
+                return false;
+            var (category, chainCategory) = ResolveCategories(head.Annotations, head.IsFilter);
+            return head.IsFilter != file.IsFilter
+                || head.Annotations.ChainOnly != file.ChainOnly
+                || category != file.Category
+                || chainCategory != file.LinkCategory;
+        }
 
         /// <summary>Content change of <paramref name="file"/>'s own .frag/.vert (filtered NodeBuilding.WatchDir of its folder).</summary>
         public static IObservable<object> WatchContent(ShaderFile file)

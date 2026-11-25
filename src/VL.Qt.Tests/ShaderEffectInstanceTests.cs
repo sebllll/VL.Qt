@@ -130,6 +130,75 @@ void main() { fragColor = vec4(phase); }
             Assert.That(nodes.Select(n => n.Category), Is.EquivalentTo(new[] { "Qt.Elements.Shaders", "Qt.Effects" }));
         }
 
+        [Test]
+        public void Scan_RelativeCategory_IsAppendedToTheDefaultOfEachNodeKind()
+        {
+            Write("Split.frag", "// @category Examples\n" + filterSource);
+            Write("Stripes.frag", "// @category Examples.Deep\n" + generatorSource);
+            Write("Chain.frag", "// @category Examples\n// @chainonly\n" + filterSource);
+
+            var nodes = ShaderNodeFactory.CreateDescriptions(ShaderNodeFactory.Scan(_dir), new FakeFactory(), NullLogger.Instance);
+            Assert.That(nodes.Select(n => (n.Name, n.Category)), Is.EquivalentTo(new[]
+            {
+                ("Split", "Qt.Elements.Shaders.Examples"),
+                ("Split", "Qt.Effects.Examples"),
+                ("Stripes", "Qt.Elements.Shaders.Examples.Deep"),
+                ("Chain", "Qt.Effects.Examples"),
+            }));
+        }
+
+        [Test]
+        public void HeadChanged_CategoryEdit_IsReported()
+        {
+            var path = Write("Split.frag", "// @category Qt.Test\n" + filterSource);
+            var file = ShaderNodeFactory.Scan(_dir).Single();
+            Assert.That(ShaderNodeFactory.HeadChanged(file), Is.False);
+
+            File.WriteAllText(path, "// @category Qt.Other\n" + filterSource);
+            Assert.That(ShaderNodeFactory.HeadChanged(file), "absolute category changed");
+
+            File.WriteAllText(path, "// @category Qt.Test\n// @summary only the summary\n" + filterSource);
+            Assert.That(ShaderNodeFactory.HeadChanged(file), Is.False, "a summary change goes to the node itself");
+
+            File.WriteAllText(path, "// @category Examples\n" + filterSource);
+            var relative = ShaderNodeFactory.Scan(_dir).Single();
+            File.WriteAllText(path, "// @category Mine\n" + filterSource);
+            Assert.That(ShaderNodeFactory.HeadChanged(relative), "relative category changed");
+        }
+
+        [Test]
+        public void Scan_SameFileNameInDifferentCategories_IsNoDuplicate()
+        {
+            Write("Split.frag", "// @category Qt.A\n" + generatorSource);
+            Directory.CreateDirectory(Path.Combine(_dir, "sub"));
+            Write(Path.Combine("sub", "Split.frag"), "// @category Qt.B\n" + generatorSource);
+            Assert.That(ShaderNodeFactory.Scan(_dir).Select(f => f.DuplicateError), Is.All.Null);
+        }
+
+        [Test]
+        public void Scan_SameNodeFromTwoFileNames_IsDuplicate()
+        {
+            // "Glow_.frag" and "Glow.frag" both give the node "Glow".
+            Write("Glow.frag", generatorSource);
+            Write("Glow_.frag", generatorSource);
+            var files = ShaderNodeFactory.Scan(_dir);
+            Assert.That(files.Select(f => f.FullName), Is.EqualTo(new[] { "Glow", "Glow" }));
+            Assert.That(files.Select(f => f.DuplicateError), Is.All.Not.Null);
+            Assert.That(files[0].DuplicateError, Does.Contain("Rename"));
+        }
+
+        [Test]
+        public void Scan_FilterNamedLikeBuiltInEffect_IsReported()
+        {
+            Write("Blur.frag", filterSource);
+            Write("Fine.frag", filterSource);
+            Write("BlurGen.frag", generatorSource);
+            var files = ShaderNodeFactory.Scan(_dir);
+            Assert.That(files.Single(f => f.Name == "Blur").DuplicateError, Does.Contain("built-in").And.Contain("Rename"));
+            Assert.That(files.Single(f => f.Name == "Fine").DuplicateError, Is.Null);
+            Assert.That(files.Single(f => f.Name == "BlurGen").DuplicateError, Is.Null);
+        }
+
         // --- @padding ---
 
         private static ShaderAnnotations Annotations(string head) => ShaderAnnotations.Parse(head + "\n#version 440\nvoid main() {}\n");
