@@ -159,7 +159,7 @@ Both companions:
 
 - `ElementNodeCore<TElement, TProps>`, `CommonInputs`, `VideoNode.Props` and `VideoNode.Create` (`Nodes/`): the element node of `Video` that the audio variant extends with the tap.
 - `Categories` (`VL.Qt`): the node category names.
-- `ResourceClient.ForApp` and `ResourceClient.CreateAudioTap` with `ImageResource` (`Images/`): create and release the audio tap of a video.
+- `ResourceClient.ForApp` and `ResourceClient.CreateAudioTap` with `QtResource` (`Images/`): create and release the audio tap of a video.
 - `Native.vlqt_audio_tap_*` (`vlqt_audio_tap_now_ns`, `AudioTapRead`, `AudioTapDrop`, `vlqt_audio_tap_state`) and the flags `Protocol.AudioTap` (`Interop/`, `Wire/`): the reader of the tap ring, behind `IAudioTapReader` in the companion. This is the one place where a companion calls `Native`; it is the audio tap group of the C API.
 
 Public types that the pins of the companion nodes carry (`IElement`, `Space`, `MultisampleCount`, `Video`) are part of the public API, not of this list.

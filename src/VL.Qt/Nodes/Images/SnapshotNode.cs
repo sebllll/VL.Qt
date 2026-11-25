@@ -88,7 +88,7 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>The snapshot resource, null until the first <see cref="Start"/> got that far.</summary>
-        public ImageResource? Resource { get; private set; }
+        public QtResource? Resource { get; private set; }
 
         /// <summary>
         /// Starts a snapshot of <paramref name="element"/> (a stylable: the element of its last Build); returns the error at

@@ -19,7 +19,7 @@ namespace VL.Qt.Nodes
         private readonly ResourceNodeReport _report;
         private IImage? _last;
         private ImageUpload _upload;
-        private ImageResource? _resource;
+        private QtResource? _resource;
         private QtImage? _image;
         private string _error = string.Empty;
 

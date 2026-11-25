@@ -19,7 +19,7 @@ namespace VL.Qt.Nodes
         private string? _path;
         private bool _mipmaps;
         private ImageUpload _upload;
-        private ImageResource? _resource;
+        private QtResource? _resource;
         private QtImage? _image;
         private string _createError = string.Empty;
 

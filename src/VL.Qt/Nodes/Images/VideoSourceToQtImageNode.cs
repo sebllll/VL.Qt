@@ -25,7 +25,7 @@ namespace VL.Qt.Nodes
         private bool _preferPush;
         private ImageUpload _upload;
         private VideoFrameStream? _stream;
-        private ImageResource? _resource;
+        private QtResource? _resource;
         private QtImage? _image;
         private bool _hasFrame;
         private string _error = string.Empty;

@@ -442,6 +442,19 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void QtImage_AfterItsNodeReleasedIt_SaysReleased()
+        {
+            var r = _client.CreateImage();
+            var image = new QtImage(r);
+            Assert.That(image.State, Is.EqualTo(QtImageState.Loading));
+            _client.Release(r);
+            Assert.That(image.State, Is.EqualTo(QtImageState.Released), "at once, not only after the pump");
+            Assert.That(image.Error, Is.Empty, "the state carries no text");
+            Pump();
+            Assert.That(image.State, Is.EqualTo(QtImageState.Released));
+        }
+
+        [Test]
         public void ReleaseQueue_FromAnotherThread_FlushedOnMainThread()
         {
             var r = _client.CreateImage();

@@ -44,7 +44,7 @@ public static class TooltipTest
 
     private sealed class Job
     {
-        public ImageResource Resource = null!;
+        public QtResource Resource = null!;
         public bool Done;
         public bool Started;
     }

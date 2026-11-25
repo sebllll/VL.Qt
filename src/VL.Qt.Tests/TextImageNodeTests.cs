@@ -43,7 +43,7 @@ namespace VL.Qt.Tests
         private Element UpdateImage(QtImage? image = null, FillMode fill = FillMode.Stretch, bool smooth = true)
             => (Element)_image.Update(DefaultSize, default, RectangleAnchor.Center, image, fill, smooth, 1, false, false, null, null, true, out _, out _);
 
-        private static QtImage NewImage(ulong id) => new(new ImageResource(id));
+        private static QtImage NewImage(ulong id) => new(new QtResource(id));
 
         [Test]
         public void Text_Defaults_WithFeedback()

@@ -211,8 +211,8 @@ namespace VL.Qt.Tests
         [Test]
         public void ImageUniform_SendsResourceId_ChangeResends()
         {
-            var a = new QtImage(new ImageResource(0x100000003));
-            var b = new QtImage(new ImageResource(0x200000003));
+            var a = new QtImage(new QtResource(0x100000003));
+            var b = new QtImage(new QtResource(0x200000003));
             Frame(new Shader { Uniforms = U(Uniform.FromImage("tex", a)) });
             Assert.That(_sink.OfOp("UNIFORMS").Single(), Is.EqualTo($"UNIFORMS 1 0 tex=u64({a.Id})"));
             Frame(new Shader { Uniforms = U(Uniform.FromImage("tex", b)) });

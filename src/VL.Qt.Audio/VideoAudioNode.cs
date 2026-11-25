@@ -29,7 +29,7 @@ namespace VL.Qt.Audio
         private readonly VideoAudioSignal _signal;
         private readonly ResourceClient _client;
         private readonly NodeErrors _errors;
-        private ImageResource? _tap;
+        private QtResource? _tap;
         private int _tapSampleRate;
         // A sample rate QtNative refused (not retried every frame); 0 = none (the engine never reports a valid rate of 0).
         private int _failedSampleRate;
@@ -124,7 +124,7 @@ namespace VL.Qt.Audio
                 return;
             if ((_tap is not null && sampleRate == _tapSampleRate) || sampleRate == _failedSampleRate)
                 return;
-            ImageResource tap;
+            QtResource tap;
             try
             {
                 tap = _client.CreateAudioTap(VideoAudioSignal.Channels, sampleRate);
