@@ -28,7 +28,14 @@ class VlqtAnimationDriver : public QAnimationDriver
 public:
     qint64 elapsed() const override { return m_ms - m_startMs; }
     // seconds is finite and in range (vlqt::clock::advance): the cast to qint64 is undefined behaviour otherwise.
-    void setTime(double seconds) { m_ms = qint64(seconds * 1000.0); }
+    // The driver time never runs backwards: a time below the current one is ignored (animations hold until the clock
+    // passes the old time again), whichever caller advances the clock (several apps, offscreen renders).
+    void setTime(double seconds)
+    {
+        const qint64 ms = qint64(seconds * 1000.0);
+        if (ms > m_ms)
+            m_ms = ms;
+    }
 protected:
     void start() override
     {

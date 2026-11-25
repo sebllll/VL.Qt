@@ -124,8 +124,8 @@ VLQT_API int         vlqt_app_set_frame_budget(double ms);
  * Main thread only, outside vlqt_app_process_events_for (a call from inside the pump does nothing). Returns the number
  * of queued events it delivered (0 = none), VLQT_ERR_NOT_INITIALIZED. */
 VLQT_API int         vlqt_app_deliver_input(void);
-/* Animation clock: the time QML animations run on, from the host. Animations follow it forward and hold with it; a jump
- * back does not rewind them (they go on from their value). 0, VLQT_ERR_NOT_INITIALIZED, VLQT_ERR_BAD_ARGUMENT (seconds
+/* Animation clock: the time QML animations run on, from the host. Animations follow it forward and hold with it; a time
+ * below the current one is ignored (they hold until the clock passes the old time). 0, VLQT_ERR_NOT_INITIALIZED, VLQT_ERR_BAD_ARGUMENT (seconds
  * is NaN, infinite or out of range). */
 VLQT_API int         vlqt_app_advance_animations(double seconds);
 /* Text of the last failing call on the calling thread (top of this file). Any thread. */

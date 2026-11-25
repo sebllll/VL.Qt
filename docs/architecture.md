@@ -32,7 +32,7 @@ per vvvv frame:
 
 - **Deterministic:** same tree and time, same output for everything vvvv computes from the time
 - **Pause:** no Qt timers or system clocks interfere; when the clock stands, QML animations stand
-- **Scrubbing:** only values from vvvv scrub. QML animations follow the clock forward and hold with it, but Qt never rewinds one: after the clock has jumped back, a running animation keeps its value and goes on forward from it with the next positive time steps
+- **Scrubbing:** only values from vvvv scrub. QML animations follow the clock forward and hold with it, and the animation driver never runs backwards (QtApp owns its time, QtNative ignores a time below the current one): after the clock has jumped back, a running animation holds its value until the clock passes the old time again, then goes on forward
 - **Multiple windows:** the same clock drives all renderers
 - **Input:** `vlqt_app_advance_animations` refuses a time that is NaN, infinite or out of range (`VLQT_ERR_BAD_ARGUMENT`)
 - **Exception:** a QML `Timer` in a user file (`QmlElement`) runs on wall time. QML animations follow the clock.

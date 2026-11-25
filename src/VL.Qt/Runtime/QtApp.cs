@@ -17,7 +17,7 @@ namespace VL.Qt
         private static QtApp? s_instance;
 
         private readonly int _threadId;
-        private double _driverSeconds = double.NaN;
+        private DriverTime _driver = DriverTime.Start;
         private bool _wrongThreadLogged;
         private static bool s_abiMismatchLogged;
 
@@ -98,7 +98,7 @@ namespace VL.Qt
         public long Pumps => _diagnostics.Pumps;
         public long Advances => _diagnostics.Advances;
         public long ProcessEventsCount => _diagnostics.ProcessEventsCount;
-        public double DriverSeconds => _driverSeconds;
+        public double DriverSeconds => _driver.Seconds;
 
         /// <summary>Image resources of QtNative: status queue and release queue, pumped here.</summary>
         public ResourceClient Resources => _resources;
@@ -132,7 +132,7 @@ namespace VL.Qt
             meter.Begin();
             ApplyCommands(participants);
             var tApplied = Stopwatch.GetTimestamp();
-            Advance(driverSeconds);
+            AdvanceDriver(driverSeconds);
             var tAdvanced = Stopwatch.GetTimestamp();
             // One budget in C# and QtNative: the windows of this pump judge their Qt work against this frame interval.
             Native.vlqt_app_set_frame_budget(budgetMs);
@@ -174,14 +174,18 @@ namespace VL.Qt
             catch (Exception e) { _diagnostics.LogParticipantError(e, nameof(ResourceClient.BeforeEvents)); }
         }
 
-        // Another app's pump in the same vvvv frame may bring an earlier time (own clock): keep the driver.
-        private void Advance(double driverSeconds)
+        /// <summary>
+        /// The one owner of the animation driver time: moves it to <paramref name="seconds"/> only if that is later (another
+        /// app's pump or an offscreen render may bring an earlier time from its own clock) and returns the time in effect.
+        /// </summary>
+        internal double AdvanceDriver(double seconds)
         {
-            if (driverSeconds <= _driverSeconds)
-                return;
-            _driverSeconds = driverSeconds;
-            Native.vlqt_app_advance_animations(driverSeconds);
-            _diagnostics.CountAdvance();
+            if (_driver.TryAdvance(seconds))
+            {
+                Native.vlqt_app_advance_animations(seconds);
+                _diagnostics.CountAdvance();
+            }
+            return _driver.Seconds;
         }
 
         private void AfterEvents(IQtFrameParticipant[] participants)

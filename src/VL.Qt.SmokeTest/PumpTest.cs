@@ -84,9 +84,17 @@ public static class PumpTest
     {
         public readonly Subject<FrameFinishedMessage> Finished = new();
         public readonly Subject<FrameTimeMessage> Ticks = new();
-        private double _t = 10_000; // monotonic and later than the manual driver times of the earlier smoke tests
-        public SimClock() { }
-        public SimClock(double t) { _t = t; }
+        // Monotonic and later than the manual driver times of the earlier smoke tests (default start 10 000 s).
+        private double _t;
+        public SimClock() : this(10_000) { }
+
+        public SimClock(double t)
+        {
+            _t = t;
+            // QtNative ignores a driver time below the current one: the later scenarios (QtHost.Pump) go on after this clock.
+            QtHost.Time = Math.Max(QtHost.Time, t + 100);
+        }
+
         private ulong _n;
         public Time Time => new(_t);
         public double TimeDifference => 1.0 / 60;
