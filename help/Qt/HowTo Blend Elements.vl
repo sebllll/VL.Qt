@@ -99,7 +99,7 @@
             <Pin Id="mWGexbVRoevqCJB8J82GAh" Name="Input" Kind="InputPin" />
             <Pin Id="QAwJX3p9AUoCvoIR31Qmm2" Name="Layer" Kind="InputPin" />
             <Pin Id="QILboH7iHD3PAAu8wTQMoQ" Name="Layer Sampler" Kind="InputPin" IsHidden="true" />
-            <Pin Id="e4bpuW1LNrotiVP68O2EYG" Name="Mode" Kind="InputPin" DefaultValue="Multiply" />
+            <Pin Id="e4bpuW1LNrotiVP68O2EYG" Name="Blend Mode" Kind="InputPin" DefaultValue="Multiply" />
             <Pin Id="WmFD45c0EhJ9cuaUGI43Wz" Name="Opacity" Kind="InputPin" />
             <Pin Id="lmtvlTd9djeJdbqzFI2iA7" Name="Output" Kind="OutputPin" />
           </Node>
@@ -183,7 +183,7 @@
             <Pin Id="8TOO6vsQ8gExRf6uIgfcbc" Name="Input" Kind="InputPin" />
             <Pin Id="riN8LfMXQzPsAwRtaUno3L" Name="Layer" Kind="InputPin" />
             <Pin Id="PXp01NTJot2L6jHQvNk4do" Name="Layer Sampler" Kind="InputPin" IsHidden="true" />
-            <Pin Id="EFi3wYRwhEKarbEauYkN0I" Name="Mode" Kind="InputPin" DefaultValue="Screen" />
+            <Pin Id="EFi3wYRwhEKarbEauYkN0I" Name="Blend Mode" Kind="InputPin" DefaultValue="Screen" />
             <Pin Id="CQ04B2MSjhWanRhXJ8PHS3" Name="Opacity" Kind="InputPin" />
             <Pin Id="5IZ2s7Ce6iA6rWhVUUYCjF" Name="Output" Kind="OutputPin" />
           </Node>
@@ -267,7 +267,7 @@
             <Pin Id="1BFJYY24NfA48YjwNHSh1i" Name="Input" Kind="InputPin" />
             <Pin Id="rsCmcHzK32hi3GG8RbcdsM" Name="Layer" Kind="InputPin" />
             <Pin Id="GzDmBizwjEXM10FJJY5ocl" Name="Layer Sampler" Kind="InputPin" IsHidden="true" />
-            <Pin Id="PjRZPUfaxfryNM8Vp9lV4a" Name="Mode" Kind="InputPin" DefaultValue="Difference" />
+            <Pin Id="PjRZPUfaxfryNM8Vp9lV4a" Name="Blend Mode" Kind="InputPin" DefaultValue="Difference" />
             <Pin Id="4PaqSmYDda7wZM9UZLItWG" Name="Opacity" Kind="InputPin" />
             <Pin Id="eBfHsUI55BZ3fq5K9OXToi" Name="Output" Kind="OutputPin" />
           </Node>

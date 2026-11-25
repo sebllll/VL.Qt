@@ -160,8 +160,8 @@
             </p:NodeReference>
             <Pin Id="GYSp75vzrXyUZptAGg9mA0" Name="Input" Kind="InputPin" />
             <Pin Id="ForfWrj3YvLLRyWOBdtwA3" Name="Amount" Kind="InputPin" DefaultValue="0.35" />
-            <Pin Id="GtA7JI629gGKmIpNYKHbhN" Name="Max" Kind="InputPin" IsHidden="true" />
-            <Pin Id="GwZM5CaRhybG0uussaGKSg" Name="Multiplier" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GtA7JI629gGKmIpNYKHbhN" Name="Max Radius" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GwZM5CaRhybG0uussaGKSg" Name="Radius Multiplier" Kind="InputPin" IsHidden="true" />
             <Pin Id="FfnTg7R0BygSEd7xk6BlE2" Name="Output" Kind="OutputPin" />
             <Pin Id="FicjZapCWgWVrIgElA2HX2" Name="Auto Padding" Kind="InputPin" IsHidden="true" />
             <Pin Id="GPXezsxKnLuMdLMrTCoQuR" Name="Padding" Kind="InputPin" IsHidden="true" />
@@ -177,7 +177,7 @@
             <Pin Id="GOuKKDow6lmRsOY4vB202o" Name="Input" Kind="InputPin" />
             <Pin Id="F4ZEtifvXOdCSVJ6DPUlqF" Name="Color" Kind="InputPin" DefaultValue="0, 0, 0, 0.8" />
             <Pin Id="G0XREuVfmTpVQOAip75Pxo" Name="Offset" Kind="InputPin" DefaultValue="10, 15" />
-            <Pin Id="GsbXxTEjArGNzeqn5HtseF" Name="Blur" Kind="InputPin" DefaultValue="0.5" />
+            <Pin Id="GsbXxTEjArGNzeqn5HtseF" Name="Blur Amount" Kind="InputPin" DefaultValue="0.5" />
             <Pin Id="Fl26Atuft6jIiClrOPKrkB" Name="Scale" Kind="InputPin" IsHidden="true" />
             <Pin Id="FyCSlbawQAtSHRmRUXEZE5" Name="Output" Kind="OutputPin" />
             <Pin Id="GVxpC0aCgKNOcED8dPulfi" Name="Auto Padding" Kind="InputPin" IsHidden="true" />

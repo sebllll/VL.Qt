@@ -56,18 +56,18 @@ namespace VL.Qt.Nodes
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
         /// <param name="layer">Element blended over the base (e.g. a gradient, an image, a ShaderEffect). Unconnected: no effect.</param>
         /// <param name="layerSampler">How the layer is read (filter, mipmaps), from the Sampler node. The address has no effect here: outside the element the layer is transparent. Unconnected: as the layer is.</param>
-        /// <param name="mode">How the layer and the base are combined.</param>
+        /// <param name="blendMode">How the layer and the base are combined.</param>
         /// <param name="opacity">Strength of the layer, 0 = base only, 1 = full blend.</param>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             IElement? layer,
             [Pin(Visibility = PinVisibility.Optional)] Sampler? layerSampler,
-            BlendMode mode,
+            BlendMode blendMode,
             [DefaultValue(1f)] float opacity)
         {
             var element = _layer.Update(layer);
-            return element is null ? input : _link.Describe(input, new Props(element, layerSampler, mode, opacity));
+            return element is null ? input : _link.Describe(input, new Props(element, layerSampler, blendMode, opacity));
         }
 
         public void Dispose()
