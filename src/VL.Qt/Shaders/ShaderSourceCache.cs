@@ -34,11 +34,11 @@ namespace VL.Qt.Shaders
         private readonly Dictionary<string, Entry> _entries = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, LastGood<ShaderSource>> _lastGood = new(StringComparer.OrdinalIgnoreCase);
         private readonly ILogger _logger;
-        private readonly Func<string, ShaderStage, ShaderReflection> _reflect;
+        private readonly Func<string, int, ShaderReflection> _reflect;
 
         /// <param name="logger">Receives the messages of <see cref="LogOnce"/>.</param>
         /// <param name="reflect">The reflection, normally <see cref="ShaderReflection.Reflect"/>; tests pass a fake.</param>
-        public ShaderSourceCache(ILogger logger, Func<string, ShaderStage, ShaderReflection>? reflect = null)
+        public ShaderSourceCache(ILogger logger, Func<string, int, ShaderReflection>? reflect = null)
         {
             _logger = logger;
             _reflect = reflect ?? ShaderReflection.Reflect;

@@ -8,9 +8,7 @@ using VL.Qt.Images;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Uniform values for the ShaderEffect: one node per value type, collect them into a spread for its
-    /// Uniforms pin. The name must match the uniform block member or sampler2D in the shader (case sensitive).
-    /// Advanced, like ShaderEffect: shader files in a qtshaders/ folder become nodes with one pin per uniform.
+    /// One node per uniform value type, for the Uniforms pin of the ShaderEffect.
     /// </summary>
     [SkipCategory]
     [Category(Categories.Shaders + ".Uniform")]

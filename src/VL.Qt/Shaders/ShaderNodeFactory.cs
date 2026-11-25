@@ -30,11 +30,7 @@ namespace VL.Qt.Shaders
         public const string DefaultCategory = Categories.Shaders;
 
         /// <summary>
-        /// Category of the effect chain node of a filter shader (same name as the element node). An absolute @category moves
-        /// only the element node (a filter whose @category is this one gets its element node in <see cref="DefaultCategory"/>,
-        /// so the two nodes never share name and category), a relative one is appended here and to <see cref="DefaultCategory"/>.
-        /// With @chainonly there is no element node and @category is the category of the chain node, see
-        /// <see cref="ShaderFile.LinkCategory"/>.
+        /// Category of the effect chain node of a filter shader; how @category moves it: docs/effects-and-shaders.md.
         /// </summary>
         public const string LinkCategory = Categories.Effects;
 
@@ -72,18 +68,16 @@ namespace VL.Qt.Shaders
                 headChanged: HeadChanged);
         }
 
-        /// <summary>One element node per file (none for @chainonly), plus the link node of the effect chain for every filter.</summary>
+        /// <summary>One element node per file (none for @chainonly), plus the link node of the effect chain for every filter and every @chainonly file.</summary>
         internal static ImmutableArray<IVLNodeDescription> CreateDescriptions(IEnumerable<ShaderFile> files, IVLNodeDescriptionFactory factory, ILogger logger, ShaderSourceCache? cache = null)
         {
             cache ??= new ShaderSourceCache(logger);
             var nodes = ImmutableArray.CreateBuilder<IVLNodeDescription>();
             foreach (var file in files)
             {
-                if (file.ChainOnly && !file.IsFilter)
-                    logger.LogWarning("{Shader}: @chainonly needs 'uniform sampler2D source', so there is no node for this file", file.FragmentPath);
                 if (!file.ChainOnly)
                     nodes.Add(ShaderDescription.New(factory, file, logger, cache));
-                if (file.IsFilter)
+                if (file.HasLinkNode)
                     nodes.Add(ShaderEffectDescription.New(factory, file, logger, cache));
             }
             return nodes.ToImmutable();
@@ -177,18 +171,18 @@ namespace VL.Qt.Shaders
             var builtIn = BuiltInEffectNames.Value;
             foreach (var file in files)
             {
-                if (file.IsFilter && string.Equals(file.LinkCategory, LinkCategory, StringComparison.OrdinalIgnoreCase) && builtIn.Contains(file.FullName))
+                if (file.HasLinkNode && string.Equals(file.LinkCategory, LinkCategory, StringComparison.OrdinalIgnoreCase) && builtIn.Contains(file.FullName))
                     errors[file.FragmentPath] = $"The effect node '{file.FullName}' of {file.FragmentPath} has the name and category of the built-in node '{file.FullName}' ({LinkCategory}). Rename the file.";
             }
             return errors;
         }
 
-        /// <summary>"Category/Name" of every node the file makes (the element node unless @chainonly, the chain node of a filter).</summary>
+        /// <summary>"Category/Name" of every node the file makes (the element node unless @chainonly, the chain node of a filter or @chainonly file).</summary>
         private static IEnumerable<string> NodeIdentities(ShaderFile file)
         {
             if (!file.ChainOnly)
                 yield return file.Category + "/" + file.FullName;
-            if (file.IsFilter)
+            if (file.HasLinkNode)
                 yield return file.LinkCategory + "/" + file.FullName;
         }
 

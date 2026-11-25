@@ -128,7 +128,7 @@ Annotations are `//` comments. Unknown tags show at the node.
 | `@padding <left, top, right, bottom>` | room around the element in DIP (like the shader's pixel uniforms: no conversion by the renderer's space) that the shader may draw into as an effect chain node; one number for all four sides, or four numbers. Without it the shader stays inside the element |
 | `@padding <uniform> [factor]` | all four sides = `abs(value of that float uniform pin) * factor` (factor default 1), recomputed when the pin value changes. A uniform that does not exist or is not a `float` is an error at the node |
 | `@passes 1\|2` | `2`: the effect chain node runs the shader twice, the second pass on the result of the first (default 1, other numbers are an error at the node) |
-| `@chainonly` | the file makes only the effect chain node, no element node |
+| `@chainonly` | the file makes only the effect chain node, no element node; without `sampler2D source` the node shows the "not a filter" error |
 
 **Uniform** (directly above it or at the end of its line): `@default`, `@min`, `@max` (limits of the pad only), `@color` (a `vec4` becomes a color), `@summary`.
 

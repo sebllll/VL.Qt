@@ -14,7 +14,6 @@ namespace VL.Qt.Tests
 
         private static ShaderPinModel Build(string fragReflection, string fragSource, string? vertReflection = null, string? vertSource = null) =>
             ShaderPinModel.Build(
-                "Test",
                 R(fragReflection),
                 vertReflection is null ? null : R(vertReflection),
                 ShaderAnnotations.Parse(fragSource),
@@ -131,7 +130,8 @@ void main() {
 }
 ";
             var a = ShaderAnnotations.Parse(src);
-            Assert.That(a.BoolUniforms, Is.EquivalentTo(new[] { "scanlines", "flip" }));
+            Assert.That(a.DeclaredTypes.Where(d => d.Value == "bool").Select(d => d.Key), Is.EquivalentTo(new[] { "scanlines", "flip" }));
+            Assert.That(a.DeclaredTypes["x"], Is.EqualTo("float"));
         }
 
         [Test]
@@ -198,6 +198,15 @@ void main() {
             var m = Build("uniform u uint 0\nuniform iv ivec2 0\nuniform m3 mat3 0\nuniform ok float 0\n", blockStart + "    uint u;\n    float ok;\n};\n");
             Assert.That(m.Pins.Select(p => p.UniformName), Is.EqualTo(new[] { "ok" }));
             Assert.That(m.Warnings.Count, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void Pins_UnsupportedType_MessageNamesTheDeclaredType()
+        {
+            // QtNative reflects uvec2 as "other"; the message shows what the file declares.
+            var m = Build("uniform offsets other 0\nuniform m3 mat3 0\n", blockStart + "    uvec2 offsets;\n    mat3 m3;\n};\n");
+            Assert.That(m.Warnings[0].Text, Does.Contain("type 'uvec2' is not supported").And.Contain("use float, vec2, vec3, vec4, int, bool or mat4"));
+            Assert.That(m.Warnings[1].Text, Does.Contain("type 'mat3' is not supported"));
         }
 
         [Test]
@@ -294,7 +303,7 @@ void main() {
         public void Pins_CompileError_SetsErrorAndNoPins()
         {
             var bad = ShaderReflection.Parse("error\nfragment code, line 3: broken\n");
-            var m = ShaderPinModel.Build("Test", bad, null, ShaderAnnotations.Parse("// @foo\n"), null);
+            var m = ShaderPinModel.Build(bad, null, ShaderAnnotations.Parse("// @foo\n"), null);
             Assert.That(m.Error, Does.Contain("line 3"));
             Assert.That(m.Pins, Is.Empty);
             Assert.That(m.Warnings, Is.Not.Empty); // annotation warning is kept
@@ -304,7 +313,7 @@ void main() {
         public void Pins_VertCompileError_AlsoErrors()
         {
             var bad = ShaderReflection.Parse("error\nvertex code, line 1: x\n");
-            var m = ShaderPinModel.Build("Test", R("uniform a float 0\n"), bad, ShaderAnnotations.Empty, ShaderAnnotations.Empty);
+            var m = ShaderPinModel.Build(R("uniform a float 0\n"), bad, ShaderAnnotations.Empty, ShaderAnnotations.Empty);
             Assert.That(m.Error, Does.Contain("vertex"));
             Assert.That(m.Pins, Is.Empty);
         }

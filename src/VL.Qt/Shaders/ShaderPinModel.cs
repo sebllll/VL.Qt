@@ -24,12 +24,8 @@ namespace VL.Qt.Shaders
         ImmutableArray<ShaderMessage> Warnings,
         string Error)
     {
-        /// <summary>Uniform name of the sampler that becomes the Input pin.</summary>
-        public const string InputSamplerName = "source";
-
-        /// <summary>Builds the pin model. name = node name (for messages); vert/vertA null if there is no .vert.</summary>
+        /// <summary>Builds the pin model. vert/vertA null if there is no .vert.</summary>
         public static ShaderPinModel Build(
-            string name,
             ShaderReflection frag,
             ShaderReflection? vert,
             ShaderAnnotations fragA,
@@ -50,25 +46,23 @@ namespace VL.Qt.Shaders
                 return new ShaderPinModel(false, ImmutableArray<ShaderPin>.Empty, warnings.ToImmutable(), string.Join('\n', errors));
             }
 
-            var bools = fragA.BoolUniforms;
+            var declared = fragA.DeclaredTypes;
             if (vertA != null)
-                bools = bools.Union(vertA.BoolUniforms);
+                declared = declared.SetItems(vertA.DeclaredTypes);
 
             var hasInput = false;
             var pins = ImmutableArray.CreateBuilder<ShaderPin>();
             var seen = new HashSet<string>(StringComparer.Ordinal);
 
             // Samplers: source → Input, others → Image pins.
-            var stages = vert is null
-                ? new[] { (frag, fragA) }
-                : new[] { (frag, fragA), (vert, vertA ?? ShaderAnnotations.Empty) };
-            foreach (var (reflection, annotations) in stages)
+            var stages = vert is null ? new[] { frag } : new[] { frag, vert };
+            foreach (var reflection in stages)
             {
                 foreach (var sampler in reflection.Samplers)
                 {
                     if (sampler.Name.StartsWith("qt_", StringComparison.Ordinal))
                         continue;
-                    if (sampler.Name == InputSamplerName)
+                    if (sampler.Name == ReservedUniforms.InputSampler)
                     {
                         hasInput = true;
                         continue;
@@ -83,7 +77,7 @@ namespace VL.Qt.Shaders
             }
 
             // Uniforms in block order: frag first, then those only in vert.
-            foreach (var (reflection, _) in stages)
+            foreach (var reflection in stages)
             {
                 foreach (var uniform in reflection.Uniforms)
                 {
@@ -99,10 +93,10 @@ namespace VL.Qt.Shaders
                         warnings.Add(new(line, $"uniform '{uniform.Name}' is an array, not supported (skipped)"));
                         continue;
                     }
-                    var type = MapType(uniform.Type, uniform.Name, annotation, bools);
+                    var type = MapType(uniform.Type, uniform.Name, annotation, declared);
                     if (type is null)
                     {
-                        warnings.Add(new(line, $"uniform '{uniform.Name}' of type '{uniform.Type}' is not supported (skipped)"));
+                        warnings.Add(new(line, $"uniform '{uniform.Name}': type '{DeclaredType(uniform, declared)}' is not supported (skipped); use float, vec2, vec3, vec4, int, bool or mat4"));
                         continue;
                     }
 
@@ -126,7 +120,11 @@ namespace VL.Qt.Shaders
             return null;
         }
 
-        private static ShaderPinType? MapType(string glslType, string name, UniformAnnotation? annotation, ImmutableHashSet<string> bools) => glslType switch
+        // QtNative reports every type it does not know as "other"; the declaration in the source says which one it is.
+        private static string DeclaredType(ReflectedUniform uniform, ImmutableDictionary<string, string> declared) =>
+            uniform.Type == "other" && declared.TryGetValue(uniform.Name, out var type) ? type : uniform.Type;
+
+        private static ShaderPinType? MapType(string glslType, string name, UniformAnnotation? annotation, ImmutableDictionary<string, string> declared) => glslType switch
         {
             "float" => ShaderPinType.Float,
             "vec2" => ShaderPinType.Vector2,
@@ -134,7 +132,7 @@ namespace VL.Qt.Shaders
             "vec4" => annotation is { IsColor: true } ? ShaderPinType.Color : ShaderPinType.Vector4,
             "int" => ShaderPinType.Int,
             "bool" => ShaderPinType.Bool,
-            "uint" when bools.Contains(name) => ShaderPinType.Bool,
+            "uint" when declared.TryGetValue(name, out var declaredType) && declaredType == "bool" => ShaderPinType.Bool,
             "mat4" => ShaderPinType.Matrix,
             _ => null,
         };

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using VL.Qt.Elements;
+using VL.Qt.Shaders;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Reconciliation
@@ -40,7 +41,7 @@ namespace VL.Qt.Reconciliation
                     next[new UniformKey(u.Name, true)] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(sampler));
             }
             if (effect.InputSampler is { } inputSampler)
-                next[new UniformKey("source", true)] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(inputSampler));
+                next[new UniformKey(ReservedUniforms.InputSampler, true)] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(inputSampler));
 
             var clear = false;
             foreach (var key in sent.Keys)
