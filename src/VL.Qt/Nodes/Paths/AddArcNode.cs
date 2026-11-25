@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
@@ -23,7 +24,7 @@ namespace VL.Qt.Nodes
         /// <param name="sweepAngle">The length of the arc in cycles; one cycle or more gives the full oval, 0 adds nothing.</param>
         /// <returns>The path with the contour added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
-        public QtPath Update(QtPath? input, RectangleF bounds = default, float startAngle = 0f, float sweepAngle = 0f)
+        public QtPath Update(QtPath? input, [DefaultValue("0, 0, 1, 1")] RectangleF bounds, float startAngle, [DefaultValue(0.25f)] float sweepAngle)
             => _memo.Get(input, new Props(bounds, startAngle, sweepAngle), s_create);
     }
 }

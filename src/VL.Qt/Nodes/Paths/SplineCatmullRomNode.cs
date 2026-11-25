@@ -35,9 +35,9 @@ namespace VL.Qt.Nodes
         public QtPath Update(
             QtPath? input,
             Spread<Vector2>? points,
-            bool closed = false,
-            [DefaultValue(0.5f)] float alpha = 0.5f,
-            [DefaultValue(0f)] float tension = 0f)
+            bool closed,
+            [DefaultValue(0.5f)] float alpha,
+            float tension)
             => _memo.Get(input, new Props(points ?? Spread<Vector2>.Empty, closed, alpha, tension), s_create);
     }
 }

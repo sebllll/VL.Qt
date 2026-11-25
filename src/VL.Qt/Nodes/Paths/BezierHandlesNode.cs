@@ -42,8 +42,8 @@ namespace VL.Qt.Nodes
             Spread<Vector2>? anchors,
             Spread<Vector2>? inHandles,
             Spread<Vector2>? outHandles,
-            bool closed = false,
-            [Pin(Visibility = PinVisibility.Optional)] Spread<HandleMode>? handleModes = null)
+            bool closed,
+            [Pin(Visibility = PinVisibility.Optional)] Spread<HandleMode>? handleModes)
             => _memo.Get(input, new Props(anchors ?? Spread<Vector2>.Empty, inHandles ?? Spread<Vector2>.Empty, outHandles ?? Spread<Vector2>.Empty, handleModes ?? Spread<HandleMode>.Empty, closed), s_create);
     }
 }

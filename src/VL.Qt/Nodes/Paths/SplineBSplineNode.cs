@@ -29,7 +29,7 @@ namespace VL.Qt.Nodes
         /// <param name="closed">If true, the curve is a closed loop around the control polygon.</param>
         /// <returns>The path with the spline added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
-        public QtPath Update(QtPath? input, Spread<Vector2>? points, bool closed = false)
+        public QtPath Update(QtPath? input, Spread<Vector2>? points, bool closed)
             => _memo.Get(input, new Props(points ?? Spread<Vector2>.Empty, closed), s_create);
     }
 }

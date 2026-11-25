@@ -28,7 +28,7 @@ namespace VL.Qt.Nodes
             QtPath? input,
             [DefaultValue("0, 0, 1, 1")] RectangleF rectangle,
             [DefaultValue("0.1, 0.1")] Vector2 radius,
-            [Pin(Name = "Dir")] PathDirection dir = PathDirection.Clockwise)
+            [Pin(Name = "Dir")] PathDirection dir)
             => _memo.Get(input, new Props(rectangle, radius, dir), s_create);
     }
 }

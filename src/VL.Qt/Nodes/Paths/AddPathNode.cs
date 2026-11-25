@@ -28,7 +28,7 @@ namespace VL.Qt.Nodes
         /// <param name="mode">Append adds the contours of the other path as new contours; Extend turns its first move into a line, so that the first contour continues the last contour of the input.</param>
         /// <returns>The path with the segments added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
-        public QtPath Update(QtPath? input, QtPath? other, PathAddMode mode = PathAddMode.Append)
+        public QtPath Update(QtPath? input, QtPath? other, PathAddMode mode)
             => _memo.Get(input, new Props(other ?? QtPath.Empty, mode), s_create);
 
         private static QtPath Build(QtPath path, QtPath other, PathAddMode mode)

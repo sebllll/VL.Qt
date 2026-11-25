@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
@@ -23,7 +24,7 @@ namespace VL.Qt.Nodes
         /// <param name="radius">The radius of the circle in units.</param>
         /// <returns>The path with the contour added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
-        public QtPath Update(QtPath? input, Vector2 center = default, [Pin(Name = "Dir")] PathDirection dir = PathDirection.Clockwise, float radius = 0.5f)
+        public QtPath Update(QtPath? input, Vector2 center, [Pin(Name = "Dir")] PathDirection dir, [DefaultValue(0.5f)] float radius)
             => _memo.Get(input, new Props(center, dir, radius), s_create);
     }
 }
