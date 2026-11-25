@@ -85,7 +85,8 @@ int createFence(ID3D11Device5* qt, ID3D11Device5* foreign, ComPtr<ID3D11Fence>& 
 // True if device runs on a software adapter: the software flag, or the Microsoft Basic Render Driver (WARP, vendor
 // 0x1414, device 0x8c) by its ids. On a GPU-less machine (CI runner) DXGI enumerates the Basic Render Driver as adapter 0,
 // next to the adapter of D3D_DRIVER_TYPE_WARP; a pair on it must take the software path too, else the foreign context's
-// wait before Qt's signal deadlocks (render-texture.md, spike 5.1). Unknown (no adapter): software, the safe path.
+// wait before Qt's signal deadlocks (a software device's context cannot wait for a value that is signalled later).
+// Unknown (no adapter): software, the safe path.
 bool isSoftware(ID3D11Device* device)
 {
     ComPtr<IDXGIDevice> dxgi;

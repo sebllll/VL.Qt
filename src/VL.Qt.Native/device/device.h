@@ -1,37 +1,7 @@
-/* device.h - one graphics device per process (images package 01).
- *
- * Windows/D3D11: QtNative creates one ID3D11Device + immediate context (lazily, at the first window) on the adapter
- * Qt's D3D11 backend would pick, and hands it to every QQuickWindow with QQuickGraphicsDevice::fromDeviceAndContext
- * before its first expose. Qt still creates one QRhi per window, all on this device, so a texture uploaded once can
- * be drawn in every window. Next to them an upload QRhi on the same device (EnableTimestamps) for the image packages.
- *
- * Teardown order (shared-device spike, docs/decisions/device-sharing.md): texture wrappers -> windows -> upload QRhi -> device. Device and upload
- * QRhi are never released at exit: like g_app they live until process end, so nothing is destroyed out of order.
- * Only rebuild replaces them: the upload QRhi is deleted at once, the old device is released once no window QRhi
- * uses it any more (checkLost, after Qt dropped the window QRhis).
- *
- * Device lost: checkLost notices it (GetDeviceRemovedReason) and calls
- * rebuild: listeners free their objects of the old device (lost), a new device and upload QRhi are created, every
- * QQuickWindow that was on the old device gets the new one (setGraphicsDevice) and an update; Qt then notices the
- * loss itself at that window's next Present, drops the window's QRhi and scenegraph ("Graphics device lost") and
- * creates a new QRhi on the imported new device. Same QQuickWindow, same HWND, items keep their state. Listeners
- * then re-upload (restored). Test trigger: vlqt_test_device_lost (vlqt_test.h) on the test device (test/test_device.h).
- *
- * Creation failed (at the start or in a rebuild): checkLost tries again at most once per second and on success does
- * rebuild's steps for windows and listeners (handOver), while meanwhile windows use devices of their own (kept until
- * their next loss), images are not uploaded (CPU copies), offscreen scenes report VLQT_ERR_DEVICE_LOST and the log says
- * so once.
- *
- * Adapter (QtTexture): the first device goes on the adapter Qt's D3D11 backend would pick. moveTo rebuilds it
- * on another adapter (that of Stride's device) the same way, but only while no on-screen window renders on it
- * (canMove): Qt replaces a window's QRhi only after it noticed a loss, so a window on a healthy device would stay on
- * the old one. The adapter of a move is kept for later rebuilds.
- *
- * Threads (phase 5): the device is free-threaded; its immediate context is multithread-protected and shared with the
- * render threads of offscreen scenes, so stateful sequences on it take a ContextLock (context_lock.h). Everything else here: main thread.
- *
- * Linux and every non-D3D11 backend: no-op, each window keeps its own device. A shared VkDevice docks here later.
- * VLQT_SHARED_DEVICE=0 (set before process start) also keeps Qt's own device per window (diagnosis, A/B timing).
+/* device.h - the one graphics device of the process: on Windows a D3D11 device and its immediate context that every
+ * QQuickWindow, image upload and offscreen scene shares. Threads: main, except where a function says otherwise (the device
+ * is free-threaded; its context is shared with render threads, see context_lock.h). Owner: QtNative creates it lazily and
+ * never releases it at exit; only rebuild replaces it. Linux and other backends: no-op. Design: docs/decisions/device-sharing.md.
  */
 #pragma once
 
@@ -40,7 +10,10 @@ class QRhi;
 
 namespace vlqt::device {
 
-// Gives the window the shared device; call before the window is shown. No-op without a shared device.
+// Gives the window the shared device (QQuickGraphicsDevice::fromDeviceAndContext); call before the window is shown, so Qt
+// creates the window's QRhi on it and a texture uploaded once can be drawn in every window. Creates the device at the
+// first window, on the adapter Qt's D3D11 backend would pick. No-op without a shared device (Linux, creation failed,
+// VLQT_SHARED_DEVICE=0 set before process start: every window keeps Qt's own device, for diagnosis and A/B timing).
 void attach(QQuickWindow* window);
 
 // Returns true if attach or the last rebuild gave the window the shared device, also before the window has a QRhi.
@@ -55,8 +28,9 @@ void markOnSharedDevice(QQuickWindow* window, bool on);
 // Main thread, or a render thread while the main thread waits for it (ContextLock, context_lock.h).
 void* sharedContext();
 
-// Upload QRhi on the shared device, nullptr if there is none (Linux, creation failed, VLQT_SHARED_DEVICE=0). Creates
-// the device if no window did yet (resources before the first window). Main thread.
+// Upload QRhi on the shared device (EnableTimestamps), for the image uploads; nullptr if there is none (Linux, creation
+// failed, VLQT_SHARED_DEVICE=0). Creates the device if no window did yet (resources before the first window). Main
+// thread.
 QRhi* uploadRhi();
 
 // Native device of a QRhi (ID3D11Device* for D3D11), nullptr for other backends.
@@ -72,16 +46,24 @@ int clampSamples(int requested, int dxgiFormat, QRhi* rhi);
 // other platforms.
 int windowSwapChainFormat();
 
-// Twice per pump (start and end): releases retired devices, notices a removed shared device (warning with
-// GetDeviceRemovedReason) and rebuilds; without a shared device after a failed creation, retries it once per second.
-// Cheap, allocates nothing while the device is fine.
+// Twice per pump (start and end): releases retired devices, notices a removed shared device (GetDeviceRemovedReason, with
+// a warning) and rebuilds; without a shared device after a failed creation, retries it at most once per second and on
+// success hands over as rebuild does. Meanwhile windows use devices of their own (kept until their next loss), images are
+// not uploaded (CPU copies) and offscreen scenes report VLQT_ERR_DEVICE_LOST; the log says so once. Cheap, allocates
+// nothing while the device is fine.
 void checkLost();
 
 // Changes with every new shared device (starts at 1 with the first one, 0 = none yet). Content made on another
 // generation must not be wrapped in a window's QRhi (resources, QtImageItem). Main thread.
 unsigned generation();
 
-// Rebuild after a loss (see above). Main thread: inside the pump (checkLost) or from moveTo.
+// Rebuild after a loss. Listeners free their objects of the old device (lost), the upload QRhi is deleted, a new device
+// and upload QRhi are created, every QQuickWindow that was on the old device gets the new one (setGraphicsDevice) and an
+// update; Qt then notices the loss itself at that window's next Present, drops the window's QRhi and scene graph and
+// creates a new QRhi on the imported device (same window, items keep their state). Listeners then upload again
+// (restored). The old device is released once no window QRhi uses it any more (checkLost). Teardown order: texture
+// wrappers, windows, upload QRhi, device. Test trigger: vlqt_test_device_lost (vlqt_test.h, test/test_device.h). Main
+// thread: inside the pump (checkLost) or from moveTo.
 void rebuild();
 
 // Called by rebuild on the main thread, in registration order. lost: the old device is gone, free every object of it
@@ -99,11 +81,13 @@ unsigned long long adapterLuidOf(void* d3d11Device);
 unsigned long long adapterLuid();
 
 // True while the shared device exists and no on-screen QQuickWindow has a QRhi on it (windows not yet exposed and
-// offscreen scenes, QQuickRenderControl, do not count). Main thread.
+// offscreen scenes, QQuickRenderControl, do not count): Qt replaces a window's QRhi only after it noticed a loss, so a
+// window on a healthy device would stay on the old one. Main thread.
 bool canMove();
-// Rebuilds the shared device on the adapter with this LUID (as rebuild: listeners lost/restored). Main thread,
-// only while canMove(). Returns true if the shared device now sits on that adapter; false = unchanged (cannot move,
-// unknown adapter) or no shared device afterwards (creation failed, see the log).
+// Rebuilds the shared device on the adapter with this LUID (as rebuild: listeners lost/restored), for a scene that binds
+// a texture of another adapter (Stride's); the adapter is kept for later rebuilds. Main thread, only while canMove().
+// Returns true if the shared device now sits on that adapter; false = unchanged (cannot move, unknown adapter) or no
+// shared device afterwards (creation failed, see the log).
 bool moveTo(unsigned long long luid);
 
 // test hook (vlqt_test_device_lost, test/test_probes.cpp): the ID3D12Device under the shared device when it was created

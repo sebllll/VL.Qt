@@ -16,7 +16,7 @@
 #include <utility>
 #include <vector>
 
-#ifdef _WIN32
+#ifdef Q_OS_WIN
 #include "offscreen/linear_pass.h"
 
 #include <d3d11_4.h>
@@ -30,29 +30,9 @@ struct vlqt_scene;
 
 namespace vlqt {
 
-// Lifetime: vlqt_offscreen_create -> (bind -> render_batch ... -> unbind)* -> vlqt_scene_destroy (release, then
-// destroy after the QQuickWindow). The QRhi of the scene belongs to renderControl and lives on QtNative's shared device
-// from create on, so the scene is never bound to another device than the one its QRhi uses.
-//
-// A binding is the texture opened on QtNative's device (Qt's render target), QtNative's immediate context and two
-// shared fences, each as created on QtNative's device and as opened on the foreign one. render_batch orders the GPUs
-// with them: readFence = the foreign device is done reading the texture (Qt may write), writeFence = Qt is done
-// writing (the foreign device may read). The values count up from 0 per binding.
-//
-// Device rebuild (loss, or a move to the foreign adapter in bind): a device::Listener unbinds every scene and drops its
-// scene graph and QRhi (lost); device::rebuild hands the scene's window, which then has no QRhi, the new device like
-// any window not yet exposed; restored initializes the render control again. The caller sees is_bound 0 and binds again.
-//
-// Foreign device: QtNative holds no reference to it of its own; the two fences opened on it do, until unbind. So a
-// bound scene keeps it alive after its owner released it, and unbind or destroy then frees it.
-//
-// Executor (render-texture.md "Qt render thread"): a scene gets one at create (render_thread::assign) and keeps it, a
-// render thread of the pool or, with Render Threads 0, inline on the main thread. Its scene graph and QRhi live there:
-// initialize, beginFrame, sync, render, endFrame, invalidate and unbind run through it, the main thread waits for each
-// of them except render + endFrame + Signal + Flush (posted by render_batch; inline they run at once). Items, polish,
-// input, apply and bind stay on the main thread; a render thread touches items only in sync, while the main thread
-// waits. Every blocking job runs after the jobs posted before it, so unbind, destroy, device loss and adapter move
-// drain the thread first.
+// An offscreen scene from create to destroy: its binding (the foreign texture opened on QtNative's device, two shared
+// fences, QtNative's context), its executor (a render thread or the main thread) and its input. render_batch renders it
+// through the executor. Lifetime, device rebuild and threads: docs/design/render-thread.md, "Lifetime of a scene".
 struct OffscreenScene
 {
     QQuickRenderControl* renderControl = nullptr;
@@ -82,7 +62,7 @@ struct OffscreenScene
     ulong lastPressTime = 0;
     QPointF lastPressPos;
     Qt::MouseButton lastPressButton = Qt::NoButton;
-#ifdef _WIN32
+#ifdef Q_OS_WIN
     Microsoft::WRL::ComPtr<ID3D11Texture2D> texture; // the foreign texture, opened on QtNative's device
     // The device passed to bind, to compare only (render_batch: the context it gets must be of this device); no
     // reference, the fences opened on it keep it alive.
@@ -96,7 +76,7 @@ struct OffscreenScene
     Microsoft::WRL::ComPtr<ID3D11Fence> foreignRead;        // ... and opened on the foreign device
     Microsoft::WRL::ComPtr<ID3D11Fence> foreignWrite;
     // A device of the binding is a software adapter (WARP): its context deadlocks waiting for a value that is signalled
-    // only later (spike 5.1), so render_batch waits until the render thread submitted the signal.
+    // only later, so render_batch waits until the render thread submitted the signal.
     bool software = false;
 #endif
 };
@@ -130,7 +110,7 @@ int sendKey(OffscreenScene* s, int type, int key, int modifiers, bool autoRepeat
 int sendText(OffscreenScene* s, const char* utf8, int length);
 void setFocus(OffscreenScene* s, bool focused, Qt::FocusReason reason);
 
-#ifdef _WIN32
+#ifdef Q_OS_WIN
 
 // --- offscreen_binding.cpp ---
 

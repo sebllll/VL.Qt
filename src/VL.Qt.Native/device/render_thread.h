@@ -1,18 +1,7 @@
-/* render_thread.h - the Qt render threads of offscreen scenes (phase 5; design: docs/decisions/render-texture.md,
- * "Qt render thread").
- *
- * A pool of threads with a Qt event loop, shared by every offscreen scene of the process (scenes of every app host).
- * Its size is the pin Render Threads of QtTexture and QtRenderer (vlqt_offscreen_set_render_threads), 1 until it is
- * set; 0 = the main thread. The pool only grows: a larger size adds threads at once, a smaller one (or 0) applies to
- * the scenes created afterwards and leaves the threads to the scenes that have them. A scene gets its executor at
- * create (a thread round robin, or inline on the main thread) and keeps it: its scene graph and QRhi live there
- * (QQuickRenderControl::prepareThread). Jobs of one thread run in queue order: a blocking job (call) therefore runs
- * after every job posted before it, which is how the main thread drains a thread before it unbinds or destroys a scene.
- *
- * The threads live until process end, like the shared device (device.h): stopping them at exit would run after Qt.
- *
- * Scene graph objects of a scene (a QSGTexture and the QRhiTexture under it) belong to its render thread: an item that
- * holds one from the main thread lets it go through retire, never by dropping the last reference itself.
+/* render_thread.h - the Qt render threads of offscreen scenes: a pool shared by every scene of the process, set by the pin
+ * Render Threads (setThreadCount; 0 = the main thread). Threads: a job runs on its render thread, everything declared
+ * here is called from the main thread. Owner: the pool, whose threads live until process end, like the shared device
+ * (device.h). Design: docs/design/render-thread.md.
  */
 #pragma once
 
@@ -138,8 +127,8 @@ private:
 };
 
 // Sets the pool size (pin Render Threads): 0 = the scenes created afterwards render on the main thread, n = on the
-// first n render threads (round robin), created now if the pool is smaller. Scenes created before keep their executor.
-// Logs a change. Returns VLQT_OK, VLQT_ERR_BAD_ARGUMENT (count < 0 or > maxThreads); a failure sets vlqt_last_error.
+// first n render threads (round robin), created now if the pool is smaller; the pool never shrinks. Scenes created
+// before keep their executor. Logs a change. Returns VLQT_OK, VLQT_ERR_BAD_ARGUMENT (count < 0 or > maxThreads); a failure sets vlqt_last_error.
 // Main thread.
 int setThreadCount(int count);
 

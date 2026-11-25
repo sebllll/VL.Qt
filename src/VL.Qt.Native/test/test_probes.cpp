@@ -10,7 +10,7 @@
 #include "diagnostics/perf.h"
 #include "../protocol.h"
 #include "test_hooks.h"
-#ifdef _WIN32
+#ifdef Q_OS_WIN
 #include "../device/render_thread.h"
 #include "test_device.h"
 #else
@@ -24,7 +24,7 @@
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <rhi/qrhi.h>
-#ifndef _WIN32
+#ifndef Q_OS_WIN
 #include <QtGui/QGuiApplication>
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QOpenGLFunctions>
@@ -48,7 +48,7 @@ namespace {
 
 Q_LOGGING_CATEGORY(lcGrab, "vlqt.grab")
 
-#ifndef _WIN32
+#ifndef Q_OS_WIN
 // W1-21: on Qt's offscreen platform with OpenGL, Mesa's software winsys can keep an old size of the window's default
 // framebuffer (offscreen_glx.h), so a grab would read only part of the frame. Before a grab, make the window's context
 // current (Qt sizes its X window to the window) and invalidate the drawable, so the grab's frame takes the window's size.
@@ -96,7 +96,7 @@ VLQT_API int vlqt_test_window_grab(vlqt_scene* p, const char* pngPath)
     return withWindow(p, "vlqt_test_window_grab", VLQT_ERR_UNSUPPORTED, [&](SceneHandle& h) -> int {
         QQuickWindow* window = h.window.get();
         QImage img;
-#ifndef _WIN32
+#ifndef Q_OS_WIN
         QOpenGLContext* glx = refreshOffscreenGlx(window);
 #endif
         {
@@ -105,7 +105,7 @@ VLQT_API int vlqt_test_window_grab(vlqt_scene* p, const char* pngPath)
             img = window->grabWindow();
             vlqt::device::releaseFrameLocks();
         }
-#ifndef _WIN32
+#ifndef Q_OS_WIN
         if (glx && !glxCoversWindow(glx, window)) {
             int w3, h3;
             vlqt::glx::currentDrawableSize(&w3, &h3);
@@ -223,7 +223,7 @@ VLQT_API int vlqt_test_device_lost(int mode)
     return guardedGui("vlqt_test_device_lost", [&]() -> int {
         if (mode != VLQT_DEVICE_LOST_REMOVE && mode != VLQT_DEVICE_LOST_HANG && mode != VLQT_DEVICE_LOST_REMOVE_FAIL_ONCE)
             return fail(VLQT_ERR_BAD_ARGUMENT, "test_device_lost: unknown mode " + std::to_string(mode));
-#ifdef _WIN32
+#ifdef Q_OS_WIN
         if (mode == VLQT_DEVICE_LOST_HANG) {
             // Not implemented: a TDR resets the whole GPU (every application). Manual check: dxcap -forcetdr (admin).
             return fail(VLQT_ERR_UNSUPPORTED, "test_device_lost(HANG) not implemented, use 'dxcap -forcetdr' for a real TDR");
@@ -234,7 +234,7 @@ VLQT_API int vlqt_test_device_lost(int mode)
                                               "(VLQT_TEST_D3D11ON12=1 before the first window or resource)");
         // The device goes between two frames, not under a render job a render_batch just posted: D3D11On12 then keeps an
         // acquire of the scene's shared texture in its batch without a fence, and destroying the old device (releaseRetired)
-        // runs it as ID3D12CommandQueue::Wait(nullptr) - an access violation in D3D12Core (T6, 1 in ~10 threaded runs).
+        // runs it as ID3D12CommandQueue::Wait(nullptr) - an access violation in D3D12Core (1 in about 10 threaded runs).
         vlqt::render_thread::drainAll();
         const int rc = vlqt::device::test::removeDevice(dev12);
         if (rc == 0 && mode == VLQT_DEVICE_LOST_REMOVE_FAIL_ONCE)
