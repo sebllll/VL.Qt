@@ -1,71 +1,74 @@
+// Linux implementation of platform.h. Private Qt API (setFrameless): QWindowPrivate, QHighDpi, QPlatformWindow; check
+// on Qt updates (list: elements/elements.h).
 #include "platform/platform.h"
 #include "app/app.h"
 #include "app/log.h"
 
 #include <QtCore/QByteArray>
+#include <QtCore/QFileInfo>
 #include <QtCore/QStringList>
 #include <QtCore/QtGlobal>
 #include <QtGui/QFont>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QGuiApplication>
+#include <QtGui/private/qhighdpiscaling_p.h>
+#include <QtGui/private/qwindow_p.h>
+#include <QtGui/qpa/qplatformwindow.h>
+#include <QtQuick/QQuickWindow>
 
+#include <cerrno>
 #include <cstdlib>
 #include <cstring>
-#include <dlfcn.h>
+#include <link.h>
 #include <signal.h>
+#include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+extern char** environ;
 
 using vlqt::g_nativeDir;
 using vlqt::log::emitLog;
 
 namespace {
 
-// WSLg: WSL has no DRM node (/dev/dri), only /dev/dxg, so Mesa's EGL loader finds no
-// hardware driver, Zink finds no Vulkan device (Ubuntu ships no Dozen) and Mesa falls back to llvmpipe.
-// GALLIUM_DRIVER=d3d12 selects Mesa's D3D12 Gallium driver (host GPU via /usr/lib/wsl/lib). Mesa reads it with
-// libc getenv when EGL initializes (first window), so setenv here, before QGuiApplication, is early enough.
-// Default under WSL; VLQT_GPU=software (set before process start) keeps Mesa's own choice.
-// A GALLIUM_DRIVER set by the user always wins.
-// Wayland + d3d12 hangs WSLg at the first window/GL context (process in state D, whole WSL VM
-// unresponsive until `wsl --shutdown`); xcb + d3d12 works. So when we set d3d12 ourselves and the
-// platform is not chosen explicitly, force QT_QPA_PLATFORM=xcb (Qt would otherwise pick Wayland via
-// WAYLAND_DISPLAY). An explicit wayland* platform together with d3d12 only gets a warning.
+// The ELF interpreter (dynamic loader) of the host process, such as /lib64/ld-linux-x86-64.so.2, or null. It runs
+// vlqt-glprobe when the helper's file lost the executable bit: NuGet packages and CI artifacts do not keep file modes.
+const char* hostInterpreter()
+{
+    const char* interpreter = nullptr;
+    dl_iterate_phdr([](dl_phdr_info* info, size_t, void* data) -> int {
+        // The first object is the program itself; stop after it.
+        for (int i = 0; i < info->dlpi_phnum; ++i)
+            if (info->dlpi_phdr[i].p_type == PT_INTERP)
+                *static_cast<const char**>(data) = reinterpret_cast<const char*>(info->dlpi_addr + info->dlpi_phdr[i].p_vaddr);
+        return 1;
+    }, &interpreter);
+    return interpreter;
+}
+
 // Mesa's d3d12 driver does not work on every WSL system (seen on an Intel NUC: "glx: failed to create drisw screen",
-// then Qt aborts). Probe it in a child process that does what Qt does first on xcb: open the X display and create
-// a GLX context. A failing probe (exit code != 0, crash, or no answer within 10 s) means: use llvmpipe instead.
-// The child only uses libX11/libGL through dlopen and ends with _exit; the parent stays untouched.
+// then Qt aborts). The helper vlqt-glprobe (src/VL.Qt.Native/tools/glprobe.c, next to libvlqt.so) does what Qt does
+// first on xcb: open the X display and create a GLX context. It is a process of its own, started with posix_spawn,
+// because it loads libX11 and libGL: in a fork of the multithreaded host that could deadlock on a lock another thread
+// held at the fork. It inherits the current environment, so it sees the GALLIUM_DRIVER set here.
+// True if OpenGL works, or if the helper cannot be started (keep the driver). False: the helper failed (exit code
+// != 0, crash, or no answer within 10 s).
 bool probeGlx()
 {
-    const pid_t pid = fork();
-    if (pid < 0)
-        return true; // cannot probe: keep d3d12
-    if (pid == 0) {
-        using OpenDisplayFn = void* (*)(const char*);
-        using SyncFn = int (*)(void*, int);
-        using ChooseFn = void** (*)(void*, int, const int*, int*);
-        using CreateFn = void* (*)(void*, void*, int, void*, int);
-        void* x11 = dlopen("libX11.so.6", RTLD_NOW);
-        void* gl = dlopen("libGL.so.1", RTLD_NOW);
-        if (!x11 || !gl)
-            _exit(2);
-        auto openDisplay = reinterpret_cast<OpenDisplayFn>(dlsym(x11, "XOpenDisplay"));
-        auto sync = reinterpret_cast<SyncFn>(dlsym(x11, "XSync"));
-        auto choose = reinterpret_cast<ChooseFn>(dlsym(gl, "glXChooseFBConfig"));
-        auto create = reinterpret_cast<CreateFn>(dlsym(gl, "glXCreateNewContext"));
-        if (!openDisplay || !sync || !choose || !create)
-            _exit(2);
-        void* display = openDisplay(nullptr);
-        if (!display)
-            _exit(3);
-        const int attribs[] = {0x8011 /*GLX_RENDER_TYPE*/, 0x1 /*GLX_RGBA_BIT*/, 0};
-        int count = 0;
-        void** configs = choose(display, 0, attribs, &count);
-        if (!configs || count < 1)
-            _exit(4);
-        void* context = create(display, configs[0], 0x8014 /*GLX_RGBA_TYPE*/, nullptr, 1);
-        sync(display, 0); // an X error from the context request ends the process here (default handler)
-        _exit(context ? 0 : 5);
+    const QByteArray helper = (g_nativeDir + QStringLiteral("/vlqt-glprobe")).toLocal8Bit();
+    int rc = ENOENT;
+    pid_t pid = 0;
+    if (!g_nativeDir.isEmpty() && access(helper.constData(), R_OK) == 0) {
+        const char* interpreter = access(helper.constData(), X_OK) == 0 ? nullptr : hostInterpreter();
+        char* argv[] = {const_cast<char*>(interpreter ? interpreter : helper.constData()),
+            interpreter ? const_cast<char*>(helper.constData()) : nullptr, nullptr};
+        rc = posix_spawn(&pid, argv[0], nullptr, nullptr, argv, environ);
+    }
+    if (rc != 0) {
+        emitLog(2, "vlqt.gpu", "OpenGL check skipped: cannot start " + helper + " (" + QByteArray(std::strerror(rc))
+            + "); keeping GALLIUM_DRIVER=" + qgetenv("GALLIUM_DRIVER"));
+        return true;
     }
     for (int i = 0; i < 100; ++i) {
         int status = 0;
@@ -96,7 +99,17 @@ bool hasSystemFonts()
 
 namespace vlqt::platform {
 
-void applyWslGpuDefault()
+// WSLg: WSL has no DRM node (/dev/dri), only /dev/dxg, so Mesa's EGL loader finds no
+// hardware driver, Zink finds no Vulkan device (Ubuntu ships no Dozen) and Mesa falls back to llvmpipe.
+// GALLIUM_DRIVER=d3d12 selects Mesa's D3D12 Gallium driver (host GPU via /usr/lib/wsl/lib). Mesa reads it with
+// libc getenv when EGL initializes (first window), so setenv here, before QGuiApplication, is early enough.
+// Default under WSL; VLQT_GPU=software (set before process start) keeps Mesa's own choice.
+// A GALLIUM_DRIVER set by the user always wins.
+// Wayland + d3d12 hangs WSLg at the first window/GL context (process in state D, whole WSL VM
+// unresponsive until `wsl --shutdown`); xcb + d3d12 works. So when we set d3d12 ourselves and the
+// platform is not chosen explicitly, force QT_QPA_PLATFORM=xcb (Qt would otherwise pick Wayland via
+// WAYLAND_DISPLAY). An explicit wayland* platform together with d3d12 only gets a warning.
+void prepareBeforeApp()
 {
     if (qgetenv("VLQT_GPU") != "software" && !std::getenv("GALLIUM_DRIVER")
         && access("/dev/dxg", F_OK) == 0 && access("/usr/lib/wsl/lib/libd3d12.so", F_OK) == 0) {
@@ -139,7 +152,7 @@ void applyWslGpuDefault()
     }
 }
 
-void ensureFonts()
+void initAfterApp(QGuiApplication&)
 {
     if (hasSystemFonts())
         return;
@@ -156,11 +169,46 @@ void ensureFonts()
     emitLog(1, "vlqt.font", "Fallback font registered: " + families.first().toUtf8());
 }
 
+// xcb: the window manager re-frames asynchronously; client geometry requested frame exclusive.
+// QWindow::setGeometry returns early for an unchanged rect, so the platform window would never see it. offscreen
+// (CI) recomputes its frame margins (2 px) only in QOffscreenWindow::setGeometry (no setWindowFlags), so the
+// reported frame position kept the old margins and wandered by them on every toggle. The client rect is therefore
+// passed to the platform window directly, frame exclusive, as QWindow::setGeometry would.
+void setFrameless(QQuickWindow& window, bool on, bool keepClientRect)
+{
+    const Qt::WindowFlags flags = on ? (window.flags() | Qt::FramelessWindowHint) : (window.flags() & ~Qt::FramelessWindowHint);
+    const QRect client = window.geometry();
+    window.setFlags(flags);
+    if (!keepClientRect)
+        return;
+    if (window.geometry() != client)
+        window.setGeometry(client);
+    else if (QPlatformWindow* pw = window.handle()) {
+        QWindowPrivate::get(&window)->positionPolicy = QWindowPrivate::WindowFrameExclusive;
+        pw->setGeometry(QHighDpi::toNativeWindowGeometry(client, &window));
+    }
+}
+
+// libc environ (getenv): set before the process starts. .NET on Linux keeps variables set at run time to itself.
+bool testSyntheticInputOnly()
+{
+    return qgetenv("VLQT_TEST_SYNTHETIC_INPUT") == "1";
+}
+
+// Linux file systems are case-sensitive.
+QString pathKey(const QFileInfo& file)
+{
+    return file.canonicalFilePath();
+}
+
 } // namespace vlqt::platform
 
-// At process exit the CLR is already gone when Qt's static destructors log. libvlqt.so's destructors run before those
-// of libQt6Core.so (reverse dependency order), so cut the managed callback here.
+// Unload hook. At process exit the CLR is already gone when Qt's static destructors log. libvlqt.so's destructors run
+// before those of libQt6Core.so (reverse dependency order), so cut the managed callback here. A destructor cannot tell
+// dlclose from exit, so Qt's default message handler replaces ours in both cases. Exported apps end with _exit
+// (ExportedApp.cs), which runs no destructors. Unloading QtNative is not supported otherwise (docs/architecture.md,
+// Lifetime).
 __attribute__((destructor)) static void vlqtUnload()
 {
-    vlqt::log::detach();
+    vlqt::log::detach(true);
 }

@@ -58,29 +58,44 @@ struct PropDef;
 /* A table property resolved against the QML type (once per type and engine). */
 struct ResolvedProp {
     const PropDef* def = nullptr;
-    QMetaProperty prop;  // property on the item ("color"), or the group property ("border")
-    QMetaProperty sub;   // property on the group object ("color" of "border"); invalid if not grouped
+    QMetaProperty prop;  // property on the item ("enabled")
 };
 
 class Elements;
 
 /* Setter: returns false + err on a rejected value (-> ApplyBadValue). rp is resolved (or empty for
- * properties without a QML name, which use the C++ QQuickItem API). */
+ * properties without a QML name, which use the typed C++ API of the item: Rectangle, Text, Image, Shape). */
 using Setter = bool (*)(Elements& els, ElementEntry& node, const ResolvedProp& rp, const Value& v, std::string& err);
 
 struct PropDef {
     quint16 id;              // VLQT_PROPERTY_*
     quint16 valueType;       // expected VLQT_VALUE_TYPE_*
     Setter set;
-    const char* qmlName;     // "color", "border.color" (group.sub), "font" (QFont, see modifyFont); nullptr = C++ API
+    const char* qmlName;     // QML property of the item ("enabled"), written through its QMetaProperty; nullptr = typed C++ API
 };
 
+/* Whether an element type takes AUTO_SIZE (implicit size instead of SIZE). The property itself is not in `props`:
+ * Elements::set offers it for every type but None. */
+enum class AutoSize : quint8 {
+    None,      // always SIZE (Rectangle, Text, Image, Video, Shape)
+    Always,    // containers, Button, value inputs, QML: the implicit size applies while AUTO_SIZE is on
+    WithInput  // Shader (ShaderEffect): the implicit size is the Input's, so only while it has one; otherwise SIZE
+};
+
+/* Everything QtNative needs to know about an element type: one entry per type, defined in its type file. A new type is
+ * an entry plus a line in typeTable(); nothing else asks for the type's id. */
 struct TypeDef {
     quint16 id;              // VLQT_ELEMENT_TYPE_*
-    const char* name;
-    const char* qml;         // QML one-liner (nullptr = plain QQuickItem, no component)
+    const char* name;        // the type's name in logs and error texts, and (lower case) on the perf page
+    const char* qmlUrl;      // qrc:/vlqt/qml/elements/<Name>Element.qml (nullptr = plain QQuickItem, no component)
     std::vector<PropDef> props; // type-specific (ids >= 256); common ones (1..255) apply to every type
-    QQuickItem* (*make)() = nullptr; // C++ item instead of QML (Image: QtImageItem); qml is ignored then
+    QQuickItem* (*make)() = nullptr; // C++ item instead of QML (Rectangle, Text, Image, Shape); qmlUrl is ignored then
+    AutoSize autoSize = AutoSize::None;
+    bool layout = false;     // Row/Column: a Qt positioner that owns x/y of its children (TransformState::inLayout)
+    bool container = false;  // Group, Row, Column: its children are elements that the debug overlay measures
+    bool styled = false;     // Controls: takes SET_STYLE
+    void (*applyAutoSize)(QQuickItem* item, bool on) = nullptr; // the type's own part of applySize: kind of bounds (Group, QML)
+    void (*beforeDestroy)(QQuickItem* item) = nullptr;          // Video: stop the player, release the audio tap; called by the Scene
 };
 
 const TypeDef* findType(quint16 type);
@@ -91,8 +106,8 @@ bool writeQml(QQuickItem* item, const ResolvedProp& rp, const QVariant& v, std::
 inline QColor toColor(const float* f) { return QColor::fromRgbF(f[0], f[1], f[2], f[3]); }
 inline QString toQString(const Value& v) { return QString::fromUtf8(v.utf8.constData(), v.utf8.size()); }
 
-/* Generic setters for QML properties (resolved QMetaProperty, optionally grouped), element_types.cpp. */
-bool setQmlColor(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err);
+/* Generic setters for QML properties (resolved QMetaProperty), element_types.cpp. The types built in C++ (Rectangle,
+ * Text, Image, Shape) use typed setters of their own instead: no QVariant per SET. */
 bool setQmlBool(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err);
 bool setQmlReal(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err);
 bool setQmlRect(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err);
@@ -101,13 +116,19 @@ bool setQmlString(Elements&, ElementEntry& n, const ResolvedProp& rp, const Valu
 
 /* i32 enum property: only the listed Qt values are accepted (others -> ApplyBadValue). */
 template <int... Allowed>
-bool setQmlEnum(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool checkEnum(const Value& v, std::string& err)
 {
     if (((v.i != Allowed) && ...)) {
         err = "invalid enum value " + std::to_string(v.i);
         return false;
     }
-    return writeQml(n.item, rp, v.i, err);
+    return true;
+}
+
+template <int... Allowed>
+bool setQmlEnum(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
+{
+    return checkEnum<Allowed...>(v, err) && writeQml(n.item, rp, v.i, err);
 }
 
 /* Entries of the type table (findType), one function per type, defined in its file. */

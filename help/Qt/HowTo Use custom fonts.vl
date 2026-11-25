@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="HI59yS5qNZS1XkwznVyZfj" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="LoadFont [Qt]&#xD;&#xA;- Path: font file (TTF, OTF, TTC), relative to this patch&#xD;&#xA;- Family: name for the Font Family pin of Text or Style&#xD;&#xA;- Error: why the file could not be loaded">
+          <Pad Id="HI59yS5qNZS1XkwznVyZfj" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="LoadFont [Qt]&#xD;&#xA;- Path: font file (TTF, OTF, TTC), relative to this patch&#xD;&#xA;- Family: name for the Font Family pin of Text or Style&#xD;&#xA;- A file that cannot be loaded shows at the node">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -57,13 +57,7 @@
             <Pin Id="2Bt9YWpw64QhfFlflTzNb5" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="DABBNc2iPJX7W40cxB2YmM" Name="Path" Kind="InputPin" />
             <Pin Id="H3gH8mgKVAEB8oYGvcKQ2R" Name="Family" Kind="OutputPin" />
-            <Pin Id="5Q5UBn2fHJtF0hsS1Z7ukc" Name="Error" Kind="OutputPin" />
           </Node>
-          <Pad Id="DvTyp2IsyXWqe8IBMRCZMV" Comment="Error" Bounds="362,315,330,19" ShowValueBox="true" isIOBox="true" Value="">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
-              <Choice Kind="TypeFlag" Name="String" />
-            </p:TypeAnnotation>
-          </Pad>
           <Pad Id="3o8AjCisJa0mt7HlpURgL7" Comment="Family" Bounds="302,349,200,19" ShowValueBox="true" isIOBox="true" Value="">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
@@ -121,7 +115,6 @@
           </Pad>
         </Canvas>
         <Link Id="9HI6mhkn0F1N8TrC4OYPqI" Ids="D7i6kLhEUwLTSKnHgjCRkO,DABBNc2iPJX7W40cxB2YmM" />
-        <Link Id="0s6yWfOGqnim6TZ5d66pyo" Ids="5Q5UBn2fHJtF0hsS1Z7ukc,DvTyp2IsyXWqe8IBMRCZMV" />
         <Link Id="PzJZa9MwcmlytT2xTAXf7p" Ids="H3gH8mgKVAEB8oYGvcKQ2R,3o8AjCisJa0mt7HlpURgL7" />
         <Link Id="uENReaAlq5KR89RD6wlklE" Ids="H3gH8mgKVAEB8oYGvcKQ2R,VIUiduxDWyxzkWbBSK0Wst" />
         <Link Id="dttkj5FeYpCcwhF3MwfU1x" Ids="FDRUBim6Il7iOxRy0D5tTS,J6t2WYiauERFkSiWkXOc7d" />

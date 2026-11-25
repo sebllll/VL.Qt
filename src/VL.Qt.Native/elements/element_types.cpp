@@ -1,35 +1,15 @@
+// Private Qt API: QQuickRectangle, QQuickText (typed color setters); check on Qt updates (list: elements/elements.h).
 #include "elements/element_types.h"
 
 #include <QtCore/QRectF>
 #include <QtQuick/QQuickItem>
-#include <QtQuick/private/qquickrectangle_p.h>          // typed color setters
-#include <QtQuick/private/qquicktext_p.h>               // typed color setter
 
 #include <unordered_map>
 
 namespace vlqt {
 
 // ---------------------------------------------------------------------------------------------
-// Generic setters for QML properties (resolved QMetaProperty, optionally grouped).
-
-bool setQmlColor(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
-{
-    // Typed setters (perf): QMetaProperty::write(QVariant(QColor)) per element and frame costs several percent
-    // CPU. The Qt setters compare first, so an unchanged color stays a no-op. Everything else takes the QML property.
-    const QColor c = toColor(v.f);
-    if (auto* r = qobject_cast<QQuickRectangle*>(n.item)) {
-        if (rp.sub.isValid())
-            r->border()->setColor(c); // "border.color"
-        else
-            r->setColor(c);
-        return true;
-    }
-    if (auto* t = qobject_cast<QQuickText*>(n.item); t && !rp.sub.isValid()) {
-        t->setColor(c);
-        return true;
-    }
-    return writeQml(n.item, rp, c, err);
-}
+// Generic setters for QML properties (resolved QMetaProperty).
 
 bool setQmlBool(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
@@ -95,13 +75,7 @@ const TypeDef* findType(quint16 type)
 
 bool writeQml(QQuickItem* item, const ResolvedProp& rp, const QVariant& v, std::string& err)
 {
-    QObject* target = item;
-    const QMetaProperty* p = &rp.prop;
-    if (rp.sub.isValid()) {
-        target = rp.prop.read(item).value<QObject*>();
-        p = &rp.sub;
-    }
-    if (!target || !p->write(target, v)) {
+    if (!rp.prop.write(item, v)) {
         err = std::string("writing QML property '") + rp.def->qmlName + "' failed";
         return false;
     }

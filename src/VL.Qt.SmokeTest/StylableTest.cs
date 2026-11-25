@@ -64,7 +64,7 @@ public static class StylableTest
         public int Rebuilds { get; private set; }
         public int Calls { get; private set; }
 
-        public Element? Build(Style style)
+        public IElement? Build(Style style)
         {
             Calls++;
             if (_element is not null && Equals(_lastStyle, style) && _lastText == Text && _lastWidth == Width)
@@ -96,7 +96,7 @@ public static class StylableTest
 
     private sealed class Thrower : IStylable
     {
-        public Element? Build(Style style) => throw new InvalidOperationException("boom");
+        public IElement? Build(Style style) => throw new InvalidOperationException("boom");
     }
 
     private static void Run(Scenario s)

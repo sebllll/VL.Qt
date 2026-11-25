@@ -28,16 +28,16 @@ namespace VL.Qt.Tests
 
         // Pin defaults as declared on Update (what vvvv passes for unconnected pins).
         private static Element Line(LineNode n, Vector2? from = null, Vector2? to = null, float strokeWidth = 0.05f)
-            => n.Update(from ?? new Vector2(0.5f, 0.5f), to ?? new Vector2(2.5f, 1.5f), default, White, strokeWidth, ShapeCap.Flat,
-                Spread<float>.Empty, 0, 0, 1, 0, 1, false, false, null, null, out _, out _);
+            => (Element)n.Update(from ?? new Vector2(0.5f, 0.5f), to ?? new Vector2(2.5f, 1.5f), default, White, strokeWidth, ShapeCap.Flat,
+                Spread<float>.Empty, 0, 0, 1, 0, 1, false, false, null, null, true, out _, out _);
 
         private static Element Polyline(PolylineNode n, Spread<Vector2> points, bool closed = false)
-            => n.Update(points, closed, default, White, 0.05f, ShapeCap.Flat, ShapeJoin.Miter, 4, Spread<float>.Empty, 0, 0, 1, 0, 1,
-                false, false, null, null, out _, out _);
+            => (Element)n.Update(points, closed, default, White, 0.05f, ShapeCap.Flat, ShapeJoin.Miter, 4, Spread<float>.Empty, 0, 0, 1, 0, 1,
+                false, false, null, null, true, out _, out _);
 
         private static Element Polygon(PolygonNode n, Spread<Vector2> points)
-            => n.Update(points, default, White, White, 0, ShapeJoin.Miter, 4, Spread<float>.Empty, 0, ShapeFillRule.NonZero, 1,
-                false, false, null, null, out _, out _);
+            => (Element)n.Update(points, default, White, White, 0, ShapeJoin.Miter, 4, Spread<float>.Empty, 0, ShapeFillRule.NonZero, 1,
+                false, false, null, null, true, out _, out _);
 
         private static Spread<Vector2> Points(params (float x, float y)[] p) => p.Select(v => new Vector2(v.x, v.y)).ToSpread();
 

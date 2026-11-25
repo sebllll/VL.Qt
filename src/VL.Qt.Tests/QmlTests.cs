@@ -782,6 +782,7 @@ namespace VL.Qt.Tests
             Dictionary<string, object>? properties = null, string? file = "", bool autoSize = true)
             => (QmlElement)_node.Update(file is null ? null : new Path(file == "" ? _file : file), properties, new Vector2(1, 1), autoSize,
                 Matrix.Identity, RectangleAnchor.TopLeft, 1, false, false, null, null,
+                true,
                 out changed, out signals, out _, out _, out error);
 
         private string[] Frame(Dictionary<string, object>? properties = null, string? file = "")

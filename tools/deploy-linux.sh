@@ -2,7 +2,8 @@
 # Bundles the Qt runtime next to libvlqt.so in runtimes/<rid>/native (Linux counterpart of windeployqt in build-native.ps1).
 # Usage: tools/deploy-linux.sh [--rid linux-x64|linux-arm64] [--qt-dir ~/Qt/6.12.0/<gcc_64|gcc_arm64>] [--clean]
 # Run after tools/build-native.sh. Copies Qt libs (NEEDED closure), selected plugins/ and the qml/ modules imported by
-# src/VL.Qt.Native/qml/deploy.qml, then sets RUNPATH of every ELF to $ORIGIN-relative paths (patchelf).
+# the .qml files under src/VL.Qt.Native/qml/ (qml/deploy.qml lists the ones no file imports), then sets RUNPATH of
+# every ELF to $ORIGIN-relative paths (patchelf).
 # Checks afterwards: no RUNPATH outside the bundle, ldd finds everything; prints the system libs the bundle relies on.
 # Finally trims the bundle (tools/trim-linux.sh) and runs the license check (tools/check-licenses.sh); fails if it fails.
 set -euo pipefail
@@ -36,6 +37,8 @@ SO="$NATIVE/libvlqt.so"
 fail() { echo "$1" >&2; exit 1; }
 [ -f "$QT_DIR/lib/libQt6Core.so.6" ] || fail "Qt not found in $QT_DIR (run tools/setup-qt.sh)"
 [ -f "$SO" ] || fail "$SO missing (run tools/build-native.sh)"
+GLPROBE="$NATIVE/vlqt-glprobe"
+[ -f "$GLPROBE" ] || fail "$GLPROBE missing (run tools/build-native.sh)"
 for t in readelf ldd python3; do
     command -v "$t" >/dev/null || fail "$t not found (run tools/setup-wsl.sh)"
 done
@@ -74,7 +77,7 @@ for p in "${plugins[@]}"; do
     done
 done
 
-# --- qml: modules imported by deploy.qml (qmlimportscanner resolves transitive imports). Only the files of each
+# --- qml: modules imported by the files under qml/ (qmlimportscanner resolves transitive imports). Only the files of each
 # module folder itself; nested folders are separate modules (e.g. QtQuick/Controls) and only come if imported.
 modules="$("$QT_DIR/libexec/qmlimportscanner" -rootPath "$ROOT/src/VL.Qt.Native/qml" -importPath "$QT_DIR/qml" \
     | python3 -c 'import json,sys
@@ -110,6 +113,11 @@ done
 install -D -m 644 "$ROOT/src/VL.Qt.Native/fonts/DejaVuSans.ttf" "$NATIVE/fonts/DejaVuSans.ttf"
 install -D -m 644 "$ROOT/LICENSES/DejaVu-Fonts.txt" "$NATIVE/fonts/DejaVu-Fonts-LICENSE.txt"
 
+# --- OpenGL check under WSLg (platform/platform_linux.cpp, probeGlx): vlqt-glprobe, built by build-native.sh next to
+# libvlqt.so, needs no Qt and no RUNPATH. A package may lose the executable bit; QtNative then runs it through the
+# dynamic loader.
+chmod 755 "$GLPROBE"
+
 # --- RUNPATH: $ORIGIN for files in native/, $ORIGIN/../.. for plugins/<cat>/x.so etc. (decision: only $ORIGIN-relative).
 while read -r f; do
     rel="${f#"$NATIVE"/}"
@@ -129,6 +137,8 @@ while read -r f; do
     leak="$(env -u LD_LIBRARY_PATH ldd "$f" | grep -F "$QT_DIR" || true)"
     [ -z "$leak" ] || { echo "resolves into Qt install, not bundle: ${f#"$NATIVE"/}:"$'\n'"$leak" >&2; bad=1; }
 done < <(elfs)
+missing="$(env -u LD_LIBRARY_PATH ldd "$GLPROBE" | grep 'not found' || true)"
+[ -z "$missing" ] || { echo "unresolved in vlqt-glprobe:"$'\n'"$missing" >&2; bad=1; }
 [ "$bad" = 0 ] || fail "deploy check failed"
 
 # System libs the bundle relies on (resolved outside native/), with the Debian/Ubuntu package if dpkg knows it.

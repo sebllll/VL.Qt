@@ -295,7 +295,7 @@ src/VL.Qt.Native/
               overlay_software.h  overlay_geometry.h  debug_overlay                (NDIAG-04, -05)
   test/       test_input.cpp  test_probes.cpp  test_device  test_resource_kind.cpp (F1)
   testkit/    testkit.cpp, target vlqt_testkit, not packed                         (F2, NDEV-09)
-  qml/        elements/*.qml  effects/*.qml  perf/perf_overlay.qml  deploy.qml     (D8, NELM-06, NFX-06)
+  qml/        elements/*.qml  effects/*.qml  handlers/*.qml  perf/perf_overlay.qml  deploy.qml   (D8, NELM-06, NFX-06)
               QML type files keep PascalCase (`MultiStage.qml`), the one exception of snake_case (C16)
   shaders/*.frag  fonts/  icon/  tools/glprobe.c (Linux, NAPP-12)
 ```

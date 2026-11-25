@@ -102,7 +102,7 @@ public static partial class QtTextureTest
         private static Matrix At(float x, float y) => Matrix.Translation(x / 100f, y / 100f, 0);
 
         private Element Rect(RectangleNode node, float x, float y, float w, float h, Color4 color, Interaction? interaction)
-            => node.Update(Sz(w, h), At(x, y), RectangleAnchor.TopLeft, color, 0, new Color4(0, 0, 0, 1), 0, 1, false, false, interaction, null, out _, out _);
+            => (Element)node.Update(Sz(w, h), At(x, y), RectangleAnchor.TopLeft, color, 0, new Color4(0, 0, 0, 1), 0, 1, false, false, interaction, null, true, out _, out _);
 
         // The scene of the frame: nodes pull the events of the last poll, then describe the elements.
         private Element Describe()
@@ -126,7 +126,7 @@ public static partial class QtTextureTest
                 _text.Update(Sz(220, 30), false, At(160, 170), RectangleAnchor.TopLeft, TextValue, "", true, true, 1, false, false,
                     null, null, null, out _, out _, out _, out _),
                 Rect(_rectB, 260, 20, 120, 80, new Color4(0, 1, 0, 1), interactionB));
-            return _group.Update(children, default, true, Matrix.Identity, RectangleAnchor.TopLeft, 1, false, false, null, null, null, out _, out _);
+            return (Element)_group.Update(children, default, true, Matrix.Identity, RectangleAnchor.TopLeft, 1, false, false, null, null, null, true, out _, out _);
         }
 
         /// <summary>One host frame: update, apply, render batch, s, poll events.</summary>
@@ -331,9 +331,9 @@ public static partial class QtTextureTest
             for (int i = 0; i < count; i++)
             {
                 var e = rect.Update(new Vector2(1, 0.8f), Matrix.Translation(0.2f, 0.2f, 0), RectangleAnchor.TopLeft, new Color4(1, 0, 0, 1), 0,
-                    new Color4(0, 0, 0, 1), 0, 1, false, false, wheel.Update(null, delta, null, PointerDevices.All), null, out _, out _);
+                    new Color4(0, 0, 0, 1), 0, 1, false, false, wheel.Update(null, delta, null, PointerDevices.All), null, true, out _, out _);
                 cmd.Reset();
-                rec.Update(e, Space.DIPTopLeft);
+                rec.Update((Element)e, Space.DIPTopLeft);
                 if (cmd.Length > 0)
                     s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "wheel reference: apply " + Native.LastError());
                 s.Pump(1);

@@ -73,7 +73,6 @@ std::vector<PropDef> shaderEffectProps()
         {VLQT_PROPERTY_BLENDING, VLQT_VALUE_TYPE_BOOL, setBlending, nullptr},
         {VLQT_PROPERTY_MESH_RESOLUTION, VLQT_VALUE_TYPE_IVEC2, setMeshResolution, nullptr},
         {VLQT_PROPERTY_SOURCE, VLQT_VALUE_TYPE_REF, setShaderSourceRef, "source"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -81,7 +80,9 @@ std::vector<PropDef> shaderEffectProps()
 
 TypeDef shaderType()
 {
-    return {VLQT_ELEMENT_TYPE_SHADER, "SHADER", nullptr, shaderEffectProps(), makeShaderEffect};
+    TypeDef t{VLQT_ELEMENT_TYPE_SHADER, "SHADER", nullptr, shaderEffectProps(), makeShaderEffect};
+    t.autoSize = AutoSize::WithInput; // implicit size = the Input; without Input the SIZE counts
+    return t;
 }
 
 } // namespace vlqt

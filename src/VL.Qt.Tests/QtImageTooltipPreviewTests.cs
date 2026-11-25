@@ -120,7 +120,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Node_ReadsOncePerImage_AndCaches()
         {
-            var node = new QtImageTooltipPreview(_client);
+            var node = new QtImageTooltipPreviewNode(_client);
             var image = ReadyImage(640, 480);
             _api.PreviewSize = (256, 192);
 
@@ -137,7 +137,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Node_NewInstance_ReadsAgain()
         {
-            var node = new QtImageTooltipPreview(_client);
+            var node = new QtImageTooltipPreviewNode(_client);
             _api.PreviewSize = (64, 32);
             var a = node.Update(ReadyImage(), out _);
             var b = node.Update(ReadyImage(), out _);
@@ -148,7 +148,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Node_Loading_ReadsOnReady_NotBefore()
         {
-            var node = new QtImageTooltipPreview(_client);
+            var node = new QtImageTooltipPreviewNode(_client);
             var r = _client.CreateImage();
             _client.Load(r, "C:/a.png", false);
             var image = new QtImage(r);
@@ -167,7 +167,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Node_Reload_OfTheSameImage_ReadsAgain()
         {
-            var node = new QtImageTooltipPreview(_client);
+            var node = new QtImageTooltipPreviewNode(_client);
             var image = ReadyImage(640, 480);
             _api.PreviewSize = (256, 192);
             var first = node.Update(image, out _);
@@ -186,7 +186,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Node_NoPreview_ReadsOnlyOnce_ThenFallsBackToTheText()
         {
-            var node = new QtImageTooltipPreview(_client);
+            var node = new QtImageTooltipPreviewNode(_client);
             var image = ReadyImage(640, 480); // PreviewSize null: -7
             Assert.That(node.Update(image, out var text), Is.Null);
             Assert.That(text, Is.EqualTo("QtImage 640 x 480 (Ready)"));
@@ -198,7 +198,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Node_TextIsToString_AndEmptyForNull()
         {
-            var node = new QtImageTooltipPreview(_client);
+            var node = new QtImageTooltipPreviewNode(_client);
             var image = ReadyImage(640, 480);
             node.Update(image, out var text);
             Assert.That(text, Is.EqualTo(image.ToString()));
@@ -209,7 +209,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Node_Failed_ReturnsNull_WithoutReading()
         {
-            var node = new QtImageTooltipPreview(_client);
+            var node = new QtImageTooltipPreviewNode(_client);
             var r = _client.CreateImage();
             _client.Load(r, "C:/a.png", false);
             _api.Failed(r.Id, "broken");

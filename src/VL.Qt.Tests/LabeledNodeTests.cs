@@ -17,8 +17,8 @@ namespace VL.Qt.Tests
 
         private static Element Labeled(LabeledNode n, Element? element, string text = "Volume", float labelWidth = 1.5f,
             LabelPosition position = LabelPosition.Left)
-            => n.Update(element, text, labelWidth, position, 0.1f, default, RectangleAnchor.Center, 0.2f, 1, null,
-                null, out _, out _);
+            => (Element)n.Update(element, text, labelWidth, position, 0.1f, default, RectangleAnchor.Center, 0.2f, 1, null,
+                null, true, out _, out _);
 
         [Test]
         public void Left_IsRow_LabelThenElement()
@@ -50,6 +50,32 @@ namespace VL.Qt.Tests
             var second = (Row)Labeled(n, A, text: "Other");
             Assert.That(second, Is.Not.SameAs(first));
             Assert.That(((Text)second.Children[0]).Content, Is.EqualTo("Other"));
+        }
+
+        [Test]
+        public void Warning_OfTheRow_GoneAfterSwitchingToTop()
+        {
+            string? shown = null;
+            using var n = new LabeledNode(w =>
+            {
+                shown = w;
+                return new Removal(() => shown = null);
+            });
+            var row = Labeled(n, A);
+            row.Feedback.Feedback![0].Warning = "row warning";
+            Labeled(n, A);
+            Assert.That(shown, Is.EqualTo("row warning"));
+
+            Labeled(n, A, position: LabelPosition.Top);
+            Assert.That(shown, Is.Null, "the inactive Row keeps no message at the node");
+
+            Labeled(n, A);
+            Assert.That(shown, Is.EqualTo("row warning"), "back with the Row");
+        }
+
+        private sealed class Removal(Action remove) : IDisposable
+        {
+            public void Dispose() => remove();
         }
 
         [Test]

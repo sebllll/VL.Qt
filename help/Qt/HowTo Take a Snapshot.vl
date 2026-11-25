@@ -26,7 +26,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="U3SItlSkcI51GxlBNgor02" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Snapshot [Qt]&#xD;&#xA;- Element: element or Group to grab, shown in a renderer&#xD;&#xA;- Grab, Scale: pixel size = size in DIP * Scale&#xD;&#xA;- Is Ready, Image (IImage), Error&#xD;&#xA;- Here: FromImage [Skia] and DrawImage show the result">
+          <Pad Id="U3SItlSkcI51GxlBNgor02" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Snapshot [Qt]&#xD;&#xA;- Element: element or Group to grab, shown in a renderer&#xD;&#xA;- Grab, Scale: pixel size = size in DIP * Scale&#xD;&#xA;- Is Ready, Image (IImage); a failed grab goes to the log&#xD;&#xA;- Here: FromImage [Skia] and DrawImage show the result">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -35,7 +35,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="Ng20LP7PRdg2NDYP5UvvHQ" Bounds="85,1299,830,212" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Snapshot grabs an element (or a Group with its children) on Grab, e.g. for thumbnails, export or processing in Skia/OpenCV.&#xD;&#xA;- The element has to be shown in a renderer, otherwise Error says so. Here the same Group goes to the Qt Renderer and to Snapshot.&#xD;&#xA;- It is asynchronous: Is Ready comes one frame after Grab (never in the same frame), Image keeps the last finished snapshot until a new one is done.&#xD;&#xA;- The pixel size is independent of the screen's DPI scaling, so an export is the same on every screen.&#xD;&#xA;- Image is BGRA8 premultiplied and an own copy (not volatile). FromImage [Skia] turns it into a Skia image that DrawImage shows in a Skia Renderer.&#xD;&#xA;- It is no frame stream: use it for single images, not for every frame.&#xD;&#xA;- Stable 60 fps: load images in advance or asynchronously, never synchronously while the frame is running.&#xD;&#xA;- To save the Image as a file (PNG, JPG, ...) use FileWriter [Qt], no detour via Skia; FileWriter (Element) does Snapshot and writing in one node, see HowTo Write an Element to a File.">
+          <Pad Id="Ng20LP7PRdg2NDYP5UvvHQ" Bounds="85,1299,830,212" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Snapshot grabs an element (or a Group with its children) on Grab, e.g. for thumbnails, export or processing in Skia/OpenCV.&#xD;&#xA;- The element has to be shown in a renderer, otherwise the log says so. Here the same Group goes to the Qt Renderer and to Snapshot.&#xD;&#xA;- It is asynchronous: Is Ready comes one frame after Grab (never in the same frame), Image keeps the last finished snapshot until a new one is done.&#xD;&#xA;- The pixel size is independent of the screen's DPI scaling, so an export is the same on every screen.&#xD;&#xA;- Image is BGRA8 premultiplied and an own copy (not volatile). FromImage [Skia] turns it into a Skia image that DrawImage shows in a Skia Renderer.&#xD;&#xA;- It is no frame stream: use it for single images, not for every frame.&#xD;&#xA;- Stable 60 fps: load images in advance or asynchronously, never synchronously while the frame is running.&#xD;&#xA;- To save the Image as a file (PNG, JPG, ...) use FileWriter [Qt], no detour via Skia; FileWriter (Element) does Snapshot and writing in one node, see HowTo Write an Element to a File.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -192,16 +192,10 @@
             <Pin Id="4RGmHAC66klPuvBt5wOaSP" Name="Grab" Kind="InputPin" />
             <Pin Id="R4w6VVqOcR9vo4zsqXeiho" Name="Image" Kind="OutputPin" />
             <Pin Id="fgf0dW3deD7wA3AOXC9U1d" Name="Is Ready" Kind="OutputPin" />
-            <Pin Id="RLFPIMTAqyGI6Cu18hnYge" Name="Error" Kind="OutputPin" />
           </Node>
           <Pad Id="Fa8jYkKFrMHtWwhU27rFbv" Comment="Is Ready" Bounds="497,921,35,35" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
-            </p:TypeAnnotation>
-          </Pad>
-          <Pad Id="Z0UGq2Qr9gZM4b4X9Os4Rt" Comment="Error" Bounds="544,890,410,21" ShowValueBox="true" isIOBox="true">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
-              <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
           <Node Bounds="447,980,100,26" Id="YVxVvjX9vDBA0DX1CH5F0F">
@@ -387,7 +381,6 @@
         <Link Id="ELekpkud897NGppspGxoyc" Ids="WKm4cKDyryIGezUPxwYjJn,izVO2jTC5Jm4RcMXa0IpvN" />
         <Link Id="dLsxO4Thn8nmGbPNiGVA6D" Ids="R4w6VVqOcR9vo4zsqXeiho,15wcLwb6Bhq7KGSwwO8TjI" />
         <Link Id="mmj2r0ApWsveAoiNgjE7Wz" Ids="fgf0dW3deD7wA3AOXC9U1d,Fa8jYkKFrMHtWwhU27rFbv" />
-        <Link Id="n5OfE8YBvtYo4Y0SiYhMW9" Ids="RLFPIMTAqyGI6Cu18hnYge,Z0UGq2Qr9gZM4b4X9Os4Rt" />
         <Link Id="gmHvgYTHSzax5LhWKUm5rC" Ids="YlzKU0x9176Rm3QroKfIYU,x3o5ERoYvwbhqEzyYdOvew" />
         <Link Id="aIOni0TPR7LKPiNfSi5Rmz" Ids="cG0EfdcugX33uFLimJLcfm,Vf6WX1pEp1omZobS8BflWI" />
         <Link Id="LPvKmJuld3UO3cKRzCRXIu" Ids="OXuBzjqJYuPPbUe299wrrZ,3CAf6AragOUJPXt9bNndEY" />

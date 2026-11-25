@@ -4,7 +4,8 @@
  * ships), but they are not part of the API of vlqt.h. They may change or go in any version; the only promise is the
  * one of VLQT_ABI_VERSION (protocol.h): the number changes whenever a signature, constant or struct here changes.
  * Conventions as in vlqt.h (top comment): C ABI, cdecl, UTF-8 strings, return codes of vlqt_result, vlqt_last_error,
- * buffer exports. Definitions: test/test_*.cpp.
+ * buffer exports, threads (main thread, except vlqt_test_perf_eval, vlqt_test_perf_host_eval and vlqt_test_write_image:
+ * any thread). Definitions: test/test_*.cpp.
  * The stand-in D3D11 device of the QtTexture tests is a library of its own, not part of QtNative: testkit/testkit.h. */
 #pragma once
 
@@ -93,6 +94,9 @@ VLQT_API int   vlqt_test_perf_host_eval(const vlqt_host_pump* pumps, int n, vlqt
 /* Number of pointer handlers (QQuickPointerHandler children) of item id (input handlers); VLQT_ERR_NULL_HANDLE,
  * VLQT_ERR_UNKNOWN_OBJECT. */
 VLQT_API int   vlqt_test_handler_count(vlqt_scene* window, unsigned int id);
+/* Sets the perf overlay of the window like the keys do: flags as vlqt_scene_get_overlay returns them (bit0 meter, bit1
+ * stats, bit3 freeze with the stats, bits 4..6 = page + 1, 0 = the remembered page). 0, VLQT_ERR_NULL_HANDLE. */
+VLQT_API int   vlqt_test_set_overlay(vlqt_scene* window, int flags);
 /* Busy-waits ms inside one phase of the window's next rendered frame (0 events, 1 sync, 2 render, 3 present, 4 vsync
  * wait) to check that the F5 timeline attributes a spike. 0, VLQT_ERR_NULL_HANDLE. */
 VLQT_API int   vlqt_test_perf_spike(vlqt_scene* window, int phase, float ms);

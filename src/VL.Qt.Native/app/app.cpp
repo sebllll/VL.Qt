@@ -16,19 +16,20 @@
 #include "resources/resources.h"
 #include "effects/shader_item.h"
 #include "vlqt.h"
-#include "vlstyle.h"
+#include "style/vl_style.h"
 
 #include <QtCore/QCoreApplication>
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtCore/QPointer>
+#include <QtCore/QThread>
 #include <QtGui/QGuiApplication>
 #include <QtGui/QSurfaceFormat>
-#include <QtQuick/QQuickWindow>
-#include <QtQuick/QSGRendererInterface>
 #include <QtQuickControls2/QQuickStyle>
 
+#include <atomic>
 #include <cstddef>
+#include <utility>
 #include <vector>
 
 // Layout of the structs of vlqt.h: sizes and the offset of the last field. The same numbers are in
@@ -53,15 +54,28 @@ QGuiApplication* g_app = nullptr;
 QString g_nativeDir;
 QString g_pipelineCachePath;
 
+namespace {
+
+// The Qt GUI thread, set once by vlqt_app_init; null before. Read by every export of the GUI thread (onGuiThread).
+std::atomic<Qt::HANDLE> s_guiThread{nullptr};
+
+} // namespace
+
+bool onGuiThread()
+{
+    const Qt::HANDLE gui = s_guiThread.load(std::memory_order_acquire);
+    return !gui || gui == QThread::currentThreadId();
+}
+
 } // namespace vlqt
 
-using vlqt::asWindow;
+using vlqt::asSceneHandle;
 using vlqt::fail;
 using vlqt::g_app;
 using vlqt::g_nativeDir;
 using vlqt::g_pipelineCachePath;
-using vlqt::guarded;
-using vlqt::UpdateGate;
+using vlqt::guardedGui;
+using vlqt::RenderGate;
 using vlqt::log::emitLog;
 using vlqt::PerfMonitor;
 using vlqt::registerPerfTypes;
@@ -75,7 +89,8 @@ VLQT_API int vlqt_app_get_abi_version(void)
 
 VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
 {
-    return guarded([&]() -> int {
+    // A second call from another thread than the first is VLQT_ERR_WRONG_THREAD.
+    return guardedGui("vlqt_app_init", [&]() -> int {
         if (g_app)
             return 0;
 
@@ -91,11 +106,10 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         if (!g_nativeDir.isEmpty())
             QCoreApplication::addLibraryPath(g_nativeDir + QStringLiteral("/plugins"));
 
-        // 3./4. Graphics API and default format.
-#ifdef _WIN32
-        QQuickWindow::setGraphicsApi(QSGRendererInterface::Direct3D11);
-#endif
-        // Linux: Qt's default RHI backend (OpenGL; QSG_RHI_BACKEND overrides). No other default is chosen yet.
+        // 3. Graphics API and the environment of the platform (Windows D3D11; Linux OpenGL, WSLg GPU default).
+        vlqt::platform::prepareBeforeApp();
+
+        // 4. Default format.
         QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
         fmt.setSwapInterval(0);
         // No MSAA samples here: Qt gives a swap chain max(default, window) samples
@@ -114,12 +128,8 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         if (!qEnvironmentVariableIsSet("QT_QUICK_ALLOW_SYNTHETIC_RIGHT_CLICK"))
             qputenv("QT_QUICK_ALLOW_SYNTHETIC_RIGHT_CLICK", "0");
 
-#ifndef _WIN32
-        vlqt::platform::applyWslGpuDefault();
-#endif
-
         // Qt Quick Controls style: the own base style "VLQt" on QtQuick.Templates, embedded in QtNative
-        // (qrc:/qt/qml/VLQt, CMakeLists.txt), values from the attached VlStyle (vlstyle.h). Controls without an own file
+        // (qrc:/qt/qml/VLQt, CMakeLists.txt), values from the attached VlStyle (style/vl_style.h). Controls without an own file
         // fall back to Basic, the only Qt style deployed (trim-deploy/trim-linux). The single place that picks it.
         QQuickStyle::setStyle(QStringLiteral("VLQt"));
 
@@ -127,16 +137,12 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
         static int argc = 1;
         static char* argv[] = {const_cast<char*>("vvvv"), nullptr};
         g_app = new QGuiApplication(argc, argv);
-        // The calling thread is the Qt GUI thread from here on.
+        // The calling thread is the Qt GUI thread from here on: the exports of the GUI thread check it (app/exports.h).
+        vlqt::s_guiThread.store(QThread::currentThreadId(), std::memory_order_release);
         vlqt::nameGuiThreadIfUnnamed("vlqt-gui");
         QGuiApplication::setQuitOnLastWindowClosed(false);
         emitLog(1, "vlqt.app", "QPA platform: " + QGuiApplication::platformName().toUtf8());
-#ifndef _WIN32
-        vlqt::platform::ensureFonts();
-#endif
-#ifdef _WIN32
-        vlqt::platform::installDialogCodeFilter(*g_app); // Enter/Tab/Esc/arrows past IsDialogMessage
-#endif
+        vlqt::platform::initAfterApp(*g_app); // Windows: dialog keys; Linux: fallback font
 
         // 7. Animation driver bound to vvvv time.
         vlqt::clock::install();
@@ -149,20 +155,30 @@ VLQT_API int vlqt_app_init(const char* nativeDir, vlqt_log_fn log)
 
 VLQT_API int vlqt_app_process_events_for(vlqt_scene* const* windows, int count)
 {
-    return guarded([&]() -> int {
+    return guardedGui("vlqt_app_process_events_for", [&]() -> int {
         if (!g_app)
-            return fail(VLQT_ERR_NOT_INITIALIZED, "process_events: app not initialized");
+            return fail(VLQT_ERR_NOT_INITIALIZED, "vlqt_app_process_events_for: app not initialized");
+        // A host callback inside processEvents (below) that pumps again would clear s_active and s_perf under the outer
+        // pump and end the render gate's pump early, so the rest of the outer pump would swallow update requests.
+        if (RenderGate::inPump()) {
+            static bool s_warned = false;
+            if (!std::exchange(s_warned, true))
+                emitLog(2, "vlqt.app", "vlqt_app_process_events_for called inside the pump (from a host callback in processEvents): "
+                                       "refused, the outer pump goes on (warned once)");
+            return fail(VLQT_ERR_UNSUPPORTED, "vlqt_app_process_events_for: called inside the pump, refused");
+        }
         QElapsedTimer t;
         t.start();
-        static std::vector<UpdateGate*> s_active; // reused, no allocation per pump
+        static std::vector<RenderGate*> s_active; // reused, no allocation per pump
         // processEvents also dispatches the Win32 messages of the host thread; a host callback in there (vvvv
         // restart) may destroy a window of this list, so its frame is ended only if the monitor is still alive.
         static std::vector<QPointer<PerfMonitor>> s_perf;
         s_active.clear();
         s_perf.clear();
         for (int i = 0; windows && i < count; i++)
-            if (auto* w = asWindow(windows[i])) {
-                s_active.push_back(w->gate);
+            if (auto* w = asSceneHandle(windows[i])) {
+                if (w->gate) // windows only: an offscreen scene has no gate
+                    s_active.push_back(w->gate);
                 s_perf.emplace_back(w->perf.get());
             }
         // Device lost: also before anything renders, so no window builds a new QRhi on the removed device.
@@ -170,10 +186,10 @@ VLQT_API int vlqt_app_process_events_for(vlqt_scene* const* windows, int count)
         vlqt::res::beginFrame(); // worker results + uploads within the budget, before the windows render
         vlqt::QtImageItem::afterResourceFrame(); // Image elements take new Ready content, drawn in this pump
         vlqt::ShaderItem::afterResourceFrame(); // ShaderEffects take new Ready / Failed shaders
-        UpdateGate::beginPump(!windows, s_active.data(), int(s_active.size()));
+        RenderGate::beginPump(!windows, s_active.data(), int(s_active.size()));
         QCoreApplication::sendPostedEvents();
         QCoreApplication::processEvents(QEventLoop::AllEvents);
-        UpdateGate::endPump();
+        RenderGate::endPump();
         // Every window frame of this pump has ended: no lock may outlive it (device.h, lock order).
         vlqt::device::releaseFrameLocks();
         vlqt::res::endFrame(); // frees resources without references, never in a worker
@@ -192,7 +208,7 @@ VLQT_API int vlqt_app_process_events_for(vlqt_scene* const* windows, int count)
 
 VLQT_API int vlqt_app_set_frame_budget(double ms)
 {
-    return guarded([&]() -> int {
+    return guardedGui("vlqt_app_set_frame_budget", [&]() -> int {
         if (!(ms > 0 && ms < 1000))
             return fail(VLQT_ERR_BAD_ARGUMENT, "set_frame_budget: ms must be > 0 and < 1000");
         PerfMonitor::setFrameBudget(ms);
@@ -202,7 +218,7 @@ VLQT_API int vlqt_app_set_frame_budget(double ms)
 
 VLQT_API int vlqt_app_set_pipeline_cache(const char* utf8Path)
 {
-    return guarded([&]() -> int {
+    return guardedGui("vlqt_app_set_pipeline_cache", [&]() -> int {
         g_pipelineCachePath = QString::fromUtf8(utf8Path ? utf8Path : "");
         return VLQT_OK;
     });

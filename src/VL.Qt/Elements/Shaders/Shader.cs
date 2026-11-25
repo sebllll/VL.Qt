@@ -1,6 +1,7 @@
 ﻿using System.Collections.Immutable;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
+using VL.Qt.Nodes;
 
 namespace VL.Qt.Elements
 {
@@ -16,6 +17,7 @@ namespace VL.Qt.Elements
         private readonly ImmutableArray<Element> _children = ImmutableArray<Element>.Empty;
 
         public Shader() : base(ElementType.Shader) { }
+        internal Shader(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Shader, common, feedback) { }
 
         /// <summary>On (default): with an Input the implicit size (size of the input) applies; without Input Size counts anyway.</summary>
         public bool AutoSize { get; init; } = true;

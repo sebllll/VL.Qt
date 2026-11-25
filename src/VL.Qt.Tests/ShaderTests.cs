@@ -259,6 +259,7 @@ namespace VL.Qt.Tests
         {
             var element = _node.Update(null, null, null, fragment is null ? null : new Path(fragment), null, vertex is null ? null : new Path(vertex), uniforms, true,
                 default, new Vector2(1, 1), true, Matrix.Identity, RectangleAnchor.Center, 1f, false, false, null, null,
+                true,
                 out _, out _, out error);
             return (Shader)element;
         }
@@ -361,6 +362,20 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void Node_ReservedUniformNames_AreErrors()
+        {
+            CreateNode();
+            Update("a.qsb", null, U(Uniform.Float("qt_Opacity", 1), Uniform.Float("source", 2), Uniform.Float("qt_Opacity", 3), Uniform.Float("texelSize", 4)), out var error);
+            Assert.That(error, Does.Contain("'qt_Opacity' is reserved"));
+            Assert.That(error, Does.Contain("'source' is reserved (use the Input pin)"));
+            // Said once per name; texelSize is only set by the effect chain, so a ShaderEffect may use it.
+            Assert.That(error.Split('\n').Count(l => l.Contains("is reserved")), Is.EqualTo(2));
+            Assert.That(error, Does.Not.Contain("texelSize"));
+            Update("a.qsb", null, U(Uniform.Float("a", 1)), out error);
+            Assert.That(error, Is.Empty);
+        }
+
+        [Test]
         public void Node_UniformNameProblems_AtErrorOutput()
         {
             CreateNode();
@@ -389,6 +404,7 @@ namespace VL.Qt.Tests
         {
             var element = _node.Update(null, null, fragmentCode, fragmentPath is null ? null : new Path(fragmentPath), vertexCode, null, null, true,
                 default, new Vector2(1, 1), true, Matrix.Identity, RectangleAnchor.Center, 1f, false, false, null, null,
+                true,
                 out _, out _, out error);
             return (Shader)element;
         }

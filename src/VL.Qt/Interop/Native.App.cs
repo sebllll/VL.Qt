@@ -31,6 +31,7 @@ namespace VL.Qt.Interop
 
         /// <summary>
         /// One pump: only <paramref name="windows"/>[0..count) may render (the scenes of one vvvv app); null/0 = every window.
+        /// <see cref="Result.Unsupported"/> when called inside the pump (a host callback in processEvents): the nested call does nothing.
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Result vlqt_app_process_events_for(SceneHandle[]? windows, int count);

@@ -32,11 +32,12 @@ namespace VL.Qt.Shaders
             new FilePinDescription("Debug", typeof(bool), false, "Debug overlay for this element only.", isVisible: false),
             new FilePinDescription("Interaction", typeof(Interaction), null, "Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.", isVisible: false),
             new FilePinDescription("Effect", typeof(Effect), null, "Chain of effect nodes (Blur, DropShadow, …), drawn as one effect layer on the element.", isVisible: false),
+            new FilePinDescription("Enabled", typeof(bool), true, "False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.", isVisible: false),
         };
 
         private static readonly IVLPinDescription[] s_outputs =
         {
-            new FilePinDescription("Output", typeof(Element), null, null),
+            new FilePinDescription("Output", typeof(IElement), null, null),
             new FilePinDescription("Measured Size", typeof(Vector2), Vector2.Zero, "Implicit size reported by Qt, in units (last frame).", isVisible: false),
             new FilePinDescription("Scene Bounds", typeof(RectangleF), RectangleF.Empty, "Bounds in window coordinates after layout and transform, in units (last frame).", isVisible: false),
             new FilePinDescription("Error", typeof(string), string.Empty, "Shader bake errors at runtime (with line numbers), empty if none."),
@@ -50,7 +51,7 @@ namespace VL.Qt.Shaders
             var inputs = new List<IVLPinDescription>();
             if (layout.HasInput)
             {
-                inputs.Add(new FilePinDescription("Input", typeof(Element), null, inputSummary));
+                inputs.Add(new FilePinDescription("Input", typeof(IElement), null, inputSummary));
                 inputs.Add(new FilePinDescription("Input Sampler", typeof(Sampler), null, "How the shader reads the Input (filter, wrap, mipmaps), from the Sampler node. Unconnected: as the input's layer is (Nearest, Clamp).", isVisible: false));
             }
             foreach (var pin in layout.Pins)

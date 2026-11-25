@@ -3,92 +3,155 @@
 
 #include <QtGui/QFont>
 #include <QtGui/QGuiApplication>
-#include <QtQuick/QQuickItem>
+#include <QtQml/QQmlParserStatus>
+#include <QtQuick/private/qquicktext_p.h> // QQuickText: built in C++, typed setters
+
+#include <algorithm>
 
 namespace vlqt {
 
 namespace {
 
 // ---------------------------------------------------------------------------------------------
-// Text. textFormat PlainText: the C# element is plain text, Qt's default AutoText would interpret
-// markup. minimumPixelSize 1 so fontSizeMode Fit can shrink freely; lineHeight is proportional.
-// font.* fields go through QFont read-modify-write (modifyFont).
+// Text: a QQuickText built in C++, written through its typed setters (no QVariant per SET). A font field is a copy of
+// the item's QFont (implicitly shared) with the one field changed, written back only when the field differs.
 
-constexpr const char* kTextQml =
-    "import QtQuick\nText { textFormat: Text.PlainText; minimumPixelSize: 1; lineHeightMode: Text.ProportionalHeight }\n";
-
-/* Read-modify-write of a QFont property (rp.prop = "font"). */
-template <class F>
-bool modifyFont(QObject* item, const ResolvedProp& rp, F&& f, std::string& err)
+QQuickItem* makeText()
 {
-    QFont font = rp.prop.read(item).value<QFont>();
-    f(font);
-    if (!rp.prop.write(item, QVariant::fromValue(font))) {
-        err = "writing QML property 'font' failed";
-        return false;
-    }
+    // The QML creation order, as for a Text {} element: classBegin, properties, componentComplete (both are protected
+    // in the class, public in QQmlParserStatus). Text lays out only after componentComplete.
+    auto* t = new QQuickText();
+    QQmlParserStatus* status = t;
+    status->classBegin();
+    // PlainText: the C# element is plain text, Qt's default AutoText would interpret markup. minimumPixelSize 1 lets
+    // fontSizeMode Fit shrink freely; lineHeight is proportional.
+    t->setTextFormat(QQuickText::PlainText);
+    t->setMinimumPixelSize(1);
+    t->setLineHeightMode(QQuickText::ProportionalHeight);
+    status->componentComplete();
+    return t;
+}
+
+QQuickText* text(ElementEntry& n) { return static_cast<QQuickText*>(n.item); }
+
+bool setText(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
+{
+    text(n)->setText(toQString(v));
     return true;
 }
 
-bool setFontFamily(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setColor(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
+{
+    text(n)->setColor(toColor(v.f));
+    return true;
+}
+
+bool setFontFamily(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     // Empty = default family (QGuiApplication font, like a fresh Text).
     const QString family = v.utf8.isEmpty() ? QGuiApplication::font().family() : toQString(v);
     if (!v.utf8.isEmpty())
         warnMissingFontFamily(family);
-    return modifyFont(n.item, rp, [&](QFont& f) { f.setFamily(family); }, err);
+    QFont font = text(n)->font();
+    if (font.family() != family) {
+        font.setFamily(family);
+        text(n)->setFont(font);
+    }
+    return true;
 }
 
-bool setFontPixelSize(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setFontPixelSize(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
-    // QFont pixel sizes are integers; fractional sizes are rounded (scale via TRANSFORM for smooth zooms).
+    // QFont pixel sizes are integers; fractional sizes are rounded (scale via TRANSFORM for smooth zooms). Clamped
+    // before the rounding: qRound of a float above INT_MAX is undefined.
     if (!(v.f[0] > 0)) {
         err = "font size must be > 0";
         return false;
     }
-    const int px = qMax(1, qRound(v.f[0]));
-    return modifyFont(n.item, rp, [&](QFont& f) { f.setPixelSize(px); }, err);
+    const int px = qMax(1, qRound(std::min(v.f[0], 1e6f)));
+    QFont font = text(n)->font();
+    if (font.pixelSize() != px) {
+        font.setPixelSize(px);
+        text(n)->setFont(font);
+    }
+    return true;
 }
 
-bool setFontWeight(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setFontWeight(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     if (v.i < 1 || v.i > 1000) {
         err = "font weight must be 1..1000";
         return false;
     }
-    return modifyFont(n.item, rp, [&](QFont& f) { f.setWeight(QFont::Weight(v.i)); }, err);
+    QFont font = text(n)->font();
+    if (font.weight() != QFont::Weight(v.i)) {
+        font.setWeight(QFont::Weight(v.i));
+        text(n)->setFont(font);
+    }
+    return true;
 }
 
-bool setFontItalic(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setFontItalic(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
-    return modifyFont(n.item, rp, [&](QFont& f) { f.setItalic(v.b); }, err);
+    QFont font = text(n)->font();
+    if (font.italic() != v.b) {
+        font.setItalic(v.b);
+        text(n)->setFont(font);
+    }
+    return true;
 }
 
-bool setLetterSpacing(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
+bool setLetterSpacing(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
-    return modifyFont(n.item, rp, [&](QFont& f) { f.setLetterSpacing(QFont::AbsoluteSpacing, v.f[0]); }, err);
+    QFont font = text(n)->font();
+    if (font.letterSpacingType() != QFont::AbsoluteSpacing || font.letterSpacing() != v.f[0]) {
+        font.setLetterSpacing(QFont::AbsoluteSpacing, v.f[0]);
+        text(n)->setFont(font);
+    }
+    return true;
+}
+
+bool setLineHeight(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
+{
+    text(n)->setLineHeight(v.f[0]);
+    return true;
+}
+
+/* i32 enum property of QQuickText: only the listed Qt values are accepted. */
+template <class E, void (QQuickText::*Set)(E), int... Allowed>
+bool setTextEnum(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
+{
+    if (!checkEnum<Allowed...>(v, err))
+        return false;
+    (text(n)->*Set)(static_cast<E>(v.i));
+    return true;
 }
 
 std::vector<PropDef> textProps()
 {
     return {
-        {VLQT_PROPERTY_TEXT, VLQT_VALUE_TYPE_STRING, setQmlString, "text"},
-        {VLQT_PROPERTY_FONT_FAMILY, VLQT_VALUE_TYPE_STRING, setFontFamily, "font"},
-        {VLQT_PROPERTY_FONT_SIZE, VLQT_VALUE_TYPE_F32, setFontPixelSize, "font"},
-        {VLQT_PROPERTY_FONT_WEIGHT, VLQT_VALUE_TYPE_I32, setFontWeight, "font"},
-        {VLQT_PROPERTY_FONT_ITALIC, VLQT_VALUE_TYPE_BOOL, setFontItalic, "font"},
-        {VLQT_PROPERTY_COLOR, VLQT_VALUE_TYPE_COLOR, setQmlColor, "color"},
+        {VLQT_PROPERTY_TEXT, VLQT_VALUE_TYPE_STRING, setText, nullptr},
+        {VLQT_PROPERTY_FONT_FAMILY, VLQT_VALUE_TYPE_STRING, setFontFamily, nullptr},
+        {VLQT_PROPERTY_FONT_SIZE, VLQT_VALUE_TYPE_F32, setFontPixelSize, nullptr},
+        {VLQT_PROPERTY_FONT_WEIGHT, VLQT_VALUE_TYPE_I32, setFontWeight, nullptr},
+        {VLQT_PROPERTY_FONT_ITALIC, VLQT_VALUE_TYPE_BOOL, setFontItalic, nullptr},
+        {VLQT_PROPERTY_COLOR, VLQT_VALUE_TYPE_COLOR, setColor, nullptr},
         // Qt::AlignLeft/Right/HCenter/Justify, Qt::AlignTop/Bottom/VCenter
-        {VLQT_PROPERTY_HORIZONTAL_ALIGNMENT, VLQT_VALUE_TYPE_I32, setQmlEnum<Qt::AlignLeft, Qt::AlignRight, Qt::AlignHCenter, Qt::AlignJustify>, "horizontalAlignment"},
-        {VLQT_PROPERTY_VERTICAL_ALIGNMENT, VLQT_VALUE_TYPE_I32, setQmlEnum<Qt::AlignTop, Qt::AlignBottom, Qt::AlignVCenter>, "verticalAlignment"},
+        {VLQT_PROPERTY_HORIZONTAL_ALIGNMENT, VLQT_VALUE_TYPE_I32,
+         setTextEnum<QQuickText::HAlignment, &QQuickText::setHAlign, Qt::AlignLeft, Qt::AlignRight, Qt::AlignHCenter, Qt::AlignJustify>, nullptr},
+        {VLQT_PROPERTY_VERTICAL_ALIGNMENT, VLQT_VALUE_TYPE_I32,
+         setTextEnum<QQuickText::VAlignment, &QQuickText::setVAlign, Qt::AlignTop, Qt::AlignBottom, Qt::AlignVCenter>, nullptr},
         // Text.NoWrap/WordWrap/WrapAnywhere/Wrap
-        {VLQT_PROPERTY_WRAP_MODE, VLQT_VALUE_TYPE_I32, setQmlEnum<0, 1, 3, 4>, "wrapMode"},
+        {VLQT_PROPERTY_WRAP_MODE, VLQT_VALUE_TYPE_I32,
+         setTextEnum<QQuickText::WrapMode, &QQuickText::setWrapMode, QQuickText::NoWrap, QQuickText::WordWrap, QQuickText::WrapAnywhere, QQuickText::Wrap>, nullptr},
         // Text.ElideLeft/Right/Middle/None
-        {VLQT_PROPERTY_ELIDE, VLQT_VALUE_TYPE_I32, setQmlEnum<0, 1, 2, 3>, "elide"},
-        {VLQT_PROPERTY_LINE_HEIGHT, VLQT_VALUE_TYPE_F32, setQmlReal, "lineHeight"},
-        {VLQT_PROPERTY_LETTER_SPACING, VLQT_VALUE_TYPE_F32, setLetterSpacing, "font"},
+        {VLQT_PROPERTY_ELIDE, VLQT_VALUE_TYPE_I32,
+         setTextEnum<QQuickText::TextElideMode, &QQuickText::setElideMode, QQuickText::ElideLeft, QQuickText::ElideRight, QQuickText::ElideMiddle, QQuickText::ElideNone>, nullptr},
+        {VLQT_PROPERTY_LINE_HEIGHT, VLQT_VALUE_TYPE_F32, setLineHeight, nullptr},
+        {VLQT_PROPERTY_LETTER_SPACING, VLQT_VALUE_TYPE_F32, setLetterSpacing, nullptr},
         // Text.FixedSize/HorizontalFit/VerticalFit/Fit
-        {VLQT_PROPERTY_FONT_SIZE_MODE, VLQT_VALUE_TYPE_I32, setQmlEnum<0, 1, 2, 3>, "fontSizeMode"},
+        {VLQT_PROPERTY_FONT_SIZE_MODE, VLQT_VALUE_TYPE_I32,
+         setTextEnum<QQuickText::FontSizeMode, &QQuickText::setFontSizeMode, QQuickText::FixedSize, QQuickText::HorizontalFit, QQuickText::VerticalFit, QQuickText::Fit>, nullptr},
     };
 }
 
@@ -96,7 +159,7 @@ std::vector<PropDef> textProps()
 
 TypeDef textType()
 {
-    return {VLQT_ELEMENT_TYPE_TEXT, "TEXT", kTextQml, textProps()};
+    return {VLQT_ELEMENT_TYPE_TEXT, "TEXT", nullptr, textProps(), makeText};
 }
 
 } // namespace vlqt
