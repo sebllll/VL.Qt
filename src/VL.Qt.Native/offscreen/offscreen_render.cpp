@@ -60,9 +60,9 @@ void beginAndSync(OffscreenScene* s)
 {
     try {
         {
-            vlqt::device::ContextLock lock(s->qtContext);
+            vlqt::device::ContextLock lock(s->qtContext.Get());
             // Before beginFrame: QRhi D3D11 submits the frame's commands to the immediate context only in endFrame.
-            s->qtContext->Wait(s->qtRead, s->readValue);
+            s->qtContext->Wait(s->qtRead.Get(), s->readValue);
             s->renderControl->beginFrame();
         }
         s->renderControl->sync();
@@ -82,17 +82,17 @@ void renderAndSignal(OffscreenScene* s, unsigned long long writeValue)
     } catch (...) {
         qCWarning(lcOffscreen, "offscreen scene %p: render failed", static_cast<void*>(s));
     }
-    vlqt::device::ContextLock lock(s->qtContext);
+    vlqt::device::ContextLock lock(s->qtContext.Get());
     try {
         s->renderControl->endFrame();
     } catch (...) {
         qCWarning(lcOffscreen, "offscreen scene %p: endFrame failed", static_cast<void*>(s));
     }
     if (s->linearPass.source)
-        vlqt::linear_pass::run(s->qtContext, s->linearPass);
+        vlqt::linear_pass::run(s->qtContext.Get(), s->linearPass);
     // TODO: GPU time of the frame: diagnostics/perf_monitor.cpp afterRendering reads it only from a swap chain; a scene has
     // renderControl->commandBuffer() (and its QRhi needs EnableTimestamps).
-    s->qtContext->Signal(s->qtWrite, writeValue);
+    s->qtContext->Signal(s->qtWrite.Get(), writeValue);
     // Submits the frame and the signal; without it the foreign GPU would wait forever.
     s->qtContext->Flush();
     s->renders++;
@@ -109,7 +109,7 @@ void renderAndSignal(OffscreenScene* s, unsigned long long writeValue)
 void renderScenes(const std::vector<OffscreenScene*>& scenes, ID3D11DeviceContext4* foreign)
 {
     for (OffscreenScene* s : scenes) {
-        foreign->Signal(s->foreignRead, ++s->readValue);
+        foreign->Signal(s->foreignRead.Get(), ++s->readValue);
         s->renderControl->polishItems();
         // Polish's own changes are in this frame; a change made while syncing or rendering renders next frame.
         s->dirty = false;
@@ -143,7 +143,7 @@ void renderScenes(const std::vector<OffscreenScene*>& scenes, ID3D11DeviceContex
     for (const ExecutorBatch& b : s_batches)
         if (b.used && !b.software)
             for (const auto& [s, writeValue] : b.lists[b.current])
-                foreign->Wait(s->foreignWrite, writeValue);
+                foreign->Wait(s->foreignWrite.Get(), writeValue);
     for (ExecutorBatch& b : s_batches) {
         if (!b.used)
             continue;
@@ -162,7 +162,7 @@ void renderScenes(const std::vector<OffscreenScene*>& scenes, ID3D11DeviceContex
     for (const ExecutorBatch& b : s_batches)
         if (b.used && b.software)
             for (const auto& [s, writeValue] : b.lists[b.current])
-                foreign->Wait(s->foreignWrite, writeValue);
+                foreign->Wait(s->foreignWrite.Get(), writeValue);
 }
 
 } // namespace

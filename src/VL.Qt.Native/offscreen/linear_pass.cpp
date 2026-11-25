@@ -5,6 +5,7 @@
 #include <wrl/client.h>
 
 #include <cstring>
+#include <utility>
 
 namespace vlqt::linear_pass {
 
@@ -62,14 +63,6 @@ const Bytecode& bytecode()
     return compiled;
 }
 
-template <class T> void releaseCom(T*& p)
-{
-    if (p) {
-        p->Release();
-        p = nullptr;
-    }
-}
-
 } // namespace
 
 bool isLinear(DXGI_FORMAT format)
@@ -81,7 +74,7 @@ bool isLinear(DXGI_FORMAT format)
 HRESULT create(ID3D11Device* device, ID3D11Texture2D* target, DXGI_FORMAT targetFormat, unsigned width, unsigned height,
                Pass& pass, const char*& what)
 {
-    release(pass);
+    pass = {};
     const Bytecode& code = bytecode();
     HRESULT hr = code.hr;
     if (FAILED(hr)) {
@@ -135,12 +128,12 @@ HRESULT create(ID3D11Device* device, ID3D11Texture2D* target, DXGI_FORMAT target
         return hr;
     }
 
-    pass.source = source.Detach();
-    pass.sourceView = sourceView.Detach();
-    pass.targetView = targetView.Detach();
-    pass.vertexShader = vertexShader.Detach();
-    pass.pixelShader = pixelShader.Detach();
-    pass.rasterizer = rasterizer.Detach();
+    pass.source = std::move(source);
+    pass.sourceView = std::move(sourceView);
+    pass.targetView = std::move(targetView);
+    pass.vertexShader = std::move(vertexShader);
+    pass.pixelShader = std::move(pixelShader);
+    pass.rasterizer = std::move(rasterizer);
     pass.viewport = { 0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f };
     return S_OK;
 }
@@ -149,34 +142,24 @@ HRESULT create(ID3D11Device* device, ID3D11Texture2D* target, DXGI_FORMAT target
 // for each pass and draw.
 void run(ID3D11DeviceContext* context, const Pass& pass)
 {
-    context->OMSetRenderTargets(1, &pass.targetView, nullptr);
+    context->OMSetRenderTargets(1, pass.targetView.GetAddressOf(), nullptr);
     context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
     context->OMSetDepthStencilState(nullptr, 0);
-    context->RSSetState(pass.rasterizer);
+    context->RSSetState(pass.rasterizer.Get());
     context->RSSetViewports(1, &pass.viewport);
     context->IASetInputLayout(nullptr);
     context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    context->VSSetShader(pass.vertexShader, nullptr, 0);
+    context->VSSetShader(pass.vertexShader.Get(), nullptr, 0);
     context->HSSetShader(nullptr, nullptr, 0);
     context->DSSetShader(nullptr, nullptr, 0);
     context->GSSetShader(nullptr, nullptr, 0);
-    context->PSSetShader(pass.pixelShader, nullptr, 0);
-    context->PSSetShaderResources(0, 1, &pass.sourceView);
+    context->PSSetShader(pass.pixelShader.Get(), nullptr, 0);
+    context->PSSetShaderResources(0, 1, pass.sourceView.GetAddressOf());
     context->Draw(3, 0);
     // Qt renders into source next frame: it must not stay bound as a shader resource.
     ID3D11ShaderResourceView* noView = nullptr;
     context->PSSetShaderResources(0, 1, &noView);
     context->OMSetRenderTargets(0, nullptr, nullptr);
-}
-
-void release(Pass& pass)
-{
-    releaseCom(pass.rasterizer);
-    releaseCom(pass.pixelShader);
-    releaseCom(pass.vertexShader);
-    releaseCom(pass.targetView);
-    releaseCom(pass.sourceView);
-    releaseCom(pass.source);
 }
 
 } // namespace vlqt::linear_pass

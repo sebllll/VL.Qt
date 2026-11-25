@@ -6,27 +6,26 @@
 #ifdef _WIN32
 
 #include <d3d11.h>
+#include <d3d12.h>
+#include <wrl/client.h>
 
 #include <vector>
-
-struct ID3D12CommandQueue;
-struct ID3D12Device;
 
 namespace vlqt::device::test {
 
 // The D3D12 device and queue under a D3D11On12 device, one reference each; empty for a plain D3D11 device.
 struct On12
 {
-    ID3D12Device* dev12 = nullptr;
-    ID3D12CommandQueue* queue12 = nullptr;
+    Microsoft::WRL::ComPtr<ID3D12Device> dev12;
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue> queue12;
 };
 
 // VLQT_TEST_D3D11ON12=1 in the process environment (read at every device creation).
 bool isOn12Requested();
 
 // D3D12 device + direct queue on adapter, D3D11 device and immediate context on top (D3D11On12). d3d12.dll is loaded
-// dynamically: no link dependency in the shipped QtNative. On success dev, ctx and out hold one reference each; on a
-// failure all stay null. DXGI_ERROR_DEVICE_REMOVED: only a removed D3D12 singleton was available (dropWindowRhisOn).
+// dynamically: no link dependency in the shipped QtNative. On success dev, ctx and out hold one reference each (dev and
+// ctx must be empty on entry); on a failure all stay null. DXGI_ERROR_DEVICE_REMOVED: only a removed D3D12 singleton was available (dropWindowRhisOn).
 HRESULT createOn12(IDXGIAdapter1* adapter, UINT flags, ID3D11Device** dev, ID3D11DeviceContext** ctx,
     D3D_FEATURE_LEVEL* level, On12& out);
 

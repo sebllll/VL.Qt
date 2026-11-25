@@ -8,6 +8,7 @@
 
 #ifdef Q_OS_WIN
 #include <dxgi1_5.h>
+#include <wrl/client.h>
 #endif
 
 Q_LOGGING_CATEGORY(lcGpu, "vlqt.gpu")
@@ -24,16 +25,12 @@ bool dxgiAllowTearingSupported()
 {
     static const bool supported = [] {
         bool result = false;
-        IDXGIFactory1* factory = nullptr;
-        if (SUCCEEDED(CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&factory)))) {
-            IDXGIFactory5* factory5 = nullptr;
-            if (SUCCEEDED(factory->QueryInterface(__uuidof(IDXGIFactory5), reinterpret_cast<void**>(&factory5)))) {
-                BOOL allowTearing = FALSE;
-                if (SUCCEEDED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing))))
-                    result = allowTearing != FALSE;
-                factory5->Release();
-            }
-            factory->Release();
+        Microsoft::WRL::ComPtr<IDXGIFactory1> factory;
+        Microsoft::WRL::ComPtr<IDXGIFactory5> factory5;
+        if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(factory.GetAddressOf()))) && SUCCEEDED(factory.As(&factory5))) {
+            BOOL allowTearing = FALSE;
+            if (SUCCEEDED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing))))
+                result = allowTearing != FALSE;
         }
         return result;
     }();
