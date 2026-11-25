@@ -257,6 +257,96 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void Hover_SeveralIds_OrOverOccurrences_OrderDoesNotMatter()
+        {
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint a = reg.Acquire(new FeedbackSlot(feedback, 0));
+            uint b = reg.Acquire(new FeedbackSlot(feedback, 0), primary: false);
+
+            // The pointer moves from A to B within one poll: "B enter, A leave" and "A leave, B enter" both end hovered.
+            reg.Dispatch(new Poll().Hover(a, true).Bytes);
+            reg.Dispatch(new Poll().Hover(b, true).Hover(a, false).Bytes);
+            Assert.That(feedback.IsHovered(), Is.True, "B enter, A leave");
+            reg.Dispatch(new Poll().Hover(b, false).Hover(a, true).Bytes);
+            reg.Dispatch(new Poll().Hover(a, false).Hover(b, true).Bytes);
+            Assert.That(feedback.IsHovered(), Is.True, "A leave, B enter");
+
+            reg.Dispatch(new Poll().Hover(b, false).Bytes);
+            Assert.That(feedback.IsHovered(), Is.False);
+            Assert.That(feedback[0].HoverCount, Is.Zero);
+
+            // Repeated records of one id count once.
+            reg.Dispatch(new Poll().Hover(a, true).Hover(a, true).Hover(b, true).Bytes);
+            reg.Dispatch(new Poll().Hover(a, false).Hover(a, false).Bytes);
+            Assert.That(feedback.IsHovered(), Is.True, "B is still hovered");
+            Assert.That(feedback[0].HoverCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Press_SeveralIds_OrOverOccurrences()
+        {
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint a = reg.Acquire(new FeedbackSlot(feedback, 0));
+            uint b = reg.Acquire(new FeedbackSlot(feedback, 0), primary: false);
+
+            reg.Dispatch(new Poll().Press(b, true).Press(a, true).Bytes);
+            reg.Dispatch(new Poll().Press(a, false).Bytes);
+            Assert.That(feedback.IsPressed(), Is.True, "B still pressed");
+            reg.Dispatch(new Poll().Press(b, false).Bytes);
+            Assert.That(feedback.IsPressed(), Is.False);
+        }
+
+        [Test]
+        public void Release_OneOfTwoHoveredIds_SlotStaysHoveredUntilTheOtherLetsGo()
+        {
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint a = reg.Acquire(new FeedbackSlot(feedback, 0)); // primary
+            uint b = reg.Acquire(new FeedbackSlot(feedback, 0), primary: false);
+            reg.Dispatch(new Poll().Hover(a, true).Press(a, true).Hover(b, true).Bytes);
+
+            reg.Release(a);
+            Assert.That(feedback.IsHovered(), Is.True, "B is hovered");
+            Assert.That(feedback.IsPressed(), Is.False, "only A was pressed");
+
+            reg.Release(b);
+            Assert.That(feedback.IsHovered(), Is.False);
+            Assert.That(feedback[0].HoverCount, Is.Zero);
+            Assert.That(feedback[0].PressCount, Is.Zero);
+        }
+
+        [Test]
+        public void Demotion_KeepsHoverOfTheDemotedId()
+        {
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint a = reg.Acquire(new FeedbackSlot(feedback, 0));
+            reg.Dispatch(new Poll().Hover(a, true).Bytes);
+
+            reg.SetPrimary(a, false); // its Qt object is still hovered
+            Assert.That(feedback.IsHovered(), Is.True);
+            reg.Dispatch(new Poll().Hover(a, false).Bytes);
+            Assert.That(feedback.IsHovered(), Is.False);
+        }
+
+        [Test]
+        public void Clear_TakesBackHoverAndPress_AndDropsLateEvents()
+        {
+            var reg = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint a = reg.Acquire(new FeedbackSlot(feedback, 0));
+            uint b = reg.Acquire(new FeedbackSlot(feedback, 0), primary: false);
+            reg.Dispatch(new Poll().Hover(a, true).Hover(b, true).Press(b, true).Bytes);
+
+            reg.Clear();
+            Assert.That(feedback.IsHovered() || feedback.IsPressed(), Is.False);
+            Assert.That(reg.Count, Is.Zero);
+            Assert.That(reg.Dispatch(new Poll().Hover(a, true).Bytes).Ignored, Is.EqualTo(1));
+        }
+
+        [Test]
         public void ApplyError_TakesPrecedence_SurvivesRelease()
         {
             var reg = new FeedbackRouter();

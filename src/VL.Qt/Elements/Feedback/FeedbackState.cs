@@ -20,6 +20,13 @@ namespace VL.Qt.Elements
     {
         public bool IsHovered { get; set; }
         public bool IsPressed { get; set; }
+
+        /// <summary>Number of feedback ids bound to this slot whose Qt object is hovered; <see cref="IsHovered"/> is true while it is above 0.</summary>
+        internal int HoverCount { get; set; }
+
+        /// <summary>Number of feedback ids bound to this slot whose Qt object is pressed; <see cref="IsPressed"/> is true while it is above 0.</summary>
+        internal int PressCount { get; set; }
+
         public Vector2 PointerPosition { get; set; }
         public Vector2 MeasuredSize { get; set; }
         public RectangleF SceneBounds { get; set; }

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using VL.Lib.Collections;
 using Stride.Core.Mathematics;
@@ -15,30 +17,40 @@ namespace VL.Qt.Reconciliation
     /// <para>
     /// Ids are counted up and not reused (wrap-around skips 0 and live ids): events QtNative still
     /// sends for a released id (e.g. EVENT_HOVER 0 / EVENT_PRESS 0 after an unbind, 1 frame later) are dropped
-    /// instead of landing in another slot. Releasing resets hover/press of the slot right away
-    /// (docs/design/events.md); this also holds for the ids of input handlers (a removed Hover node's
-    /// channel falls back to not hovered). Lives with the reconciler (one per window), so a restarted app (F8/F5)
+    /// instead of landing in another slot. Lives with the reconciler (one per window), so a restarted app (F8/F5)
     /// starts empty. Main thread only, allocation-free in the steady state.
     /// </para>
     /// <para>
     /// Several ids may point to the same slot (one element at several places of the tree, one Qt object and
-    /// id per occurrence). Only the primary id (the first occurrence in traversal order, see
-    /// <see cref="OccurrenceRegistry"/>) writes state values (Measured, SceneBounds, Media, Error) and resets the slot when
-    /// it is released or demoted; events (Click, Value) count from every id. Ids of input handlers are always primary.
+    /// id per occurrence). Hover and press combine with OR (docs/design/events.md): every id keeps its own bits, the slot
+    /// counts them (<see cref="FeedbackState.HoverCount"/>, <see cref="FeedbackState.PressCount"/>) and is hovered or pressed
+    /// while a count is above 0. Releasing an id takes its bits back right away (a removed Hover node's channel falls back to
+    /// not hovered; another occurrence that is still hovered keeps the slot hovered). Events (Click, Value) count from every
+    /// id. Only the primary id (the first occurrence in traversal order, see <see cref="OccurrenceRegistry"/>) writes state
+    /// values (Measured, SceneBounds, Media, Error) and resets the slot's other state when it is released or demoted. Ids of
+    /// input handlers are always primary.
     /// </para>
     /// </summary>
     internal sealed class FeedbackRouter
     {
-        private readonly struct Binding
+        private struct Binding
         {
             public Binding(FeedbackSlot slot, bool primary)
             {
                 Slot = slot;
                 Primary = primary;
+                Hovered = false;
+                Pressed = false;
             }
 
             public FeedbackSlot Slot { get; }
-            public bool Primary { get; }
+            public bool Primary { get; set; }
+
+            /// <summary>This id's hover bit, counted in <see cref="FeedbackState.HoverCount"/>.</summary>
+            public bool Hovered { get; set; }
+
+            /// <summary>This id's press bit, counted in <see cref="FeedbackState.PressCount"/>.</summary>
+            public bool Pressed { get; set; }
         }
 
         private readonly Dictionary<uint, Binding> _slots = new();
@@ -69,35 +81,52 @@ namespace VL.Qt.Reconciliation
 
         /// <summary>
         /// Demotes <paramref name="feedbackId"/> to a further occurrence (false) or promotes it (true); 0 / unknown: no-op.
-        /// A demotion resets the slot like <see cref="Release"/>: another occurrence becomes primary with a new feedbackId
-        /// and BIND, and QtNative sends only what differs from nothing (an error that is gone would never be cleared).
+        /// A demotion resets the slot's state like <see cref="Release"/>: another occurrence becomes primary with a new
+        /// feedbackId and BIND, and QtNative sends only what differs from nothing (an error that is gone would never be
+        /// cleared). The id keeps its hover and press bits, its Qt object is still hovered or pressed.
         /// The reconciler promotes by a new feedbackId and BIND instead, so QtNative sends the current state again.
         /// </summary>
         public void SetPrimary(uint feedbackId, bool primary)
         {
-            if (feedbackId == 0 || !_slots.TryGetValue(feedbackId, out var b) || b.Primary == primary)
+            ref var b = ref CollectionsMarshal.GetValueRefOrNullRef(_slots, feedbackId);
+            if (feedbackId == 0 || Unsafe.IsNullRef(ref b) || b.Primary == primary)
                 return;
-            _slots[feedbackId] = new Binding(b.Slot, primary);
+            b.Primary = primary;
             if (!primary)
-                ResetPointerState(b.Slot);
+                ResetPrimaryState(b.Slot);
         }
 
         /// <summary>
-        /// Frees <paramref name="feedbackId"/> (0 / unknown: no-op). A primary feedbackId also clears hover/press/active, the
-        /// pending taps and wheel and the error of its slot; a further occurrence's feedbackId leaves the slot as it is.
+        /// Frees <paramref name="feedbackId"/> (0 / unknown: no-op) and takes back its hover and press bits: the slot stays
+        /// hovered or pressed while another id still holds one. A primary feedbackId also clears active, the pending taps and
+        /// wheel and the error of its slot; a further occurrence's feedbackId leaves those as they are.
         /// </summary>
         public void Release(uint feedbackId)
         {
-            if (feedbackId != 0 && _slots.Remove(feedbackId, out var b) && b.Primary)
-                ResetPointerState(b.Slot);
+            if (feedbackId != 0 && _slots.Remove(feedbackId, out var b))
+                Free(b);
         }
 
-        private static void ResetPointerState(FeedbackSlot slot)
+        /// <summary>Takes back the bits of a freed <paramref name="b"/>; a primary one also resets the slot's other state.</summary>
+        private static void Free(in Binding b)
+        {
+            if (!b.Slot.Feedback!.TryGet(b.Slot.Index, out var state))
+                return;
+            if (b.Hovered)
+                state.HoverCount--;
+            if (b.Pressed)
+                state.PressCount--;
+            state.IsHovered = state.HoverCount > 0;
+            state.IsPressed = state.PressCount > 0;
+            if (b.Primary)
+                ResetPrimaryState(b.Slot);
+        }
+
+        /// <summary>Resets what only the primary id writes or the handler owns (not hover and press, which follow the bits of all ids).</summary>
+        private static void ResetPrimaryState(FeedbackSlot slot)
         {
             if (slot.Feedback!.TryGet(slot.Index, out var state))
             {
-                state.IsHovered = false;
-                state.IsPressed = false;
                 state.IsActive = false;
                 state.TapCount = 0;
                 state.PendingLongPresses = 0;
@@ -117,19 +146,14 @@ namespace VL.Qt.Reconciliation
         /// </summary>
         public SpaceMapping Mapping { get; set; } = SpaceMapping.Default;
 
-        public bool TryResolve(uint feedbackId, out FeedbackSlot slot)
-        {
-            var found = _slots.TryGetValue(feedbackId, out var b);
-            slot = b.Slot;
-            return found;
-        }
-
-        /// <summary>Frees all ids (renderer dispose).</summary>
+        /// <summary>
+        /// Frees all ids at once, like <see cref="Release"/> for each, for <see cref="Reconciler.Discard"/>, which does not walk the
+        /// mirror. A disposed renderer releases its ids one by one with the mirror (<c>Reconciler.Clear</c>).
+        /// </summary>
         public void Clear()
         {
             foreach (var b in _slots.Values)
-                if (b.Primary)
-                    ResetPointerState(b.Slot);
+                Free(b);
             _slots.Clear();
         }
 
@@ -147,8 +171,8 @@ namespace VL.Qt.Reconciliation
             var r = new EventReader(poll);
             while (r.MoveNext())
             {
-                if (_slots.TryGetValue(r.FeedbackId, out var b) && (b.Primary || !IsState(r.Event))
-                    && Apply(ref r, b.Slot.Feedback!, b.Slot.Index, Mapping))
+                ref var b = ref CollectionsMarshal.GetValueRefOrNullRef(_slots, r.FeedbackId);
+                if (!Unsafe.IsNullRef(ref b) && (b.Primary || !IsState(r.Event)) && Apply(ref r, ref b, Mapping))
                     applied++;
                 else
                     ignored++;
@@ -239,8 +263,10 @@ namespace VL.Qt.Reconciliation
         }
 
         /// <summary>Validates the record first, so ignored records do not grow the feedback's slot list.</summary>
-        private static bool Apply(ref EventReader r, ElementFeedback feedback, int index, in SpaceMapping mapping)
+        private static bool Apply(ref EventReader r, ref Binding b, in SpaceMapping mapping)
         {
+            var feedback = b.Slot.Feedback!;
+            int index = b.Slot.Index;
             int len = r.Payload.Length;
             switch (r.Event)
             {
@@ -254,11 +280,25 @@ namespace VL.Qt.Reconciliation
                     return true;
                 case Protocol.EventId.Hover:
                     if (len < 1) return false;
-                    feedback[index].IsHovered = r.Payload[0] != 0;
+                    var hs = feedback[index];
+                    bool hovered = r.Payload[0] != 0;
+                    if (b.Hovered != hovered)
+                    {
+                        b.Hovered = hovered;
+                        hs.HoverCount += hovered ? 1 : -1;
+                    }
+                    hs.IsHovered = hs.HoverCount > 0;
                     return true;
                 case Protocol.EventId.Press:
                     if (len < 1) return false;
-                    feedback[index].IsPressed = r.Payload[0] != 0;
+                    var ps = feedback[index];
+                    bool pressed = r.Payload[0] != 0;
+                    if (b.Pressed != pressed)
+                    {
+                        b.Pressed = pressed;
+                        ps.PressCount += pressed ? 1 : -1;
+                    }
+                    ps.IsPressed = ps.PressCount > 0;
                     return true;
                 case Protocol.EventId.Click:
                     if (len < 4) return false;
