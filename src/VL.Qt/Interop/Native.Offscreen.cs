@@ -39,8 +39,8 @@ namespace VL.Qt.Interop
             => vlqt_offscreen_render_batch(context, in MemoryMarshal.GetReference(scenes), scenes.Length, driverSeconds);
 
         /// <summary>
-        /// Where offscreen scenes created afterwards render: 0 = main thread, n = 1 … 16 Qt render threads (without the call:
-        /// VLQT_OFFSCREEN_THREAD, unset = 1). May be called any time; the pool only grows.
+        /// Where offscreen scenes created afterwards render (pin Render Threads): 0 = main thread, n = 1 … 16 Qt render
+        /// threads (without the call: 1). May be called any time; the pool only grows.
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Result vlqt_offscreen_set_render_threads(int count);

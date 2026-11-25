@@ -2294,13 +2294,14 @@ VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | ctor | order Node Context
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | Stride.Rendering.IGraphicsRendererBase
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | attr Fragment
-VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | order Error, Input, Space, Clear Color, Enabled, Debug, Output
+VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | order Error, Input, Space, Clear Color, Enabled, Debug, Render Threads, Output
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | pin Clear Color | in Stride.Core.Mathematics.Color4 = 0, 0, 0, 0 | (clearColor)
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | pin Debug | in bool = false | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | pin Enabled | in bool = true | (enabled)
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | pin Error | out string | (error)
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | pin Input | in VL.Qt.Elements.IElement | (input)
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | pin Output | out Stride.Rendering.IGraphicsRendererBase | Pin(Name = "Output") | (return)
+VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | pin Render Threads | in int = 1 | Pin(Name = "Render Threads", Visibility = PinVisibility.Optional) | (renderThreads)
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | method Update | pin Space | in VL.Qt.Space = DIPTopLeft | (space)
 VL.Qt.Stride | VL.Qt.Stride.QtRendererNode | type sealed class : Stride.Rendering.RendererBase
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | attr ProcessNode(Name = "QtTexture", Category = "Stride.Textures.Source")
@@ -2310,7 +2311,7 @@ VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | ctor | order Node Context
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | implements System.IDisposable
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Dispose | void
-VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | order Output, Error, Perf, Input, Size, Space, Clear Color, Clear, Format, Enabled, Input Notifications, Debug, Multisample Count
+VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | order Output, Error, Perf, Input, Size, Space, Clear Color, Clear, Format, Enabled, Input Notifications, Debug, Multisample Count, Render Threads
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Clear Color | in Stride.Core.Mathematics.Color4 = 0, 0, 0, 0 | (clearColor)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Clear | in bool = true | (clear)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Debug | in bool = false | Pin(Visibility = PinVisibility.Optional) | (debug)
@@ -2322,6 +2323,7 @@ VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Input | in VL.Qt
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Multisample Count | in VL.Qt.MultisampleCount = None | Pin(Name = "Multisample Count", Visibility = PinVisibility.Optional) | (multisampleCount)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Output | out Stride.Graphics.Texture | (output)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Perf | out VL.Qt.PerfStats | Pin(Visibility = PinVisibility.Optional) | (perf)
+VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Render Threads | in int = 1 | Pin(Name = "Render Threads", Visibility = PinVisibility.Optional) | (renderThreads)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Size | in Stride.Core.Mathematics.Int2 = 1920, 1080 | (size)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | pin Space | in VL.Qt.Space = DIPTopLeft | (space)
 VL.Qt.Stride | VL.Qt.Stride.QtTextureNode | method Update | void

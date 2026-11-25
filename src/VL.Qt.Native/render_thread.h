@@ -2,12 +2,12 @@
  * "Qt render thread").
  *
  * A pool of threads with a Qt event loop, shared by every offscreen scene of the process (scenes of every app host).
- * Its size is a QtNative setting: vlqt_offscreen_set_render_threads (any time, for the scenes created afterwards), else
- * the environment variable VLQT_OFFSCREEN_THREAD (0 = main thread, n = n threads), else 1. The pool only grows: threads
- * are created when a scene first needs them and live on when the size gets smaller. A scene gets its thread at create
- * (round robin) and keeps it: its scene graph and QRhi live there (QQuickRenderControl::prepareThread). Jobs of one thread run in
- * queue order: a blocking job (call) therefore runs after every job posted before it, which is how the main thread
- * drains a thread before it unbinds or destroys a scene.
+ * Its size is the pin Render Threads of QtTexture and QtRenderer (vlqt_offscreen_set_render_threads), 1 until it is
+ * set; 0 = the main thread. The pool only grows: a larger size adds threads at once, a smaller one (or 0) applies to
+ * the scenes created afterwards and leaves the threads to the scenes that have them. A scene gets its executor at
+ * create (a thread round robin, or inline on the main thread) and keeps it: its scene graph and QRhi live there
+ * (QQuickRenderControl::prepareThread). Jobs of one thread run in queue order: a blocking job (call) therefore runs
+ * after every job posted before it, which is how the main thread drains a thread before it unbinds or destroys a scene.
  *
  * The threads live until process end, like the shared device (device.h): stopping them at exit would run after Qt.
  *
@@ -29,6 +29,11 @@ class QQuickWindow;
 
 namespace vlqt::render_thread {
 
+inline constexpr int maxThreads = 16;
+
+// Logs the exception of a posted job (it has no caller to rethrow to). Any thread.
+void logJobError(std::exception_ptr error);
+
 class RenderThread
 {
 public:
@@ -48,7 +53,7 @@ public:
             try {
                 job();
             } catch (...) {
-                logError(std::current_exception());
+                logJobError(std::current_exception());
             }
         }, Qt::QueuedConnection);
     }
@@ -79,22 +84,68 @@ public:
     void drain() { call([] {}); }
 
 private:
-    static void logError(std::exception_ptr error);
-
     int m_index;
     QThread m_thread;
     QObject* m_context = nullptr; // lives on m_thread: the receiver of the jobs
 };
 
-// Sets the pool size for the scenes created afterwards: 0 = they render on the main thread, n = on the first n render
-// threads (round robin). Scenes created before keep theirs. Returns VLQT_OK, VLQT_ERR_BAD_ARGUMENT (count < 0 or >
-// maxThreads); a failure sets vlqt_last_error. Main thread.
-int setThreadCount(int count);
-inline constexpr int maxThreads = 16;
+// Where the jobs of one offscreen scene run: on its render thread, or inline on the calling thread (the main thread)
+// for a scene without one (Render Threads 0). call and post mean the same for both, so one frame sequence serves both
+// modes (offscreen_render.cpp): inline, a posted job runs at once and its exception is logged like on a thread.
+class Executor
+{
+public:
+    Executor() = default; // inline
+    explicit Executor(RenderThread* thread) : m_thread(thread) {}
 
-// The render thread of a new scene: the next one of the pool, round robin; nullptr = main thread. Without
-// setThreadCount the first call takes the pool size from VLQT_OFFSCREEN_THREAD, else 1, and logs it. Main thread.
-RenderThread* assign();
+    // The render thread; nullptr when inline.
+    RenderThread* thread() const { return m_thread; }
+    // 0 ... maxThreads - 1: the pool index of the thread; maxThreads when inline. One slot per executor.
+    int index() const { return m_thread ? m_thread->index() : maxThreads; }
+
+    // RenderThread::call, or job here.
+    template <class F> void call(F&& job)
+    {
+        if (m_thread)
+            m_thread->call(std::forward<F>(job));
+        else
+            job();
+    }
+
+    // RenderThread::post, or job here at once.
+    template <class F> void post(F&& job)
+    {
+        if (m_thread) {
+            m_thread->post(std::forward<F>(job));
+            return;
+        }
+        try {
+            job();
+        } catch (...) {
+            logJobError(std::current_exception());
+        }
+    }
+
+    // RenderThread::drain; nothing to wait for inline.
+    void drain()
+    {
+        if (m_thread)
+            m_thread->drain();
+    }
+
+private:
+    RenderThread* m_thread = nullptr;
+};
+
+// Sets the pool size (pin Render Threads): 0 = the scenes created afterwards render on the main thread, n = on the
+// first n render threads (round robin), created now if the pool is smaller. Scenes created before keep their executor.
+// Logs a change. Returns VLQT_OK, VLQT_ERR_BAD_ARGUMENT (count < 0 or > maxThreads); a failure sets vlqt_last_error.
+// Main thread.
+int setThreadCount(int count);
+
+// The executor of a new scene: the next thread of the pool, round robin, or inline with a pool size of 0. Without
+// setThreadCount the size is 1 (logged at the first scene). Main thread.
+Executor assign();
 
 // Waits until every render thread of the pool ran the jobs queued before (none without a pool). Main thread.
 void drainAll();

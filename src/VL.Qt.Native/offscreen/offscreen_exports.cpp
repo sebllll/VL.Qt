@@ -51,7 +51,7 @@ VLQT_API int vlqt_offscreen_unbind(vlqt_scene* scene)
     return withOffscreen(scene, "vlqt_offscreen_unbind", [&](OffscreenScene& state) -> int {
 #ifdef _WIN32
         OffscreenScene* s = &state;
-        onRenderThread(s, [s] { unbind(s); });
+        s->executor.call([s] { unbind(s); });
 #else
         (void)state;
 #endif

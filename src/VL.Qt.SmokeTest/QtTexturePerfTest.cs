@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using VL.Qt.Interop;
@@ -11,15 +10,15 @@ using VL.Qt;
 
 /// <summary>
 /// task 5.4 (perf): main-thread time per QtTexture and frame time of offscreen scenes rendered on a Qt render thread
-/// (default) or on the main thread (<c>VLQT_OFFSCREEN_THREAD=0</c>), and "same frame" in every frame. Opt-in, not part
+/// (default) or on the main thread (Render Threads 0, <c>VLQT_SMOKE_RENDERTHREADS=0</c>), and "same frame" in every frame. Opt-in, not part
 /// of --all (about a minute): <c>--only qttextureperf</c>, run alone because the thread count is fixed at the first scene.
 /// A frame imitates vvvv + Stride: apply the changes (Update), render_batch (draw start), 6 ms of Stride CPU work, then
 /// a GPU read of scene 0's texture on the test device (Stride's draw: Map waits for the GPU). A marker rectangle carries the
 /// frame number; after the read every scene's texture must show this frame's marker (same frame, 100 % of the frames).
 /// After the measured frames, snapshots of scene 0's marker every 10th frame (snapshots under load) must finish with a
 /// marker of a frame since their request while same frame still holds.
-/// The process measures the threaded mode (thread count = VLQT_OFFSCREEN_THREAD, default 1) and then starts itself with
-/// VLQT_OFFSCREEN_THREAD=0 for the main thread numbers (reference, no time limit). With VLQT_OFFSCREEN_THREAD=0 it
+/// The process measures the threaded mode (thread count = RenderThreads, default 1) and then starts itself with
+/// VLQT_SMOKE_RENDERTHREADS=0 for the main thread numbers (reference, no time limit). With RenderThreads 0 it
 /// measures only the main thread. Limit (threaded, hardware adapter): median render_batch time per QtTexture of the heavy
 /// scenes below 0.5 ms (PerfLimits factor applies); a software adapter (WARP, CI runners) waits for the submission on the
 /// main thread by design, so there the limit is logged and skipped.
@@ -51,10 +50,7 @@ public static class QtTexturePerfTest
             s.Info("qttextureperf: Windows only (Direct3D 11), skipped");
             return;
         }
-        int threads = 1;
-        var env = Environment.GetEnvironmentVariable("VLQT_OFFSCREEN_THREAD");
-        if (!string.IsNullOrEmpty(env) && int.TryParse(env, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n >= 0)
-            threads = n;
+        int threads = SmokeParameters.RenderThreads ?? 1;
         var rc = Native.vlqt_offscreen_set_render_threads(threads);
         s.Check(rc == 0, $"qttextureperf: set_render_threads({threads}) before the first scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         if (rc != 0)
@@ -101,7 +97,7 @@ public static class QtTexturePerfTest
             psi.ArgumentList.Add(cmdline[0]);
         foreach (var a in cmdline.Skip(1))
             psi.ArgumentList.Add(a);
-        psi.Environment["VLQT_OFFSCREEN_THREAD"] = "0";
+        psi.Environment["VLQT_SMOKE_RENDERTHREADS"] = "0";
         Console.Out.Flush();
         using var child = Process.Start(psi);
         if (child == null)
@@ -110,7 +106,7 @@ public static class QtTexturePerfTest
             return;
         }
         child.WaitForExit();
-        s.Check(child.ExitCode == 0, $"qttextureperf: main thread run (VLQT_OFFSCREEN_THREAD=0), exit code {child.ExitCode}");
+        s.Check(child.ExitCode == 0, $"qttextureperf: main thread run (RenderThreads 0), exit code {child.ExitCode}");
     }
 
     // Returns the median main-thread time of render_batch per QtTexture (ms).

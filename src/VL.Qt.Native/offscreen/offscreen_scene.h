@@ -45,13 +45,13 @@ namespace vlqt {
 // Foreign device: QtNative holds no reference to it of its own; the two fences opened on it do, until unbind. So a
 // bound scene keeps it alive after its owner released it, and unbind or destroy then frees it.
 //
-// Render thread (render-texture.md "Qt render thread"): a scene of a threaded process gets a render thread at create
-// (render_thread::assign) and its scene graph and QRhi live there: initialize, beginFrame, sync, render, endFrame,
-// invalidate and unbind run there, the main thread waits for each of them except render + endFrame + Signal + Flush
-// (posted by render_batch). Items, polish, input, apply and bind stay on the main thread; the render thread touches
-// items only in sync, while the main thread waits. Every blocking job runs after the jobs posted before it, so unbind,
-// destroy, device loss and adapter move drain the thread first. Without a render thread
-// (vlqt_offscreen_set_render_threads(0), VLQT_OFFSCREEN_THREAD=0) everything runs on the main thread as before.
+// Executor (render-texture.md "Qt render thread"): a scene gets one at create (render_thread::assign) and keeps it, a
+// render thread of the pool or, with Render Threads 0, inline on the main thread. Its scene graph and QRhi live there:
+// initialize, beginFrame, sync, render, endFrame, invalidate and unbind run through it, the main thread waits for each
+// of them except render + endFrame + Signal + Flush (posted by render_batch; inline they run at once). Items, polish,
+// input, apply and bind stay on the main thread; a render thread touches items only in sync, while the main thread
+// waits. Every blocking job runs after the jobs posted before it, so unbind, destroy, device loss and adapter move
+// drain the thread first.
 struct OffscreenScene
 {
     QQuickRenderControl* renderControl = nullptr;
@@ -64,7 +64,7 @@ struct OffscreenScene
     unsigned long long readValue = 0;  // last value signalled on the read fence
     unsigned long long writeValue = 0; // last value signalled on the write fence
     std::atomic<long long> renders = 0; // renders into the texture since bind (the render thread counts them)
-    render_thread::RenderThread* thread = nullptr; // the scene's render thread; null = main thread
+    render_thread::Executor executor; // where its scene graph runs: a render thread, or inline on the main thread
     // Input. Devices of their own per scene, children of renderControl, created at the first event: point ids
     // and grabs live in the device, so two scenes fed the same host input (a press lands in both) must not share one.
     QPointingDevice* mouse = nullptr;
@@ -108,15 +108,6 @@ const std::vector<OffscreenScene*>& scenes();
 // The scene whose QQuickWindow is window; nullptr for any other window.
 OffscreenScene* sceneOf(const QQuickWindow* window);
 
-// f on the scene's render thread, blocking and after every job posted before it (drains it); here without one.
-template <class F> void onRenderThread(OffscreenScene* s, F&& f)
-{
-    if (s->thread)
-        s->thread->call(std::forward<F>(f));
-    else
-        f();
-}
-
 // --- offscreen_scene.cpp ---
 
 // A new scene on a handle of its own; nullptr with vlqt_last_error set (vlqt_offscreen_create).
@@ -144,7 +135,7 @@ int fail(int code, const char* what, HRESULT hr = S_OK);
 // QtNative's device of the scene's QRhi; nullptr without one.
 ID3D11Device* qtDevice(const OffscreenScene* s);
 // Frees the binding: render target, opened texture, fences. While the QRhi still exists (before the QQuickWindow is
-// deleted). On the scene's render thread (onRenderThread).
+// deleted). Through the scene's executor (executor.call).
 void unbind(OffscreenScene* s);
 // Main thread; unbinds first and takes the new binding only after every check, so a failure leaves the scene unbound.
 int bind(OffscreenScene* s, void* device, void* ntHandle, int width, int height, int format, int samples, int* usedSamples);

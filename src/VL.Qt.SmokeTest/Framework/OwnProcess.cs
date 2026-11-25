@@ -38,7 +38,7 @@ internal static class OwnProcess
     /// </summary>
     /// <param name="s">Scenario of the calling NUnit test (created by <see cref="Scenario.RunLocal"/>).</param>
     /// <param name="scenarios">Names the helper runs (see <see cref="Find"/>).</param>
-    /// <param name="env">Extra environment of the child, e.g. VLQT_TEST_D3D11ON12=1, VLQT_OFFSCREEN_THREAD=0.</param>
+    /// <param name="env">Extra environment of the child, e.g. VLQT_TEST_D3D11ON12=1, VLQT_SMOKE_RENDERTHREADS=0.</param>
     /// <param name="outDir">Grab folder of the child (default: the run's OutDir).</param>
     /// <param name="expectInQtLog">Text the child's Qt log must contain (e.g. the thread-mode line), checked after the run.</param>
     public static void Run(Scenario s, string[] scenarios, IReadOnlyDictionary<string, string>? env = null, string? outDir = null, string? expectInQtLog = null)
