@@ -39,6 +39,7 @@ namespace VL.Qt.Stride
         private bool _created, _hasContent, _scheduled, _enabled, _disposed;
         private const string SamplesPhase = "Multisample Count";
         private const string BuildPhase = "Build";
+        private const string ReconcilePhase = "Reconcile";
         private const string SceneErrorPhase = "Scene";
         private readonly ElementInput _element;
 
@@ -121,6 +122,8 @@ namespace VL.Qt.Stride
                 _errors.Warn(buildError, BuildPhase);
             else
                 _errors.Clear(BuildPhase);
+            // The scene could not be written (e.g. a value too large for a command): logged, shown until a reconcile works.
+            _errors.Report(_scene.ReconcileFault, ReconcilePhase);
 
             if (enabled && _texture is not null && !_scheduled)
             {

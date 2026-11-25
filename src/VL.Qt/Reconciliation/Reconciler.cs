@@ -77,8 +77,9 @@ namespace VL.Qt.Reconciliation
     /// Thread: <see cref="Update(Element?, in SpaceMapping)"/> runs on the vvvv main thread inside the Update of the
     /// Renderer [Qt] node (<see cref="WindowScene.Update"/>), once per frame and window, after the element tree of that
     /// frame was evaluated; it only writes commands. The pump applies them later in the same frame (frame finished, after
-    /// all node updates, <see cref="WindowScene.ApplyCommands"/>). An exception here is not caught by the renderer: it
-    /// ends at the node like any exception of its Update.
+    /// all node updates, <see cref="WindowScene.ApplyCommands"/>). An exception here leaves the mirror half updated: the
+    /// caller drops the commands of the frame and resyncs (<see cref="ResyncController.OnReconcileFailed"/>), whose
+    /// <see cref="Discard"/> also removes what the cut-short visit registered.
     /// </para>
     /// Allocation-free in the steady state (no structural change). Not thread-safe; one per window.
     /// </summary>
@@ -89,6 +90,7 @@ namespace VL.Qt.Reconciliation
 
         private readonly ICommandSink _sink;
         private readonly IdAllocator _ids;
+        private readonly OccurrenceRegistry _scene;
         private readonly Dictionary<uint, FeedbackSlot> _bindings = new();
         private readonly FeedbackRouter _feedbackRouter = new();
         private readonly PrimaryOccurrences _primaries;
@@ -106,7 +108,7 @@ namespace VL.Qt.Reconciliation
         {
             _sink = sink ?? throw new ArgumentNullException(nameof(sink));
             _ids = ids ?? throw new ArgumentNullException(nameof(ids));
-            ArgumentNullException.ThrowIfNull(scene);
+            _scene = scene ?? throw new ArgumentNullException(nameof(scene));
             _primaries = new PrimaryOccurrences(this, scene, _feedbackRouter, sink);
             _handlers = new HandlerReconciler(this, sink, ids, _feedbackRouter, scene, _bindings);
             _properties = new PropertyDiff(sink);
@@ -182,21 +184,45 @@ namespace VL.Qt.Reconciliation
         }
 
         /// <summary>
-        /// Forgets the whole mirror WITHOUT writing commands (ids, element ownership, duplicates, bindings) and
-        /// restarts the id allocator. For the resync after a failed apply, once QtNative has been wiped
-        /// (<see cref="ResyncController"/>). The next <see cref="Update(Element?, in SpaceMapping)"/> builds the scene from scratch.
+        /// Forgets the whole mirror WITHOUT writing commands (ids, element ownership, duplicates, bindings, the messages it
+        /// shows) and restarts the id allocator. For the resync after a failed apply or a failed
+        /// <see cref="Update(Element?, in SpaceMapping)"/>, once QtNative has been wiped (<see cref="ResyncController"/>). Does
+        /// not walk the mirror for the registry: an update an exception cut short leaves occurrences and handlers no mirror
+        /// reaches and mirrors whose ids are already freed. The next <see cref="Update(Element?, in SpaceMapping)"/> builds
+        /// the scene from scratch.
         /// </summary>
         internal void Discard()
         {
             if (_root is not null)
             {
-                Forget(_root);
+                ClearMessages(_root);
                 _root = null;
             }
-            _primaries.ResolveAtEndOfUpdate();
+            _scene.RemoveAll(this);
+            _primaries.Reset();
+            _feedbackRouter.Clear();
             _bindings.Clear();
             _ids.Reset();
             _hasMapping = false;
+        }
+
+        /// <summary>Clears the build errors and effect warnings the subtree of <paramref name="item"/> shows (may run twice on a mirror).</summary>
+        private static void ClearMessages(ItemMirror item)
+        {
+            if (item.BuildError is not null)
+                SetBuildError(item.Parent?.Element?.Feedback ?? default, item, null);
+            foreach (var child in item.Children)
+                ClearMessages(child);
+            if (item.Effect is { } effect)
+            {
+                if (effect.Objects is { } objects)
+                {
+                    foreach (var o in objects)
+                        ClearMessages(o);
+                }
+                if (effect.Warning is not null)
+                    SetEffectWarning(effect, item.Element?.Feedback ?? default, null);
+            }
         }
 
         /// <summary>

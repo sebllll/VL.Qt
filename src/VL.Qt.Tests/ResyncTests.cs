@@ -13,7 +13,10 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Resync after a failed apply: Reconciler + ResyncController against a fake QtNative that aborts a batch like the real one.</summary>
+    /// <summary>
+    /// Resync after a failed apply: Reconciler + ResyncController against a fake QtNative that aborts a batch like the real
+    /// one; and after a reconcile that throws, through Scene without a native scene.
+    /// </summary>
     public class ResyncTests
     {
         /// <summary>
@@ -90,6 +93,7 @@ namespace VL.Qt.Tests
         private Reconciler _rec = null!;
         private ResyncController _resync = null!;
         private int _lastRc;
+        private int _resets;
 
         [SetUp]
         public void SetUp()
@@ -97,7 +101,12 @@ namespace VL.Qt.Tests
             _sink = new RecordingSink();
             _qtNative = new FakeQtNative();
             _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry());
-            _resync = new ResyncController(_rec, () => _qtNative.Apply(new[] { "RESET" }));
+            _resets = 0;
+            _resync = new ResyncController(_rec, () =>
+            {
+                _resets++;
+                return _qtNative.Apply(new[] { "RESET" });
+            });
         }
 
         private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
@@ -153,6 +162,79 @@ namespace VL.Qt.Tests
             Assert.That(_lastRc, Is.EqualTo(0));
             Assert.That(_qtNative.Scene(), Is.EqualTo("[g[1][4]]"));
             Assert.That(_resync.GaveUp, Is.False);
+        }
+
+        [Test]
+        public void FailingEveryApply_NewInputEveryFrame_PauseDoubles()
+        {
+            // Animated input: a new tree every frame, and Qt rejects every one of them.
+            for (int i = 0; i < 100; i++)
+                Frame(G(R(1), R(-1 - i)));
+            Assert.That(_resets, Is.InRange(5, 8), "no rebuild every second frame; pauses of 2, 4, ... 64 frames");
+            Assert.That(_resync.GaveUp, Is.True);
+        }
+
+        [Test]
+        public void Pause_StartsAtTwoAgainAfterASuccessfulApply()
+        {
+            Frame(G(R(-1)));
+            Frame(G(R(-2))); // the retry fails too: gives up, the next pause will be 4 frames
+            Frame(G(R(1))); // 1st frame of the pause of 2
+            Frame(G(R(2))); // new input after the pause: applied
+            Assert.That(_lastRc, Is.EqualTo(0));
+            Assert.That(_resync.GaveUp, Is.False);
+
+            Frame(G(R(-3)));
+            Frame(G(R(-4))); // gives up again: the pause is 2 frames, not 4
+            Frame(G(R(3)));
+            Frame(G(R(4)));
+            Assert.That(_lastRc, Is.EqualTo(0));
+            Assert.That(_qtNative.Scene(), Is.EqualTo("[g[4]]"));
+        }
+
+        [Test]
+        public void Scene_ReconcileThrows_DropsTheFrameAndRebuildsNextFrame()
+        {
+            var registry = new OccurrenceRegistry();
+            var scene = new Scene(registry, SceneHandle.Null);
+            // Above the size limit of one command (PROTO-02, B7): a failed reconcile, not a truncation.
+            var tooLong = new Text { Content = new string('€', Protocol.MaxCommandPayload / 3 + 1) };
+
+            Assert.DoesNotThrow(() => scene.Update(G(R(1), tooLong), Space.DIPTopLeft, default, true));
+            Assert.That(scene.ReconcileFault, Is.InstanceOf<ArgumentOutOfRangeException>());
+            Assert.That(scene.Commands.Length, Is.Zero, "nothing of the failed frame goes to QtNative");
+            Assert.That(scene.Resyncs, Is.EqualTo(1));
+            Assert.That(registry.Count, Is.Zero);
+            Assert.That(scene.Reconciler.Root, Is.Null);
+
+            scene.Update(G(R(1), new Text { Content = "ok" }), Space.DIPTopLeft, default, true);
+            Assert.That(scene.ReconcileFault, Is.Null);
+            Assert.That(registry.Count, Is.EqualTo(3));
+            Assert.That(scene.Reconciler.Root!.Children, Has.Count.EqualTo(2));
+            Assert.That(scene.Commands.Length, Is.GreaterThan(0), "clear color, Clear flag, Space and the scene, sent again");
+        }
+
+        [Test]
+        public void Scene_ReconcileThrowsTwiceForTheSameInput_GivesUpUntilTheInputChanges()
+        {
+            var registry = new OccurrenceRegistry();
+            var scene = new Scene(registry, SceneHandle.Null);
+            var bad = G(new Text { Content = new string('€', Protocol.MaxCommandPayload / 3 + 1) });
+
+            scene.Update(bad, Space.DIPTopLeft, default, true);
+            scene.Update(bad, Space.DIPTopLeft, default, true); // the one retry
+            Assert.That(scene.Resyncs, Is.EqualTo(2));
+            var fault = scene.ReconcileFault;
+            Assert.That(fault, Is.Not.Null);
+
+            for (int i = 0; i < 5; i++)
+                scene.Update(bad, Space.DIPTopLeft, default, true);
+            Assert.That(scene.Resyncs, Is.EqualTo(2), "no more attempts while the input stays the failing one");
+            Assert.That(scene.ReconcileFault, Is.SameAs(fault), "the fault stays shown meanwhile");
+
+            scene.Update(G(R(1)), Space.DIPTopLeft, default, true);
+            Assert.That(scene.ReconcileFault, Is.Null);
+            Assert.That(registry.Count, Is.EqualTo(2));
         }
 
         [Test]

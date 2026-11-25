@@ -147,7 +147,7 @@ namespace VL.Qt.Reconciliation
             }
 
             var h = new HandlerMirror(_ids.Allocate(), link.HandlerType, link.Feedback) { SeenPass = pass.Pass, Last = link };
-            _scene.SetHandlerOwner(h);
+            _scene.SetHandlerOwner(h, _owner);
             _sink.Create(h.Id, h.Type);
             HandlerPropertyDiff.Write(_sink, h.Id, link, null, pass.Mapping);
             _sink.Reparent(h.Id, item.Id, 0);

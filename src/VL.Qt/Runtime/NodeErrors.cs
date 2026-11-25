@@ -56,8 +56,14 @@ namespace VL.Qt
         /// <summary>Logger of the node (category and node path of this node).</summary>
         public ILogger Logger { get; }
 
-        /// <summary>Logs <paramref name="e"/> and shows it at the node as an error until <paramref name="phase"/> is cleared.</summary>
-        public void Report(Exception e, string phase) => Set(phase, MessageSeverity.Error, $"{phase}: {e.Message}", e);
+        /// <summary>Logs <paramref name="e"/> and shows it at the node as an error until <paramref name="phase"/> is cleared; null clears it.</summary>
+        public void Report(Exception? e, string phase)
+        {
+            if (e is null)
+                Clear(phase);
+            else
+                Set(phase, MessageSeverity.Error, $"{phase}: {e.Message}", e);
+        }
 
         /// <summary>
         /// Logs a warning text and shows it at the node as a warning until <see cref="Clear"/> is called for the same
