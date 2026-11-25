@@ -34,7 +34,8 @@ namespace VL.Qt.Qml
 
         /// <summary>
         /// Everything of the declarations that ends up in the node description, without line numbers: head, names, types, flags,
-        /// initializer kinds, defaults (invariant culture), summaries, signal arguments, message texts. The factory invalidates the
+        /// initializer kinds, defaults (invariant culture), summaries, signal arguments, message texts; the line of an error or a warning
+        /// (infos only list names, so they do not change when lines move). The factory invalidates the
         /// description only when this changes (hot reload of pins); any other edit only reloads the running instance.
         /// </summary>
         public string Signature
@@ -55,21 +56,23 @@ namespace VL.Qt.Qml
                     sb.Append('\n');
                 }
                 foreach (var m in Messages)
-                    sb.Append('m').Append(sep).Append(m.Severity).Append(sep).Append(m.File).Append(sep).Append(m.Text).Append('\n');
+                    sb.Append('m').Append(sep).Append(m.Severity).Append(sep).Append(m.File).Append(sep).Append(m.Severity == QmlMessageSeverity.Info ? 0 : m.Line).Append(sep).Append(m.Text).Append('\n');
                 return sb.ToString();
             }
         }
 
         /// <summary>Parses <paramref name="source"/> (the content of a .qml file).</summary>
         /// <param name="source">Content of the file.</param>
+        /// <param name="ownTypeName">Type name of the file itself (its name without ".qml"); a root type of the same name is an error.</param>
         /// <param name="readSibling">
         /// Content of "&lt;TypeName&gt;.qml" in the same folder for a root type name, null if there is none or it cannot be read.
         /// </param>
-        public static QmlDeclarations Parse(string source, Func<string, string?> readSibling)
+        public static QmlDeclarations Parse(string source, string ownTypeName, Func<string, string?> readSibling)
         {
             ArgumentNullException.ThrowIfNull(source);
+            ArgumentNullException.ThrowIfNull(ownTypeName);
             ArgumentNullException.ThrowIfNull(readSibling);
-            return QmlDeclarationParser.Parse(source, readSibling, ImmutableList<string>.Empty, false);
+            return QmlDeclarationParser.Parse(source, readSibling, ImmutableList.Create(ownTypeName), false);
         }
 
         /// <summary>Only the head tags: cheap, for the scan of the factory (node browser), reads no sibling.</summary>

@@ -65,7 +65,7 @@ namespace VL.Qt.Qml
 
         // Help texts like QmlElementNode.Update.
         private static readonly IVLPinDescription s_propertiesInput = new FilePinDescription(PropertiesPinName, typeof(Dictionary<string, object>), null,
-            "Plan B for properties of the QML root that get no pin (alias, var, list, object types): values by name, as at QmlElement. A pin of the node wins over an entry with the same name.",
+            "Plan B for properties of the QML root that get no pin (alias, var, list, object types): values by name, as at QmlElement. A pin of the node wins over an entry with the same name once the pin differs from its default.",
             isVisible: false);
 
         private static readonly IVLPinDescription[] s_commonInputs =
@@ -125,14 +125,14 @@ namespace VL.Qt.Qml
             try
             {
                 var dir = Path.GetDirectoryName(file.FilePath) ?? string.Empty;
-                declarations = QmlDeclarations.Parse(File.ReadAllText(file.FilePath), name => ReadSibling(dir, name));
+                declarations = QmlDeclarations.Parse(File.ReadAllText(file.FilePath), Path.GetFileNameWithoutExtension(file.FilePath), name => ReadSibling(dir, name));
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
                 declarations = QmlDeclarations.Empty;
                 readError = $"{file.FilePath} cannot be read: {e.Message}";
             }
-            var layout = Build(file.FilePath, declarations, file.DuplicateError ?? readError);
+            var layout = Build(file.FilePath, declarations, JoinErrors(file.DuplicateError, readError));
             foreach (var m in layout.Messages)
             {
                 if (m.Type == MessageType.Error)
@@ -142,6 +142,9 @@ namespace VL.Qt.Qml
             }
             return layout;
         }
+
+        private static string? JoinErrors(string? first, string? second)
+            => first != null && second != null ? first + "\n" + second : first ?? second;
 
         /// <summary>Content of &lt;dir&gt;/&lt;typeName&gt;.qml, null if there is none or it cannot be read.</summary>
         internal static string? ReadSibling(string dir, string typeName)

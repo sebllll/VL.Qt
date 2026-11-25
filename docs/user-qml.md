@@ -175,7 +175,7 @@ A change of `@category` or `@tags` moves the node: vvvv builds the node list aga
 
 ### The Properties pin (plan B)
 
-The generated node still has the optional `Properties` input (`Dictionary<string, object>`, hidden until you show it), the same as at `QmlElement`, for what gets no pin: an `alias`, a `var`, a list or object property. A pin of the same name wins over a dictionary entry. There is no `Properties` or `Signals` **output**, the typed pins replace them. Values of properties that get no pin do not come back to the patch.
+The generated node still has the optional `Properties` input (`Dictionary<string, object>`, hidden until you show it), the same as at `QmlElement`, for what gets no pin: an `alias`, a `var`, a list or object property. A pin of the node wins over a dictionary entry of the same name once the pin differs from its default. There is no `Properties` or `Signals` **output**, the typed pins replace them. Values of properties that get no pin do not come back to the patch.
 
 ### Hot reload of generated nodes
 

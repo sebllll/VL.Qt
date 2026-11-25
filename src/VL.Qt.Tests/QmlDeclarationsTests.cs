@@ -23,7 +23,7 @@ namespace VL.Qt.Tests
         }
 
         private static QmlDeclarations Parse(string source, IDictionary<string, string>? siblings = null)
-            => QmlDeclarations.Parse(source, name => siblings != null && siblings.TryGetValue(name, out var s) ? s : null);
+            => QmlDeclarations.Parse(source, "Own", name => siblings != null && siblings.TryGetValue(name, out var s) ? s : null);
 
         private static QmlPropertyDecl Prop(QmlDeclarations d, string name) => d.Properties.Single(p => p.Name == name);
 
@@ -411,7 +411,8 @@ namespace VL.Qt.Tests
             Assert.That(d.Messages[0].Text, Does.Contain("inner").And.Contain("alias"));
             Assert.That(d.Messages[2].Text, Does.Contain("kids").And.Contain("list<Item>"));
             Assert.That(d.Messages[3].Text, Does.Contain("target").And.Contain("Item"));
-            Assert.That(d.Messages[0].ToString(), Does.StartWith("line 2: "));
+            // An info lists the name only: after lines move above it, a line number would point to the wrong place.
+            Assert.That(d.Messages[0].ToString(), Does.Not.Contain("line"));
         }
 
         // ---- head -------------------------------------------------------------------------------------------------------------
@@ -530,7 +531,7 @@ namespace VL.Qt.Tests
             var info = d.Messages.Single();
             Assert.That(info.Severity, Is.EqualTo(QmlMessageSeverity.Info));
             Assert.That(info.File, Is.EqualTo("Base.qml"));
-            Assert.That(info.ToString(), Does.StartWith("Base.qml:2: "));
+            Assert.That(info.ToString(), Is.EqualTo("Base.qml: property 'junk' (var)"));
         }
 
         [Test]
@@ -551,14 +552,48 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void SelfReference_RootTypeOfTheFileItself_IsAnError()
+        {
+            var asked = new List<string>();
+            var d = QmlDeclarations.Parse("Gauge { property real a: 1 }", "Gauge", name => { asked.Add(name); return "Gauge { }"; });
+
+            var error = d.Messages.Single();
+            Assert.That(error.Severity, Is.EqualTo(QmlMessageSeverity.Error));
+            Assert.That(error.Text, Is.EqualTo("'Gauge.qml' cannot have its own type 'Gauge' as root type"));
+            Assert.That(d.Properties, Is.Empty);
+            Assert.That(asked, Is.Empty);
+        }
+
+        [Test]
+        public void Redeclaration_WithATypeWithoutPin_RemovesTheInheritedPin()
+        {
+            var siblings = new Dictionary<string, string> { ["Base"] = "Item { property real level: 1; property real other: 2 }" };
+
+            var d = Parse("Base { property var level }", siblings);
+
+            Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "other" }));
+            Assert.That(d.Messages.Single().Text, Is.EqualTo("property 'level' (var)"));
+        }
+
+        [Test]
+        public void Signature_HasTheLineOfAnErrorOrWarning_ButNotOfAnInfo()
+        {
+            const string info = "Item {\n    property var model\n}";
+            Assert.That(Parse("\n" + info).Signature, Is.EqualTo(Parse(info).Signature));
+
+            const string warning = "Item {\n    property real\n}";
+            Assert.That(Parse("\n" + warning).Signature, Is.Not.EqualTo(Parse(warning).Signature));
+        }
+
+        [Test]
         public void SelfReference_AndQualifiedOrUnknownRootTypes_ReadNoSibling()
         {
             var asked = new List<string>();
-            var d = QmlDeclarations.Parse("Controls.Slider { property real a: 1 }", name => { asked.Add(name); return null; });
+            var d = QmlDeclarations.Parse("Controls.Slider { property real a: 1 }", "Own", name => { asked.Add(name); return null; });
             Assert.That(asked, Is.Empty);
             Assert.That(d.RootType, Is.EqualTo("Controls.Slider"));
 
-            d = QmlDeclarations.Parse("Rectangle { property real a: 1 }", name => { asked.Add(name); return null; });
+            d = QmlDeclarations.Parse("Rectangle { property real a: 1 }", "Own", name => { asked.Add(name); return null; });
             Assert.That(asked, Is.EqualTo(new[] { "Rectangle" }));
             Assert.That(d.Messages, Is.Empty);
 
@@ -582,7 +617,7 @@ namespace VL.Qt.Tests
         [Test]
         public void SiblingThatThrowsOnRead_GivesAWarning()
         {
-            var d = QmlDeclarations.Parse("Gauge { property real a: 1 }", _ => throw new IOException("locked"));
+            var d = QmlDeclarations.Parse("Gauge { property real a: 1 }", "Own", _ => throw new IOException("locked"));
 
             Assert.That(d.HasErrors, Is.False);
             Assert.That(d.Messages.Single().Severity, Is.EqualTo(QmlMessageSeverity.Warning));
@@ -638,8 +673,8 @@ namespace VL.Qt.Tests
         [Test]
         public void Parse_NullArguments_Throw()
         {
-            Assert.Throws<ArgumentNullException>(() => QmlDeclarations.Parse(null!, _ => null));
-            Assert.Throws<ArgumentNullException>(() => QmlDeclarations.Parse("Item { }", null!));
+            Assert.Throws<ArgumentNullException>(() => QmlDeclarations.Parse(null!, "Own", _ => null));
+            Assert.Throws<ArgumentNullException>(() => QmlDeclarations.Parse("Item { }", "Own", null!));
             Assert.Throws<ArgumentNullException>(() => QmlDeclarations.ParseHead(null!));
         }
 

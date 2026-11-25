@@ -54,6 +54,9 @@ namespace VL.Qt.Qml
             }
             if (k >= tokens.Count || !tokens[k].IsPunct('{'))
                 return Fail(rootType, rootLine, $"no root object found ('{rootType}' is not followed by '{{')");
+            // The first entry of the chain is the type of the file itself; QML rejects a file that instantiates its own type.
+            if (!isSibling && chain.Count > 0 && rootType == chain[0])
+                return Fail(rootType, rootLine, $"'{rootType}.qml' cannot have its own type '{rootType}' as root type");
             var rootOpen = tokens[k];
             k++;
 
@@ -313,7 +316,9 @@ namespace VL.Qt.Qml
 
             if (!QmlTypes.TryMap(type, out var kind))
             {
-                messages.Add(new QmlParseMessage(line, QmlMessageSeverity.Info, $"property '{name}' of type '{type}'"));
+                // The inherited pin of the same name is gone: the property is now of a type that gets no pin.
+                properties.RemoveAll(p => p.Name == name);
+                messages.Add(new QmlParseMessage(line, QmlMessageSeverity.Info, $"property '{name}' ({type})"));
                 return;
             }
 

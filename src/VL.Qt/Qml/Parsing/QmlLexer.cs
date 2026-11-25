@@ -6,8 +6,8 @@ using System.Text;
 namespace VL.Qt.Qml
 {
     /// <summary>
-    /// The lexer of <see cref="QmlDeclarationParser"/>: identifiers, numbers, strings, punctuation and line comments; block comments,
-    /// whitespace and the contents of strings are dropped.
+    /// The lexer of <see cref="QmlDeclarationParser"/>: identifiers, numbers, strings, regular expression literals, punctuation and
+    /// line comments; block comments, whitespace and the contents of strings and regular expressions are dropped.
     /// </summary>
     internal static class QmlLexer
     {
@@ -17,6 +17,7 @@ namespace VL.Qt.Qml
             Number,
             String,
             Template,
+            Regex,
             Punct,
         }
 
@@ -29,6 +30,117 @@ namespace VL.Qt.Qml
         internal readonly record struct Comment(int Line, string Text, bool OwnLine);
 
         internal sealed record Lexed(List<Token> Tokens, List<Comment> Comments, string? Error, int ErrorLine);
+
+        // Keywords after which a '/' starts a regular expression and is not a division.
+        private static readonly HashSet<string> s_regexKeywords = new(StringComparer.Ordinal)
+        {
+            "return", "typeof", "instanceof", "in", "of", "new", "delete", "void", "throw", "case", "do", "else",
+        };
+
+        private const string regexPrecedingPunct = "(,=:[!&|?{};+-*%<>~^";
+
+        // A '/' starts a regular expression when no operand precedes it; after an operand it is a division.
+        private static bool RegexAllowed(List<Token> tokens)
+        {
+            if (tokens.Count == 0)
+                return true;
+            var prev = tokens[^1];
+            return prev.Kind switch
+            {
+                TokenKind.Punct => regexPrecedingPunct.Contains(prev.Text[0]),
+                TokenKind.Ident => s_regexKeywords.Contains(prev.Text),
+                _ => false,
+            };
+        }
+
+        // Index after the closing '/' and the flags of the regular expression that starts at s[start], -1 if it does not end on its line.
+        private static int SkipRegex(string s, int start)
+        {
+            var inClass = false;
+            for (var j = start + 1; j < s.Length && s[j] != '\n' && s[j] != '\r'; j++)
+            {
+                var ch = s[j];
+                if (ch == '\\')
+                    j++;
+                else if (ch == '[')
+                    inClass = true;
+                else if (ch == ']')
+                    inClass = false;
+                else if (ch == '/' && !inClass)
+                {
+                    j++;
+                    while (j < s.Length && char.IsLetter(s[j]))
+                        j++;
+                    return j;
+                }
+            }
+            return -1;
+        }
+
+        // Index after the closing backtick of the template literal that starts at s[start], -1 if there is none; counts the lines it spans.
+        private static int SkipTemplate(string s, int start, ref int line)
+        {
+            var j = start + 1;
+            while (j < s.Length)
+            {
+                var ch = s[j];
+                if (ch == '`')
+                    return j + 1;
+                if (ch == '\\')
+                {
+                    j++;
+                    if (j < s.Length && s[j] == '\n')
+                        line++;
+                }
+                else if (ch == '\n')
+                    line++;
+                else if (ch == '$' && j + 1 < s.Length && s[j + 1] == '{')
+                {
+                    j = SkipSubstitution(s, j + 2, ref line);
+                    if (j < 0)
+                        return -1;
+                    continue;
+                }
+                j++;
+            }
+            return -1;
+        }
+
+        // Index after the '}' that closes a "${" substitution, -1 if there is none. Nested braces, strings and templates are skipped.
+        private static int SkipSubstitution(string s, int start, ref int line)
+        {
+            var depth = 0;
+            var j = start;
+            while (j < s.Length)
+            {
+                var ch = s[j];
+                if (ch == '\n')
+                    line++;
+                else if (ch == '{')
+                    depth++;
+                else if (ch == '}')
+                {
+                    if (depth == 0)
+                        return j + 1;
+                    depth--;
+                }
+                else if (ch == '`')
+                {
+                    j = SkipTemplate(s, j, ref line);
+                    if (j < 0)
+                        return -1;
+                    continue;
+                }
+                else if (ch == '"' || ch == '\'')
+                {
+                    j++;
+                    while (j < s.Length && s[j] != ch && s[j] != '\n')
+                        j += s[j] == '\\' ? 2 : 1;
+                }
+                j++;
+            }
+            return -1;
+        }
 
         public static Lexed Lex(string s, bool headOnly)
         {
@@ -87,9 +199,23 @@ namespace VL.Qt.Qml
                             line++;
                     i = end + 2;
                 }
+                else if (c == '/' && RegexAllowed(tokens))
+                {
+                    var end = SkipRegex(s, i);
+                    if (end < 0)
+                    {
+                        error = "unterminated regular expression";
+                        errorLine = line;
+                        break;
+                    }
+                    if (!Add(new Token(TokenKind.Regex, s.Substring(i, end - i), line)))
+                        break;
+                    i = end;
+                }
                 else if (c == '"' || c == '\'')
                 {
                     var value = new StringBuilder();
+                    var startLine = line;
                     var j = i + 1;
                     var closed = false;
                     while (j < s.Length && s[j] != '\n')
@@ -102,6 +228,15 @@ namespace VL.Qt.Qml
                         if (s[j] == '\\' && j + 1 < s.Length)
                         {
                             j++;
+                            // A line continuation (backslash and line break) adds nothing to the value.
+                            if (s[j] == '\r' && j + 1 < s.Length && s[j + 1] == '\n')
+                                j++;
+                            if (s[j] == '\n')
+                            {
+                                line++;
+                                j++;
+                                continue;
+                            }
                             switch (s[j])
                             {
                                 case 'n': value.Append('\n'); break;
@@ -124,26 +259,18 @@ namespace VL.Qt.Qml
                     if (!closed)
                     {
                         error = "unterminated string";
-                        errorLine = line;
+                        errorLine = startLine;
                         break;
                     }
-                    if (!Add(new Token(TokenKind.String, s.Substring(i, j - i + 1), line, value.ToString())))
+                    if (!Add(new Token(TokenKind.String, s.Substring(i, j - i + 1), startLine, value.ToString())))
                         break;
                     i = j + 1;
                 }
                 else if (c == '`')
                 {
                     var startLine = line;
-                    var j = i + 1;
-                    while (j < s.Length && s[j] != '`')
-                    {
-                        if (s[j] == '\\')
-                            j++;
-                        else if (j < s.Length && s[j] == '\n')
-                            line++;
-                        j++;
-                    }
-                    if (j >= s.Length)
+                    var j = SkipTemplate(s, i, ref line);
+                    if (j < 0)
                     {
                         error = "unterminated template string";
                         errorLine = startLine;
@@ -151,7 +278,7 @@ namespace VL.Qt.Qml
                     }
                     if (!Add(new Token(TokenKind.Template, "`", startLine)))
                         break;
-                    i = j + 1;
+                    i = j;
                 }
                 else if (char.IsAsciiDigit(c) || (c == '.' && i + 1 < s.Length && char.IsAsciiDigit(s[i + 1])))
                 {
