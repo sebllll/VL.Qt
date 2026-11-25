@@ -5,6 +5,16 @@ using VL.Qt.Wire;
 
 namespace VL.Qt.Elements
 {
+    /// <summary>What a message of a feedback slot is (<see cref="FeedbackState.SetMessage"/>).</summary>
+    internal enum MessageKind
+    {
+        /// <summary>A warning shown at the element node.</summary>
+        Warning,
+
+        /// <summary>The failed Build of an <see cref="Styles.IStylable"/> child, shown at the parent's node.</summary>
+        BuildError,
+    }
+
     /// <summary>State of one feedback slot (one element instance of a spread output). Main thread only.</summary>
     internal sealed class FeedbackState
     {
@@ -96,7 +106,11 @@ namespace VL.Qt.Elements
         /// <summary>QmlElement: signals not yet taken by <see cref="ElementFeedback.TakeQmlSignals"/>, in order of arrival.</summary>
         internal List<QmlSignal>? PendingQmlSignals { get; set; }
 
-        public string? Warning { get; set; }
+        /// <summary>
+        /// Warnings of every writer (effect fold warning, Video and interaction duplicate), joined with a space in the order
+        /// they were set; null if none.
+        /// </summary>
+        public string? Warning => Joined(MessageKind.Warning);
 
         /// <summary>Error reported by Qt for the element (e.g. file not found), null if none.</summary>
         public string? Error { get; set; }
@@ -108,9 +122,50 @@ namespace VL.Qt.Elements
         public string? ApplyError { get; set; }
 
         /// <summary>
-        /// Containers: error of the last failed <see cref="Styles.IStylable.Build"/> of a child, null if none.
-        /// Set and cleared by the reconciler.
+        /// Containers: errors of the last failed <see cref="Styles.IStylable.Build"/> of the children (one per child, joined
+        /// with a space), null if none. Set and cleared by the reconciler through <see cref="SetMessage"/>.
         /// </summary>
-        public string? BuildError { get; set; }
+        public string? BuildError => Joined(MessageKind.BuildError);
+
+        /// <summary>
+        /// Sets (or, with null, removes) the message of <paramref name="source"/> and <paramref name="kind"/>. Every source
+        /// keeps its own message, so writers neither overwrite nor clear each other's; a source is any stable object (the
+        /// mirror or a constant of the writer). The list is allocated with the first message.
+        /// </summary>
+        public void SetMessage(object source, MessageKind kind, string? text)
+        {
+            if (_messages is { } messages)
+            {
+                for (int i = 0; i < messages.Count; i++)
+                {
+                    if (!ReferenceEquals(messages[i].Source, source) || messages[i].Kind != kind)
+                        continue;
+                    if (text is null)
+                        messages.RemoveAt(i);
+                    else
+                        messages[i] = new Message(source, kind, text);
+                    return;
+                }
+            }
+            if (text is not null)
+                (_messages ??= new List<Message>()).Add(new Message(source, kind, text));
+        }
+
+        private string? Joined(MessageKind kind)
+        {
+            if (_messages is not { } messages)
+                return null;
+            string? joined = null;
+            for (int i = 0; i < messages.Count; i++)
+            {
+                if (messages[i].Kind == kind)
+                    joined = joined is null ? messages[i].Text : $"{joined} {messages[i].Text}";
+            }
+            return joined;
+        }
+
+        private readonly record struct Message(object Source, MessageKind Kind, string Text);
+
+        private List<Message>? _messages;
     }
 }

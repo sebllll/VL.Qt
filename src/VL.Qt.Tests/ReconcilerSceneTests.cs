@@ -374,6 +374,25 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void VideoDuplicate_DoesNotHideEffectWarning_WhichComesBackWhenTheDuplicateGoes()
+        {
+            var feedback = new ElementFeedback();
+            var slot = new FeedbackSlot(feedback, 0);
+            var v = new Video { Size = new Vector2(1, 1), Feedback = slot, Effect = new BlurEffect(new BlurEffect(null, 0.5f, 32, 0), 0.5f, 32, 0) };
+            var sink2 = new RecordingSink();
+            var rec2 = new Reconciler(sink2, new IdAllocator(), _scene);
+
+            _rec.Update(G(v), Space.DIPTopLeft);
+            Assert.That(feedback[0].Warning, Does.Contain("Blur is used more than once").And.Not.Contain("Video"));
+
+            rec2.Update(G(v), Space.DIPTopLeft);
+            Assert.That(feedback[0].Warning, Does.Contain("Blur is used more than once").And.Contain(OccurrenceRegistry.VideoDuplicateWarning));
+
+            rec2.Update(null, Space.DIPTopLeft);
+            Assert.That(feedback[0].Warning, Does.Contain("Blur is used more than once").And.Not.Contain("Video"), "the effect warning is shown again");
+        }
+
+        [Test]
         public void AppRestart_NewRegistry_StaleOwnerIsNoDuplicate()
         {
             // App 1: a renderer owns the video e and is never disposed/cleared (unclean F8).

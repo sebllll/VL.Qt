@@ -7,5 +7,19 @@
 
         /// <summary>State of the slot, or null for <c>default</c>.</summary>
         public FeedbackState? State => Feedback?[Index];
+
+        /// <summary>
+        /// Sets or (null) removes the message of <paramref name="source"/> in this slot (<see cref="FeedbackState.SetMessage"/>);
+        /// nothing for <c>default</c>. Removing does not create a slot.
+        /// </summary>
+        public void SetMessage(object source, MessageKind kind, string? text)
+        {
+            if (Feedback is null)
+                return;
+            if (text is not null)
+                Feedback[Index].SetMessage(source, kind, text);
+            else if (Feedback.TryGet(Index, out var state))
+                state.SetMessage(source, kind, null);
+        }
     }
 }

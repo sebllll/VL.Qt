@@ -260,6 +260,26 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void TwoFailedSiblings_BothErrorsKept_ClearedOneByOne()
+        {
+            var feedback = new ElementFeedback();
+            _ = feedback[0]; // the container node allocates its slots before the reconciler runs
+            var s1 = new TestStylable { Throw = true };
+            var s2 = new TestStylable { Throw = true };
+            var w1 = Wrap(s1);
+            var w2 = Wrap(s2);
+            Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = Kids(w1, w2) });
+            Assert.That(feedback[0].BuildError!.Split("failed").Length - 1, Is.EqualTo(2), feedback[0].BuildError);
+
+            Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = Kids(w2) });
+            Assert.That(feedback[0].BuildError!.Split("failed").Length - 1, Is.EqualTo(1), "the second sibling's error stays after the first one went");
+
+            s2.Throw = false;
+            Update(new Group { Feedback = new FeedbackSlot(feedback, 0), Children = Kids(w2) });
+            Assert.That(feedback[0].BuildError, Is.Null);
+        }
+
+        [Test]
         public void RemovingParentOfFailedChild_ClearsErrorOfItsFeedback()
         {
             var feedback = new ElementFeedback();

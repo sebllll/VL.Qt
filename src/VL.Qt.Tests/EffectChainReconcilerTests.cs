@@ -136,6 +136,35 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void Warning_ChangedFromAToB_ShowsB_ThenClears()
+        {
+            var feedback = new ElementFeedback();
+            var slot = new FeedbackSlot(feedback, 0);
+            Frame(new Rectangle { Feedback = slot, Effect = Blur(Blur()) });
+            Assert.That(feedback.Warning, Does.Contain("Blur"));
+
+            Frame(new Rectangle { Feedback = slot, Effect = Shadow(Shadow()) });
+            Assert.That(feedback.Warning, Does.Contain("DropShadow").And.Not.Contain("Blur"), "the changed warning replaces the old one");
+
+            Frame(new Rectangle { Feedback = slot, Effect = Shadow() });
+            Assert.That(feedback.Warning, Is.Null);
+        }
+
+        [Test]
+        public void Warning_OfTwoElementsSharingOneSlot_KeptSeparately()
+        {
+            var feedback = new ElementFeedback();
+            var slot = new FeedbackSlot(feedback, 0);
+            var a = new Rectangle { Feedback = slot, Effect = Blur(Blur()) };
+            var b = new Rectangle { Feedback = slot, Effect = Shadow(Shadow()) };
+            Frame(new Group { Children = ImmutableArray.Create<Element>(a, b) });
+            Assert.That(feedback.Warning, Does.Contain("Blur").And.Contain("DropShadow"));
+
+            Frame(new Group { Children = ImmutableArray.Create<Element>(new Rectangle { Feedback = slot, Effect = Shadow(Shadow()) }) });
+            Assert.That(feedback.Warning, Does.Contain("DropShadow").And.Not.Contain("Blur"));
+        }
+
+        [Test]
         public void MaskPerRun_OwnObjectEach_NoReparent_DestroyedAfterChain()
         {
             var a = new Text { Content = "A" };
