@@ -42,7 +42,7 @@ namespace VL.Qt.Nodes
         /// <param name="isDone">True in the frame the write ended, also when it failed (see Success).</param>
         /// <param name="success">True if the last write that ended wrote the file; set in the frame of Is Done and held until the next one. A failure is logged.</param>
         /// <param name="quality">0..100 for lossy formats (JPG, WebP); ignored for PNG and BMP.</param>
-        /// <param name="write">Starts writing the current Image (a write while one runs waits, only the newest one).</param>
+        /// <param name="write">Starts writing the current Image. A Write while another write runs waits; of several waiting Writes only the newest is written.</param>
         public void Update(
             IImage? image,
             Path filePath,

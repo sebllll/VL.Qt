@@ -25,20 +25,20 @@ namespace VL.Qt.Shaders
             new FilePinDescription("Mesh Resolution", typeof(Int2), new Int2(1, 1), "Grid subdivisions (x, y >= 1) for vertex shaders that deform the element.", isVisible: false),
             new FilePinDescription("Size", typeof(Vector2), new Vector2(1f, 1f), "Size of the element (width, height), only with Auto Size off or without Input. The position comes from Transform and Anchor."),
             new FilePinDescription("Auto Size", typeof(bool), true, "On: with an Input the implicit size (size of the input) applies. Without Input or off: Size counts.", isVisible: false),
-            new FilePinDescription("Transform", typeof(Matrix), Matrix.Identity, "Position, rotation and scale; applied around the Anchor (like Skia)."),
-            new FilePinDescription("Anchor", typeof(RectangleAnchor), RectangleAnchor.TopLeft, "Point of the element that lies at the origin of its parent space; Transform rotates/scales around it.", isVisible: false),
+            new FilePinDescription("Transform", typeof(Matrix), Matrix.Identity, "Position, rotation and scale, applied around the Anchor. Inside Row/Column the layout places the element and Transform is only visual."),
+            new FilePinDescription("Anchor", typeof(RectangleAnchor), RectangleAnchor.TopLeft, "Point of the element that lies at the origin of its parent space (TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size. Transform rotates and scales around it. Inside Row/Column only the pivot of Transform.", isVisible: false),
             new FilePinDescription("Opacity", typeof(float), 1f, "Opacity of the effect output (qt_Opacity in the shader). 0 = not drawn, but still takes its space and receives input.", isVisible: false),
             new FilePinDescription("Clip", typeof(bool), false, "Clip to the element's size.", isVisible: false),
-            new FilePinDescription("Debug", typeof(bool), false, "Debug overlay for this element only.", isVisible: false),
+            new FilePinDescription("Debug", typeof(bool), false, "Draws the debug overlay of this element only, not of its children (the Debug pin of Renderer [Qt] shows all elements); it does not change layout or hit-testing. The colors are explained at the Debug pin of Renderer [Qt] and in the help patch HowTo Debug Overlay.", isVisible: false),
             new FilePinDescription("Interaction", typeof(Interaction), null, "Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.", isVisible: false),
-            new FilePinDescription("Effect", typeof(Effect), null, "Chain of effect nodes (Blur, DropShadow, …), drawn as one effect layer on the element.", isVisible: false),
+            new FilePinDescription("Effect", typeof(Effect), null, "Chain of effect nodes (Blur, DropShadow, Glow, ColorAdjust, Mask, …), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.", isVisible: false),
             new FilePinDescription("Enabled", typeof(bool), true, "False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.", isVisible: false),
         };
 
         private static readonly IVLPinDescription[] s_outputs =
         {
             new FilePinDescription("Output", typeof(IElement), null, null),
-            new FilePinDescription("Measured Size", typeof(Vector2), Vector2.Zero, "Implicit size reported by Qt, in units (last frame).", isVisible: false),
+            new FilePinDescription("Measured Size", typeof(Vector2), Vector2.Zero, "Size the element takes with Auto Size on, in units (last frame).", isVisible: false),
             new FilePinDescription("Scene Bounds", typeof(RectangleF), RectangleF.Empty, "Bounds in window coordinates after layout and transform, in units (last frame).", isVisible: false),
             new FilePinDescription("Error", typeof(string), string.Empty, "Shader bake errors at runtime (with line numbers), empty if none."),
         };

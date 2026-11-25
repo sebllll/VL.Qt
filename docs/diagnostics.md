@@ -69,7 +69,7 @@ Every element node and the `Renderer [Qt]` have a `Debug` pin. On an element it 
 
 <img src="images/debug-overlay.png" width="640" alt="Debug overlay: frames, origins, anchors, padding, Row/Column spacing, text baseline">
 
-The legend is also in the `Debug` pin's tooltip. See `help/Qt/HowTo Debug Overlay.vl`.
+The legend is also in the tooltip of the `Debug` pin of `Renderer [Qt]`; the `Debug` pin of an element points to it. See `help/Qt/HowTo Debug Overlay.vl`.
 
 With `Debug` on for all elements, painting the overlay is O(elements) per frame: every frame that changes the scene rebuilds the geometry of every element.
 

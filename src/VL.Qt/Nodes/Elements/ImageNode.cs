@@ -40,21 +40,21 @@ namespace VL.Qt.Nodes
 
         internal ElementNodeCore<Image, Props> Core => _node;
 
-        /// <summary>Describes the image. A new description is only created when an input changes.</summary>
-        /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor.</param>
-        /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
-        /// <param name="anchor">Point of the element that lies at the origin of its parent space (default TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size; Transform rotates/scales around it. Inside Row/Column only the pivot of Transform.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='size']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <param name="image">The image to draw (LoadImage, LoadImage (Async), ToQtImage). Nothing = empty element. While a new image loads, the previous one stays visible.</param>
         /// <param name="fillMode">How the image fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill), Tile.</param>
         /// <param name="smooth">Smooth (bilinear) scaling.</param>
-        /// <param name="opacity">Opacity of the element and its children. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
-        /// <param name="clip">Clip children to the element's size.</param>
-        /// <param name="debug">Debug overlay for this element only (not its children; the Renderer's Debug shows all). Does not affect layout or hit-testing. Cyan frame = actual size (solid: Size, dashed: Auto Size on), orange = implicit size, i.e. what Auto Size would give (only where it differs), blue dotted = children extent, translucent red = children outside the frame (overflow), translucent green = padding and hatched violet = Row/Column spacing (both inside the frame), magenta cross = origin, yellow diamond = anchor. Text: green line = baseline, dashed green = ascent, dashed red = descent.</param>
-        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
-        /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
-        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
-        /// <param name="measuredSize">Natural size of the image reported by Qt, in units (0, 0 until loaded; last frame).</param>
-        /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='interaction']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
+        /// <param name="measuredSize">Natural size of the image, in units (0, 0 until loaded; last frame).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         // Pin defaults: see RectangleNode. Image default = null (no image).
         [return: Pin(Name = "Output")]
         public IElement Update(

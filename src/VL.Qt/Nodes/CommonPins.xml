@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The pin texts that every element node shares. A node takes one with
+  /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
+  in place of the <param> (the path is relative to the source file; the include replaces the whole <param>, not
+  its content). The compiler expands it into VL.Qt.xml, which vvvv shows as pin help.
+
+  A set holds the texts of one family of nodes, so that the name attribute of an entry always equals the C#
+  parameter name (the compiler checks it):
+    element   every element node (Rectangle, Text, Image, Video, Group, Row, Column, Labeled, QML, Shader, widgets)
+    autosize  the Size of the nodes that have an Auto Size pin
+    plain     Rectangle, Circle and the shapes: no content size of their own (Measured Size); Rectangle and Circle: Clip
+    shape     Line, Polyline, Polygon, Path: their extent comes from the points
+    widget    Button, Slider, Toggle, TextInput, InputInt
+  Texts that only one node needs stay at the node. Write for the patcher, not for the Qt implementation.
+-->
+<docs>
+  <set name="element">
+    <param name="size">Size of the element (width, height) in units of the renderer's Space. The position comes from Transform and Anchor.</param>
+    <param name="transform">Position, rotation and scale, applied around the Anchor. Inside Row/Column the layout places the element and Transform is only visual.</param>
+    <param name="anchor">Point of the element that lies at the origin of its parent space (TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size. Transform rotates and scales around it. Inside Row/Column only the pivot of Transform.</param>
+    <param name="opacity">Opacity of the element, including its children. 0 = not drawn and costs no render time, but the element keeps its space in Row/Column and still receives input. Enabled off removes the element from the layout instead.</param>
+    <param name="clip">Clips the drawing of the element and of its children to the element's size: text that overflows, the overhang of a cropped Image and children outside the frame are cut.</param>
+    <param name="debug">Draws the debug overlay of this element only, not of its children (the Debug pin of Renderer [Qt] shows all elements); it does not change layout or hit-testing. The colors are explained at the Debug pin of Renderer [Qt] and in the help patch HowTo Debug Overlay.</param>
+    <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
+    <param name="effect">Chain of effect nodes (Blur, DropShadow, Glow, ColorAdjust, Mask, …), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
+    <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
+    <param name="measuredSize">Size the element takes with Auto Size on, in units (last frame).</param>
+    <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
+    <returns>The element; connect it to Renderer [Qt] or a Group.</returns>
+  </set>
+  <set name="autosize">
+    <param name="size">Size of the element (width, height) in units of the renderer's Space, only with Auto Size off. The position comes from Transform and Anchor.</param>
+  </set>
+  <set name="plain">
+    <param name="clip">No visible effect on this element: it never paints outside its size, so nothing is cut (checked with stroke and with DropShadow, which Clip does not cut either). The pin is here so that every element has the same pins.</param>
+    <param name="measuredSize">Always 0, 0: this element has no content size of its own.</param>
+  </set>
+  <set name="shape">
+    <param name="transform">Position, rotation and scale, applied around the origin of the parent space. Inside Row/Column the layout places the element and Transform is only visual.</param>
+    <param name="clip">Clips the drawing to the extent (0, 0) to (max X, max Y) of the points: the stroke and points outside it are cut.</param>
+    <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input. Hit-testing uses the extent (0, 0) to (max X, max Y) of the points, not the stroke.</param>
+  </set>
+  <set name="widget">
+    <param name="opacity">Opacity of the widget. 0 = not drawn and costs no render time, but the widget keeps its space in Row/Column and still receives input.</param>
+    <param name="interaction">Chain of interaction nodes (Hover, Click, …). The widget takes its input itself in any case; the chain adds hover, press and pointer handling.</param>
+    <param name="channel">Channel of the value. Changes from the patch are shown; changes by the user are written into it (author "Qt"). A plain value or an IOBox on the pin is the start value and sets the value whenever it changes. If the patch and the user change the value in the same frame, the user wins.</param>
+  </set>
+</docs>

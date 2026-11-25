@@ -249,6 +249,19 @@ namespace VL.Qt.Tests
         private static QmlDeclarations Declare(QmlPropertyDecl[] properties, QmlSignalDecl[]? signals = null) =>
             new("Item", QmlFileHead.Empty, properties.ToImmutableArray(), (signals ?? Array.Empty<QmlSignalDecl>()).ToImmutableArray(), ImmutableArray<QmlParseMessage>.Empty);
 
+        // The pin texts that QML nodes share with the element nodes come from CommonPins.xml (written once, NODE-03).
+        [Test]
+        public void Layout_CommonPinHelp_IsTheSharedText()
+        {
+            var layout = QmlNodeLayout.Build("Gauge.qml", Declare(Array.Empty<QmlPropertyDecl>()));
+            var inputs = layout.InputDescriptions().ToDictionary(i => i.Name, i => ((IInfo)i).Summary);
+            foreach (var (pin, name) in new[] { ("Transform", "transform"), ("Anchor", "anchor"), ("Opacity", "opacity"), ("Clip", "clip"), ("Debug", "debug"),
+                ("Interaction", "interaction"), ("Effect", "effect"), ("Enabled", "enabled") })
+                Assert.That(inputs[pin], Is.EqualTo(CommonPinsXml.Param("element", name)), pin);
+            var outputs = layout.OutputDescriptions().ToDictionary(o => o.Name, o => ((IInfo)o).Summary);
+            Assert.That(outputs["Scene Bounds"], Is.EqualTo(CommonPinsXml.Param("element", "sceneBounds")));
+        }
+
         [Test]
         public void Layout_PinsFollowDeclarations_CommonPinsAround()
         {

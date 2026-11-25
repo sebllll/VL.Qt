@@ -71,24 +71,24 @@ namespace VL.Qt.Nodes
 
         internal ElementNodeCore<QmlElement, Props> Core => _node;
 
-        /// <summary>Describes the QML element. A new description is only created when an input changes (also when the file was reloaded).</summary>
         /// <param name="file">The .qml file, its root must be an Item. A relative path is taken from the working directory of the app (vvvv resolves a Path IOBox against the document). Empty = nothing loaded. The file and the *.qml and qmldir next to it are watched: saving one reloads the element and sends all properties again; the outputs start empty again.</param>
         /// <param name="properties">Values for properties of the QML root by name (float, double, int, bool, string, Color4, Vector2/3/4, RectangleF). Only entries that changed are sent. A key that is removed is not reset in QML. Unknown names and values QML cannot convert show at Error and are ignored; a float for an int property is converted by Qt.</param>
         /// <param name="size">Size of the element (width, height), only with Auto Size off: it sets width and height of the QML root. The position comes from Transform and Anchor.</param>
         /// <param name="autoSize">On: the element takes the implicit size (implicitWidth, implicitHeight) of the QML root. Off: Size counts.</param>
-        /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
-        /// <param name="anchor">Point of the element that lies at the origin of its parent space (default TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size; Transform rotates/scales around it. Inside Row/Column only the pivot of Transform.</param>
-        /// <param name="opacity">Opacity of the element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
-        /// <param name="clip">Clip children to the element's size.</param>
-        /// <param name="debug">Debug overlay for this element only. Does not affect layout or hit-testing. Cyan frame = actual size (solid: Size, dashed: Auto Size on), orange = implicit size, i.e. what Auto Size would give (only where it differs), magenta cross = origin, yellow diamond = anchor.</param>
-        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
-        /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
-        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='interaction']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
         /// <param name="changedProperties">Last value of each root property that QML changed (a change the patch caused with Properties is not reported back). A new dictionary instance whenever something changed; reset when the file is reloaded.</param>
         /// <param name="signals">Signals of the QML root emitted since the last frame, in order. Each has its name and its arguments.</param>
-        /// <param name="measuredSize">Implicit size of the QML root reported by Qt, in units.</param>
-        /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
+        /// <param name="measuredSize">Size the QML root takes with Auto Size on, in units.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <param name="error">Compile, load and type errors of the QML file (with file and line), properties that could not be set; empty = OK.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         [return: Pin(Name = "Output")]
         public IElement Update(
             Path? file,

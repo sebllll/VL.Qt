@@ -26,9 +26,8 @@ namespace VL.Qt.Nodes
 
         internal ShapeNodeCore Core => _core;
 
-        /// <summary>Describes the polygon. A new description is only created when an input changes.</summary>
         /// <param name="points">Vertices in units, in the parent space. Transform acts around the origin of the parent space, not around the shape; the shape reports (max X, max Y) of the points as its size.</param>
-        /// <param name="transform">Position, rotation and scale; applied around the origin of the parent space (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='shape']/param[@name='transform']"/>
         /// <param name="fill">Fill color of the enclosed area.</param>
         /// <param name="strokeColor">Color of the stroke.</param>
         /// <param name="strokeWidth">Width of the stroke in units, 0 = no stroke.</param>
@@ -37,15 +36,15 @@ namespace VL.Qt.Nodes
         /// <param name="dash">Lengths of dashes and gaps in units, alternating. Empty = solid stroke.</param>
         /// <param name="dashOffset">Start of the dash pattern along the stroke, in units.</param>
         /// <param name="fillRule">Which areas of a self-intersecting polygon are filled: NonZero or EvenOdd.</param>
-        /// <param name="opacity">Opacity of the element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
-        /// <param name="clip">Clip children to the extent of the shape (see Rectangle).</param>
-        /// <param name="debug">Debug overlay for this element (see Rectangle).</param>
-        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input. Hit-testing uses the extent (0, 0) to (max X, max Y) of the points, not the stroke.</param>
-        /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
-        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
-        /// <param name="measuredSize">Implicit size reported by Qt, in units (0, 0).</param>
-        /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
-        /// <returns>The element for Renderer [Qt] or a Group.</returns>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='shape']/param[@name='clip']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='shape']/param[@name='interaction']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='plain']/param[@name='measuredSize']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         [return: Pin(Name = "Output")]
         public IElement Update(
             Spread<Vector2> points,

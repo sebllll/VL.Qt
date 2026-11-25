@@ -50,10 +50,9 @@ namespace VL.Qt.Nodes
 
         internal ElementNodeCore<Text, Props> Core => _node;
 
-        /// <summary>Describes the text. A new description is only created when an input changes.</summary>
         /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor. The size is the box for alignment, wrapping and eliding.</param>
-        /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
-        /// <param name="anchor">Point of the element that lies at the origin of its parent space (default TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size; Transform rotates/scales around it. Inside Row/Column only the pivot of Transform.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <param name="text">The text (plain, no markup).</param>
         /// <param name="fontFamily">Font family, empty = system default.</param>
         /// <param name="fontSize">Font size (pixel height) in units, rounded to whole DIP (0.12 = 12 DIP).</param>
@@ -67,14 +66,15 @@ namespace VL.Qt.Nodes
         /// <param name="lineHeight">Proportional line height (1 = font line height).</param>
         /// <param name="letterSpacing">Extra space between letters in units.</param>
         /// <param name="autofit">Shrink the font size to fit Size (Font Size is the maximum).</param>
-        /// <param name="opacity">Opacity of the element and its children. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
-        /// <param name="clip">Clip children to the element's size.</param>
-        /// <param name="debug">Debug overlay for this element only (not its children; the Renderer's Debug shows all). Does not affect layout or hit-testing. Cyan frame = actual size (solid: Size, dashed: Auto Size on), orange = implicit size, i.e. what Auto Size would give (only where it differs), blue dotted = children extent, translucent red = children outside the frame (overflow), translucent green = padding and hatched violet = Row/Column spacing (both inside the frame), magenta cross = origin, yellow diamond = anchor. Text: green line = baseline, dashed green = ascent, dashed red = descent.</param>
-        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
-        /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
-        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
-        /// <param name="measuredSize">Size of the laid-out text reported by Qt, in units (last frame).</param>
-        /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='interaction']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
+        /// <param name="measuredSize">Size of the laid-out text, in units (last frame).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         // Pin defaults: see RectangleNode (string-valued [DefaultValue] for Color4/Vector2). Default text color is
         // white (readable on the Renderer's #202020 clear color), Size 100 x 100 DIP.
         [return: Pin(Name = "Output")]

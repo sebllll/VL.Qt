@@ -13,10 +13,10 @@ using VL.Qt.Styles;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Push button (QtQuick.Controls Button, style Basic). Connect to Renderer [Qt] or a Group.
-    /// A click is a release over the button (Qt clicked); it is reported by Bang and Is Clicked.
-    /// Lengths in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP).
+    /// Push button that reports each click as Bang and into the Is Clicked channel. A click is a release over the button.
+    /// Connect to Renderer [Qt] or a Group.
     /// </summary>
+    /// <remarks>QtQuick.Controls Button, style Basic.</remarks>
     [ProcessNode(Name = "Button", Category = Categories.Widgets)]
     public sealed class ButtonNode : IDisposable
     {
@@ -42,24 +42,24 @@ namespace VL.Qt.Nodes
 
         internal ElementNodeCore<Button, Props> Core => _node;
 
-        /// <summary>Describes the button. A new description is only created when an input changes.</summary>
-        /// <param name="size">Size of the element (width, height), only with Auto Size off. The position comes from Transform and Anchor.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='autosize']/param[@name='size']"/>
         /// <param name="autoSize">On: Size is ignored and the implicit size applies (text + padding of the style). Off: Size counts.</param>
-        /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
-        /// <param name="anchor">Point of the element that lies at the origin of its parent space (default TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size; Transform rotates/scales around it. Inside Row/Column only the pivot of Transform.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <param name="text">Label of the button.</param>
         /// <param name="enabled">False greys the button out; it then sends no clicks.</param>
         /// <param name="autoRepeat">Repeats the click while the button is held down.</param>
         /// <param name="isClicked">Channel: receives one value per click (author "Qt"). The clicks come from the button itself (Qt clicked), no Interaction node is needed.</param>
-        /// <param name="opacity">Opacity of the element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
-        /// <param name="clip">Clip children to the element's size.</param>
-        /// <param name="debug">Debug overlay for this element only. Does not affect layout or hit-testing. Cyan frame = actual size (solid: Size, dashed: Auto Size on), orange = implicit size, i.e. what Auto Size would give (only where it differs), magenta cross = origin, yellow diamond = anchor.</param>
-        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). The button takes clicks itself in any case; the chain adds hover, press and pointer handling.</param>
-        /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='widget']/param[@name='opacity']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='widget']/param[@name='interaction']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
         /// <param name="style">Look of the widget. Unset fields come from the enclosing Group's style, else from the base style.</param>
         /// <param name="bang">True for one frame when the button was clicked since the last frame.</param>
-        /// <param name="measuredSize">Implicit size reported by Qt (text + padding of the style), in units.</param>
-        /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='measuredSize']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         [return: Pin(Name = "Output")]
         public IElement Update(
             [DefaultValue("1, 0.4")] Vector2 size,

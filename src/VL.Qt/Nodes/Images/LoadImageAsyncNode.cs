@@ -10,7 +10,7 @@ namespace VL.Qt.Nodes
 {
     /// <summary>
     /// Loads an image file into a QtImage without blocking the frame: decoding runs in a worker, the upload is spread over
-    /// frames. The previous image stays at the output until the new one is ready.
+    /// frames. With Keep Previous on, the previous image stays at the output until the new one is ready.
     /// </summary>
     [ProcessNode(Name = "LoadImage (Async)", Category = Categories.Images)]
     public sealed class LoadImageAsyncNode : IDisposable

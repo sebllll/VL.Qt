@@ -81,7 +81,6 @@ namespace VL.Qt.Nodes
 
         internal ElementNodeCore<Shader, Props> Core => _node;
 
-        /// <summary>Describes the shader effect. A new description is only created when an input changes.</summary>
         /// <param name="input">Element sampled as sampler2D "source" (hidden itself, only the effect output is drawn). Unconnected = generative shader.</param>
         /// <param name="inputSampler">How the shader reads the Input (filter, wrap, mipmaps), from the Sampler node. Unconnected = as the input's layer is (Nearest, Clamp).</param>
         /// <param name="fragmentCode">Fragment shader as full Qt GLSL (#version 440), baked at runtime in the background. The default is a commented template. Ignored while Fragment Shader is set. While a new text bakes or if it has errors, the last working version keeps drawing; errors (with line numbers) go to Error.</param>
@@ -94,16 +93,17 @@ namespace VL.Qt.Nodes
         /// <param name="size">Size of the element (width, height), only with Auto Size off or without Input. The position comes from Transform and Anchor.</param>
         /// <param name="autoSize">On: with an Input the implicit size (size of the input) applies. Without Input or off: Size counts.</param>
         /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Set it here, not on the input.</param>
-        /// <param name="anchor">Point of the element that lies at the origin of its parent space (default TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size; Transform rotates/scales around it. Inside Row/Column only the pivot of Transform.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <param name="opacity">Opacity of the effect output (qt_Opacity in the shader). 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
         /// <param name="clip">Clip to the element's size.</param>
-        /// <param name="debug">Debug overlay for this element only (not its children; the Renderer's Debug shows all).</param>
-        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
-        /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
-        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
-        /// <param name="measuredSize">Implicit size reported by Qt, in units (last frame).</param>
-        /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='interaction']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='measuredSize']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <param name="error">Shader load errors and uniform problems (unknown name, wrong type, reserved name), empty if none.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         [return: Pin(Name = "Output")]
         public IElement Update(
             IElement? input,

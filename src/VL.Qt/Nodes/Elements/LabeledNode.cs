@@ -76,21 +76,21 @@ namespace VL.Qt.Nodes
                 ChildAlignment = HorizontalAlignment.Left,
             };
 
-        /// <summary>Describes the label and the layout around it. A new description is only created when an input changes.</summary>
         /// <param name="element">The element to label (Button, Slider, Input, …). Unconnected: only the label is shown.</param>
         /// <param name="text">The label text (plain, no markup).</param>
         /// <param name="labelWidth">Width of the label box. Use the same value on all Labeled nodes of a panel so the elements line up. With the label above the element it only limits the box, not the layout.</param>
         /// <param name="labelPosition">Label left of the element or above it.</param>
         /// <param name="spacing">Gap between label and element.</param>
-        /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
-        /// <param name="anchor">Point of the element that lies at the origin of its parent space (default TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size; Transform rotates/scales around it. Inside Row/Column only the pivot of Transform.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <param name="labelHeight">Height of the label box; the text is vertically centered in it. Must be at least the text height (12 DIP font: about 0.2).</param>
-        /// <param name="opacity">Opacity of label and element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
         /// <param name="interaction">Chain of interaction nodes (Hover, Click, …) for label and element together. Without interaction the label row is transparent for input; the element keeps its own Interaction.</param>
-        /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
-        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
-        /// <param name="measuredSize">Implicit size reported by Qt (label + spacing + element), in units (last frame).</param>
-        /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
+        /// <param name="measuredSize">Size the node takes (label + spacing + element), in units (last frame).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         [return: Pin(Name = "Output")]
         public IElement Update(
             IElement? element,

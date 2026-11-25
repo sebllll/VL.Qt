@@ -72,13 +72,13 @@ namespace VL.Qt.Qml
         {
             new FilePinDescription("Size", typeof(Vector2), new Vector2(1f, 1f), "Size of the element (width, height), only with Auto Size off: it sets width and height of the QML root. The position comes from Transform and Anchor."),
             new FilePinDescription("Auto Size", typeof(bool), true, "On: the element takes the implicit size (implicitWidth, implicitHeight) of the QML root. Off: Size counts.", isVisible: false),
-            new FilePinDescription("Transform", typeof(Matrix), Matrix.Identity, "Position, rotation and scale; applied around the Anchor (like Skia)."),
-            new FilePinDescription("Anchor", typeof(RectangleAnchor), RectangleAnchor.TopLeft, "Point of the element that lies at the origin of its parent space; Transform rotates/scales around it.", isVisible: false),
-            new FilePinDescription("Opacity", typeof(float), 1f, "Opacity of the element. 0 = not drawn, but still takes its space and receives input.", isVisible: false),
-            new FilePinDescription("Clip", typeof(bool), false, "Clip children to the element's size.", isVisible: false),
-            new FilePinDescription("Debug", typeof(bool), false, "Debug overlay for this element only.", isVisible: false),
+            new FilePinDescription("Transform", typeof(Matrix), Matrix.Identity, "Position, rotation and scale, applied around the Anchor. Inside Row/Column the layout places the element and Transform is only visual."),
+            new FilePinDescription("Anchor", typeof(RectangleAnchor), RectangleAnchor.TopLeft, "Point of the element that lies at the origin of its parent space (TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size. Transform rotates and scales around it. Inside Row/Column only the pivot of Transform.", isVisible: false),
+            new FilePinDescription("Opacity", typeof(float), 1f, "Opacity of the element, including its children. 0 = not drawn and costs no render time, but the element keeps its space in Row/Column and still receives input. Enabled off removes the element from the layout instead.", isVisible: false),
+            new FilePinDescription("Clip", typeof(bool), false, "Clips the drawing of the element and of its children to the element's size: text that overflows, the overhang of a cropped Image and children outside the frame are cut.", isVisible: false),
+            new FilePinDescription("Debug", typeof(bool), false, "Draws the debug overlay of this element only, not of its children (the Debug pin of Renderer [Qt] shows all elements); it does not change layout or hit-testing. The colors are explained at the Debug pin of Renderer [Qt] and in the help patch HowTo Debug Overlay.", isVisible: false),
             new FilePinDescription("Interaction", typeof(Interaction), null, "Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.", isVisible: false),
-            new FilePinDescription("Effect", typeof(Effect), null, "Chain of effect nodes (Blur, DropShadow, …), drawn as one effect layer on the element.", isVisible: false),
+            new FilePinDescription("Effect", typeof(Effect), null, "Chain of effect nodes (Blur, DropShadow, Glow, ColorAdjust, Mask, …), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.", isVisible: false),
             new FilePinDescription("Enabled", typeof(bool), true, "False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.", isVisible: false),
         };
 
@@ -86,7 +86,7 @@ namespace VL.Qt.Qml
 
         private static readonly IVLPinDescription[] s_trailingOutputs =
         {
-            new FilePinDescription("Measured Size", typeof(Vector2), Vector2.Zero, "Implicit size of the QML root reported by Qt, in units (last frame).", isVisible: false),
+            new FilePinDescription("Measured Size", typeof(Vector2), Vector2.Zero, "Size the QML root takes with Auto Size on, in units (last frame).", isVisible: false),
             new FilePinDescription("Scene Bounds", typeof(RectangleF), RectangleF.Empty, "Bounds in window coordinates after layout and transform, in units (last frame).", isVisible: false),
             new FilePinDescription("Error", typeof(string), string.Empty, "Compile, load and type errors of the QML file (with file and line), properties that could not be set; empty = OK."),
         };

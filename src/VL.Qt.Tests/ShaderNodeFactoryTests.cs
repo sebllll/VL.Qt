@@ -190,6 +190,19 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
             Assert.That(second[0], Is.SameAs(first[0]), "unchanged uniforms are reused");
         }
 
+        // The pin texts that generated shader nodes share with the element nodes come from CommonPins.xml (written once, NODE-03).
+        [Test]
+        public void Description_CommonPinHelp_IsTheSharedText()
+        {
+            var layout = Load(fragmentSource, reflection);
+            var inputs = ShaderNodeDescription.Inputs(layout).ToDictionary(i => i.Name, i => ((IInfo)i).Summary);
+            foreach (var (pin, name) in new[] { ("Transform", "transform"), ("Anchor", "anchor"), ("Debug", "debug"), ("Interaction", "interaction"), ("Effect", "effect"), ("Enabled", "enabled") })
+                Assert.That(inputs[pin], Is.EqualTo(CommonPinsXml.Param("element", name)), pin);
+            var outputs = ShaderNodeDescription.Outputs.ToDictionary(o => o.Name, o => ((IInfo)o).Summary);
+            Assert.That(outputs["Measured Size"], Is.EqualTo(CommonPinsXml.Param("element", "measuredSize")));
+            Assert.That(outputs["Scene Bounds"], Is.EqualTo(CommonPinsXml.Param("element", "sceneBounds")));
+        }
+
         [Test]
         public void Instance_InputPinsMatchDescriptionOrder()
         {
