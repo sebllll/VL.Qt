@@ -58,6 +58,33 @@ public static class PerfStatsTest
         s.Check(rc == 0 && st.long_frames == 0 && st.idle == 56 && st.frames == 16 && st.frame_max == 16,
             $"perfstats: on demand -> long frames 0, idle 56, 16 consecutive frames, frame max 16 (long {st.long_frames}, idle {st.idle}, frames {st.frames}, max {st.frame_max})");
 
+        // NDIAG-02: frame statistics (vlqt_perf: fps, frame_ms) only from consecutive frames. 60 pumps of 16 ms frames,
+        // with and without a 2 s idle gap (the frame after it has interval 2000 and a previous pump without a frame).
+        var anim = new Native.vlqt_perf_sample[60];
+        for (int i = 0; i < 60; i++)
+            anim[i] = new Native.vlqt_perf_sample { pump = 1, sync = 0.2f, render = 0.4f, present = 0.1f, frame_interval = 16, swaps = 1 };
+        rc = NativeTest.vlqt_test_perf_summary_eval(anim, anim.Length, out var pf);
+        s.Check(rc == 0 && pf.samples == 60 && pf.frame_ms == 16 && pf.frame_ms_max == 16 && Math.Abs(pf.fps - 62.5) < 1e-9,
+            $"perfstats: summary of 60 frames of 16 ms -> 16 ms, 62.5 fps (rc {rc}, frame {pf.frame_ms}, max {pf.frame_ms_max}, fps {pf.fps})");
+        var gap = (Native.vlqt_perf_sample[])anim.Clone();
+        for (int i = 30; i < 40; i++) gap[i] = new Native.vlqt_perf_sample { pump = 0.1f, swaps = 0 }; // idle pumps
+        gap[40] = gap[40] with { frame_interval = 2000 }; // first frame after the idle pumps
+        rc = NativeTest.vlqt_test_perf_summary_eval(gap, gap.Length, out var pg);
+        s.Check(rc == 0 && pg.frame_ms == 16 && pg.frame_ms_max == 16 && Math.Abs(pg.fps - 62.5) < 1e-9,
+            $"perfstats: an idle gap does not change frame_ms, frame_ms_max or fps (rc {rc}, frame {pg.frame_ms}, max {pg.frame_ms_max}, fps {pg.fps})");
+        // Phases per pump that rendered: render 0.4 in 50 of the 60 pumps -> 0.4, not 0.4 * 50 / 60.
+        s.Check(Math.Abs(pg.render_ms - 0.4) < 1e-6 && Math.Abs(pg.sync_ms - 0.2) < 1e-6 && Math.Abs(pg.present_ms - 0.1) < 1e-6,
+            $"perfstats: phase averages per pump that rendered (render {pg.render_ms}, sync {pg.sync_ms}, present {pg.present_ms})");
+        // Idle scene: a frame every 8th pump only (on demand) -> no consecutive frame, fps 0.
+        var demand = new Native.vlqt_perf_sample[60];
+        for (int i = 0; i < 60; i++)
+            demand[i] = i % 8 == 7 ? new Native.vlqt_perf_sample { pump = 1, frame_interval = 128, swaps = 1 } : new Native.vlqt_perf_sample { pump = 0.1f };
+        rc = NativeTest.vlqt_test_perf_summary_eval(demand, demand.Length, out var pd);
+        s.Check(rc == 0 && pd.fps == 0 && pd.frame_ms == 0 && pd.frame_ms_max == 0,
+            $"perfstats: an idle / on-demand scene has fps 0, frame_ms 0 (rc {rc}, fps {pd.fps}, frame {pd.frame_ms}, max {pd.frame_ms_max})");
+        rc = NativeTest.vlqt_test_perf_summary_eval(anim, 0, out pd);
+        s.Check(rc == 0 && pd.samples == 0 && pd.fps == 0, "perfstats: summary without samples -> zeros");
+
         // Ring limit: 300 samples -> percentiles over the last 240 (pump 60..299), counters over all.
         samples = new Native.vlqt_perf_sample[300];
         t = new double[300];

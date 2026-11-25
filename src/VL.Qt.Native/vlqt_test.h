@@ -89,6 +89,9 @@ VLQT_API int   vlqt_test_window_grab(vlqt_scene* window, const char* pngPath);
 /* The vlqt_perf_stats computation on n given samples with timestamps t_ms (ascending, ms; "now" = t_ms[n-1]) and a
  * fixed budget. 0, VLQT_ERR_BAD_ARGUMENT null/negative argument. */
 VLQT_API int   vlqt_test_perf_eval(const vlqt_perf_sample* samples, const double* t_ms, int n, double budget_ms, vlqt_perf_stats* out);
+/* The vlqt_perf computation (vlqt_scene_get_perf) on n given samples: the last 60 of them. 0, VLQT_ERR_BAD_ARGUMENT
+ * null/negative argument. */
+VLQT_API int   vlqt_test_perf_summary_eval(const vlqt_perf_sample* samples, int n, vlqt_perf* out);
 /* The vlqt_host_pump_stats computation on n given host pumps. 0, VLQT_ERR_BAD_ARGUMENT null/negative argument. */
 VLQT_API int   vlqt_test_perf_host_eval(const vlqt_host_pump* pumps, int n, vlqt_host_pump_stats* out);
 /* Number of pointer handlers (QQuickPointerHandler children) of item id (input handlers); VLQT_ERR_NULL_HANDLE,

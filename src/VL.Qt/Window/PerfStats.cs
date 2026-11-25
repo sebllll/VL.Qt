@@ -5,6 +5,11 @@ namespace VL.Qt
 {
     /// <summary>
     /// Timings of a Qt window, averaged over the last ~1 s (max = worst pump in that range). All times in ms.
+    /// Frame statistics (Fps, FrameMs, FrameMsMax) come only from consecutive frames, like the percentiles: the interval
+    /// after idle pumps (a static scene, an animation that stopped) spans the idle time and is not a frame time. Without
+    /// a consecutive frame in the range (an idle scene) they are 0, so Fps is 0, not a low number. The phases (SyncMs,
+    /// RenderMs, PresentMs, VsyncMs) are averages per pump that rendered, not diluted by idle pumps; PumpMs, WorkMs and
+    /// SwapsPerPump are per pump of the range.
     /// Pump is the time Qt takes inside the vvvv frame (events, animation, vsync wait, sync, render, present). The vsync wait
     /// (VsyncMs, the start of the frame) and Present wait for the display refresh or the GPU, which is not Qt work: Qt work
     /// (WorkMs) is the pump without them, and only Qt work counts against the budget (OverBudget).

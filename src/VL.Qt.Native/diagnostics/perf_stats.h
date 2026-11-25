@@ -11,6 +11,8 @@ namespace vlqt {
 
 // Samples the ring of a window keeps (PerfMonitor::kHistory).
 inline constexpr int kPerfHistory = 240;
+// Pumps (about 1 s at 60 Hz) that the summary (vlqt_perf, F2 meter) and the Summary page average over.
+inline constexpr int kSummaryPumps = 60;
 
 // Timings of one pump (vlqt_app_process_events_for), in ms. 0 = no value in this pump (no frame, no GPU timestamp).
 struct PerfSample {
@@ -64,6 +66,39 @@ private:
 // samples[i] has a frame interval between consecutive frames (previous pump also had a frame); the interval
 // after idle pumps (on-demand rendering) spans the idle time and is not a frame time.
 bool consecutiveFrame(const PerfSample* samples, int i);
+
+// The averages and maxima over the last pumps of a ring, computed once for vlqt_perf (PerfStats), the F2 meter text and the
+// F5 Summary page, so that they agree. Rules:
+//  - Frame statistics (frameAvg, frameMax, fps) only from consecutive frames (consecutiveFrame, like the percentiles).
+//    After idle pumps the interval spans the idle time and is not a frame time. 0 = no consecutive frame in the window
+//    (the scene is idle or renders on demand): fps is then 0, not a low number.
+//  - Phase averages (events, vsync, sync, render, present) per pump that rendered (swaps > 0): the cost of a rendered
+//    pump, not diluted by the idle ones.
+//  - Pump, Qt work and swaps per pump of the window, GPU per pump with a timestamp.
+struct PerfWindow {
+    int pumps = 0;     // pumps in the window
+    int rendered = 0;  // of those with a frame (swaps > 0)
+    int idle = 0;      // without a frame
+    int frames = 0;    // of those with a consecutive frame interval
+    int gpus = 0;      // of those with a GPU timestamp
+    double frameAvg = 0, frameMax = 0; // ms, 0 = no consecutive frame
+    double fps = 0;                    // 1000 / frameAvg, 0 = no consecutive frame
+    double pumpAvg = 0, pumpMax = 0;   // ms
+    double workAvg = 0;                // ms, PerfSample::workMs
+    double eventsAvg = 0, vsyncAvg = 0, syncAvg = 0, renderAvg = 0, presentAvg = 0; // ms per rendered pump
+    double gpuAvg = 0, gpuMax = 0;     // ms, 0 = unavailable
+    double swapsPerPump = 0;
+};
+
+// The window over the last `window` of n samples (oldest to newest). The sample before the window, if there is one, only
+// decides whether the first frame interval is a consecutive one.
+PerfWindow perfWindow(const PerfSample* samples, int n, int window);
+
+// The vlqt_perf of a window (vlqt_scene_get_perf).
+void perfSummary(const PerfWindow& w, vlqt_perf* out);
+
+// The same on given samples, the last kSummaryPumps of them (vlqt_test_perf_summary_eval).
+void perfSummaryEval(const vlqt_perf_sample* samples, int n, vlqt_perf* out);
 
 // Fills out from n samples (oldest to newest, the last up to kPerfHistory are used for the percentiles)
 // and the counters. Percentiles are nearest-rank; sorts copies on the stack, so call it at query time only.

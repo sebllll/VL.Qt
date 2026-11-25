@@ -102,28 +102,120 @@ void perfStats(const PerfSample* samples, int n, const PerfCounters& counters, d
     out->recent_multi_swap = r.multiSwap;
 }
 
+namespace {
+
+PerfSample toPerfSample(const vlqt_perf_sample& v)
+{
+    PerfSample s;
+    s.frameInterval = v.frame_interval;
+    s.pump = v.pump;
+    s.sync = v.sync;
+    s.render = v.render;
+    s.present = v.present;
+    s.vsync = v.vsync;
+    s.gpu = v.gpu;
+    s.events = v.events;
+    s.swaps = v.swaps;
+    return s;
+}
+
+} // namespace
+
 void perfEval(const vlqt_perf_sample* samples, const double* tMs, int n, double budgetMs, vlqt_perf_stats* out)
 {
     PerfCounters counters;
     std::array<PerfSample, kPerfHistory> ring;
     const int first = std::max(0, n - kPerfHistory);
     for (int i = 0; i < n; i++) {
-        const vlqt_perf_sample& v = samples[i];
-        PerfSample s;
-        s.frameInterval = v.frame_interval;
-        s.pump = v.pump;
-        s.sync = v.sync;
-        s.render = v.render;
-        s.present = v.present;
-        s.vsync = v.vsync;
-        s.gpu = v.gpu;
-        s.events = v.events;
-        s.swaps = v.swaps;
+        const PerfSample s = toPerfSample(samples[i]);
         counters.add(s, tMs[i], budgetMs);
         if (i >= first)
             ring[i - first] = s;
     }
     perfStats(ring.data(), n - first, counters, n > 0 ? tMs[n - 1] : 0, budgetMs, out);
+}
+
+PerfWindow perfWindow(const PerfSample* samples, int n, int window)
+{
+    PerfWindow w;
+    const int first = std::max(0, n - window);
+    double frameSum = 0, pumpSum = 0, workSum = 0, gpuSum = 0, swaps = 0;
+    double events = 0, vsync = 0, sync = 0, render = 0, present = 0;
+    for (int i = first; i < n; i++) {
+        const PerfSample& s = samples[i];
+        w.pumps++;
+        pumpSum += s.pump;
+        w.pumpMax = std::max(w.pumpMax, double(s.pump));
+        workSum += s.workMs();
+        swaps += s.swaps;
+        if (s.gpu > 0) {
+            gpuSum += s.gpu;
+            w.gpuMax = std::max(w.gpuMax, double(s.gpu));
+            w.gpus++;
+        }
+        if (s.swaps == 0) {
+            w.idle++;
+            continue;
+        }
+        w.rendered++;
+        events += s.events;
+        vsync += s.vsync;
+        sync += s.sync;
+        render += s.render;
+        present += s.present;
+        if (consecutiveFrame(samples, i)) {
+            frameSum += s.frameInterval;
+            w.frameMax = std::max(w.frameMax, double(s.frameInterval));
+            w.frames++;
+        }
+    }
+    if (w.pumps) {
+        w.pumpAvg = pumpSum / w.pumps;
+        w.workAvg = workSum / w.pumps;
+        w.swapsPerPump = swaps / w.pumps;
+    }
+    if (w.rendered) {
+        w.eventsAvg = events / w.rendered;
+        w.vsyncAvg = vsync / w.rendered;
+        w.syncAvg = sync / w.rendered;
+        w.renderAvg = render / w.rendered;
+        w.presentAvg = present / w.rendered;
+    }
+    if (w.frames) {
+        w.frameAvg = frameSum / w.frames;
+        w.fps = w.frameAvg > 0 ? 1000.0 / w.frameAvg : 0;
+    }
+    if (w.gpus)
+        w.gpuAvg = gpuSum / w.gpus;
+    return w;
+}
+
+void perfSummary(const PerfWindow& w, vlqt_perf* out)
+{
+    *out = vlqt_perf{};
+    out->fps = w.fps;
+    out->frame_ms = w.frameAvg;
+    out->frame_ms_max = w.frameMax;
+    out->pump_ms = w.pumpAvg;
+    out->pump_ms_max = w.pumpMax;
+    out->sync_ms = w.syncAvg;
+    out->render_ms = w.renderAvg;
+    out->present_ms = w.presentAvg;
+    out->gpu_ms = w.gpuAvg;
+    out->gpu_ms_max = w.gpuMax;
+    out->swaps_per_pump = w.swapsPerPump;
+    out->samples = w.pumps;
+    out->vsync_ms = w.vsyncAvg;
+    out->work_ms = w.workAvg;
+}
+
+void perfSummaryEval(const vlqt_perf_sample* samples, int n, vlqt_perf* out)
+{
+    std::array<PerfSample, kPerfHistory> ring;
+    const int first = std::max(0, n - kPerfHistory);
+    for (int i = first; i < n; i++)
+        ring[i - first] = toPerfSample(samples[i]);
+    perfSummary(perfWindow(ring.data(), n - first, kSummaryPumps), out);
 }
 
 void perfHostStats(const vlqt_host_pump* frames, int n, vlqt_host_pump_stats* out)

@@ -170,53 +170,12 @@ void PerfMonitor::endPump(float pumpMs)
 
 void PerfMonitor::summary(vlqt_perf* out) const
 {
-    *out = vlqt_perf{};
-    const int n = std::min(m_count, kSummaryPumps);
-    int frames = 0, gpus = 0, swaps = 0;
-    for (int i = m_count - n; i < m_count; i++) {
-        const PerfSample& s = sample(i);
-        out->pump_ms += s.pump;
-        out->pump_ms_max = std::max(out->pump_ms_max, double(s.pump));
-        out->work_ms += s.workMs();
-        swaps += s.swaps;
-        if (s.swaps == 0)
-            continue;
-        if (s.frameInterval > 0) {
-            out->frame_ms += s.frameInterval;
-            out->frame_ms_max = std::max(out->frame_ms_max, double(s.frameInterval));
-            frames++;
-        }
-        out->sync_ms += s.sync / s.swaps;
-        out->render_ms += s.render / s.swaps;
-        out->present_ms += s.present / s.swaps;
-        out->vsync_ms += s.vsync / s.swaps;
-        if (s.gpu > 0) {
-            out->gpu_ms += s.gpu;
-            out->gpu_ms_max = std::max(out->gpu_ms_max, double(s.gpu));
-            gpus++;
-        }
-    }
-    out->samples = n;
-    if (n == 0)
-        return;
-    out->pump_ms /= n;
-    out->work_ms /= n;
-    out->swaps_per_pump = double(swaps) / n;
-    int pumpsWithSwap = 0;
-    for (int i = m_count - n; i < m_count; i++)
-        pumpsWithSwap += sample(i).swaps > 0;
-    if (pumpsWithSwap) {
-        out->sync_ms /= pumpsWithSwap;
-        out->render_ms /= pumpsWithSwap;
-        out->present_ms /= pumpsWithSwap;
-        out->vsync_ms /= pumpsWithSwap;
-    }
-    if (frames) {
-        out->frame_ms /= frames;
-        out->fps = 1000.0 / out->frame_ms;
-    }
-    if (gpus)
-        out->gpu_ms /= gpus;
+    // One more sample than the window: it decides whether the window's first interval is a consecutive one.
+    const int n = std::min(m_count, kSummaryPumps + 1);
+    std::array<PerfSample, kSummaryPumps + 1> s;
+    for (int i = 0; i < n; i++)
+        s[i] = sample(m_count - n + i);
+    perfSummary(perfWindow(s.data(), n, kSummaryPumps), out);
 }
 
 bool PerfMonitor::lastSample(PerfSample* out) const
@@ -445,7 +404,7 @@ void PerfMonitor::updateOverlay()
         m_overlay->setProperty("meterText", QStringLiteral(
             "%1 fps  frame %2  <font color='#ff6eb4'>vvvv %3</font>  <font color='#50dc78'>gpu %4</font>  "
             "<font color='#ffa028'>work %5</font>")
-            .arg(f(p.fps, 1), f(p.frame_ms, 1), opt(hs.vvvv_ms), opt(p.gpu_ms), f(p.work_ms, 1)));
+            .arg(opt(p.fps), opt(p.frame_ms), opt(hs.vvvv_ms), opt(p.gpu_ms), f(p.work_ms, 1)));
     }
 
     if (!stats || (m_frozen && !forced))
