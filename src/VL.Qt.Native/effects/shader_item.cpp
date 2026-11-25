@@ -318,7 +318,7 @@ void ShaderItem::releaseUniform(Uniform& u)
     }
     u.image = 0;
     u.imageContent.reset();
-    u.imageTexture.reset();
+    retireImageTexture(u.imageTexture);
     u.ref = nullptr;
 }
 
@@ -413,7 +413,7 @@ bool ShaderItem::setUniform(const char* name, int nameLen, quint16 vt, const uns
             }
             u.image = 0;
             u.imageContent.reset();
-            u.imageTexture.reset();
+            retireImageTexture(u.imageTexture);
             if (id && res::kindOfId(id, nullptr) == VLQT_RESOURCE_KIND_IMAGE && res::acquire(id) == res::okRc) {
                 u.image = id;
                 s_watch.add(id, this);
@@ -739,9 +739,11 @@ void ShaderItem::invalidateSceneGraph()
         u.imageTexture.reset();
 }
 
+// Main thread: the textures go where the window renders.
 void ShaderItem::releaseResources()
 {
-    invalidateSceneGraph();
+    for (Uniform& u : m_uniforms)
+        retireImageTexture(u.imageTexture);
 }
 
 void ShaderItem::geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry)
