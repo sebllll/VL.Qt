@@ -97,21 +97,6 @@ namespace VL.Qt.Qml
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
 
-        /// <summary>Wire value type (<c>Protocol.ValueType</c>) of this kind, the one <see cref="QmlValue.TryConvert"/> produces for its CLR type.</summary>
-        public static ushort WireType(QmlValueKind kind) => kind switch
-        {
-            QmlValueKind.Real => Protocol.ValueType.F32,
-            QmlValueKind.Int => Protocol.ValueType.I32,
-            QmlValueKind.Bool => Protocol.ValueType.Bool,
-            QmlValueKind.String => Protocol.ValueType.String,
-            QmlValueKind.Color => Protocol.ValueType.Color,
-            QmlValueKind.Vector2D or QmlValueKind.Point or QmlValueKind.Size => Protocol.ValueType.Vec2,
-            QmlValueKind.Vector3D => Protocol.ValueType.Vec3,
-            QmlValueKind.Vector4D => Protocol.ValueType.Vec4,
-            QmlValueKind.Rect => Protocol.ValueType.Rectf,
-            _ => throw new ArgumentOutOfRangeException(nameof(kind)),
-        };
-
         /// <summary>
         /// Returns true if <paramref name="value"/> (a value from QtNative: EVENT_QML_PROPERTY or a signal argument) fits a pin of
         /// <paramref name="kind"/>; <paramref name="result"/> is then of <see cref="ClrType"/>. Converts the cases QML mixes

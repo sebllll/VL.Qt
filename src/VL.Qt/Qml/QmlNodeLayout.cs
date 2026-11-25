@@ -4,11 +4,8 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging;
-using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Diagnostics;
-using VL.Lib.Mathematics;
-using VL.Qt.Elements;
 using VL.Qt.NodeFactories;
 
 namespace VL.Qt.Qml
@@ -16,23 +13,9 @@ namespace VL.Qt.Qml
     /// <summary>
     /// The exact pins of a generated QML node, built once per node description from the parsed declarations. Both the
     /// description (<see cref="InputDescriptions"/>, <see cref="OutputDescriptions"/>) and the instance
-    /// (<see cref="QmlNodeInstance"/>) take the order from here.
-    /// <para>Inputs, in this order:</para>
-    /// <list type="number">
-    /// <item>one pin per <see cref="PropertyInputs"/> (declaration order, inherited first), visible, type from
-    /// <see cref="QmlTypes.ClrType"/>, default <see cref="QmlPropertyDecl.Default"/>;</item>
-    /// <item>Properties: Dictionary&lt;string, object&gt;, default null, optional (plan B for what has no pin);</item>
-    /// <item>Size (Vector2, 1, 1), Auto Size (bool, true, optional), Transform (Matrix, identity), Anchor (RectangleAnchor, TopLeft, optional),
-    /// Opacity (float, 1, optional), Clip (bool, optional), Debug (bool, optional), Interaction (optional), Effect (optional), Enabled (bool, true, optional): exactly as QmlElement.</item>
-    /// </list>
-    /// <para>Outputs, in this order:</para>
-    /// <list type="number">
-    /// <item>Output (Element);</item>
-    /// <item>one pin per <see cref="PropertyOutputs"/> (declaration order), visibility <see cref="QmlOutputPin.IsVisible"/>;</item>
-    /// <item>one pin per <see cref="SignalOutputs"/> (declaration order), visible;</item>
-    /// <item>Measured Size (Vector2, optional), Scene Bounds (RectangleF, optional), Error (string).</item>
-    /// </list>
-    /// A property or signal whose pin name is taken (by a common pin or an earlier declaration) gets a number, "Size 2", with a warning.
+    /// (<see cref="QmlNodeInstance"/>) take the order from here; the common pins, in the order of QmlElement, come from
+    /// <see cref="QmlCommonPins"/>. A property or signal whose pin name is taken gets a number, "Size 2", with a warning.
+    /// The pins are listed under "Which declarations give which pins" in docs/user-qml.md.
     /// </summary>
     /// <param name="FilePath">Full path of the .qml file (the File input of the QmlElementNode underneath).</param>
     /// <param name="Declarations">What the parser found.</param>
@@ -50,69 +33,35 @@ namespace VL.Qt.Qml
         ImmutableArray<Message> Messages,
         string? Summary)
     {
-        /// <summary>Name of the optional dictionary input.</summary>
-        public const string PropertiesPinName = "Properties";
-
-        /// <summary>Pin names of the common inputs, in pin order (after the property inputs and Properties).</summary>
-        public static readonly ImmutableArray<string> CommonInputNames = ImmutableArray.Create(
-            "Size", "Auto Size", "Transform", "Anchor", "Opacity", "Clip", "Debug", "Interaction", "Effect", "Enabled");
-
-        /// <summary>Pin names a property or signal pin must not take: the common pins of both sides and Properties.</summary>
-        public static readonly ImmutableHashSet<string> ReservedPinNames = ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
-            PropertiesPinName, "Size", "Auto Size", "Transform", "Anchor", "Opacity", "Clip", "Debug", "Interaction", "Effect", "Enabled",
-            "Output", "Measured Size", "Scene Bounds", "Error");
-
-        // Help texts like QmlElementNode.Update.
-        private static readonly IVLPinDescription s_propertiesInput = new FilePinDescription(PropertiesPinName, typeof(Dictionary<string, object>), null,
-            "Plan B for properties of the QML root that get no pin (alias, var, list, object types): values by name, as at QmlElement. A pin of the node wins over an entry with the same name once the pin differs from its default.",
-            isVisible: false);
-
-        private static readonly IVLPinDescription[] s_commonInputs =
-        {
-            new FilePinDescription("Size", typeof(Vector2), new Vector2(1f, 1f), "Size of the element (width, height), only with Auto Size off: it sets width and height of the QML root. The position comes from Transform and Anchor."),
-            new FilePinDescription("Auto Size", typeof(bool), true, "On: the element takes the implicit size (implicitWidth, implicitHeight) of the QML root. Off: Size counts.", isVisible: false),
-            new FilePinDescription("Transform", typeof(Matrix), Matrix.Identity, "Position, rotation and scale, applied around the Anchor. Inside Row/Column the layout places the element and Transform is only visual."),
-            new FilePinDescription("Anchor", typeof(RectangleAnchor), RectangleAnchor.TopLeft, "Point of the element that lies at the origin of its parent space (TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size. Transform rotates and scales around it. Inside Row/Column only the pivot of Transform.", isVisible: false),
-            new FilePinDescription("Opacity", typeof(float), 1f, "Opacity of the element, including its children. 0 = not drawn and costs no render time, but the element keeps its space in Row/Column and still receives input. Enabled off removes the element from the layout instead.", isVisible: false),
-            new FilePinDescription("Clip", typeof(bool), false, "Clips the drawing of the element and of its children to the element's size: text that overflows, the overhang of a cropped Image and children outside the frame are cut.", isVisible: false),
-            new FilePinDescription("Debug", typeof(bool), false, "Draws the debug overlay of this element only, not of its children (the Debug pin of Renderer [Qt] shows all elements); it does not change layout or hit-testing. The colors are explained at the Debug pin of Renderer [Qt] and in the help patch HowTo Debug Overlay.", isVisible: false),
-            new FilePinDescription("Interaction", typeof(Interaction), null, "Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.", isVisible: false),
-            new FilePinDescription("Effect", typeof(Effect), null, "Chain of effect nodes (Blur, DropShadow, Glow, ColorAdjust, Mask, …), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.", isVisible: false),
-            new FilePinDescription("Enabled", typeof(bool), true, "False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.", isVisible: false),
-        };
-
-        private static readonly IVLPinDescription s_output = new FilePinDescription("Output", typeof(IElement), null, null);
-
-        private static readonly IVLPinDescription[] s_trailingOutputs =
-        {
-            new FilePinDescription("Measured Size", typeof(Vector2), Vector2.Zero, "Size the QML root takes with Auto Size on, in units (last frame).", isVisible: false),
-            new FilePinDescription("Scene Bounds", typeof(RectangleF), RectangleF.Empty, "Bounds in window coordinates after layout and transform, in units (last frame).", isVisible: false),
-            new FilePinDescription("Error", typeof(string), string.Empty, "Compile, load and type errors of the QML file (with file and line), properties that could not be set; empty = OK."),
-        };
-
-        /// <summary>Input pin descriptions in pin order (see the type summary).</summary>
+        /// <summary>Input pin descriptions in pin order: the leading common pins, one per property, Properties, the trailing common pins.</summary>
         public List<IVLPinDescription> InputDescriptions()
         {
-            var inputs = new List<IVLPinDescription>(PropertyInputs.Length + 1 + s_commonInputs.Length);
+            var inputs = new List<IVLPinDescription>(QmlCommonPins.LeadingInputs.Length + PropertyInputs.Length + 1 + QmlCommonPins.TrailingInputs.Length);
+            foreach (var pin in QmlCommonPins.LeadingInputs)
+                inputs.Add(Describe(pin));
             foreach (var pin in PropertyInputs)
                 inputs.Add(new FilePinDescription(pin.Name, pin.Property.ClrType, pin.Property.Default, PinSummary(pin.Property)));
-            inputs.Add(s_propertiesInput);
-            inputs.AddRange(s_commonInputs);
+            inputs.Add(Describe(QmlCommonPins.Properties));
+            foreach (var pin in QmlCommonPins.TrailingInputs)
+                inputs.Add(Describe(pin));
             return inputs;
         }
 
-        /// <summary>Output pin descriptions in pin order (see the type summary).</summary>
+        /// <summary>Output pin descriptions in pin order: Output, one per property, one per signal, the trailing common pins.</summary>
         public List<IVLPinDescription> OutputDescriptions()
         {
-            var outputs = new List<IVLPinDescription>(1 + PropertyOutputs.Length + SignalOutputs.Length + s_trailingOutputs.Length) { s_output };
+            var outputs = new List<IVLPinDescription>(1 + PropertyOutputs.Length + SignalOutputs.Length + QmlCommonPins.TrailingOutputs.Length) { Describe(QmlCommonPins.Output) };
             foreach (var pin in PropertyOutputs)
                 outputs.Add(new FilePinDescription(pin.Name, pin.Property.ClrType, pin.Property.Default, PinSummary(pin.Property), pin.IsVisible));
             foreach (var pin in SignalOutputs)
                 outputs.Add(new FilePinDescription(pin.Name, pin.Type, null, SignalSummary(pin.Signal)));
-            outputs.AddRange(s_trailingOutputs);
+            foreach (var pin in QmlCommonPins.TrailingOutputs)
+                outputs.Add(Describe(pin));
             return outputs;
         }
+
+        private static IVLPinDescription Describe(QmlCommonPin pin)
+            => new FilePinDescription(pin.Name, pin.Type, pin.Default, pin.Summary.Length == 0 ? null : pin.Summary, pin.IsVisible);
 
         /// <summary>
         /// Reads and parses the file (siblings from its folder) and builds the layout. A file that cannot be read gives an
@@ -181,7 +130,7 @@ namespace VL.Qt.Qml
                 list.Add(m.ToString());
             }
 
-            var used = new HashSet<string>(ReservedPinNames, StringComparer.OrdinalIgnoreCase);
+            var used = new HashSet<string>(QmlCommonPins.ReservedNames, StringComparer.OrdinalIgnoreCase);
             string Unique(string qmlName, string what)
             {
                 var wanted = PinNames.FromIdentifier(qmlName);

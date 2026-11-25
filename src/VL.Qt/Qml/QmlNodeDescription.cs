@@ -11,7 +11,7 @@ namespace VL.Qt.Qml
     /// messages: layout.Messages, openEditorAction, summary: layout.Summary ?? file.Summary, filePath: file.FilePath)</c>; not
     /// fragmented (like the shader nodes, so vvvv calls Update). Name <see cref="QmlFile.FullName"/>, category
     /// <see cref="QmlFile.Category"/>, tags <see cref="QmlFile.Tags"/> (the tags argument of NewNodeDescription). invalidated:
-    /// <see cref="QmlNodeFactory.WatchSignature(QmlFile, string)"/> with the signature of the layout, so only a change of the declarations
+    /// <see cref="QmlNodeFactory.WatchSignature"/> with the signature of the layout, so only a change of the declarations
     /// rebuilds the node; vvvv keeps links on pins with the same name. A file that does not parse still gets a node with the
     /// common pins and its errors as messages.
     /// </summary>

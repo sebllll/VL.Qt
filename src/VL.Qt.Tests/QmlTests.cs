@@ -816,14 +816,14 @@ namespace VL.Qt.Tests
         }
 
         private QmlElement Update(Dictionary<string, object>? properties = null, string? file = "", bool autoSize = true)
-            => Update(out _, out _, out _, properties, file, autoSize);
+            => Update(out _, out _, properties, file, autoSize);
 
-        private QmlElement Update(out Dictionary<string, object> changed, out Spread<QmlSignal> signals, out string error,
+        private QmlElement Update(out Dictionary<string, object> changed, out Spread<QmlSignal> signals,
             Dictionary<string, object>? properties = null, string? file = "", bool autoSize = true)
             => (QmlElement)_node.Update(autoSize, new Vector2(1, 1),
                 Matrix.Identity, RectangleAnchor.TopLeft, file is null ? null : new Path(file == "" ? _file : file), properties, 1, false, false, null, null,
                 true,
-                out changed, out signals, out _, out _, out error);
+                out changed, out signals, out _, out _);
 
         private string[] Frame(Dictionary<string, object>? properties = null, string? file = "")
         {
@@ -948,13 +948,13 @@ namespace VL.Qt.Tests
             _registry.Dispatch(NewPoll()
                 .Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("steps", Protocol.ValueType.I32, QmlWire.I32(3)))
                 .Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("clicked", (Protocol.ValueType.I32, QmlWire.I32(1)))).Bytes);
-            Update(out var changed, out var signals, out _);
+            Update(out var changed, out var signals);
             Assert.That(changed["steps"], Is.EqualTo(3));
             Assert.That(signals.Count, Is.EqualTo(1));
 
             _registry.Dispatch(NewPoll().Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("clicked")).Bytes);
             _events.OnNext(new FileSystemEventArgs(WatcherChangeTypes.Changed, _dir, "a.qml"));
-            Update(out changed, out signals, out _);
+            Update(out changed, out signals);
             Assert.That(changed, Is.Empty, "the properties belonged to the old instance");
             Assert.That(signals.Count, Is.EqualTo(0), "so did the signal that was waiting");
         }
@@ -964,24 +964,24 @@ namespace VL.Qt.Tests
         {
             Update();
             _registry.Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("a", Protocol.ValueType.F32, QmlWire.F(1))).Bytes);
-            Update(out var changed, out _, out _);
+            Update(out var changed, out _);
             Assert.That(changed, Has.Count.EqualTo(1));
-            Update(out changed, out _, out _, file: System.IO.Path.Combine(_dir, "b.qml"));
+            Update(out changed, out _, file: System.IO.Path.Combine(_dir, "b.qml"));
             Assert.That(changed, Is.Empty);
         }
 
         [Test]
         public void Outputs_Properties_NewInstanceOnlyWhenSomethingChanged()
         {
-            Update(out var first, out _, out _);
+            Update(out var first, out _);
             Assert.That(first, Is.Empty);
             _registry.Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("progress", Protocol.ValueType.F32, QmlWire.F(0.5f))).Bytes);
-            Update(out var second, out _, out _);
+            Update(out var second, out _);
             Assert.That(second, Is.EqualTo(new Dictionary<string, object> { ["progress"] = 0.5f }));
-            Update(out var third, out _, out _);
+            Update(out var third, out _);
             Assert.That(third, Is.SameAs(second), "nothing new: the same dictionary");
             _registry.Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("progress", Protocol.ValueType.F32, QmlWire.F(0.75f))).Bytes);
-            Update(out var fourth, out _, out _);
+            Update(out var fourth, out _);
             Assert.That(fourth, Is.Not.SameAs(second));
             Assert.That(fourth["progress"], Is.EqualTo(0.75f));
             Assert.That(second["progress"], Is.EqualTo(0.5f), "an earlier output is not changed afterwards");
@@ -994,47 +994,33 @@ namespace VL.Qt.Tests
             _registry.Dispatch(NewPoll()
                 .Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("clicked", (Protocol.ValueType.I32, QmlWire.I32(1))))
                 .Add(Protocol.EventId.QmlSignal, _handle, QmlWire.Signal("clicked", (Protocol.ValueType.I32, QmlWire.I32(2)))).Bytes);
-            Update(out _, out var signals, out _);
+            Update(out _, out var signals);
             Assert.That(signals.Select(s => (s.Name, s.Arguments[0])), Is.EqualTo(new[] { ("clicked", (object)1), ("clicked", 2) }));
-            Update(out _, out signals, out _);
+            Update(out _, out signals);
             Assert.That(signals.Count, Is.EqualTo(0));
         }
 
         [Test]
-        public void Error_UnsupportedValues_AreListed_AndIgnored()
+        public void Problems_UnsupportedValues_AreWarned_AndIgnored()
         {
             var d = new Dictionary<string, object> { ["good"] = 1f, ["bad"] = 5L };
-            var e = Update(out _, out _, out var error, d);
+            var e = Update(out _, out _, d);
             Assert.That(e.Properties.Count, Is.EqualTo(1));
-            Assert.That(error, Does.Contain("Property 'bad': type Int64 is not supported"));
-            Assert.That(Update(out _, out _, out var again, d), Is.Not.Null);
-            Assert.That(again, Is.EqualTo(error));
-            Update(out _, out _, out error, new() { ["good"] = 1f });
-            Assert.That(error, Is.Empty);
+            Assert.That(_warnings.Single(), Does.Contain("Property 'bad': type Int64 is not supported"));
+            Update(out _, out _, d);
+            Assert.That(_warnings, Has.Count.EqualTo(1), "the same problem is shown once");
         }
 
         [Test]
-        public void Error_FromQt_IsShown_AndClears()
+        public void Problems_FromQt_AreShownAtTheNode_AndClear()
         {
             Update();
             _registry.Dispatch(NewPoll().Error(_handle, "a.qml:3:5: Unexpected token").Bytes);
-            Update(out _, out _, out var error);
-            Assert.That(error, Is.EqualTo("a.qml:3:5: Unexpected token"));
-            _registry.Dispatch(NewPoll().Error(_handle, "").Bytes);
-            Update(out _, out _, out error);
-            Assert.That(error, Is.Empty);
-        }
-
-        [Test]
-        public void Error_ValueProblemsAndQtError_AreJoined()
-        {
             Update();
-            _registry.Dispatch(NewPoll().Error(_handle, "progress: the root has no such property").Bytes);
-            Update(out _, out _, out var error, new() { ["x"] = 5L });
-            var lines = error.Split('\n').Select(l => l.TrimEnd('\r')).ToArray();
-            Assert.That(lines, Has.Length.EqualTo(2));
-            Assert.That(lines[0], Does.StartWith("Property 'x': type Int64"));
-            Assert.That(lines[1], Is.EqualTo("progress: the root has no such property"));
+            Assert.That(_node.Core.Error, Is.EqualTo("a.qml:3:5: Unexpected token"));
+            _registry.Dispatch(NewPoll().Error(_handle, "").Bytes);
+            Update();
+            Assert.That(_node.Core.Error, Is.Null.Or.Empty);
         }
     }
 }

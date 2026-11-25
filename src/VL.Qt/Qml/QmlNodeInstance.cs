@@ -24,7 +24,7 @@ namespace VL.Qt.Qml
     /// after a reload (the dictionary starts empty again) the declared default.</item>
     /// <item>Signal outputs: its Signals output this frame, by name: bool (any emission), Spread&lt;T&gt; of the only argument, or
     /// Spread&lt;QmlSignal&gt;; empty/false in a frame without emission.</item>
-    /// <item>Output, Measured Size, Scene Bounds, Error passed on.</item>
+    /// <item>Output, Measured Size, Scene Bounds passed on. Errors are not an output: the element node logs them and marks the node.</item>
     /// </list>
     /// Pins come in the order of <see cref="QmlNodeLayout.InputDescriptions"/> / <see cref="QmlNodeLayout.OutputDescriptions"/>.
     /// Hot reload of the content is QmlElementNode's (its watcher of the folder); new pins come with a new description.
@@ -39,21 +39,20 @@ namespace VL.Qt.Qml
         private readonly SignalOutput[] _signalOutputs;
 
         private readonly ValuePin<Dictionary<string, object>?> _propertiesPin = new(null);
-        private readonly ValuePin<Vector2> _size = new(new Vector2(1f, 1f));
-        private readonly ValuePin<bool> _autoSize = new(true);
-        private readonly ValuePin<Matrix> _transform = new(Matrix.Identity);
-        private readonly ValuePin<RectangleAnchor> _anchor = new(RectangleAnchor.TopLeft);
-        private readonly ValuePin<float> _opacity = new(1f);
-        private readonly ValuePin<bool> _clip = new(false);
-        private readonly ValuePin<bool> _debug = new(false);
-        private readonly ValuePin<Interaction?> _interaction = new(null);
-        private readonly ValuePin<Effect?> _effect = new(null);
-        private readonly ValuePin<bool> _enabled = new(true);
+        private readonly ValuePin<bool> _autoSize = new(QmlCommonPins.Default<bool>("Auto Size"));
+        private readonly ValuePin<Vector2> _size = new(QmlCommonPins.Default<Vector2>("Size"));
+        private readonly ValuePin<Matrix> _transform = new(QmlCommonPins.Default<Matrix>("Transform"));
+        private readonly ValuePin<RectangleAnchor> _anchor = new(QmlCommonPins.Default<RectangleAnchor>("Anchor"));
+        private readonly ValuePin<float> _opacity = new(QmlCommonPins.Default<float>("Opacity"));
+        private readonly ValuePin<bool> _clip = new(QmlCommonPins.Default<bool>("Clip"));
+        private readonly ValuePin<bool> _debug = new(QmlCommonPins.Default<bool>("Debug"));
+        private readonly ValuePin<Interaction?> _interaction = new(QmlCommonPins.Default<Interaction?>("Interaction"));
+        private readonly ValuePin<Effect?> _effect = new(QmlCommonPins.Default<Effect?>("Effect"));
+        private readonly ValuePin<bool> _enabled = new(QmlCommonPins.Default<bool>("Enabled"));
 
         private readonly ValuePin<IElement?> _output = new(null);
-        private readonly ValuePin<Vector2> _measuredSize = new(Vector2.Zero);
-        private readonly ValuePin<RectangleF> _sceneBounds = new(RectangleF.Empty);
-        private readonly ValuePin<string> _error = new(string.Empty);
+        private readonly ValuePin<Vector2> _measuredSize = new(QmlCommonPins.Default<Vector2>("Measured Size"));
+        private readonly ValuePin<RectangleF> _sceneBounds = new(QmlCommonPins.Default<RectangleF>("Scene Bounds"));
 
         private readonly IVLPin[] _inputs;
         private readonly IVLPin[] _outputs;
@@ -85,19 +84,20 @@ namespace VL.Qt.Qml
             for (var i = 0; i < _signalOutputs.Length; i++)
                 _signalOutputs[i] = SignalOutput.Create(layout.SignalOutputs[i]);
 
-            var inputs = new List<IVLPin>(_slots.Length + 11);
+            // The order of QmlNodeLayout.InputDescriptions.
+            var inputs = new List<IVLPin>(_slots.Length + 11) { _autoSize, _size, _transform, _anchor };
             foreach (var slot in _slots)
                 inputs.Add(slot.Pin);
             inputs.Add(_propertiesPin);
-            inputs.AddRange(new IVLPin[] { _size, _autoSize, _transform, _anchor, _opacity, _clip, _debug, _interaction, _effect, _enabled });
+            inputs.AddRange(new IVLPin[] { _opacity, _clip, _debug, _interaction, _effect, _enabled });
             _inputs = inputs.ToArray();
 
-            var outputs = new List<IVLPin>(_propertyOutputs.Length + _signalOutputs.Length + 4) { _output };
+            var outputs = new List<IVLPin>(_propertyOutputs.Length + _signalOutputs.Length + 3) { _output };
             foreach (var property in _propertyOutputs)
                 outputs.Add(property.Pin);
             foreach (var signal in _signalOutputs)
                 outputs.Add(signal.Pin);
-            outputs.AddRange(new IVLPin[] { _measuredSize, _sceneBounds, _error });
+            outputs.AddRange(new IVLPin[] { _measuredSize, _sceneBounds });
             _outputs = outputs.ToArray();
         }
 
@@ -120,12 +120,11 @@ namespace VL.Qt.Qml
 
             var element = _element.Update(_autoSize.Value, _size.Value, _transform.Value, _anchor.Value, _file, _properties, _opacity.Value,
                 _clip.Value, _debug.Value, _interaction.Value, _effect.Value, _enabled.Value,
-                out var changed, out var signals, out var measuredSize, out var sceneBounds, out var error);
+                out var changed, out var signals, out var measuredSize, out var sceneBounds);
 
             _output.Value = element;
             _measuredSize.Value = measuredSize;
             _sceneBounds.Value = sceneBounds;
-            _error.Value = error;
 
             // The element hands out a new dictionary whenever something changed (also on reload: empty).
             if (!ReferenceEquals(changed, _lastChanged))
