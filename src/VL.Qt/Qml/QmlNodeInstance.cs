@@ -171,7 +171,7 @@ namespace VL.Qt.Qml
             _properties.Clear();
             foreach (var (name, value) in _planB)
                 _properties[name] = value;
-            // A typed pin wins over a Properties entry of the same name.
+            // A typed pin wins over a Properties entry of the same name once it has been sent (it differs from its default).
             foreach (var slot in _slots)
             {
                 if (slot.IsSent)

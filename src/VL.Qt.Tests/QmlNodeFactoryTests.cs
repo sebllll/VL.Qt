@@ -263,6 +263,19 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void Layout_DuplicateAndReadError_AreBothShown()
+        {
+            var missing = Path.Combine(_dir, "Missing.qml");
+            var file = new QmlFile(missing, "Missing", null, QmlNodeFactory.DefaultCategory, null, "", "duplicate of Other.qml");
+
+            var layout = QmlNodeLayout.Load(file, NullLogger.Instance);
+
+            // A missing file is a FileNotFoundException, so the read error comes with the duplicate error.
+            var error = layout.Messages.Single(m => m.Type == VL.Core.Diagnostics.MessageType.Error).Text;
+            Assert.That(error, Does.Contain("duplicate of Other.qml").And.Contain("cannot be read").And.Contain(missing));
+        }
+
+        [Test]
         public void Layout_PinsFollowDeclarations_CommonPinsAround()
         {
             var layout = QmlNodeLayout.Build("Gauge.qml", Declare(

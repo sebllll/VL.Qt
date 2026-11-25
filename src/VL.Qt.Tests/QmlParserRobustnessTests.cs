@@ -23,7 +23,7 @@ namespace VL.Qt.Tests
         }
 
         private static QmlDeclarations Parse(string source, IDictionary<string, string>? siblings = null)
-            => QmlDeclarations.Parse(source, name => siblings != null && siblings.TryGetValue(name, out var s) ? s : null);
+            => QmlDeclarations.Parse(source, "Own", name => siblings != null && siblings.TryGetValue(name, out var s) ? s : null);
 
         private static QmlPropertyDecl Prop(QmlDeclarations d, string name) => d.Properties.Single(p => p.Name == name);
 
@@ -83,7 +83,6 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        [Ignore("QML-01: the lexer reads a regex literal as code (quote opens a string, braces unbalance)")]
         public void Regex_LiteralWithBracesAndQuotes_DoesNotBreakTheMembersAfterIt()
         {
             var d = Parse("""
@@ -97,6 +96,43 @@ namespace VL.Qt.Tests
             Assert.That(Prop(d, "after").Default, Is.EqualTo(3));
         }
 
+        [TestCase("function strip(s) { return s.replace(/\"/g, \"\") }")]
+        [TestCase("function f(s) { return /https?:\\/\\//.test(s) }")]
+        [TestCase("function f(s) { return /[{]/.test(s) }")]
+        [TestCase("function f(s) { return s.split(/[/]{2}/) }")]
+        [TestCase("function f(x) { if (/a\"b/.test(x)) return 1 }")]
+        public void Regex_Literals_AreSkipped_AndTheMembersAfterThemStayInTheDeclarations(string member)
+        {
+            var d = Parse($"import QtQuick\nItem {{\n    {member}\n    property int after: 3\n}}\n");
+            Assert.That(d.HasErrors, Is.False, string.Join("; ", d.Messages));
+            Assert.That(Prop(d, "after").Default, Is.EqualTo(3));
+            Assert.That(Prop(d, "after").Line, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void Division_IsNotARegex()
+        {
+            var d = Parse("import QtQuick\nItem {\n    property real half: width / 2\n    property real q: (width + 1) / 2 / 3\n    property int after: 1\n}\n");
+            Assert.That(d.HasErrors, Is.False, string.Join("; ", d.Messages));
+            Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "half", "q", "after" }));
+        }
+
+        [Test]
+        public void Regex_Unterminated_IsAnErrorWithItsLine()
+        {
+            var d = Parse("import QtQuick\nItem {\n    property var re: /abc\n}\n");
+            var error = d.Messages.Single(m => m.Severity == QmlMessageSeverity.Error);
+            Assert.That(error.Text, Does.Contain("regular expression"));
+            Assert.That(error.Line, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void Template_WithANestedTemplateInASubstitution_DoesNotEndEarly()
+        {
+            var d = Parse("import QtQuick\nItem {\n    function f(a) { return `x${a ? `y${a}` : \"}\"}z`; }\n    property int after: 1\n}\n");
+            Assert.That(d.HasErrors, Is.False, string.Join("; ", d.Messages));
+            Assert.That(Prop(d, "after").Line, Is.EqualTo(4));
+        }
         [Test]
         public void InlineComponent_AtTheRoot_IsSkippedAndDoesNotBreakTheMembersAfterIt()
         {
@@ -141,7 +177,6 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        [Ignore("QML-01: an escaped newline in a string does not count as a line")]
         public void LineNumbers_AfterAnEscapedNewlineInAString_StayCorrect()
         {
             // The string continues over a line break with a backslash: that line break counts.
