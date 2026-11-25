@@ -40,6 +40,9 @@ struct ElementEntry {
     bool autoSize = true;        // AUTO_SIZE (containers + Button, see applySize in geometry.cpp)
     float size[2] = {0, 0};      // last SIZE (w, h), so AUTO_SIZE can re-apply it
     quint32 transformEpoch = 0;  // counts SET TRANSFORM: a running drag re-bases its offset on 0 after one
+    float padding = 0;           // PADDING of a Row/Column as last set (all four sides), read by the debug overlay instead of item->property("leftPadding")
+    mutable float fontAscent = 0, fontDescent = 0; // QFontMetricsF of a Text's font for the debug overlay, valid while fontMetricsValid
+    mutable bool fontMetricsValid = false;         // reset by every font change of a Text (type_text.cpp setFont)
     bool debug = false;          // DEBUG: drawn by the window's debug overlay (diagnostics/debug_overlay.h), set through Elements::setDebug
     bool enabled = true;         // VISIBLE (Enabled pin): Scene::reparent and setVisible in geometry.cpp combine it with QtNative's own hiding
     bool polled = false;         // Elements::pollsState: the poll reads media/error/clicks/user value of this type

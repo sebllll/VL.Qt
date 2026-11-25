@@ -71,6 +71,8 @@ Every element node and the `Renderer [Qt]` have a `Debug` pin. On an element it 
 
 The legend is also in the `Debug` pin's tooltip. See `help/Qt/HowTo Debug Overlay.vl`.
 
+With `Debug` on for all elements, painting the overlay is O(elements) per frame: every frame that changes the scene rebuilds the geometry of every element.
+
 ## Logging and errors
 
 All messages of VL.Qt go to the vvvv **Log window**, nothing goes to the console. If Qt rejects a property of an element, the element node turns orange with the message; QtNative errors mark the Renderer node.
