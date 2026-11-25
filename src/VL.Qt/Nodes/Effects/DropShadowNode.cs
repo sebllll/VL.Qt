@@ -31,7 +31,6 @@ namespace VL.Qt.Nodes
         /// <param name="scale">Size of the shadow relative to the element, around its center.</param>
         /// <param name="autoPadding">On: the effect area grows by what the shadow needs. Off: Padding applies. Qt has one effect area per element: if any Blur or DropShadow in the chain has this off, the area is the side-wise maximum of the Padding of all those links.</param>
         /// <param name="padding">Extra effect area around the element in units (x = left, y = top, width = right, height = bottom); only used with Auto Padding off.</param>
-        // Pin defaults: see RectangleNode (string-valued [DefaultValue] for Vector2/Color4).
         [return: Pin(Name = "Output")]
         public Effect Update(
             Effect? input,

@@ -354,7 +354,7 @@ public static class TooltipTest
                 tipImage = tip.Update(target, out tipText) ?? tipImage;
                 // grab is an edge: once, in the first pass (the point of the test); every further grab would supersede the running one
                 // (only the newest grab of an id counts), and with the software backend a grab needs more than one pump.
-                snapImage = snap.Update(target, out _, 1, grab: i == 1) ?? snapImage;
+                snapImage = snap.Update(target, 1, i == 1, out _) ?? snapImage;
                 var logged = snapLog.Take();
                 if (logged.Length > 0)
                     snapError = logged;

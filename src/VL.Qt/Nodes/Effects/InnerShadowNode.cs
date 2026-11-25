@@ -62,7 +62,6 @@ namespace VL.Qt.Nodes
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
-            // Pin defaults: see RectangleNode (string-valued [DefaultValue] for Vector2/Color4).
             [DefaultValue("0, 0, 0, 0.6")] Color4 color,
             [DefaultValue(0.1f)] float radius,
             [DefaultValue("0.05, 0.05")] Vector2 offset,

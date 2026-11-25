@@ -68,7 +68,6 @@ namespace VL.Qt.Audio
         /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/returns"/>
         /// <returns>The video element.</returns>
-        // Pin defaults: see RectangleNode (text form, typeof(T) defaults are ignored by vvvvc).
         [return: Pin(Name = "Output")]
         public IElement Update(
             [DefaultValue("1.6, 0.9")] Vector2 size,

@@ -203,12 +203,12 @@ public static class MultiRendererTest
         check(registry.TryLocate(rect, out var located2, out _) && located2 == offscreen.Handle, "TryLocate finds the rectangle in the offscreen scene");
         var snapshotLog = new NodeLog();
         var snapshot = new SnapshotNode(client, registry, snapshotLog.Errors);
-        IImage? image = snapshot.Update(rect, out var ready, 1, true);
+        IImage? image = snapshot.Update(rect, 1, true, out var ready);
         var error = snapshotLog.Take();
         for (int i = 0; i < MaxFrames && !ready && error.Length == 0; i++)
         {
             FrameOffscreen(content2);
-            image = snapshot.Update(rect, out ready);
+            image = snapshot.Update(rect, 1, false, out ready);
             error = snapshotLog.Take();
         }
         check(ready && image is not null && error.Length == 0, $"snapshot of the rectangle is ready ('{error}')");

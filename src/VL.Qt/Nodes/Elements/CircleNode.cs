@@ -44,7 +44,6 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='plain']/param[@name='measuredSize']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
-        // Pin defaults: see RectangleNode (string-valued [DefaultValue] for Vector2/Color4).
         [return: Pin(Name = "Output")]
         public IElement Update(
             [DefaultValue(0.5f)] float radius,

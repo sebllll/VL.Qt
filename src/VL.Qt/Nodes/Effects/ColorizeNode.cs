@@ -25,7 +25,6 @@ namespace VL.Qt.Nodes
         /// <param name="input">Effect chain to extend (other effect nodes).</param>
         /// <param name="color">Tint color.</param>
         /// <param name="amount">Strength of the tint, 0..1 (0 = off).</param>
-        // Pin defaults: see RectangleNode (string-valued [DefaultValue] for Color4).
         [return: Pin(Name = "Output")]
         public Effect Update(
             Effect? input,

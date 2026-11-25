@@ -1,6 +1,8 @@
 ﻿using System;
+using System.ComponentModel;
 using VL.Core;
 using VL.Core.Import;
+using VL.Model;
 using VL.Lib.Animation;
 using VL.Lib.Basics.Video;
 using VL.Qt.Images;
@@ -55,8 +57,8 @@ namespace VL.Qt.Nodes
         /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
         /// <returns>The image: the same QtImage for all frames (one GPU resource per node, its content is replaced). A failed source or upload is shown at the node and logged.</returns>
         [return: Pin(Name = "Output")]
-        public QtImage? Update(IVideoSource? input, QtImage? fallback, bool preferPush = true,
-            [Pin(Visibility = Model.PinVisibility.Optional)] ImageUpload upload = ImageUpload.Auto)
+        public QtImage? Update(IVideoSource? input, QtImage? fallback, [DefaultValue(true)] bool preferPush,
+            [Pin(Visibility = PinVisibility.Optional)] ImageUpload upload)
         {
             // A new mode applies from the next frame on.
             _upload = upload;

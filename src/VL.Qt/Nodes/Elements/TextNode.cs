@@ -75,8 +75,7 @@ namespace VL.Qt.Nodes
         /// <param name="measuredSize">Size of the laid-out text, in units (last frame).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
-        // Pin defaults: see RectangleNode (string-valued [DefaultValue] for Color4/Vector2). Default text color is
-        // white (readable on the Renderer's #202020 clear color), Size 100 x 100 DIP.
+        // Default text color is white (readable on the Renderer's #202020 clear color), Size 100 x 100 DIP.
         [return: Pin(Name = "Output")]
         public IElement Update(
             [DefaultValue("1, 1")] Vector2 size,

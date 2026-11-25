@@ -145,8 +145,7 @@ namespace VL.Qt.Nodes
         /// (timing stats), F6 (freeze) and F7 (host segments of the timeline); the scene never sees them. Off: none of
         /// them is taken, the keys reach the elements and handlers of the scene (e.g. a TextField or your own F5
         /// shortcut); an overlay that is open stays open. Live. F11 / Alt+Enter (Fullscreen) are not affected.</param>
-        // Pin defaults: string-valued [DefaultValue] (Color4/RectangleF have no TypeConverter, so the (Type, string) form is
-        // silently ignored by vvvvc and the pin becomes default(T)); no C# defaults on the pins. #202020 = 0.1254902.
+        // The default clear color is #202020 = 0.1254902.
         public void Update(
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] out bool isVisible,
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] out PerfStats perf,
