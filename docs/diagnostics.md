@@ -26,8 +26,8 @@ The Qt phases of a frame are events, vsync wait, sync, render and present. "vsyn
 Three words hold the numbers together:
 
 - **Pump**: the whole `vlqt_app_process_events_for` call, with the vsync wait and the present. It is what the frame costs on the vvvv thread; the tables and percentiles show it as it is, not judged against the budget.
-- **Qt work**: events + sync + render, i.e. the pump without the vsync wait and the present, which wait for the display refresh or the GPU. QtNative computes it once per pump (`vlqt_perf_sample.work`, `PerfStats.WorkMs` as average). Everything that judges Qt against the budget uses it: the `over budget` counter (`PerfStats.OverBudget`, `RecentOverBudget`), the "work" row and bar of the Summary page, the red highlight of the Timeline page, the F2 series "work" and the slow-frame warning in the vvvv log.
-- **Budget**: vvvv's frame interval, which QtNative renders in step with. VL.Qt hands it to QtNative before each pump (`vlqt_app_set_frame_budget`); C# and QtNative judge against the same value (`PerfStats.BudgetMs`, "budget" on the pages; 60 Hz before the first frame). `long frames` counts frame intervals above 1.5 x the budget.
+- **Qt work**: events + sync + render, i.e. the pump without the vsync wait and the present, which wait for the display refresh or the GPU. QtNative computes it once per pump (`vlqt_perf_sample.work`, `PerfStats.WorkMs` as average). Everything that judges Qt against the budget uses it: the `over budget` counter (`PerfStats.Counters.OverBudget`, `Recent.OverBudget`), the "work" row and bar of the Summary page, the red highlight of the Timeline page, the F2 series "work" and the slow-frame warning in the vvvv log.
+- **Budget**: vvvv's frame interval, which QtNative renders in step with. VL.Qt hands it to QtNative before each pump (`vlqt_app_set_frame_budget`); C# and QtNative judge against the same value (`PerfStats.Percentiles.BudgetMs`, "budget" on the pages; 60 Hz before the first frame). `long frames` counts frame intervals above 1.5 x the budget.
 
 The averages over the last ~1 s (the last 60 pumps) come from one computation (`PerfWindow` in `diagnostics/perf_stats.cpp`), so `PerfStats`, the F2 meter and the F5 Summary page agree:
 
@@ -35,7 +35,7 @@ The averages over the last ~1 s (the last 60 pumps) come from one computation (`
 - **Phase averages** (`SyncMs`, `RenderMs`, `PresentMs`, `VsyncMs`, and the phase rows of the Summary page, events included) are per pump that rendered, not diluted by idle pumps.
 - **Pump, Qt work, swaps per pump** are per pump of the range, **GPU** per pump with a timestamp.
 
-The same numbers are available in a patch: `Renderer [Qt]` has an optional `Perf` output (`PerfStats`), see `help/Qt/HowTo Read Performance.vl`. `PerfStats (Split)` exposes the frame, pump, sync, render, present and GPU timings; `Split Vsync` the vsync wait, `Split Percentiles`, `Split Counters`, `Split Host` (vvvv, wait, apply, reconcile, ops) and `Split Gc` read the further fields.
+The same numbers are available in a patch: `Renderer [Qt]` has an optional `Perf` output (`PerfStats`), see `help/Qt/HowTo Read Performance.vl`. `PerfStats (Split)` exposes the frame, pump, work, sync, render, present, vsync and GPU timings and five groups, each its own record with a `Split`: `Percentiles` (`PerfPercentiles`: budget and the frame and pump percentiles), `Counters` and `Recent` (`PerfCounters`: since start and over the last 10 s), `Host` (`HostPerfStats`: vvvv, wait, apply, reconcile, ops) and `Gc` (`GcPerfStats`).
 
 ### Overhead of the overlays
 

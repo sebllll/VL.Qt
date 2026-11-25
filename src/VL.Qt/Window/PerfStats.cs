@@ -1,5 +1,4 @@
-﻿using VL.Core.Import;
-using VL.Qt.Interop;
+﻿using VL.Qt.Interop;
 
 namespace VL.Qt
 {
@@ -10,171 +9,65 @@ namespace VL.Qt
     /// a consecutive frame in the range (an idle scene) they are 0, so Fps is 0, not a low number. The phases (SyncMs,
     /// RenderMs, PresentMs, VsyncMs) are averages per pump that rendered, not diluted by idle pumps; PumpMs, WorkMs and
     /// SwapsPerPump are per pump of the range.
-    /// Pump is the time Qt takes inside the vvvv frame (events, animation, vsync wait, sync, render, present). The vsync wait
-    /// (VsyncMs, the start of the frame) and Present wait for the display refresh or the GPU, which is not Qt work: Qt work
-    /// (WorkMs) is the pump without them, and only Qt work counts against the budget (OverBudget).
-    /// GPU is 0 when the backend delivers no timestamps.
+    /// A pump is one call of Qt's event processing in the vvvv frame: the time Qt takes inside it is events, animation, vsync
+    /// wait, sync, render and present. The vsync wait (VsyncMs, the start of the frame) and Present wait for the display
+    /// refresh or the GPU, which is not Qt work: Qt work (WorkMs) is the pump without them, and only Qt work counts against
+    /// the budget (<see cref="PerfCounters.OverBudget"/>). GPU is 0 when the backend delivers no timestamps. The groups
+    /// hold the percentiles, the pump counters, and the host and .NET GC values.
     /// </summary>
-    public sealed record PerfStats(
+    /// <param name="Fps">Frames per second over the last ~1 s, 0 when there was no consecutive frame.</param>
+    /// <param name="FrameMs">Interval between consecutive frames (ms, average).</param>
+    /// <param name="FrameMsMax">Longest interval between consecutive frames (ms).</param>
+    /// <param name="PumpMs">Time Qt takes inside the vvvv frame, including the vsync wait and Present (ms per pump, average).</param>
+    /// <param name="PumpMsMax">Longest pump (ms).</param>
+    /// <param name="WorkMs">Qt work in ms per pump, average: events, sync and render, i.e. the pump without the vsync wait and Present. The over budget counter counts the pumps where it exceeds the budget.</param>
+    /// <param name="SyncMs">Synchronizing the scene with the render thread (ms per pump that rendered, average).</param>
+    /// <param name="RenderMs">Recording the frame (ms per pump that rendered, average).</param>
+    /// <param name="PresentMs">Present of the swap chain (ms per pump that rendered, average).</param>
+    /// <param name="VsyncMs">Start of the frame (QRhi::beginFrame) in ms per frame, average. With VSync this is where Direct3D 11 waits for the display refresh; without VSync it waits there when the GPU is behind. Not Qt work.</param>
+    /// <param name="GpuMs">GPU time of the frame (ms, average), 0 when the backend delivers no timestamps.</param>
+    /// <param name="GpuMsMax">Longest GPU time of a frame (ms).</param>
+    /// <param name="SwapsPerPump">Swaps (presented frames) per pump, average.</param>
+    /// <param name="Percentiles">Budget and the frame and pump percentiles over the last up to 240 pumps.</param>
+    /// <param name="Counters">Pump counters since the window was created.</param>
+    /// <param name="Recent">The same counters over the last 10 s.</param>
+    /// <param name="Host">The host side of the frame: vvvv, wait, apply, reconcile and commands.</param>
+    /// <param name="Gc">.NET garbage collector activity of the process.</param>
+    public readonly record struct PerfStats(
         float Fps,
         float FrameMs, float FrameMsMax,
         float PumpMs, float PumpMsMax,
+        float WorkMs,
         float SyncMs, float RenderMs, float PresentMs,
+        float VsyncMs,
         float GpuMs, float GpuMsMax,
-        float SwapsPerPump)
+        float SwapsPerPump,
+        PerfPercentiles Percentiles,
+        PerfCounters Counters,
+        PerfCounters Recent,
+        HostPerfStats Host,
+        GcPerfStats Gc)
     {
-        public static readonly PerfStats Empty = new(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-
-        internal static PerfStats From(in Native.vlqt_perf p) => new(
-            (float)p.fps,
-            (float)p.frame_ms, (float)p.frame_ms_max,
-            (float)p.pump_ms, (float)p.pump_ms_max,
-            (float)p.sync_ms, (float)p.render_ms, (float)p.present_ms,
-            (float)p.gpu_ms, (float)p.gpu_ms_max,
-            (float)p.swaps_per_pump);
-
-        // additive (init-only, 0 when unknown): percentiles/counters/budget of the window's ring and the host side
-        // (apply/reconcile, commands, .NET GC) over the last ~1 s.
-
-        /// <summary>Frame budget in ms: vvvv's frame interval, which Qt renders in step with (60 Hz before the first frame).</summary>
-        public float BudgetMs { get; init; }
-        /// <summary>Frame interval percentiles over the last up to 240 pumps (ms, nearest rank; only intervals between
-        /// consecutive frames, not after idle pumps).</summary>
-        public float FrameMsP50 { get; init; }
-        public float FrameMsP95 { get; init; }
-        public float FrameMsP99 { get; init; }
-        /// <summary>Pump percentiles over the last up to 240 pumps (ms, nearest rank).</summary>
-        public float PumpMsP50 { get; init; }
-        public float PumpMsP95 { get; init; }
-        public float PumpMsP99 { get; init; }
-
-        /// <summary>Pumps since the window was created.</summary>
-        public long Pumps { get; init; }
-        /// <summary>Pumps whose Qt work (events, sync, render; not the vsync wait and Present) took longer than the budget, since start.</summary>
-        public long OverBudget { get; init; }
-        /// <summary>Frame intervals longer than 1.5 x budget between consecutive frames (missed frames; not after idle
-        /// pumps of on-demand rendering), since start.</summary>
-        public long LongFrames { get; init; }
-        /// <summary>Pumps without a frame (nothing changed), since start.</summary>
-        public long IdlePumps { get; init; }
-        /// <summary>Pumps with more than one frame, since start.</summary>
-        public long MultiSwaps { get; init; }
-        /// <summary>The same counters over the last 10 s (RecentOverBudget: Qt work above the budget, like OverBudget).</summary>
-        public long RecentPumps { get; init; }
-        public long RecentOverBudget { get; init; }
-        public long RecentLongFrames { get; init; }
-        public long RecentIdlePumps { get; init; }
-        public long RecentMultiSwaps { get; init; }
-
-        /// <summary>Applying this window's commands in the pump (ms, average/max over ~1 s).</summary>
-        public float ApplyMs { get; init; }
-        public float ApplyMsMax { get; init; }
-        /// <summary>Reconcile and command writing in the node update (ms per frame, average/max over ~1 s).</summary>
-        public float ReconcileMs { get; init; }
-        public float ReconcileMsMax { get; init; }
-        /// <summary>Commands applied per frame (average over ~1 s).</summary>
-        public float Ops { get; init; }
-        /// <summary>.NET garbage collections per second per generation (over ~1 s).</summary>
-        public float Gen0PerSecond { get; init; }
-        public float Gen1PerSecond { get; init; }
-        public float Gen2PerSecond { get; init; }
-        /// <summary>.NET GC pause in ms per second (over ~1 s).</summary>
-        public float GcPauseMsPerSecond { get; init; }
-        /// <summary>.NET bytes allocated per vvvv frame (process, average over ~1 s).</summary>
-        public float AllocatedBytesPerFrame { get; init; }
-
-        // additive: the vvvv side of the frame before the Qt pump.
-
-        /// <summary>vvvv frame (patch update, from the frame clock's tick to the Qt pump) in ms, average/max over ~1 s.</summary>
-        public float VvvvMs { get; init; }
-        public float VvvvMsMax { get; init; }
-        /// <summary>Waiting between the end of the previous Qt pump and the next vvvv frame start (frame timer, vsync) in ms, average/max over ~1 s.</summary>
-        public float WaitMs { get; init; }
-        public float WaitMsMax { get; init; }
-
-        /// <summary>Start of the frame (QRhi::beginFrame) in ms per frame, average over ~1 s. With VSync this is where
-        /// Direct3D 11 waits for the display refresh; without VSync it waits there when the GPU is behind. Not Qt
-        /// work.</summary>
-        public float VsyncMs { get; init; }
-
-        /// <summary>Qt work in ms per pump, average over ~1 s: events, sync and render, i.e. the pump without the vsync wait
-        /// and Present. OverBudget counts the pumps where it exceeds the budget.</summary>
-        public float WorkMs { get; init; }
-
-        // VL imports the primary-constructor parameters as the pins of `Split`, but not the init-only properties above.
-        // These explicit operations read them in a patch (PerfStats (Split Percentiles) etc.); `Split` itself is unchanged.
-
-        /// <summary>Frame budget and the frame/pump percentiles (ms) over the last up to 240 pumps.</summary>
-        public void SplitPercentiles(
-            out float budgetMs,
-            out float frameMsP50, out float frameMsP95, out float frameMsP99,
-            out float pumpMsP50, out float pumpMsP95, out float pumpMsP99)
-        {
-            budgetMs = BudgetMs;
-            frameMsP50 = FrameMsP50; frameMsP95 = FrameMsP95; frameMsP99 = FrameMsP99;
-            pumpMsP50 = PumpMsP50; pumpMsP95 = PumpMsP95; pumpMsP99 = PumpMsP99;
-        }
-
-        /// <summary>Pump counters since the window was created, and the same over the last 10 s.</summary>
-        public void SplitCounters(
-            out long pumps, out long overBudget, out long longFrames, out long idlePumps, out long multiSwaps,
-            out long recentPumps, out long recentOverBudget, out long recentLongFrames, out long recentIdlePumps, out long recentMultiSwaps)
-        {
-            pumps = Pumps; overBudget = OverBudget; longFrames = LongFrames; idlePumps = IdlePumps; multiSwaps = MultiSwaps;
-            recentPumps = RecentPumps; recentOverBudget = RecentOverBudget; recentLongFrames = RecentLongFrames;
-            recentIdlePumps = RecentIdlePumps; recentMultiSwaps = RecentMultiSwaps;
-        }
-
-        /// <summary>The wait at the start of each frame (ms per frame, average over ~1 s): for the display refresh with VSync, for the GPU without.</summary>
-        public void SplitVsync(out float vsyncMs)
-        {
-            vsyncMs = VsyncMs;
-        }
-
-        /// <summary>The host side of the frame (ms, average/max over ~1 s): vvvv patch update, wait for the next frame,
-        /// applying commands and reconcile, and commands per frame.</summary>
-        public void SplitHost(
-            out float vvvvMs, out float vvvvMsMax, out float waitMs, out float waitMsMax,
-            out float applyMs, out float applyMsMax, out float reconcileMs, out float reconcileMsMax, out float ops)
-        {
-            vvvvMs = VvvvMs; vvvvMsMax = VvvvMsMax; waitMs = WaitMs; waitMsMax = WaitMsMax;
-            applyMs = ApplyMs; applyMsMax = ApplyMsMax; reconcileMs = ReconcileMs; reconcileMsMax = ReconcileMsMax; ops = Ops;
-        }
-
-        /// <summary>.NET garbage collector activity of the process over ~1 s: collections per second per generation,
-        /// pause ms per second and allocated bytes per vvvv frame.</summary>
-        public void SplitGc(
-            [Pin(Name = "Gen0 Per Second")] out float gen0PerSecond, [Pin(Name = "Gen1 Per Second")] out float gen1PerSecond, [Pin(Name = "Gen2 Per Second")] out float gen2PerSecond,
-            out float gcPauseMsPerSecond, out float allocatedBytesPerFrame)
-        {
-            gen0PerSecond = Gen0PerSecond; gen1PerSecond = Gen1PerSecond; gen2PerSecond = Gen2PerSecond;
-            gcPauseMsPerSecond = GcPauseMsPerSecond; allocatedBytesPerFrame = AllocatedBytesPerFrame;
-        }
-
+        // One constructor call, no allocation: the groups are structs.
         internal static PerfStats From(in Native.vlqt_perf p, in Native.vlqt_perf_stats s, in Native.vlqt_host_pump_stats h) => new(
             (float)p.fps,
             (float)p.frame_ms, (float)p.frame_ms_max,
             (float)p.pump_ms, (float)p.pump_ms_max,
+            (float)p.work_ms,
             (float)p.sync_ms, (float)p.render_ms, (float)p.present_ms,
+            (float)p.vsync_ms,
             (float)p.gpu_ms, (float)p.gpu_ms_max,
-            (float)p.swaps_per_pump)
-        {
-            BudgetMs = (float)s.budget_ms,
-            FrameMsP50 = (float)s.frame_p50, FrameMsP95 = (float)s.frame_p95, FrameMsP99 = (float)s.frame_p99,
-            PumpMsP50 = (float)s.pump_p50, PumpMsP95 = (float)s.pump_p95, PumpMsP99 = (float)s.pump_p99,
-            Pumps = s.pumps, OverBudget = s.over_budget, LongFrames = s.long_frames, IdlePumps = s.idle, MultiSwaps = s.multi_swap,
-            RecentPumps = s.recent_pumps, RecentOverBudget = s.recent_over_budget, RecentLongFrames = s.recent_long_frames,
-            RecentIdlePumps = s.recent_idle, RecentMultiSwaps = s.recent_multi_swap,
-            ApplyMs = (float)h.apply_ms, ApplyMsMax = (float)h.apply_ms_max,
-            ReconcileMs = (float)h.reconcile_ms, ReconcileMsMax = (float)h.reconcile_ms_max,
-            Ops = (float)h.ops,
-            Gen0PerSecond = (float)h.gc0_per_s, Gen1PerSecond = (float)h.gc1_per_s, Gen2PerSecond = (float)h.gc2_per_s,
-            GcPauseMsPerSecond = (float)h.gc_pause_ms_per_s,
-            AllocatedBytesPerFrame = (float)h.alloc_bytes,
-            VvvvMs = (float)h.vvvv_ms, VvvvMsMax = (float)h.vvvv_ms_max,
-            WaitMs = (float)h.wait_ms, WaitMsMax = (float)h.wait_ms_max,
-            VsyncMs = (float)p.vsync_ms,
-            WorkMs = (float)p.work_ms,
-        };
+            (float)p.swaps_per_pump,
+            new PerfPercentiles(
+                (float)s.budget_ms,
+                (float)s.frame_p50, (float)s.frame_p95, (float)s.frame_p99,
+                (float)s.pump_p50, (float)s.pump_p95, (float)s.pump_p99),
+            new PerfCounters(s.pumps, s.over_budget, s.long_frames, s.idle, s.multi_swap),
+            new PerfCounters(s.recent_pumps, s.recent_over_budget, s.recent_long_frames, s.recent_idle, s.recent_multi_swap),
+            new HostPerfStats(
+                (float)h.vvvv_ms, (float)h.vvvv_ms_max, (float)h.wait_ms, (float)h.wait_ms_max,
+                (float)h.apply_ms, (float)h.apply_ms_max, (float)h.reconcile_ms, (float)h.reconcile_ms_max, (float)h.ops),
+            new GcPerfStats(
+                (float)h.gc0_per_s, (float)h.gc1_per_s, (float)h.gc2_per_s, (float)h.gc_pause_ms_per_s, (float)h.alloc_bytes));
     }
 }

@@ -5,7 +5,7 @@ using VL.Qt.Interop;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>PerfStats additively carries percentiles, counters, budget and host values (apply/reconcile, ops, GC).</summary>
+    /// <summary>PerfStats: the main values and the groups (percentiles, counters, host, GC) from the native structs; the slow-frame warning helpers.</summary>
     public class PerfStatsTests
     {
         private static Native.vlqt_perf Perf() => new()
@@ -35,23 +35,17 @@ namespace VL.Qt.Tests
 
             var p = PerfStats.From(Perf(), stats, host);
 
-            // Existing values unchanged (same as the old one-argument From).
             Assert.That(p.Fps, Is.EqualTo(60f));
             Assert.That(p.PumpMsMax, Is.EqualTo(5f));
             Assert.That(p.SwapsPerPump, Is.EqualTo(1f));
 
-            Assert.That(p.BudgetMs, Is.EqualTo(16.667f).Within(1e-4));
-            Assert.That((p.FrameMsP50, p.FrameMsP95, p.FrameMsP99), Is.EqualTo((16f, 17f, 18f)));
-            Assert.That((p.PumpMsP50, p.PumpMsP95, p.PumpMsP99), Is.EqualTo((1f, 3f, 4f)));
-            Assert.That((p.Pumps, p.OverBudget, p.LongFrames, p.IdlePumps, p.MultiSwaps), Is.EqualTo((1000L, 3L, 2L, 10L, 1L)));
-            Assert.That((p.RecentPumps, p.RecentOverBudget, p.RecentLongFrames, p.RecentIdlePumps, p.RecentMultiSwaps),
-                Is.EqualTo((600L, 1L, 1L, 4L, 0L)));
-            Assert.That((p.ApplyMs, p.ApplyMsMax, p.ReconcileMs, p.ReconcileMsMax), Is.EqualTo((0.25f, 0.5f, 0.75f, 1.5f)));
-            Assert.That(p.Ops, Is.EqualTo(42f));
-            Assert.That((p.Gen0PerSecond, p.Gen1PerSecond, p.Gen2PerSecond), Is.EqualTo((2f, 0.5f, 0f)));
-            Assert.That(p.GcPauseMsPerSecond, Is.EqualTo(1.25f));
-            Assert.That(p.AllocatedBytesPerFrame, Is.EqualTo(4096f));
-            Assert.That((p.VvvvMs, p.VvvvMsMax, p.WaitMs, p.WaitMsMax), Is.EqualTo((6.5f, 12f, 8.25f, 9f)));
+            Assert.That(p.Percentiles.BudgetMs, Is.EqualTo(16.667f).Within(1e-4));
+            Assert.That((p.Percentiles.FrameMsP50, p.Percentiles.FrameMsP95, p.Percentiles.FrameMsP99), Is.EqualTo((16f, 17f, 18f)));
+            Assert.That((p.Percentiles.PumpMsP50, p.Percentiles.PumpMsP95, p.Percentiles.PumpMsP99), Is.EqualTo((1f, 3f, 4f)));
+            Assert.That(p.Counters, Is.EqualTo(new PerfCounters(1000, 3, 2, 10, 1)));
+            Assert.That(p.Recent, Is.EqualTo(new PerfCounters(600, 1, 1, 4, 0)));
+            Assert.That(p.Host, Is.EqualTo(new HostPerfStats(6.5f, 12f, 8.25f, 9f, 0.25f, 0.5f, 0.75f, 1.5f, 42f)));
+            Assert.That(p.Gc, Is.EqualTo(new GcPerfStats(2f, 0.5f, 0f, 1.25f, 4096f)));
         }
 
         [Test]
@@ -65,16 +59,76 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void OldFromAndEmpty_NewValuesZero_RecordEquality()
+        public void From_RecordStructEquality_ZeroIsDefault()
         {
-            var old = PerfStats.From(Perf());
-            Assert.That(old.Pumps, Is.Zero);
-            Assert.That(old.BudgetMs, Is.Zero);
-            Assert.That(PerfStats.Empty.ApplyMs, Is.Zero);
-            Assert.That(PerfStats.From(Perf(), default, default), Is.EqualTo(old), "zero stats/host = the old record");
-
+            var perf = Perf();
+            Assert.That(PerfStats.From(perf, default, default), Is.EqualTo(PerfStats.From(perf, default, default)));
+            Assert.That(PerfStats.From(default, default, default), Is.EqualTo(default(PerfStats)));
             var stats = new Native.vlqt_perf_stats { pumps = 1 };
-            Assert.That(PerfStats.From(Perf(), stats, default), Is.Not.EqualTo(old), "new values take part in equality");
+            Assert.That(PerfStats.From(perf, stats, default), Is.Not.EqualTo(PerfStats.From(perf, default, default)), "group values take part in equality");
+        }
+
+        // Native fields that PerfStats does not carry (counts of samples, maxima the pages and the F5 overlay use).
+        private static readonly string[] s_unmapped =
+        {
+            "vlqt_perf.samples", "vlqt_perf_stats.frame_max", "vlqt_perf_stats.pump_max", "vlqt_perf_stats.samples",
+            "vlqt_perf_stats.frames", "vlqt_host_pump_stats.ops_max", "vlqt_host_pump_stats.samples",
+        };
+
+        [Test]
+        public void From_MapsEveryNativeField()
+        {
+            // Every native field gets its own number; each one must show up in the PerfStats tree, and every value of the
+            // tree must come from one of them (a field added to a native struct or to PerfStats alone fails here).
+            double next = 1;
+            var expected = new System.Collections.Generic.Dictionary<double, string>();
+            object Fill(object boxed)
+            {
+                foreach (var f in boxed.GetType().GetFields())
+                {
+                    var name = boxed.GetType().Name + "." + f.Name;
+                    var value = next++;
+                    if (Array.IndexOf(s_unmapped, name) < 0)
+                        expected.Add(value, name);
+                    f.SetValue(boxed, Convert.ChangeType(value, f.FieldType));
+                }
+                return boxed;
+            }
+            var perf = (Native.vlqt_perf)Fill(new Native.vlqt_perf());
+            var stats = (Native.vlqt_perf_stats)Fill(new Native.vlqt_perf_stats());
+            var host = (Native.vlqt_host_pump_stats)Fill(new Native.vlqt_host_pump_stats());
+
+            var actual = new System.Collections.Generic.List<double>();
+            void Collect(object boxed)
+            {
+                foreach (var f in boxed.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                {
+                    if (f.Name == "EqualityContract")
+                        continue;
+                    var v = f.GetValue(boxed)!;
+                    if (v is float or long)
+                        actual.Add(Convert.ToDouble(v));
+                    else
+                        Collect(v);
+                }
+            }
+            Collect(PerfStats.From(perf, stats, host));
+
+            Assert.That(actual, Is.Unique, "two values of PerfStats come from the same native field");
+            Assert.That(actual, Is.EquivalentTo(expected.Keys), () => "native fields without a PerfStats value, or PerfStats values without a native field: "
+                + string.Join(", ", expected.Where(e => !actual.Contains(e.Key)).Select(e => e.Value)));
+        }
+
+        [Test]
+        public void From_AllocatesNothing()
+        {
+            var perf = Perf();
+            var stats = new Native.vlqt_perf_stats { pumps = 5 };
+            var host = new Native.vlqt_host_pump_stats { ops = 3 };
+            PerfStats last = default;
+            Action frame = () => last = PerfStats.From(perf, stats, host);
+            Assert.That(Allocations.Fewest(frame, 100), Is.EqualTo(0));
+            Assert.That(last.Counters.Pumps, Is.EqualTo(5));
         }
 
         private sealed class Window : IQtFrameParticipant
@@ -143,28 +197,6 @@ namespace VL.Qt.Tests
             Assert.That(renderer.DefaultValue, Is.True);
             Assert.That(renderer.GetCustomAttributes(typeof(System.ComponentModel.DefaultValueAttribute), false).Cast<System.ComponentModel.DefaultValueAttribute>().Single().Value,
                 Is.True, "the pin default in vvvv");
-        }
-
-        [Test]
-        public void SplitOperations_ReadTheInitOnlyProperties()
-        {
-            var p = PerfStats.Empty with
-            {
-                BudgetMs = 16f, FrameMsP95 = 3f, PumpMsP99 = 4f, Pumps = 7, RecentMultiSwaps = 2,
-                VvvvMs = 6.5f, WaitMsMax = 9f, ReconcileMs = 0.75f, Ops = 42f, Gen2PerSecond = 0.5f, AllocatedBytesPerFrame = 4096f,
-            };
-
-            p.SplitPercentiles(out var budget, out _, out var f95, out _, out _, out _, out var p99);
-            Assert.That((budget, f95, p99), Is.EqualTo((16f, 3f, 4f)));
-
-            p.SplitCounters(out var pumps, out _, out _, out _, out _, out _, out _, out _, out _, out var recentMulti);
-            Assert.That((pumps, recentMulti), Is.EqualTo((7L, 2L)));
-
-            p.SplitHost(out var vvvv, out _, out _, out var waitMax, out _, out _, out var reconcile, out _, out var ops);
-            Assert.That((vvvv, waitMax, reconcile, ops), Is.EqualTo((6.5f, 9f, 0.75f, 42f)));
-
-            p.SplitGc(out _, out _, out var gen2, out _, out var alloc);
-            Assert.That((gen2, alloc), Is.EqualTo((0.5f, 4096f)));
         }
     }
 }

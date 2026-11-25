@@ -33,7 +33,7 @@ namespace VL.Qt
         private Native.vlqt_perf_stats _stats;
         private Native.vlqt_host_pump_stats _host;
         private long _statsAt = long.MinValue;
-        private PerfStats _perf = PerfStats.Empty;
+        private PerfStats _perf;
 
         /// <param name="registry">Duplicate registry of the app (<see cref="OccurrenceRegistry.ForApp"/>).</param>
         /// <param name="title">Initial window title.</param>

@@ -250,7 +250,7 @@ namespace VL.Qt.Nodes
 
             // Is Visible is live; Perf, Client Bounds and the QtNative error reflect the last pump (previous frame).
             isVisible = _view?.IsVisible ?? false;
-            perf = _view?.Perf ?? PerfStats.Empty;
+            perf = _view?.Perf ?? default;
             clientBounds = _view?.Geometry?.ClientBounds ?? default;
             // Window creation, apply or poll in QtNative; apply errors of an element are shown at its element node instead.
             _qtError.Set(_view?.Error);

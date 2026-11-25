@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="8rESQedUStPKR0CsTy4Qwb" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Renderer [Qt]: Perf (PerfStats)&#xD;&#xA;- PerfStats (Split): frame, pump, sync, render, present, GPU&#xD;&#xA;- (Split Percentiles), (Split Counters): budget, percentiles, counters&#xD;&#xA;- (Split Host): vvvv, wait, apply, reconcile time; (Split Gc): .NET GC">
+          <Pad Id="8rESQedUStPKR0CsTy4Qwb" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Renderer [Qt]: Perf (PerfStats)&#xD;&#xA;- PerfStats (Split): frame, pump, work, sync, render, present, vsync, GPU&#xD;&#xA;- Percentiles, Counters, Recent (Split): budget, percentiles, counters since start and over the last 10 s&#xD;&#xA;- Host (Split): vvvv, wait, apply, reconcile time; Gc (Split): .NET GC">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="8DwkNhFdnXsiVpzz63FfkC" Bounds="99,1086,830,62" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Same values as the F5 overlay.&#xD;&#xA;- Averages over about 1 s, Max = worst pump.">
+          <Pad Id="8DwkNhFdnXsiVpzz63FfkC" Bounds="99,1150,830,62" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Same values as the F5 overlay.&#xD;&#xA;- Averages over about 1 s, Max = worst pump.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -117,7 +117,7 @@
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="114,701,205,26" Id="Dvbw3E3XdNwiBakms49PnN">
+          <Node Bounds="114,701,345,26" Id="Dvbw3E3XdNwiBakms49PnN">
             <p:NodeReference LastCategoryFullName="Qt.PerfStats" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="RecordType" Name="PerfStats" />
@@ -131,73 +131,90 @@
             <Pin Id="3kDwrzk5JZpCr7KdB3yLkC" Name="Frame Ms Max" Kind="OutputPin" />
             <Pin Id="rkCjIXUfHCLSLtNGCVk9Xr" Name="Pump Ms" Kind="OutputPin" />
             <Pin Id="uUSu0MREAFpZzJS2dJfgZy" Name="Pump Ms Max" Kind="OutputPin" />
+            <Pin Id="T43nWMjBzpSc2TRBJNmWHJ" Name="Work Ms" Kind="OutputPin" />
             <Pin Id="83OhTvYkhR8Gbj9BXZGvai" Name="Sync Ms" Kind="OutputPin" />
             <Pin Id="bVlWoa9Ubh7IZfSAPEd7kI" Name="Render Ms" Kind="OutputPin" />
             <Pin Id="82XtIt6P0uwXE3pMuQmii7" Name="Present Ms" Kind="OutputPin" />
+            <Pin Id="BlYIQnc0yOchbQXeioJpM8" Name="Vsync Ms" Kind="OutputPin" />
             <Pin Id="EVLSRApr9EQBD8bwvbzxW9" Name="Gpu Ms" Kind="OutputPin" />
             <Pin Id="TgjOTgbWMG1jKq6rlxDh4z" Name="Gpu Ms Max" Kind="OutputPin" />
             <Pin Id="pmI5hEZKK0yh2WSdHIQljy" Name="Swaps Per Pump" Kind="OutputPin" />
+            <Pin Id="K9LgNtBvC5kvFrkFI2CP7p" Name="Percentiles" Kind="OutputPin" />
+            <Pin Id="owN9ugA9SwmCp36KztM5pe" Name="Counters" Kind="OutputPin" />
+            <Pin Id="DJv3rb8puLOQab7PS0uW1e" Name="Recent" Kind="OutputPin" />
+            <Pin Id="6ZAg1yl2Eg7JAbOi0VTgiN" Name="Host" Kind="OutputPin" />
+            <Pin Id="EY43pHa9McurxAVnHt3tzI" Name="Gc" Kind="OutputPin" />
           </Node>
-          <Pad Id="OavgRntNg0NWq5iHtnKqvO" Comment="Fps" Bounds="116,1041,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="OavgRntNg0NWq5iHtnKqvO" Comment="Fps" Bounds="116,1101,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="mArPGcMemQvCKapVk6lVL7" Comment="Frame Ms" Bounds="136,1011,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="mArPGcMemQvCKapVk6lVL7" Comment="Frame Ms" Bounds="136,1071,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="PZ2vlOfCaddoXggdoGOWna" Comment="Frame Ms Max" Bounds="156,981,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="PZ2vlOfCaddoXggdoGOWna" Comment="Frame Ms Max" Bounds="156,1041,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="ecIxNNFZO8NmVapRqj1vev" Comment="Pump Ms" Bounds="176,951,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="ecIxNNFZO8NmVapRqj1vev" Comment="Pump Ms" Bounds="176,1011,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="oPGDvgy1WyVyLV2KgvVM6O" Comment="Pump Ms Max" Bounds="196,921,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="oPGDvgy1WyVyLV2KgvVM6O" Comment="Pump Ms Max" Bounds="196,981,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="oOpSyFXmiBAnvmVyUhP62y" Comment="Sync Ms" Bounds="216,891,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="oOpSyFXmiBAnvmVyUhP62y" Comment="Sync Ms" Bounds="236,921,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="pQD2Xr7zRAIis31xMLLCoH" Comment="Render Ms" Bounds="236,861,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="pQD2Xr7zRAIis31xMLLCoH" Comment="Render Ms" Bounds="256,891,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="vu8uBEURCSuQDfelU7yKR4" Comment="Present Ms" Bounds="256,831,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="vu8uBEURCSuQDfelU7yKR4" Comment="Present Ms" Bounds="276,861,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="t7E14ipatHtcFhJbt5cF5y" Comment="Gpu Ms" Bounds="276,801,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="t7E14ipatHtcFhJbt5cF5y" Comment="Gpu Ms" Bounds="316,801,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="uQFXyAbsfnJXiOoqMn35cM" Comment="Gpu Ms Max" Bounds="296,771,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="uQFXyAbsfnJXiOoqMn35cM" Comment="Gpu Ms Max" Bounds="336,771,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="NQsGvjb3lkcxkmGTKX1N3Z" Comment="Swaps Per Pump" Bounds="316,741,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="NQsGvjb3lkcxkmGTKX1N3Z" Comment="Swaps Per Pump" Bounds="356,741,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="491,701,125,26" Id="2lw0fUMYtbL7P2ic20EIsr">
-            <p:NodeReference LastCategoryFullName="Qt.PerfStats" LastDependency="VL.Qt.dll">
+          <Pad Id="eFnZGlhaFyuNdMhsPPnXtB" Comment="Work Ms" Bounds="216,951,35,15" ShowValueBox="true" isIOBox="true">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Pad Id="CLqvKgpZD6GGgloi8LmIU3" Comment="Vsync Ms" Bounds="296,831,35,15" ShowValueBox="true" isIOBox="true">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="Float32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="520,760,125,26" Id="2lw0fUMYtbL7P2ic20EIsr">
+            <p:NodeReference LastCategoryFullName="Qt.PerfPercentiles" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="RecordType" Name="PerfStats" />
-              <Choice Kind="OperationCallFlag" Name="SplitPercentiles" />
+              <CategoryReference Kind="RecordType" Name="PerfPercentiles" />
+              <Choice Kind="OperationCallFlag" Name="Split" />
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="Q24PH6q8Q0Bv6NlRKEWKdb" Name="Input" Kind="StateInputPin" />
@@ -210,11 +227,11 @@
             <Pin Id="dO1SAvSTBZATaEbrq8RE1i" Name="Pump Ms P95" Kind="OutputPin" />
             <Pin Id="3cpIBxEEHtBUDVwEcjREBL" Name="Pump Ms P99" Kind="OutputPin" />
           </Node>
-          <Node Bounds="788,701,185,26" Id="ASwF7BMtwdEPHL1eRkdF5k">
-            <p:NodeReference LastCategoryFullName="Qt.PerfStats" LastDependency="VL.Qt.dll">
+          <Node Bounds="700,760,85,26" Id="ASwF7BMtwdEPHL1eRkdF5k">
+            <p:NodeReference LastCategoryFullName="Qt.PerfCounters" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="RecordType" Name="PerfStats" />
-              <Choice Kind="OperationCallFlag" Name="SplitCounters" />
+              <CategoryReference Kind="RecordType" Name="PerfCounters" />
+              <Choice Kind="OperationCallFlag" Name="Split" />
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="4WGmXoNqFsPAEOOyxahbGT" Name="Input" Kind="StateInputPin" />
@@ -224,17 +241,27 @@
             <Pin Id="wkWpulAF3jWfWBKy9xZd5m" Name="Long Frames" Kind="OutputPin" />
             <Pin Id="VRzuT4Cbs8aEm0N0cczouo" Name="Idle Pumps" Kind="OutputPin" />
             <Pin Id="gN98vYySff0lvoRUCynlcH" Name="Multi Swaps" Kind="OutputPin" />
-            <Pin Id="4HAd7lIAaCE1u7WZcSDxPB" Name="Recent Pumps" Kind="OutputPin" />
-            <Pin Id="KVS4Aw4To3ntAChwAPZ7pA" Name="Recent Over Budget" Kind="OutputPin" />
-            <Pin Id="0psU5JbeDciLbGUsD5DbHo" Name="Recent Long Frames" Kind="OutputPin" />
-            <Pin Id="tvYnBHdRrtdWGk0qWCKZmb" Name="Recent Idle Pumps" Kind="OutputPin" />
-            <Pin Id="VmXRpUIXelDUu6qqnBBiKi" Name="Recent Multi Swaps" Kind="OutputPin" />
           </Node>
-          <Node Bounds="1145,701,165,26" Id="rx13hAnEOvUrHMkgTt6a7o">
-            <p:NodeReference LastCategoryFullName="Qt.PerfStats" LastDependency="VL.Qt.dll">
+          <Node Bounds="820,760,85,26" Id="K8cGcv7uAWBCP9p9bVMqNx">
+            <p:NodeReference LastCategoryFullName="Qt.PerfCounters" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="RecordType" Name="PerfStats" />
-              <Choice Kind="OperationCallFlag" Name="SplitHost" />
+              <CategoryReference Kind="RecordType" Name="PerfCounters" />
+              <Choice Kind="OperationCallFlag" Name="Split" />
+            </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
+            <Pin Id="3ftBGQvWsZsCAupGoYaJTV" Name="Input" Kind="StateInputPin" />
+            <Pin Id="On9Rx0nmxp6a3a0nrg3NjM" Name="Output" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="4HAd7lIAaCE1u7WZcSDxPB" Name="Pumps" Kind="OutputPin" />
+            <Pin Id="KVS4Aw4To3ntAChwAPZ7pA" Name="Over Budget" Kind="OutputPin" />
+            <Pin Id="0psU5JbeDciLbGUsD5DbHo" Name="Long Frames" Kind="OutputPin" />
+            <Pin Id="tvYnBHdRrtdWGk0qWCKZmb" Name="Idle Pumps" Kind="OutputPin" />
+            <Pin Id="VmXRpUIXelDUu6qqnBBiKi" Name="Multi Swaps" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="940,760,165,26" Id="rx13hAnEOvUrHMkgTt6a7o">
+            <p:NodeReference LastCategoryFullName="Qt.HostPerfStats" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="RecordType" Name="HostPerfStats" />
+              <Choice Kind="OperationCallFlag" Name="Split" />
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="K589FPVzWJNf1K3BLLgEit" Name="Input" Kind="StateInputPin" />
@@ -249,172 +276,172 @@
             <Pin Id="WPMqHIGHnB9ppoIElOPxDD" Name="Reconcile Ms Max" Kind="OutputPin" />
             <Pin Id="gsdjgAXa7VQEQheePSr32N" Name="Ops" Kind="OutputPin" />
           </Node>
-          <Node Bounds="1482,701,85,26" Id="Jl3hAM2JkRVcgNIQNKu9KL">
-            <p:NodeReference LastCategoryFullName="Qt.PerfStats" LastDependency="VL.Qt.dll">
+          <Node Bounds="1140,760,85,26" Id="Jl3hAM2JkRVcgNIQNKu9KL">
+            <p:NodeReference LastCategoryFullName="Qt.GcPerfStats" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="RecordType" Name="PerfStats" />
-              <Choice Kind="OperationCallFlag" Name="SplitGc" />
+              <CategoryReference Kind="RecordType" Name="GcPerfStats" />
+              <Choice Kind="OperationCallFlag" Name="Split" />
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="jOkxB7O0raojN0qWlCO1Gq" Name="Input" Kind="StateInputPin" />
             <Pin Id="JOPNzydJgRmOwUz8bL0mdB" Name="Output" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="XGUFZkZ5NUFs8IHQt779zF" Name="Gen0 Per Second" Kind="OutputPin" />
-            <Pin Id="RzhRQdcnBSFiBlIO7YdSlM" Name="Gen1 Per Second" Kind="OutputPin" />
-            <Pin Id="bSpb2x5VD8Cfbodwo4jZYp" Name="Gen2 Per Second" Kind="OutputPin" />
+            <Pin Id="XGUFZkZ5NUFs8IHQt779zF" Name="Gen Zero Per Second" Kind="OutputPin" />
+            <Pin Id="RzhRQdcnBSFiBlIO7YdSlM" Name="Gen One Per Second" Kind="OutputPin" />
+            <Pin Id="bSpb2x5VD8Cfbodwo4jZYp" Name="Gen Two Per Second" Kind="OutputPin" />
             <Pin Id="RbEkUJvz4nyOqm4F3xgvvb" Name="Gc Pause Ms Per Second" Kind="OutputPin" />
             <Pin Id="0T3bzh1W8PD8SqWv9zjTmZ" Name="Allocated Bytes Per Frame" Kind="OutputPin" />
           </Node>
-          <Pad Id="See46dsX7IKcjvl635tHqZ" Comment="Budget Ms" Bounds="493,921,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="See46dsX7IKcjvl635tHqZ" Comment="Budget Ms" Bounds="522,980,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="bYNK7MkEk8Ef0fmOai97FF" Comment="Frame Ms P50" Bounds="513,891,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="bYNK7MkEk8Ef0fmOai97FF" Comment="Frame Ms P50" Bounds="542,950,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="IpEy0Dx2AOzjb3MRG6tZJJ" Comment="Frame Ms P95" Bounds="533,861,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="IpEy0Dx2AOzjb3MRG6tZJJ" Comment="Frame Ms P95" Bounds="562,920,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="UYHMk9EHSp5zc6QpPcNt4r" Comment="Frame Ms P99" Bounds="553,831,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="UYHMk9EHSp5zc6QpPcNt4r" Comment="Frame Ms P99" Bounds="582,890,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="8yOa94kMjX0pwzDQMHAmJL" Comment="Pump Ms P50" Bounds="573,801,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="8yOa94kMjX0pwzDQMHAmJL" Comment="Pump Ms P50" Bounds="602,860,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="s3pcXZHoajEpfyWP3VuKnu" Comment="Pump Ms P95" Bounds="593,771,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="s3pcXZHoajEpfyWP3VuKnu" Comment="Pump Ms P95" Bounds="622,830,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="MwTvMfwtCPg55bHZxDmgma" Comment="Pump Ms P99" Bounds="613,741,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="MwTvMfwtCPg55bHZxDmgma" Comment="Pump Ms P99" Bounds="642,800,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="2czYA6Qnfibd1HX4cxNz2G" Comment="Pumps" Bounds="790,1011,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="2czYA6Qnfibd1HX4cxNz2G" Comment="Pumps" Bounds="702,920,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer64" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="EPsTFhx6p89Jyb33pKOY7F" Comment="Over Budget" Bounds="810,981,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="EPsTFhx6p89Jyb33pKOY7F" Comment="Over Budget" Bounds="722,890,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer64" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="m3cZNThgFAUFWtAAiEZUiM" Comment="Long Frames" Bounds="830,951,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="m3cZNThgFAUFWtAAiEZUiM" Comment="Long Frames" Bounds="742,860,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer64" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="WXxNQuo2Qyk90WOz3oI9YX" Comment="Idle Pumps" Bounds="850,921,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="WXxNQuo2Qyk90WOz3oI9YX" Comment="Idle Pumps" Bounds="762,830,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer64" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="BN1VFVWareSGEAXoQQX2eQ" Comment="Multi Swaps" Bounds="870,891,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="BN1VFVWareSGEAXoQQX2eQ" Comment="Multi Swaps" Bounds="782,800,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer64" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="nx1s31BLjV693AFQgywrxS" Comment="Recent Pumps" Bounds="890,861,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="nx1s31BLjV693AFQgywrxS" Comment="Recent Pumps" Bounds="822,920,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer64" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="yi06qwhK5VUl8nXmE8qWjH" Comment="Recent Over Budget" Bounds="910,831,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="yi06qwhK5VUl8nXmE8qWjH" Comment="Recent Over Budget" Bounds="842,890,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer64" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="v8CR4p3Xnn0rCygSWpp2aT" Comment="Recent Long Frames" Bounds="930,801,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="v8CR4p3Xnn0rCygSWpp2aT" Comment="Recent Long Frames" Bounds="862,860,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer64" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="FhIspoNk0TMvQ4PlES0BqU" Comment="Recent Idle Pumps" Bounds="950,771,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="FhIspoNk0TMvQ4PlES0BqU" Comment="Recent Idle Pumps" Bounds="882,830,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer64" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="amNhNoDRpiTkiFdUe4f7e2" Comment="Recent Multi Swaps" Bounds="970,741,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="amNhNoDRpiTkiFdUe4f7e2" Comment="Recent Multi Swaps" Bounds="902,800,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Integer64" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="Q6Sd3lHikNFop9l5qbKeOD" Comment="Vvvv Ms" Bounds="1147,981,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="Q6Sd3lHikNFop9l5qbKeOD" Comment="Vvvv Ms" Bounds="942,1040,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="TRzP4UxkZ6WPObDvuvJDp7" Comment="Vvvv Ms Max" Bounds="1167,951,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="TRzP4UxkZ6WPObDvuvJDp7" Comment="Vvvv Ms Max" Bounds="962,1010,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="JscBeJn1TP7pExmPieeblk" Comment="Wait Ms" Bounds="1187,921,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="JscBeJn1TP7pExmPieeblk" Comment="Wait Ms" Bounds="982,980,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="ipZUgJoOmNngnNbcwao2Bw" Comment="Wait Ms Max" Bounds="1207,891,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="ipZUgJoOmNngnNbcwao2Bw" Comment="Wait Ms Max" Bounds="1002,950,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="4uglrt5LcOOlfgwJ4NWfcQ" Comment="Apply Ms" Bounds="1227,861,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="4uglrt5LcOOlfgwJ4NWfcQ" Comment="Apply Ms" Bounds="1022,920,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="3Lb9NCdg57sKosGHgxNCgy" Comment="Apply Ms Max" Bounds="1247,831,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="3Lb9NCdg57sKosGHgxNCgy" Comment="Apply Ms Max" Bounds="1042,890,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="UvOVBZcUkJcTeZPUDQ76ce" Comment="Reconcile Ms" Bounds="1267,801,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="UvOVBZcUkJcTeZPUDQ76ce" Comment="Reconcile Ms" Bounds="1062,860,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="ZBbuE3FQhKxHNMyGpDXPK4" Comment="Reconcile Ms Max" Bounds="1287,771,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="ZBbuE3FQhKxHNMyGpDXPK4" Comment="Reconcile Ms Max" Bounds="1082,830,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="0G2yyJ7Gz6IN70cOcBXa15" Comment="Ops" Bounds="1307,741,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="0G2yyJ7Gz6IN70cOcBXa15" Comment="Ops" Bounds="1102,800,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="VgDWHaW3sW6ygxizxXMfxV" Comment="Gen0 Per Second" Bounds="1484,861,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="VgDWHaW3sW6ygxizxXMfxV" Comment="Gen0 Per Second" Bounds="1142,920,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="huTBsMhH2T6Jl0SILoJYnI" Comment="Gen1 Per Second" Bounds="1504,831,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="huTBsMhH2T6Jl0SILoJYnI" Comment="Gen1 Per Second" Bounds="1162,890,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="9h8ZejEclyLauAl0lztZ5g" Comment="Gen2 Per Second" Bounds="1524,801,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="9h8ZejEclyLauAl0lztZ5g" Comment="Gen2 Per Second" Bounds="1182,860,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="URcEhOR8qLxsAD1JoJ4nwt" Comment="Gc Pause Ms Per Second" Bounds="1544,771,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="URcEhOR8qLxsAD1JoJ4nwt" Comment="Gc Pause Ms Per Second" Bounds="1202,830,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="HtatkpeASZtR3kdOu8oVhu" Comment="Allocated Bytes Per Frame" Bounds="1564,741,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="HtatkpeASZtR3kdOu8oVhu" Comment="Allocated Bytes Per Frame" Bounds="1222,800,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
@@ -434,7 +461,13 @@
         <Link Id="eSsOgaKQxpSo8U5mYcZuTM" Ids="TgjOTgbWMG1jKq6rlxDh4z,uQFXyAbsfnJXiOoqMn35cM" />
         <Link Id="kZp17OeukbAbxx18tgQaFU" Ids="pmI5hEZKK0yh2WSdHIQljy,NQsGvjb3lkcxkmGTKX1N3Z" />
         <Link Id="pqzyo89BFvOcOdHu7H3NhT" Ids="F30pM32esWwMH8HIR1eJ1k,W3TAIJisn5fIOWgrdC8jgw" />
-        <Link Id="1d9UXU7KpEnBKsfsOPLXso" Ids="F30pM32esWwMH8HIR1eJ1k,Q24PH6q8Q0Bv6NlRKEWKdb" />
+        <Link Id="3g8l2UohVH5FqqWjGD7lSX" Ids="K9LgNtBvC5kvFrkFI2CP7p,Q24PH6q8Q0Bv6NlRKEWKdb" />
+        <Link Id="eTK5wlDteOfZ5bxOquVQ5a" Ids="owN9ugA9SwmCp36KztM5pe,4WGmXoNqFsPAEOOyxahbGT" />
+        <Link Id="OrTb5XPkKuJKm7Qwjk1AbI" Ids="DJv3rb8puLOQab7PS0uW1e,3ftBGQvWsZsCAupGoYaJTV" />
+        <Link Id="q4yqO7DwGDkEEKm7StNvjA" Ids="6ZAg1yl2Eg7JAbOi0VTgiN,K589FPVzWJNf1K3BLLgEit" />
+        <Link Id="tjc597JDY3x9yTpZx7OoVs" Ids="EY43pHa9McurxAVnHt3tzI,jOkxB7O0raojN0qWlCO1Gq" />
+        <Link Id="HxQwpeM2HDbr3wem1F5yL9" Ids="T43nWMjBzpSc2TRBJNmWHJ,eFnZGlhaFyuNdMhsPPnXtB" />
+        <Link Id="IR53hPgO7mkRGlzIvAwU2e" Ids="BlYIQnc0yOchbQXeioJpM8,CLqvKgpZD6GGgloi8LmIU3" />
         <Link Id="f5lPoUrcLHmhptPHmRCAuF" Ids="VuMaM5VRcLkyuO4kWIFRup,See46dsX7IKcjvl635tHqZ" />
         <Link Id="hN2cQCR5CaPrcOI14GDO6j" Ids="xiCfCW7wt7eIOPXxaXt8RW,bYNK7MkEk8Ef0fmOai97FF" />
         <Link Id="oPFqBNDN8l6Qo9tMacgQXN" Ids="KPVUA4A2GhlkqqzKGLtBZM,IpEy0Dx2AOzjb3MRG6tZJJ" />
@@ -442,7 +475,6 @@
         <Link Id="u3AKZEg4ogDKHQp6onudXS" Ids="uxxLLcCCnDMkIJNwkldV11,8yOa94kMjX0pwzDQMHAmJL" />
         <Link Id="lVYdW9wtI4qqo41d3Z89fC" Ids="dO1SAvSTBZATaEbrq8RE1i,s3pcXZHoajEpfyWP3VuKnu" />
         <Link Id="KD8AbRK4yuvY01JBp8s1wy" Ids="3cpIBxEEHtBUDVwEcjREBL,MwTvMfwtCPg55bHZxDmgma" />
-        <Link Id="H0xAGdWKvw8JZcTFK0TqTo" Ids="F30pM32esWwMH8HIR1eJ1k,4WGmXoNqFsPAEOOyxahbGT" />
         <Link Id="HSRH6qSY7Rz8xva1Wmn4I1" Ids="D67WQ5YQjbsCvxYLBhN2B2,2czYA6Qnfibd1HX4cxNz2G" />
         <Link Id="wBdhXR6APqOq1VsdyAawlM" Ids="BBAwozID1kiGDNClfvM8uf,EPsTFhx6p89Jyb33pKOY7F" />
         <Link Id="iZxLklTbzmTwS8ShwGfhN7" Ids="wkWpulAF3jWfWBKy9xZd5m,m3cZNThgFAUFWtAAiEZUiM" />
@@ -453,7 +485,6 @@
         <Link Id="BYxXO7DF9o6dUgDwBuzcIt" Ids="0psU5JbeDciLbGUsD5DbHo,v8CR4p3Xnn0rCygSWpp2aT" />
         <Link Id="2bGoHK78lQRLta0ysfHq18" Ids="tvYnBHdRrtdWGk0qWCKZmb,FhIspoNk0TMvQ4PlES0BqU" />
         <Link Id="Uf77ckGaTzrdGBCgIZHZWL" Ids="VmXRpUIXelDUu6qqnBBiKi,amNhNoDRpiTkiFdUe4f7e2" />
-        <Link Id="evwaFBbmA49piwZoLZ3OcT" Ids="F30pM32esWwMH8HIR1eJ1k,K589FPVzWJNf1K3BLLgEit" />
         <Link Id="D9XcpXaqs3s4xxMitXPFTp" Ids="oQoLYnatzPH18o7ugqhPLF,Q6Sd3lHikNFop9l5qbKeOD" />
         <Link Id="GuSjASW7ER9cby0f6yCTLe" Ids="63PijhEUfZCKh4w3hKNpOZ,TRzP4UxkZ6WPObDvuvJDp7" />
         <Link Id="vtoK0hnPnQ0E766GJnsyYj" Ids="hbulquCBVNLktqPx1XmiSc,JscBeJn1TP7pExmPieeblk" />
@@ -463,7 +494,6 @@
         <Link Id="xeC21b8BPApTDVs1uwGBTu" Ids="VjB8vpxiDWBrZtIlJ5GhEr,UvOVBZcUkJcTeZPUDQ76ce" />
         <Link Id="yd1PnMHWuzznOtX1MWKI9N" Ids="WPMqHIGHnB9ppoIElOPxDD,ZBbuE3FQhKxHNMyGpDXPK4" />
         <Link Id="NwtnHvWgAJTS7IvApOR8Um" Ids="gsdjgAXa7VQEQheePSr32N,0G2yyJ7Gz6IN70cOcBXa15" />
-        <Link Id="BZxeLUT4Kd7dRlTelbfJeO" Ids="F30pM32esWwMH8HIR1eJ1k,jOkxB7O0raojN0qWlCO1Gq" />
         <Link Id="pO3noroHl3odrNlWWwkjH9" Ids="XGUFZkZ5NUFs8IHQt779zF,VgDWHaW3sW6ygxizxXMfxV" />
         <Link Id="vaUOjSrZ0WFurt71BVMZuf" Ids="RzhRQdcnBSFiBlIO7YdSlM,huTBsMhH2T6Jl0SILoJYnI" />
         <Link Id="g0RncTM9XcHqvtNIrYdPPy" Ids="bSpb2x5VD8Cfbodwo4jZYp,9h8ZejEclyLauAl0lztZ5g" />

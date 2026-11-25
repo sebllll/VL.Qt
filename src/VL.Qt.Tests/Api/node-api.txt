@@ -240,6 +240,108 @@ VL.Qt | VL.Qt.Elements.VerticalAlignment | member Bottom = 64
 VL.Qt | VL.Qt.Elements.VerticalAlignment | member Center = 128
 VL.Qt | VL.Qt.Elements.VerticalAlignment | member Top = 32
 VL.Qt | VL.Qt.Elements.VerticalAlignment | type enum
+VL.Qt | VL.Qt.GcPerfStats | ctor | new
+VL.Qt | VL.Qt.GcPerfStats | ctor | order Gen Zero Per Second, Gen One Per Second, Gen Two Per Second, Gc Pause Ms Per Second, Allocated Bytes Per Frame
+VL.Qt | VL.Qt.GcPerfStats | ctor | pin Allocated Bytes Per Frame | in float | (AllocatedBytesPerFrame)
+VL.Qt | VL.Qt.GcPerfStats | ctor | pin Gc Pause Ms Per Second | in float | (GcPauseMsPerSecond)
+VL.Qt | VL.Qt.GcPerfStats | ctor | pin Gen One Per Second | in float | (GenOnePerSecond)
+VL.Qt | VL.Qt.GcPerfStats | ctor | pin Gen Two Per Second | in float | (GenTwoPerSecond)
+VL.Qt | VL.Qt.GcPerfStats | ctor | pin Gen Zero Per Second | in float | (GenZeroPerSecond)
+VL.Qt | VL.Qt.GcPerfStats | implements System.IEquatable<VL.Qt.GcPerfStats>
+VL.Qt | VL.Qt.GcPerfStats | method Deconstruct | order Gen Zero Per Second, Gen One Per Second, Gen Two Per Second, Gc Pause Ms Per Second, Allocated Bytes Per Frame
+VL.Qt | VL.Qt.GcPerfStats | method Deconstruct | pin Allocated Bytes Per Frame | out float | (AllocatedBytesPerFrame)
+VL.Qt | VL.Qt.GcPerfStats | method Deconstruct | pin Gc Pause Ms Per Second | out float | (GcPauseMsPerSecond)
+VL.Qt | VL.Qt.GcPerfStats | method Deconstruct | pin Gen One Per Second | out float | (GenOnePerSecond)
+VL.Qt | VL.Qt.GcPerfStats | method Deconstruct | pin Gen Two Per Second | out float | (GenTwoPerSecond)
+VL.Qt | VL.Qt.GcPerfStats | method Deconstruct | pin Gen Zero Per Second | out float | (GenZeroPerSecond)
+VL.Qt | VL.Qt.GcPerfStats | method Deconstruct | void
+VL.Qt | VL.Qt.GcPerfStats | method Equals(VL.Qt.GcPerfStats) | bool
+VL.Qt | VL.Qt.GcPerfStats | method Equals(VL.Qt.GcPerfStats) | order Other, Output
+VL.Qt | VL.Qt.GcPerfStats | method Equals(VL.Qt.GcPerfStats) | pin Other | in VL.Qt.GcPerfStats | (other)
+VL.Qt | VL.Qt.GcPerfStats | method Equals(VL.Qt.GcPerfStats) | pin Output | out bool | (return)
+VL.Qt | VL.Qt.GcPerfStats | method Equals(object) | order Obj, Output
+VL.Qt | VL.Qt.GcPerfStats | method Equals(object) | override bool
+VL.Qt | VL.Qt.GcPerfStats | method Equals(object) | pin Obj | in object | (obj)
+VL.Qt | VL.Qt.GcPerfStats | method Equals(object) | pin Output | out bool | (return)
+VL.Qt | VL.Qt.GcPerfStats | method GetHashCode | order Output
+VL.Qt | VL.Qt.GcPerfStats | method GetHashCode | override int
+VL.Qt | VL.Qt.GcPerfStats | method GetHashCode | pin Output | out int | (return)
+VL.Qt | VL.Qt.GcPerfStats | method ToString | order Output
+VL.Qt | VL.Qt.GcPerfStats | method ToString | override string
+VL.Qt | VL.Qt.GcPerfStats | method ToString | pin Output | out string | (return)
+VL.Qt | VL.Qt.GcPerfStats | method op_Equality | order Left, Right, Output
+VL.Qt | VL.Qt.GcPerfStats | method op_Equality | pin Left | in VL.Qt.GcPerfStats | (left)
+VL.Qt | VL.Qt.GcPerfStats | method op_Equality | pin Output | out bool | (return)
+VL.Qt | VL.Qt.GcPerfStats | method op_Equality | pin Right | in VL.Qt.GcPerfStats | (right)
+VL.Qt | VL.Qt.GcPerfStats | method op_Equality | static bool
+VL.Qt | VL.Qt.GcPerfStats | method op_Inequality | order Left, Right, Output
+VL.Qt | VL.Qt.GcPerfStats | method op_Inequality | pin Left | in VL.Qt.GcPerfStats | (left)
+VL.Qt | VL.Qt.GcPerfStats | method op_Inequality | pin Output | out bool | (return)
+VL.Qt | VL.Qt.GcPerfStats | method op_Inequality | pin Right | in VL.Qt.GcPerfStats | (right)
+VL.Qt | VL.Qt.GcPerfStats | method op_Inequality | static bool
+VL.Qt | VL.Qt.GcPerfStats | property AllocatedBytesPerFrame | float { get; init }
+VL.Qt | VL.Qt.GcPerfStats | property GcPauseMsPerSecond | float { get; init }
+VL.Qt | VL.Qt.GcPerfStats | property GenOnePerSecond | float { get; init }
+VL.Qt | VL.Qt.GcPerfStats | property GenTwoPerSecond | float { get; init }
+VL.Qt | VL.Qt.GcPerfStats | property GenZeroPerSecond | float { get; init }
+VL.Qt | VL.Qt.GcPerfStats | type struct
+VL.Qt | VL.Qt.HostPerfStats | ctor | new
+VL.Qt | VL.Qt.HostPerfStats | ctor | order Vvvv Ms, Vvvv Ms Max, Wait Ms, Wait Ms Max, Apply Ms, Apply Ms Max, Reconcile Ms, Reconcile Ms Max, Ops
+VL.Qt | VL.Qt.HostPerfStats | ctor | pin Apply Ms Max | in float | (ApplyMsMax)
+VL.Qt | VL.Qt.HostPerfStats | ctor | pin Apply Ms | in float | (ApplyMs)
+VL.Qt | VL.Qt.HostPerfStats | ctor | pin Ops | in float | (Ops)
+VL.Qt | VL.Qt.HostPerfStats | ctor | pin Reconcile Ms Max | in float | (ReconcileMsMax)
+VL.Qt | VL.Qt.HostPerfStats | ctor | pin Reconcile Ms | in float | (ReconcileMs)
+VL.Qt | VL.Qt.HostPerfStats | ctor | pin Vvvv Ms Max | in float | (VvvvMsMax)
+VL.Qt | VL.Qt.HostPerfStats | ctor | pin Vvvv Ms | in float | (VvvvMs)
+VL.Qt | VL.Qt.HostPerfStats | ctor | pin Wait Ms Max | in float | (WaitMsMax)
+VL.Qt | VL.Qt.HostPerfStats | ctor | pin Wait Ms | in float | (WaitMs)
+VL.Qt | VL.Qt.HostPerfStats | implements System.IEquatable<VL.Qt.HostPerfStats>
+VL.Qt | VL.Qt.HostPerfStats | method Deconstruct | order Vvvv Ms, Vvvv Ms Max, Wait Ms, Wait Ms Max, Apply Ms, Apply Ms Max, Reconcile Ms, Reconcile Ms Max, Ops
+VL.Qt | VL.Qt.HostPerfStats | method Deconstruct | pin Apply Ms Max | out float | (ApplyMsMax)
+VL.Qt | VL.Qt.HostPerfStats | method Deconstruct | pin Apply Ms | out float | (ApplyMs)
+VL.Qt | VL.Qt.HostPerfStats | method Deconstruct | pin Ops | out float | (Ops)
+VL.Qt | VL.Qt.HostPerfStats | method Deconstruct | pin Reconcile Ms Max | out float | (ReconcileMsMax)
+VL.Qt | VL.Qt.HostPerfStats | method Deconstruct | pin Reconcile Ms | out float | (ReconcileMs)
+VL.Qt | VL.Qt.HostPerfStats | method Deconstruct | pin Vvvv Ms Max | out float | (VvvvMsMax)
+VL.Qt | VL.Qt.HostPerfStats | method Deconstruct | pin Vvvv Ms | out float | (VvvvMs)
+VL.Qt | VL.Qt.HostPerfStats | method Deconstruct | pin Wait Ms Max | out float | (WaitMsMax)
+VL.Qt | VL.Qt.HostPerfStats | method Deconstruct | pin Wait Ms | out float | (WaitMs)
+VL.Qt | VL.Qt.HostPerfStats | method Deconstruct | void
+VL.Qt | VL.Qt.HostPerfStats | method Equals(VL.Qt.HostPerfStats) | bool
+VL.Qt | VL.Qt.HostPerfStats | method Equals(VL.Qt.HostPerfStats) | order Other, Output
+VL.Qt | VL.Qt.HostPerfStats | method Equals(VL.Qt.HostPerfStats) | pin Other | in VL.Qt.HostPerfStats | (other)
+VL.Qt | VL.Qt.HostPerfStats | method Equals(VL.Qt.HostPerfStats) | pin Output | out bool | (return)
+VL.Qt | VL.Qt.HostPerfStats | method Equals(object) | order Obj, Output
+VL.Qt | VL.Qt.HostPerfStats | method Equals(object) | override bool
+VL.Qt | VL.Qt.HostPerfStats | method Equals(object) | pin Obj | in object | (obj)
+VL.Qt | VL.Qt.HostPerfStats | method Equals(object) | pin Output | out bool | (return)
+VL.Qt | VL.Qt.HostPerfStats | method GetHashCode | order Output
+VL.Qt | VL.Qt.HostPerfStats | method GetHashCode | override int
+VL.Qt | VL.Qt.HostPerfStats | method GetHashCode | pin Output | out int | (return)
+VL.Qt | VL.Qt.HostPerfStats | method ToString | order Output
+VL.Qt | VL.Qt.HostPerfStats | method ToString | override string
+VL.Qt | VL.Qt.HostPerfStats | method ToString | pin Output | out string | (return)
+VL.Qt | VL.Qt.HostPerfStats | method op_Equality | order Left, Right, Output
+VL.Qt | VL.Qt.HostPerfStats | method op_Equality | pin Left | in VL.Qt.HostPerfStats | (left)
+VL.Qt | VL.Qt.HostPerfStats | method op_Equality | pin Output | out bool | (return)
+VL.Qt | VL.Qt.HostPerfStats | method op_Equality | pin Right | in VL.Qt.HostPerfStats | (right)
+VL.Qt | VL.Qt.HostPerfStats | method op_Equality | static bool
+VL.Qt | VL.Qt.HostPerfStats | method op_Inequality | order Left, Right, Output
+VL.Qt | VL.Qt.HostPerfStats | method op_Inequality | pin Left | in VL.Qt.HostPerfStats | (left)
+VL.Qt | VL.Qt.HostPerfStats | method op_Inequality | pin Output | out bool | (return)
+VL.Qt | VL.Qt.HostPerfStats | method op_Inequality | pin Right | in VL.Qt.HostPerfStats | (right)
+VL.Qt | VL.Qt.HostPerfStats | method op_Inequality | static bool
+VL.Qt | VL.Qt.HostPerfStats | property ApplyMs | float { get; init }
+VL.Qt | VL.Qt.HostPerfStats | property ApplyMsMax | float { get; init }
+VL.Qt | VL.Qt.HostPerfStats | property Ops | float { get; init }
+VL.Qt | VL.Qt.HostPerfStats | property ReconcileMs | float { get; init }
+VL.Qt | VL.Qt.HostPerfStats | property ReconcileMsMax | float { get; init }
+VL.Qt | VL.Qt.HostPerfStats | property VvvvMs | float { get; init }
+VL.Qt | VL.Qt.HostPerfStats | property VvvvMsMax | float { get; init }
+VL.Qt | VL.Qt.HostPerfStats | property WaitMs | float { get; init }
+VL.Qt | VL.Qt.HostPerfStats | property WaitMsMax | float { get; init }
+VL.Qt | VL.Qt.HostPerfStats | type struct
 VL.Qt | VL.Qt.Images.ImageUpload | member Auto = 0
 VL.Qt | VL.Qt.Images.ImageUpload | member MainThread = 1
 VL.Qt | VL.Qt.Images.ImageUpload | member Worker = 2
@@ -1661,33 +1763,142 @@ VL.Qt | VL.Qt.Paths.QtPath | property Bounds | Stride.Core.Mathematics.Rectangle
 VL.Qt | VL.Qt.Paths.QtPath | property Empty | static VL.Qt.Paths.QtPath { get }
 VL.Qt | VL.Qt.Paths.QtPath | property IsEmpty | bool { get }
 VL.Qt | VL.Qt.Paths.QtPath | type sealed class
+VL.Qt | VL.Qt.PerfCounters | ctor | new
+VL.Qt | VL.Qt.PerfCounters | ctor | order Pumps, Over Budget, Long Frames, Idle Pumps, Multi Swaps
+VL.Qt | VL.Qt.PerfCounters | ctor | pin Idle Pumps | in long | (IdlePumps)
+VL.Qt | VL.Qt.PerfCounters | ctor | pin Long Frames | in long | (LongFrames)
+VL.Qt | VL.Qt.PerfCounters | ctor | pin Multi Swaps | in long | (MultiSwaps)
+VL.Qt | VL.Qt.PerfCounters | ctor | pin Over Budget | in long | (OverBudget)
+VL.Qt | VL.Qt.PerfCounters | ctor | pin Pumps | in long | (Pumps)
+VL.Qt | VL.Qt.PerfCounters | implements System.IEquatable<VL.Qt.PerfCounters>
+VL.Qt | VL.Qt.PerfCounters | method Deconstruct | order Pumps, Over Budget, Long Frames, Idle Pumps, Multi Swaps
+VL.Qt | VL.Qt.PerfCounters | method Deconstruct | pin Idle Pumps | out long | (IdlePumps)
+VL.Qt | VL.Qt.PerfCounters | method Deconstruct | pin Long Frames | out long | (LongFrames)
+VL.Qt | VL.Qt.PerfCounters | method Deconstruct | pin Multi Swaps | out long | (MultiSwaps)
+VL.Qt | VL.Qt.PerfCounters | method Deconstruct | pin Over Budget | out long | (OverBudget)
+VL.Qt | VL.Qt.PerfCounters | method Deconstruct | pin Pumps | out long | (Pumps)
+VL.Qt | VL.Qt.PerfCounters | method Deconstruct | void
+VL.Qt | VL.Qt.PerfCounters | method Equals(VL.Qt.PerfCounters) | bool
+VL.Qt | VL.Qt.PerfCounters | method Equals(VL.Qt.PerfCounters) | order Other, Output
+VL.Qt | VL.Qt.PerfCounters | method Equals(VL.Qt.PerfCounters) | pin Other | in VL.Qt.PerfCounters | (other)
+VL.Qt | VL.Qt.PerfCounters | method Equals(VL.Qt.PerfCounters) | pin Output | out bool | (return)
+VL.Qt | VL.Qt.PerfCounters | method Equals(object) | order Obj, Output
+VL.Qt | VL.Qt.PerfCounters | method Equals(object) | override bool
+VL.Qt | VL.Qt.PerfCounters | method Equals(object) | pin Obj | in object | (obj)
+VL.Qt | VL.Qt.PerfCounters | method Equals(object) | pin Output | out bool | (return)
+VL.Qt | VL.Qt.PerfCounters | method GetHashCode | order Output
+VL.Qt | VL.Qt.PerfCounters | method GetHashCode | override int
+VL.Qt | VL.Qt.PerfCounters | method GetHashCode | pin Output | out int | (return)
+VL.Qt | VL.Qt.PerfCounters | method ToString | order Output
+VL.Qt | VL.Qt.PerfCounters | method ToString | override string
+VL.Qt | VL.Qt.PerfCounters | method ToString | pin Output | out string | (return)
+VL.Qt | VL.Qt.PerfCounters | method op_Equality | order Left, Right, Output
+VL.Qt | VL.Qt.PerfCounters | method op_Equality | pin Left | in VL.Qt.PerfCounters | (left)
+VL.Qt | VL.Qt.PerfCounters | method op_Equality | pin Output | out bool | (return)
+VL.Qt | VL.Qt.PerfCounters | method op_Equality | pin Right | in VL.Qt.PerfCounters | (right)
+VL.Qt | VL.Qt.PerfCounters | method op_Equality | static bool
+VL.Qt | VL.Qt.PerfCounters | method op_Inequality | order Left, Right, Output
+VL.Qt | VL.Qt.PerfCounters | method op_Inequality | pin Left | in VL.Qt.PerfCounters | (left)
+VL.Qt | VL.Qt.PerfCounters | method op_Inequality | pin Output | out bool | (return)
+VL.Qt | VL.Qt.PerfCounters | method op_Inequality | pin Right | in VL.Qt.PerfCounters | (right)
+VL.Qt | VL.Qt.PerfCounters | method op_Inequality | static bool
+VL.Qt | VL.Qt.PerfCounters | property IdlePumps | long { get; init }
+VL.Qt | VL.Qt.PerfCounters | property LongFrames | long { get; init }
+VL.Qt | VL.Qt.PerfCounters | property MultiSwaps | long { get; init }
+VL.Qt | VL.Qt.PerfCounters | property OverBudget | long { get; init }
+VL.Qt | VL.Qt.PerfCounters | property Pumps | long { get; init }
+VL.Qt | VL.Qt.PerfCounters | type struct
+VL.Qt | VL.Qt.PerfPercentiles | ctor | new
+VL.Qt | VL.Qt.PerfPercentiles | ctor | order Budget Ms, Frame Ms P50, Frame Ms P95, Frame Ms P99, Pump Ms P50, Pump Ms P95, Pump Ms P99
+VL.Qt | VL.Qt.PerfPercentiles | ctor | pin Budget Ms | in float | (BudgetMs)
+VL.Qt | VL.Qt.PerfPercentiles | ctor | pin Frame Ms P50 | in float | (FrameMsP50)
+VL.Qt | VL.Qt.PerfPercentiles | ctor | pin Frame Ms P95 | in float | (FrameMsP95)
+VL.Qt | VL.Qt.PerfPercentiles | ctor | pin Frame Ms P99 | in float | (FrameMsP99)
+VL.Qt | VL.Qt.PerfPercentiles | ctor | pin Pump Ms P50 | in float | (PumpMsP50)
+VL.Qt | VL.Qt.PerfPercentiles | ctor | pin Pump Ms P95 | in float | (PumpMsP95)
+VL.Qt | VL.Qt.PerfPercentiles | ctor | pin Pump Ms P99 | in float | (PumpMsP99)
+VL.Qt | VL.Qt.PerfPercentiles | implements System.IEquatable<VL.Qt.PerfPercentiles>
+VL.Qt | VL.Qt.PerfPercentiles | method Deconstruct | order Budget Ms, Frame Ms P50, Frame Ms P95, Frame Ms P99, Pump Ms P50, Pump Ms P95, Pump Ms P99
+VL.Qt | VL.Qt.PerfPercentiles | method Deconstruct | pin Budget Ms | out float | (BudgetMs)
+VL.Qt | VL.Qt.PerfPercentiles | method Deconstruct | pin Frame Ms P50 | out float | (FrameMsP50)
+VL.Qt | VL.Qt.PerfPercentiles | method Deconstruct | pin Frame Ms P95 | out float | (FrameMsP95)
+VL.Qt | VL.Qt.PerfPercentiles | method Deconstruct | pin Frame Ms P99 | out float | (FrameMsP99)
+VL.Qt | VL.Qt.PerfPercentiles | method Deconstruct | pin Pump Ms P50 | out float | (PumpMsP50)
+VL.Qt | VL.Qt.PerfPercentiles | method Deconstruct | pin Pump Ms P95 | out float | (PumpMsP95)
+VL.Qt | VL.Qt.PerfPercentiles | method Deconstruct | pin Pump Ms P99 | out float | (PumpMsP99)
+VL.Qt | VL.Qt.PerfPercentiles | method Deconstruct | void
+VL.Qt | VL.Qt.PerfPercentiles | method Equals(VL.Qt.PerfPercentiles) | bool
+VL.Qt | VL.Qt.PerfPercentiles | method Equals(VL.Qt.PerfPercentiles) | order Other, Output
+VL.Qt | VL.Qt.PerfPercentiles | method Equals(VL.Qt.PerfPercentiles) | pin Other | in VL.Qt.PerfPercentiles | (other)
+VL.Qt | VL.Qt.PerfPercentiles | method Equals(VL.Qt.PerfPercentiles) | pin Output | out bool | (return)
+VL.Qt | VL.Qt.PerfPercentiles | method Equals(object) | order Obj, Output
+VL.Qt | VL.Qt.PerfPercentiles | method Equals(object) | override bool
+VL.Qt | VL.Qt.PerfPercentiles | method Equals(object) | pin Obj | in object | (obj)
+VL.Qt | VL.Qt.PerfPercentiles | method Equals(object) | pin Output | out bool | (return)
+VL.Qt | VL.Qt.PerfPercentiles | method GetHashCode | order Output
+VL.Qt | VL.Qt.PerfPercentiles | method GetHashCode | override int
+VL.Qt | VL.Qt.PerfPercentiles | method GetHashCode | pin Output | out int | (return)
+VL.Qt | VL.Qt.PerfPercentiles | method ToString | order Output
+VL.Qt | VL.Qt.PerfPercentiles | method ToString | override string
+VL.Qt | VL.Qt.PerfPercentiles | method ToString | pin Output | out string | (return)
+VL.Qt | VL.Qt.PerfPercentiles | method op_Equality | order Left, Right, Output
+VL.Qt | VL.Qt.PerfPercentiles | method op_Equality | pin Left | in VL.Qt.PerfPercentiles | (left)
+VL.Qt | VL.Qt.PerfPercentiles | method op_Equality | pin Output | out bool | (return)
+VL.Qt | VL.Qt.PerfPercentiles | method op_Equality | pin Right | in VL.Qt.PerfPercentiles | (right)
+VL.Qt | VL.Qt.PerfPercentiles | method op_Equality | static bool
+VL.Qt | VL.Qt.PerfPercentiles | method op_Inequality | order Left, Right, Output
+VL.Qt | VL.Qt.PerfPercentiles | method op_Inequality | pin Left | in VL.Qt.PerfPercentiles | (left)
+VL.Qt | VL.Qt.PerfPercentiles | method op_Inequality | pin Output | out bool | (return)
+VL.Qt | VL.Qt.PerfPercentiles | method op_Inequality | pin Right | in VL.Qt.PerfPercentiles | (right)
+VL.Qt | VL.Qt.PerfPercentiles | method op_Inequality | static bool
+VL.Qt | VL.Qt.PerfPercentiles | property BudgetMs | float { get; init }
+VL.Qt | VL.Qt.PerfPercentiles | property FrameMsP50 | float { get; init }
+VL.Qt | VL.Qt.PerfPercentiles | property FrameMsP95 | float { get; init }
+VL.Qt | VL.Qt.PerfPercentiles | property FrameMsP99 | float { get; init }
+VL.Qt | VL.Qt.PerfPercentiles | property PumpMsP50 | float { get; init }
+VL.Qt | VL.Qt.PerfPercentiles | property PumpMsP95 | float { get; init }
+VL.Qt | VL.Qt.PerfPercentiles | property PumpMsP99 | float { get; init }
+VL.Qt | VL.Qt.PerfPercentiles | type struct
 VL.Qt | VL.Qt.PerfStats | ctor | new
-VL.Qt | VL.Qt.PerfStats | ctor | order Fps, Frame Ms, Frame Ms Max, Pump Ms, Pump Ms Max, Sync Ms, Render Ms, Present Ms, Gpu Ms, Gpu Ms Max, Swaps Per Pump
+VL.Qt | VL.Qt.PerfStats | ctor | order Fps, Frame Ms, Frame Ms Max, Pump Ms, Pump Ms Max, Work Ms, Sync Ms, Render Ms, Present Ms, Vsync Ms, Gpu Ms, Gpu Ms Max, Swaps Per Pump, Percentiles, Counters, Recent, Host, Gc
+VL.Qt | VL.Qt.PerfStats | ctor | pin Counters | in VL.Qt.PerfCounters | (Counters)
 VL.Qt | VL.Qt.PerfStats | ctor | pin Fps | in float | (Fps)
 VL.Qt | VL.Qt.PerfStats | ctor | pin Frame Ms Max | in float | (FrameMsMax)
 VL.Qt | VL.Qt.PerfStats | ctor | pin Frame Ms | in float | (FrameMs)
+VL.Qt | VL.Qt.PerfStats | ctor | pin Gc | in VL.Qt.GcPerfStats | (Gc)
 VL.Qt | VL.Qt.PerfStats | ctor | pin Gpu Ms Max | in float | (GpuMsMax)
 VL.Qt | VL.Qt.PerfStats | ctor | pin Gpu Ms | in float | (GpuMs)
+VL.Qt | VL.Qt.PerfStats | ctor | pin Host | in VL.Qt.HostPerfStats | (Host)
+VL.Qt | VL.Qt.PerfStats | ctor | pin Percentiles | in VL.Qt.PerfPercentiles | (Percentiles)
 VL.Qt | VL.Qt.PerfStats | ctor | pin Present Ms | in float | (PresentMs)
 VL.Qt | VL.Qt.PerfStats | ctor | pin Pump Ms Max | in float | (PumpMsMax)
 VL.Qt | VL.Qt.PerfStats | ctor | pin Pump Ms | in float | (PumpMs)
+VL.Qt | VL.Qt.PerfStats | ctor | pin Recent | in VL.Qt.PerfCounters | (Recent)
 VL.Qt | VL.Qt.PerfStats | ctor | pin Render Ms | in float | (RenderMs)
 VL.Qt | VL.Qt.PerfStats | ctor | pin Swaps Per Pump | in float | (SwapsPerPump)
 VL.Qt | VL.Qt.PerfStats | ctor | pin Sync Ms | in float | (SyncMs)
-VL.Qt | VL.Qt.PerfStats | field Empty | static readonly VL.Qt.PerfStats
+VL.Qt | VL.Qt.PerfStats | ctor | pin Vsync Ms | in float | (VsyncMs)
+VL.Qt | VL.Qt.PerfStats | ctor | pin Work Ms | in float | (WorkMs)
 VL.Qt | VL.Qt.PerfStats | implements System.IEquatable<VL.Qt.PerfStats>
-VL.Qt | VL.Qt.PerfStats | method Deconstruct | order Fps, Frame Ms, Frame Ms Max, Pump Ms, Pump Ms Max, Sync Ms, Render Ms, Present Ms, Gpu Ms, Gpu Ms Max, Swaps Per Pump
+VL.Qt | VL.Qt.PerfStats | method Deconstruct | order Fps, Frame Ms, Frame Ms Max, Pump Ms, Pump Ms Max, Work Ms, Sync Ms, Render Ms, Present Ms, Vsync Ms, Gpu Ms, Gpu Ms Max, Swaps Per Pump, Percentiles, Counters, Recent, Host, Gc
+VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Counters | out VL.Qt.PerfCounters | (Counters)
 VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Fps | out float | (Fps)
 VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Frame Ms Max | out float | (FrameMsMax)
 VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Frame Ms | out float | (FrameMs)
+VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Gc | out VL.Qt.GcPerfStats | (Gc)
 VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Gpu Ms Max | out float | (GpuMsMax)
 VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Gpu Ms | out float | (GpuMs)
+VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Host | out VL.Qt.HostPerfStats | (Host)
+VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Percentiles | out VL.Qt.PerfPercentiles | (Percentiles)
 VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Present Ms | out float | (PresentMs)
 VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Pump Ms Max | out float | (PumpMsMax)
 VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Pump Ms | out float | (PumpMs)
+VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Recent | out VL.Qt.PerfCounters | (Recent)
 VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Render Ms | out float | (RenderMs)
 VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Swaps Per Pump | out float | (SwapsPerPump)
 VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Sync Ms | out float | (SyncMs)
+VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Vsync Ms | out float | (VsyncMs)
+VL.Qt | VL.Qt.PerfStats | method Deconstruct | pin Work Ms | out float | (WorkMs)
 VL.Qt | VL.Qt.PerfStats | method Deconstruct | void
 VL.Qt | VL.Qt.PerfStats | method Equals(VL.Qt.PerfStats) | bool
 VL.Qt | VL.Qt.PerfStats | method Equals(VL.Qt.PerfStats) | order Other, Output
@@ -1700,48 +1911,6 @@ VL.Qt | VL.Qt.PerfStats | method Equals(object) | pin Output | out bool | (retur
 VL.Qt | VL.Qt.PerfStats | method GetHashCode | order Output
 VL.Qt | VL.Qt.PerfStats | method GetHashCode | override int
 VL.Qt | VL.Qt.PerfStats | method GetHashCode | pin Output | out int | (return)
-VL.Qt | VL.Qt.PerfStats | method SplitCounters | order Pumps, Over Budget, Long Frames, Idle Pumps, Multi Swaps, Recent Pumps, Recent Over Budget, Recent Long Frames, Recent Idle Pumps, Recent Multi Swaps
-VL.Qt | VL.Qt.PerfStats | method SplitCounters | pin Idle Pumps | out long | (idlePumps)
-VL.Qt | VL.Qt.PerfStats | method SplitCounters | pin Long Frames | out long | (longFrames)
-VL.Qt | VL.Qt.PerfStats | method SplitCounters | pin Multi Swaps | out long | (multiSwaps)
-VL.Qt | VL.Qt.PerfStats | method SplitCounters | pin Over Budget | out long | (overBudget)
-VL.Qt | VL.Qt.PerfStats | method SplitCounters | pin Pumps | out long | (pumps)
-VL.Qt | VL.Qt.PerfStats | method SplitCounters | pin Recent Idle Pumps | out long | (recentIdlePumps)
-VL.Qt | VL.Qt.PerfStats | method SplitCounters | pin Recent Long Frames | out long | (recentLongFrames)
-VL.Qt | VL.Qt.PerfStats | method SplitCounters | pin Recent Multi Swaps | out long | (recentMultiSwaps)
-VL.Qt | VL.Qt.PerfStats | method SplitCounters | pin Recent Over Budget | out long | (recentOverBudget)
-VL.Qt | VL.Qt.PerfStats | method SplitCounters | pin Recent Pumps | out long | (recentPumps)
-VL.Qt | VL.Qt.PerfStats | method SplitCounters | void
-VL.Qt | VL.Qt.PerfStats | method SplitGc | order Gen0 Per Second, Gen1 Per Second, Gen2 Per Second, Gc Pause Ms Per Second, Allocated Bytes Per Frame
-VL.Qt | VL.Qt.PerfStats | method SplitGc | pin Allocated Bytes Per Frame | out float | (allocatedBytesPerFrame)
-VL.Qt | VL.Qt.PerfStats | method SplitGc | pin Gc Pause Ms Per Second | out float | (gcPauseMsPerSecond)
-VL.Qt | VL.Qt.PerfStats | method SplitGc | pin Gen0 Per Second | out float | Pin(Name = "Gen0 Per Second") | (gen0PerSecond)
-VL.Qt | VL.Qt.PerfStats | method SplitGc | pin Gen1 Per Second | out float | Pin(Name = "Gen1 Per Second") | (gen1PerSecond)
-VL.Qt | VL.Qt.PerfStats | method SplitGc | pin Gen2 Per Second | out float | Pin(Name = "Gen2 Per Second") | (gen2PerSecond)
-VL.Qt | VL.Qt.PerfStats | method SplitGc | void
-VL.Qt | VL.Qt.PerfStats | method SplitHost | order Vvvv Ms, Vvvv Ms Max, Wait Ms, Wait Ms Max, Apply Ms, Apply Ms Max, Reconcile Ms, Reconcile Ms Max, Ops
-VL.Qt | VL.Qt.PerfStats | method SplitHost | pin Apply Ms Max | out float | (applyMsMax)
-VL.Qt | VL.Qt.PerfStats | method SplitHost | pin Apply Ms | out float | (applyMs)
-VL.Qt | VL.Qt.PerfStats | method SplitHost | pin Ops | out float | (ops)
-VL.Qt | VL.Qt.PerfStats | method SplitHost | pin Reconcile Ms Max | out float | (reconcileMsMax)
-VL.Qt | VL.Qt.PerfStats | method SplitHost | pin Reconcile Ms | out float | (reconcileMs)
-VL.Qt | VL.Qt.PerfStats | method SplitHost | pin Vvvv Ms Max | out float | (vvvvMsMax)
-VL.Qt | VL.Qt.PerfStats | method SplitHost | pin Vvvv Ms | out float | (vvvvMs)
-VL.Qt | VL.Qt.PerfStats | method SplitHost | pin Wait Ms Max | out float | (waitMsMax)
-VL.Qt | VL.Qt.PerfStats | method SplitHost | pin Wait Ms | out float | (waitMs)
-VL.Qt | VL.Qt.PerfStats | method SplitHost | void
-VL.Qt | VL.Qt.PerfStats | method SplitPercentiles | order Budget Ms, Frame Ms P50, Frame Ms P95, Frame Ms P99, Pump Ms P50, Pump Ms P95, Pump Ms P99
-VL.Qt | VL.Qt.PerfStats | method SplitPercentiles | pin Budget Ms | out float | (budgetMs)
-VL.Qt | VL.Qt.PerfStats | method SplitPercentiles | pin Frame Ms P50 | out float | (frameMsP50)
-VL.Qt | VL.Qt.PerfStats | method SplitPercentiles | pin Frame Ms P95 | out float | (frameMsP95)
-VL.Qt | VL.Qt.PerfStats | method SplitPercentiles | pin Frame Ms P99 | out float | (frameMsP99)
-VL.Qt | VL.Qt.PerfStats | method SplitPercentiles | pin Pump Ms P50 | out float | (pumpMsP50)
-VL.Qt | VL.Qt.PerfStats | method SplitPercentiles | pin Pump Ms P95 | out float | (pumpMsP95)
-VL.Qt | VL.Qt.PerfStats | method SplitPercentiles | pin Pump Ms P99 | out float | (pumpMsP99)
-VL.Qt | VL.Qt.PerfStats | method SplitPercentiles | void
-VL.Qt | VL.Qt.PerfStats | method SplitVsync | order Vsync Ms
-VL.Qt | VL.Qt.PerfStats | method SplitVsync | pin Vsync Ms | out float | (vsyncMs)
-VL.Qt | VL.Qt.PerfStats | method SplitVsync | void
 VL.Qt | VL.Qt.PerfStats | method ToString | order Output
 VL.Qt | VL.Qt.PerfStats | method ToString | override string
 VL.Qt | VL.Qt.PerfStats | method ToString | pin Output | out string | (return)
@@ -1755,51 +1924,25 @@ VL.Qt | VL.Qt.PerfStats | method op_Inequality | pin Left | in VL.Qt.PerfStats |
 VL.Qt | VL.Qt.PerfStats | method op_Inequality | pin Output | out bool | (return)
 VL.Qt | VL.Qt.PerfStats | method op_Inequality | pin Right | in VL.Qt.PerfStats | (right)
 VL.Qt | VL.Qt.PerfStats | method op_Inequality | static bool
-VL.Qt | VL.Qt.PerfStats | property AllocatedBytesPerFrame | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property ApplyMs | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property ApplyMsMax | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property BudgetMs | float { get; init }
+VL.Qt | VL.Qt.PerfStats | property Counters | VL.Qt.PerfCounters { get; init }
 VL.Qt | VL.Qt.PerfStats | property Fps | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property FrameMs | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property FrameMsMax | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property FrameMsP50 | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property FrameMsP95 | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property FrameMsP99 | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property GcPauseMsPerSecond | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property Gen0PerSecond | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property Gen1PerSecond | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property Gen2PerSecond | float { get; init }
+VL.Qt | VL.Qt.PerfStats | property Gc | VL.Qt.GcPerfStats { get; init }
 VL.Qt | VL.Qt.PerfStats | property GpuMs | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property GpuMsMax | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property IdlePumps | long { get; init }
-VL.Qt | VL.Qt.PerfStats | property LongFrames | long { get; init }
-VL.Qt | VL.Qt.PerfStats | property MultiSwaps | long { get; init }
-VL.Qt | VL.Qt.PerfStats | property Ops | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property OverBudget | long { get; init }
+VL.Qt | VL.Qt.PerfStats | property Host | VL.Qt.HostPerfStats { get; init }
+VL.Qt | VL.Qt.PerfStats | property Percentiles | VL.Qt.PerfPercentiles { get; init }
 VL.Qt | VL.Qt.PerfStats | property PresentMs | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property PumpMs | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property PumpMsMax | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property PumpMsP50 | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property PumpMsP95 | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property PumpMsP99 | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property Pumps | long { get; init }
-VL.Qt | VL.Qt.PerfStats | property RecentIdlePumps | long { get; init }
-VL.Qt | VL.Qt.PerfStats | property RecentLongFrames | long { get; init }
-VL.Qt | VL.Qt.PerfStats | property RecentMultiSwaps | long { get; init }
-VL.Qt | VL.Qt.PerfStats | property RecentOverBudget | long { get; init }
-VL.Qt | VL.Qt.PerfStats | property RecentPumps | long { get; init }
-VL.Qt | VL.Qt.PerfStats | property ReconcileMs | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property ReconcileMsMax | float { get; init }
+VL.Qt | VL.Qt.PerfStats | property Recent | VL.Qt.PerfCounters { get; init }
 VL.Qt | VL.Qt.PerfStats | property RenderMs | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property SwapsPerPump | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property SyncMs | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property VsyncMs | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property VvvvMs | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property VvvvMsMax | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property WaitMs | float { get; init }
-VL.Qt | VL.Qt.PerfStats | property WaitMsMax | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property WorkMs | float { get; init }
-VL.Qt | VL.Qt.PerfStats | type sealed class
+VL.Qt | VL.Qt.PerfStats | type struct
 VL.Qt | VL.Qt.Space | member DIP = 1
 VL.Qt | VL.Qt.Space | member DIPTopLeft = 2
 VL.Qt | VL.Qt.Space | member Normalized = 0
