@@ -211,14 +211,14 @@
             <Pin Id="VzRjZBDRG9eQPX0IT3adMP" Name="Clear Color" Kind="InputPin" />
             <Pin Id="GqoFHrw8xCJOZZZonnW9nm" Name="Clear" Kind="InputPin" IsHidden="true" />
             <Pin Id="QsDDcKz2hUzMeOkqztIqRR" Name="Enabled" Kind="InputPin" />
-            <Pin Id="9dpsduUIURe6quoPz6GMs0" Name="Title" Kind="InputPin" DefaultValue="HowTo Use a TextInput" />
+            <Pin Id="9dpsduUIURe6quoPz6GMs0" Name="Title" Kind="InputPin" DefaultValue="HowTo Use Input (String)" />
             <Pin Id="GuesAIkg6VKOXF57GYFBvw" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="MuNXhwBNFsoLgwvAZ4LDuh" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="FKDTOwwnepfPktNoyCJjLV" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="ESWCI1VK2AIPUp6m2uDrre" Name="Window" Kind="InputPin" IsHidden="true" />
             <Pin Id="Ku704t2sxdWQUcCl7xEriW" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="TGOHPVzxVt4gP2ydmLDRKM" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Use a TextInput">
+          <Pad Id="TGOHPVzxVt4gP2ydmLDRKM" Bounds="85,16,440,52" ShowValueBox="true" isIOBox="true" Value="How To Use Input (String)">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -227,7 +227,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="vEzKwlC5CfjgXyrqpEstsk" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="TextInput [Qt]&#xD;&#xA;- Channel: binds the text, the user writes back (IOBox &quot;Hello&quot; = start value)&#xD;&#xA;- Placeholder: shown while the field is empty&#xD;&#xA;- Editable: off makes the field read-only&#xD;&#xA;- Value: current text; Bang: true for one frame when the user committed a change">
+          <Pad Id="vEzKwlC5CfjgXyrqpEstsk" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Input (String) [Qt]&#xD;&#xA;- Channel: binds the text, the user writes back (IOBox &quot;Hello&quot; = start value)&#xD;&#xA;- Placeholder: shown while the field is empty&#xD;&#xA;- Editable: off makes the field read-only&#xD;&#xA;- Value: current text; Bang: true for one frame when the user committed a change">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -323,7 +323,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="FIvHxbQhfF2QLiWbRXP6XO" Comment="Title" Bounds="182,930,114,15" ShowValueBox="true" isIOBox="true" Value="HowTo Use a TextInput">
+          <Pad Id="FIvHxbQhfF2QLiWbRXP6XO" Comment="Title" Bounds="182,930,114,15" ShowValueBox="true" isIOBox="true" Value="HowTo Use Input (String)">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

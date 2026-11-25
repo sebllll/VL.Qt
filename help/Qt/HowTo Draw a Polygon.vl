@@ -134,7 +134,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="DwY2UFYqT4f5LCF1yaFllr" Bounds="85,85,520,135" ShowValueBox="true" isIOBox="true" Value="Polygon [Qt]&#xD;&#xA;- Points: a Spread of positions, always closed and filled&#xD;&#xA;- Fill, plus an optional stroke: Stroke Color and Stroke Width&#xD;&#xA;- Join: Miter, Bevel or Round corners&#xD;&#xA;- Fill Rule: NonZero (default) or EvenOdd for outlines that cross themselves&#xD;&#xA;- Position and rotation via Transform">
+          <Pad Id="DwY2UFYqT4f5LCF1yaFllr" Bounds="85,85,520,135" ShowValueBox="true" isIOBox="true" Value="Polygon [Qt]&#xD;&#xA;- Points: a Spread of positions, always closed and filled&#xD;&#xA;- Fill Color, plus an optional stroke: Stroke Color and Stroke Width&#xD;&#xA;- Join: Miter, Bevel or Round corners&#xD;&#xA;- Fill Rule: NonZero (default) or EvenOdd for outlines that cross themselves&#xD;&#xA;- Position and rotation via Transform">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

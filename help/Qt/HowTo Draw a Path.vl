@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="Fl43MBXwAG4vUekOAOlttN" Bounds="85,85,600,116" ShowValueBox="true" isIOBox="true" Value="Path [Qt]&#xD;&#xA;- Fill, Stroke Color, Stroke Width, Cap and Join: fill and stroke in one node&#xD;&#xA;- Trim Start, Trim End and Trim Offset draw a part of the stroke&#xD;&#xA;- Fill Rule: NonZero (default) or EvenOdd, which leaves a hole where contours overlap&#xD;&#xA;- Position, rotation and scale via Transform">
+          <Pad Id="Fl43MBXwAG4vUekOAOlttN" Bounds="85,85,600,116" ShowValueBox="true" isIOBox="true" Value="Path [Qt]&#xD;&#xA;- Fill Color, Stroke Color, Stroke Width, Cap and Join: fill and stroke in one node&#xD;&#xA;- Trim Start, Trim End and Trim Offset draw a part of the stroke&#xD;&#xA;- Fill Rule: NonZero (default) or EvenOdd, which leaves a hole where contours overlap&#xD;&#xA;- Position, rotation and scale via Transform">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

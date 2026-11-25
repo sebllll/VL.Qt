@@ -38,7 +38,7 @@
 		<VLDocument link="Qt\HowTo Use a Button.vl" tags="bang" />
 		<VLDocument link="Qt\HowTo Use a Toggle.vl" tags="checkbox switch" />
 		<VLDocument link="Qt\HowTo Use a Slider.vl" tags="" />
-		<VLDocument link="Qt\HowTo Use a TextInput.vl" tags="" />
+		<VLDocument link="Qt\HowTo Use Input (String).vl" tags="text textfield" />
 		<VLDocument link="Qt\HowTo Use Input (Int).vl" tags="numberbox" />
 		<VLDocument link="Qt\HowTo Style a Widget.vl" tags="" />
 		<VLDocument link="Qt\HowTo Style Control Parts.vl" tags="" />

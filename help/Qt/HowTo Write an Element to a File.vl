@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="F6G0QCqo3qYLxjzsjgSHuW" Bounds="85,85,519,110" ShowValueBox="true" isIOBox="true" Value="FileWriter (Element) [Qt], FileWriter [Qt]&#xA;- Element, File Path, Scale, Write: grabs the element and writes it&#xA;- Format by file extension: png, jpg, bmp, ...&#xA;- Is Done and Success report the result&#xA;- Image: write any IImage, e.g. from Snapshot, Quality for JPG">
+          <Pad Id="F6G0QCqo3qYLxjzsjgSHuW" Bounds="85,85,519,110" ShowValueBox="true" isIOBox="true" Value="FileWriter (Element) [Qt], FileWriter [Qt]&#xA;- Input, File Path, Scale, Write: grabs the element and writes it&#xA;- Format by file extension: png, jpg, bmp, ...&#xA;- Is Done and Success report the result&#xA;- Image: write any IImage, e.g. from Snapshot, Quality for JPG">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

@@ -16,7 +16,7 @@
       </p:NodeReference>
       <Patch Id="k6z2VPqUmBxChf0BXfvJOr">
         <Canvas Id="WM3vGKEpwUNnp8oxpcMx66" CanvasType="Group">
-          <Pad Id="hp8nzZslZKfXCtrNTGrte0" Bounds="85,85,830,78" ShowValueBox="true" isIOBox="true" Value="Touch Points [Qt]: every finger (or pen) pressed on the element&#xD;&#xA;- Points: Spread of TouchPoint (Id, Position, Pressure, Size), sorted by Id, empty when nothing touches&#xD;&#xA;- Position: local to the element in units (1 unit = 100 DIP, origin top left)&#xD;&#xA;- Works next to Click, Drag and Pinch on the same element">
+          <Pad Id="hp8nzZslZKfXCtrNTGrte0" Bounds="85,85,830,78" ShowValueBox="true" isIOBox="true" Value="TouchPoints [Qt]: every finger (or pen) pressed on the element&#xD;&#xA;- Points: Spread of TouchPoint (Id, Position, Pressure, Size), sorted by Id, empty when nothing touches&#xD;&#xA;- Position: local to the element in units (1 unit = 100 DIP, origin top left)&#xD;&#xA;- Works next to Click, Drag and Pinch on the same element">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

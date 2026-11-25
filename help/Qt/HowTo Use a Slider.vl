@@ -361,7 +361,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="x2y9qnClcjJQI9ImzVTaPl" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Slider [Qt]&#xD;&#xA;- Channel: binds the value, the user writes back (IOBox 0.3 = start value)&#xD;&#xA;- Min, Max, Step (0 = stepless; here 0..100 in steps of 10)&#xD;&#xA;- Orientation: horizontal or vertical&#xD;&#xA;- Value: current value; Bang: true for one frame when the user changed it">
+          <Pad Id="x2y9qnClcjJQI9ImzVTaPl" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Slider (Float) [Qt]&#xD;&#xA;- Channel: binds the value, the user writes back (IOBox 0.3 = start value)&#xD;&#xA;- Min, Max, Step (0 = stepless; here 0..100 in steps of 10)&#xD;&#xA;- Orientation: horizontal or vertical&#xD;&#xA;- Value: current value; Bang: true for one frame when the user changed it">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

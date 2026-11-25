@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="zxeYiu8OuHsX0FHuKCccR1" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Circle [Qt]&#xD;&#xA;- Radius, Fill, Stroke Color and Stroke Width&#xD;&#xA;- Anchor: Center (default) or TopLeft&#xD;&#xA;- Position via Transform (Translation)&#xD;&#xA;- Opacity and Interaction like Rectangle [Qt]">
+          <Pad Id="zxeYiu8OuHsX0FHuKCccR1" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Circle [Qt]&#xD;&#xA;- Radius, Fill Color, Stroke Color and Stroke Width&#xD;&#xA;- Anchor: Center (default) or TopLeft&#xD;&#xA;- Position via Transform (Translation)&#xD;&#xA;- Opacity and Interaction like Rectangle [Qt]">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
