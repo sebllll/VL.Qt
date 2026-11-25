@@ -1,4 +1,5 @@
 #include "diagnostics/perf_monitor.h"
+#include "diagnostics/overlay_software.h"
 #include "diagnostics/perf.h"
 #include "diagnostics/perf_items.h"
 #include "diagnostics/perf_pages.h"
@@ -24,7 +25,7 @@ QString softwareRendererName(QQuickWindow* window)
 {
     if (!window)
         return {};
-    if (window->rendererInterface() && window->rendererInterface()->graphicsApi() == QSGRendererInterface::Software)
+    if (isSoftwareBackend(window))
         return QStringLiteral("Qt Quick software backend");
     QRhi* rhi = window->rhi();
     if (!rhi)
@@ -57,7 +58,8 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
     s_monitors.push_back(this);
     window->installEventFilter(this);
 
-    // GPU rendering is required (software rendering is not supported): warn loudly when Qt fell back to the CPU.
+    // GPU rendering is the supported mode; the software backends (Qt Quick software renderer, Mesa llvmpipe, WARP) are
+    // a fallback that gets this warning and, on the Qt Quick one, the reduced drawing of overlay_software.h.
     // sceneGraphInitialized alone is not enough: the Qt Quick software render loop shares one render context and
     // emits it only for the first window, so later windows detect on their first swap.
     connect(window, &QQuickWindow::sceneGraphInitialized, this, &PerfMonitor::detectRenderer, Qt::DirectConnection);
@@ -345,9 +347,7 @@ void PerfMonitor::ensureOverlay()
     }
     QQmlEngine::setObjectOwnership(item, QQmlEngine::CppOwnership);
     // Before the item joins the scene: no layers on the Qt Quick software backend (see qml/perf/perf_overlay.qml).
-    const QSGRendererInterface* ri = m_window->rendererInterface();
-    if (QQuickWindow::sceneGraphBackend() == QLatin1String("software")
-        || (ri && ri->graphicsApi() == QSGRendererInterface::Software))
+    if (isSoftwareBackend(m_window))
         item->setProperty("layered", false);
     item->setObjectName(QLatin1String(vlqt::overlayObjectName)); // not counted as a scene change (app/scene_change.h)
     item->setParentItem(m_window->contentItem());
@@ -400,11 +400,14 @@ void PerfMonitor::updateOverlay()
         hostStats(&hs);
         auto f = [](double v, int prec = 2) { return QString::number(v, 'f', prec); };
         auto opt = [&f](double v) { return v > 0 ? f(v, 1) : QStringLiteral("-"); };
-        // Colors double as the graph legend (kGraphSeries).
-        m_overlay->setProperty("meterText", QStringLiteral(
-            "%1 fps  frame %2  <font color='#ff6eb4'>vvvv %3</font>  <font color='#50dc78'>gpu %4</font>  "
-            "<font color='#ffa028'>work %5</font>")
-            .arg(opt(p.fps), opt(p.frame_ms), opt(hs.vvvv_ms), opt(p.gpu_ms), f(p.work_ms, 1)));
+        // The colours are the legend of the graph series (kGraphSeries in perf_items.cpp).
+        auto col = [](const Rgb& c, const QString& text) {
+            return QStringLiteral("<font color='%1'>%2</font>").arg(QLatin1String(c.html), text);
+        };
+        m_overlay->setProperty("meterText", QStringLiteral("%1 fps  frame %2  ").arg(opt(p.fps), opt(p.frame_ms))
+            + col(kVvvvColor, QStringLiteral("vvvv ") + opt(hs.vvvv_ms)) + QStringLiteral("  ")
+            + col(kGpuColor, QStringLiteral("gpu ") + opt(p.gpu_ms)) + QStringLiteral("  ")
+            + col(kWorkColor, QStringLiteral("work ") + f(p.work_ms, 1)));
     }
 
     if (!stats || (m_frozen && !forced))

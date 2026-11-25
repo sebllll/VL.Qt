@@ -235,9 +235,9 @@ public static class PumpTest
         // QtApp reports apply/host/interval/GC per pump, the window adds its ops.
         var hrc = Native.vlqt_scene_get_host_pump(a.Handle, out var hf);
         Native.vlqt_scene_get_host_pump_stats(a.Handle, out var hs);
-        s.Check(hrc == 0 && hf.apply > 0 && hf.host >= hf.apply && hf.interval > 0 && hf.ops == 1 && hf.alloc_bytes >= 0
-              && hs.samples == 60 && hs.ops == 1 && hs.host_ms > 0,
-            $"pump: host frame reported (rc {hrc}, apply {hf.apply:F3}, host {hf.host:F2}, interval {hf.interval:F1}, ops {hf.ops}, alloc {hf.alloc_bytes}; stats samples {hs.samples}, ops {hs.ops}, gen0/s {hs.gc0_per_s:F1})");
+        s.Check(hrc == 0 && hf.apply > 0 && hf.interval > 0 && hf.ops == 1 && hf.alloc_bytes >= 0
+              && hs.samples == 60 && hs.ops == 1 && hs.apply_ms > 0,
+            $"pump: host frame reported (rc {hrc}, apply {hf.apply:F3}, interval {hf.interval:F1}, ops {hf.ops}, alloc {hf.alloc_bytes}; stats samples {hs.samples}, ops {hs.ops}, gen0/s {hs.gc0_per_s:F1})");
         s.Check(hf.vvvv == 0 && hf.wait == 0, $"pump: no tick, no clock update time -> vvvv/wait unknown (vvvv {hf.vvvv}, wait {hf.wait})");
 
         // host-side 10 ms spike in the vvvv update (tick -> frame finished) shows up as vvvv, not in the Qt phases.
@@ -255,9 +255,9 @@ public static class PumpTest
         // WSLg: Present copies to the host compositor (L4e) -> the Qt/host limits without the Present share.
         var wslgPresent = QtHost.Wslg ? a.Last.present + b.Last.present : 0;
         s.Check(hrc == 0 && hf.vvvv >= 9.5f && hf.vvvv < 100 && hf.wait >= 10 && hf.wait < 200
-              && qt - (QtHost.Wslg ? a.Last.present : 0) < 9 && hf.host - wslgPresent < 9
+              && qt - (QtHost.Wslg ? a.Last.present : 0) < 9 && hf.apply < 9
               && hs.vvvv_ms_max >= 9.5 && hs.wait_ms_max >= 10 && hf.interval >= hf.vvvv + hf.wait,
-            $"pump: 10 ms vvvv spike -> vvvv phase (vvvv {hf.vvvv:F2}, wait {hf.wait:F2}, host {hf.host:F2}, interval {hf.interval:F2}, Qt phases {qt:F2}{(QtHost.Wslg ? $", WSLg present {wslgPresent:F2}" : "")}; stats vvvv max {hs.vvvv_ms_max:F2}, wait max {hs.wait_ms_max:F2})");
+            $"pump: 10 ms vvvv spike -> vvvv phase (vvvv {hf.vvvv:F2}, wait {hf.wait:F2}, apply {hf.apply:F2}, interval {hf.interval:F2}, Qt phases {qt:F2}{(QtHost.Wslg ? $", WSLg present {wslgPresent:F2}" : "")}; stats vvvv max {hs.vvvv_ms_max:F2}, wait max {hs.wait_ms_max:F2})");
 
         var warm = ms[10..];
         var sorted = (double[])warm.Clone();

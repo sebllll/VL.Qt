@@ -114,20 +114,20 @@ public static class PerfStatsTest
         // host frames. Eval: 4 frames of 250 ms, apply 1..4, ops 10..40, alloc 100..400, gen0 1 each, gen2 once.
         var hf = new Native.vlqt_host_pump[4];
         for (int i = 0; i < 4; i++)
-            hf[i] = new Native.vlqt_host_pump { apply = i + 1, reconcile = 2 * (i + 1), host = 5, interval = 250, gc_pause = 0.5f,
+            hf[i] = new Native.vlqt_host_pump { apply = i + 1, reconcile = 2 * (i + 1), interval = 250, gc_pause = 0.5f,
                 ops = 10 * (i + 1), gc0 = 1, gc2 = i == 3 ? 1 : 0, alloc_bytes = 100 * (i + 1),
                 vvvv = 2 * (i + 1), wait = i == 2 ? 10 : 1 }; // vvvv 2..8, wait 1,1,10,1
         rc = NativeTest.vlqt_test_perf_host_eval(hf, 4, out var hs);
         s.Check(rc == 0 && hs.samples == 4 && hs.apply_ms == 2.5 && hs.apply_ms_max == 4 && hs.reconcile_ms == 5 && hs.reconcile_ms_max == 8
-              && hs.host_ms == 5 && hs.ops == 25 && hs.ops_max == 40 && hs.gc0_per_s == 4 && hs.gc1_per_s == 0 && hs.gc2_per_s == 1
-              && hs.gc_pause_ms_per_s == 2 && hs.alloc_bytes == 250 && hs.alloc_bytes_max == 400
+              && hs.ops == 25 && hs.ops_max == 40 && hs.gc0_per_s == 4 && hs.gc1_per_s == 0 && hs.gc2_per_s == 1
+              && hs.gc_pause_ms_per_s == 2 && hs.alloc_bytes == 250
               && hs.vvvv_ms == 5 && hs.vvvv_ms_max == 8 && hs.wait_ms == 3.25 && hs.wait_ms_max == 10,
-            $"perfstats: host eval (rc {rc}, n {hs.samples}, apply {hs.apply_ms}/{hs.apply_ms_max}, ops {hs.ops}/{hs.ops_max}, gen0/1/2 per s {hs.gc0_per_s}/{hs.gc1_per_s}/{hs.gc2_per_s}, pause/s {hs.gc_pause_ms_per_s}, alloc {hs.alloc_bytes}/{hs.alloc_bytes_max}, vvvv {hs.vvvv_ms}/{hs.vvvv_ms_max}, wait {hs.wait_ms}/{hs.wait_ms_max})");
+            $"perfstats: host eval (rc {rc}, n {hs.samples}, apply {hs.apply_ms}/{hs.apply_ms_max}, ops {hs.ops}/{hs.ops_max}, gen0/1/2 per s {hs.gc0_per_s}/{hs.gc1_per_s}/{hs.gc2_per_s}, pause/s {hs.gc_pause_ms_per_s}, alloc {hs.alloc_bytes}, vvvv {hs.vvvv_ms}/{hs.vvvv_ms_max}, wait {hs.wait_ms}/{hs.wait_ms_max})");
         rc = NativeTest.vlqt_test_perf_host_eval(hf, 0, out hs);
         s.Check(rc == 0 && hs.samples == 0 && hs.gc0_per_s == 0, "perfstats: host eval, no frames -> zeros");
 
         // Live: report after a pump, read back; the next pump without a report has none.
-        var f = new Native.vlqt_host_pump { apply = 0.5f, host = 3, interval = 16, ops = 7, gc0 = 1, alloc_bytes = 1234, vvvv = 10.5f, wait = 2.25f };
+        var f = new Native.vlqt_host_pump { apply = 0.5f, interval = 16, ops = 7, gc0 = 1, alloc_bytes = 1234, vvvv = 10.5f, wait = 2.25f };
         rc = Native.vlqt_scene_report_host_pump(w, f);
         var rc2 = Native.vlqt_scene_get_host_pump(w, out var back);
         Native.vlqt_scene_get_host_pump_stats(w, out hs);

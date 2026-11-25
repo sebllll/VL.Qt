@@ -35,9 +35,8 @@ QString softwareRendererName(QQuickWindow* window);
 // The last page is remembered process-wide (new windows open on it).
 // vlqt_test_set_overlay / vlqt_scene_get_overlay flags: bit0 meter, bit1 stats, bit3 freeze, bits 4..6 = page + 1
 // (set: 0 = keep the remembered page).
-class PerfMonitor : public QObject
+class PerfMonitor : public QObject // no Q_OBJECT: no signals, slots or properties; the connects use member pointers
 {
-    Q_OBJECT
 public:
     static constexpr int kHistory = kPerfHistory;
     enum Flags { Meter = 1, Stats = 2, Freeze = 8 };

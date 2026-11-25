@@ -66,10 +66,9 @@ void perfStats(const PerfSample* samples, int n, const PerfCounters& counters, d
 {
     *out = vlqt_perf_stats{};
     out->budget_ms = budgetMs;
-    const int first = std::max(0, n - kPerfHistory);
     std::array<float, kPerfHistory> pump, frame;
     int np = 0, nf = 0;
-    for (int i = first; i < n; i++) {
+    for (int i = 0; i < n; i++) {
         const PerfSample& s = samples[i];
         pump[np++] = s.pump;
         if (consecutiveFrame(samples, i))
@@ -230,12 +229,9 @@ void perfHostStats(const vlqt_host_pump* frames, int n, vlqt_host_pump_stats* ou
         out->apply_ms_max = std::max(out->apply_ms_max, double(f.apply));
         out->reconcile_ms += f.reconcile;
         out->reconcile_ms_max = std::max(out->reconcile_ms_max, double(f.reconcile));
-        out->host_ms += f.host;
-        out->host_ms_max = std::max(out->host_ms_max, double(f.host));
         out->ops += f.ops;
         out->ops_max = std::max(out->ops_max, double(f.ops));
         out->alloc_bytes += double(f.alloc_bytes);
-        out->alloc_bytes_max = std::max(out->alloc_bytes_max, double(f.alloc_bytes));
         out->vvvv_ms += f.vvvv;
         out->vvvv_ms_max = std::max(out->vvvv_ms_max, double(f.vvvv));
         out->wait_ms += f.wait;
@@ -249,7 +245,6 @@ void perfHostStats(const vlqt_host_pump* frames, int n, vlqt_host_pump_stats* ou
     out->samples = n;
     out->apply_ms /= n;
     out->reconcile_ms /= n;
-    out->host_ms /= n;
     out->ops /= n;
     out->alloc_bytes /= n;
     out->vvvv_ms /= n;

@@ -28,10 +28,11 @@
  * same list (paintSoftware), so both paths show the identical overlay. */
 #pragma once
 
+#include "diagnostics/overlay_geometry.h"
+
 #include <QtCore/QtTypes>
 #include <QtGui/QImage>
 #include <QtQuick/QQuickItem>
-#include <QtQuick/QSGGeometry>
 
 #include <vector>
 
@@ -60,7 +61,6 @@ protected:
     void itemChange(ItemChange change, const ItemChangeData& data) override;
 
 private:
-    using Vertex = QSGGeometry::ColoredPoint2D;
     void follow(QQuickWindow* window);
     void build();
     void drawNode(const ElementEntry& node);
@@ -70,8 +70,8 @@ private:
     bool m_active = false;
     bool m_all = false;
     QMetaObject::Connection m_follow; // afterAnimating of the window while active
-    std::vector<Vertex> m_verts; // triangles, premultiplied colors; rebuilt per paint (render thread, GUI blocked)
-    std::vector<Vertex> m_lines; // line layer while building; appended after the fills (areas of all nodes) in m_verts
+    std::vector<OverlayVertex> m_verts; // triangles, premultiplied colors; rebuilt per paint (render thread, GUI blocked)
+    std::vector<OverlayVertex> m_lines; // line layer while building; appended after the fills (areas of all nodes) in m_verts
     qreal m_dpr = 1;             // device pixel ratio of the current build (line snapping)
     QImage m_image;              // software backend
 };

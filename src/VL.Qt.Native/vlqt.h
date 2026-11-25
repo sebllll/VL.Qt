@@ -193,7 +193,6 @@ typedef struct vlqt_perf_stats {
 typedef struct vlqt_host_pump {
     float apply;       /* vlqt_scene_apply of this scene in this pump (incl. resync) */
     float reconcile;   /* reconcile + command writing in the node updates since the previous host pump */
-    float host;        /* the whole host pump (all scenes: apply, advance, processEvents, poll) */
     float interval;    /* since the previous host pump of the same vvvv app (0 = first) */
     float gc_pause;    /* .NET GC pause since the previous host pump */
     int ops;           /* commands applied to this scene in this pump */
@@ -209,11 +208,10 @@ typedef struct vlqt_host_pump {
 typedef struct vlqt_host_pump_stats {
     double apply_ms, apply_ms_max;
     double reconcile_ms, reconcile_ms_max;
-    double host_ms, host_ms_max;
     double ops, ops_max;               /* per pump */
     double gc0_per_s, gc1_per_s, gc2_per_s;
     double gc_pause_ms_per_s;
-    double alloc_bytes, alloc_bytes_max; /* per host pump */
+    double alloc_bytes;                /* per host pump */
     int samples;
     double vvvv_ms, vvvv_ms_max;       /* vlqt_host_pump.vvvv, average/max */
     double wait_ms, wait_ms_max;       /* vlqt_host_pump.wait, average/max */

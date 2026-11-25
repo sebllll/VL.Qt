@@ -41,17 +41,16 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Returns the host values of the pump that ends at <paramref name="end"/>: pump time, interval since the previous
+        /// Returns the host values of the pump that started at <see cref="Start"/>: interval since the previous
         /// pump of this app, vvvv time (<paramref name="vvvvStart"/> → pump start), wait (<paramref name="prevPumpEnd"/> of
         /// any app → vvvv start) and GC/alloc since the previous pump start (= one vvvv frame). Apply, ops and reconcile
         /// are left to the caller.
         /// </summary>
-        public Native.vlqt_host_pump End(long vvvvStart, long prevPumpEnd, long end)
+        public Native.vlqt_host_pump End(long vvvvStart, long prevPumpEnd)
         {
             var start = Start;
             var host = new Native.vlqt_host_pump
             {
-                host = (float)Stopwatch.GetElapsedTime(start, end).TotalMilliseconds,
                 interval = _prevStart != 0 ? (float)Stopwatch.GetElapsedTime(_prevStart, start).TotalMilliseconds : 0,
                 // vvvv = frame start → this pump; wait = previous pump end (any app) → frame start. Interleaved apps
                 // (frame start before the previous pump ended) give wait 0.

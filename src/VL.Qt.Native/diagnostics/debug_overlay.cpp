@@ -1,14 +1,12 @@
 #include "diagnostics/debug_overlay.h"
 #include "app/scene_change.h"
+#include "diagnostics/overlay_geometry.h"
+#include "diagnostics/overlay_software.h"
 #include "scene/scene.h"
 
 #include <QtGui/QFont>
 #include <QtGui/QFontMetricsF>
-#include <QtGui/QPainter>
-#include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGGeometryNode>
-#include <QtQuick/QSGImageNode>
-#include <QtQuick/QSGRendererInterface>
 #include <QtQuick/QSGVertexColorMaterial>
 
 #include <algorithm>
@@ -40,13 +38,11 @@ constexpr float kDotOff = 2.5f;
 enum class Stroke { Solid, Dash, Dot };
 constexpr float kHatch = 6.f;  // hatch distance of spacing gaps, item space
 
-using Vertex = QSGGeometry::ColoredPoint2D;
-
 // Two layers: areas (padding, spacing hatch) of all nodes go first, lines and marks of all nodes on top, so a fill of a
 // later node never covers a line of an earlier one.
 struct Painter {
-    std::vector<Vertex>& fills;
-    std::vector<Vertex>& lines;
+    std::vector<OverlayVertex>& fills;
+    std::vector<OverlayVertex>& lines;
     const QQuickItem* item = nullptr; // current item: local points are mapped with its mapToScene
     qreal dpr = 1;
     bool area = false; // true: write into the fill layer
@@ -55,8 +51,8 @@ struct Painter {
 
     void vert(const QPointF& p, QRgb c)
     {
-        Vertex x;
-        x.set(float(p.x()), float(p.y()), uchar(qRed(c)), uchar(qGreen(c)), uchar(qBlue(c)), uchar(qAlpha(c)));
+        OverlayVertex x;
+        setVertex(x, float(p.x()), float(p.y()), c);
         (area ? fills : lines).push_back(x);
     }
     // Device pixel grid (scene units): a line of whole device pixels whose edges lie on pixel boundaries. Without it a
@@ -329,8 +325,7 @@ QSGNode* DebugOverlay::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
         return nullptr;
     }
     build();
-    const QSGRendererInterface* ri = window() ? window()->rendererInterface() : nullptr;
-    if (ri && ri->graphicsApi() == QSGRendererInterface::Software)
+    if (isSoftwareBackend(window()))
         return paintSoftware(old);
     auto* node = static_cast<QSGGeometryNode*>(old);
     if (!node) {
@@ -348,39 +343,23 @@ QSGNode* DebugOverlay::updatePaintNode(QSGNode* old, UpdatePaintNodeData*)
     if (g->vertexCount() != count)
         g->allocate(count);
     if (count)
-        std::memcpy(g->vertexData(), m_verts.data(), size_t(count) * sizeof(Vertex));
+        std::memcpy(g->vertexData(), m_verts.data(), size_t(count) * sizeof(OverlayVertex));
     node->markDirty(QSGNode::DirtyGeometry);
     return node;
 }
 
-// Software backend: custom geometry is not drawn there, so the triangles go into one image (like PerfGraph).
+// Software backend: custom geometry is not drawn there, so the triangles go into one image (overlay_software.h).
 QSGNode* DebugOverlay::paintSoftware(QSGNode* old)
 {
-    auto* node = static_cast<QSGImageNode*>(old);
-    if (!node) {
-        node = window()->createImageNode();
-        node->setOwnsTexture(true);
-    }
-    const qreal dpr = window()->effectiveDevicePixelRatio();
-    const QSize px(std::max(1, qRound(width() * dpr)), std::max(1, qRound(height() * dpr)));
-    if (m_image.size() != px)
-        m_image = QImage(px, QImage::Format_ARGB32_Premultiplied);
-    m_image.fill(Qt::transparent);
-    {
-        QPainter painter(&m_image);
-        painter.scale(dpr, dpr);
+    return paintToImageNode(this, old, m_image, [&](QPainter& painter) {
         painter.setPen(Qt::NoPen);
         for (size_t i = 0; i + 2 < m_verts.size(); i += 3) {
-            const Vertex& a = m_verts[i];
+            const OverlayVertex& a = m_verts[i];
             const QPointF tri[3] = {{a.x, a.y}, {m_verts[i + 1].x, m_verts[i + 1].y}, {m_verts[i + 2].x, m_verts[i + 2].y}};
-            painter.setBrush(QColor::fromRgba(qUnpremultiply(qRgba(a.r, a.g, a.b, a.a))));
+            painter.setBrush(QColor::fromRgba(vertexColor(a)));
             painter.drawPolygon(tri, 3);
         }
-    }
-    node->setTexture(window()->createTextureFromImage(m_image));
-    node->setRect(QRectF(0, 0, width(), height()));
-    node->markDirty(QSGNode::DirtyMaterial);
-    return node;
+    });
 }
 
 } // namespace vlqt
