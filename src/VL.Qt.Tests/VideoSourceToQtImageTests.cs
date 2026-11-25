@@ -98,7 +98,7 @@ namespace VL.Qt.Tests
             var watch = Stopwatch.StartNew();
             while (watch.ElapsedMilliseconds < 5000)
             {
-                var image = node.Update(source, fallback, out _, preferPush: true);
+                var image = node.Update(source, fallback, preferPush: true);
                 if (image is not null && !ReferenceEquals(image, fallback))
                     return image;
                 Thread.Sleep(5);
@@ -111,8 +111,8 @@ namespace VL.Qt.Tests
         {
             var source = new FakeSource();
             using var node = new VideoSourceToQtImageNode(_client, _ctx);
-            node.Update(source, null, out _, preferPush: false);
-            node.Update(source, null, out _, preferPush: false, upload: ImageUpload.Worker);
+            node.Update(source, null, preferPush: false);
+            node.Update(source, null, preferPush: false, upload: ImageUpload.Worker);
             Assert.That(_api.Uploads, Is.EqualTo(new[] { Protocol.ImageUpload.Auto, Protocol.ImageUpload.Worker }));
         }
 
@@ -120,12 +120,13 @@ namespace VL.Qt.Tests
         public void Pull_UploadsEveryFrame_SameImage_ReleasesFrames()
         {
             var source = new FakeSource();
-            using (var node = new VideoSourceToQtImageNode(_client, _ctx))
+            var messages = new RecordingMessages();
+            using (var node = new VideoSourceToQtImageNode(_client, _ctx, messages.Errors))
             {
-                var a = node.Update(source, null, out var error, preferPush: false)!;
-                Assert.That(error, Is.Empty);
+                var a = node.Update(source, null, preferPush: false)!;
+                Assert.That(messages.Logged, Is.Empty);
                 Assert.That(_api.Calls.Last(), Is.EqualTo($"pixels {a.Id:X} 4x2 row 16 fmt 9 pm 0 len 32"));
-                Assert.That(node.Update(source, null, out _, preferPush: false), Is.SameAs(a), "content replaced, same QtImage");
+                Assert.That(node.Update(source, null, preferPush: false), Is.SameAs(a), "content replaced, same QtImage");
                 Assert.That(_api.Calls.Count(c => c.StartsWith("pixels")), Is.EqualTo(2));
                 Assert.That(_api.Calls.Count(c => c.StartsWith("create")), Is.EqualTo(1));
                 Assert.That(source.Started, Is.EqualTo(1));
@@ -160,14 +161,14 @@ namespace VL.Qt.Tests
             var second = new FakeSource();
             var fallback = new QtImage(_client.CreateImage());
             using var node = new VideoSourceToQtImageNode(_client, _ctx);
-            Assert.That(node.Update(null, fallback, out _), Is.SameAs(fallback));
-            var a = node.Update(first, fallback, out _, preferPush: false)!;
+            Assert.That(node.Update(null, fallback), Is.SameAs(fallback));
+            var a = node.Update(first, fallback, preferPush: false)!;
             Assert.That(a, Is.Not.SameAs(fallback));
             var b = UpdateUntilFrame(node, second, fallback);
             Assert.That(b, Is.SameAs(a), "same resource and image for the new source");
             Assert.That(first.Stopped, Is.EqualTo(1));
             Assert.That(first.Released, Is.EqualTo(first.Created));
-            Assert.That(node.Update(null, fallback, out _), Is.SameAs(fallback));
+            Assert.That(node.Update(null, fallback), Is.SameAs(fallback));
             Assert.That(second.Stopped, Is.EqualTo(1));
             Assert.That(second.Released, Is.EqualTo(second.Created));
             Pump();
@@ -179,33 +180,36 @@ namespace VL.Qt.Tests
         {
             var source = new FakeSource();
             using var node = new VideoSourceToQtImageNode(_client, _ctx);
-            node.Update(source, null, out _, preferPush: false);
-            node.Update(source, null, out _, preferPush: false);
+            node.Update(source, null, preferPush: false);
+            node.Update(source, null, preferPush: false);
             source.Ticket++;
-            node.Update(source, null, out _, preferPush: false);
+            node.Update(source, null, preferPush: false);
             Assert.That(source.Started, Is.EqualTo(2));
             Assert.That(source.Stopped, Is.EqualTo(1));
         }
 
         [Test]
-        public void GrabError_ShownAtError()
+        public void GrabError_MarksTheNodeUntilAFrameArrives()
         {
             var source = new FakeSource { GrabError = new InvalidOperationException("decoder broke") };
-            using var node = new VideoSourceToQtImageNode(_client, _ctx);
-            Assert.That(node.Update(source, null, out var error, preferPush: false), Is.Null);
-            Assert.That(error, Does.Contain("decoder broke"));
+            var messages = new RecordingMessages();
+            using var node = new VideoSourceToQtImageNode(_client, _ctx, messages.Errors);
+            Assert.That(node.Update(source, null, preferPush: false), Is.Null);
+            Assert.That(messages.Shown, Does.Contain("decoder broke"));
+            Assert.That(messages.Logged.Single(), Does.Contain("decoder broke"));
             source.GrabError = null;
-            Assert.That(node.Update(source, null, out error, preferPush: false), Is.Not.Null);
-            Assert.That(error, Is.Empty);
+            Assert.That(node.Update(source, null, preferPush: false), Is.Not.Null);
+            Assert.That(messages.Shown, Is.Null);
         }
 
         [Test]
-        public void FrameNotInMemory_Error_FrameReleased()
+        public void FrameNotInMemory_MarksTheNode_FrameReleased()
         {
             var source = new FakeSource { InMemory = false };
-            using var node = new VideoSourceToQtImageNode(_client, _ctx);
-            Assert.That(node.Update(source, null, out var error, preferPush: false), Is.Null);
-            Assert.That(error, Does.Contain("not in CPU memory"));
+            var messages = new RecordingMessages();
+            using var node = new VideoSourceToQtImageNode(_client, _ctx, messages.Errors);
+            Assert.That(node.Update(source, null, preferPush: false), Is.Null);
+            Assert.That(messages.Shown, Does.Contain("not in CPU memory"));
             Assert.That(source.Released, Is.EqualTo(source.Created));
             Assert.That(_api.Calls.Any(c => c.StartsWith("pixels")), Is.False);
         }

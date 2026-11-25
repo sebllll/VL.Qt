@@ -84,6 +84,9 @@ namespace VL.Qt.Reconciliation
     /// </summary>
     internal sealed class Reconciler
     {
+        // Stylables returning stylables: more than this many in a row count as a cycle.
+        private const int maxStylableDepth = 32;
+
         private readonly ICommandSink _sink;
         private readonly IdAllocator _ids;
         private readonly Dictionary<uint, FeedbackSlot> _bindings = new();
@@ -132,6 +135,13 @@ namespace VL.Qt.Reconciliation
         /// <see cref="Update(Element?, in SpaceMapping)"/> picks the first of its occurrences in this tree as the primary one.
         /// </summary>
         internal void TakeOver(Element element) => _primaries.TakeOver(element);
+
+        /// <summary>
+        /// Error of the Build of a stylable passed as root to the last <see cref="Update(Element?, in SpaceMapping)"/>
+        /// (exception, cycle, foreign result), null if none; the renderer node shows it. Errors further down show at the
+        /// container that holds the stylable.
+        /// </summary>
+        public string? RootBuildError => _root is { Stylable: not null } root ? root.BuildError : null;
 
         /// <summary>Mapping of the last <see cref="Update(Element?, in SpaceMapping)"/>: units ↔ logical pixels of this scene.</summary>
         public SpaceMapping Mapping => _pass.Mapping;
@@ -227,23 +237,57 @@ namespace VL.Qt.Reconciliation
         /// </summary>
         private ItemMirror ReconcileStylable(ItemMirror? existing, StylableElement next, in Position at)
         {
-            Element built;
-            string? error = null;
+            Element? built;
+            string? error;
             try
             {
-                built = next.Stylable.Build(at.Inherited) ?? next.Empty;
+                built = Build(next.Stylable, at.Inherited, out error);
             }
             catch (Exception e)
             {
+                built = null;
                 error = $"Build of {next.Stylable.GetType().Name} failed: {e.GetType().Name}: {e.Message}";
-                var previous = existing?.Stylable is { } s && ReferenceEquals(s.Stylable, next.Stylable) ? existing.Element : null;
-                built = previous ?? next.Empty;
             }
+            if (error is not null)
+                built = existing?.Stylable is { } s && ReferenceEquals(s.Stylable, next.Stylable) ? existing.Element : null;
+            built ??= next.Empty;
 
             var item = ReconcileElement(existing, built, at);
             item.Stylable = next;
+            next.Built = built;
             SetBuildError(at.ParentSlot, item, error);
             return item;
+        }
+
+        /// <summary>
+        /// Calls Build of <paramref name="stylable"/>, and of every stylable it returns in turn, with the same style. Returns
+        /// the element (null for "nothing"), or null with <paramref name="error"/> set for a stylable that returns itself, a
+        /// cycle of stylables, or a foreign implementation of <see cref="IElement"/>. Exceptions of Build pass through.
+        /// </summary>
+        private static Element? Build(IStylable stylable, Style style, out string? error)
+        {
+            var current = stylable;
+            for (int depth = 0; ; depth++)
+            {
+                var result = current.Build(style);
+                if (result is IStylable next)
+                {
+                    if (ReferenceEquals(next, current) || ReferenceEquals(next, stylable) || depth >= maxStylableDepth)
+                    {
+                        error = $"Build of {current.GetType().Name} returns itself or a cycle of stylables; nothing is shown.";
+                        return null;
+                    }
+                    current = next;
+                    continue;
+                }
+                if (ElementConversion.IsForeign(result))
+                {
+                    error = $"Build of {current.GetType().Name}: {ElementConversion.ForeignWarning(result!.GetType())}";
+                    return null;
+                }
+                error = null;
+                return (Element?)result;
+            }
         }
 
         /// <summary>
@@ -382,7 +426,8 @@ namespace VL.Qt.Reconciliation
             int oldCount = old.Count;
             int common = Math.Min(newCount, oldCount);
             int live = 0; // real objects before the current position = REPARENT index
-            bool stylable = false;
+            // The effect objects were reconciled just before (ReconcileEffect); a stylable among them needs every pass too.
+            bool stylable = HasStylable(item.Effect?.Objects);
 
             for (int i = 0; i < common; i++)
             {
@@ -411,6 +456,17 @@ namespace VL.Qt.Reconciliation
                 }
             }
             item.ContainsStylable = stylable;
+        }
+
+        private static bool HasStylable(List<ItemMirror>? objects)
+        {
+            if (objects is not null)
+            {
+                foreach (var o in objects)
+                    if (o.Stylable is not null || o.ContainsStylable)
+                        return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -583,7 +639,9 @@ namespace VL.Qt.Reconciliation
             {
                 if (used[i])
                     continue;
-                if (sameElement ? ReferenceEquals(old[i].Element, element) : old[i].Type == element.Type)
+                // The object of a stylable holds its built element; the placeholder in the chain is the stylable's.
+                var shown = (Element?)old[i].Stylable ?? old[i].Element;
+                if (sameElement ? ReferenceEquals(shown, element) : old[i].Type == element.Type)
                 {
                     used[i] = true;
                     return old[i];

@@ -34,7 +34,8 @@ target_sources(vlqt PRIVATE
     protocol.h
     wire.h
 
-    # app/: start and pump, exports and last error, log, animation clock, render gate, input delivery, app fonts
+    # app/: start and pump, exports and last error, log, animation clock, render gate, scene change count, input delivery,
+    # app fonts
     app/animation_clock.cpp
     app/animation_clock.h
     app/app.cpp
@@ -49,6 +50,8 @@ target_sources(vlqt PRIVATE
     app/log.h
     app/render_gate.cpp
     app/render_gate.h
+    app/scene_change.cpp
+    app/scene_change.h
     app/thread_name.h
 
     # platform/: platform.h here, the sources of one platform in the if(WIN32) block below
@@ -94,6 +97,8 @@ target_sources(vlqt PRIVATE
     elements/geometry.h
     elements/group_item.cpp
     elements/group_item.h
+    elements/positioner_align.cpp
+    elements/positioner_align.h
     elements/shape_path_element.cpp
     elements/shape_path_element.h
     elements/type_controls.cpp
@@ -126,8 +131,8 @@ target_sources(vlqt PRIVATE
     user_qml/qml_wire.h
 
     # style/
-    vlstyle.cpp
-    vlstyle.h
+    style/vl_style.cpp
+    style/vl_style.h
 
     # resources/
     resources/pixel_format.cpp
@@ -200,7 +205,7 @@ target_compile_definitions(vlqt PRIVATE VLQT_BUILD
     $<$<PLATFORM_ID:Windows>:NOMINMAX;WIN32_LEAN_AND_MEAN>)
 # Base style "VLQt": Qt Quick Controls style module embedded in QtNative (qrc:/qt/qml/VLQt, on the engine's
 # default import path), nothing to deploy. Plain resources + hand-written qmldir: no qmlcachegen/plugin target; the
-# C++ part (attached VlStyle) is registered at app start as module VLQt.Style (vlstyle.cpp). Controls without a file
+# C++ part (attached VlStyle) is registered at app start as module VLQt.Style (style/vl_style.cpp). Controls without a file
 # here fall back to Basic (qmldir "import QtQuick.Controls.Basic auto"). A new control = <Control>.qml in style/VLQt,
 # a line "<Control> 1.0 <Control>.qml" in its qmldir and the file in FILES below.
 qt_add_resources(vlqt "vlqt_style"
@@ -214,6 +219,31 @@ qt_add_resources(vlqt "vlqt_style"
         style/VLQt/Switch.qml
         style/VLQt/SpinBox.qml
         style/VLQt/TextField.qml)
+# Built-in QML: the QML of the element types (qml/elements), the effect chain stages (qml/effects), the input handlers
+# (qml/handlers) and the perf overlay (qml/perf), loaded as qrc:/vlqt/qml/<folder>/<File>.qml (TypeDef::qmlUrl, effects/effect_chain.cpp,
+# scene/handlers.cpp, diagnostics/perf_monitor.cpp). Files of elements and handlers end in "Element": a file Button.qml with
+# Button {} would instantiate itself (QML resolves a type from the file's own folder first). windeployqt and
+# tools/deploy-linux.sh scan qml/ for the Qt modules these files import. A new file = a line below.
+qt_add_resources(vlqt "vlqt_qml"
+    PREFIX "/vlqt"
+    FILES
+        qml/elements/ButtonElement.qml
+        qml/elements/CheckBoxElement.qml
+        qml/elements/SliderElement.qml
+        qml/elements/SpinBoxElement.qml
+        qml/elements/SwitchElement.qml
+        qml/elements/TextFieldElement.qml
+        qml/elements/VideoElement.qml
+        qml/effects/ChainRoot.qml
+        qml/effects/MultiStage.qml
+        qml/effects/PassStage.qml
+        qml/handlers/DragHandlerElement.qml
+        qml/handlers/HoverHandlerElement.qml
+        qml/handlers/PinchHandlerElement.qml
+        qml/handlers/PointHandlerElement.qml
+        qml/handlers/TapHandlerElement.qml
+        qml/handlers/WheelHandlerElement.qml
+        qml/perf/perf_overlay.qml)
 # Default window icon: PNGs in several sizes (scaled from docs/icon/icon.png) embedded as
 # :/vlqt/icon/default-<size>.png, so it also shows in an export without a file next to it. Artwork replaceable: same
 # file names; a new size = file in icon/ plus a line below and in window/window.cpp (defaultIcon).
@@ -239,7 +269,7 @@ if(VLQT_SANITIZE)
     target_compile_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE} -fno-omit-frame-pointer -g)
     target_link_options(vlqt PRIVATE -fsanitize=${VLQT_SANITIZE})
 endif()
-# GuiPrivate: QRhi (GPU timestamps). QuickPrivate: QQuickPointerDeviceHandler (scene/touch_handler.h, check on Qt updates).
+# GuiPrivate: QRhi (GPU timestamps). QuickPrivate: QQuickRectangle, QQuickText (elements/type_*.cpp), QQuickPointerDeviceHandler (scene/touch_handler.h); the list of private classes is the head comment of elements/elements.h, check on Qt updates.
 # QuickControls2: QQuickStyle. Multimedia: QAudioBufferOutput of the audio tap (deployed for the Video element anyway).
 target_link_libraries(vlqt PRIVATE Qt6::Gui Qt6::GuiPrivate Qt6::Qml Qt6::Quick Qt6::QuickPrivate Qt6::QuickControls2 Qt6::Multimedia)
 # ShaderToolsPrivate: QShaderBaker (runtime bake of ShaderEffect sources). rhi/qshaderbaker.h lies only in the
@@ -249,11 +279,11 @@ target_link_libraries(vlqt PRIVATE Qt6::ShaderTools Qt6::ShaderToolsPrivate)
 # QuickShapes: Shape/ShapePath for Line, Polyline, Polygon, Path. QuickShapesPrivate: QQuickShape/QQuickShapePath
 # (qquickshape_p.h) built from C++ with typed setters (makeShape in elements/type_shape.cpp); ShapePathElement (elements/shape_path_element.h)
 # subclasses the private QQuickCurve of QuickPrivate (qquickpath_p.h). Private API, limited compatibility guarantees:
-# check on Qt updates. Qt6QuickShapes and qml/QtQuick/Shapes are deployed next to QtNative (qml/deploy.qml).
+# check on Qt updates. Qt6QuickShapes and qml/QtQuick/Shapes are deployed next to QtNative (imported by qml/deploy.qml).
 target_link_libraries(vlqt PRIVATE Qt6::QuickShapes Qt6::QuickShapesPrivate)
 if(WIN32)
     target_sources(vlqt PRIVATE
-        # platform/: dialog keys for vvvv's message loop, DllMain
+        # platform/: D3D11, dialog keys for vvvv's message loop, borderless, DllMain
         platform/platform_win.cpp
         # offscreen/: the D3D11 binding and the frames of a scene; linear_pass converts QtTexture into SRGB and float textures;
         # d3dcompiler_47.dll ships with Windows 10 and up
@@ -271,12 +301,21 @@ if(WIN32)
     target_link_libraries(vlqt PRIVATE d3d11 dxgi d3dcompiler)
 else()
     target_sources(vlqt PRIVATE
-        # platform/: WSLg GPU default and probe, display check, fallback font, unload hook
+        # platform/: WSLg GPU default and its OpenGL check (runs vlqt-glprobe, below), display check, fallback font,
+        # borderless, unload hook
         platform/platform_linux.cpp
         # offscreen/: X geometry of the offscreen platform's GLX drawable for window grabs. Uses the X11 headers that Qt's
         # OpenGL dependency brings (libgl-dev); libX11/libGL are looked up at run time, not linked.
         offscreen/offscreen_glx.cpp
         offscreen/offscreen_glx.h)
+    # vlqt-glprobe (tools/glprobe.c): the OpenGL check under WSLg as a process of its own, next to libvlqt.so. Plain C,
+    # no Qt; libX11/libGL are looked up at run time, not linked.
+    enable_language(C)
+    add_executable(vlqt-glprobe tools/glprobe.c)
+    target_link_libraries(vlqt-glprobe PRIVATE ${CMAKE_DL_LIBS})
+    set_target_properties(vlqt-glprobe PROPERTIES
+        AUTOMOC OFF AUTOUIC OFF AUTORCC OFF
+        RUNTIME_OUTPUT_DIRECTORY "${VLQT_OUT_DIR}")
 endif()
 set_target_properties(vlqt PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${VLQT_OUT_DIR}"   # vlqt.dll
@@ -336,12 +375,14 @@ add_custom_target(vlqt_shaders ALL DEPENDS ${_shader_outs})
 
 if(WIN32) # Qt deploy (Linux: tools/deploy-linux.sh)
 # Deploy Qt DLLs, plugins/ and qml/ next to QtNative (LGPL: dynamic, unmodified).
-# qml/ holds only deploy.qml: windeployqt collects the QML modules it imports.
-# Own custom command (not POST_BUILD) so it also re-runs when deploy.qml changes; the stamp lives in
+# windeployqt scans the source folder qml/ and collects the QML modules its files import (qml/deploy.qml lists the ones
+# no file imports).
+# Own custom command (not POST_BUILD) so it also re-runs when a .qml file changes; the stamp lives in
 # the build dir, build-native.ps1 deletes it to force a deploy (e.g. when qml/QtQuick/Effects is missing).
 get_target_property(_qmake Qt6::qmake IMPORTED_LOCATION)
 get_filename_component(_qtbin "${_qmake}" DIRECTORY)
 set(_deploy_stamp "${CMAKE_CURRENT_BINARY_DIR}/windeployqt.stamp")
+file(GLOB_RECURSE _qml_files CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/qml/*.qml")
 add_custom_command(OUTPUT "${_deploy_stamp}"
     COMMAND "${_qtbin}/windeployqt.exe" --release
         --qmldir "${CMAKE_CURRENT_SOURCE_DIR}/qml"
@@ -352,7 +393,7 @@ add_custom_command(OUTPUT "${_deploy_stamp}"
         --no-compiler-runtime
         "$<TARGET_FILE:vlqt>"
     COMMAND "${CMAKE_COMMAND}" -E touch "${_deploy_stamp}"
-    DEPENDS vlqt "${CMAKE_CURRENT_SOURCE_DIR}/qml/deploy.qml"
+    DEPENDS vlqt ${_qml_files}
     COMMENT "windeployqt -> ${VLQT_OUT_DIR}"
     VERBATIM)
 add_custom_target(vlqt_deploy ALL DEPENDS "${_deploy_stamp}")

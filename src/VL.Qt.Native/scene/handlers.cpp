@@ -21,21 +21,13 @@ namespace {
 
 Q_LOGGING_CATEGORY(lcEvents, "vlqt.events")
 
-constexpr const char* kHoverQml = "import QtQuick\nHoverHandler {}\n";
-// ReleaseWithinBounds: exclusive grab on press (button semantics, the topmost tap handler wins), tap when released
-// inside even after moving out and back.
-constexpr const char* kTapQml = "import QtQuick\nTapHandler { gesturePolicy: TapHandler.ReleaseWithinBounds }\n";
-// Passive grab: the press goes on to the handlers below (a Tap handler under a Point handler still taps).
-constexpr const char* kPointQml = "import QtQuick\nPointHandler {}\n";
-// target null: the handler moves/scales nothing, it only reports. The wheel event (QQuickWheelEvent) is no public C++
-// API, so the notches are summed up in QML and taken by Handlers::takeWheel.
-constexpr const char* kWheelQml = "import QtQuick\nWheelHandler {\n    target: null\n    property point vlqtDelta\n"
-                                  "    onWheel: (event) => vlqtDelta = Qt.point(vlqtDelta.x + event.angleDelta.x / 120,"
-                                  " vlqtDelta.y + event.angleDelta.y / 120)\n}\n";
-// target null: the handler moves nothing itself, DragState writes the drag offset of the item.
-constexpr const char* kDragQml = "import QtQuick\nDragHandler { target: null }\n";
-// target null: the handler scales/rotates/moves nothing, PinchState reports its values.
-constexpr const char* kPinchQml = "import QtQuick\nPinchHandler { target: null }\n";
+// The handler QML files (qml/handlers/*Element.qml) hold the comments on how each handler is set up.
+constexpr const char* kHoverUrl = "qrc:/vlqt/qml/handlers/HoverHandlerElement.qml";
+constexpr const char* kTapUrl = "qrc:/vlqt/qml/handlers/TapHandlerElement.qml";
+constexpr const char* kPointUrl = "qrc:/vlqt/qml/handlers/PointHandlerElement.qml";
+constexpr const char* kWheelUrl = "qrc:/vlqt/qml/handlers/WheelHandlerElement.qml";
+constexpr const char* kDragUrl = "qrc:/vlqt/qml/handlers/DragHandlerElement.qml";
+constexpr const char* kPinchUrl = "qrc:/vlqt/qml/handlers/PinchHandlerElement.qml";
 // EVENT_TOUCH_POINTS: at most this many points (a count of fingers, not a length limit).
 constexpr int kMaxTouchPoints = 64;
 
@@ -50,27 +42,30 @@ QMetaProperty metaProperty(const QObject* o, const char* name)
    Forgets the sent state, so a new sink gets the current state with the next poll. */
 void resetSent(Scene& scene, HandlerEntry& hn)
 {
+    const HandlerSent& sent = hn.sent;
     if (hn.feedbackId != 0) {
-        if (hn.sentHover)
+        if (sent.hover)
             scene.events.pushFlag(VLQT_EVENT_HOVER, hn.feedbackId, false);
-        if (hn.sentPress)
+        if (sent.press)
             scene.events.pushFlag(VLQT_EVENT_PRESS, hn.feedbackId, false);
-        if (hn.sentActive)
+        if (sent.active)
             scene.events.pushFlag(VLQT_EVENT_ACTIVE, hn.feedbackId, false);
-        if (hn.sentWheel) {
+        if (sent.wheel) {
             const float zero[2] = {};
             scene.events.push(VLQT_EVENT_WHEEL, hn.feedbackId, zero, sizeof zero);
         }
-        if (hn.sentTouch.size() > 4) { // points were sent: the old sink sees them go
+        if (sent.touch.size() > 4) { // points were sent: the old sink sees them go
             const quint32 zero = 0;
             scene.events.push(VLQT_EVENT_TOUCH_POINTS, hn.feedbackId, &zero, sizeof zero);
         }
     }
-    hn.sentTouch.clear();
-    hn.sentGestures = 0;
-    hn.sentHover = hn.sentPress = hn.sentActive = hn.sentWheel = hn.hasPointer = false;
-    hn.sentTapCount = 0;
-    hn.sentDrag[0] = hn.sentDrag[1] = 0;
+    hn.sent = {};
+}
+
+/* The TouchPointsHandler of a Touch Points handler (its object, no QML type), else nullptr. */
+TouchPointsHandler* touchPoints(const HandlerEntry& hn)
+{
+    return hn.type == VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER ? static_cast<TouchPointsHandler*>(hn.objects.object.data()) : nullptr;
 }
 
 /* Bit of an input-handler type (VLQT_ELEMENT_TYPE_*_HANDLER) in HandlerProp::types. */
@@ -151,20 +146,19 @@ bool applyAccepted(QObject* obj, quint16 prop, qint32 v)
    updates or removes it after a change of the item, the buttons or the devices. */
 void syncPointHover(Scene& scene, HandlerEntry& hn, QQuickItem* item)
 {
-    if (hn.type != VLQT_ELEMENT_TYPE_POINT_HANDLER || !hn.object)
+    HandlerObjects& qt = hn.objects;
+    if (hn.type != VLQT_ELEMENT_TYPE_POINT_HANDLER || !qt.object)
         return;
     constexpr qint32 cursorDevices = qint32(QInputDevice::DeviceType::Mouse) | qint32(QInputDevice::DeviceType::TouchPad);
-    const qint32 devices = (hn.acceptedDevices ? *hn.acceptedDevices : qint32(QInputDevice::DeviceType::AllDevices))
+    const qint32 devices = (hn.config.acceptedDevices ? *hn.config.acceptedDevices : qint32(QInputDevice::DeviceType::AllDevices))
         & cursorDevices;
-    const bool want = hn.acceptedButtons && *hn.acceptedButtons == 0 && devices != 0;
-    if (!want) {
-        delete hn.hover; // the next poll sends ACTIVE 0 if only the hover made the handler active
-        hn.hover = nullptr;
-    } else if (!hn.hover) {
-        hn.hover = scene.handlers.createHover(item, devices);
-    } else {
-        applyAccepted(hn.hover, VLQT_PROPERTY_ACCEPTED_DEVICES, devices);
-    }
+    const bool want = hn.config.acceptedButtons && *hn.config.acceptedButtons == 0 && devices != 0;
+    if (!want)
+        delete qt.hover.data(); // the QPointer reads null; the next poll sends ACTIVE 0 if only the hover made the handler active
+    else if (!qt.hover)
+        qt.hover = scene.handlers.createHover(item, devices);
+    else
+        applyAccepted(qt.hover, VLQT_PROPERTY_ACCEPTED_DEVICES, devices);
 }
 
 /* Point handlers first (manual test): Qt delivers to the handlers of an item from the last attached to the first
@@ -176,9 +170,9 @@ void raisePointHandlers(Scene& scene, const ElementEntry& owner, quint32 except)
 {
     for (quint32 id : owner.handlers) {
         auto it = scene.handlerNodes.find(id);
-        if (id == except || it == scene.handlerNodes.end() || it->second.type != VLQT_ELEMENT_TYPE_POINT_HANDLER || !it->second.object)
+        if (id == except || it == scene.handlerNodes.end() || it->second.type != VLQT_ELEMENT_TYPE_POINT_HANDLER || !it->second.objects.object)
             continue;
-        QObject* obj = it->second.object;
+        QObject* obj = it->second.objects.object;
         // QQuickPointerHandler::parent (setParentItem): remove from the item, add again in front of the list.
         if (!obj->setProperty("parent", QVariant::fromValue<QQuickItem*>(nullptr))
             || !obj->setProperty("parent", QVariant::fromValue(owner.item)))
@@ -225,8 +219,8 @@ void DragState::onActiveChanged()
         return;
     const ElementEntry& node = nit->second;
     // Several drag handlers at one item share its one offset: each starts from the offset as it is now.
-    start_[0] = node.xf ? node.xf->dx : 0.f;
-    start_[1] = node.xf ? node.xf->dy : 0.f;
+    start_[0] = node.xf->dx;
+    start_[1] = node.xf->dy;
     raw_[0] = raw_[1] = 0;
     delta[0] = delta[1] = 0;
     ++drags;
@@ -242,7 +236,7 @@ void DragState::onTranslationChanged()
     auto nit = hit == scene_.handlerNodes.end() ? scene_.nodes.end() : scene_.nodes.find(hit->second.owner);
     if (nit == scene_.nodes.end())
         return;
-    HandlerEntry& hn = hit->second;
+    const HandlerConfig& config = hit->second.config;
     ElementEntry& node = nit->second;
 
     // activeTranslation is the centroid's movement in scene (window) coordinates; the offset lives in the parent's
@@ -251,9 +245,9 @@ void DragState::onTranslationChanged()
     QPointF d = t;
     if (const QQuickItem* parent = node.item->parentItem())
         d = parent->mapFromScene(t) - parent->mapFromScene(QPointF());
-    if (hn.dragAxis == 2)
+    if (config.dragAxis == 2)
         d.setX(0);
-    if (hn.dragAxis == 1)
+    if (config.dragAxis == 1)
         d.setY(0);
 
     // SET TRANSFORM during the drag (pin wins): the offset went to 0, the drag goes on from there.
@@ -264,13 +258,24 @@ void DragState::onTranslationChanged()
     }
     raw_[0] = float(d.x());
     raw_[1] = float(d.y());
-    const float ox = std::clamp(start_[0] + raw_[0], hn.dragLimits[0], hn.dragLimits[2]);
-    const float oy = std::clamp(start_[1] + raw_[1], hn.dragLimits[1], hn.dragLimits[3]);
+    const float ox = std::clamp(start_[0] + raw_[0], config.dragLimits[0], config.dragLimits[2]);
+    const float oy = std::clamp(start_[1] + raw_[1], config.dragLimits[1], config.dragLimits[3]);
     delta[0] = ox - start_[0];
     delta[1] = oy - start_[1];
-    std::string err;
-    if (hn.movesElement && !scene_.elements.setDragOffset(node, ox, oy, err))
-        qCWarning(lcEvents, "drag offset of item %u could not be set: %s", unsigned(hn.owner), err.c_str());
+    if (config.movesElement)
+        scene_.elements.setDragOffset(node, ox, oy);
+}
+
+HandlerObjects::~HandlerObjects()
+{
+    release();
+}
+
+void HandlerObjects::release()
+{
+    delete object.data();
+    delete pinchTracker.data();
+    delete hover.data();
 }
 
 TextMask::TextMask(QQuickItem* item) : QObject(item), item_(item) {}
@@ -286,12 +291,10 @@ Handlers::~Handlers()
         delete c;
 }
 
-QObject* Handlers::create(QQmlComponent*& comp, const char* qml, const char* url, QQuickItem* item)
+QObject* Handlers::create(QQmlComponent*& comp, const char* url, QQuickItem* item)
 {
-    if (!comp) {
-        comp = new QQmlComponent(engine);
-        comp->setData(QByteArray(qml), QUrl(QString::fromLatin1(url)));
-    }
+    if (!comp)
+        comp = new QQmlComponent(engine, QUrl(QString::fromLatin1(url)));
     // beginCreate + data.append + completeCreate: HoverHandler registers hover at its parent item in
     // componentComplete, so the parent must be set before (a plain create() leaves it without hover).
     QObject* obj = comp->isError() ? nullptr : comp->beginCreate(engine->rootContext());
@@ -312,31 +315,31 @@ QObject* Handlers::createHandler(quint16 type, QQuickItem* item)
     QObject* obj = nullptr;
     switch (type) {
     case VLQT_ELEMENT_TYPE_HOVER_HANDLER:
-        obj = create(component(HandlerComponent::Hover), kHoverQml, "vlqt_hoverhandler.qml", item);
+        obj = create(component(HandlerComponent::Hover), kHoverUrl, item);
         if (obj && !props.hovered.isValid())
             props.hovered = metaProperty(obj, "hovered");
         break;
     case VLQT_ELEMENT_TYPE_TAP_HANDLER:
-        obj = create(component(HandlerComponent::Tap), kTapQml, "vlqt_taphandler.qml", item);
+        obj = create(component(HandlerComponent::Tap), kTapUrl, item);
         if (obj && !props.pressed.isValid())
             props.pressed = metaProperty(obj, "pressed");
         break;
     case VLQT_ELEMENT_TYPE_POINT_HANDLER:
-        obj = create(component(HandlerComponent::Point), kPointQml, "vlqt_pointhandler.qml", item);
+        obj = create(component(HandlerComponent::Point), kPointUrl, item);
         break;
     case VLQT_ELEMENT_TYPE_WHEEL_HANDLER:
-        obj = create(component(HandlerComponent::Wheel), kWheelQml, "vlqt_wheelhandler.qml", item);
+        obj = create(component(HandlerComponent::Wheel), kWheelUrl, item);
         if (obj && !props.wheelDelta.isValid())
             props.wheelDelta = metaProperty(obj, "vlqtDelta");
         break;
     case VLQT_ELEMENT_TYPE_DRAG_HANDLER:
-        obj = create(component(HandlerComponent::Drag), kDragQml, "vlqt_draghandler.qml", item);
+        obj = create(component(HandlerComponent::Drag), kDragUrl, item);
         break;
     case VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER:
         obj = new TouchPointsHandler(item); // no QML type: own C++ handler (scene/touch_handler.h)
         break;
     case VLQT_ELEMENT_TYPE_PINCH_HANDLER:
-        obj = create(component(HandlerComponent::Pinch), kPinchQml, "vlqt_pinchhandler.qml", item);
+        obj = create(component(HandlerComponent::Pinch), kPinchUrl, item);
         break;
     default:
         return nullptr;
@@ -352,7 +355,7 @@ QObject* Handlers::createHandler(quint16 type, QQuickItem* item)
 
 QObject* Handlers::createHover(QQuickItem* item, qint32 devices)
 {
-    QObject* obj = create(component(HandlerComponent::Hover), kHoverQml, "vlqt_hoverhandler.qml", item);
+    QObject* obj = create(component(HandlerComponent::Hover), kHoverUrl, item);
     if (!obj)
         return nullptr;
     if (!props.hovered.isValid())
@@ -438,45 +441,49 @@ int reparentHandler(Scene& scene, HandlerEntry& handler, quint32 handlerId, quin
         return ApplyInvalid;
     }
     // Properties stored before the REPARENT.
-    if (handler.acceptedButtons)
-        applyAccepted(obj, VLQT_PROPERTY_ACCEPTED_BUTTONS, *handler.acceptedButtons);
-    if (handler.acceptedDevices)
-        applyAccepted(obj, VLQT_PROPERTY_ACCEPTED_DEVICES, *handler.acceptedDevices);
+    const HandlerConfig& config = handler.config;
+    HandlerObjects& qt = handler.objects;
+    if (config.acceptedButtons)
+        applyAccepted(obj, VLQT_PROPERTY_ACCEPTED_BUTTONS, *config.acceptedButtons);
+    if (config.acceptedDevices)
+        applyAccepted(obj, VLQT_PROPERTY_ACCEPTED_DEVICES, *config.acceptedDevices);
     if (handler.type == VLQT_ELEMENT_TYPE_TAP_HANDLER) {
-        handler.tap = new TapState(obj);
-        QObject::connect(obj, SIGNAL(tapped(QEventPoint, Qt::MouseButton)), handler.tap, SLOT(onTapped()));
-        QObject::connect(obj, SIGNAL(longPressed()), handler.tap, SLOT(onLongPressed()));
-        QObject::connect(obj, SIGNAL(pressedChanged()), handler.tap, SLOT(onPressedChanged()));
+        auto* tap = new TapState(obj);
+        QObject::connect(obj, SIGNAL(tapped(QEventPoint, Qt::MouseButton)), tap, SLOT(onTapped()));
+        QObject::connect(obj, SIGNAL(longPressed()), tap, SLOT(onLongPressed()));
+        QObject::connect(obj, SIGNAL(pressedChanged()), tap, SLOT(onPressedChanged()));
+        qt.tap = tap;
     }
     if (handler.type == VLQT_ELEMENT_TYPE_DRAG_HANDLER) {
-        applyDragAxis(obj, handler.dragAxis);
-        handler.drag = new DragState(obj, scene, handlerId);
-        QObject::connect(obj, SIGNAL(activeChanged()), handler.drag, SLOT(onActiveChanged()));
-        QObject::connect(obj, SIGNAL(translationChanged(QVector2D)), handler.drag, SLOT(onTranslationChanged()));
+        applyDragAxis(obj, config.dragAxis);
+        auto* drag = new DragState(obj, scene, handlerId);
+        QObject::connect(obj, SIGNAL(activeChanged()), drag, SLOT(onActiveChanged()));
+        QObject::connect(obj, SIGNAL(translationChanged(QVector2D)), drag, SLOT(onTranslationChanged()));
+        qt.drag = drag;
     }
-    if (handler.type == VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER) {
-        handler.points = static_cast<TouchPointsHandler*>(obj);
-        handler.points->setOcclusion(handler.occlusion);
-    }
+    if (handler.type == VLQT_ELEMENT_TYPE_TOUCH_POINTS_HANDLER)
+        static_cast<TouchPointsHandler*>(obj)->setOcclusion(config.occlusion);
     if (handler.type == VLQT_ELEMENT_TYPE_PINCH_HANDLER) {
-        if (handler.minimumPointCount)
-            applyPointCount(obj, VLQT_PROPERTY_MINIMUM_POINT_COUNT, *handler.minimumPointCount);
-        if (handler.maximumPointCount)
-            applyPointCount(obj, VLQT_PROPERTY_MAXIMUM_POINT_COUNT, *handler.maximumPointCount);
+        if (config.minimumPointCount)
+            applyPointCount(obj, VLQT_PROPERTY_MINIMUM_POINT_COUNT, *config.minimumPointCount);
+        if (config.maximumPointCount)
+            applyPointCount(obj, VLQT_PROPERTY_MAXIMUM_POINT_COUNT, *config.maximumPointCount);
         // Internal point counter: keeps the gesture running while the finger count changes (PinchState, scene/touch_handler.h).
-        handler.points = new TouchPointsHandler(owner.item);
-        handler.points->setOcclusion(false);
-        if (handler.acceptedDevices)
-            applyAccepted(handler.points, VLQT_PROPERTY_ACCEPTED_DEVICES, *handler.acceptedDevices);
-        handler.pinch = new PinchState(obj, handler.points);
-        QObject::connect(obj, SIGNAL(activeChanged()), handler.pinch, SLOT(onActiveChanged()));
-        QObject::connect(obj, SIGNAL(scaleChanged(qreal)), handler.pinch, SLOT(onValuesChanged()));
-        QObject::connect(obj, SIGNAL(rotationChanged(qreal)), handler.pinch, SLOT(onValuesChanged()));
-        QObject::connect(obj, SIGNAL(translationChanged(QVector2D)), handler.pinch, SLOT(onValuesChanged()));
-        QObject::connect(obj, SIGNAL(centroidChanged()), handler.pinch, SLOT(onValuesChanged()));
-        QObject::connect(handler.points, SIGNAL(pointsChanged()), handler.pinch, SLOT(onPointsChanged()));
+        auto* tracker = new TouchPointsHandler(owner.item);
+        tracker->setOcclusion(false);
+        if (config.acceptedDevices)
+            applyAccepted(tracker, VLQT_PROPERTY_ACCEPTED_DEVICES, *config.acceptedDevices);
+        auto* pinch = new PinchState(obj, tracker);
+        QObject::connect(obj, SIGNAL(activeChanged()), pinch, SLOT(onActiveChanged()));
+        QObject::connect(obj, SIGNAL(scaleChanged(qreal)), pinch, SLOT(onValuesChanged()));
+        QObject::connect(obj, SIGNAL(rotationChanged(qreal)), pinch, SLOT(onValuesChanged()));
+        QObject::connect(obj, SIGNAL(translationChanged(QVector2D)), pinch, SLOT(onValuesChanged()));
+        QObject::connect(obj, SIGNAL(centroidChanged()), pinch, SLOT(onValuesChanged()));
+        QObject::connect(tracker, SIGNAL(pointsChanged()), pinch, SLOT(onPointsChanged()));
+        qt.pinchTracker = tracker;
+        qt.pinch = pinch;
     }
-    handler.object = obj;
+    qt.object = obj;
     handler.owner = parentId;
     syncPointHover(scene, handler, owner.item);
     if (handler.type != VLQT_ELEMENT_TYPE_POINT_HANDLER)
@@ -500,18 +507,20 @@ int setHandler(Scene& scene, HandlerEntry& handler, quint16 prop, const Value& v
             + std::to_string(v.type);
         return ApplyBadValue;
     }
+    HandlerConfig& config = handler.config;
+    const HandlerObjects& qt = handler.objects;
     switch (prop) {
     case VLQT_PROPERTY_MOVES_ELEMENT:
-        handler.movesElement = v.b; // the current offset stays; off: the next drags only report
+        config.movesElement = v.b; // the current offset stays; off: the next drags only report
         return ApplyOk;
     case VLQT_PROPERTY_DRAG_AXIS:
         if (v.i < 0 || v.i > 2) {
             err = "drag axis " + std::to_string(v.i) + " is not 0 (both), 1 (x) or 2 (y)";
             return ApplyBadValue;
         }
-        handler.dragAxis = v.i;
-        if (handler.object)
-            applyDragAxis(handler.object, v.i);
+        config.dragAxis = v.i;
+        if (qt.object)
+            applyDragAxis(qt.object, v.i);
         return ApplyOk;
     case VLQT_PROPERTY_DRAG_LIMITS:
         // rectf slots: minX, minY, maxX, maxY (not x, y, w, h). NaN fails both comparisons.
@@ -520,12 +529,12 @@ int setHandler(Scene& scene, HandlerEntry& handler, quint16 prop, const Value& v
             return ApplyBadValue;
         }
         for (int i = 0; i < 4; ++i)
-            handler.dragLimits[i] = v.f[i];
+            config.dragLimits[i] = v.f[i];
         return ApplyOk; // applies from the next movement on
     case VLQT_PROPERTY_OCCLUSION:
-        handler.occlusion = v.b;
-        if (handler.points)
-            handler.points->setOcclusion(v.b); // from the next press on
+        config.occlusion = v.b;
+        if (TouchPointsHandler* points = touchPoints(handler))
+            points->setOcclusion(v.b); // from the next press on
         return ApplyOk;
     case VLQT_PROPERTY_MINIMUM_POINT_COUNT:
     case VLQT_PROPERTY_MAXIMUM_POINT_COUNT: {
@@ -534,26 +543,26 @@ int setHandler(Scene& scene, HandlerEntry& handler, quint16 prop, const Value& v
             err = "point count " + std::to_string(v.i) + " of a pinch handler is less than 2";
             return ApplyBadValue;
         }
-        if (handler.object && !applyPointCount(handler.object, prop, v.i)) {
+        if (qt.object && !applyPointCount(qt.object, prop, v.i)) {
             err = "property " + std::to_string(prop) + " could not be set to " + std::to_string(v.i);
             return ApplyBadValue;
         }
-        (prop == VLQT_PROPERTY_MINIMUM_POINT_COUNT ? handler.minimumPointCount : handler.maximumPointCount) = v.i;
-        if (handler.pinch)
-            handler.pinch->onPointsChanged(); // a paused gesture ends when the new minimum is not reached
+        (prop == VLQT_PROPERTY_MINIMUM_POINT_COUNT ? config.minimumPointCount : config.maximumPointCount) = v.i;
+        if (qt.pinch)
+            qt.pinch->onPointsChanged(); // a paused gesture ends when the new minimum is not reached
         return ApplyOk;
     }
     default:
         break;
     }
     // ACCEPTED_BUTTONS, ACCEPTED_DEVICES
-    if (handler.object && !applyAccepted(handler.object, prop, v.i)) {
+    if (qt.object && !applyAccepted(qt.object, prop, v.i)) {
         err = "property " + std::to_string(prop) + " could not be set to " + std::to_string(v.i);
         return ApplyBadValue;
     }
-    (prop == VLQT_PROPERTY_ACCEPTED_BUTTONS ? handler.acceptedButtons : handler.acceptedDevices) = v.i;
-    if (handler.pinch) // the internal point counter of a pinch takes the same devices
-        applyAccepted(handler.points, prop, v.i);
+    (prop == VLQT_PROPERTY_ACCEPTED_BUTTONS ? config.acceptedButtons : config.acceptedDevices) = v.i;
+    if (qt.pinchTracker) // the internal point counter of a pinch takes the same devices
+        applyAccepted(qt.pinchTracker, prop, v.i);
     auto oit = scene.nodes.find(handler.owner);
     if (oit != scene.nodes.end())
         syncPointHover(scene, handler, oit->second.item);
@@ -566,14 +575,15 @@ void bindHandler(Scene& scene, HandlerEntry& handler, quint32 handle)
         return;
     resetSent(scene, handler);
     // What happened for the old sink stays there: a running press is cancelled, unpolled taps and motion are dropped.
-    if (handler.tap)
-        handler.tap->cancel(scene.handlers.isPressed(handler.object));
+    const HandlerObjects& qt = handler.objects;
+    if (qt.tap)
+        qt.tap->cancel(scene.handlers.isPressed(qt.object));
     float drop[2];
-    if (handler.type == VLQT_ELEMENT_TYPE_WHEEL_HANDLER && handler.object)
-        scene.handlers.takeWheel(handler.object, drop);
+    if (handler.type == VLQT_ELEMENT_TYPE_WHEEL_HANDLER && qt.object)
+        scene.handlers.takeWheel(qt.object, drop);
     // The last drag belonged to the old sink; a running one goes on for the new sink.
-    if (handler.drag && !scene.handlers.isActive(handler.object))
-        handler.drag->delta[0] = handler.drag->delta[1] = 0;
+    if (qt.drag && !scene.handlers.isActive(qt.object))
+        qt.drag->delta[0] = qt.drag->delta[1] = 0;
     handler.feedbackId = handle;
 }
 
@@ -584,14 +594,11 @@ void destroyHandler(Scene& scene, quint32 handlerId)
         return;
     HandlerEntry& handler = it->second;
     resetSent(scene, handler);
+    handler.objects.release();
     auto oit = scene.nodes.find(handler.owner);
     if (oit != scene.nodes.end()) {
         auto& list = oit->second.handlers;
         list.erase(std::remove(list.begin(), list.end(), handlerId), list.end());
-        delete handler.hover;  // internal HoverHandler of a Point handler, also a child of the item
-        if (handler.pinch)
-            delete handler.points; // internal point counter of a Pinch handler; Touch Points: points == object
-        delete handler.object; // QObject child of the item, deleted before it (takes the TapState along)
         updateTextMask(oit->second);
     }
     scene.handlerNodes.erase(it);
@@ -601,30 +608,32 @@ namespace {
 
 void pushPointer(Scene& scene, HandlerEntry& hn, QObject* source)
 {
+    HandlerSent& sent = hn.sent;
     float p[2];
-    if (scene.handlers.pointerPosition(source, p) && (!hn.hasPointer || p[0] != hn.sentPointer[0] || p[1] != hn.sentPointer[1])) {
-        hn.sentPointer[0] = p[0];
-        hn.sentPointer[1] = p[1];
-        hn.hasPointer = true;
+    if (scene.handlers.pointerPosition(source, p) && (!sent.hasPointer || p[0] != sent.pointer[0] || p[1] != sent.pointer[1])) {
+        sent.pointer[0] = p[0];
+        sent.pointer[1] = p[1];
+        sent.hasPointer = true;
         scene.events.push(VLQT_EVENT_POINTER, hn.feedbackId, p, sizeof p);
     }
 }
 
 void collectHover(Scene& scene, HandlerEntry& hn)
 {
-    const bool hovered = scene.handlers.isHovered(hn.object);
-    if (hovered != hn.sentHover) {
-        hn.sentHover = hovered;
+    const bool hovered = scene.handlers.isHovered(hn.objects.object);
+    if (hovered != hn.sent.hover) {
+        hn.sent.hover = hovered;
         scene.events.pushFlag(VLQT_EVENT_HOVER, hn.feedbackId, hovered);
     }
 }
 
 void collectTap(Scene& scene, HandlerEntry& hn)
 {
-    TapState& ts = *hn.tap;
-    const bool pressed = scene.handlers.isPressed(hn.object) && !ts.cancelled;
-    if (pressed != hn.sentPress) {
-        hn.sentPress = pressed;
+    TapState& ts = *hn.objects.tap;
+    HandlerSent& sent = hn.sent;
+    const bool pressed = scene.handlers.isPressed(hn.objects.object) && !ts.cancelled;
+    if (pressed != sent.press) {
+        sent.press = pressed;
         scene.events.pushFlag(VLQT_EVENT_PRESS, hn.feedbackId, pressed);
     }
     if (ts.taps) {
@@ -633,8 +642,8 @@ void collectTap(Scene& scene, HandlerEntry& hn)
         scene.events.push(VLQT_EVENT_CLICK, hn.feedbackId, &c, sizeof c);
     }
     // Never 0: the count of the last tap stays until the next tap (a sink change starts at 0 = nothing sent).
-    if (ts.tapCount != 0 && ts.tapCount != hn.sentTapCount) {
-        hn.sentTapCount = ts.tapCount;
+    if (ts.tapCount != 0 && ts.tapCount != sent.tapCount) {
+        sent.tapCount = ts.tapCount;
         scene.events.push(VLQT_EVENT_TAP_COUNT, hn.feedbackId, &ts.tapCount, sizeof ts.tapCount);
     }
     if (ts.longPresses) {
@@ -647,91 +656,96 @@ void collectTap(Scene& scene, HandlerEntry& hn)
 void collectPoint(Scene& scene, HandlerEntry& hn)
 {
     // A pressed point (touch, pen, accepted mouse button) wins over the hovering mouse (ACCEPTED_BUTTONS 0).
-    const bool pressed = scene.handlers.isActive(hn.object);
-    const bool hovered = !pressed && hn.hover && scene.handlers.isHovered(hn.hover);
+    const HandlerObjects& qt = hn.objects;
+    HandlerSent& sent = hn.sent;
+    const bool pressed = scene.handlers.isActive(qt.object);
+    const bool hovered = !pressed && qt.hover && scene.handlers.isHovered(qt.hover);
     const bool active = pressed || hovered;
-    if (active != hn.sentActive) {
-        hn.sentActive = active;
+    if (active != sent.active) {
+        sent.active = active;
         scene.events.pushFlag(VLQT_EVENT_ACTIVE, hn.feedbackId, active);
     }
     if (active)
-        pushPointer(scene, hn, pressed ? hn.object : hn.hover);
+        pushPointer(scene, hn, pressed ? qt.object : qt.hover);
     else
-        hn.hasPointer = false; // active again: the next poll sends the position right away
+        sent.hasPointer = false; // active again: the next poll sends the position right away
 }
 
 void collectWheel(Scene& scene, HandlerEntry& hn)
 {
     float d[2] = {};
-    if (scene.handlers.takeWheel(hn.object, d)) {
-        hn.sentWheel = true;
+    if (scene.handlers.takeWheel(hn.objects.object, d)) {
+        hn.sent.wheel = true;
         scene.events.push(VLQT_EVENT_WHEEL, hn.feedbackId, d, sizeof d);
-    } else if (hn.sentWheel) {
-        hn.sentWheel = false; // once (0, 0) after motion
+    } else if (hn.sent.wheel) {
+        hn.sent.wheel = false; // once (0, 0) after motion
         scene.events.push(VLQT_EVENT_WHEEL, hn.feedbackId, d, sizeof d);
     }
 }
 
 void collectDrag(Scene& scene, HandlerEntry& hn)
 {
-    const bool active = scene.handlers.isActive(hn.object);
-    if (active != hn.sentActive) {
-        hn.sentActive = active;
+    HandlerSent& sent = hn.sent;
+    const bool active = scene.handlers.isActive(hn.objects.object);
+    if (active != sent.active) {
+        sent.active = active;
         scene.events.pushFlag(VLQT_EVENT_ACTIVE, hn.feedbackId, active);
     }
-    const float* d = hn.drag->delta;
-    if (d[0] != hn.sentDrag[0] || d[1] != hn.sentDrag[1] || (hn.drag->drags != hn.sentDrags && (d[0] != 0 || d[1] != 0))) {
-        hn.sentDrag[0] = d[0];
-        hn.sentDrag[1] = d[1];
-        hn.sentDrags = hn.drag->drags;
+    const DragState& ds = *hn.objects.drag;
+    const float* d = ds.delta;
+    if (d[0] != sent.drag[0] || d[1] != sent.drag[1] || (ds.drags != sent.drags && (d[0] != 0 || d[1] != 0))) {
+        sent.drag[0] = d[0];
+        sent.drag[1] = d[1];
+        sent.drags = ds.drags;
         scene.events.push(VLQT_EVENT_DRAG, hn.feedbackId, d, 2 * sizeof(float));
     }
 }
 
 void collectTouchPoints(Scene& scene, HandlerEntry& hn)
 {
-    const auto& points = hn.points->points();
+    const auto& points = touchPoints(hn)->points();
     const quint32 count = quint32(std::min<size_t>(points.size(), kMaxTouchPoints));
     // No point and none sent: nothing to send (a new sink starts empty).
-    if (count == 0 && hn.sentTouch.size() <= 4)
+    if (count == 0 && hn.sent.touch.size() <= 4)
         return;
-    QByteArray payload;
-    payload.reserve(qsizetype(4 + count * 24));
-    payload.append(reinterpret_cast<const char*>(&count), 4);
+    // Built in the scene's scratch (capacity kept), compared with the last payload and swapped in on change: no
+    // allocation per frame while a finger is down and nothing changes.
+    QByteArray& payload = scene.handlers.touchScratch;
+    payload.resize(0);
+    WireWriter w(payload);
+    w.u32(count);
     quint32 n = 0;
     for (const auto& [id, p] : points) {
         if (n++ == count)
             break;
-        const quint32 uid = id;
-        const float f[5] = {float(p.pos.x()), float(p.pos.y()), p.pressure, float(p.size.width()), float(p.size.height())};
-        payload.append(reinterpret_cast<const char*>(&uid), 4);
-        payload.append(reinterpret_cast<const char*>(f), sizeof f);
+        w.u32(quint32(id)).f32(float(p.pos.x())).f32(float(p.pos.y())).f32(p.pressure).f32(float(p.size.width())).f32(float(p.size.height()));
     }
-    if (payload == hn.sentTouch)
+    if (payload == hn.sent.touch)
         return;
-    hn.sentTouch = payload;
-    scene.events.push(VLQT_EVENT_TOUCH_POINTS, hn.feedbackId, payload.constData(), payload.size());
+    std::swap(payload, hn.sent.touch);
+    scene.events.push(VLQT_EVENT_TOUCH_POINTS, hn.feedbackId, hn.sent.touch.constData(), hn.sent.touch.size());
 }
 
 void collectPinch(Scene& scene, HandlerEntry& hn)
 {
-    const PinchState& ps = *hn.pinch;
+    const PinchState& ps = *hn.objects.pinch;
+    HandlerSent& sent = hn.sent;
     // Gesture start: ACTIVE 1, then the values; end: the last values (if not sent yet), then ACTIVE 0.
-    if (ps.running && !hn.sentActive)
+    if (ps.running && !sent.active)
         scene.events.pushFlag(VLQT_EVENT_ACTIVE, hn.feedbackId, true);
     const float* v = ps.value;
     bool changed = false;
     for (int i = 0; i < 6; ++i)
-        changed = changed || v[i] != hn.sentPinch[i];
-    if ((ps.running || hn.sentActive) && (changed || ps.gestures != hn.sentGestures)) {
+        changed = changed || v[i] != sent.pinch[i];
+    if ((ps.running || sent.active) && (changed || ps.gestures != sent.gestures)) {
         for (int i = 0; i < 6; ++i)
-            hn.sentPinch[i] = v[i];
-        hn.sentGestures = ps.gestures;
+            sent.pinch[i] = v[i];
+        sent.gestures = ps.gestures;
         scene.events.push(VLQT_EVENT_PINCH, hn.feedbackId, v, 6 * sizeof(float));
     }
-    if (!ps.running && hn.sentActive)
+    if (!ps.running && sent.active)
         scene.events.pushFlag(VLQT_EVENT_ACTIVE, hn.feedbackId, false);
-    hn.sentActive = ps.running;
+    sent.active = ps.running;
 }
 
 } // namespace
@@ -741,7 +755,7 @@ void collectHandlers(Scene& scene)
 {
     for (auto& kv : scene.handlerNodes) {
         HandlerEntry& hn = kv.second;
-        if (hn.feedbackId == 0 || !hn.object)
+        if (hn.feedbackId == 0 || !hn.objects.object)
             continue;
         switch (hn.type) {
         case VLQT_ELEMENT_TYPE_HOVER_HANDLER: collectHover(scene, hn); break;

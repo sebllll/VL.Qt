@@ -1,4 +1,5 @@
 #include "diagnostics/debug_overlay.h"
+#include "app/scene_change.h"
 #include "scene/scene.h"
 
 #include <QtGui/QFont>
@@ -161,11 +162,6 @@ QRectF padded(const QQuickItem* item, const QRectF& r)
     return r.adjusted(prop(item, "leftPadding"), prop(item, "topPadding"), -prop(item, "rightPadding"), -prop(item, "bottomPadding"));
 }
 
-bool isContainer(quint16 type)
-{
-    return type == VLQT_ELEMENT_TYPE_GROUP || type == VLQT_ELEMENT_TYPE_ROW || type == VLQT_ELEMENT_TYPE_COLUMN;
-}
-
 // Equal up to half a logical pixel (layout rounding): a line drawn twice on top of each other only hides the first.
 bool same(const QRectF& a, const QRectF& b)
 {
@@ -177,6 +173,7 @@ bool same(const QRectF& a, const QRectF& b)
 
 DebugOverlay::DebugOverlay(QQuickItem* contentItem, const Scene& scene) : QQuickItem(contentItem), m_scene(scene)
 {
+    setObjectName(QLatin1String(overlayObjectName)); // not counted as a scene change (app/scene_change.h)
     setFlag(ItemHasContents, true);
     setEnabled(false);
     setAcceptedMouseButtons(Qt::NoButton);
@@ -194,7 +191,30 @@ void DebugOverlay::setActive(bool on)
         return;
     m_active = on;
     setVisible(on);
+    follow(window());
     refresh();
+}
+
+// While active, repaint in every frame whose polish left an item of the scene to sync (afterAnimating: after polish,
+// before sync, GUI thread in both the basic loop and the render control of an offscreen scene). The overlay's own
+// repaint is no such item, so a static scene renders nothing.
+void DebugOverlay::follow(QQuickWindow* win)
+{
+    QObject::disconnect(m_follow);
+    if (m_active && win) {
+        m_follow = QObject::connect(win, &QQuickWindow::afterAnimating, this, [this, win] {
+            if (SceneChangeCounter::itemsDirty(win))
+                update();
+        }, Qt::DirectConnection);
+    }
+}
+
+// A window swap (Scene::moveToWindow) moves the overlay to the new window.
+void DebugOverlay::itemChange(ItemChange change, const ItemChangeData& data)
+{
+    if (change == ItemSceneChange)
+        follow(data.window);
+    QQuickItem::itemChange(change, data);
 }
 
 void DebugOverlay::refresh()
@@ -210,8 +230,8 @@ void DebugOverlay::drawNode(const ElementEntry& n)
     const qreal w = item->width(), h = item->height();
     // Frame = actual size: (0, 0, w, h) = SIZE, or the Auto Size result; for an auto-sized Group with children in
     // negative coordinates it starts there. Everything else is drawn relative to it.
-    const QRectF frame = n.xf ? itemFrame(*n.xf, item) : QRectF(0, 0, w, h);
-    const bool container = isContainer(n.type);
+    const QRectF frame = itemBounds(*n.xf, item);
+    const bool container = n.def->container;
 
     // Children extent (tracked, visible, non-empty children incl. their x/y and TRANSFORM; like the Group frame, not
     // Qt's childrenRect; internals like the MultiEffect inner item are not tracked).
@@ -236,9 +256,9 @@ void DebugOverlay::drawNode(const ElementEntry& n)
 
     // Padding, spacing and overflow into the fill layer (under the lines of all nodes), all relative to the frame.
     p.area = true;
-    if (n.type == VLQT_ELEMENT_TYPE_ROW || n.type == VLQT_ELEMENT_TYPE_COLUMN || n.type == VLQT_ELEMENT_TYPE_TEXT)
+    if (n.def->layout || n.type == VLQT_ELEMENT_TYPE_TEXT)
         p.ring(frame, padded(item, frame), kPadding);
-    if (n.type == VLQT_ELEMENT_TYPE_ROW || n.type == VLQT_ELEMENT_TYPE_COLUMN) {
+    if (n.def->layout) {
         // Gaps between consecutive laid-out children (Qt skips invisible and zero-size ones).
         const bool column = n.type == VLQT_ELEMENT_TYPE_COLUMN;
         const QRectF inner = padded(item, frame);
@@ -284,7 +304,7 @@ void DebugOverlay::drawNode(const ElementEntry& n)
     const QPointF o = p.map(0, 0);
     p.segment(o - QPointF(5, 0), o + QPointF(5, 0), kOrigin, 1.5f);
     p.segment(o - QPointF(0, 5), o + QPointF(0, 5), kOrigin, 1.5f);
-    const QPointF a = n.xf ? anchorPoint(*n.xf, item) : QPointF(w / 2, h / 2); // xf exists from CREATE on
+    const QPointF a = anchorPoint(*n.xf, item);
     const QPointF pv = p.map(a.x(), a.y());
     p.quad(pv + QPointF(0, -4), pv + QPointF(4, 0), pv + QPointF(0, 4), pv + QPointF(-4, 0), kAnchor);
 }

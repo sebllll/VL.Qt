@@ -129,7 +129,7 @@ Annotations are `//` comments. Unknown tags show at the node.
 
 **Uniform** (directly above it or at the end of its line): `@default`, `@min`, `@max` (limits of the pad only), `@color` (a `vec4` becomes a color), `@summary`.
 
-**Names set by VL.Qt** (no pin, an own entry of that name is an error): `qt_Matrix`, `qt_Opacity`, and in the effect chain `source`, `texelSize` (1 / pixel size of the sampled texture), `dpr`, `weight`, `elementRect` and `passIndex`. `base`, `glow` and `shadow` are reserved there too (a uniform of that name gets no pin and a warning). `passIndex` is a `float` that VL.Qt writes into the uniform block if the shader declares it: 0 in a single pass and in pass 1, 1 in pass 2.
+**Names set by VL.Qt** (no pin, an own entry of that name is an error): `qt_Matrix`, `qt_Opacity`, and in the effect chain `source`, `texelSize` (1 / pixel size of the sampled texture), `dpr`, `weight`, `elementRect` and `passIndex`. `base`, `glow` and `shadow` are reserved there too: a shader file with a uniform of that name gets no pin and an error at its effect chain node. The same goes for an entry of such a name in the Uniforms of a ShaderEffect (`qt_Matrix`, `qt_Opacity`, `source`): an error at the node, the entry is ignored. The list lives once, in `effects/shader_item.h` (`kItemReservedUniforms`, `kChainAutomaticUniforms`, `kChainReservedUniforms`), and `ReservedUniforms` in C# mirrors it (a unit test compares them). `passIndex` is a `float` that VL.Qt writes into the uniform block if the shader declares it: 0 in a single pass and in pass 1, 1 in pass 2.
 
 ### Two-pass effects
 

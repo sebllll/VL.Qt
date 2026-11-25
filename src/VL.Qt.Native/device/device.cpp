@@ -1,3 +1,4 @@
+// Private Qt API: QQuickWindowPrivate::renderControl (which windows are on the shared device); check on Qt updates (list: elements/elements.h).
 #include "device/device.h"
 
 #include <QtCore/QElapsedTimer>
@@ -333,6 +334,15 @@ int clampSamples(int requested, int dxgiFormat, QRhi* rhi)
         best = c;
     }
     return best;
+}
+
+int windowSwapChainFormat()
+{
+#ifdef Q_OS_WIN
+    return DXGI_FORMAT_R8G8B8A8_UNORM;
+#else
+    return 0;
+#endif
 }
 
 void checkLost()

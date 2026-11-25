@@ -41,7 +41,7 @@ namespace VL.Qt.Tests
 
         private Element Update(out bool value, out bool bang, IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox,
             bool enabled = true, bool autoSize = true)
-            => _node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, channel, look, enabled,
+            => (Element)_node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, channel, look, enabled,
                 1, false, false, null, null, null, out value, out bang, out _, out _);
 
         private Element Update(IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox)

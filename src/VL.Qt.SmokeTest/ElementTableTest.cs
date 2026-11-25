@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading;
 using NUnit.Framework;
 using VL.Qt.Interop;
 using VL.Qt.Wire;
@@ -75,6 +73,7 @@ public static class ElementTableTest
         [Protocol.PropertyId.Size] = Protocol.ValueType.Vec2,
         [Protocol.PropertyId.Transform] = Protocol.ValueType.Mat4,
         [Protocol.PropertyId.Opacity] = Protocol.ValueType.F32,
+        [Protocol.PropertyId.Visible] = Protocol.ValueType.Bool,
         [Protocol.PropertyId.Clip] = Protocol.ValueType.Bool,
         [Protocol.PropertyId.Anchor] = Protocol.ValueType.I32,
         [Protocol.PropertyId.Debug] = Protocol.ValueType.Bool,
@@ -222,14 +221,6 @@ public static class ElementTableTest
         finally
         {
             Native.vlqt_scene_destroy(w);
-            // The Video row starts QtMultimedia (player, audio output) only for a moment. A process that ends right after
-            // that stays behind as an unkillable testhost (run alone: element-table is the last scenario). Like the video
-            // test, let it settle for a while before the scenario ends.
-            for (var t = Stopwatch.StartNew(); t.ElapsedMilliseconds < 2000;)
-            {
-                s.Pump(1);
-                Thread.Sleep(15);
-            }
         }
     }
 

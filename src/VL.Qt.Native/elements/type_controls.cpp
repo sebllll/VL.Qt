@@ -9,18 +9,12 @@ namespace {
 
 // ---------------------------------------------------------------------------------------------
 // Button (QtQuick.Controls, first Controls element). Base style VLQt (style/VLQt/Button.qml), values from
-// SET_STYLE (vlstyle.h); style picked once at startup (app/app.cpp). Clicks are
+// SET_STYLE (style/vl_style.h); style picked once at startup (app/app.cpp). Clicks are
 // Qt's clicked signal (release over the button; autoRepeat repeats it while held; disabled = none), counted in
 // vlqtClicks and sent as EVENT_CLICK by the poll for every bound Button (input handlers report their own clicks)
 // (Elements::takeClicks). AUTO_SIZE on (default): implicit size from text + padding, else the SIZE.
 
-constexpr const char* kButtonQml =
-    "import QtQuick\n"
-    "import QtQuick.Controls\n"
-    "Button {\n"
-    "  property int vlqtClicks: 0\n"
-    "  onClicked: ++vlqtClicks\n"
-    "}\n";
+constexpr const char* kButtonQml = "qrc:/vlqt/qml/elements/ButtonElement.qml";
 
 std::vector<PropDef> buttonProps()
 {
@@ -28,13 +22,12 @@ std::vector<PropDef> buttonProps()
         {VLQT_PROPERTY_TEXT, VLQT_VALUE_TYPE_STRING, setQmlString, "text"},
         {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
         {VLQT_PROPERTY_AUTO_REPEAT, VLQT_VALUE_TYPE_BOOL, setQmlBool, "autoRepeat"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
 // ---------------------------------------------------------------------------------------------
-// Value inputs (SpinBox; CheckBox, Switch, Slider, TextField). Generic user-value channel: the QML
-// snippet declares
+// Value inputs (SpinBox; CheckBox, Switch, Slider, TextField). Generic user-value channel: the element's
+// QML (qml/elements/*Element.qml) declares
 //   property int vlqtUserCount   user changes since the last poll (reset to 0 by Elements::takeUserValue)
 //   property <T> vlqtUserValue   value of the last user change, T = int | real | bool | string (= EVENT_VALUE value type)
 // and sets both in the handler of the control's user-only signal (SpinBox valueModified, CheckBox/Switch toggled,
@@ -47,21 +40,7 @@ std::vector<PropDef> buttonProps()
 // Enter or focus loss (valueModified); +/-, arrow keys and wheel commit at once. Qt clamps the value to [from, to]
 // without a signal (C# clamps its own copy). AUTO_SIZE on (default): implicit size, else the SIZE.
 
-constexpr const char* kSpinBoxQml =
-    "import QtQuick\n"
-    "import QtQuick.Controls\n"
-    "SpinBox {\n"
-    "  from: -2147483648\n"
-    "  to: 2147483647\n"
-    "  editable: true\n"
-    "  wheelEnabled: true\n"
-    "  locale: Qt.locale(\"C\")\n"
-    "  textFromValue: function(v, l) { return v.toString() }\n"
-    "  valueFromText: function(t, l) { var v = parseInt(t, 10); return isNaN(v) ? value : v }\n"
-    "  property int vlqtUserCount: 0\n"
-    "  property int vlqtUserValue: 0\n"
-    "  onValueModified: { vlqtUserValue = value; ++vlqtUserCount }\n"
-    "}\n";
+constexpr const char* kSpinBoxQml = "qrc:/vlqt/qml/elements/SpinBoxElement.qml";
 
 std::vector<PropDef> spinBoxProps()
 {
@@ -72,7 +51,6 @@ std::vector<PropDef> spinBoxProps()
         {VLQT_PROPERTY_STEP, VLQT_VALUE_TYPE_I32, setQmlInt, "stepSize"},
         {VLQT_PROPERTY_EDITABLE, VLQT_VALUE_TYPE_BOOL, setQmlBool, "editable"},
         {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -81,32 +59,14 @@ std::vector<PropDef> spinBoxProps()
 // indicator is centred in a larger SIZE. toggled = user only (click, Space); SET VALUE (checked) never fires it.
 // Tristate and dragging the Switch handle are not exposed; a drag that flips the Switch also sends toggled.
 
-constexpr const char* kCheckBoxQml =
-    "import QtQuick\n"
-    "import QtQuick.Controls\n"
-    "CheckBox {\n"
-    "  spacing: 0\n"
-    "  property int vlqtUserCount: 0\n"
-    "  property bool vlqtUserValue: false\n"
-    "  onToggled: { vlqtUserValue = checked; ++vlqtUserCount }\n"
-    "}\n";
-
-constexpr const char* kSwitchQml =
-    "import QtQuick\n"
-    "import QtQuick.Controls\n"
-    "Switch {\n"
-    "  spacing: 0\n"
-    "  property int vlqtUserCount: 0\n"
-    "  property bool vlqtUserValue: false\n"
-    "  onToggled: { vlqtUserValue = checked; ++vlqtUserCount }\n"
-    "}\n";
+constexpr const char* kCheckBoxQml = "qrc:/vlqt/qml/elements/CheckBoxElement.qml";
+constexpr const char* kSwitchQml = "qrc:/vlqt/qml/elements/SwitchElement.qml";
 
 std::vector<PropDef> toggleProps()
 {
     return {
         {VLQT_PROPERTY_VALUE, VLQT_VALUE_TYPE_BOOL, setQmlBool, "checked"},
         {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -115,16 +75,7 @@ std::vector<PropDef> toggleProps()
 // polls give one EVENT_VALUE with the last value. snapMode SnapAlways: with STEP > 0 a drag lands on from + k * step like
 // keys and wheel; STEP 0 stays continuous. Wheel on (like SpinBox). ORIENTATION Qt::Horizontal 1 | Qt::Vertical 2.
 
-constexpr const char* kSliderQml =
-    "import QtQuick\n"
-    "import QtQuick.Controls\n"
-    "Slider {\n"
-    "  wheelEnabled: true\n"
-    "  snapMode: Slider.SnapAlways\n"
-    "  property int vlqtUserCount: 0\n"
-    "  property real vlqtUserValue: 0\n"
-    "  onMoved: { vlqtUserValue = value; ++vlqtUserCount }\n"
-    "}\n";
+constexpr const char* kSliderQml = "qrc:/vlqt/qml/elements/SliderElement.qml";
 
 std::vector<PropDef> sliderProps()
 {
@@ -135,7 +86,6 @@ std::vector<PropDef> sliderProps()
         {VLQT_PROPERTY_STEP, VLQT_VALUE_TYPE_F32, setQmlReal, "stepSize"},
         {VLQT_PROPERTY_ORIENTATION, VLQT_VALUE_TYPE_I32, setQmlEnum<Qt::Horizontal, Qt::Vertical>, "orientation"},
         {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
 }
 
@@ -144,15 +94,7 @@ std::vector<PropDef> sliderProps()
 // and would otherwise echo the value C# set (no echo, like SpinBox). SET VALUE writes text and vlqtCommitted together,
 // so a SET while the user types replaces the edit and counts as the new reference. EDITABLE = !readOnly.
 
-constexpr const char* kTextFieldQml =
-    "import QtQuick\n"
-    "import QtQuick.Controls\n"
-    "TextField {\n"
-    "  property string vlqtCommitted: \"\"\n"
-    "  property int vlqtUserCount: 0\n"
-    "  property string vlqtUserValue: \"\"\n"
-    "  onEditingFinished: { if (text !== vlqtCommitted) { vlqtCommitted = text; vlqtUserValue = text; ++vlqtUserCount } }\n"
-    "}\n";
+constexpr const char* kTextFieldQml = "qrc:/vlqt/qml/elements/TextFieldElement.qml";
 
 // SET VALUE of TextField: text + vlqtCommitted (by name; only on SET, not per frame).
 bool setTextFieldValue(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
@@ -176,40 +118,48 @@ std::vector<PropDef> textFieldProps()
         {VLQT_PROPERTY_PLACEHOLDER, VLQT_VALUE_TYPE_STRING, setQmlString, "placeholderText"},
         {VLQT_PROPERTY_EDITABLE, VLQT_VALUE_TYPE_BOOL, setQmlBoolNot, "readOnly"},
         {VLQT_PROPERTY_ENABLED, VLQT_VALUE_TYPE_BOOL, setQmlBool, "enabled"},
-        {VLQT_PROPERTY_AUTO_SIZE, VLQT_VALUE_TYPE_BOOL, setAutoSize, nullptr},
     };
+}
+
+// What the Controls share: the implicit size (text + style padding) and SET_STYLE.
+TypeDef control(quint16 id, const char* name, const char* qml, std::vector<PropDef> props)
+{
+    TypeDef t{id, name, qml, std::move(props)};
+    t.autoSize = AutoSize::Always;
+    t.styled = true;
+    return t;
 }
 
 } // namespace
 
 TypeDef buttonType()
 {
-    return {VLQT_ELEMENT_TYPE_BUTTON, "BUTTON", kButtonQml, buttonProps()};
+    return control(VLQT_ELEMENT_TYPE_BUTTON, "BUTTON", kButtonQml, buttonProps());
 }
 
 TypeDef spinBoxType()
 {
-    return {VLQT_ELEMENT_TYPE_SPIN_BOX, "SPIN_BOX", kSpinBoxQml, spinBoxProps()};
+    return control(VLQT_ELEMENT_TYPE_SPIN_BOX, "SPIN_BOX", kSpinBoxQml, spinBoxProps());
 }
 
 TypeDef checkBoxType()
 {
-    return {VLQT_ELEMENT_TYPE_CHECK_BOX, "CHECK_BOX", kCheckBoxQml, toggleProps()};
+    return control(VLQT_ELEMENT_TYPE_CHECK_BOX, "CHECK_BOX", kCheckBoxQml, toggleProps());
 }
 
 TypeDef switchType()
 {
-    return {VLQT_ELEMENT_TYPE_SWITCH, "SWITCH", kSwitchQml, toggleProps()};
+    return control(VLQT_ELEMENT_TYPE_SWITCH, "SWITCH", kSwitchQml, toggleProps());
 }
 
 TypeDef sliderType()
 {
-    return {VLQT_ELEMENT_TYPE_SLIDER, "SLIDER", kSliderQml, sliderProps()};
+    return control(VLQT_ELEMENT_TYPE_SLIDER, "SLIDER", kSliderQml, sliderProps());
 }
 
 TypeDef textFieldType()
 {
-    return {VLQT_ELEMENT_TYPE_TEXT_FIELD, "TEXT_FIELD", kTextFieldQml, textFieldProps()};
+    return control(VLQT_ELEMENT_TYPE_TEXT_FIELD, "TEXT_FIELD", kTextFieldQml, textFieldProps());
 }
 
 } // namespace vlqt

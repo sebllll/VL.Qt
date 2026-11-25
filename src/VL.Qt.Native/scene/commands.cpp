@@ -4,7 +4,7 @@
 #include "elements/group_item.h"
 #include "user_qml/qml_item.h"
 #include "scene/scene.h"
-#include "vlstyle.h"
+#include "style/vl_style.h"
 #include "wire.h"
 
 #include <QtCore/QRectF>
@@ -15,6 +15,7 @@
 #include <QtQuick/QQuickItem>
 
 #include <algorithm>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -368,6 +369,102 @@ int Scene::opReset(WireReader&, std::string&)
     return ApplyOk;
 }
 
+namespace {
+
+/* The SET_STYLE entries (u32 id, u16 count, u16 flags, then count x (u16 field, u8 state, u8 value type, value, padded
+ * to 4 bytes), protocol.h "Style") on the Controls element item. payload starts at the id; its length is checked
+ * against the minimum by the op table. The whole command is checked before the table is touched, so a bad entry
+ * leaves the style as it was: pass 0 checks every entry, pass 1 writes the table. */
+int applyStyleEntries(QQuickItem* item, WireReader payload, std::string& err)
+{
+    WireReader head = payload;
+    head.u32(); // id, the caller has looked it up
+    const int count = head.u16();
+    const quint16 flags = head.u16();
+    if (flags & ~quint16(VLQT_STYLE_SET_CLEAR)) {
+        err = "unknown SET_STYLE flags " + std::to_string(flags);
+        return ApplyUnknownProperty;
+    }
+    VlStyle* style = nullptr;
+    for (int pass = 0; pass < 2; ++pass) {
+        if (pass == 1) {
+            style = qobject_cast<VlStyle*>(qmlAttachedPropertiesObject<VlStyle>(item, true));
+            if (!style) {
+                err = "VlStyle attached object unavailable (type not registered)";
+                return ApplyInvalid;
+            }
+            if (flags & VLQT_STYLE_SET_CLEAR)
+                style->clear();
+        }
+        WireReader r = head;
+        for (int e = 0; e < count; ++e) {
+            const int off = r.offset();
+            auto at = [&] { return "entry " + std::to_string(e) + " (offset " + std::to_string(off) + ")"; };
+            if (r.remaining() < VLQT_ENTRY_HEADER_SIZE) {
+                err = at() + ": truncated (" + std::to_string(r.remaining()) + " bytes left)";
+                return ApplyBadLength;
+            }
+            const quint16 field = r.u16();
+            const int state = r.u8();
+            Value v;
+            v.type = r.u8();
+            const std::optional<VlStyle::Slot> slot = VlStyle::slotOf(field);
+            if (!slot) {
+                err = at() + ": unknown style field " + std::to_string(field);
+                return ApplyUnknownProperty;
+            }
+            if (state >= VlStyle::stateCount) {
+                err = at() + ": unknown style state " + std::to_string(state);
+                return ApplyUnknownProperty;
+            }
+            const quint16 expected = VlStyle::valueTypeOf(*slot);
+            if (v.type != expected) {
+                err = at() + ": value type " + std::to_string(v.type) + " for style field " + std::to_string(field)
+                    + ", expected " + std::to_string(expected);
+                return ApplyBadValue;
+            }
+            qint64 size = 0;
+            switch (v.type) {
+            case VLQT_VALUE_TYPE_COLOR: size = 16; break;
+            case VLQT_VALUE_TYPE_F32: size = 4; break;
+            case VLQT_VALUE_TYPE_I32: size = 4; break;
+            case VLQT_VALUE_TYPE_STRING: size = 4 + qint64(r.peek<quint32>()); break; // peek: 0 when the length is cut off
+            default: break;
+            }
+            if (size > r.remaining()) {
+                err = at() + ": value needs " + std::to_string(size) + " bytes, " + std::to_string(r.remaining()) + " left";
+                return ApplyBadLength;
+            }
+            WireReader value = r.sub(size);
+            if (pass == 1) {
+                switch (v.type) {
+                case VLQT_VALUE_TYPE_COLOR: value.copy(v.f, 16); break;
+                case VLQT_VALUE_TYPE_F32: value.copy(v.f, 4); break;
+                case VLQT_VALUE_TYPE_I32: v.i = value.i32(); break;
+                case VLQT_VALUE_TYPE_STRING: {
+                    const quint32 n = value.u32();
+                    v.utf8 = QByteArray::fromRawData(reinterpret_cast<const char*>(value.bytes(n)), qsizetype(n));
+                    break;
+                }
+                default: break;
+                }
+                style->setCell(*slot, state, v);
+            }
+            r.align();
+        }
+        // payloadLen excludes the padding of the last entry (like every command); the padded end is accepted too.
+        if (pass == 0 && r.remaining() != 0) {
+            err = "payloadLen " + std::to_string(payload.remaining()) + " does not match " + std::to_string(count)
+                + " entries (" + std::to_string(align4(r.offset())) + " bytes incl. padding)";
+            return ApplyBadLength;
+        }
+    }
+    style->commit();
+    return ApplyOk;
+}
+
+} // namespace
+
 int Scene::opSetStyle(WireReader& r, std::string& err)
 {
     int rc = ApplyOk;
@@ -375,11 +472,11 @@ int Scene::opSetStyle(WireReader& r, std::string& err)
     if (!entry)
         return rc;
     const quint16 type = entry->type;
-    if (type < VLQT_ELEMENT_TYPE_BUTTON || type > VLQT_ELEMENT_TYPE_TEXT_FIELD) {
+    if (!entry->def->styled) {
         err = "type " + std::to_string(type) + " has no style (Controls elements only)";
         return ApplyUnknownProperty;
     }
-    return applySetStyle(entry->item, r.cursor(), r.remaining(), err);
+    return applyStyleEntries(entry->item, r, err);
 }
 
 int Scene::opSetClear(WireReader& r, std::string&)
@@ -480,7 +577,7 @@ int Scene::opSetQmlProperties(WireReader& r, std::string& err)
     }
     auto* item = static_cast<QmlItem*>(entry->item);
     for (const NamedEntry& e : entryScratch) {
-        const QString name = QString::fromUtf8(reinterpret_cast<const char*>(e.name), e.nameLen);
+        const QByteArrayView name(reinterpret_cast<const char*>(e.name), e.nameLen);
         WireReader v(e.value, e.valueLen);
         float f[4] = {};
         switch (e.type) {
@@ -513,7 +610,7 @@ int Scene::opSetQmlProperties(WireReader& r, std::string& err)
             item->setRootProperty(name, QVector4D(f[0], f[1], f[2], f[3]));
             break;
         default:
-            item->rejectRootProperty(name, QStringLiteral("value type %1 is not supported for QML properties").arg(e.type));
+            item->rejectRootProperty(QString::fromUtf8(name), QStringLiteral("value type %1 is not supported for QML properties").arg(e.type));
             break;
         }
     }
@@ -553,31 +650,32 @@ int Scene::opSetEffectChain(WireReader& r, std::string& err)
         WireReader body = r.sub(bodyLen);
         if (link.kind == VLQT_EFFECT_CHAIN_LINK_MULTI) {
             for (int i = 0; i < count; ++i) {
-                const std::string ie = at + " entry #" + std::to_string(i);
+                // Built on the error path only: the text is longer than the small-string buffer.
+                auto ie = [&] { return at + " entry #" + std::to_string(i); };
                 if (body.remaining() < 4) {
-                    err = ie + ": truncated entry";
+                    err = ie() + ": truncated entry";
                     return ApplyBadLength;
                 }
                 const quint16 prop = body.u16();
                 const quint16 vt = body.u16();
                 const quint16 expected = effectValueType(prop);
                 if (!expected) {
-                    err = ie + ": property " + std::to_string(prop) + " is no MULTI key (EFFECT_* 833..855)";
+                    err = ie() + ": property " + std::to_string(prop) + " is no MULTI key (EFFECT_* 833..855)";
                     return ApplyUnknownProperty;
                 }
                 if (vt != expected) {
-                    err = ie + ": value type " + std::to_string(vt) + ", property " + std::to_string(prop) + " takes "
+                    err = ie() + ": value type " + std::to_string(vt) + ", property " + std::to_string(prop) + " takes "
                         + std::to_string(expected);
                     return ApplyBadValue;
                 }
                 const unsigned char* vp = body.bytes(fixedValueSize(vt), true);
                 if (!vp) {
-                    err = ie + ": entry exceeds the body";
+                    err = ie() + ": entry exceeds the body";
                     return ApplyBadLength;
                 }
                 EffectMultiEntry multi{prop, readEffectValue(vt, vp)};
                 if (vt == VLQT_VALUE_TYPE_REF && !knownRef(multi.value.ref)) {
-                    err = ie + ": unknown ref id " + std::to_string(multi.value.ref);
+                    err = ie() + ": unknown ref id " + std::to_string(multi.value.ref);
                     return ApplyUnknownId;
                 }
                 link.multi.push_back(multi);
@@ -651,22 +749,23 @@ int Scene::opSetEffectChain(WireReader& r, std::string& err)
             if (e.prop != VLQT_MULTI_EFFECT_KEY_MASK_SOURCE || e.value.ref == VLQT_ROOT_ID)
                 continue;
             const ElementEntry& mask = nodes[e.value.ref]; // existence checked above (knownRef)
-            const std::string at = "link #" + std::to_string(l) + ": mask " + std::to_string(e.value.ref);
+            // Built on the error path only (a heap allocation per mask otherwise).
+            auto at = [&] { return "link #" + std::to_string(l) + ": mask " + std::to_string(e.value.ref); };
             for (QQuickItem* a = host.item; a; a = a->parentItem())
                 if (a == mask.item) {
-                    err = at + " is the element itself or one of its ancestors";
+                    err = at() + " is the element itself or one of its ancestors";
                     return ApplyInvalid;
                 }
             if (mask.maskHost && mask.maskHost != host.item) {
-                err = at + " is attached to another element";
+                err = at() + " is attached to another element";
                 return ApplyInvalid;
             }
             if (!mask.maskHost && mask.item->parentItem() && !mask.maskHidden) {
-                err = at + " already has a parent (REPARENT)";
+                err = at() + " already has a parent (REPARENT)";
                 return ApplyInvalid;
             }
             if (std::find(masks.begin(), masks.end(), mask.item) != masks.end()) {
-                err = at + " is the mask of another link";
+                err = at() + " is the mask of another link";
                 return ApplyInvalid;
             }
             masks[l] = mask.item;

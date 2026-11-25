@@ -16,7 +16,7 @@ namespace VL.Qt.Nodes
     public sealed class VideoSourceToQtImageNode : IDisposable
     {
         private readonly ResourceClient _client;
-        private readonly ImageNodeReport _report;
+        private readonly ResourceNodeReport _report;
         private readonly VideoPlaybackContext _ctx;
         private IVideoSource? _source;
         private int _ticket;
@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
         {
             _client = ResourceClient.ForApp(nodeContext.AppHost);
             var errors = new NodeErrors(nodeContext);
-            _report = new ImageNodeReport(errors);
+            _report = new ResourceNodeReport(errors, lasting: true);
             var clock = nodeContext.AppHost.Services.GetService(typeof(IFrameClock)) as IFrameClock
                 ?? throw new InvalidOperationException("VL.Qt: the app host has no IFrameClock");
             // CPU frames only: no graphics device in the context, the players deliver frames in memory.
@@ -40,11 +40,11 @@ namespace VL.Qt.Nodes
             _ctx = new VideoPlaybackContext(clock, errors.Logger);
         }
 
-        /// <summary>For tests: a client on a fake API and a playback context without a device, nothing is reported.</summary>
-        internal VideoSourceToQtImageNode(ResourceClient client, VideoPlaybackContext ctx)
+        /// <summary>For tests: a client on a fake API and a playback context without a device; null <paramref name="messages"/> reports nothing.</summary>
+        internal VideoSourceToQtImageNode(ResourceClient client, VideoPlaybackContext ctx, NodeErrors? messages = null)
         {
             _client = client;
-            _report = new ImageNodeReport(null);
+            _report = new ResourceNodeReport(messages, lasting: true);
             _ctx = ctx;
         }
 
@@ -52,11 +52,10 @@ namespace VL.Qt.Nodes
         /// <param name="input">The video source, e.g. VideoPlayer or VideoIn. Nothing = Fallback.</param>
         /// <param name="fallback">Returned until the first frame of the current source is uploaded.</param>
         /// <param name="preferPush">True: frames are grabbed on a thread of their own as they arrive. False: one frame is grabbed per vvvv frame on the main thread.</param>
-        /// <param name="error">Why the source or the upload failed, empty otherwise.</param>
         /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
-        /// <returns>The image: the same QtImage for all frames (one GPU resource per node, its content is replaced).</returns>
+        /// <returns>The image: the same QtImage for all frames (one GPU resource per node, its content is replaced). A failed source or upload is shown at the node and logged.</returns>
         [return: Pin(Name = "Output")]
-        public QtImage? Update(IVideoSource? input, QtImage? fallback, out string error, bool preferPush = true,
+        public QtImage? Update(IVideoSource? input, QtImage? fallback, bool preferPush = true,
             [Pin(Visibility = Model.PinVisibility.Optional)] ImageUpload upload = ImageUpload.Auto)
         {
             // A new mode applies from the next frame on.
@@ -77,7 +76,7 @@ namespace VL.Qt.Nodes
 
             var output = _hasFrame ? _image : fallback;
             var streamError = _stream?.Error ?? string.Empty;
-            error = streamError.Length > 0 ? streamError
+            var error = streamError.Length > 0 ? streamError
                 : _error.Length > 0 ? _error
                 : _hasFrame ? _resource?.Error ?? string.Empty : string.Empty;
             _report.Update(_hasFrame ? _resource : null, error);

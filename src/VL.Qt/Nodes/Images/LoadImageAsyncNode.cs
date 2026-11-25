@@ -16,7 +16,7 @@ namespace VL.Qt.Nodes
     public sealed class LoadImageAsyncNode : IDisposable
     {
         private readonly ResourceClient _client;
-        private readonly ImageNodeReport _report;
+        private readonly ResourceNodeReport _report;
         private readonly Subject<QtImage> _onLoaded = new();
         private readonly Action<ImageResource> _onSettled;
         private string? _path;
@@ -32,16 +32,11 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <summary>For tests: a client on a fake API, nothing is reported.</summary>
-        internal LoadImageAsyncNode(ResourceClient client)
-            : this(client, null)
-        {
-        }
-
-        private LoadImageAsyncNode(ResourceClient client, NodeErrors? errors)
+        /// <summary>For tests: a client on a fake API; null <paramref name="messages"/> reports nothing.</summary>
+        internal LoadImageAsyncNode(ResourceClient client, NodeErrors? messages = null)
         {
             _client = client;
-            _report = new ImageNodeReport(errors);
+            _report = new ResourceNodeReport(messages, lasting: true);
             _onSettled = OnSettled;
         }
 
@@ -49,8 +44,7 @@ namespace VL.Qt.Nodes
         /// <param name="path">Image file (PNG, JPG, BMP, ... everything Qt reads; EXIF rotation is applied). Empty = no image.</param>
         /// <param name="mipmaps">Generate mipmaps (+33 % GPU memory): smoother when the image is drawn much smaller than its size.</param>
         /// <param name="keepPrevious">Keep the previous image at the output while the new one loads (and when it fails). Off: the output switches at once to the loading image, which draws nothing until it is ready.</param>
-        /// <param name="isLoaded">True when the image of the current Path is ready.</param>
-        /// <param name="error">Why loading the current Path failed, empty otherwise.</param>
+        /// <param name="isLoaded">True when the image of the current Path is ready. False also when it failed: the node then shows why and logs it.</param>
         /// <param name="onLoaded">Fires the image when a load is complete (on the main thread, during the frame's Qt pump).</param>
         /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
         /// <returns>The image; nothing until the first load is complete (Keep Previous) or for an empty path.</returns>
@@ -60,7 +54,6 @@ namespace VL.Qt.Nodes
             bool mipmaps,
             [DefaultValue(true)] bool keepPrevious,
             out bool isLoaded,
-            out string error,
             [Pin(Visibility = Model.PinVisibility.Optional)] out IObservable<QtImage> onLoaded,
             [Pin(Visibility = Model.PinVisibility.Optional)] ImageUpload upload = ImageUpload.Auto)
         {
@@ -70,9 +63,8 @@ namespace VL.Qt.Nodes
             Promote();
             // _error: the load of the current Path failed (a kept previous image does not count).
             isLoaded = _error.Length == 0 && _pending is null && _current is { State: QtImageState.Ready };
-            error = _error.Length > 0 ? _error : _current?.Error ?? string.Empty;
             onLoaded = _onLoaded;
-            _report.Update(_current, error);
+            _report.Update(_current, _error.Length > 0 ? _error : _current?.Error ?? string.Empty);
             return _currentImage;
         }
 

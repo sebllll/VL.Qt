@@ -23,6 +23,7 @@ namespace VL.Qt.Tests
         private string _writeError = null!;
         private ImageFileWriter _writer = null!;
         private FileWriterNode _node = null!;
+        private RecordingMessages _messages = null!;
 
         private FakeResourceApi _api = null!;
         private ResourceClient _client = null!;
@@ -30,6 +31,7 @@ namespace VL.Qt.Tests
         private Reconciler _reconciler = null!;
         private ImageFileWriter _elementWriter = null!;
         private FileWriterElementNode _elementNode = null!;
+        private RecordingMessages _elementMessages = null!;
         private Rectangle _element = null!;
 
         private ImageFileWriter NewWriter() => new((image, path, quality) =>
@@ -46,7 +48,8 @@ namespace VL.Qt.Tests
             _writes = new();
             _writeError = string.Empty;
             _writer = NewWriter();
-            _node = new FileWriterNode(_writer);
+            _messages = new RecordingMessages();
+            _node = new FileWriterNode(_writer, _messages.Errors);
 
             _api = new FakeResourceApi();
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
@@ -54,7 +57,8 @@ namespace VL.Qt.Tests
             _scene = new OccurrenceRegistry();
             _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene);
             _elementWriter = NewWriter();
-            _elementNode = new FileWriterElementNode(_client, _scene, _elementWriter);
+            _elementMessages = new RecordingMessages();
+            _elementNode = new FileWriterElementNode(_client, _scene, _elementWriter, _elementMessages.Errors);
             _element = new Rectangle { Size = new Vector2(10, 10) };
         }
 
@@ -79,11 +83,11 @@ namespace VL.Qt.Tests
             _reconciler.Update(_element, Space.DIPTopLeft);
         }
 
-        private void Update(IImage? image, string? path, out bool isDone, out string error, bool write = false, int quality = 90)
-            => _node.Update(image, path is null ? null! : new Path(path), out isDone, out error, quality, write);
+        private void Update(IImage? image, string? path, out bool isDone, out bool success, bool write = false, int quality = 90)
+            => _node.Update(image, path is null ? null! : new Path(path), out isDone, out success, quality, write);
 
-        private void UpdateElement(string? path, out bool isDone, out string error, bool write = false, float scale = 1, int quality = 90)
-            => _elementNode.Update(_element, path is null ? null! : new Path(path), out isDone, out error, scale, quality, write);
+        private void UpdateElement(string? path, out bool isDone, out bool success, bool write = false, float scale = 1, int quality = 90)
+            => _elementNode.Update(_element, path is null ? null! : new Path(path), out isDone, out success, scale, quality, write);
 
         private ulong SnapshotId() => Convert.ToUInt64(_api.Calls.Where(c => c.StartsWith("snapshot")).Last().Split(' ')[1], 16);
 
@@ -93,91 +97,103 @@ namespace VL.Qt.Tests
         public void Write_StartsAWrite_IsDoneInALaterFrame_OnlyOnce()
         {
             var image = new TestImage(4, 3, 0x33);
-            Update(image, "out/a.png", out var done, out var error, write: true, quality: 70);
+            Update(image, "out/a.png", out var done, out var success, write: true, quality: 70);
             Assert.That(done, Is.False, "never in the frame of Write");
-            Assert.That(error, Is.Empty);
+            Assert.That(success, Is.False, "no write ended yet");
             Finish(_writer);
-            Update(image, "out/a.png", out done, out error);
+            Update(image, "out/a.png", out done, out success);
             Assert.That(done, Is.True);
-            Assert.That(error, Is.Empty);
+            Assert.That(success, Is.True);
             Assert.That(_writes.Single(), Is.EqualTo(("out/a.png", 70, 4, 3, (byte)0x33)));
-            Update(image, "out/a.png", out done, out _);
+            Update(image, "out/a.png", out done, out success);
             Assert.That(done, Is.False, "one frame only");
+            Assert.That(success, Is.True, "held until the next write ends");
             Assert.That(_writes, Has.Count.EqualTo(1), "no write without Write");
+            Assert.That(_messages.Logged, Is.Empty);
+            Assert.That(_messages.Shown, Is.Null);
         }
 
         [Test]
         public void NoWrite_NothingStarts()
         {
-            Update(new TestImage(2, 2, 1), "a.png", out var done, out var error);
+            Update(new TestImage(2, 2, 1), "a.png", out var done, out var success);
             Finish(_writer);
-            Update(new TestImage(2, 2, 1), "a.png", out done, out error);
+            Update(new TestImage(2, 2, 1), "a.png", out done, out success);
             Assert.That(done, Is.False);
-            Assert.That(error, Is.Empty);
+            Assert.That(success, Is.False);
             Assert.That(_writes, Is.Empty);
+            Assert.That(_messages.Logged, Is.Empty);
         }
 
         [Test]
-        public void Write_Fails_ErrorStaysUntilTheNextWriteStarts()
+        public void Write_Fails_LoggedOnce_NoSuccessUntilTheNextWriteEnds()
         {
             var image = new TestImage(2, 2, 1);
             _writeError = "disk full";
             Update(image, "a.png", out _, out _, write: true);
             Finish(_writer);
-            Update(image, "a.png", out var done, out var error);
+            Update(image, "a.png", out var done, out var success);
             Assert.That(done, Is.True);
-            Assert.That(error, Is.EqualTo("disk full"));
-            Update(image, "a.png", out done, out error);
+            Assert.That(success, Is.False);
+            Assert.That(_messages.Logged, Is.EqualTo(new[] { "disk full" }));
+            Assert.That(_messages.Shown, Is.Null, "a one-shot failure does not mark the node");
+            Update(image, "a.png", out done, out success);
             Assert.That(done, Is.False);
-            Assert.That(error, Is.EqualTo("disk full"), "stays");
+            Assert.That(success, Is.False, "held");
+            Assert.That(_messages.Logged, Has.Count.EqualTo(1), "logged once");
 
             _writeError = string.Empty;
-            Update(image, "a.png", out done, out error, write: true);
-            Assert.That(error, Is.Empty, "cleared when the next write starts");
+            Update(image, "a.png", out done, out success, write: true);
+            Assert.That(success, Is.False, "held while the next write runs");
             Finish(_writer);
-            Update(image, "a.png", out done, out error);
+            Update(image, "a.png", out done, out success);
             Assert.That(done, Is.True);
-            Assert.That(error, Is.Empty);
+            Assert.That(success, Is.True);
+            Assert.That(_messages.Logged, Has.Count.EqualTo(1));
         }
 
         [TestCase(null)]
         [TestCase("")]
-        public void Write_WithoutPath_ErrorAndDone_NoWrite(string? path)
+        public void Write_WithoutPath_LoggedAndDone_NoWrite(string? path)
         {
-            Update(new TestImage(2, 2, 1), path, out var done, out var error, write: true);
+            Update(new TestImage(2, 2, 1), path, out var done, out var success, write: true);
             Assert.That(done, Is.True);
-            Assert.That(error, Is.EqualTo(FileWriterNode.NoPathError));
+            Assert.That(success, Is.False);
+            Assert.That(_messages.Logged, Is.EqualTo(new[] { FileWriterNode.NoPathError }));
             Assert.That(_writes, Is.Empty);
         }
 
         [Test]
-        public void Write_WithoutImage_ErrorAndDone_NoWrite()
+        public void Write_WithoutImage_LoggedAndDone_NoWrite()
         {
-            Update(null, "a.png", out var done, out var error, write: true);
+            Update(null, "a.png", out var done, out var success, write: true);
             Assert.That(done, Is.True);
-            Assert.That(error, Is.EqualTo(FileWriterNode.NoImageError));
+            Assert.That(success, Is.False);
+            Assert.That(_messages.Logged, Is.EqualTo(new[] { FileWriterNode.NoImageError }));
             Assert.That(_writes, Is.Empty);
         }
 
         // ---- FileWriter (Element)
 
         [Test]
-        public void Element_NotShown_ErrorAndDone_NoSnapshot()
+        public void Element_NotShown_LoggedAndDone_NoSnapshot()
         {
-            UpdateElement("a.png", out var done, out var error, write: true);
+            UpdateElement("a.png", out var done, out var success, write: true);
             Assert.That(done, Is.True);
-            Assert.That(error, Is.EqualTo(SnapshotNode.NotShownError));
+            Assert.That(success, Is.False);
+            Assert.That(_elementMessages.Logged, Is.EqualTo(new[] { SnapshotNode.NotShownError }));
             Assert.That(_api.Calls, Is.Empty, "no resource created");
             Assert.That(_writes, Is.Empty);
         }
 
         [Test]
-        public void Element_WithoutPath_ErrorAndDone_NoSnapshot()
+        public void Element_WithoutPath_LoggedAndDone_NoSnapshot()
         {
             Show();
-            UpdateElement("", out var done, out var error, write: true);
+            UpdateElement("", out var done, out var success, write: true);
             Assert.That(done, Is.True);
-            Assert.That(error, Is.EqualTo(FileWriterNode.NoPathError));
+            Assert.That(success, Is.False);
+            Assert.That(_elementMessages.Logged, Is.EqualTo(new[] { FileWriterNode.NoPathError }));
             Assert.That(_api.Calls, Is.Empty);
         }
 
@@ -186,53 +202,56 @@ namespace VL.Qt.Tests
         {
             Show();
             _api.SnapshotSize = (6, 3);
-            UpdateElement("shot.png", out var done, out var error, write: true, scale: 2, quality: 55);
+            UpdateElement("shot.png", out var done, out var success, write: true, scale: 2, quality: 55);
             Assert.That(done, Is.False);
-            Assert.That(error, Is.Empty);
+            Assert.That(success, Is.False);
             Assert.That(_api.Calls.Single(c => c.StartsWith("snapshot")), Does.EndWith($" {_reconciler.Root!.Id} 2"));
             Assert.That(_writes, Is.Empty, "still grabbing");
 
             _api.Ready(SnapshotId(), 6, 3);
             Pump();
-            UpdateElement("shot.png", out done, out error);
+            UpdateElement("shot.png", out done, out success);
             Assert.That(done, Is.False, "the file write has just started");
             Finish(_elementWriter);
-            UpdateElement("shot.png", out done, out error);
+            UpdateElement("shot.png", out done, out success);
             Assert.That(done, Is.True);
-            Assert.That(error, Is.Empty);
+            Assert.That(success, Is.True);
+            Assert.That(_elementMessages.Logged, Is.Empty);
             Assert.That(_writes.Single(), Is.EqualTo(("shot.png", 55, 6, 3, (byte)0x7F)));
             UpdateElement("shot.png", out done, out _);
             Assert.That(done, Is.False);
         }
 
         [Test]
-        public void Element_GrabFails_ErrorAndDone()
+        public void Element_GrabFails_LoggedAndDone()
         {
             Show();
             UpdateElement("a.png", out _, out _, write: true);
             _api.Failed(SnapshotId(), "grab failed");
             Pump();
-            UpdateElement("a.png", out var done, out var error);
+            UpdateElement("a.png", out var done, out var success);
             Assert.That(done, Is.True);
-            Assert.That(error, Is.EqualTo("grab failed"));
+            Assert.That(success, Is.False);
+            Assert.That(_elementMessages.Logged, Is.EqualTo(new[] { "grab failed" }));
             Assert.That(_writes, Is.Empty);
         }
 
         [Test]
-        public void Element_GrabRefused_ErrorAndDone()
+        public void Element_GrabRefused_LoggedAndDone()
         {
             Show();
             _api.SnapshotRc = Native.Result.BadArgument;
-            UpdateElement("a.png", out var done, out var error, write: true, scale: 0);
+            UpdateElement("a.png", out var done, out var success, write: true, scale: 0);
             if (!done)
-                UpdateElement("a.png", out done, out error);
+                UpdateElement("a.png", out done, out success);
             Assert.That(done, Is.True);
-            Assert.That(error, Does.Contain("refused"));
+            Assert.That(success, Is.False);
+            Assert.That(_elementMessages.Logged.Single(), Does.Contain("refused"));
             Assert.That(_writes, Is.Empty);
         }
 
         [Test]
-        public void Element_FileWriteFails_ErrorAndDone()
+        public void Element_FileWriteFails_LoggedAndDone()
         {
             Show();
             _api.SnapshotSize = (4, 4);
@@ -242,9 +261,10 @@ namespace VL.Qt.Tests
             Pump();
             UpdateElement("a.png", out _, out _);
             Finish(_elementWriter);
-            UpdateElement("a.png", out var done, out var error);
+            UpdateElement("a.png", out var done, out var success);
             Assert.That(done, Is.True);
-            Assert.That(error, Is.EqualTo("no permission"));
+            Assert.That(success, Is.False);
+            Assert.That(_elementMessages.Logged, Is.EqualTo(new[] { "no permission" }));
         }
 
         [Test, Ignore("NODW-03: the first grab to settle is written to the path of the second Write (A's pixels in b.png)")]

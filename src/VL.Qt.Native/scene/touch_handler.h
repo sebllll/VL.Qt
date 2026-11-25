@@ -12,9 +12,11 @@
 #include <QtCore/QSizeF>
 #include <QtCore/QtTypes>
 
-// QT-UPDATE: Qt private API (Qt6::QuickPrivate; accepted because Qt has no public API for these handlers). Check on every Qt update: header path,
-// QQuickPointerDeviceHandler / QQuickPointerHandler virtuals (wantsEventPoint, handlePointerEventImpl, onGrabChanged),
-// setPassiveGrab, parentContains. A failing build or SmokeTest touch-points shows a break.
+// QT-UPDATE: Qt private API (Qt6::QuickPrivate; accepted because Qt has no public API for these handlers;
+// list: elements/elements.h).
+// Check on every Qt update: header path, QQuickPointerDeviceHandler / QQuickPointerHandler
+// virtuals (wantsEventPoint, handlePointerEventImpl, onGrabChanged), setPassiveGrab, parentContains. A failing build
+// or SmokeTest touch-points shows a break.
 #include <QtQuick/private/qquickpointerdevicehandler_p.h>
 
 #include <map>
@@ -75,7 +77,7 @@ private:
  * composed with the frozen one), so a changing finger count does not jump. The values describe
  * p' = pivot + translation + scale * R(rotation) * (p - pivot) in the parent's space, with the centroid of the first
  * activation as the pivot: applied like that, the content follows the fingers. QObject child of the QML PinchHandler
- * (deleted with it). */
+ * (deleted with it, before the point counter: HandlerObjects::release, scene/handlers.h). */
 class PinchState : public QObject
 {
     Q_OBJECT

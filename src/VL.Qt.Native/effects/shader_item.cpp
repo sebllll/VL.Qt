@@ -111,12 +111,24 @@ bool accepts(QShaderDescription::VariableType t, quint16 vt)
     }
 }
 
-bool reserved(const QByteArray& name)
+bool contains(const std::string_view* first, const std::string_view* last, std::string_view name)
 {
-    return name == "qt_Matrix" || name == "qt_Opacity" || name == "source";
+    return std::find(first, last, name) != last;
 }
 
 } // namespace
+
+bool isItemReservedUniform(std::string_view name)
+{
+    return contains(std::begin(kItemReservedUniforms), std::end(kItemReservedUniforms), name);
+}
+
+bool isChainReservedUniform(std::string_view name)
+{
+    return isItemReservedUniform(name)
+        || contains(std::begin(kChainAutomaticUniforms), std::end(kChainAutomaticUniforms), name)
+        || contains(std::begin(kChainReservedUniforms), std::end(kChainReservedUniforms), name);
+}
 
 // --- Item -----------------------------------------------------------------------------------------------------------
 
@@ -544,7 +556,7 @@ void ShaderItem::rebuild()
         for (int k = 0; !passThrough && k < int(m_uniforms.size()); ++k) {
             const Uniform& u = m_uniforms[size_t(k)];
             const QString name = QString::fromUtf8(u.name);
-            if (reserved(u.name)) {
+            if (isItemReservedUniform(std::string_view(u.name.constData(), size_t(u.name.size())))) {
                 errors << QStringLiteral("uniform '%1' is reserved (%2)")
                               .arg(name, u.name == "source" ? QStringLiteral("use the Input pin")
                                                             : QStringLiteral("set by VL.Qt"));

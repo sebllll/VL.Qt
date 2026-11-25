@@ -1,5 +1,5 @@
 // Test exports of vlqt_test.h: probes into a window handle, the perf computations, the shared device, image resources,
-// fonts and offscreen scenes (SmokeTest, unit tests).
+// fonts and offscreen scenes (SmokeTest, unit tests). Qt GUI thread, except where an export says "any thread".
 #include "../vlqt_test.h"
 #include "scene/scene.h"
 #include "../device/device.h"
@@ -31,10 +31,16 @@
 
 #include <string>
 
+using vlqt::asSceneHandle;
 using vlqt::fail;
 using vlqt::guarded;
+using vlqt::guardedGui;
+using vlqt::guardedGuiBuffer;
 using vlqt::perfEval;
 using vlqt::perfHostStats;
+using vlqt::SceneHandle;
+using vlqt::withScene;
+using vlqt::withWindow;
 
 namespace {
 
@@ -85,12 +91,8 @@ extern "C" {
 
 VLQT_API int vlqt_test_window_grab(vlqt_scene* p, const char* pngPath)
 {
-    return guarded([&]() -> int {
-        if (!p)
-            return fail(VLQT_ERR_NULL_HANDLE, "test_window_grab: null window");
-        if (vlqt::offscreen::stateOf(p))
-            return fail(VLQT_ERR_UNSUPPORTED, "test_window_grab: not supported on an offscreen scene");
-        QQuickWindow* window = vlqt::offscreen::quickWindow(p);
+    return withWindow(p, "vlqt_test_window_grab", VLQT_ERR_UNSUPPORTED, [&](SceneHandle& h) -> int {
+        QQuickWindow* window = h.window.get();
         QImage img;
 #ifndef _WIN32
         QOpenGLContext* glx = refreshOffscreenGlx(window);
@@ -118,6 +120,7 @@ VLQT_API int vlqt_test_window_grab(vlqt_scene* p, const char* pngPath)
     });
 }
 
+// Pure computations: any thread.
 VLQT_API int vlqt_test_perf_eval(const vlqt_perf_sample* samples, const double* t_ms, int n, double budget_ms, vlqt_perf_stats* out)
 {
     return guarded([&]() -> int {
@@ -140,10 +143,8 @@ VLQT_API int vlqt_test_perf_host_eval(const vlqt_host_pump* pumps, int n, vlqt_h
 
 VLQT_API int vlqt_test_handler_count(vlqt_scene* p, unsigned int id)
 {
-    return guarded([&]() -> int {
-        if (!p)
-            return fail(VLQT_ERR_NULL_HANDLE, "test_handler_count: null window");
-        vlqt::Scene* scene = vlqt::test::scene(p);
+    return withScene(p, "vlqt_test_handler_count", [&](SceneHandle& h) -> int {
+        vlqt::Scene* scene = h.scene.get();
         auto it = scene->nodes.find(id);
         if (it == scene->nodes.end())
             return fail(VLQT_ERR_UNKNOWN_OBJECT, "test_handler_count: unknown id " + std::to_string(id));
@@ -155,12 +156,18 @@ VLQT_API int vlqt_test_handler_count(vlqt_scene* p, unsigned int id)
     });
 }
 
+VLQT_API int vlqt_test_set_overlay(vlqt_scene* p, int flags)
+{
+    return withScene(p, "vlqt_test_set_overlay", [&](SceneHandle& h) -> int {
+        h.perf->setOverlay(flags);
+        return VLQT_OK;
+    });
+}
+
 VLQT_API int vlqt_test_perf_spike(vlqt_scene* p, int phase, float ms)
 {
-    return guarded([&]() -> int {
-        if (!p)
-            return fail(VLQT_ERR_NULL_HANDLE, "test_perf_spike: null window");
-        vlqt::test::perf(p)->injectSpike(phase, ms);
+    return withScene(p, "vlqt_test_perf_spike", [&](SceneHandle& h) -> int {
+        h.perf->injectSpike(phase, ms);
         return VLQT_OK;
     });
 }
@@ -170,17 +177,17 @@ VLQT_API int vlqt_test_perf_text(vlqt_scene* p, int page, char* out, int cap, in
     return guarded([&]() -> int {
         if (const int rc = vlqt::beginBuffer(out, cap, written, required); rc != VLQT_OK)
             return rc;
-        if (!p)
-            return fail(VLQT_ERR_NULL_HANDLE, "test_perf_text: null window");
-        const QByteArray utf8 = vlqt::test::perf(p)->pageText(page).toUtf8();
+        if (const int rc = vlqt::checkScene(p, "vlqt_test_perf_text"); rc != VLQT_OK)
+            return rc;
+        const QByteArray utf8 = asSceneHandle(p)->perf->pageText(page).toUtf8();
         return vlqt::copyText(utf8.constData(), int(utf8.size()), out, cap, written, required);
     });
 }
 
 VLQT_API int vlqt_test_device_info(vlqt_scene* p, void** device, void** rhi)
 {
-    return guarded([&]() -> int {
-        QRhi* r = p ? vlqt::offscreen::quickWindow(p)->rhi() : vlqt::device::uploadRhi();
+    return guardedGui("vlqt_test_device_info", [&]() -> int {
+        QRhi* r = p ? asSceneHandle(p)->window->rhi() : vlqt::device::uploadRhi();
         if (device)
             *device = vlqt::device::nativeDevice(r);
         if (rhi)
@@ -192,7 +199,7 @@ VLQT_API int vlqt_test_device_info(vlqt_scene* p, void** device, void** rhi)
 VLQT_API unsigned long long vlqt_test_device_luid(void)
 {
     unsigned long long luid = 0;
-    guarded([&]() -> int {
+    guardedGui("vlqt_test_device_luid", [&]() -> int {
         luid = vlqt::device::adapterLuid();
         return VLQT_OK;
     });
@@ -201,7 +208,7 @@ VLQT_API unsigned long long vlqt_test_device_luid(void)
 
 VLQT_API int vlqt_test_device_lost(int mode)
 {
-    return guarded([&]() -> int {
+    return guardedGui("vlqt_test_device_lost", [&]() -> int {
         if (mode != VLQT_DEVICE_LOST_REMOVE && mode != VLQT_DEVICE_LOST_HANG)
             return fail(VLQT_ERR_BAD_ARGUMENT, "test_device_lost: unknown mode " + std::to_string(mode));
 #ifdef _WIN32
@@ -227,9 +234,11 @@ VLQT_API int vlqt_test_device_lost(int mode)
 VLQT_API int vlqt_test_res_read_pixels(unsigned long long id, unsigned char* out, int cap, int* width, int* height,
     int* written, int* required)
 {
-    return guarded([&] { return vlqt::res::image::testRead(id, out, cap, width, height, written, required); });
+    return guardedGuiBuffer("vlqt_test_res_read_pixels", out, cap, written, required,
+        [&] { return vlqt::res::image::testRead(id, out, cap, width, height, written, required); });
 }
 
+// Paints a QImage without a window: any thread.
 VLQT_API int vlqt_test_write_image(const char* utf8Path, int width, int height, int quality)
 {
     return guarded([&] {
@@ -247,13 +256,13 @@ VLQT_API int vlqt_test_write_image(const char* utf8Path, int width, int height, 
 
 VLQT_API int vlqt_test_font_refs(unsigned long long handle)
 {
-    return guarded([&] { return vlqt::test::fontRefs(handle); });
+    return guardedGui("vlqt_test_font_refs", [&] { return vlqt::test::fontRefs(handle); });
 }
 
 VLQT_API int vlqt_test_offscreen_state(vlqt_scene* scene, unsigned long long* readFence, unsigned long long* writeFence,
                                        long long* renders)
 {
-    return guarded([&] { return vlqt::offscreen::testState(scene, readFence, writeFence, renders); });
+    return guardedGui("vlqt_test_offscreen_state", [&] { return vlqt::offscreen::testState(scene, readFence, writeFence, renders); });
 }
 
 } // extern "C"

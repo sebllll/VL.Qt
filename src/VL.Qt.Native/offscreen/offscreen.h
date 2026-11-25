@@ -31,7 +31,7 @@ class RenderThread;
 
 namespace vlqt::offscreen {
 
-// --- window/: window.cpp (createHandle, stateOf, quickWindow), focus_release.cpp, touch_input.cpp ---
+// --- window/: window.cpp (createHandle, stateOf), focus_release.cpp, touch_input.cpp ---
 
 // Window handle of a new scene around window, a QQuickWindow of state's render control: QML engine, scene (apply,
 // poll), change count, perf monitor and graphics configuration on the shared device (device::attach), the
@@ -40,7 +40,6 @@ namespace vlqt::offscreen {
 vlqt_scene* createHandle(QQuickWindow* window, OffscreenScene* state);
 // The offscreen part of handle; nullptr for a null handle or a window.
 OffscreenScene* stateOf(vlqt_scene* handle);
-QQuickWindow* quickWindow(vlqt_scene* handle);
 // Clears the focus of the outermost focused item below window's root, so the active focus goes to the root: a running
 // edit commits as on any focus loss. Shared by the FocusRelease filter and the scene's focus loss.
 void releaseFocus(QQuickWindow* window);

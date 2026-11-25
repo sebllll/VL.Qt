@@ -7,6 +7,7 @@ using VL.Lang;
 using VL.Model;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
+using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 
@@ -36,10 +37,13 @@ namespace VL.Qt.Stride
         private Native.Result _lastBindCode;
         private int _rebindWait;
         private const string SamplesPhase = "Multisample Count";
+        private const string BuildPhase = "Build";
+        private readonly ElementInput _element;
 
         public SharedTextureScene(NodeContext nodeContext)
         {
             _errors = new NodeErrors(nodeContext);
+            _element = new ElementInput(_errors);
             _renderer = QtTextureRenderer.ForApp(nodeContext.AppHost);
             _scene = new OffscreenScene(OccurrenceRegistry.ForApp(nodeContext.AppHost), 1920, 1080);
             _input = new NotificationQueue(_scene.Input.Notify);
@@ -72,7 +76,7 @@ namespace VL.Qt.Stride
         /// A new <paramref name="samples"/> rebinds the scene to the same texture (QtNative renders with the new MSAA count and
         /// resolves into the texture); a count the device does not support gives a warning at the node.
         /// </summary>
-        public void Update(Element? input, Int2 size, PixelFormat format, Space space, Color4 clearColor, bool clear, bool enabled, bool debug, MultisampleCount samples)
+        public void Update(IElement? input, Int2 size, PixelFormat format, Space space, Color4 clearColor, bool clear, bool enabled, bool debug, MultisampleCount samples)
         {
             _enabled = enabled;
             // The previous frame had no draw (game not drawing): send its commands now, so they do not pile up.
@@ -97,7 +101,12 @@ namespace VL.Qt.Stride
             }
             // Qt does not premultiply the clear colour itself (render-texture.md, task 1.8).
             var premultiplied = new Color4(clearColor.R * clearColor.A, clearColor.G * clearColor.A, clearColor.B * clearColor.A, clearColor.A);
-            _scene.Update(input, space, premultiplied, clear, enabled);
+            _scene.Update(_element.Update(input), space, premultiplied, clear, enabled);
+            // A stylable linked to Input failed to build (exception, cycle, foreign result): warning until a Build succeeds.
+            if (_scene.Reconciler.RootBuildError is { } buildError)
+                _errors.Warn(buildError, BuildPhase);
+            else
+                _errors.Clear(BuildPhase);
 
             if (enabled && _texture is not null)
             {
@@ -281,6 +290,7 @@ namespace VL.Qt.Stride
             _texture?.Dispose();
             _texture = null;
             _errors.Dispose();
+            _element.Dispose();
         }
     }
 }

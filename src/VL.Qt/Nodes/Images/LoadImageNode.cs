@@ -14,7 +14,7 @@ namespace VL.Qt.Nodes
     public sealed class LoadImageNode : IDisposable
     {
         private readonly ResourceClient _client;
-        private readonly ImageNodeReport _report;
+        private readonly ResourceNodeReport _report;
         private string? _path;
         private bool _mipmaps;
         private ImageUpload _upload;
@@ -23,33 +23,30 @@ namespace VL.Qt.Nodes
         private string _createError = string.Empty;
 
         public LoadImageNode(NodeContext nodeContext)
+            : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
         {
-            _client = ResourceClient.ForApp(nodeContext.AppHost);
-            _report = new ImageNodeReport(new NodeErrors(nodeContext));
         }
 
-        /// <summary>For tests: a client on a fake API, nothing is reported.</summary>
-        internal LoadImageNode(ResourceClient client)
+        /// <summary>For tests: a client on a fake API; null <paramref name="messages"/> reports nothing.</summary>
+        internal LoadImageNode(ResourceClient client, NodeErrors? messages = null)
         {
             _client = client;
-            _report = new ImageNodeReport(null);
+            _report = new ResourceNodeReport(messages, lasting: true);
         }
 
         /// <summary>Loads the file when Path, Mipmaps or Upload change and waits until it is on the GPU.</summary>
         /// <param name="path">Image file (PNG, JPG, BMP, ... everything Qt reads; EXIF rotation is applied). Empty = no image.</param>
         /// <param name="mipmaps">Generate mipmaps (+33 % GPU memory): smoother when the image is drawn much smaller than its size.</param>
-        /// <param name="error">Why loading failed, empty otherwise.</param>
         /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
-        /// <returns>The image, also when loading failed (State Failed, draws nothing). Nothing for an empty path.</returns>
+        /// <returns>The image, also when loading failed (State Failed, draws nothing; the node shows why and logs it). Nothing for an empty path.</returns>
         [return: Pin(Name = "Image")]
-        public QtImage? Update(Path path, bool mipmaps, out string error,
+        public QtImage? Update(Path path, bool mipmaps,
             [Pin(Visibility = Model.PinVisibility.Optional)] ImageUpload upload = ImageUpload.Auto)
         {
             var p = path?.Value ?? string.Empty;
             if (p != _path || mipmaps != _mipmaps || upload != _upload)
                 Load(p, mipmaps, upload);
-            error = _resource?.Error ?? _createError;
-            _report.Update(_resource, error);
+            _report.Update(_resource, _resource?.Error ?? _createError);
             return _image;
         }
 

@@ -15,7 +15,7 @@ namespace VL.Qt.Nodes
     public sealed class ToQtImageNode : IDisposable
     {
         private readonly ResourceClient _client;
-        private readonly ImageNodeReport _report;
+        private readonly ResourceNodeReport _report;
         private IImage? _last;
         private ImageUpload _upload;
         private ImageResource? _resource;
@@ -23,25 +23,23 @@ namespace VL.Qt.Nodes
         private string _error = string.Empty;
 
         public ToQtImageNode(NodeContext nodeContext)
+            : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
         {
-            _client = ResourceClient.ForApp(nodeContext.AppHost);
-            _report = new ImageNodeReport(new NodeErrors(nodeContext));
         }
 
-        /// <summary>For tests: a client on a fake API, nothing is reported.</summary>
-        internal ToQtImageNode(ResourceClient client)
+        /// <summary>For tests: a client on a fake API; null <paramref name="messages"/> reports nothing.</summary>
+        internal ToQtImageNode(ResourceClient client, NodeErrors? messages = null)
         {
             _client = client;
-            _report = new ImageNodeReport(null);
+            _report = new ResourceNodeReport(messages, lasting: true);
         }
 
         /// <summary>Uploads Input when it is a new instance or volatile, or when Upload changes.</summary>
         /// <param name="input">8-bit RGBA/BGRA/RGBX/BGRX directly; RGB, grey, 16 bit and float are converted to 8 bit RGBA (with a warning for 16 bit and float). Nothing = no image.</param>
-        /// <param name="error">Why the upload failed, empty otherwise.</param>
         /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
-        /// <returns>The image: a new QtImage for each new Input instance (one GPU resource per node, its content is replaced).</returns>
+        /// <returns>The image: a new QtImage for each new Input instance (one GPU resource per node, its content is replaced). A failed upload is shown at the node and logged.</returns>
         [return: Pin(Name = "Image")]
-        public QtImage? Update(IImage? input, out string error,
+        public QtImage? Update(IImage? input,
             [Pin(Visibility = Model.PinVisibility.Optional)] ImageUpload upload = ImageUpload.Auto)
         {
             if (input is null)
@@ -58,7 +56,7 @@ namespace VL.Qt.Nodes
                 if (_resource is not null && (isNew || _image is null))
                     _image = new QtImage(_resource);
             }
-            error = _error.Length > 0 ? _error : _image is null ? string.Empty : _resource?.Error ?? string.Empty;
+            var error = _error.Length > 0 ? _error : _image is null ? string.Empty : _resource?.Error ?? string.Empty;
             _report.Update(_image is null ? null : _resource, error);
             return _image;
         }

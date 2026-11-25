@@ -1,6 +1,6 @@
+// Private Qt API: QQuickWindowPrivate::itemsToPolish (poll); check on Qt updates (list: elements/elements.h).
 #include "scene/scene.h"
 #include "app/exports.h"
-#include "resources/audio_tap.h"
 #include "diagnostics/debug_overlay.h"
 #include "effects/effect_chain.h"
 
@@ -63,13 +63,13 @@ Scene::~Scene()
         kv.second.xf->scene = nullptr; // the unparenting and deletes below emit geometry signals
     for (auto& kv : nodes) {
         elements.clearEffectSource(kv.second);
-        releaseVideo(kv.second);
+        beforeDestroy(kv.second);
     }
     for (auto& kv : nodes)
         kv.second.item->setParentItem(nullptr);
     for (auto& kv : nodes)
         delete kv.second.item; // attached input handlers are QObject children of their items
-    handlerNodes.clear();
+    handlerNodes.clear(); // their QPointers read null now: HandlerObjects deletes nothing twice
     deleteRetired(); // destroyed former effect sources of the last frame (not in nodes any more)
     nodes.clear();
     ids.clear();
@@ -105,7 +105,7 @@ const QQuickItem* Scene::debugOverlay() const { return debug; }
 
 void Scene::updateDebug()
 {
-    const bool on = debugAll || elements.debugCount > 0;
+    const bool on = debugAll || elements.anyDebug();
     if (!on && !debug)
         return; // never used: nothing to do, no per-frame cost
     if (!debug)
@@ -113,6 +113,18 @@ void Scene::updateDebug()
     debug->setAll(debugAll);
     debug->setActive(on);
     debug->refresh();
+}
+
+ElementEntry Scene::makeEntry(QQuickItem* item, const TypeDef& def)
+{
+    // Member assignments, not a designated initializer (C++20; the build is C++17): a new field cannot shift the others.
+    ElementEntry entry;
+    entry.item = item;
+    entry.type = def.id;
+    entry.def = &def;
+    elements.initGeometry(entry); // xf, anchor placement, follows size changes
+    entry.polled = elements.pollsState(def.id);
+    return entry;
 }
 
 int Scene::create(quint32 id, quint16 type, std::string& err)
@@ -123,9 +135,7 @@ int Scene::create(quint32 id, quint16 type, std::string& err)
     }
     if (isHandlerType(type)) {
         // Only the id, type and properties: the QML handler needs its parent item before completeCreate (REPARENT).
-        HandlerEntry h;
-        h.type = type;
-        handlerNodes[id] = h;
+        handlerNodes[id].type = type; // in place: HandlerEntry owns its Qt objects and is not copyable
         return ApplyOk;
     }
     const TypeDef* ti = findType(type);
@@ -136,22 +146,16 @@ int Scene::create(quint32 id, quint16 type, std::string& err)
     QQuickItem* item = elements.create(*ti, err);
     if (!item)
         return ApplyInvalid;
-    ElementEntry& node = nodes[id] = ElementEntry{item, type, 0, 0, nullptr};
-    elements.initGeometry(node); // anchor placement, follows size changes
-    node.polled = elements.pollsState(type);
+    ElementEntry& node = nodes[id] = makeEntry(item, *ti);
     ids[item] = id;
     watchGeometry(*this, id, node); // measure on change
     return ApplyOk;
 }
 
-void Scene::releaseVideo(ElementEntry& node)
+void Scene::beforeDestroy(ElementEntry& node)
 {
-    if (node.type != VLQT_ELEMENT_TYPE_VIDEO)
-        return;
-    // Stop the player and drop its source first, so the decoder and audio threads end before the item goes;
-    // then the audio tap, while the player still exists (resources/audio_tap.h releaseVideo).
-    QMetaObject::invokeMethod(node.item, "vlqtRelease");
-    res::audio::releaseVideo(node.item);
+    if (node.def->beforeDestroy)
+        node.def->beforeDestroy(node.item);
 }
 
 void Scene::destroySubtree(QQuickItem* item)
@@ -163,7 +167,7 @@ void Scene::destroySubtree(QQuickItem* item)
     auto it = ids.find(item);
     ElementEntry& node = nodes[it->second];
     destroyHandlersOf(node); // before the item goes: handler QML objects, ids free again
-    releaseVideo(node);
+    beforeDestroy(node);
     // Effect chain off first (layer, its root and stages; the masks of its links are detached and parked); a
     // SHADER source keeps its layer until flushLayerOff.
     const std::vector<QQuickItem*> masks = elements.effectMasks(node);
@@ -190,8 +194,7 @@ void Scene::destroySubtree(QQuickItem* item)
         for (auto& kv : nodes)
             if (kv.second.effectSource == item)
                 elements.clearEffectSource(kv.second);
-    if (node.debug)
-        --elements.debugCount;
+    elements.setDebug(node, false); // leaves the count of DEBUG nodes
     node.xf->scene = nullptr; // its connections may outlive the node (retired item): no more queue entries
     nodes.erase(it->second);
     ids.erase(it);
@@ -284,7 +287,7 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
         return id == VLQT_ROOT_ID ? ApplyInvalid : ApplyUnknownId;
     }
     QQuickItem* parent = root;
-    bool underShaderEffect = false;
+    bool underShaderEffect = false, parentIsLayout = false;
     if (parentId != VLQT_ROOT_ID) {
         auto pit = nodes.find(parentId);
         if (pit == nodes.end()) {
@@ -295,6 +298,7 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
         }
         parent = pit->second.item;
         underShaderEffect = pit->second.type == VLQT_ELEMENT_TYPE_SHADER;
+        parentIsLayout = pit->second.def->layout;
     }
     QQuickItem* item = it->second.item;
     if (it->second.maskHost) {
@@ -317,13 +321,13 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
     if (item->parentItem() != parent) {
         item->setParentItem(parent); // appended as last child
         // Free parent: x/y = -anchor; Row/Column: its layout owns x/y and lays out the new child itself.
-        if (!elements.placeAfterReparent(it->second, err))
-            return ApplyInvalid;
+        it->second.xf->inLayout = parentIsLayout; // also cleared again when the item leaves a Row/Column
+        elements.placeAfterReparent(it->second);
     }
     it->second.maskHidden = false; // a detached mask comes back into the tree
-    // Visibility is QtNative's alone (there is no VISIBLE property): children of a ShaderEffect (Input, texture
-    // elements) are drawn only through their layers, every other element is shown (Opacity 0 = not drawn, input stays).
-    item->setVisible(!underShaderEffect); // no-op when the explicit value is unchanged
+    // Children of a ShaderEffect (Input, texture elements) are drawn only through their layers; every other element is
+    // shown unless its Enabled pin (VISIBLE) is off (Opacity 0 = not drawn, input stays).
+    item->setVisible(!underShaderEffect && it->second.enabled); // no-op when the explicit value is unchanged
 
     // Stacking order: index = position among the element siblings (clamped). Untracked items do not count: the
     // root of an effect chain (a sibling, kept right after its item by Qt), retired items, QML internals.
@@ -369,12 +373,20 @@ int Scene::poll(unsigned char* out, int cap, int* written, int* required)
 {
     if (const int rc = beginBuffer(out, cap, written, required); rc != VLQT_OK)
         return rc;
-    deleteRetired(); // poll runs after processEvents: the effects have moved off retired sources
-    appliedSincePoll = false; // polish (if Qt did not render) ran before this poll
-    collectWindowGeometry(*this);
-    collectMeasurements(*this);
-    collectHandlers(*this);
-    return events.drain(out, cap, written, required);
+    // Collect once per poll cycle: a buffer that was too small leaves the records queued and `eventsCollected` set, so
+    // the retry only drains and *required is exactly what it needs (collecting again would add records).
+    if (!eventsCollected) {
+        deleteRetired(); // poll runs after processEvents: the effects have moved off retired sources
+        appliedSincePoll = false; // polish (if Qt did not render) ran before this poll
+        collectWindowGeometry(*this);
+        collectMeasurements(*this);
+        collectHandlers(*this);
+        eventsCollected = true;
+    }
+    const int rc = events.drain(out, cap, written, required);
+    if (rc == VLQT_OK)
+        eventsCollected = false;
+    return rc;
 }
 
 } // namespace vlqt

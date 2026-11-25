@@ -1,3 +1,4 @@
+// Private Qt API: QQuickShape, QQuickShapePath, QQuickShapeTrim (typed setters); check on Qt updates (list: elements/elements.h).
 #include "elements/element_types.h"
 #include "elements/shape_path_element.h"
 
@@ -57,14 +58,6 @@ QQuickItem* makeShape()
 
 QQuickShapePath* shapePath(const ElementEntry& n) { return static_cast<ShapeItem*>(n.item)->path; }
 
-bool finiteF32(const Value& v, std::string& err)
-{
-    if (std::isfinite(v.f[0]))
-        return true;
-    err = "value must be finite";
-    return false;
-}
-
 bool setShapePoints(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
 {
     if (v.floatCount % 2) {
@@ -103,10 +96,8 @@ bool setShapeStrokeColor(Elements&, ElementEntry& n, const ResolvedProp&, const 
 }
 
 // < 0 = no stroke (Qt draws none for a negative width).
-bool setShapeStrokeWidth(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapeStrokeWidth(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
-    if (!finiteF32(v, err))
-        return false;
     shapePath(n)->setStrokeWidth(v.f[0]);
     return true;
 }
@@ -136,10 +127,8 @@ bool setShapeJoin(Elements&, ElementEntry& n, const ResolvedProp&, const Value& 
 }
 
 // ShapePath.miterLimit is an int: the f32 is rounded (docs/decisions/paths.md).
-bool setShapeMiterLimit(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapeMiterLimit(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
-    if (!finiteF32(v, err))
-        return false;
     shapePath(n)->setMiterLimit(int(std::lround(std::clamp(v.f[0], 0.f, 1.0e6f))));
     return true;
 }
@@ -170,20 +159,16 @@ bool setShapeDash(Elements&, ElementEntry& n, const ResolvedProp&, const Value& 
     return true;
 }
 
-bool setShapeDashOffset(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapeDashOffset(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
-    if (!finiteF32(v, err))
-        return false;
     shapePath(n)->setDashOffset(v.f[0]);
     return true;
 }
 
 // Trim (QQuickShapeTrim, Qt 6.10): created on the first trim value, a pure trim change draws without changed().
 template <void (QQuickShapeTrim::*Set)(qreal)>
-bool setShapeTrim(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string& err)
+bool setShapeTrim(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
-    if (!finiteF32(v, err))
-        return false;
     (shapePath(n)->trim()->*Set)(v.f[0]);
     return true;
 }

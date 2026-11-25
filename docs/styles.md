@@ -29,7 +29,7 @@ Sizes in a style are px. Rectangles and Text have no Style pin: they are primiti
 
 ## Self-made widgets
 
-A patched class that implements `IStylable` behaves like a built-in widget: connect it to a Group, Row or Column, and the container calls its `Build` operation with the style resolved at that position and shows the returned element. Inside Build, use the getters to read colors, radius and font for the current state and draw the widget from primitives. Build runs once per frame; element nodes return the same instance while nothing changes, so the scene stays untouched. The output pin of Build must be named `Result`.
+A patched class that implements `IStylable` behaves like a built-in widget: connect it wherever an element goes (Group, Row, Column, Renderer, Labeled, an effect input), and its `Build` operation is called with the style resolved at that position; the returned element is shown. Build may return another stylable, which is built in turn; one that returns itself or a cycle shows nothing and warns. Inside Build, use the getters to read colors, radius and font for the current state and draw the widget from primitives. Build runs once per frame; element nodes return the same instance while nothing changes, so the scene stays untouched. The output pin of Build must be named `Result`.
 
 ## Help patches
 

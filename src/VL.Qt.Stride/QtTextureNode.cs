@@ -45,7 +45,7 @@ namespace VL.Qt.Stride
             out Texture? output,
             out string error,
             [Pin(Visibility = PinVisibility.Optional)] out PerfStats perf,
-            Element? input,
+            IElement? input,
             [DefaultValue(typeof(Int2), "1920, 1080")] Int2 size,
             [DefaultValue(typeof(Space), nameof(Space.DIPTopLeft))] Space space,
             [DefaultValue("0, 0, 0, 0")] Color4 clearColor,

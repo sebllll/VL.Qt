@@ -94,7 +94,7 @@ The reference is the code written by the vvvv team in [VL.StandardLibs](https://
 - Interop with QtNative: `unsafe` pointers with explicit ownership; platform code behind `OperatingSystem.Is…()` / `[SupportedOSPlatform]`.
 
 **Errors and logging**
-- Catch errors from Qt/QML, log them with message templates (`LogWarning("... {Name}", name)`, not string interpolation) and show them at the node (`Error` output or the shared `AddException` helper). Throw only for programming errors (`ArgumentNullException(nameof(x))`, `InvalidOperationException`).
+- Catch errors from Qt/QML and report them through the node's `NodeErrors` (`src/VL.Qt/Runtime/NodeErrors.cs`): one entry per phase, logged once per distinct text with a message template (`LogWarning("... {Name}", name)`, not string interpolation) and shown at the node; a message source holds a `NodeMessage`, the resource and file nodes use `ResourceNodeReport`. No `Error` output pins. Throw only for programming errors (`ArgumentNullException(nameof(x))`, `InvalidOperationException`).
 - Log only through the vvvv logger (from the `NodeContext` or `QtApp`: `nodeContext.GetLogger()` / `appHost.LoggerFactory`), so everything, including Qt messages forwarded from QtNative, ends up in vvvv's log window. No `Console.*` or `Debug.Write` in the library. For log files while debugging see the help patch `HowTo Configure logging providers`.
 
 **Documentation**

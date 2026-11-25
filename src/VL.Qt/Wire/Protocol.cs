@@ -10,7 +10,7 @@ namespace VL.Qt.Wire
     internal static class Protocol
     {
         /// <summary>Version of the command protocol and the C ABI of vlqt.h; QtApp refuses a vlqt.dll with another one. Bump with every change (see protocol.h).</summary>
-        public const int AbiVersion = 20;
+        public const int AbiVersion = 22;
         public const int CommandAlign = 4;
         /// <summary>Header of a command, a poll record and a resource record: u16 op/event, u16 flags (0, reserved), u32 length.</summary>
         public const int HeaderSize = 8;
@@ -190,7 +190,8 @@ namespace VL.Qt.Wire
             public const ushort Size = 1;
             public const ushort Transform = 2;
             public const ushort Opacity = 3;
-            // 4 free: was Visible, removed in #474 (Opacity 0 = not drawn, input stays).
+            /// <summary>bool, the Enabled pin (default true): false takes the item out of the scene (not drawn, no input, no space in Row/Column).</summary>
+            public const ushort Visible = 4;
             public const ushort Clip = 5;
             /// <summary>i32 Qt::Alignment: point of the item at its parent's origin, pivot of <see cref="Transform"/> (in Row/Column only the pivot).</summary>
             public const ushort Anchor = 6;

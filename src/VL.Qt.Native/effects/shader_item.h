@@ -51,6 +51,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -58,6 +59,20 @@ class QSGTexture;
 class QSGTextureProvider;
 
 namespace vlqt {
+
+// Uniform names VL.Qt sets itself: THE one list (the C# mirror is VL.Qt.Shaders.ReservedUniforms, ReservedUniformsDriftTests
+// compares the three arrays below). An entry of that name from C# is an error line; shader files get no pin for them.
+// - item: every ShaderEffect (qt_Matrix and qt_Opacity from the render state, source = Input);
+// - chain automatic: written by the effect chain into the passes of a SHADER link if the shader declares them;
+// - chain reserved: names of the Blur-Pyramide textures, no uniform of a shader link may have them.
+inline constexpr std::string_view kItemReservedUniforms[] = {"qt_Matrix", "qt_Opacity", "source"};
+inline constexpr std::string_view kChainAutomaticUniforms[] = {"texelSize", "dpr", "weight", "elementRect", "passIndex"};
+inline constexpr std::string_view kChainReservedUniforms[] = {"base", "glow", "shadow"};
+
+// A name of kItemReservedUniforms.
+bool isItemReservedUniform(std::string_view name);
+// A name of a SHADER link of the effect chain that C# must not set: the item names, the chain automatic ones and the chain reserved ones.
+bool isChainReservedUniform(std::string_view name);
 
 namespace res::image {
 class ImageContent;

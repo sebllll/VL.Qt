@@ -1,3 +1,4 @@
+// Private Qt API: QQuickRenderControlPrivate::resetRhi, QQuickWindowPrivate (dropRhi); check on Qt updates (list: elements/elements.h).
 #include "offscreen/offscreen_scene.h"
 #include "app/exports.h"
 #include "vlqt.h"

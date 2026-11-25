@@ -1,5 +1,6 @@
 // The D3D11 binding of an offscreen scene: the texture of the foreign device opened on QtNative's device, two shared
 // fences, the adapter match and the linear pass (render-texture.md). Windows only (CMakeLists.txt).
+// Private Qt API: QQuickWindowPrivate::ensureCustomRenderTarget; check on Qt updates (list: elements/elements.h).
 #include "offscreen/offscreen_scene.h"
 #include "app/exports.h"
 #include "device/device.h"
