@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.IO;
 using Microsoft.Extensions.Logging;
 using VL.Core.Diagnostics;
+using VL.Qt.NodeFactories;
 
 namespace VL.Qt.Shaders
 {
@@ -31,6 +32,7 @@ namespace VL.Qt.Shaders
 
         private readonly object _syncRoot = new();
         private readonly Dictionary<string, Entry> _entries = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, LastGood<ShaderSource>> _lastGood = new(StringComparer.OrdinalIgnoreCase);
         private readonly ILogger _logger;
         private readonly Func<string, ShaderStage, ShaderReflection> _reflect;
 
@@ -44,7 +46,8 @@ namespace VL.Qt.Shaders
 
         /// <summary>
         /// The source of the current version of <paramref name="file"/>; reads and reflects only if the files changed since the
-        /// last call. A file that could not be read is not remembered, so the next call tries again.
+        /// last call. A file that could not be read is not remembered, so the next call tries again. A version that does not
+        /// read or compile gives the last good one with <see cref="ShaderSource.KeptError"/> set (<see cref="LastGood{T}"/>).
         /// </summary>
         public ShaderSource Get(ShaderFile file)
         {
@@ -55,8 +58,11 @@ namespace VL.Qt.Shaders
                 if (_entries.TryGetValue(file.FragmentPath, out var entry) && entry.FragmentTime == fragmentTime && entry.VertexTime == vertexTime)
                     return entry.Source;
 
-                var source = ShaderSource.Load(file, _reflect);
-                if (source.ReadError is null)
+                if (!_lastGood.TryGetValue(file.FragmentPath, out var lastGood))
+                    _lastGood[file.FragmentPath] = lastGood = new LastGood<ShaderSource>();
+                var loaded = ShaderSource.Load(file, _reflect);
+                var source = lastGood.Resolve(loaded, loaded.Failed, static (good, failed) => good with { KeptError = failed.ReadError ?? failed.PinModel.Error });
+                if (loaded.ReadError is null)
                     _entries[file.FragmentPath] = new Entry(fragmentTime, vertexTime, source);
                 else
                     _entries.Remove(file.FragmentPath);

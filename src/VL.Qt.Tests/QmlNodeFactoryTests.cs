@@ -5,6 +5,7 @@ using System.Linq;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using VL.Core;
+using VL.Qt.NodeFactories;
 using VL.Qt.Qml;
 
 namespace VL.Qt.Tests
@@ -273,6 +274,55 @@ namespace VL.Qt.Tests
             // A missing file is a FileNotFoundException, so the read error comes with the duplicate error.
             var error = layout.Messages.Single(m => m.Type == VL.Core.Diagnostics.MessageType.Error).Text;
             Assert.That(error, Does.Contain("duplicate of Other.qml").And.Contain("cannot be read").And.Contain(missing));
+        }
+
+        [Test]
+        public void Layout_ParseErrorAfterGoodVersion_KeepsLastGoodPinsAndShowsTheError()
+        {
+            var path = Write("Gauge.qml", "Item { property real level: 1; property color accentColor }\n");
+            var file = File_(path, "Gauge");
+            var lastGood = new LastGood<QmlNodeLayout>();
+
+            var good = lastGood.Resolve(QmlNodeLayout.Load(file, NullLogger.Instance), failed: false, QmlNodeLayout.KeepPins);
+            // A root type that is the file itself is a parse error: alone it leaves only the common pins.
+            File.WriteAllText(path, "Gauge { property real level: 1 }\n");
+            var loaded = QmlNodeLayout.Load(file, NullLogger.Instance);
+            Assert.That(loaded.HasErrors);
+            Assert.That(loaded.InputDescriptions().Select(i => i.Name), Does.Not.Contain("Level"));
+
+            var kept = lastGood.Resolve(loaded, loaded.HasErrors, QmlNodeLayout.KeepPins);
+
+            Assert.That(kept.InputDescriptions().Select(i => i.Name), Is.EqualTo(good.InputDescriptions().Select(i => i.Name)));
+            Assert.That(kept.InputDescriptions().Select(i => i.Name), Does.Contain("Level").And.Contain("Accent Color"));
+            Assert.That(kept.Messages.Count(m => m.Type == VL.Core.Diagnostics.MessageType.Error), Is.EqualTo(1));
+            Assert.That(kept.Messages.Single(m => m.Type == VL.Core.Diagnostics.MessageType.Error).Text, Does.Contain("own type"));
+            Assert.That(kept.Messages.Select(m => m.Text), Does.Contain(LastGood<QmlNodeLayout>.KeptNote));
+        }
+
+        [Test]
+        public void Layout_UnreadableFileAfterGoodVersion_KeepsLastGoodPins()
+        {
+            var path = Write("Gauge.qml", "Item { property real level: 1 }\n");
+            var file = File_(path, "Gauge");
+            var lastGood = new LastGood<QmlNodeLayout>();
+            lastGood.Resolve(QmlNodeLayout.Load(file, NullLogger.Instance), failed: false, QmlNodeLayout.KeepPins);
+
+            // Locked by the editor that saves it.
+            using var locked = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            var loaded = QmlNodeLayout.Load(file, NullLogger.Instance);
+            var kept = lastGood.Resolve(loaded, loaded.HasErrors, QmlNodeLayout.KeepPins);
+
+            Assert.That(kept.InputDescriptions().Select(i => i.Name), Does.Contain("Level"));
+            Assert.That(kept.Messages.Single(m => m.Type == VL.Core.Diagnostics.MessageType.Error).Text, Does.Contain("cannot be read"));
+        }
+
+        [Test]
+        public void Layout_ParseErrorWithoutGoodVersion_ShowsWhatTheFailedVersionGives()
+        {
+            var path = Write("Gauge.qml", "Gauge { property real level: 1 }\n");
+            var loaded = QmlNodeLayout.Load(File_(path, "Gauge"), NullLogger.Instance);
+            var kept = new LastGood<QmlNodeLayout>().Resolve(loaded, loaded.HasErrors, QmlNodeLayout.KeepPins);
+            Assert.That(kept, Is.SameAs(loaded));
         }
 
         [Test]

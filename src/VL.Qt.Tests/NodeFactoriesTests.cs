@@ -25,6 +25,17 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void LastGood_FailedVersion_GivesTheLastGoodOne_UntilAGoodOneComes()
+        {
+            var lastGood = new LastGood<string>();
+            Assert.That(lastGood.Resolve("broken 0", failed: true, static (good, failed) => good + "+" + failed), Is.EqualTo("broken 0"), "no good version yet");
+            Assert.That(lastGood.Resolve("good 1", failed: false, static (good, failed) => good + "+" + failed), Is.EqualTo("good 1"));
+            Assert.That(lastGood.Resolve("broken 2", failed: true, static (good, failed) => good + "+" + failed), Is.EqualTo("good 1+broken 2"));
+            Assert.That(lastGood.Resolve("broken 3", failed: true, static (good, failed) => good + "+" + failed), Is.EqualTo("good 1+broken 3"), "a failed version never replaces the good one");
+            Assert.That(lastGood.Resolve("good 4", failed: false, static (good, failed) => good + "+" + failed), Is.EqualTo("good 4"));
+        }
+
+        [Test]
         public void PinNames_SplitCamelCase()
         {
             Assert.That(PinNames.FromIdentifier("pixelSize"), Is.EqualTo("Pixel Size"));

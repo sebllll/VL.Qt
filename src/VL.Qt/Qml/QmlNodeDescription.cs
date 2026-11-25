@@ -12,8 +12,9 @@ namespace VL.Qt.Qml
     /// fragmented (like the shader nodes, so vvvv calls Update). Name <see cref="QmlFile.FullName"/>, category
     /// <see cref="QmlFile.Category"/>, tags <see cref="QmlFile.Tags"/> (the tags argument of NewNodeDescription). invalidated:
     /// <see cref="QmlNodeFactory.WatchSignature"/> with the signature of the layout, so only a change of the declarations
-    /// rebuilds the node; vvvv keeps links on pins with the same name. A file that does not parse still gets a node with the
-    /// common pins and its errors as messages.
+    /// rebuilds the node; vvvv keeps links on pins with the same name. A file that does not read or parse keeps the pins of the
+    /// last good version (<see cref="LastGood{T}"/>) and shows its errors as messages; without a good version the node has
+    /// the common pins and the errors.
     /// </summary>
     // Smell experimental like QmlElement is not possible: NodeBuilding.NewNodeDescription and IVLNodeDescription (VL.Core
     // 2026.8) have no smell, SymbolSmell only exists as the [Smell] attribute on symbols. The experimental state of the
@@ -25,6 +26,7 @@ namespace VL.Qt.Qml
         {
             // The signature of the layout of the last init: the description is invalidated only when the declarations change.
             string? signature = null;
+            var lastGood = new LastGood<QmlNodeLayout>();
             return factory.NewNodeDescription(
                 file.FullName,
                 file.Category,
@@ -33,8 +35,11 @@ namespace VL.Qt.Qml
                 invalidated: QmlNodeFactory.WatchSignature(file, () => Volatile.Read(ref signature)),
                 init: context =>
                 {
-                    var layout = QmlNodeLayout.Load(file, logger);
-                    Volatile.Write(ref signature, layout.Declarations.Signature);
+                    var loaded = QmlNodeLayout.Load(file, logger);
+                    // The signature of the file as it is now, also while the node shows the last good pins: the broken file then does
+                    // not invalidate again with every event, and a fix does (it differs from the broken one).
+                    Volatile.Write(ref signature, loaded.Declarations.Signature);
+                    var layout = lastGood.Resolve(loaded, loaded.HasErrors, QmlNodeLayout.KeepPins);
                     return context.Node(
                         layout.InputDescriptions(),
                         layout.OutputDescriptions(),

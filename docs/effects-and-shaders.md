@@ -70,7 +70,7 @@ Every `.frag` file in a folder named `qtshaders` next to the patch becomes a nod
 - A `sampler2D source` becomes the `Input` pin: the shader is a filter. Without it, it is a generator without Input pin. Further `sampler2D` become image pins.
 - Uniforms become pins in the order of the file, the name split into words (`pixelSize` → `Pixel Size`). Types: `float`, `vec2`, `vec3`, `vec4`, `int`, `bool`, `mat4`.
 - Annotations as `//` comments, see [Annotations](#annotations): file head tags (`@category`, `@summary`, `@padding`, `@passes`, `@chainonly`) and uniform tags (`@default`, `@min`, `@max`, `@color`, `@summary`).
-- Pins with the same name keep their links and values when the file changes. Compile errors, unknown annotations and unsupported uniform types (`uint`, `ivec`, `mat3`, arrays) show at the node.
+- Pins with the same name keep their links and values when the file changes. Compile errors, unknown annotations and unsupported uniform types (`uint`, `ivec`, `mat3`, arrays) show at the node. While a file does not compile or cannot be read, the node keeps the pins and the shader of its last version that worked, so a typo loses no links or values; the error shows at the node and in the log.
 - A filter shader is also a node of the effect chain, see [Shaders in the effect chain](#shaders-in-the-effect-chain).
 
 <img src="images/shader-nodes-from-files.png" width="820" alt="Help patch 'HowTo Create Shader Nodes from Files': two shader nodes generated from .frag files, the Qt window and the shader source in VS Code">

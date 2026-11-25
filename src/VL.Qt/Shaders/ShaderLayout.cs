@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using VL.Core.Diagnostics;
+using VL.Qt.NodeFactories;
 
 namespace VL.Qt.Shaders
 {
     /// <summary>
     /// Everything the init of a generated shader node needs, built once per node description: the file sources, the pin model
     /// (with pin names made unique against the fixed pins) and the messages shown at the node. Errors (red): file not readable,
-    /// compile error (then only the fixed pins), duplicate file name. Warnings (orange): the pin model's warnings.
+    /// compile error (then the pins of the last version that compiled, or only the fixed pins if there was none), duplicate file name. Warnings (orange): the pin model's warnings.
     /// </summary>
     /// <param name="HasInput">Node has an Input pin (sampler2D source).</param>
     /// <param name="Pins">Image and uniform pins in pin order, names unique.</param>
@@ -30,6 +31,7 @@ namespace VL.Qt.Shaders
             var errors = new List<string>();
             var warnings = new List<string>();
             var pins = Common(source, file, errors, warnings, out var hasInput);
+            AddKeptError(source, errors, warnings);
             // Input and Input Sampler are pins of the node only with an Input.
             var reserved = hasInput ? ShaderElementPins.Names : ShaderElementPins.Names.Remove(ShaderElementPins.Input.Name).Remove(ShaderElementPins.InputSampler.Name);
             return new ShaderLayout(hasInput, UniquePinNames(pins, reserved, warnings), ToMessages(errors, warnings), source.FragmentAnnotations.Summary, source.FragmentSource, source.VertexSource);
@@ -52,6 +54,15 @@ namespace VL.Qt.Shaders
             foreach (var w in source.PinModel.Warnings)
                 warnings.Add(w.ToString());
             return source.PinModel.Pins;
+        }
+
+        /// <summary>The error of a file that fails now, with the note that the node keeps its last good pins (<see cref="ShaderSource.KeptError"/>).</summary>
+        internal static void AddKeptError(ShaderSource source, List<string> errors, List<string> warnings)
+        {
+            if (source.KeptError is null)
+                return;
+            errors.Add(source.KeptError);
+            warnings.Add(LastGood<ShaderSource>.KeptNote);
         }
 
         /// <summary>
