@@ -417,8 +417,7 @@ namespace VL.Qt.Reconciliation
         /// </summary>
         private Style ResolveStyle(ItemMirror item, Element next, Style inherited)
         {
-            var styled = next is Group || BaseStyle.AppliesTo((ushort)item.Type);
-            if (!styled)
+            if (!StylableElements.ResolvesStyle(next))
             {
                 item.InheritedStyle = inherited;
                 return inherited;
@@ -436,7 +435,7 @@ namespace VL.Qt.Reconciliation
             item.InheritedStyle = inherited;
             item.ResolvedStyle = resolved;
 
-            if (next is not Group)
+            if (StylableElements.IsWidget(next))
             {
                 // Writes nothing when QtNative already holds an equal style.
                 StyleWriter.Write(_sink, item.Id, resolved, item.SentStyle);
@@ -463,7 +462,7 @@ namespace VL.Qt.Reconciliation
                 old[i] = child;
                 if (!child.IsPlaceholder)
                     live++;
-                stylable |= child.Stylable is not null || child.ContainsStylable;
+                stylable |= child.HoldsStylable;
             }
 
             if (oldCount > newCount)
@@ -480,7 +479,7 @@ namespace VL.Qt.Reconciliation
                     old.Add(child);
                     if (!child.IsPlaceholder)
                         live++;
-                    stylable |= child.Stylable is not null || child.ContainsStylable;
+                    stylable |= child.HoldsStylable;
                 }
             }
             item.ContainsStylable = stylable;
@@ -491,7 +490,7 @@ namespace VL.Qt.Reconciliation
             if (objects is not null)
             {
                 foreach (var o in objects)
-                    if (o.Stylable is not null || o.ContainsStylable)
+                    if (o.HoldsStylable)
                         return true;
             }
             return false;

@@ -105,8 +105,12 @@ namespace VL.Qt.Reconciliation
         public string? BuildError { get; set; }
 
         /// <summary>
-        /// This subtree contains an <see cref="IStylable"/>: never skipped, so every Build runs once per pass.
+        /// This subtree contains an <see cref="IStylable"/>, among its children or among the objects of its effect chain
+        /// (mask source, uniform texture): never skipped, so every Build runs once per pass.
         /// </summary>
         public bool ContainsStylable { get; set; }
+
+        /// <summary>This position is an <see cref="IStylable"/> or contains one: the parent must not be skipped.</summary>
+        public bool HoldsStylable => Stylable is not null || ContainsStylable;
     }
 }

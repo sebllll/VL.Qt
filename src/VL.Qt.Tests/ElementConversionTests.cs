@@ -241,6 +241,72 @@ namespace VL.Qt.Tests
             Assert.That(s.Builds, Is.EqualTo(3));
         }
 
+        [Test]
+        public void StylableAsMaskSource_DeepInsideUnchangedTree_IsBuiltEveryUpdate()
+        {
+            var s = new Delegating { Next = new Rectangle() };
+            var host = new Rectangle { Effect = new MaskEffect(null, ElementConversion.ToElement(s), 0, 0, 1, 0, false) };
+            var root = new Group { Children = ImmutableArray.Create<Element>(new Row { Children = ImmutableArray.Create<Element>(host) }) };
+
+            Update(root);
+            _sink.Clear();
+            Update(root);
+            Update(root);
+
+            Assert.That(s.Builds, Is.EqualTo(3));
+            Assert.That(_sink.Commands, Is.Empty);
+        }
+
+        [Test]
+        public void StylableInsideMaskSource_IsBuiltEveryUpdate()
+        {
+            var s = new Delegating { Next = new Rectangle() };
+            var source = new Group { Children = ImmutableArray.Create<Element>(new Group { Children = ImmutableArray.Create(ElementConversion.ToElement(s)!) }) };
+            var root = new Rectangle { Effect = new MaskEffect(null, source, 0, 0, 1, 0, false) };
+
+            Update(root);
+            Update(root);
+
+            Assert.That(s.Builds, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void StylableAsUniformTexture_IsBuiltEveryUpdate()
+        {
+            var s = new Delegating { Next = new Rectangle() };
+            var root = new Rectangle { Effect = new TextureEffect(Uniform.FromTexture("map", ElementConversion.ToElement(s))) };
+
+            Update(root);
+            Update(root);
+            Update(root);
+
+            Assert.That(s.Builds, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void MaskSourceReplacedByPlainElement_StopsBuilding()
+        {
+            var s = new Delegating { Next = new Rectangle() };
+            var mask = new MaskEffect(null, ElementConversion.ToElement(s), 0, 0, 1, 0, false);
+
+            Update(new Rectangle { Effect = mask });
+            Update(new Rectangle { Effect = new MaskEffect(null, new Rectangle(), 0, 0, 1, 0, false) });
+            var after = s.Builds;
+            Update(_rec.Root!.Element);
+            Update(_rec.Root!.Element);
+
+            Assert.That(s.Builds, Is.EqualTo(after));
+            Assert.That(_rec.Root!.ContainsStylable, Is.False);
+        }
+
+        private sealed class TextureEffect : ShaderEffect
+        {
+            public TextureEffect(params Uniform[] uniforms)
+                : base(null, Wire.Protocol.EffectTemplate.Single, ImmutableArray.Create(7UL), uniforms.ToSpread(), default, 1)
+            {
+            }
+        }
+
         private sealed class ThrowingStylable : IStylable
         {
             private readonly Rectangle _rectangle = new();
