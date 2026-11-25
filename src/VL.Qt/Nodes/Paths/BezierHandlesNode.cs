@@ -54,7 +54,7 @@ namespace VL.Qt.Nodes
                 _outHandles = outHandles;
                 _handleModes = handleModes;
                 _closed = closed;
-                _output = BezierGeometry.Build(input, anchors, inHandles, outHandles, handleModes, closed);
+                _output = BezierGeometry.Build(input, anchors.AsSpan(), inHandles.AsSpan(), outHandles.AsSpan(), handleModes.AsSpan(), closed);
             }
             return _output;
         }

@@ -40,7 +40,7 @@ namespace VL.Qt.Nodes
                 _corner = corner;
                 _destinationPoint = destinationPoint;
                 _cornerRadius = cornerRadius;
-                _output = ArcGeometry.TangentArcTo(input, input.LastPoint, corner, destinationPoint, cornerRadius);
+                _output = ArcGeometry.TangentArcTo(input, corner, destinationPoint, cornerRadius);
             }
             return _output;
         }
@@ -124,7 +124,7 @@ namespace VL.Qt.Nodes
                 _largeArc = largeArc;
                 _sweep = sweep;
                 _destinationPoint = destinationPoint;
-                _output = ArcGeometry.SvgArcTo(input, input.LastPoint, radius, xAxisRotate, largeArc, sweep, destinationPoint);
+                _output = ArcGeometry.SvgArcTo(input, radius, xAxisRotate, largeArc, sweep, destinationPoint);
             }
             return _output;
         }
@@ -169,7 +169,7 @@ namespace VL.Qt.Nodes
                 _sweep = sweep;
                 _destinationPoint = destinationPoint;
                 var last = input.LastPoint;
-                _output = ArcGeometry.SvgArcTo(input, last, radius, xAxisRotate, largeArc, sweep, last + destinationPoint);
+                _output = ArcGeometry.SvgArcTo(input, radius, xAxisRotate, largeArc, sweep, last + destinationPoint);
             }
             return _output;
         }

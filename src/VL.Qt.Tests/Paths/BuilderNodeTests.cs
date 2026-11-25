@@ -75,7 +75,7 @@ namespace VL.Qt.Tests.Paths
         public void ArcToTangent_StartsAtLastPoint()
         {
             var path = new ArcToTangentNode().Update(start, new Vector2(20, 20), new Vector2(20, 40), 5);
-            Assert.That(path.ContentEquals(ArcGeometry.TangentArcTo(start, new Vector2(10, 20), new Vector2(20, 20), new Vector2(20, 40), 5)), Is.True);
+            Assert.That(path.ContentEquals(ArcGeometry.TangentArcTo(start, new Vector2(20, 20), new Vector2(20, 40), 5)), Is.True);
         }
 
         [Test]
@@ -88,7 +88,7 @@ namespace VL.Qt.Tests.Paths
             var rel = new ArcToRelativeNode().Update(start, new Vector2(5, 5), 0, false, true, new Vector2(10, 0));
             Assert.That(rel.LastPoint.X, Is.EqualTo(20).Within(1e-4));
             Assert.That(rel.LastPoint.Y, Is.EqualTo(20).Within(1e-4));
-            var expected = ArcGeometry.SvgArcTo(start, new Vector2(10, 20), new Vector2(5, 5), 0, false, true, new Vector2(20, 20));
+            var expected = ArcGeometry.SvgArcTo(start, new Vector2(5, 5), 0, false, true, new Vector2(20, 20));
             Assert.That(rel.ContentEquals(expected), Is.True);
         }
 

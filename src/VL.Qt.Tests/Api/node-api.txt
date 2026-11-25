@@ -432,8 +432,8 @@ VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | order Input, Rectangle, R
 VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | pin Dir | in VL.Qt.Paths.PathDirection = PathDirection.Clockwise | Pin(Name = "Dir") | (dir)
 VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | pin Input | in VL.Qt.Paths.QtPath | (input)
 VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | pin Output | out VL.Qt.Paths.QtPath | Pin(Name = "Output") | (return)
-VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | pin Radius | in Stride.Core.Mathematics.Vector2 = null | (radius)
-VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | pin Rectangle | in Stride.Core.Mathematics.RectangleF = null | (rectangle)
+VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | pin Radius | in Stride.Core.Mathematics.Vector2 = 0.1, 0.1 | (radius)
+VL.Qt | VL.Qt.Nodes.AddRoundRectNode | method Update | pin Rectangle | in Stride.Core.Mathematics.RectangleF = 0, 0, 1, 1 | (rectangle)
 VL.Qt | VL.Qt.Nodes.AddRoundRectNode | type sealed class
 VL.Qt | VL.Qt.Nodes.ArcToOvalNode | attr ProcessNode(Name = "ArcTo", Category = "Qt.Paths")
 VL.Qt | VL.Qt.Nodes.ArcToOvalNode | ctor | new

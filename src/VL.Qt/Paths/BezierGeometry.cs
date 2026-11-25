@@ -19,13 +19,13 @@ namespace VL.Qt.Paths
         /// </summary>
         internal static QtPath Build(
             QtPath path,
-            IReadOnlyList<Vector2> anchors,
-            IReadOnlyList<Vector2> inHandles,
-            IReadOnlyList<Vector2> outHandles,
-            IReadOnlyList<HandleMode> modes,
+            ReadOnlySpan<Vector2> anchors,
+            ReadOnlySpan<Vector2> inHandles,
+            ReadOnlySpan<Vector2> outHandles,
+            ReadOnlySpan<HandleMode> modes,
             bool closed)
         {
-            var n = anchors.Count;
+            var n = anchors.Length;
             if (n < 2)
                 return path;
 
@@ -45,13 +45,13 @@ namespace VL.Qt.Paths
             return closed ? path.Close() : path;
         }
 
-        private static Vector2 OutHandle(IReadOnlyList<Vector2> outHandles, int i) =>
-            i < outHandles.Count ? outHandles[i] : Vector2.Zero;
+        private static Vector2 OutHandle(ReadOnlySpan<Vector2> outHandles, int i) =>
+            i < outHandles.Length ? outHandles[i] : Vector2.Zero;
 
-        private static Vector2 InHandle(IReadOnlyList<Vector2> inHandles, IReadOnlyList<Vector2> outHandles, IReadOnlyList<HandleMode> modes, int i)
+        private static Vector2 InHandle(ReadOnlySpan<Vector2> inHandles, ReadOnlySpan<Vector2> outHandles, ReadOnlySpan<HandleMode> modes, int i)
         {
-            var mode = modes.Count == 0 ? HandleMode.Free : modes[i % modes.Count];
-            var given = i < inHandles.Count ? inHandles[i] : Vector2.Zero;
+            var mode = modes.Length == 0 ? HandleMode.Free : modes[i % modes.Length];
+            var given = i < inHandles.Length ? inHandles[i] : Vector2.Zero;
             switch (mode)
             {
                 case HandleMode.Mirrored:
