@@ -75,7 +75,7 @@ namespace VL.Qt.Nodes
                 _path = filePath?.Value ?? string.Empty;
                 _quality = quality;
                 _grabbing = false;
-                _error = _path.Length == 0 ? FileWriterNode.NoPathError : _grab.Start(input, scale);
+                _error = _path.Length == 0 ? ImageFileWriter.NoPathError : _grab.Start(input, scale);
                 if (_error.Length > 0)
                     // Nothing is written: Done without Success in the same frame, so a patch waiting for Is Done does not hang.
                     isDone = true;

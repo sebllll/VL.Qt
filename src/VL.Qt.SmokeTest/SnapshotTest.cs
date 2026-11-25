@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using VL.Qt.Images;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
@@ -269,7 +270,7 @@ public static class SnapshotTest
             thrown = e;
         }
         s.Check(thrown is null, $"element in no renderer does not throw ({thrown?.Message})");
-        s.Check(looseImage is null && looseError == SnapshotNode.NotShownError, $"element in no renderer: logged '{looseError}'");
+        s.Check(looseImage is null && looseError == SnapshotGrab.NotShownError, $"element in no renderer: logged '{looseError}'");
         // The node recovers with a shown element.
         var again = Snap(node, group, 1, out var errAgain, out _);
         s.Check(again is not null && errAgain.Length == 0, $"grab of a shown element after the error works ('{errAgain}')");

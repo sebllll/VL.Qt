@@ -13,6 +13,11 @@ namespace VL.Qt
     /// </summary>
     internal sealed class ImageFileWriter : IDisposable
     {
+        /// <summary>Error logged when Write is hit without a File Path.</summary>
+        internal const string NoPathError = "File Path is empty";
+        /// <summary>Error logged when Write is hit without an Image.</summary>
+        internal const string NoImageError = "Image is empty";
+
         private readonly Func<IImage, string, int, string> _write;
         private readonly object _syncRoot = new();
         // Idle = no write runs or waits; the tests wait on it.

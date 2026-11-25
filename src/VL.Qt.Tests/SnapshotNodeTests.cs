@@ -1,4 +1,5 @@
 ﻿using System;
+using VL.Qt.Images;
 using System.Linq;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
@@ -66,12 +67,12 @@ namespace VL.Qt.Tests
             var image = Update(out var ready, grab: true);
             Assert.That(image, Is.Null);
             Assert.That(ready, Is.False);
-            Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotNode.NotShownError }));
+            Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotGrab.NotShownError }));
             Assert.That(_messages.Shown, Is.Null, "a one-shot failure does not mark the node");
             Assert.That(_api.Calls, Is.Empty, "no resource created");
 
             _ = _node.Update(null, 1, true, out _);
-            Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotNode.NotShownError }), "no element: the same error, logged once");
+            Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotGrab.NotShownError }), "no element: the same error, logged once");
             Assert.That(_api.Calls, Is.Empty);
         }
 
@@ -99,19 +100,19 @@ namespace VL.Qt.Tests
             Show();
             var other = new Rectangle { Size = new Vector2(10, 10) };
             _node.Update(other, 1, true, out _);
-            Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotNode.NotShownError }), "no slot: no place to fall back to");
+            Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotGrab.NotShownError }), "no slot: no place to fall back to");
 
             var foreign = new Rectangle { Feedback = new FeedbackSlot(new ElementFeedback(), 0) };
             _node.Update(foreign, 1, true, out _);
             Assert.That(Snapshots, Is.Zero, "a slot no renderer has shown");
-            Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotNode.NotShownError }), "the same error, logged once");
+            Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotGrab.NotShownError }), "the same error, logged once");
         }
 
         [Test]
         public void Grab_ErrorOfAnEarlierAttempt_ClearedByTheNextOne()
         {
             Update(out _, grab: true);
-            Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotNode.NotShownError }), "not shown yet at the start");
+            Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotGrab.NotShownError }), "not shown yet at the start");
             Show();
             Update(out _, grab: true);
             Assert.That(Snapshots, Is.EqualTo(1));
@@ -120,7 +121,7 @@ namespace VL.Qt.Tests
 
             // Cleared: the same error later is logged again.
             _node.Update(null, 1, true, out _);
-            Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotNode.NotShownError, SnapshotNode.NotShownError }));
+            Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotGrab.NotShownError, SnapshotGrab.NotShownError }));
         }
 
         [Test]

@@ -358,7 +358,7 @@ public static class TooltipTest
                 var logged = snapLog.Take();
                 if (logged.Length > 0)
                     snapError = logged;
-                if (tipText.Contains(ElementTooltipPreviewNode.NotShownSuffix) || logged == SnapshotNode.NotShownError)
+                if (tipText.Contains(ElementTooltipPreviewNode.NotShownSuffix) || logged == SnapshotGrab.NotShownError)
                     notShown++;
                 current = new Group { Anchor = RectangleAnchor.TopLeft, Children = [target, small] };
                 Step(1, 15);
