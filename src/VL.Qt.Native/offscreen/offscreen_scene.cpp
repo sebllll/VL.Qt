@@ -58,6 +58,10 @@ void deviceLost()
 void deviceRestored()
 {
     for (OffscreenScene* s : s_scenes) {
+        // No shared device (creation failed, device.h): initialize would create a device of its own. bind reports
+        // DEVICE_LOST until the retry hands the window the new device and calls this again.
+        if (!vlqt::device::isOnSharedDevice(s->window))
+            continue;
         bool initialized = false;
         s->executor.call([s, &initialized] { initialized = s->renderControl->initialize(); });
         if (!initialized)
@@ -95,7 +99,7 @@ vlqt_scene* create(int width, int height)
     // device::attach marks a window that got the shared device; without it initialize would create a device of its own.
     if (!vlqt::device::isOnSharedDevice(window)) {
         vlqt_scene_destroy(handle);
-        vlqt::setLastError("offscreen scene: QtNative has no shared D3D11 device (VLQT_SHARED_DEVICE=0 or creation failed, see the log)");
+        vlqt::setLastError("offscreen scene: QtNative has no shared D3D11 device (VLQT_SHARED_DEVICE=0, or creation failed and is retried, see the log)");
         return nullptr;
     }
     // From here on the scene graph and the QRhi belong to the executor's thread (prepareThread before initialize).

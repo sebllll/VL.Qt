@@ -36,6 +36,8 @@
             public const int Remove = 1;
             /// <summary>Real loss through a GPU hang (TDR, whole GPU); manual checks only.</summary>
             public const int Hang = 2;
+            /// <summary>Remove, and the next creation of the shared device fails once (QtNative retries it about a second later).</summary>
+            public const int RemoveFailOnce = 3;
         }
 
         /// <summary>Resource kind of vlqt_res_create for vlqt_test_res_start; the product kinds are <see cref="Protocol.ResourceKind"/>.</summary>

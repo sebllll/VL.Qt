@@ -33,8 +33,11 @@ Q_LOGGING_CATEGORY(lcDevice, "vlqt.device")
 ID3D11Device* s_dev = nullptr;
 ID3D11DeviceContext* s_ctx = nullptr;
 QRhi* s_upload = nullptr;
-bool s_tried = false;
+bool s_attempted = false;   // the first creation ran (ensureDevice); later ones come from rebuild and the retry
 bool s_lostReported = false;
+// Valid while there is no shared device after a failed creation: checkLost retries it at most every retryMs.
+QElapsedTimer s_retry;
+constexpr qint64 retryMs = 1000;
 // test hook: the D3D12 device and queue under a D3D11On12 device (VLQT_TEST_D3D11ON12=1, test/test_device.h).
 test::On12 s_on12;
 // Old devices after a rebuild: released once no window's QRhi uses them any more (Qt drops the window QRhi at its
@@ -139,11 +142,10 @@ void dropWindowRhisOnRetired()
         int(s_retired.size()));
 }
 
-bool ensureDevice()
+// Creates the shared device, its context and the upload QRhi. A failure arms the retry (s_retry) and is logged only when
+// the attempt before succeeded, not at every retry.
+bool createDevice()
 {
-    if (s_tried)
-        return s_dev != nullptr;
-    s_tried = true;
     if (qEnvironmentVariableIsSet("VLQT_SHARED_DEVICE") && qEnvironmentVariableIntValue("VLQT_SHARED_DEVICE") == 0) {
         qCInfo(lcDevice, "VLQT_SHARED_DEVICE=0: every window creates its own D3D11 device");
         return false;
@@ -155,7 +157,10 @@ bool ensureDevice()
         flags |= D3D11_CREATE_DEVICE_DEBUG;
     D3D_FEATURE_LEVEL level{};
     HRESULT hr = E_FAIL;
-    if (test::isOn12Requested()) { // test hook: the device of vlqt_test_device_lost REMOVE (test/test_device.h)
+    const bool failForTest = test::takeCreationFailure(); // test hook: vlqt_test_device_lost REMOVE_FAIL_ONCE
+    if (failForTest)
+        qCInfo(lcDevice, "test: this creation of the shared device fails");
+    else if (test::isOn12Requested()) { // test hook: the device of vlqt_test_device_lost REMOVE (test/test_device.h)
         hr = test::createOn12(adapter, flags, &s_dev, &s_ctx, &level, s_on12);
         if (hr == DXGI_ERROR_DEVICE_REMOVED && !s_retired.empty()) {
             dropWindowRhisOnRetired();
@@ -165,7 +170,7 @@ bool ensureDevice()
             qCWarning(lcDevice, "VLQT_TEST_D3D11ON12: D3D11On12 device failed (0x%08lx), plain D3D11 device instead",
                 long(hr));
     }
-    if (FAILED(hr))
+    if (FAILED(hr) && !failForTest)
         hr = D3D11CreateDevice(adapter, adapter ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE, nullptr, flags,
             nullptr, 0, D3D11_SDK_VERSION, &s_dev, &level, &s_ctx);
     QString name;
@@ -178,8 +183,11 @@ bool ensureDevice()
     if (FAILED(hr)) {
         s_dev = nullptr;
         s_ctx = nullptr;
-        qCWarning(lcDevice, "D3D11CreateDevice failed (0x%08lx) on '%s': every window creates its own device", long(hr),
-            qPrintable(name));
+        if (!s_retry.isValid())
+            qCWarning(lcDevice, "D3D11CreateDevice failed (0x%08lx) on '%s': no shared device, retried once per second; "
+                "meanwhile windows create their own device, images are not uploaded and offscreen scenes report DEVICE_LOST "
+                "(not repeated at every retry)", long(hr), qPrintable(name));
+        s_retry.start();
         return false;
     }
 
@@ -201,10 +209,70 @@ bool ensureDevice()
     if (!s_upload)
         qCWarning(lcDevice, "upload QRhi on the shared device could not be created");
     s_generation++;
+    s_retry.invalidate();
     qCInfo(lcDevice, "shared D3D11 device %p%s on '%s' (feature level 0x%x), upload QRhi %p, generation %u",
         static_cast<void*>(s_dev), s_on12.dev12 ? " (D3D11On12, test)" : "", qPrintable(name), unsigned(level),
         static_cast<void*>(s_upload), s_generation);
     return true;
+}
+
+// The first creation (attach, uploadRhi); after a failure only checkLost tries again.
+bool ensureDevice()
+{
+    if (s_dev)
+        return true;
+    if (s_attempted)
+        return false;
+    s_attempted = true;
+    return createDevice();
+}
+
+bool isRetired(const void* dev)
+{
+    return std::any_of(s_retired.begin(), s_retired.end(), [dev](const Retired& r) { return r.dev == dev; });
+}
+
+// Steps 4 and 5 of rebuild, also after a successful retry. Every QQuickWindow whose QRhi is on a retired device imports
+// the shared device (an empty one if there is none) and renders: only at that render Qt notices the loss itself and
+// creates a new QRhi with the imported device. A window without a QRhi gets the shared device when there is one (else it
+// keeps the shared device's mark); a window on a device of its own keeps that until its next loss. Then the listeners
+// upload again. Returns the windows handed over.
+int handOver()
+{
+    const bool ok = s_dev != nullptr;
+    int moved = 0;
+    for (QWindow* w : QGuiApplication::topLevelWindows()) {
+        auto* q = qobject_cast<QQuickWindow*>(w);
+        if (!q)
+            continue;
+        const bool onOld = q->rhi() ? isRetired(nativeDevice(q->rhi())) : ok || isOnSharedDevice(q);
+        if (!onOld)
+            continue;
+        q->setGraphicsDevice(ok ? QQuickGraphicsDevice::fromDeviceAndContext(s_dev, s_ctx) : QQuickGraphicsDevice());
+        markOnSharedDevice(q, ok);
+        q->update();
+        moved++;
+    }
+    for (const Listener& l : s_listeners)
+        if (l.restored)
+            l.restored();
+    return moved;
+}
+
+// No shared device after a failed creation: tries again at most every retryMs; on success as rebuild (handOver).
+void retryIfDue()
+{
+    if (!s_retry.isValid() || !s_retry.hasExpired(retryMs))
+        return;
+    QElapsedTimer t;
+    t.start();
+    if (!createDevice())
+        return;
+    // The listeners run blocking render-thread jobs that take the context lock (device.h, lock order).
+    releaseFrameLocks();
+    const int moved = handOver();
+    qCInfo(lcDevice, "shared device created again in %.1f ms: generation %u, %d window(s) handed over to device %p",
+        t.nsecsElapsed() / 1e6, s_generation, moved, static_cast<void*>(s_dev));
 }
 
 // Remaining references after the last own Release point to a leak (an object of the old device still alive).
@@ -288,7 +356,7 @@ QRhi* uploadRhi()
 {
 #ifdef Q_OS_WIN
     // Resources may come before the first window: create the device here then.
-    if (!s_tried && QQuickWindow::graphicsApi() == QSGRendererInterface::Direct3D11)
+    if (!s_dev && QQuickWindow::graphicsApi() == QSGRendererInterface::Direct3D11)
         ensureDevice();
     return s_upload;
 #else
@@ -349,7 +417,11 @@ void checkLost()
 {
 #ifdef Q_OS_WIN
     releaseRetired();
-    if (!s_dev || s_lostReported)
+    if (!s_dev) {
+        retryIfDue();
+        return;
+    }
+    if (s_lostReported)
         return;
     const HRESULT reason = s_dev->GetDeviceRemovedReason();
     if (reason == S_OK)
@@ -434,7 +506,6 @@ void rebuild()
 #ifdef Q_OS_WIN
     QElapsedTimer t;
     t.start();
-    ID3D11Device* const old = s_dev;
     // The listeners run blocking render-thread jobs that take the context lock (device.h, lock order).
     releaseFrameLocks();
 
@@ -453,30 +524,11 @@ void rebuild()
     s_ctx = nullptr;
     s_on12 = {};
 
-    // 3. New device (generation + 1; D3D11On12 again with VLQT_TEST_D3D11ON12).
-    s_tried = false;
-    const bool ok = QQuickWindow::graphicsApi() == QSGRendererInterface::Direct3D11 && ensureDevice();
+    // 3. New device (generation + 1; D3D11On12 again with VLQT_TEST_D3D11ON12). A failure arms the retry (checkLost).
+    const bool ok = QQuickWindow::graphicsApi() == QSGRendererInterface::Direct3D11 && createDevice();
 
-    // 4. Every QQuickWindow on the old device imports the new one (or its own, if there is none) and renders: only at
-    // that render Qt notices the loss itself and creates a new QRhi with the imported device.
-    int moved = 0;
-    for (QWindow* w : QGuiApplication::topLevelWindows()) {
-        auto* q = qobject_cast<QQuickWindow*>(w);
-        if (!q)
-            continue;
-        const bool onOld = q->rhi() ? nativeDevice(q->rhi()) == old : isOnSharedDevice(q);
-        if (!onOld)
-            continue;
-        q->setGraphicsDevice(ok ? QQuickGraphicsDevice::fromDeviceAndContext(s_dev, s_ctx) : QQuickGraphicsDevice());
-        markOnSharedDevice(q, ok);
-        q->update();
-        moved++;
-    }
-
-    // 5. Listeners upload again on the new device.
-    for (const Listener& l : s_listeners)
-        if (l.restored)
-            l.restored();
+    // 4. Windows on the old device import the new one (or their own, if there is none); 5. listeners upload again.
+    const int moved = handOver();
 
     // 6. A further loss is noticed again.
     s_lostReported = false;
@@ -484,7 +536,8 @@ void rebuild()
         qCInfo(lcDevice, "device rebuilt in %.1f ms: generation %u, %d window(s) moved to device %p",
             t.nsecsElapsed() / 1e6, s_generation, moved, static_cast<void*>(s_dev));
     else
-        qCWarning(lcDevice, "no new shared device after the loss: %d window(s) create their own device", moved);
+        qCWarning(lcDevice, "no new shared device after the loss (retried once per second): %d window(s) create their own "
+            "device and keep it until their next loss", moved);
 #endif
 }
 

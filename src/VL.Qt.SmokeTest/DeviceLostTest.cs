@@ -16,7 +16,9 @@ using VL.Qt;
 /// upload QRhi, windows and resources: both windows end up on the new device, same as the upload QRhi, and draw their
 /// rect and 20 images again (10 PNG files + 10 via set_pixels, both windows show all of them). Twice in a row.
 /// After each loss: vlqt_res_list has the same resources, all Ready, same bytes (no leaks), the Ready snapshot has
-/// unchanged pixels. INFO lines carry the time until everything is visible again (for the docs).
+/// unchanged pixels. A third loss fails the next device creation once: QtNative retries it within about a second, the
+/// windows keep devices of their own, the images upload again (a new window draws them). INFO lines carry the time until
+/// everything is visible again (for the docs).
 /// </summary>
 [TestFixture, NonParallelizable]
 public static class DeviceLostTest
@@ -114,9 +116,11 @@ public static class DeviceLostTest
         // Grab succeeds and shows the orange rect (logical 20,20,100,60) on the dark background and every image tile
         // in its color.
         int badTiles = 0;
+        bool rectShown = false;
         bool Shows(SceneHandle w, string path)
         {
             badTiles = -1;
+            rectShown = false;
             if (NativeTest.vlqt_test_window_grab(w, path) != 0)
                 return false;
             using var b = new Bitmap(path);
@@ -130,7 +134,8 @@ public static class DeviceLostTest
                 if (Math.Abs(t.R - e.R) > 10 || Math.Abs(t.G - e.G) > 10 || Math.Abs(t.B - e.B) > 10)
                     badTiles++;
             }
-            return Math.Abs(c.R - 255) < 8 && Math.Abs(c.G - 153) < 8 && c.B < 8 && bg.R < 40 && bg.G < 40 && badTiles == 0;
+            rectShown = Math.Abs(c.R - 255) < 8 && Math.Abs(c.G - 153) < 8 && c.B < 8 && bg.R < 40 && bg.G < 40;
+            return rectShown && badTiles == 0;
         }
 
         // Status queue: after a loss every image resource must announce its replacement (INFO record) - without the
@@ -276,11 +281,88 @@ public static class DeviceLostTest
             s.Info($"round {round}: windows on the new device after {moved:F1} ms ({pumps} pumps), rect + images visible after {visibleMs:F1} ms, resources Ready after {sw.Elapsed.TotalMilliseconds:F1} ms");
             dev = upload;
         }
+
+        // Round 3: the creation after the loss fails once. The windows fall back to devices of their own (kept until their
+        // next loss), images are not uploaded meanwhile; QtNative retries the creation about a second later and the images
+        // upload on the new device: a window opened afterwards (on it) draws them, CPU copies of the old generation it never
+        // would.
+        var winC = SceneHandle.Null;
+        var lost3 = NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.RemoveFailOnce);
+        s.Check(lost3 == 0, $"round 3: vlqt_test_device_lost(REMOVE_FAIL_ONCE) = {lost3}");
+        if (lost3 == 0)
+        {
+            sw.Restart();
+            Poll();
+            infos.Clear();
+            double noneMs = -1;
+            IntPtr upload = IntPtr.Zero;
+            while (sw.ElapsedMilliseconds < TimeoutMs)
+            {
+                Pump();
+                NativeTest.vlqt_test_device_info(SceneHandle.Null, out upload, out _);
+                if (upload == IntPtr.Zero)
+                {
+                    if (noneMs < 0)
+                        noneMs = sw.Elapsed.TotalMilliseconds;
+                    continue;
+                }
+                if (noneMs >= 0)
+                    break;
+            }
+            var retryMs = sw.Elapsed.TotalMilliseconds;
+            s.Check(noneMs >= 0, $"round 3: no shared device after the failed creation ({noneMs:F0} ms)");
+            // The retry comes about 1 s after the failed creation; a pump or two later on a slow runner.
+            s.Check(upload != IntPtr.Zero && retryMs < 2500, $"round 3: shared device created again after {retryMs:F0} ms ({upload:X})");
+
+            IntPtr da = Device(a), db = Device(b);
+            while (sw.ElapsedMilliseconds < retryMs + TimeoutMs && (da == IntPtr.Zero || db == IntPtr.Zero))
+            {
+                Pump();
+                da = Device(a);
+                db = Device(b);
+            }
+            s.Check(da != IntPtr.Zero && db != IntPtr.Zero && da != upload && db != upload,
+                $"round 3: both windows on devices of their own until their next loss ({da:X}, {db:X}, shared {upload:X})");
+            bool rects = false;
+            while (sw.ElapsedMilliseconds < retryMs + TimeoutMs && !rects)
+            {
+                Shows(a, Path.Combine(dir, "after3_a.png"));
+                rects = rectShown;
+                Shows(b, Path.Combine(dir, "after3_b.png"));
+                rects &= rectShown;
+                if (!rects)
+                    Pump();
+            }
+            s.Check(rects, "round 3: both windows render their rect on their own devices");
+
+            winC = Open("VL.Qt device lost C", 950);
+            while (sw.ElapsedMilliseconds < retryMs + TimeoutMs && Device(winC) == IntPtr.Zero)
+                Pump();
+            s.Check(Device(winC) == upload, $"round 3: a new window is on the new shared device ({Device(winC):X})");
+            s.Check(Settled(winC, Path.Combine(dir, "after3_c.png")), $"round 3: rect + 20 images uploaded again, visible in the new window (bad tiles {badTiles})");
+
+            var after = Table();
+            while (sw.ElapsedMilliseconds < retryMs + TimeoutMs && (after.notReady != 0 || after.count != before.count || after.bytes != before.bytes))
+            {
+                Pump();
+                after = Table();
+            }
+            var replaced = ids.Count(id => infos.GetValueOrDefault(id) >= 1);
+            s.Check(replaced == Images, $"round 3: every image resource got a replacement INFO record ({replaced} of {Images})");
+            s.Check(after.count == before.count && after.notReady == 0 && after.bytes == before.bytes,
+                $"round 3: {after.count} resources (before {before.count}), not ready/missing {after.notReady}, bytes {after.bytes} (before {before.bytes})");
+            var snapAfter = ReadSnap(out var desc3);
+            s.Check(snapAfter.AsSpan().SequenceEqual(snapBefore) && desc3.width == snapDesc.width && desc3.height == snapDesc.height,
+                $"round 3: snapshot pixels unchanged ({snapAfter.Length} bytes)");
+            s.Info($"round 3: no shared device for {retryMs - Math.Max(noneMs, 0):F0} ms, created again after {retryMs:F1} ms, resources Ready after {sw.Elapsed.TotalMilliseconds:F1} ms");
+        }
         Native.vlqt_res_release(snap);
         foreach (var id in ids)
             Native.vlqt_res_release(id);
         Native.vlqt_scene_destroy(a);
         Native.vlqt_scene_destroy(b);
+        if (winC != SceneHandle.Null)
+            Native.vlqt_scene_destroy(winC);
         s.Pump(2);
     }
 }
