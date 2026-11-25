@@ -91,7 +91,7 @@ namespace VL.Qt.Tests
             Assert.That(link.Uniforms.Single(u => u.Name == "blurLength").Numbers.M11, Is.EqualTo(Unit(64f)).Within(1e-4));
             AssertPadding(link.Padding, 33, 0, 33, 0); // L / 2 + L / 64, horizontal
 
-            var vertical = Link(node.Update(null, 90f, Unit(64)));
+            var vertical = Link(node.Update(null, 0.25f, Unit(64)));
             Assert.That(vertical.Padding.X, Is.LessThan(Unit(1f)));
             Assert.That(vertical.Padding.Y, Is.EqualTo(Unit(33f)).Within(1e-4));
         }
@@ -106,8 +106,8 @@ namespace VL.Qt.Tests
             AssertPadding(z.Padding, 60, 60, 60, 60);
 
             using var radial = new RadialBlurNode(_client);
-            var r = Link(radial.Update(null, new Vector2(0.5f, 0.5f), 12f, Unit(30)));
-            Assert.That(r.Uniforms.Single(u => u.Name == "angle").Numbers.M11, Is.EqualTo(12f), "degrees are not converted");
+            var r = Link(radial.Update(null, new Vector2(0.5f, 0.5f), 0.03f, Unit(30)));
+            Assert.That(r.Uniforms.Single(u => u.Name == "angle").Numbers.M11, Is.EqualTo(0.03f), "cycles are passed on as they are");
             AssertPadding(r.Padding, 30, 30, 30, 30);
         }
 

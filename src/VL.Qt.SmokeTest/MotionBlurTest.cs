@@ -148,7 +148,7 @@ public static class MotionBlurTest
             else
             {
                 cmd.UniformVec2("center", 0.5f, 0.5f);
-                cmd.UniformF32("angle", amount);
+                cmd.UniformF32("angle", amount / 360f); // amount in degrees, the shader takes cycles
             }
             cmd.UniformVec2("texelSize", 1 / (width * dpr), 1 / (CellH * dpr));
             cmd.EndUniforms();

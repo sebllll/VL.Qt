@@ -212,7 +212,7 @@ public static class ReadmeImagesTest
                     cmd.BeginEffectChain(text);
                     cmd.BeginEffectChainLink(Protocol.EffectTemplate.TwoPass, [radial], pad, pad, pad, pad, 0);
                     cmd.UniformVec2("center", 0.5f, 0.5f);
-                    cmd.UniformF32("angle", 8);
+                    cmd.UniformF32("angle", 8f / 360f);
                     cmd.EndLink();
                     cmd.EndEffectChain();
                     break;

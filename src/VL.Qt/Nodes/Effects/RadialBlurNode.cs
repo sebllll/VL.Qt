@@ -12,7 +12,7 @@ using VL.Qt.Wire;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Radial (rotational) blur: arcs around Center, a box blur over a rotation of Angle degrees (centred, the picture does not
+    /// Radial (rotational) blur: arcs around Center, a box blur over a rotation of Angle cycles (centred, the picture does not
     /// turn). Two passes of the same shader keep large angles clean.
     /// Connect Output to the Effect pin of an element, or chain it with other effect nodes (data flow order: the node at the
     /// Effect pin acts last). A shader effect ends a run of Blur/DropShadow/... nodes and costs a layer of its own.
@@ -47,13 +47,13 @@ namespace VL.Qt.Nodes
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
         /// <param name="center">Center of the rotation, 0..1 of the element area (0.5, 0.5 = middle).</param>
-        /// <param name="angle">Total rotation of the blur in degrees (0 = no blur).</param>
-        /// <param name="padding">Extra area around the element in units so the arcs have room: about half the angle in radians times the distance of the farthest point from Center.</param>
+        /// <param name="angle">Total rotation of the blur in cycles (1 = full turn, 0 = no blur).</param>
+        /// <param name="padding">Extra area around the element in units so the arcs have room: about half the angle in radians (Angle times 2π) times the distance of the farthest point from Center.</param>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             [DefaultValue("0.5, 0.5")] Vector2 center,
-            [DefaultValue(8f)] float angle,
+            [DefaultValue(0.05f)] float angle,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(0.3f)] float padding)
             => _link.Describe(input, new Props(center, angle, padding));
 

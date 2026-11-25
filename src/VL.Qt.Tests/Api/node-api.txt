@@ -1307,7 +1307,7 @@ VL.Qt | VL.Qt.Nodes.RadialBlurNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | VL.Qt.Elements.Effect
 VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | order Input, Center, Angle, Padding, Output
-VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | pin Angle | in float = 8 | (angle)
+VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | pin Angle | in float = 0.05 | (angle)
 VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | pin Center | in Stride.Core.Mathematics.Vector2 = 0.5, 0.5 | (center)
 VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | pin Input | in VL.Qt.Elements.Effect | (input)
 VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | pin Output | out VL.Qt.Elements.Effect | Pin(Name = "Output") | (return)

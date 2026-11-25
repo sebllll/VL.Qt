@@ -8,7 +8,7 @@ layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
-    float angle;     // direction of the blur in degrees, 0 = horizontal, increases clockwise on screen
+    float angle;     // direction of the blur in cycles (1 = full turn), 0 = horizontal, increases clockwise on screen
     float blurLength; // length of the blur line in DIP (total, centred on the pixel), 0 = off
     vec2 texelSize;  // 1 / width, 1 / height of the source in pixels (DIP size x dpr, as the layer is created)
     float dpr;       // device pixels per DIP (1 if unset)
@@ -53,7 +53,7 @@ void main()
         return;
     }
     int n = sampleCount(len);
-    float a = radians(angle);
+    float a = 6.28318530718 * angle;
     vec2 step = vec2(cos(a), sin(a)) * len * texelSize;
     vec4 sum = vec4(0.0);
     for (int i = 0; i < n; ++i) {
