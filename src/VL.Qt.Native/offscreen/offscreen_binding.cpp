@@ -3,6 +3,7 @@
 // Private Qt API: QQuickWindowPrivate::ensureCustomRenderTarget; check on Qt updates (list: elements/elements.h).
 #include "offscreen/offscreen_scene.h"
 #include "app/exports.h"
+#include "device/context_lock.h"
 #include "device/device.h"
 #include "vlqt.h"
 
@@ -131,6 +132,7 @@ void unbind(OffscreenScene* s)
     }
     s->linearPass = {};
     s->texture.Reset();
+    s->foreignDevice = nullptr;
     s->foreignRead.Reset();
     s->foreignWrite.Reset();
     s->qtRead.Reset();
@@ -228,6 +230,7 @@ int bind(OffscreenScene* s, void* device, void* ntHandle, int width, int height,
     s->window->setRenderTarget(target);
 
     s->texture = std::move(texture);
+    s->foreignDevice = foreign;
     s->linearPass = std::move(linearPass);
     s->qtContext = std::move(qtContext);
     s->qtRead = std::move(qtRead);

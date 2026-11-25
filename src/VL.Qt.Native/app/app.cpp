@@ -9,6 +9,7 @@
 #include "app/thread_name.h"
 #include "platform/platform.h"
 #include "window/scene_handle.h"
+#include "device/context_lock.h"
 #include "device/device.h"
 #include "diagnostics/perf.h"
 #include "protocol.h"

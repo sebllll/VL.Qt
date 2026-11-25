@@ -4,7 +4,7 @@
 #pragma once
 
 #include "offscreen/offscreen.h"
-#include "render_thread.h"
+#include "device/render_thread.h"
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
@@ -84,6 +84,9 @@ struct OffscreenScene
     Qt::MouseButton lastPressButton = Qt::NoButton;
 #ifdef _WIN32
     Microsoft::WRL::ComPtr<ID3D11Texture2D> texture; // the foreign texture, opened on QtNative's device
+    // The device passed to bind, to compare only (render_batch: the context it gets must be of this device); no
+    // reference, the fences opened on it keep it alive.
+    ID3D11Device* foreignDevice = nullptr;
     // A consumer that samples linear values (SRGB view, float): Qt renders into the pass's source, the pass writes the
     // texture after each frame. Empty for a UNORM view: Qt renders into the texture itself.
     vlqt::linear_pass::Pass linearPass;

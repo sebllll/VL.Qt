@@ -2,6 +2,7 @@
 // sequence per executor of the scenes (a render thread, or inline on the main thread). Windows only (CMakeLists.txt).
 #include "offscreen/offscreen_scene.h"
 #include "app/exports.h"
+#include "device/context_lock.h"
 #include "device/device.h"
 #include "vlqt.h"
 
@@ -174,6 +175,7 @@ int renderBatch(void* context, vlqt_scene* const* scenes, int count, double driv
     vlqt_app_advance_animations(driverSeconds);
     finishPostedRenders();
     ComPtr<ID3D11DeviceContext4> foreign;
+    ID3D11Device* foreignDevice = nullptr; // the device of context, compared with the scenes' (no reference)
     static std::vector<OffscreenScene*> batch; // reused: no allocation per frame
     batch.clear();
     for (int i = 0; i < count; i++) {
@@ -184,7 +186,13 @@ int renderBatch(void* context, vlqt_scene* const* scenes, int count, double driv
             HRESULT hr = static_cast<ID3D11DeviceContext*>(context)->QueryInterface(IID_PPV_ARGS(foreign.GetAddressOf()));
             if (FAILED(hr))
                 return fail(VLQT_ERR_BAD_ARGUMENT, "render_batch: context is no ID3D11DeviceContext4", hr);
+            ComPtr<ID3D11Device> device;
+            foreign->GetDevice(device.GetAddressOf());
+            foreignDevice = device.Get(); // the context keeps its device alive
         }
+        // The fences of the scene are opened on the device it was bound to: another device's context cannot use them.
+        if (s->foreignDevice != foreignDevice)
+            return fail(VLQT_ERR_BAD_ARGUMENT, "render_batch: a scene is bound to another device than the context, bind again");
         // Lost but not rebuilt yet: the next pump (device::checkLost) rebuilds and unbinds every scene.
         ID3D11Device* qt = qtDevice(s);
         if (!qt || FAILED(qt->GetDeviceRemovedReason()))

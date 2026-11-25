@@ -1,6 +1,8 @@
 // Private Qt API: QQuickWindowPrivate::renderControl (which windows are on the shared device); check on Qt updates (list: elements/elements.h).
 #include "device/device.h"
 
+#include "device/context_lock.h"
+
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QGuiApplication>
@@ -11,7 +13,6 @@
 #include <rhi/qrhi.h>
 
 #include <algorithm>
-#include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -61,31 +62,6 @@ std::vector<Listener> s_listeners;   // addListener, main thread
 // markOnSharedDevice: windows by whether they are on the shared device; an entry goes with its window. Main thread.
 std::unordered_map<const QQuickWindow*, bool> s_onShared;
 
-// lockFrames: holds the shared context from beforeRendering to afterFrameEnd of an on-screen window's frame (basic
-// loop, main thread); releaseFrameLocks ends every one still held. Child of its window.
-class FrameLock final : public QObject
-{
-public:
-    explicit FrameLock(QQuickWindow* window) : QObject(window)
-    {
-        s_all.push_back(this);
-        connect(window, &QQuickWindow::beforeRendering, this, [this] {
-            if (!m_lock)
-                m_lock.emplace();
-        }, Qt::DirectConnection);
-        connect(window, &QQuickWindow::afterFrameEnd, this, &FrameLock::release, Qt::DirectConnection);
-    }
-    ~FrameLock() override { s_all.erase(std::remove(s_all.begin(), s_all.end(), this), s_all.end()); }
-    void release() { m_lock.reset(); }
-    static void releaseAll()
-    {
-        for (FrameLock* l : s_all)
-            l->release();
-    }
-private:
-    std::optional<ContextLock> m_lock;
-    static inline std::vector<FrameLock*> s_all; // main thread
-};
 #ifdef Q_OS_WIN
 
 // The adapter Qt's D3D11 backend would pick: QT_D3D_ADAPTER_INDEX, with QSG_RHI_PREFER_SOFTWARE_RENDERER the first
@@ -337,16 +313,6 @@ void markOnSharedDevice(QQuickWindow* window, bool on)
     QObject::connect(window, &QObject::destroyed, [window] { s_onShared.erase(window); });
 }
 
-void lockFrames(QQuickWindow* window)
-{
-    new FrameLock(window);
-}
-
-void releaseFrameLocks()
-{
-    FrameLock::releaseAll();
-}
-
 QRhi* uploadRhi()
 {
 #ifdef Q_OS_WIN
@@ -545,29 +511,12 @@ void* testDevice12()
 #endif
 }
 
-ContextLock::ContextLock()
-#ifdef Q_OS_WIN
-    : ContextLock(s_ctx.Get())
-#endif
-{
-}
-
-ContextLock::ContextLock(void* d3d11Context)
+void* sharedContext()
 {
 #ifdef Q_OS_WIN
-    auto* const context = static_cast<ID3D11DeviceContext*>(d3d11Context);
-    if (context && SUCCEEDED(context->QueryInterface(IID_PPV_ARGS(m_multithread.GetAddressOf()))))
-        m_multithread->Enter();
+    return s_ctx.Get();
 #else
-    Q_UNUSED(d3d11Context);
-#endif
-}
-
-ContextLock::~ContextLock()
-{
-#ifdef Q_OS_WIN
-    if (m_multithread)
-        m_multithread->Leave();
+    return nullptr;
 #endif
 }
 

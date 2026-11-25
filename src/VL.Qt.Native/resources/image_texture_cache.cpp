@@ -2,7 +2,7 @@
 #include "resources/image_texture_cache.h"
 
 #include "device/device.h"
-#include "render_thread.h"
+#include "device/render_thread.h"
 #include "resources/gpu_texture.h"
 #include "resources/image_resource.h"
 

@@ -409,7 +409,8 @@ VLQT_API int   vlqt_offscreen_is_bound(vlqt_scene* scene);
  * the same order in both modes. context's GPU waits for Qt's frame, its CPU never does; this call blocks only while a
  * render thread is still busy with the previous batch. An unchanged scene costs no render and no fence signal. NULL
  * entries and unbound scenes are skipped. Returns the number of scenes rendered (>= 0), or VLQT_ERR_BAD_ARGUMENT (null
- * context, null scenes with count > 0, count < 0), VLQT_ERR_DEVICE_LOST, VLQT_ERR_UNSUPPORTED. */
+ * context, null scenes with count > 0, count < 0, or a scene to render that is bound to another device than context's:
+ * nothing is rendered, bind it again), VLQT_ERR_DEVICE_LOST, VLQT_ERR_UNSUPPORTED. */
 VLQT_API int   vlqt_offscreen_render_batch(void* context, vlqt_scene* const* scenes, int count, double driverSeconds);
 /* Size of the render-thread pool (pin Render Threads; docs/decisions/render-texture.md, "Qt render thread"). count
  * 0 = offscreen scenes render on the main thread, inside vlqt_offscreen_render_batch; n = 1 ... 16 = on a pool of Qt
