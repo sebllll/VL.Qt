@@ -403,6 +403,18 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void Node_ImagePin_ValueAndSamplerEntry_NoDuplicateMessage()
+        {
+            CreateNode();
+            // A generated node sends an image pin as a value entry and a sampler-only entry of the same name.
+            Update("a.qsb", null, U(Uniform.FromImage("tex", null), Uniform.FromSampler("tex", new Sampler())), out var error);
+            Assert.That(error, Is.Empty);
+            // The same name twice with the same kind is still a duplicate.
+            Update("a.qsb", null, U(Uniform.FromSampler("tex", new Sampler()), Uniform.FromSampler("tex", new Sampler())), out error);
+            Assert.That(error, Does.Contain("'tex' is set more than once"));
+        }
+
+        [Test]
         public void Node_UnchangedInputs_SameDescription()
         {
             CreateNode();

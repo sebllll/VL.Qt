@@ -35,7 +35,7 @@ namespace VL.Qt.Reconciliation
                 if (u is null || !Protocol.IsValidName(u.Name))
                     continue;
                 if (u.ValueType != Protocol.ValueType.Sampler)
-                    next[new UniformKey(u.Name, false)] = Resolve(u, effect, children);
+                    next[UniformKey.Of(u)] = Resolve(u, effect, children);
                 if (u.Sampler is { } sampler)
                     next[new UniformKey(u.Name, true)] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(sampler));
             }
