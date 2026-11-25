@@ -1,6 +1,6 @@
 # Reconciler identity
 
-How the reconciler decides, every frame, whether to update an existing Qt object or create a new one, and what counts as one element when it is shown at several places. The code is in `src/VL.Qt/Reconciliation/`: `Reconciler` (positions), `OccurrenceKey` and `OccurrenceRegistry` (elements and their occurrences), `PrimaryOccurrences` (the primary occurrence inside one tree), `InteractionRegistry` (input handlers). How the feedback carries events back to the nodes is in [events.md](events.md).
+How the reconciler decides, every frame, whether to update an existing Qt object or create a new one, and what counts as one element when it is shown at several places. The rest of the reconciler (one frame, the skip test, the order of the commands, resync) is in [reconciler.md](reconciler.md). The code is in `src/VL.Qt/Reconciliation/`: `Reconciler` (positions), `OccurrenceKey` and `OccurrenceRegistry` (elements and their occurrences), `PrimaryOccurrences` (the primary occurrence inside one tree), `InteractionRegistry` (input handlers). How the feedback carries events back to the nodes is in [events.md](events.md).
 
 ## Context
 

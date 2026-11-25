@@ -5,20 +5,10 @@ using VL.Qt.Reconciliation;
 namespace VL.Qt
 {
     /// <summary>
-    /// Resync after a failed <c>vlqt_scene_apply</c> or a reconcile that threw. QtNative aborts a batch at the first bad
-    /// command, and an exception leaves the mirror half updated, so mirror and QtNative disagree. Recovery is always
-    /// complete: one RESET wipes the window's scene in QtNative, the mirror is dropped without commands
-    /// (<see cref="Reconciler.Discard"/>) and the next <c>Update</c> creates the scene from scratch, i.e. one frame later.
-    /// (QtNative reports the failing id, vlqt_scene_get_apply_error; it is used to show the error at the element node,
-    /// not for a partial rebuild.)
-    /// <para>
-    /// No endless loop: if the rebuild fails as well (the first attempt after a resync), the controller gives up and
-    /// leaves the scene empty; <see cref="ShouldReconcile"/> stays false until the input changes (new reference), which
-    /// allows exactly one new attempt, and not before a pause of 2 frames that doubles with every give-up up to 64 frames
-    /// (animated input is new every frame) and starts at 2 again after a successful apply. The error stays visible
-    /// meanwhile (the caller keeps it).
-    /// </para>
-    /// Main thread only; one per window.
+    /// Resync after a failed <c>vlqt_scene_apply</c> or a reconcile that threw: one RESET wipes the scene in QtNative, the mirror
+    /// is dropped without commands (<see cref="Reconciler.Discard"/>) and the next <c>Update</c> builds it from scratch. If the
+    /// rebuild fails too, the controller gives up until the input changes and a growing pause is over. Main thread only; one per window.
+    /// Design: docs/design/reconciler.md, "Errors and resync".
     /// </summary>
     internal sealed class ResyncController
     {

@@ -10,80 +10,10 @@ using VL.Qt.Wire;
 namespace VL.Qt.Reconciliation
 {
     /// <summary>
-    /// Compares the element tree of one window with the tree of the last frame and writes the minimal
-    /// commands (CREATE / SET / REPARENT / DESTROY / BIND) into an <see cref="ICommandSink"/>.
-    /// <para>
-    /// Identity rules (docs/design/reconciler-identity.md, "Qt objects: position and type"): an object is identified by
-    /// its position under its parent plus its element type. A type change at a position destroys the old object and
-    /// creates a new one. Inserting or removing in the middle of a child list lets the following objects take over the
-    /// data of their neighbours; only the tail is created or destroyed. Moving an element to another parent
-    /// therefore creates a new object there. A description that is reference-equal to the last frame's skips
-    /// its whole subtree.
-    /// </para>
-    /// <para>
-    /// An element may hang at several places of this tree (<see cref="OccurrenceRegistry"/>; one element = one
-    /// <see cref="OccurrenceKey"/>, the feedback slot of its node, so a new instance at a position changes no occurrence):
-    /// every occurrence gets its own Qt object and its own feedback id on the element's feedback. The first occurrence in
-    /// traversal order (depth-first, children in order; an effect mask counts at its place, before the children) is the
-    /// primary one (<see cref="ItemMirror.IsPrimary"/>): only its feedback id reports state values. A new occurrence is
-    /// primary if the current primary was not reached yet in this pass (positions of existing mirrors never change their
-    /// order); when the primary lets go, the first of the remaining occurrences is picked at the end of the update and
-    /// re-bound with a new feedback id, so QtNative sends its current state again. Other renderers may show the same element at
-    /// the same time, each with its own Qt objects; only the owner renderer (the first one) has the primary occurrence.
-    /// When this tree lets go of the last occurrence of an element it owns, it hands the element over at the end of the
-    /// update (<see cref="OccurrenceRegistry.HandOver"/>); the next renderer picks its primary in its next update
-    /// (<see cref="TakeOver"/>). A video is shown once only, app-wide (inside this tree the first occurrence in traversal
-    /// order wins and takes it over from a later position if needed): every other occurrence becomes a placeholder
-    /// mirror without Qt object (<see cref="ItemMirror.IsPlaceholder"/>) and sets a warning in the element's feedback.
-    /// REPARENT indices count only the real objects. <see cref="PrimaryOccurrences"/> does this bookkeeping.
-    /// </para>
-    /// <para>
-    /// Every visited object is bound to the feedback slot of its description (BIND with a feedback id from
-    /// <see cref="FeedbackRouter"/>, a new feedback id per slot change), no feedback sends an unbind (feedback id 0).
-    /// </para>
-    /// <para>
-    /// Input handlers: the interaction chain of an element (<see cref="Element.Interaction"/>) becomes a list of
-    /// handler objects per item (<see cref="ItemMirror.Handlers"/>, not children), diffed by <see cref="HandlerReconciler"/>;
-    /// they are written after the item's BIND and before its children.
-    /// </para>
-    /// <para>
-    /// Commands are written parent before child (CREATE, property SETs, REPARENT, BIND, then the children).
-    /// DESTROY is sent only for the topmost object of a removed subtree (QtNative destroys recursively);
-    /// the ids of the whole subtree are returned to the <see cref="IdAllocator"/>.
-    /// </para>
-    /// <para>
-    /// Styles are resolved top-down: the base style (<see cref="BaseStyle.Default"/>) under the window root, each
-    /// Group and widget merges its <see cref="Element.Style"/> over the style it inherited (<see cref="StyleMerge"/>),
-    /// all other elements pass the inherited style on unchanged. A resolved style that stays equal keeps its reference
-    /// (<see cref="ItemMirror.ResolvedStyle"/>), so a reference-equal subtree is skipped only if its inherited style is
-    /// reference-equal too (<see cref="ItemMirror.InheritedStyle"/>); otherwise it is visited and only SET_STYLE diffs
-    /// go out. Widgets send their resolved style right after CREATE and later as diff against
-    /// <see cref="ItemMirror.SentStyle"/> (<see cref="StyleWriter"/>); primitives never get SET_STYLE.
-    /// </para>
-    /// <para>
-    /// Self-made widgets: a child that is an <see cref="IStylable"/> (a <see cref="StylableElement"/> in the
-    /// children array) is built with the style inherited at its position, and the returned element is reconciled in its
-    /// place. Build runs on every pass, because a patched widget is usually a mutable instance whose reference does not
-    /// change; subtrees containing one are therefore never skipped (<see cref="ItemMirror.ContainsStylable"/>), the
-    /// elements around them still are. Exceptions are caught per call and shown at the parent's feedback
-    /// (<see cref="FeedbackState.BuildError"/>).
-    /// </para>
-    /// <para>
-    /// Effect chain: the Effect pin of an element is segmented (<see cref="Effect.Segment"/>) into links in application
-    /// order and sent as one SET_EFFECT_CHAIN (<see cref="EffectChainWriter"/>), only when the chain instance changed
-    /// (reference comparison, a new instance sends the whole chain again, no chain = linkCount 0). Elements the links refer
-    /// to (the mask of a MULTI run, the texture of a shader uniform) are objects of their own, reconciled without REPARENT
-    /// before the chain is sent and destroyed after it (<see cref="EffectChainMirror.Objects"/>).
-    /// </para>
-    /// <para>
-    /// Thread: <see cref="Update(Element?, in SpaceMapping)"/> runs on the vvvv main thread inside the Update of the
-    /// Renderer [Qt] node (<see cref="WindowScene.Update"/>), once per frame and window, after the element tree of that
-    /// frame was evaluated; it only writes commands. The pump applies them later in the same frame (frame finished, after
-    /// all node updates, <see cref="WindowScene.ApplyCommands"/>). An exception here leaves the mirror half updated: the
-    /// caller drops the commands of the frame and resyncs (<see cref="ResyncController.OnReconcileFailed"/>), whose
-    /// <see cref="Discard"/> also removes what the cut-short visit registered.
-    /// </para>
-    /// Allocation-free in the steady state (no structural change). Not thread-safe; one per window.
+    /// Compares the element tree of one renderer with the mirror of the last frame and writes the minimal commands
+    /// (CREATE / SET / REPARENT / DESTROY / BIND) into an <see cref="ICommandSink"/>. Runs on the vvvv main thread in the
+    /// update of the renderer node, once per frame; allocation-free in the steady state; not thread-safe, one per renderer.
+    /// Design: docs/design/reconciler.md; identity: docs/design/reconciler-identity.md, "Qt objects: position and type".
     /// </summary>
     internal sealed class Reconciler
     {
@@ -124,7 +54,7 @@ namespace VL.Qt.Reconciliation
         /// <summary>Native window of the renderer (vlqt_window_*), Zero in tests; used by Snapshot to find an element.</summary>
         public SceneHandle Window { get; set; }
 
-        /// <summary>Mirror of the object under the window root (index 0); null = empty scene.</summary>
+        /// <summary>Mirror of the object under the window root (index 0); null = empty element tree.</summary>
         internal ItemMirror? Root => _root;
 
         /// <summary>Object id → feedback slot of every bound object.</summary>
@@ -152,7 +82,7 @@ namespace VL.Qt.Reconciliation
         /// </summary>
         public string? RootBuildError => _root is { Stylable: not null } root ? root.BuildError : null;
 
-        /// <summary>Mapping of the last <see cref="Update(Element?, in SpaceMapping)"/>: units ↔ logical pixels of this scene.</summary>
+        /// <summary>Mapping of the last <see cref="Update(Element?, in SpaceMapping)"/>: units ↔ logical pixels of this renderer.</summary>
         public SpaceMapping Mapping => _pass.Mapping;
 
         /// <summary>
@@ -162,10 +92,12 @@ namespace VL.Qt.Reconciliation
         public void Update(Element? root, Space space) => Update(root, new SpaceMapping(space, default, 1f));
 
         /// <summary>
-        /// Reconciles the scene against <paramref name="root"/> (null = empty scene) and writes the commands, lengths
+        /// Reconciles the element tree against <paramref name="root"/> (null = empty) and writes the commands, lengths
         /// converted with <paramref name="mapping"/>. A change of its <see cref="SpaceMapping.UnitScale"/> disables the
         /// reference-equality shortcut for this frame, so the property diff writes every length again; a change of the
-        /// space alone only moves the origin in QtNative (SET_SPACE, written by <see cref="Scene"/>).
+        /// space alone only moves the origin in QtNative (SET_SPACE, written by <see cref="Scene"/>). An exception leaves the
+        /// mirror half updated: the caller drops the commands of the frame and resyncs (<see cref="ResyncController.OnReconcileFailed"/>),
+        /// see docs/design/reconciler.md, "Errors and resync".
         /// </summary>
         public void Update(Element? root, in SpaceMapping mapping)
         {
@@ -186,6 +118,8 @@ namespace VL.Qt.Reconciliation
                 return;
             }
 
+            // Mirror, registries and feedback ids agree once the update ends; a visit cut short by an exception leaves them
+            // apart, and the caller resyncs (docs/design/reconciler.md, "Invariants").
             _root = Reconcile(_root, root, new Position(null, default, 0, BaseStyle.Default, false));
             _primaries.ResolveAtEndOfUpdate();
         }
@@ -194,9 +128,9 @@ namespace VL.Qt.Reconciliation
         /// Forgets the whole mirror WITHOUT writing commands (ids, occurrences, placeholders, bindings, the messages it
         /// shows) and restarts the id allocator. For the resync after a failed apply or a failed
         /// <see cref="Update(Element?, in SpaceMapping)"/>, once QtNative has been wiped (<see cref="ResyncController"/>). Does
-        /// not walk the mirror for the registry: an update an exception cut short leaves occurrences and handlers no mirror
+        /// not walk the mirror for the registries: an update an exception cut short leaves occurrences and handlers no mirror
         /// reaches and mirrors whose ids are already freed. The next <see cref="Update(Element?, in SpaceMapping)"/> builds
-        /// the scene from scratch.
+        /// the element tree from scratch.
         /// </summary>
         internal void Discard()
         {
@@ -352,6 +286,8 @@ namespace VL.Qt.Reconciliation
             if (existing is not null && existing.Type == next.Type)
             {
                 bool same = ReferenceEquals(existing.Element, next);
+                // Skip the subtree only if all five hold: same instance, pass not forced, no video taken over inside, no self-made
+                // widget inside, inherited style unchanged (docs/design/reconciler.md, "Skipping unchanged subtrees").
                 if (same && !_pass.Force && !existing.MustVisit && !existing.ContainsStylable && ReferenceEquals(at.Inherited, existing.InheritedStyle))
                 {
                     existing.SkippedPass = pass;
@@ -452,7 +388,7 @@ namespace VL.Qt.Reconciliation
             int newCount = children.Length;
             int oldCount = old.Count;
             int common = Math.Min(newCount, oldCount);
-            int live = 0; // real objects before the current position = REPARENT index
+            int live = 0; // real objects before the current position = REPARENT index; placeholders and effect objects do not count
             // The effect objects were reconciled just before (ReconcileEffect); a stylable among them needs every pass too.
             bool stylable = HasStylable(item.Effect?.Objects);
 

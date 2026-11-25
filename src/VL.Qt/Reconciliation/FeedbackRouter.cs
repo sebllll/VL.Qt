@@ -11,25 +11,10 @@ using VL.Qt.Wire;
 namespace VL.Qt.Reconciliation
 {
     /// <summary>
-    /// Feedback ids of one window: <c>uint feedbackId ↔ FeedbackSlot</c>. The reconciler acquires an id per binding
-    /// (BIND feedbackId) and releases it on unbind, feedback change or destroy; <see cref="Dispatch"/> writes the
-    /// poll buffer of the window into the bound slots.
-    /// <para>
-    /// Ids are counted up and not reused (wrap-around skips 0 and live ids): events QtNative still
-    /// sends for a released id (e.g. EVENT_HOVER 0 / EVENT_PRESS 0 after an unbind, 1 frame later) are dropped
-    /// instead of landing in another slot. Lives with the reconciler (one per window), so a restarted app (F8/F5)
-    /// starts empty. Main thread only, allocation-free in the steady state.
-    /// </para>
-    /// <para>
-    /// Several ids may point to the same slot (one element at several places of the tree, one Qt object and
-    /// id per occurrence). Hover and press combine with OR (docs/design/events.md): every id keeps its own bits, the slot
-    /// counts them (<see cref="FeedbackState.HoverCount"/>, <see cref="FeedbackState.PressCount"/>) and is hovered or pressed
-    /// while a count is above 0. Releasing an id takes its bits back right away (a removed Hover node's channel falls back to
-    /// not hovered; another occurrence that is still hovered keeps the slot hovered). Events (Click, Value) count from every
-    /// id. Only the primary id (the first occurrence in traversal order, see <see cref="OccurrenceRegistry"/>) writes state
-    /// values (Measured, SceneBounds, Media, Error) and resets the slot's other state when it is released or demoted. Ids of
-    /// input handlers are always primary.
-    /// </para>
+    /// Feedback ids of one window: <c>uint feedbackId ↔ FeedbackSlot</c>. The reconciler acquires an id per binding and releases
+    /// it on unbind, slot change or destroy; <see cref="Dispatch"/> writes the poll buffer into the bound slots. Ids count up and
+    /// are not reused, so late events of a released id are dropped. Several ids may share a slot (one per occurrence). Main thread only.
+    /// Design: docs/design/reconciler.md, "Feedback binding"; docs/design/events.md, "Feedback binding".
     /// </summary>
     internal sealed class FeedbackRouter
     {

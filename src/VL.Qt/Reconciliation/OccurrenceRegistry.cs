@@ -8,39 +8,11 @@ using VL.Qt.Interop;
 namespace VL.Qt.Reconciliation
 {
     /// <summary>
-    /// App-wide record of where each element is shown (docs/design/reconciler-identity.md, "Occurrences"). An element is what one
-    /// <see cref="OccurrenceKey"/> names: the feedback slot of a node, whatever instance the node outputs this frame, or
-    /// the instance of an element without a slot.
-    /// <para>
-    /// An element may hang at several places, inside one renderer and in several renderers: every occurrence is a Qt
-    /// object of its own and binds the element's feedback. The owner renderer (<see cref="OwnerOf"/>) is the first
-    /// renderer that showed the element (registration order). The primary occurrence (<see cref="PrimaryOf(OccurrenceKey)"/>)
-    /// is the first occurrence in traversal order in the owner renderer: only it reports state values into the feedback
-    /// (<see cref="FeedbackRouter"/>), Snapshot and TooltipPreview locate it (<see cref="TryLocate"/>). Events of all
-    /// occurrences in all renderers reach the feedback. The owner's reconciler keeps the primary up to date inside its
-    /// tree (see <see cref="PrimaryOccurrences"/>).
-    /// </para>
-    /// <para>
-    /// When the last occurrence in the owner renderer lets go while other renderers show the element, the owner's
-    /// reconciler hands it over at the end of its update (<see cref="HandOver"/>): the next renderer in registration order
-    /// becomes the owner and picks its first occurrence in traversal order as primary in its next update. Until then the
-    /// element has no primary (no state values, <see cref="TryLocate"/> fails).
-    /// </para>
-    /// <para>
-    /// A <see cref="ElementType.Video"/> is shown at one place only, app-wide (<see cref="IsShownOnce"/>; two occurrences
-    /// would be two players): the first occurrence in traversal order of the first renderer plays, the others are
-    /// placeholders registered here (<see cref="AddPlaceholder"/>), which puts <see cref="VideoPlaceholderWarning"/> into
-    /// the element's feedback slot. When the last occurrence lets go while placeholders wait, their reconcilers are
-    /// invalidated, so their next update visits the whole tree and one of them takes over.
-    /// </para>
-    /// <para>
-    /// Occurrences are kept until their mirror lets go of the element (the key at its position changes, it is destroyed,
-    /// or its reconciler is cleared), not reset every frame: subtrees skipped by the reference-equality shortcut are not
-    /// visited, and a new instance of the same slot changes nothing here.
-    /// </para>
-    /// One instance per vvvv app (<see cref="ForApp"/>); tests and the SmokeTest create their own. Input handlers are
-    /// in the <see cref="InteractionRegistry"/>. Main thread only. Allocation-free as long as the set of occurrences does
-    /// not change.
+    /// App-wide record of where each element is shown, by <see cref="OccurrenceKey"/>: owner renderer, primary occurrence
+    /// (<see cref="PrimaryOccurrences"/> keeps it up to date in the owner's tree), further occurrences, hand-over to the next
+    /// renderer, and the placeholders of a <see cref="ElementType.Video"/>, which is shown once only. One per vvvv app
+    /// (<see cref="ForApp"/>); main thread only; allocation-free while the set of occurrences does not change.
+    /// Design: docs/design/reconciler.md, "Occurrences and the primary" and "Placeholders"; docs/design/reconciler-identity.md, "Occurrences".
     /// </summary>
     internal sealed class OccurrenceRegistry
     {
