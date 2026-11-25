@@ -71,6 +71,9 @@ namespace VL.Qt
         /// <summary>vlqt_perf_stats computed from given samples and timestamps (ms, ascending) with a fixed budget.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Native.Result vlqt_test_perf_eval(Native.vlqt_perf_sample[] samples, double[] t_ms, int n, double budget_ms, out Native.vlqt_perf_stats stats);
+        /// <summary>vlqt_perf (the ~1 s summary) computed from given samples: the last 60.</summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Native.Result vlqt_test_perf_summary_eval(Native.vlqt_perf_sample[] samples, int n, out Native.vlqt_perf perf);
         /// <summary>vlqt_host_pump_stats computed from given host pumps.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Native.Result vlqt_test_perf_host_eval(Native.vlqt_host_pump[] pumps, int n, out Native.vlqt_host_pump_stats stats);

@@ -13,10 +13,9 @@
  * the members used). "Public way" is information only: nothing has to move to a public API.
  *
  *   QtCore/private/qabstractanimation_p.h   QAbstractAnimationTimer, QUnifiedTimer::startAnimationTimer: keep-alive of
- *       the vvvv clock (app/animation_clock.cpp); QUnifiedTimer::runningAnimationCount (diagnostics/perf_pages.cpp).
+ *       the vvvv clock (app/animation_clock.cpp).
  *       Public way: partly, an endless QAbstractAnimation (duration() == -1, empty updateCurrentTime) started once also
- *       keeps the driver running, but counts as a running animation (the perf page must subtract it) and must never
- *       be paused.
+ *       keeps the driver running, but counts as a running animation and must never be paused.
  *   QtQuick/private/qquickitem_p.h          QQuickItemPrivate: dirtyAttributes, nextDirtyItem, childItems for the
  *       change count (app/scene_change.cpp); explicitVisible (elements/group_item.cpp); childItems and explicitVisible
  *       (elements/positioner_align.cpp). Public way: no.

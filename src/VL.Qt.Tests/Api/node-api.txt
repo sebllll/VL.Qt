@@ -1815,6 +1815,7 @@ VL.Qt | VL.Qt.PerfStats | property VvvvMs | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property VvvvMsMax | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property WaitMs | float { get; init }
 VL.Qt | VL.Qt.PerfStats | property WaitMsMax | float { get; init }
+VL.Qt | VL.Qt.PerfStats | property WorkMs | float { get; init }
 VL.Qt | VL.Qt.PerfStats | type sealed class
 VL.Qt | VL.Qt.Space | member DIP = 1
 VL.Qt | VL.Qt.Space | member DIPTopLeft = 2

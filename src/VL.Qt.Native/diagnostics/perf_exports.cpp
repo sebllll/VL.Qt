@@ -31,7 +31,7 @@ VLQT_API int vlqt_scene_get_perf_sample(vlqt_scene* p, vlqt_perf_sample* out)
             *out = vlqt_perf_sample{};
             return fail(VLQT_ERR_NO_DATA, "vlqt_scene_get_perf_sample: no pump yet");
         }
-        *out = vlqt_perf_sample{s.frameInterval, s.pump, s.sync, s.render, s.present, s.gpu, s.events, s.swaps, s.vsync};
+        *out = vlqt_perf_sample{s.frameInterval, s.pump, s.sync, s.render, s.present, s.gpu, s.events, s.swaps, s.vsync, s.workMs()};
         return 0;
     });
 }

@@ -1,10 +1,9 @@
-// Private Qt API: QUnifiedTimer::runningAnimationCount (perf page); check on Qt updates (list: elements/elements.h).
 #include "diagnostics/perf_pages.h"
+#include "device/renderer_info.h"
 #include "diagnostics/perf_items.h"
 #include "scene/scene.h"
 #include "snapshot_resource.h"
 
-#include <QtCore/private/qabstractanimation_p.h> // QUnifiedTimer::runningAnimationCount (CorePrivate via GuiPrivate)
 #include <QtGui/QScreen>
 #include <QtGui/QTextDocumentFragment>
 #include <QtQuick/QQuickWindow>
@@ -13,11 +12,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <map>
-
-#ifdef Q_OS_WIN
-#include <dxgi1_5.h>
-#endif
 
 namespace vlqt {
 namespace {
@@ -26,46 +22,24 @@ constexpr double kOnDemandIdleShare = 0.25; // Summary shows "on demand" above t
 
 // Colors: phases (timeline bars + summary rows) and thresholds against the budget.
 constexpr Rgb kPhaseColor[PerfMonitor::PhaseCount] = {
-    {90, 156, 255, "#5a9cff"},  // events
-    {192, 128, 255, "#c080ff"}, // sync
-    {255, 160, 40, "#ffa028"},  // render
-    {64, 208, 208, "#40d0d0"},  // present
-    {176, 196, 222, "#b0c4de"}, // vsync wait
+    {90, 156, 255},  // events
+    {192, 128, 255}, // sync
+    kWorkColor,      // render
+    {64, 208, 208},  // present
+    {176, 196, 222}, // vsync wait
 };
-const char* const kGreen = "#50dc78";
-const char* const kYellow = "#ffd040";
-const char* const kRed = "#ff5050";
-const char* const kGrey = "#909090";
+constexpr Rgb kRedColor{255, 80, 80};
+constexpr Rgb kGreyColor{144, 144, 144};
+constexpr const char* kGreen = kGpuColor.html;
+constexpr const char* kYellow = kBudgetColor.html;
+constexpr const char* kRed = kRedColor.html;
+constexpr const char* kGrey = kGreyColor.html;
 const char* const kPhaseName[PerfMonitor::PhaseCount] = {"events", "sync", "render", "present", "vsync wait"};
 // Frame order of the phases (timeline bottom -> top, summary rows): the vsync wait sits between the events and the
 // sync. The enum keeps vsync last, so the phase numbers of vlqt_test_perf_spike stay.
 constexpr int kPhaseOrder[PerfMonitor::PhaseCount] = {PerfMonitor::PhaseEvents, PerfMonitor::PhaseVsync,
     PerfMonitor::PhaseSync, PerfMonitor::PhaseRender, PerfMonitor::PhasePresent};
 const char* const kPageName[PerfMonitor::PageCount] = {"SUMMARY", "TIMELINE", "SCENE", "SYSTEM", "RESOURCES"};
-
-#ifdef Q_OS_WIN
-// Same query as QRhiD3D11::create(): IDXGIFactory5::CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING),
-// qtbase v6.12.0 src/gui/rhi/qrhid3d11.cpp:211-219 (supportsAllowTearing). Asked once per process.
-bool dxgiAllowTearingSupported()
-{
-    static const bool supported = [] {
-        bool result = false;
-        IDXGIFactory1* factory = nullptr;
-        if (SUCCEEDED(CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&factory)))) {
-            IDXGIFactory5* factory5 = nullptr;
-            if (SUCCEEDED(factory->QueryInterface(__uuidof(IDXGIFactory5), reinterpret_cast<void**>(&factory5)))) {
-                BOOL allowTearing = FALSE;
-                if (SUCCEEDED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing))))
-                    result = allowTearing != FALSE;
-                factory5->Release();
-            }
-            factory->Release();
-        }
-        return result;
-    }();
-    return supported;
-}
-#endif
 
 float phaseMs(const PerfSample& s, int phase)
 {
@@ -80,9 +54,9 @@ float phaseMs(const PerfSample& s, int phase)
 
 // Host segments of the timeline (vvvv update, .NET GC pause, apply).
 constexpr Rgb kHostColor[SegQt] = {
-    {255, 110, 180, "#ff6eb4"}, // vvvv (same as the F2 line)
-    {176, 112, 64, "#b07040"},  // GC
-    {160, 160, 184, "#a0a0b8"}, // apply
+    kVvvvColor,      // vvvv (same as the F2 line)
+    {176, 112, 64},  // GC
+    {160, 160, 184}, // apply
 };
 const char* const kHostName[SegQt] = {"vvvv", "GC", "apply"};
 
@@ -113,8 +87,8 @@ namespace {
 
 const char* segName(int seg) { return seg < SegQt ? kHostName[seg] : kPhaseName[kPhaseOrder[seg - SegQt]]; }
 
-// Pump (Qt's share of a vvvv frame): green < half the budget, yellow < budget, red above.
-const char* pumpColor(double ms, double budget) { return ms < 0.5 * budget ? kGreen : ms < budget ? kYellow : kRed; }
+// A duration in the vvvv frame (Qt work, a phase, vvvv, apply): green < half the budget, yellow < budget, red above.
+const char* budgetColor(double ms, double budget) { return ms < 0.5 * budget ? kGreen : ms < budget ? kYellow : kRed; }
 // Frame interval: green up to 1.1 x budget, yellow up to 1.5 x (one refresh late), red above.
 const char* frameColor(double ms, double budget) { return ms <= 1.1 * budget ? kGreen : ms <= 1.5 * budget ? kYellow : kRed; }
 
@@ -196,40 +170,47 @@ QString PerfMonitor::summaryPage(QString* body) const
     vlqt_perf_stats st;
     perfStats(ring.data(), n, m_counters, nowMs(), budget, &st);
 
-    // avg over the last ~1 s, max over the whole view (same window as the percentiles).
-    const int first = std::max(0, n - kSummaryPumps);
-    double frameSum = 0, pumpSum = 0, gpuSum = 0, gpuMax = 0, swaps = 0;
-    double phSum[PhaseCount] = {}, phMax[PhaseCount] = {};
-    double rowSum = 0; // frame row: consecutive frames only, like the percentiles
-    int frames = 0, rowFrames = 0, gpus = 0, idle = 0;
+    // avg over the last ~1 s (PerfWindow, the one computation of vlqt_perf and the F2 meter), max over the whole view (same
+    // range as the percentiles).
+    const PerfWindow win = perfWindow(ring.data(), n, kSummaryPumps);
+    double workMax = 0, gpuMax = 0;
+    std::array<float, kHistory> work; // Qt work over the view, for the p95 tick of the bar
+    double phMax[PhaseCount] = {};
     for (int i = 0; i < n; i++) {
         const PerfSample& s = ring[i];
         for (int ph = 0; ph < PhaseCount; ph++)
             phMax[ph] = std::max(phMax[ph], double(phaseMs(s, ph)));
         gpuMax = std::max(gpuMax, double(s.gpu));
-        if (i < first)
-            continue;
-        pumpSum += s.pump;
-        swaps += s.swaps;
-        for (int ph = 0; ph < PhaseCount; ph++)
-            phSum[ph] += phaseMs(s, ph);
-        if (s.swaps > 0 && s.frameInterval > 0) { frameSum += s.frameInterval; frames++; }
-        if (consecutiveFrame(ring.data(), i)) { rowSum += s.frameInterval; rowFrames++; }
-        if (s.gpu > 0) { gpuSum += s.gpu; gpus++; }
-        idle += s.swaps == 0;
+        work[i] = s.workMs();
+        workMax = std::max(workMax, double(work[i]));
     }
-    const int na = n - first;
-    const double frameAvg = frames ? frameSum / frames : 0;
-    const double rowAvg = rowFrames ? rowSum / rowFrames : 0;
-    const double pumpAvg = na ? pumpSum / na : 0;
+    const int na = win.pumps;
+    const double frameAvg = win.frameAvg;
+    const double pumpAvg = win.pumpAvg;
+    const double workAvg = win.workAvg;
+    auto phAvg = [&](int ph) { // per pump with a frame
+        switch (ph) {
+        case PerfMonitor::PhaseEvents: return win.eventsAvg;
+        case PerfMonitor::PhaseSync: return win.syncAvg;
+        case PerfMonitor::PhaseRender: return win.renderAvg;
+        case PerfMonitor::PhaseVsync: return win.vsyncAvg;
+        default: return win.presentAvg;
+        }
+    };
+    double workP95 = 0; // nearest rank, as the percentiles of vlqt_perf_stats
+    if (n > 0) {
+        const int k = std::clamp(int(std::ceil(0.95 * n)) - 1, 0, n - 1);
+        std::nth_element(work.begin(), work.begin() + k, work.begin() + n);
+        workP95 = work[k];
+    }
     // Qt renders only on changes; a low fps from idle pumps is not a slowdown -> neutral, no traffic light.
-    const bool onDemand = na > 0 && idle > kOnDemandIdleShare * na;
+    const bool onDemand = na > 0 && win.idle > kOnDemandIdleShare * na;
 
     Html h;
     pageHeader(h, Summary, m_frozen);
-    h.br().t("fps ").c(frameAvg > 0 && !onDemand ? frameColor(frameAvg, budget) : kGrey, frameAvg > 0 ? num(1000.0 / frameAvg, 5, 1) : QStringLiteral("    -"));
+    h.br().t("fps ").c(frameAvg > 0 && !onDemand ? frameColor(frameAvg, budget) : kGrey, win.fps > 0 ? num(win.fps, 5, 1) : QStringLiteral("    -"));
     if (onDemand)
-        h.c(kGrey, QStringLiteral(" (on demand, %1 % idle)").arg(qRound(100.0 * idle / na)));
+        h.c(kGrey, QStringLiteral(" (on demand, %1 % idle)").arg(qRound(100.0 * win.idle / na)));
     h.t(QStringLiteral("   budget %1 ms (%2 Hz)").arg(num(budget, 0), num(1000.0 / budget, 0, 0)));
     vlqt_host_pump_stats hs; // C# side (live, also while frozen); only when the host reports it
     hostStats(&hs);
@@ -239,11 +220,11 @@ QString PerfMonitor::summaryPage(QString* body) const
         if (vvvv)
             h.t(", ").c(kHostColor[SegVvvv].html, QStringLiteral("vvvv %1%").arg(qRound(100.0 * hs.vvvv_ms / frameAvg)));
     }
-    h.br().c(kGrey, QStringLiteral("pump avg vs. budget, tick = p95"));
+    h.br().c(kGrey, QStringLiteral("work avg vs. budget, tick = p95"));
     if (m_overlay) { // null for pageText without overlay
-        m_overlay->setProperty("barUse", budget > 0 ? pumpAvg / budget : 0.0);
-        m_overlay->setProperty("barP95", budget > 0 ? st.pump_p95 / budget : 0.0);
-        m_overlay->setProperty("barColor", QColor(QLatin1String(pumpColor(pumpAvg, budget))));
+        m_overlay->setProperty("barUse", budget > 0 ? workAvg / budget : 0.0);
+        m_overlay->setProperty("barP95", budget > 0 ? workP95 / budget : 0.0);
+        m_overlay->setProperty("barColor", QColor(QLatin1String(budgetColor(workAvg, budget))));
     }
 
     constexpr int L = 12, W = 8;
@@ -254,33 +235,37 @@ QString PerfMonitor::summaryPage(QString* body) const
         b.t(lab(name, L)).c(color(avg), num(avg, W)).c(color(p50), num(p50, W)).c(color(p95), num(p95, W))
             .c(color(p99), num(p99, W)).c(color(max), num(max, W)).br();
     };
-    pRow("frame", rowAvg, st.frame_p50, st.frame_p95, st.frame_p99, st.frame_max,
+    pRow("frame", frameAvg, st.frame_p50, st.frame_p95, st.frame_p99, st.frame_max,
         [&](double v) { return onDemand ? kGrey : frameColor(v, budget); });
-    pRow("pump", pumpAvg, st.pump_p50, st.pump_p95, st.pump_p99, st.pump_max,
-        [&](double v) { return pumpColor(v, budget); });
+    // The pump includes the vsync wait and the present: what the frame costs on the host thread, not judged against the
+    // budget. Qt work (PerfSample::workMs) is, like the over budget counter.
+    b.t(lab("pump", L)).t(num(pumpAvg, W)).t(num(st.pump_p50, W)).t(num(st.pump_p95, W)).t(num(st.pump_p99, W))
+        .t(num(st.pump_max, W)).br();
+    b.t(lab("work", L)).c(budgetColor(workAvg, budget), num(workAvg, W)).t(QString(3 * W, u' '))
+        .c(budgetColor(workMax, budget), num(workMax, W)).br();
     for (int ph : kPhaseOrder) {
         b.t("  ").c(kPhaseColor[ph].html, lab(kPhaseName[ph], L - 2));
-        b.c(pumpColor(na ? phSum[ph] / na : 0, budget), num(na ? phSum[ph] / na : 0, W));
-        b.t(QString(3 * W, u' ')).c(pumpColor(phMax[ph], budget), num(phMax[ph], W)).br();
+        b.c(budgetColor(phAvg(ph), budget), num(phAvg(ph), W));
+        b.t(QString(3 * W, u' ')).c(budgetColor(phMax[ph], budget), num(phMax[ph], W)).br();
     }
     b.c(kGpuColor.html, lab("GPU", L));
-    if (gpus)
-        b.t(num(gpuSum / gpus, W)).t(QString(3 * W, u' ')).t(num(gpuMax, W)).br();
+    if (win.gpus)
+        b.t(num(win.gpuAvg, W)).t(QString(3 * W, u' ')).t(num(gpuMax, W)).br();
     else
         b.c(kGrey, QStringLiteral("n/a").rightJustified(W)).br();
-    b.t(lab("swaps/pump", L)).t(num(na ? swaps / na : 0, W)).br();
+    b.t(lab("swaps/pump", L)).t(num(win.swapsPerPump, W)).br();
     if (hs.samples > 0) {
         if (vvvv) // the vvvv update before the pump, same columns as the phases (avg, max)
-            b.c(kHostColor[SegVvvv].html, lab("vvvv", L)).c(pumpColor(hs.vvvv_ms, budget), num(hs.vvvv_ms, W))
-                .t(QString(3 * W, u' ')).c(pumpColor(hs.vvvv_ms_max, budget), num(hs.vvvv_ms_max, W)).br();
-        b.c(kHostColor[SegApply].html, lab("apply", L)).c(pumpColor(hs.apply_ms, budget), num(hs.apply_ms, W)).t(QString(3 * W, u' '))
-            .c(pumpColor(hs.apply_ms_max, budget), num(hs.apply_ms_max, W)).c(kGrey, QStringLiteral("  ops %1").arg(num(hs.ops, 0, 0))).br();
+            b.c(kHostColor[SegVvvv].html, lab("vvvv", L)).c(budgetColor(hs.vvvv_ms, budget), num(hs.vvvv_ms, W))
+                .t(QString(3 * W, u' ')).c(budgetColor(hs.vvvv_ms_max, budget), num(hs.vvvv_ms_max, W)).br();
+        b.c(kHostColor[SegApply].html, lab("apply", L)).c(budgetColor(hs.apply_ms, budget), num(hs.apply_ms, W)).t(QString(3 * W, u' '))
+            .c(budgetColor(hs.apply_ms_max, budget), num(hs.apply_ms_max, W)).c(kGrey, QStringLiteral("  ops %1").arg(num(hs.ops, 0, 0))).br();
         b.t(lab("reconcile", L)).t(num(hs.reconcile_ms, W)).t(QString(3 * W, u' ')).t(num(hs.reconcile_ms_max, W)).br();
         b.c(kHostColor[SegGc].html, lab("GC /s", L)).c(hs.gc2_per_s > 0 ? kRed : hs.gc1_per_s > 0 ? kYellow : kGreen,
             QStringLiteral("gen0 %1  gen1 %2  gen2 %3  pause %4 ms").arg(num(hs.gc0_per_s, 0, 1), num(hs.gc1_per_s, 0, 1),
                 num(hs.gc2_per_s, 0, 1), num(hs.gc_pause_ms_per_s, 0))).br();
     }
-    b.c(kGrey, QStringLiteral("avg: last %1 pumps, p/max: last %2").arg(kSummaryPumps).arg(n)).br().br();
+    b.c(kGrey, QStringLiteral("avg: last %1 pumps (phases: pumps with a frame), p/max: last %2").arg(kSummaryPumps).arg(n)).br().br();
 
     b.c(kGrey, lab("counters", L + 2) + QStringLiteral("total").rightJustified(W) + QStringLiteral("10 s").rightJustified(W)).br();
     auto cRow = [&](const char* name, long long total, long long recent, bool bad) {
@@ -299,38 +284,29 @@ QString PerfMonitor::summaryPage(QString* body) const
 QString PerfMonitor::timelinePage(QString* foot) const
 {
     const double budget = budgetMs();
-    const int n = viewCount();
+    const TimelineView view = analyze(*this);
+    const int n = view.count;
     Html h;
     pageHeader(h, Timeline, m_frozen);
     h.br().c(kGrey, QStringLiteral("%1 pumps, newest right, scale 0-%2 ms   F7 vvvv/GC/apply %3").arg(n)
-        .arg(num(PerfTimeline::scaleFor(this), 0, 1), QLatin1String(s_hostSegments ? "on" : "off")));
+        .arg(num(view.top, 0, 1), QLatin1String(s_hostSegments ? "on" : "off")));
 
     Html f;
     for (int seg = firstSeg(); seg < SegCount; seg++)
         f.c(segColor(seg).html, QStringLiteral("■ ")).t(segName(seg)).t("  ");
-    f.br().c(kGpuColor.html, "- GPU  ").c(kBudgetColor.html, QStringLiteral("- budget %1 (pump > budget: red)").arg(num(budget, 0)));
+    f.br().c(kGpuColor.html, "- GPU  ").c(kBudgetColor.html, QStringLiteral("- budget %1 (work > budget: red)").arg(num(budget, 0)));
     f.t("  ").c(kGrey, "- max").br();
     // Peaks: the 3 largest bars (shown segments) with their dominant segment and age.
-    int peaks[3] = {-1, -1, -1};
-    for (int i = 0; i < n; i++) {
-        const float v = stackMs(viewSample(i));
-        for (int k = 0; k < 3; k++) {
-            if (peaks[k] < 0 || v > stackMs(viewSample(peaks[k]))) {
-                for (int j = 2; j > k; j--)
-                    peaks[j] = peaks[j - 1];
-                peaks[k] = i;
-                break;
-            }
-        }
-    }
+    const auto& peaks = view.peaks;
     for (int k = 0; k < 3 && peaks[k] >= 0; k++) {
         const PerfSample& s = viewSample(peaks[k]);
         int dom = firstSeg();
         for (int seg = dom + 1; seg < SegCount; seg++)
             if (segMs(s, seg) > segMs(s, dom))
                 dom = seg;
-        const float total = stackMs(s);
-        f.t(k == 0 ? "peaks " : "      ").c(pumpColor(total, budget), num(total, 6) + QStringLiteral(" ms"));
+        const float total = view.stack[size_t(peaks[k])];
+        // The colour judges the pump's Qt work, like the red highlight; the bar total also holds the waits (and vvvv).
+        f.t(k == 0 ? "peaks " : "      ").c(budgetColor(s.workMs(), budget), num(total, 6) + QStringLiteral(" ms"));
         f.t("  ").c(segColor(dom).html, lab(segName(dom), 10)).t(num(segMs(s, dom), 6));
         f.c(kGrey, QStringLiteral("  %1 pumps ago").arg(n - 1 - peaks[k]));
         if (k < 2 && peaks[k + 1] >= 0)
@@ -370,12 +346,16 @@ QString PerfMonitor::scenePage() const
     h.br().t(lab("elements", L));
     if (m_scene) {
         h.t(QString::number(qulonglong(m_scene->nodes.size())).rightJustified(8));
-        std::map<const TypeDef*, int> byType; // TypeDef::name is the type's name, lower case here
-        for (const auto& kv : m_scene->nodes)
-            byType[kv.second.def]++;
+        // By type id (stable order); the name is TypeDef::name of the one type table, lower case here.
+        std::map<quint16, std::pair<const TypeDef*, int>> byType;
+        for (const auto& kv : m_scene->nodes) {
+            auto& entry = byType[kv.second.def->id];
+            entry.first = kv.second.def;
+            entry.second++;
+        }
         QString parts;
-        for (const auto& [def, count] : byType)
-            parts += QStringLiteral("  %1 %2").arg(QString::fromLatin1(def->name).toLower()).arg(count);
+        for (const auto& kv : byType)
+            parts += QStringLiteral("  %1 %2").arg(QString::fromLatin1(kv.second.first->name).toLower()).arg(kv.second.second);
         h.c(kGrey, parts);
     } else {
         h.t(kNa.rightJustified(8));
@@ -390,10 +370,6 @@ QString PerfMonitor::scenePage() const
     const int effects = countMultiEffects(m_window->contentItem(), m_overlay, m_scene ? m_scene->debugOverlay() : nullptr);
     h.br().t(lab("effects", L)).t(QString::number(layers).rightJustified(8))
         .c(kGrey, QStringLiteral("  effect layers, %1 MultiEffect items").arg(effects));
-    // QUnifiedTimer of this (GUI) thread: QAbstractAnimations + QML animations/animators; process-wide, not per window.
-    const QUnifiedTimer* timer = QUnifiedTimer::instance(false);
-    h.br().t(lab("animations", L)).t(QString::number(timer ? qlonglong(timer->runningAnimationCount()) : 0).rightJustified(8))
-        .c(kGrey, "  running (process)");
     // Ops per apply: commands the host applied to this window per pump (host pumps, ~1 s).
     vlqt_host_pump_stats hs;
     hostStats(&hs);
@@ -429,28 +405,24 @@ QString PerfMonitor::systemPage() const
     Html h;
     pageHeader(h, System, m_frozen);
     constexpr int L = 14; // "allow tearing" + 1
-    QRhi* rhi = m_window->rhi();
-    const QSGRendererInterface* ri = m_window->rendererInterface();
-    const bool quickSoftware = ri && ri->graphicsApi() == QSGRendererInterface::Software;
+    const RendererInfo ri = describeRenderer(m_window);
     h.br().t(lab("backend", L));
-    if (rhi)
-        h.t(QString::fromLatin1(rhi->backendName())).c(kGrey, "  QRhi");
-    else if (quickSoftware)
+    if (ri.hasRhi)
+        h.t(ri.backendName).c(kGrey, "  QRhi");
+    else if (ri.quickSoftware)
         h.t("software").c(kGrey, "  Qt Quick 2D renderer, no QRhi");
     else
         h.t(kNa);
-    const QRhiDriverInfo info = rhi ? rhi->driverInfo() : QRhiDriverInfo{};
-    const QString device = QString::fromUtf8(info.deviceName);
-    h.br().t(lab("adapter", L)).t(device.isEmpty() ? kNa : device);
-    if (const char* type = rhi ? deviceTypeName(info.deviceType) : nullptr)
+    h.br().t(lab("adapter", L)).t(ri.adapter.isEmpty() ? kNa : ri.adapter);
+    if (const char* type = ri.hasRhi ? deviceTypeName(ri.deviceType) : nullptr)
         h.c(kGrey, QStringLiteral("  %1").arg(QString::fromLatin1(type)));
     h.br().t(lab("rendering", L));
     if (!m_rendererKnown)
         h.c(kGrey, kNa);
-    else if (m_software.isEmpty())
+    else if (m_renderer.software.isEmpty())
         h.c(kGreen, "GPU");
     else
-        h.c(kRed, QStringLiteral("CPU (%1)").arg(m_software));
+        h.c(kRed, QStringLiteral("CPU (%1)").arg(m_renderer.software));
     const qreal dpr = m_window->devicePixelRatio();
     const QSize px = m_window->size() * dpr;
     h.br().t(lab("window", L)).t(QStringLiteral("%1x%2 px").arg(px.width()).arg(px.height()))
@@ -463,40 +435,35 @@ QString PerfMonitor::systemPage() const
         h.t(QStringLiteral("%1 Hz").arg(num(hz, 0, 1)));
     else
         h.t(kNa);
-    h.c(kGrey, QStringLiteral("  budget %1 ms").arg(num(budgetMs(), 0)) + (screen ? QStringLiteral("  ") + screen->name() : QString()));
+    h.c(kGrey, (screen ? QStringLiteral("  ") + screen->name() : QString())
+        + QStringLiteral("  budget %1 ms (vvvv frame)").arg(num(budgetMs(), 0)));
     // Actual swap chain flag where there is one; the requested QSurfaceFormat value otherwise (software: n/a).
     h.br().t(lab("swap int.", L));
     if (QRhiSwapChain* sc = m_window->swapChain()) {
         const bool vsync = !(sc->flags() & QRhiSwapChain::NoVSync);
         h.t(QString::number(vsync ? 1 : 0)).c(kGrey, vsync ? "  VSync on, Present waits" : "  VSync off, Present does not wait");
-    } else if (rhi) {
+    } else if (ri.hasRhi) {
         h.t(QString::number(m_window->format().swapInterval())).c(kGrey, "  requested");
     } else {
         h.t(kNa);
-        if (quickSoftware)
+        if (ri.quickSoftware)
             h.c(kGrey, "  software backend presents via the backing store");
     }
     // Does Qt call Present with DXGI_PRESENT_ALLOW_TEARING? D3D11 only. QRhiD3D11::beginFrame/endFrame
     // (qrhid3d11.cpp:1561-1562, v6.12.0) sets it when swapInterval == 0 and the swap chain has
     // DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING; that flag is set when NoVSync and supportsAllowTearing
-    // (qrhid3d11.cpp:5422-5430) = dxgiAllowTearingSupported() here.
+    // (qrhid3d11.cpp:5422-5430) = RendererInfo::allowTearingSupported.
     h.br().t(lab("allow tearing", L));
     QRhiSwapChain* tearSc = m_window->swapChain();
-#ifdef Q_OS_WIN
-    if (rhi && rhi->backend() == QRhi::D3D11 && tearSc) {
+    if (ri.hasRhi && ri.backend == QRhi::D3D11 && tearSc) {
         const bool noVsync = tearSc->flags() & QRhiSwapChain::NoVSync;
-        const bool supported = dxgiAllowTearingSupported();
-        const bool tearing = noVsync && supported;
+        const bool tearing = noVsync && ri.allowTearingSupported;
         h.c(tearing ? kYellow : kGreen, tearing ? "yes" : "no");
         h.c(kGrey, tearing ? "  Present uses ALLOW_TEARING, frames may tear"
             : !noVsync ? "  VSync on" : "  not supported by the system, Present(0) in the flip model may still wait");
     } else {
         h.c(kGrey, kNa);
     }
-#else
-    Q_UNUSED(tearSc);
-    h.c(kGrey, kNa);
-#endif
     h.br().t(lab("Qt", L)).t(QString::fromLatin1(qVersion()));
     return h.str();
 }

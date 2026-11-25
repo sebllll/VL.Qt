@@ -134,6 +134,8 @@ namespace VL.Qt
             var tApplied = Stopwatch.GetTimestamp();
             Advance(driverSeconds);
             var tAdvanced = Stopwatch.GetTimestamp();
+            // One budget in C# and QtNative: the windows of this pump judge their Qt work against this frame interval.
+            Native.vlqt_app_set_frame_budget(budgetMs);
             Native.vlqt_app_process_events_for(_windows, CollectWindows(participants));
             _diagnostics.CountProcessEvents();
             var tProcessed = Stopwatch.GetTimestamp();
@@ -142,7 +144,7 @@ namespace VL.Qt
             var tEnd = Stopwatch.GetTimestamp();
 
             // Host frame to every window's PerfMonitor.
-            var host = meter.End(vvvvStart, _prevPumpEnd, tEnd);
+            var host = meter.End(vvvvStart, _prevPumpEnd);
             _prevPumpEnd = tEnd;
             for (int i = 0; i < participants.Length; i++)
             {

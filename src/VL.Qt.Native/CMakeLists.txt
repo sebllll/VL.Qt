@@ -171,6 +171,8 @@ target_sources(vlqt PRIVATE
     # device/
     device/device.cpp
     device/device.h
+    device/renderer_info.cpp
+    device/renderer_info.h
     render_thread.cpp
     render_thread.h
 
@@ -184,6 +186,8 @@ target_sources(vlqt PRIVATE
     # diagnostics/: perf monitor (statistics, hooks, pages, graph and timeline items) and debug overlay
     diagnostics/debug_overlay.cpp
     diagnostics/debug_overlay.h
+    diagnostics/overlay_geometry.h
+    diagnostics/overlay_software.h
     diagnostics/perf.h
     diagnostics/perf_exports.cpp
     diagnostics/perf_items.cpp

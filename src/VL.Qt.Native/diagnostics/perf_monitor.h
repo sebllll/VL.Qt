@@ -1,7 +1,28 @@
 // The per-window perf monitor: measurement hooks, the ring of samples, the F2/F5 overlay state and the keys.
 // The statistics are in perf_stats.h, the text pages in perf_pages.cpp, the graph and timeline items in perf_items.h.
+//
+// Threading contract. A monitor is created on the GUI (vvvv) thread and belongs to it, except for what is listed here.
+//  - GUI thread only: the ring (m_ring, m_head, m_count), m_cur, m_counters, the overlay (flags, page, frozen state,
+//    m_overlay and its children, every QML property including "rendering"), m_renderer/m_rendererKnown, m_keys,
+//    m_budgetMs and s_frameBudgetMs (set and read in the pump), m_scene, m_frozenRing, m_resRows, the text pages and
+//    every vlqt_* export that reads the monitor. endPump runs here.
+//  - Signal thread: the frame signals of the window (connected in the constructor) fill m_pending and the timestamps
+//    (m_tFrameBegin ... m_tLastSwap); only that thread touches them. For a window it is the GUI thread, inside
+//    processEvents; for an offscreen scene it is the scene's render thread (offscreen/offscreen_render.cpp), which also
+//    runs detectRenderer.
+//  - Shared: m_done under m_doneLock (afterFrameEnd adds a finished frame, endPump takes it: the only hand-off of
+//    measurements), m_spikePhase/m_spikeMs (atomics, test hook). The process-wide renderer warning is a
+//    std::atomic<bool> in device/renderer_info.cpp.
+//  - Render thread to GUI thread: detectRenderer reads the renderer on the signal thread, where the QRhi is valid, and
+//    hands the result to publishRenderer on the GUI thread (a queued call when the signal thread is another one). It
+//    never writes a QML property or a member of the GUI side from the signal thread.
+//  - Item painting: PerfGraph and PerfTimeline read the ring in updatePaintNode, which runs inside the scene graph
+//    sync. The GUI thread cannot be in endPump then: a window syncs on the GUI thread itself; a scene syncs in the
+//    blocking RenderThread::call of beginAndSync (offscreen_render.cpp), during which the GUI thread waits. A software
+//    batch also renders in a blocking call; a hardware batch renders in post() and never touches the ring.
 #pragma once
 
+#include "device/renderer_info.h"
 #include "diagnostics/perf_stats.h"
 #include "resources/resources.h"
 #include "vlqt.h"
@@ -24,13 +45,6 @@ namespace vlqt {
 
 class Scene;
 
-// Non-empty (renderer name) if the window renders on the CPU: Qt Quick software backend, a software QRhi
-// adapter (CpuDevice, e.g. WARP) or a Mesa software rasterizer (llvmpipe, softpipe). Valid after sceneGraphInitialized.
-QString softwareRendererName(QQuickWindow* window);
-
-// Pumps (about 1 s at 60 Hz) that the summary and the Summary page average over.
-inline constexpr int kSummaryPumps = 60;
-
 // Per-window measurement, overlay (F2 perfmeter, F5 stats pages) and key handling.
 // Keys (window focused, no other modifiers; setKeysEnabled(false) turns all of them off): F2 meter on/off; F5 Summary -> Timeline -> Scene -> System -> Resources -> off;
 // Shift+F5 hides/shows the stats keeping the page; F6 (only while the stats are visible) freezes the overlay; F7 (same)
@@ -38,9 +52,8 @@ inline constexpr int kSummaryPumps = 60;
 // The last page is remembered process-wide (new windows open on it).
 // vlqt_test_set_overlay / vlqt_scene_get_overlay flags: bit0 meter, bit1 stats, bit3 freeze, bits 4..6 = page + 1
 // (set: 0 = keep the remembered page).
-class PerfMonitor : public QObject
+class PerfMonitor : public QObject // no Q_OBJECT: no signals, slots or properties; the connects use member pointers
 {
-    Q_OBJECT
 public:
     static constexpr int kHistory = kPerfHistory;
     enum Flags { Meter = 1, Stats = 2, Freeze = 8 };
@@ -62,8 +75,10 @@ public:
     // last completed pump (false = none yet) and percentiles/counters/budget.
     bool lastSample(PerfSample* out) const;
     void stats(vlqt_perf_stats* out) const;
-    // 1000 / refresh rate of the window's screen, 60 Hz if unknown.
-    double budgetMs() const;
+    // The frame budget: vvvv's frame interval (vlqt_app_set_frame_budget), taken at the end of each pump of the window.
+    double budgetMs() const { return m_budgetMs; }
+    // vlqt_app_set_frame_budget: the budget the next pumps take (process-wide, 1000 / 60 until set).
+    static void setFrameBudget(double ms) { s_frameBudgetMs = ms; }
     int overlay() const { return m_flags | (m_frozen ? Freeze : 0) | ((m_page + 1) << kPageShift); }
     void setOverlay(int flags);
     int page() const { return m_page; }
@@ -94,6 +109,7 @@ private:
     void ensureOverlay();
     void updateRenderingBadge();
     void detectRenderer();
+    void publishRenderer(RendererInfo info);
     void updateOverlay();
     void setFrozen(bool on);
     void spin(int phase);
@@ -114,6 +130,8 @@ private:
     int m_count = 0;
     PerfSample m_cur; // main thread: endPump fills it from m_done
     PerfCounters m_counters;
+    static inline double s_frameBudgetMs = 1000.0 / 60;
+    double m_budgetMs = s_frameBudgetMs;
     // Frame signals fire on the GUI thread for a window and on the scene's render thread for an offscreen scene,
     // concurrently with endPump. They fill m_pending and the timestamps (only that thread touches them);
     // afterFrameEnd adds the finished frame to m_done under m_doneLock, and endPump takes m_done. A sample therefore holds
@@ -124,8 +142,8 @@ private:
     double m_tFrameBegin = -1, m_tSyncBegin = 0, m_tRenderBegin = 0, m_tRenderEnd = 0, m_tLastSwap = -1;
     int m_flags = 0;
     bool m_keys = true; // the event filter is installed on the window
-    QString m_software; // softwareRendererName() after scenegraph init
-    bool m_rendererKnown = false; // m_software is valid
+    RendererInfo m_renderer; // describeRenderer() after scenegraph init, published on the GUI thread
+    bool m_rendererKnown = false; // m_renderer is valid
     QPointer<QQuickItem> m_overlay;
     QQuickItem* m_graph = nullptr;    // child of m_overlay
     QQuickItem* m_timeline = nullptr; // child of m_overlay

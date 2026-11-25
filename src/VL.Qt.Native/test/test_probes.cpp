@@ -38,6 +38,7 @@ using vlqt::guardedGui;
 using vlqt::guardedGuiBuffer;
 using vlqt::perfEval;
 using vlqt::perfHostStats;
+using vlqt::perfSummaryEval;
 using vlqt::SceneHandle;
 using vlqt::withScene;
 using vlqt::withWindow;
@@ -127,6 +128,16 @@ VLQT_API int vlqt_test_perf_eval(const vlqt_perf_sample* samples, const double* 
         if (!out || n < 0 || (n > 0 && (!samples || !t_ms)))
             return fail(VLQT_ERR_BAD_ARGUMENT, "test_perf_eval: null or negative argument");
         perfEval(samples, t_ms, n, budget_ms, out);
+        return 0;
+    });
+}
+
+VLQT_API int vlqt_test_perf_summary_eval(const vlqt_perf_sample* samples, int n, vlqt_perf* out)
+{
+    return guarded([&]() -> int {
+        if (!out || n < 0 || (n > 0 && !samples))
+            return fail(VLQT_ERR_BAD_ARGUMENT, "test_perf_summary_eval: null or negative argument");
+        perfSummaryEval(samples, n, out);
         return 0;
     });
 }

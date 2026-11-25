@@ -25,6 +25,7 @@ public static class DebugOverlayTest
     private static uint Child(uint parent, uint i) => 10 + parent * 10 + i;
     private const uint HHover = 100; // element feedback of the green column child
     private const uint HoverId = 900, HHoverHandler = 101; // its Hover handler and that handler's feedback
+    private const uint OuterGrp = 50, InnerGrp = 51; // Group in a Group with group bounds (-30, -30, 60, 60) (children 52, 53)
     private const uint FollowCol = 40, FollowQml = 41; // Column whose child grows by a QML timer, without a command
 
     // 40x40, grows to 200 wide after 1 s of wall time: the Column re-lays out without an apply.
@@ -154,6 +155,17 @@ public static class DebugOverlayTest
         cmd.SetI32(Rot, Protocol.PropertyId.Anchor, 0x1 | 0x20);
         var rot = Matrix.RotationZ(MathUtil.Pi / 6) * Matrix.Translation(640, 80, 0);
         cmd.SetMat4(Rot, Protocol.PropertyId.Transform, in rot);
+        // Group in a Group: the inner one has children left of / above its origin, so its group bounds are (-30, -30, 60, 60),
+        // not (0, 0, 60, 60). The outer Group's frame is that rect and so is its children extent: no blue dotted rect, no red
+        // overflow right of / below it (they would show at x 730..760, y 360..390 if a child Group counted as (0, 0, w, h)).
+        cmd.Create(OuterGrp, Protocol.ElementType.Group);
+        cmd.SetPlace(OuterGrp, 700, 330, 0, 0);
+        cmd.Reparent(OuterGrp, 0, 1000);
+        cmd.Create(InnerGrp, Protocol.ElementType.Group);
+        cmd.SetPlace(InnerGrp, 0, 0, 0, 0);
+        cmd.Reparent(InnerGrp, OuterGrp, 1000);
+        Rect(InnerGrp + 1, InnerGrp, -30, -30, 40, 40, 0.5f, 0.5f, 0.5f);
+        Rect(InnerGrp + 2, InnerGrp, 10, 10, 20, 20, 0.5f, 0.5f, 0.5f);
         all.AddRange(new[] { Col, Child(Col, 0), Child(Col, 1), Child(Col, 2), Txt, Grp, Child(Grp, 0), Child(Grp, 1), RowId,
             Child(RowId, 0), Child(RowId, 1), Child(RowId, 2), Rot });
         // Measure feedback on every element (handle = id); the green child keeps its interactive feedback.
@@ -221,6 +233,9 @@ public static class DebugOverlayTest
             Color ov = Px(a, 80, 415), raw = Px(off, 80, 415);
             s.Check(ov.R > raw.R + 20 && ov.G <= raw.G, $"debug: overflow tinted red ({ov} over {raw})");
             s.Check(Near(a, 80, 440, c => c.R > 200 && c.G is > 100 and < 200 && c.B < 80), $"debug: implicit size orange ({Px(a, 80, 440)})");
+            // Child Group counts with its group bounds: the outer frame (670..730, 300..360) holds the children extent exactly.
+            s.Check(Near(a, 670, 330, IsCyan), $"debug: outer group frame at the group bounds of its child group ({Px(a, 670, 330)})");
+            s.Check(IsBg(Px(a, 745, 375)) && !Near(a, 745, 390, c => c.B > 200 && c.R < 130), $"debug: no overflow or children rect for a child group's bounds ({Px(a, 745, 375)}, {Px(a, 745, 390)})");
         }
 
         // Changes while debug is on: measurements still flow (column child resized -> column measured changes).

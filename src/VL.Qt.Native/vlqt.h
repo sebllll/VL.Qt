@@ -112,6 +112,12 @@ VLQT_API int         vlqt_app_set_pipeline_cache(const char* utf8Path);
  * (count ignored). 0, VLQT_ERR_NOT_INITIALIZED, VLQT_ERR_UNSUPPORTED when called inside the pump (from a host callback
  * that processEvents dispatched): the nested call does nothing, the outer pump goes on (a warning is logged once). */
 VLQT_API int         vlqt_app_process_events_for(vlqt_scene* const* windows, int count);
+/* The frame budget in ms: vvvv's frame interval, which QtNative renders in step with. Each window of a pump takes it at
+ * the end of the pump and judges that pump's Qt work against it (vlqt_perf_stats: budget_ms, over_budget, long_frames;
+ * the colours and the red highlight of the F2/F5 overlay). VL.Qt calls it before each vlqt_app_process_events_for with
+ * the interval of its frame clock; 1000 / 60 until the first call. Process-wide, needs no vlqt_app_init. Qt GUI thread.
+ * 0, VLQT_ERR_BAD_ARGUMENT (ms not in (0, 1000), NaN), VLQT_ERR_WRONG_THREAD. */
+VLQT_API int         vlqt_app_set_frame_budget(double ms);
 /* delivers the window system events Qt has queued (input of all windows, also geometry and close) without
  * rendering: update requests stay pending and an Expose is deferred, both render in the next pump. Call at the start
  * of the host frame, then vlqt_scene_poll, so input that arrived between two frames reaches the host in this frame.
@@ -127,16 +133,23 @@ VLQT_API const char* vlqt_last_error(void);
 
 /* ===== scene: a window or an offscreen scene; main thread ===== */
 
-/* Averages/maxima over the last ~1 s of pumps, all times in ms. */
+/* Averages/maxima over the last ~1 s of pumps (the last 60), all times in ms. Frame statistics (fps, frame_ms,
+ * frame_ms_max) come only from consecutive frames, like the percentiles of vlqt_perf_stats: pumps with a swap whose
+ * previous pump also had one. After idle pumps the interval spans the idle time and is not a frame time. Without a
+ * consecutive frame in the range (an idle or on-demand scene) all three are 0. The phases (sync_ms, render_ms,
+ * present_ms, vsync_ms) are averages per pump that rendered (swaps > 0), summed over its swaps; pump_ms, work_ms and
+ * swaps_per_pump are per pump of the range, gpu_ms per pump with a GPU timestamp. The F2 meter and the F5 Summary
+ * page use the same computation. */
 typedef struct vlqt_perf {
-    double fps;            /* from the average interval between swaps */
+    double fps;            /* 1000 / frame_ms, 0 = no consecutive frame */
     double frame_ms, frame_ms_max; /* average/max frame interval (vlqt_perf_sample.frame_interval) */
-    double pump_ms, pump_ms_max;   /* processEvents incl. rendering, on the vvvv thread */
+    double pump_ms, pump_ms_max;   /* processEvents incl. rendering, vsync wait and present, on the vvvv thread */
     double sync_ms, render_ms, present_ms;
     double gpu_ms, gpu_ms_max;     /* 0 = GPU timestamps unavailable */
     double swaps_per_pump;
     int samples;
     double vsync_ms;               /* QRhi::beginFrame, see vlqt_perf_sample.vsync (appended) */
+    double work_ms;                /* Qt work per pump, see vlqt_perf_sample.work (appended) */
 } vlqt_perf;
 
 /* One pump (vlqt_app_process_events_for) of a scene, times in ms. */
@@ -151,18 +164,22 @@ typedef struct vlqt_perf_sample {
      * D3D11 waits there for the refresh (frame latency waitable object), not in Present; without VSync it waits there
      * when the GPU is behind. F5 segment "vsync wait". 0 on the software backend. */
     float vsync;
+    /* Appended: Qt work = events + sync + render, i.e. pump - vsync - present (>= 0): the pump without the waits for the
+     * display refresh or the GPU. The one definition of Qt work: over_budget, the F2 series "work" and the slow-frame
+     * warning of VL.Qt judge it. Filled by QtNative; vlqt_test_perf_eval computes it from pump, vsync and present. */
+    float work;
 } vlqt_perf_sample;
 
 /* Percentiles over the ring (last up to 240 pumps; frame only over pumps with a swap whose previous pump also had one,
  * i.e. intervals between consecutive frames), nearest rank, and counters.
  * Computed at query time only. Counters: since scene creation and over the last 10 s (1 s buckets).
- *   over_budget   pump > budget_ms
+ *   over_budget   Qt work > budget_ms (vlqt_perf_sample.work: the pump without the vsync wait and the present)
  *   long_frames   frame interval > 1.5 x budget_ms and the previous pump also had a frame (a refresh was skipped =
  *                 missed frame; the interval after idle pumps of on-demand rendering does not count)
  *   idle          swaps == 0 (no frame in the pump, mostly because nothing changed)
  *   multi_swap    swaps > 1 */
 typedef struct vlqt_perf_stats {
-    double budget_ms;   /* 1000 / refresh rate of the window's screen, fallback 60 Hz */
+    double budget_ms;   /* vvvv's frame interval (vlqt_app_set_frame_budget) at the window's last pump, 1000 / 60 until set */
     double frame_p50, frame_p95, frame_p99, frame_max;
     double pump_p50, pump_p95, pump_p99, pump_max;
     int samples;        /* pumps in the ring */
@@ -176,7 +193,6 @@ typedef struct vlqt_perf_stats {
 typedef struct vlqt_host_pump {
     float apply;       /* vlqt_scene_apply of this scene in this pump (incl. resync) */
     float reconcile;   /* reconcile + command writing in the node updates since the previous host pump */
-    float host;        /* the whole host pump (all scenes: apply, advance, processEvents, poll) */
     float interval;    /* since the previous host pump of the same vvvv app (0 = first) */
     float gc_pause;    /* .NET GC pause since the previous host pump */
     int ops;           /* commands applied to this scene in this pump */
@@ -192,11 +208,10 @@ typedef struct vlqt_host_pump {
 typedef struct vlqt_host_pump_stats {
     double apply_ms, apply_ms_max;
     double reconcile_ms, reconcile_ms_max;
-    double host_ms, host_ms_max;
     double ops, ops_max;               /* per pump */
     double gc0_per_s, gc1_per_s, gc2_per_s;
     double gc_pause_ms_per_s;
-    double alloc_bytes, alloc_bytes_max; /* per host pump */
+    double alloc_bytes;                /* per host pump */
     int samples;
     double vvvv_ms, vvvv_ms_max;       /* vlqt_host_pump.vvvv, average/max */
     double wait_ms, wait_ms_max;       /* vlqt_host_pump.wait, average/max */

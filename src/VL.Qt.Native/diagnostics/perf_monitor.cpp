@@ -1,12 +1,14 @@
 #include "diagnostics/perf_monitor.h"
+#include "device/renderer_info.h"
+#include "diagnostics/overlay_software.h"
 #include "diagnostics/perf.h"
 #include "diagnostics/perf_items.h"
 #include "diagnostics/perf_pages.h"
 #include "app/scene_change.h"
 
-#include <QtCore/QLoggingCategory>
+#include <QtCore/QThread>
+#include <QtGui/QFontDatabase>
 #include <QtGui/QKeyEvent>
-#include <QtGui/QScreen>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickWindow>
@@ -17,32 +19,11 @@
 #include <utility>
 #include <vector>
 
-Q_LOGGING_CATEGORY(lcGpu, "vlqt.gpu")
-
 namespace vlqt {
-
-QString softwareRendererName(QQuickWindow* window)
-{
-    if (!window)
-        return {};
-    if (window->rendererInterface() && window->rendererInterface()->graphicsApi() == QSGRendererInterface::Software)
-        return QStringLiteral("Qt Quick software backend");
-    QRhi* rhi = window->rhi();
-    if (!rhi)
-        return {};
-    const QRhiDriverInfo info = rhi->driverInfo();
-    const QString name = QString::fromUtf8(info.deviceName);
-    static const char* const kSoftware[] = {"llvmpipe", "softpipe", "Software Rasterizer", "SwiftShader"};
-    bool sw = info.deviceType == QRhiDriverInfo::CpuDevice;
-    for (const char* s : kSoftware)
-        sw = sw || name.contains(QLatin1String(s), Qt::CaseInsensitive);
-    return sw ? (name.isEmpty() ? QStringLiteral("CPU device") : name) : QString();
-}
 
 namespace {
 
 std::vector<PerfMonitor*> s_monitors;
-bool s_softwareWarned = false; // once per process
 
 constexpr double kTextIntervalMs = 250;
 constexpr double kTimelineIntervalMs = 50;
@@ -58,7 +39,8 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
     s_monitors.push_back(this);
     window->installEventFilter(this);
 
-    // GPU rendering is required (software rendering is not supported): warn loudly when Qt fell back to the CPU.
+    // GPU rendering is the supported mode; the software backends (Qt Quick software renderer, Mesa llvmpipe, WARP) are
+    // a fallback that gets this warning and, on the Qt Quick one, the reduced drawing of overlay_software.h.
     // sceneGraphInitialized alone is not enough: the Qt Quick software render loop shares one render context and
     // emits it only for the first window, so later windows detect on their first swap.
     connect(window, &QQuickWindow::sceneGraphInitialized, this, &PerfMonitor::detectRenderer, Qt::DirectConnection);
@@ -124,17 +106,26 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
     }, Qt::DirectConnection);
 }
 
+// Signal or render thread (a scene's frame signals): reads the renderer there, where the QRhi is valid, and
+// publishes the result to the GUI thread; m_renderer and m_rendererKnown belong to that thread (perf_monitor.h).
 void PerfMonitor::detectRenderer()
 {
-    m_software = softwareRendererName(m_window);
+    RendererInfo info = describeRenderer(m_window);
+    warnSoftwareRendering(info);
+    if (QThread::currentThread() == thread()) {
+        publishRenderer(std::move(info));
+        return;
+    }
+    // A queued call does not outlive the monitor: it is dropped when the monitor is destroyed.
+    QMetaObject::invokeMethod(this, [this, info = std::move(info)]() mutable { publishRenderer(std::move(info)); },
+        Qt::QueuedConnection);
+}
+
+void PerfMonitor::publishRenderer(RendererInfo info)
+{
+    m_renderer = std::move(info);
     m_rendererKnown = true;
     updateRenderingBadge();
-    if (m_software.isEmpty() || s_softwareWarned)
-        return;
-    s_softwareWarned = true;
-    qCWarning(lcGpu, "SOFTWARE RENDERING: Qt Quick renders on the CPU (%s), not on the GPU. Expect low fps. "
-        "WSLg: GALLIUM_DRIVER=d3d12 selects the host GPU via Mesa d3d12.", qPrintable(m_software));
-    // no extra stderr line; exports see it via a logging provider or VLQT_LOG_STDERR (app/log.cpp emitLog).
 }
 
 PerfMonitor::~PerfMonitor()
@@ -157,7 +148,8 @@ void PerfMonitor::endPump(float pumpMs)
     }
     m_cur.pump = pumpMs;
     m_cur.events = std::max(0.0f, pumpMs - m_cur.vsync - m_cur.sync - m_cur.render - m_cur.present);
-    m_counters.add(m_cur, nowMs(), budgetMs());
+    m_budgetMs = s_frameBudgetMs;
+    m_counters.add(m_cur, nowMs(), m_budgetMs);
     m_ring[(m_head + m_count) % kHistory] = m_cur;
     if (m_count < kHistory)
         m_count++;
@@ -170,59 +162,12 @@ void PerfMonitor::endPump(float pumpMs)
 
 void PerfMonitor::summary(vlqt_perf* out) const
 {
-    *out = vlqt_perf{};
-    const int n = std::min(m_count, kSummaryPumps);
-    int frames = 0, gpus = 0, swaps = 0;
-    for (int i = m_count - n; i < m_count; i++) {
-        const PerfSample& s = sample(i);
-        out->pump_ms += s.pump;
-        out->pump_ms_max = std::max(out->pump_ms_max, double(s.pump));
-        swaps += s.swaps;
-        if (s.swaps == 0)
-            continue;
-        if (s.frameInterval > 0) {
-            out->frame_ms += s.frameInterval;
-            out->frame_ms_max = std::max(out->frame_ms_max, double(s.frameInterval));
-            frames++;
-        }
-        out->sync_ms += s.sync / s.swaps;
-        out->render_ms += s.render / s.swaps;
-        out->present_ms += s.present / s.swaps;
-        out->vsync_ms += s.vsync / s.swaps;
-        if (s.gpu > 0) {
-            out->gpu_ms += s.gpu;
-            out->gpu_ms_max = std::max(out->gpu_ms_max, double(s.gpu));
-            gpus++;
-        }
-    }
-    out->samples = n;
-    if (n == 0)
-        return;
-    out->pump_ms /= n;
-    out->swaps_per_pump = double(swaps) / n;
-    int pumpsWithSwap = 0;
-    for (int i = m_count - n; i < m_count; i++)
-        pumpsWithSwap += sample(i).swaps > 0;
-    if (pumpsWithSwap) {
-        out->sync_ms /= pumpsWithSwap;
-        out->render_ms /= pumpsWithSwap;
-        out->present_ms /= pumpsWithSwap;
-        out->vsync_ms /= pumpsWithSwap;
-    }
-    if (frames) {
-        out->frame_ms /= frames;
-        out->fps = 1000.0 / out->frame_ms;
-    }
-    if (gpus)
-        out->gpu_ms /= gpus;
-}
-
-double PerfMonitor::budgetMs() const
-{
-    // QScreen::refreshRate is a cached value; cheap enough per pump.
-    const QScreen* screen = m_window->screen();
-    const double hz = screen ? screen->refreshRate() : 0;
-    return 1000.0 / (hz >= 1 && hz <= 1000 ? hz : 60.0);
+    // One more sample than the window: it decides whether the window's first interval is a consecutive one.
+    const int n = std::min(m_count, kSummaryPumps + 1);
+    std::array<PerfSample, kSummaryPumps + 1> s;
+    for (int i = 0; i < n; i++)
+        s[i] = sample(m_count - n + i);
+    perfSummary(perfWindow(s.data(), n, kSummaryPumps), out);
 }
 
 bool PerfMonitor::lastSample(PerfSample* out) const
@@ -392,10 +337,13 @@ void PerfMonitor::ensureOverlay()
     }
     QQmlEngine::setObjectOwnership(item, QQmlEngine::CppOwnership);
     // Before the item joins the scene: no layers on the Qt Quick software backend (see qml/perf/perf_overlay.qml).
-    const QSGRendererInterface* ri = m_window->rendererInterface();
-    if (QQuickWindow::sceneGraphBackend() == QLatin1String("software")
-        || (ri && ri->graphicsApi() == QSGRendererInterface::Software))
+    if (isSoftwareBackend(m_window))
         item->setProperty("layered", false);
+    // Monospaced: Consolas where it exists (Windows), else the system fixed font (the columns are aligned with spaces).
+    // One family: the overlay's QML has no font.families ("Cannot assign to non-existent property").
+    static const QString fixedFamily = QFontDatabase::hasFamily(QStringLiteral("Consolas"))
+        ? QStringLiteral("Consolas") : QFontDatabase::systemFont(QFontDatabase::FixedFont).family();
+    item->setProperty("fontFamily", fixedFamily);
     item->setObjectName(QLatin1String(vlqt::overlayObjectName)); // not counted as a scene change (app/scene_change.h)
     item->setParentItem(m_window->contentItem());
     item->setZ(1e9); // above the user root
@@ -415,7 +363,7 @@ void PerfMonitor::ensureOverlay()
 void PerfMonitor::updateRenderingBadge()
 {
     if (m_overlay && m_rendererKnown)
-        m_overlay->setProperty("rendering", m_software.isEmpty() ? 1 : 2);
+        m_overlay->setProperty("rendering", m_renderer.software.isEmpty() ? 1 : 2);
 }
 
 void PerfMonitor::updateOverlay()
@@ -447,11 +395,14 @@ void PerfMonitor::updateOverlay()
         hostStats(&hs);
         auto f = [](double v, int prec = 2) { return QString::number(v, 'f', prec); };
         auto opt = [&f](double v) { return v > 0 ? f(v, 1) : QStringLiteral("-"); };
-        // Colors double as the graph legend (kGraphSeries).
-        m_overlay->setProperty("meterText", QStringLiteral(
-            "%1 fps  frame %2  <font color='#ff6eb4'>vvvv %3</font>  <font color='#50dc78'>gpu %4</font>  "
-            "<font color='#ffa028'>cpu %5</font>")
-            .arg(f(p.fps, 1), f(p.frame_ms, 1), opt(hs.vvvv_ms), opt(p.gpu_ms), f(p.pump_ms, 1)));
+        // The colours are the legend of the graph series (kGraphSeries in perf_items.cpp).
+        auto col = [](const Rgb& c, const QString& text) {
+            return QStringLiteral("<font color='%1'>%2</font>").arg(QLatin1String(c.html), text);
+        };
+        m_overlay->setProperty("meterText", QStringLiteral("%1 fps  frame %2  ").arg(opt(p.fps), opt(p.frame_ms))
+            + col(kVvvvColor, QStringLiteral("vvvv ") + opt(hs.vvvv_ms)) + QStringLiteral("  ")
+            + col(kGpuColor, QStringLiteral("gpu ") + opt(p.gpu_ms)) + QStringLiteral("  ")
+            + col(kWorkColor, QStringLiteral("work ") + f(p.work_ms, 1)));
     }
 
     if (!stats || (m_frozen && !forced))

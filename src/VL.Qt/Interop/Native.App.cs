@@ -37,6 +37,13 @@ namespace VL.Qt.Interop
         public static extern Result vlqt_app_process_events_for(SceneHandle[]? windows, int count);
 
         /// <summary>
+        /// The frame budget (vvvv's frame interval, ms) the windows of the next pumps judge their Qt work against.
+        /// <see cref="Result.BadArgument"/> = not in (0, 1000).
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern Result vlqt_app_set_frame_budget(double ms);
+
+        /// <summary>
         /// delivers the queued window system events (input) without rendering, at the start of the host frame.
         /// Number of delivered events, <see cref="Result.NotInitialized"/> = app not initialized.
         /// </summary>
