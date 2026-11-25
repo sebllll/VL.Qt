@@ -43,11 +43,11 @@ namespace VL.Qt.Shaders
         float PaddingFactor = 1f,
         ImmutableArray<string> ChainErrors = default)
     {
-        /// <summary>Pin names a uniform pin must not take (the Input pin and the fixed Shader pins).</summary>
+        /// <summary>Pin names a uniform pin must not take (the Input pin, the Apply pin of the effect chain node and the fixed Shader pins).</summary>
         public static readonly ImmutableHashSet<string> ReservedPinNames = ImmutableHashSet.Create(
             StringComparer.OrdinalIgnoreCase,
             "Input", "Blending", "Mesh Resolution", "Size", "Auto Size", "Transform", "Anchor", "Opacity", "Clip", "Debug",
-            "Interaction", "Effect", "Enabled", "Output", "Measured Size", "Scene Bounds", "Error");
+            "Interaction", "Effect", "Enabled", "Apply", "Output", "Measured Size", "Scene Bounds", "Error");
 
         // Used only when the shader does not compile: keeps the Input pin (and its link) through a typo.
         private static readonly Regex s_sourceSampler = new(@"\buniform\s+sampler2D\s+source\b", RegexOptions.CultureInvariant);

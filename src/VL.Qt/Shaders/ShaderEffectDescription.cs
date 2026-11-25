@@ -20,12 +20,15 @@ namespace VL.Qt.Shaders
 
         private const string inputSummary = "Effect chain to extend: what the other effect nodes before this one made of the element. This link works on that result.";
 
-        /// <summary>Input pins: Input (the chain before), image and uniform pins.</summary>
+        private const string applySummary = "On: the effect is applied. Off: the effect chain passes on unchanged, as if this node was not there.";
+
+        /// <summary>Input pins: Input (the chain before), image and uniform pins, Apply last (hidden).</summary>
         internal static List<IVLPinDescription> Inputs(ShaderNodeLayout layout)
         {
             var inputs = new List<IVLPinDescription> { new FilePinDescription("Input", typeof(Effect), null, inputSummary) };
             foreach (var pin in layout.Pins)
                 inputs.Add(new FilePinDescription(pin.Name, UniformPin.ClrType(pin.Type), pin.Default, pin.Summary, isVisible: pin.Type != ShaderPinType.Sampler));
+            inputs.Add(new FilePinDescription("Apply", typeof(bool), true, applySummary, isVisible: false));
             return inputs;
         }
 

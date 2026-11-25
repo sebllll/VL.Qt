@@ -13,6 +13,7 @@
     plain     Rectangle, Circle and the shapes: no content size of their own (Measured Size); Rectangle and Circle: Clip
     shape     Line, Polyline, Polygon, Path: their extent comes from the points
     widget    Button, Slider, Toggle, TextInput, InputInt
+    effect    every effect node (Blur, DropShadow, ColorAdjust, Glow, Blend, …) and the effect nodes of shader files: the Apply pin
   Texts that only one node needs stay at the node. Write for the patcher, not for the Qt implementation.
 -->
 <docs>
@@ -49,5 +50,8 @@
     <param name="opacity">Opacity of the widget. 0 = not drawn and costs no render time, but the widget keeps its space in Row/Column and still receives input.</param>
     <param name="interaction">Chain of interaction nodes (Hover, Click, …). The widget takes its input itself in any case; the chain adds hover, press and pointer handling.</param>
     <param name="channel">Channel of the value. Changes from the patch are shown; changes by the user are written into it (author "Qt"). A plain value or an IOBox on the pin is the start value and sets the value whenever it changes. If the patch and the user change the value in the same frame, the user wins.</param>
+  </set>
+  <set name="effect">
+    <param name="apply">On: the effect is applied. Off: the effect chain passes on unchanged, as if this node was not there.</param>
   </set>
 </docs>

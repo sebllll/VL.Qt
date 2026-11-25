@@ -58,6 +58,7 @@ namespace VL.Qt.Nodes
         /// <param name="spread">0..1: denser glow, 0 = soft fall-off, towards 1 a nearly hard edge.</param>
         /// <param name="intensity">Strength of the glow; values above 1 glow brighter.</param>
         /// <param name="additive">Off: the glow lies behind the element. On: it is added on top of the element.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
@@ -65,8 +66,9 @@ namespace VL.Qt.Nodes
             [DefaultValue(20f)] float radius,
             [Pin(Visibility = PinVisibility.Optional)] float spread,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float intensity,
-            [Pin(Visibility = PinVisibility.Optional)] bool additive)
-            => _link.Describe(input, new Props(color, radius, spread, intensity, additive));
+            [Pin(Visibility = PinVisibility.Optional)] bool additive,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
+            => apply ? _link.Describe(input, new Props(color, radius, spread, intensity, additive)) : input;
 
         public void Dispose() => _link.Dispose();
     }

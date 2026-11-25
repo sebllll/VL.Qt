@@ -205,7 +205,7 @@ void main() { fragColor = vec4(phase); }
             using var instance = new ShaderEffectInstance((ResourceClient?)null, layout);
 
             var inputs = ShaderEffectDescription.Inputs(layout);
-            Assert.That(inputs.Select(d => d.Name), Is.EqualTo(new[] { "Input", "Map", "Map Sampler", "Amount" }));
+            Assert.That(inputs.Select(d => d.Name), Is.EqualTo(new[] { "Input", "Map", "Map Sampler", "Amount", "Apply" }));
             Assert.That(inputs[0].Type, Is.EqualTo(typeof(Effect)));
             Assert.That(instance.Inputs.Select(PinType), Is.EqualTo(inputs.Select(d => d.Type)));
             Assert.That(ShaderEffectDescription.Outputs.Select(d => d.Name), Is.EqualTo(new[] { "Output" }), "no Error output: shader problems show at the node");
@@ -266,6 +266,31 @@ void main() { fragColor = vec4(phase); }
             instance.Update();
             Assert.That(Output(instance), Is.Not.SameAs(second));
             Assert.That(((ShaderEffect)Output(instance)!).Previous, Is.Null);
+        }
+
+        [Test]
+        public void Apply_OffPassesTheChainOn_AndTheTextIsTheSharedOne()
+        {
+            var layout = Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag");
+            using var instance = new ShaderEffectInstance(_client, layout);
+            var inputs = ShaderEffectDescription.Inputs(layout);
+            Assert.That(inputs[^1].Name, Is.EqualTo("Apply"), "last input pin");
+            Assert.That(inputs[^1].Type, Is.EqualTo(typeof(bool)));
+            Assert.That(inputs[^1].DefaultValue, Is.EqualTo(true));
+            Assert.That(((IVLPinDescriptionWithVisibility)inputs[^1]).IsVisible, Is.False, "optional pin");
+            Assert.That(((IInfo)inputs[^1]).Summary, Is.EqualTo(CommonPinsXml.Param("effect", "apply")));
+
+            var input = new BlurEffect(null, 0.5f, 32, 0);
+            ((IVLPin)instance.Inputs.First()).Value = input;
+            var apply = (IVLPin)instance.Inputs.Last();
+            Assert.That(apply.Value, Is.EqualTo(true), "default");
+            apply.Value = false;
+            instance.Update();
+            Assert.That(Output(instance), Is.SameAs(input));
+            Assert.That(instance.Created, Is.Zero);
+            apply.Value = true;
+            instance.Update();
+            Assert.That(Output(instance), Is.InstanceOf<ShaderEffect>());
         }
 
         [Test]

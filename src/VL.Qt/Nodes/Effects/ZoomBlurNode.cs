@@ -49,12 +49,14 @@ namespace VL.Qt.Nodes
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
         /// <param name="center">Center of the zoom, 0..1 of the element area (0.5, 0.5 = middle).</param>
         /// <param name="length">Streak length at the farthest corner, in DIP (0 = no blur).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             [DefaultValue("0.5, 0.5")] Vector2 center,
-            [DefaultValue(40f)] float length)
-            => _link.Describe(input, new Props(center, length));
+            [DefaultValue(40f)] float length,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
+            => apply ? _link.Describe(input, new Props(center, length)) : input;
 
         public void Dispose() => _link.Dispose();
     }

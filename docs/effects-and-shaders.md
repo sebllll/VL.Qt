@@ -8,7 +8,7 @@ Every element has an `Effect` pin. Chain the nodes of `Qt.Effects` to it, like t
 |---|---|
 | `Blur` | blur the element |
 | `DropShadow` | shadow behind the element |
-| `ColorAdjust` | brightness, contrast, saturation |
+| `ColorAdjust` | brightness, contrast, saturation (`Saturation` is on the scale of HSCB: 1 = unchanged, 0 = grey, above 1 more colorful) |
 | `Colorize` | tint the element |
 | `Mask` | use another element as alpha mask, `Inverted` flips it |
 | `Glow` | soft glow around the element (behind it, or `Additive` on top), `Radius` can be animated up to several hundred DIP |
@@ -22,6 +22,8 @@ Every element has an `Effect` pin. Chain the nodes of `Qt.Effects` to it, like t
 <img src="images/effects-basic.png" width="820" alt="Blur, DropShadow, ColorAdjust, Colorize and Mask on the same element">
 
 The chain runs in data flow order, like TextureFX in Stride: the top node acts first, the node at the `Effect` pin last. `Blur`, `DropShadow`, `ColorAdjust`, `Colorize` and `Mask` are the **merged effects**: neighbours in the chain merge into one offscreen layer (Qt's MultiEffect). Inside such a run Qt applies them in its own fixed order, so their order among each other does not matter, and each kind counts once: for a duplicate the node nearest to the `Effect` pin wins and the element shows a warning. A **shader effect** (the other nodes of `Qt.Effects`, and the shader nodes of [Shaders in the effect chain](#shaders-in-the-effect-chain)) ends the run and costs a layer of its own. Size, transform and layout stay with the element.
+
+**Apply:** every effect node has an optional last input pin `Apply` (default on). Off, the node passes the chain at `Input` on unchanged, as if it was not there, so an effect can be switched without relinking. The filter shaders of the chain have it too (`Apply` is a reserved pin name there: a uniform called `Apply` shows as `Apply 2`).
 
 ### Mask and padding
 

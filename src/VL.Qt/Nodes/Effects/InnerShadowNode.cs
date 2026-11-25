@@ -59,6 +59,7 @@ namespace VL.Qt.Nodes
         /// <param name="offset">Shift of the shadow in DIP: a positive (x, y) lets the shadow fall from the left and top edge.</param>
         /// <param name="spread">0..1: denser shadow, 0 = soft fall-off, towards 1 a nearly hard edge.</param>
         /// <param name="intensity">Strength of the shadow; values above 1 make it denser.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
@@ -66,8 +67,9 @@ namespace VL.Qt.Nodes
             [DefaultValue(10f)] float radius,
             [DefaultValue("5, 5")] Vector2 offset,
             [Pin(Visibility = PinVisibility.Optional)] float spread,
-            [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float intensity)
-            => _link.Describe(input, new Props(color, radius, offset, spread, intensity));
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float intensity,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
+            => apply ? _link.Describe(input, new Props(color, radius, offset, spread, intensity)) : input;
 
         public void Dispose() => _link.Dispose();
     }

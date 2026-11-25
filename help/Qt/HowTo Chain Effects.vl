@@ -328,7 +328,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="lG6SxW00I5XTVli25QhtE6" Comment="Saturation" Bounds="1059,321,35,15" ShowValueBox="true" isIOBox="true" Value="0.4">
+          <Pad Id="lG6SxW00I5XTVli25QhtE6" Comment="Saturation" Bounds="1059,321,35,15" ShowValueBox="true" isIOBox="true" Value="1.4">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
