@@ -267,7 +267,23 @@ public static class PerfOverlayTest
         // draw calls n/a; GPU memory and pipelines n/a without QRhi.
         var scene = PageText(w, Scene);
         s.Check(scene.Contains("elements 1 rectangle 1"), $"perfoverlay: scene counts 1 rectangle element ({Line(scene, "elements")})");
-        s.Check(scene.Contains("QML items") && scene.Contains("animations 0"), $"perfoverlay: scene items/animations ({Line(scene, "QML items")} | {Line(scene, "animations")})");
+        s.Check(scene.Contains("QML items") && !scene.Contains("animations"), $"perfoverlay: scene items, no animations row ({Line(scene, "QML items")})");
+        // Every element type is counted by its own name (Shape, Shader), none in "other".
+        cmd.Reset();
+        cmd.Create(2, Protocol.ElementType.Shape);
+        cmd.Create(3, Protocol.ElementType.Shader);
+        cmd.Reparent(2, 0, 1);
+        cmd.Reparent(3, 0, 2);
+        Native.Apply(w, cmd.EndFrame());
+        Run(2);
+        var typed = PageText(w, Scene);
+        s.Check(typed.Contains("elements 3") && typed.Contains("shape 1") && typed.Contains("shader 1") && typed.Contains("rectangle 1") && !typed.Contains("other"),
+            $"perfoverlay: scene names every element type ({Line(typed, "elements")})");
+        cmd.Reset();
+        cmd.Destroy(2);
+        cmd.Destroy(3);
+        Native.Apply(w, cmd.EndFrame());
+        Run(1);
         s.Check(scene.Contains("last 1"), $"perfoverlay: scene ops/apply from host frames ({Line(scene, "ops/apply")})");
         s.Check(scene.Contains("draw calls n/a"), "perfoverlay: scene draw calls n/a");
         if (s.QuickSoftware)
