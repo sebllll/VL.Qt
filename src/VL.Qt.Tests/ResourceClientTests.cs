@@ -233,7 +233,7 @@ namespace VL.Qt.Tests
             _client.AfterEvents();
         }
 
-        [Test, Ignore("SIP-03: a Settled handler that calls Wait polls into the buffer the outer Poll still parses; the remaining records of the batch are lost")]
+        [Test]
         public void Settled_HandlerCallsWait_TheRestOfTheBatchIsStillApplied()
         {
             var a = _client.CreateImage();
@@ -333,6 +333,74 @@ namespace VL.Qt.Tests
             Assert.That(r.State, Is.EqualTo(QtImageState.Failed));
             Assert.That(r.Error, Does.Contain("BadArgument"));
             Assert.That(settled, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Load_InvalidPath_FailsAndSettlesOnce()
+        {
+            var r = _client.CreateImage();
+            var settled = 0;
+            r.Settled = _ => settled++;
+            var version = r.Version;
+            Assert.That(_client.Load(r, "a b.png", false), Is.False);
+            Assert.That(r.State, Is.EqualTo(QtImageState.Failed));
+            Assert.That(r.Error, Does.Contain("Invalid path"));
+            Assert.That(settled, Is.EqualTo(1));
+            Assert.That(r.Version, Is.EqualTo(version + 1));
+            Assert.That(_api.Calls.Any(c => c.StartsWith("load")), Is.False);
+        }
+
+        [Test]
+        public void LoadShader_InvalidPath_FailsAndSettlesOnce()
+        {
+            var r = _client.CreateShader();
+            var settled = 0;
+            r.Settled = _ => settled++;
+            Assert.That(_client.LoadShader(r, "a b.qsb", Protocol.ShaderStage.Fragment), Is.False);
+            Assert.That(r.State, Is.EqualTo(QtImageState.Failed));
+            Assert.That(settled, Is.EqualTo(1));
+            Assert.That(r.Version, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Settled_FiresAfterTheLastRecordOfTheBatchIsApplied()
+        {
+            var a = _client.CreateImage();
+            var b = _client.CreateImage();
+            _client.Load(a, "C:/a.png", false);
+            _client.Load(b, "C:/b.png", false);
+            // User code must not see a half-applied batch.
+            (QtImageState, int)? seenOfB = null;
+            a.Settled = _ => seenOfB = (b.State, b.Width);
+            _api.Ready(a.Id, 1, 1);
+            _api.Ready(b.Id, 2, 2);
+            Pump();
+            Assert.That(seenOfB, Is.EqualTo((QtImageState.Ready, 2)));
+        }
+
+        [Test]
+        public void Settled_HandlerPollsAgain_EverySettledResourceFiresOnce()
+        {
+            var a = _client.CreateImage();
+            var b = _client.CreateImage();
+            var c = _client.CreateImage();
+            _client.Load(a, "C:/a.png", false);
+            _client.Load(b, "C:/b.png", false);
+            _client.Load(c, "C:/c.png", false);
+            var fired = new List<ulong>();
+            foreach (var r in new[] { a, b, c })
+                r.Settled = x => fired.Add(x.Id);
+            // c finishes inside the nested poll of a's handler; the outermost call settles it.
+            a.Settled = x =>
+            {
+                fired.Add(x.Id);
+                _api.Ready(c.Id, 3, 3);
+                _client.Poll();
+            };
+            _api.Ready(a.Id, 1, 1);
+            _api.Ready(b.Id, 2, 2);
+            Pump();
+            Assert.That(fired, Is.EqualTo(new[] { a.Id, b.Id, c.Id }));
         }
 
         [Test]
