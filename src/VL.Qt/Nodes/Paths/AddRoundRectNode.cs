@@ -21,14 +21,14 @@ namespace VL.Qt.Nodes
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
         /// <param name="rectangle">The rectangle in units.</param>
         /// <param name="radius">The horizontal (X) and vertical (Y) radius of the corners in units, scaled down together if they do not fit (a very large radius gives semicircular ends); zero or less gives a plain rectangle.</param>
-        /// <param name="dir">The direction in which the contour runs.</param>
+        /// <param name="direction">The direction in which the contour runs.</param>
         /// <returns>The path with the contour added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
         public QtPath Update(
             QtPath? input,
             [DefaultValue("0, 0, 1, 1")] RectangleF rectangle,
             [DefaultValue("0.1, 0.1")] Vector2 radius,
-            [Pin(Name = "Dir")] PathDirection dir)
-            => _memo.Get(input, new Props(rectangle, radius, dir), s_create);
+            PathDirection direction)
+            => _memo.Get(input, new Props(rectangle, radius, direction), s_create);
     }
 }
