@@ -150,17 +150,17 @@ namespace VL.Qt.Tests
             Assert.That(_warnings, Is.EqualTo(0));
 
             // A warning in the feedback slot (e.g. a video duplicate) is shown at the node once and removed with it.
-            _node.Core.Feedback[0].Warning = OccurrenceRegistry.VideoDuplicateWarning;
+            _node.Core.Feedback[0].SetMessage(OccurrenceRegistry.VideoDuplicateSource, MessageKind.Warning, OccurrenceRegistry.VideoDuplicateWarning);
             Update();
             Assert.That(_warnings, Is.EqualTo(1));
             Update();
             Assert.That(_warnings, Is.EqualTo(1), "added once");
 
-            _node.Core.Feedback[0].Warning = null;
+            _node.Core.Feedback[0].SetMessage(OccurrenceRegistry.VideoDuplicateSource, MessageKind.Warning, null);
             Update();
             Assert.That(_warnings, Is.EqualTo(0), "removed");
 
-            _node.Core.Feedback[0].Warning = OccurrenceRegistry.VideoDuplicateWarning;
+            _node.Core.Feedback[0].SetMessage(OccurrenceRegistry.VideoDuplicateSource, MessageKind.Warning, OccurrenceRegistry.VideoDuplicateWarning);
             Update();
             Assert.That(_warnings, Is.EqualTo(1));
             _node.Dispose();

@@ -311,10 +311,45 @@ namespace VL.Qt.Tests
         {
             var feedback = new ElementFeedback();
             Assert.That(feedback.Warning, Is.Null);
-            feedback[1].Warning = "dup";
+            feedback[1].SetMessage(this, MessageKind.Warning, "dup");
             Assert.That(feedback.Warning, Is.EqualTo("dup"));
-            feedback[1].Warning = null;
+            feedback[1].SetMessage(this, MessageKind.Warning, null);
             Assert.That(feedback.Warning, Is.Null);
+        }
+
+        [Test]
+        public void Messages_OnePerSourceAndKind_JoinedInOrder()
+        {
+            var state = new FeedbackState();
+            var a = new object();
+            var b = new object();
+            state.SetMessage(a, MessageKind.Warning, "A");
+            state.SetMessage(b, MessageKind.Warning, "B");
+            state.SetMessage(a, MessageKind.BuildError, "E");
+            Assert.That(state.Warning, Is.EqualTo("A B"));
+            Assert.That(state.BuildError, Is.EqualTo("E"));
+
+            state.SetMessage(a, MessageKind.Warning, "A2");
+            Assert.That(state.Warning, Is.EqualTo("A2 B"), "a changed message replaces the old one");
+
+            state.SetMessage(a, MessageKind.Warning, null);
+            Assert.That(state.Warning, Is.EqualTo("B"), "removing one source keeps the other's message");
+            state.SetMessage(b, MessageKind.Warning, null);
+            state.SetMessage(a, MessageKind.BuildError, null);
+            Assert.That(state.Warning, Is.Null);
+            Assert.That(state.BuildError, Is.Null);
+        }
+
+        [Test]
+        public void SlotSetMessage_DefaultIsNone_RemovingCreatesNoSlot()
+        {
+            default(FeedbackSlot).SetMessage(this, MessageKind.Warning, "x");
+
+            var feedback = new ElementFeedback();
+            new FeedbackSlot(feedback, 2).SetMessage(this, MessageKind.Warning, null);
+            Assert.That(feedback.Count, Is.EqualTo(0));
+            new FeedbackSlot(feedback, 2).SetMessage(this, MessageKind.Warning, "x");
+            Assert.That(feedback.Warning, Is.EqualTo("x"));
         }
 
         [Test]

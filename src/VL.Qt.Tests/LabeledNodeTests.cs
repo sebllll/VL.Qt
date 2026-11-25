@@ -62,7 +62,7 @@ namespace VL.Qt.Tests
                 return new Removal(() => shown = null);
             });
             var row = Labeled(n, A);
-            row.Feedback.Feedback![0].Warning = "row warning";
+            row.Feedback.Feedback![0].SetMessage(this, MessageKind.Warning, "row warning");
             Labeled(n, A);
             Assert.That(shown, Is.EqualTo("row warning"));
 

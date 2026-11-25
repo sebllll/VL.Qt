@@ -50,6 +50,9 @@ namespace VL.Qt.Reconciliation
         /// <summary>Warning written to the feedback slot of a video that is used more than once.</summary>
         public const string VideoDuplicateWarning = "Video is used more than once (in one tree or across renderers); only the first occurrence plays.";
 
+        /// <summary>Source of <see cref="VideoDuplicateWarning"/> in the message store of the slot.</summary>
+        internal static readonly object VideoDuplicateSource = new();
+
         /// <summary>
         /// The registry shared by all renderers of one vvvv app (service of its <see cref="AppHost"/>). Deliberately
         /// not static: statics survive an app restart (F8/F5) in the same process, and ownership entries of a
@@ -304,8 +307,7 @@ namespace VL.Qt.Reconciliation
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_entries, element, out _);
             (entry.Waiting ??= new List<Reconciler>()).Add(reconciler);
-            if (element.Feedback.State is { } state)
-                state.Warning = VideoDuplicateWarning;
+            element.Feedback.SetMessage(VideoDuplicateSource, MessageKind.Warning, VideoDuplicateWarning);
         }
 
         /// <summary>Removes one ignored occurrence; clears the warning when none is left.</summary>
@@ -317,7 +319,7 @@ namespace VL.Qt.Reconciliation
             if (entry.Waiting.Count > 0)
                 return;
             entry.Waiting = null;
-            ClearWarning(element.Feedback, VideoDuplicateWarning);
+            element.Feedback.SetMessage(VideoDuplicateSource, MessageKind.Warning, null);
             if (entry.OwnerReconciler is null)
                 RemoveEntry(element);
         }
@@ -335,7 +337,7 @@ namespace VL.Qt.Reconciliation
             {
                 ref var entry = ref CollectionsMarshal.GetValueRefOrNullRef(_entries, element);
                 if (RemoveWaiting(ref entry.Waiting, reconciler))
-                    ClearWarning(element.Feedback, VideoDuplicateWarning);
+                    element.Feedback.SetMessage(VideoDuplicateSource, MessageKind.Warning, null);
                 if (entry.Elsewhere is { } elsewhere)
                 {
                     for (int i = elsewhere.Count - 1; i >= 0; i--)
@@ -373,7 +375,7 @@ namespace VL.Qt.Reconciliation
             {
                 ref var entry = ref CollectionsMarshal.GetValueRefOrNullRef(_handlers, key);
                 if (RemoveWaiting(ref entry.Waiting, reconciler))
-                    ClearWarning(key, InteractionDuplicateWarning);
+                    key.SetMessage(InteractionDuplicateSource, MessageKind.Warning, null);
                 if (ReferenceEquals(entry.OwnerReconciler, reconciler))
                 {
                     entry.Owner = null;
@@ -405,13 +407,6 @@ namespace VL.Qt.Reconciliation
             return true;
         }
 
-        /// <summary>Clears <paramref name="warning"/> in <paramref name="slot"/> if the slot still shows it.</summary>
-        private static void ClearWarning(FeedbackSlot slot, string warning)
-        {
-            if (slot.Feedback is not null && slot.Feedback.TryGet(slot.Index, out var state) && state.Warning == warning)
-                state.Warning = null;
-        }
-
         /// <summary>Removes the entry of <paramref name="element"/> and its slot entry if the slot still points to it.</summary>
         private void RemoveEntry(Element element)
         {
@@ -436,6 +431,9 @@ namespace VL.Qt.Reconciliation
 
         /// <summary>Warning written to the feedback slot of an interaction node that is used more than once.</summary>
         public const string InteractionDuplicateWarning = "Interaction is used more than once (at several elements, in one chain twice or across renderers); only the first occurrence is active. Use one interaction node per element.";
+
+        /// <summary>Source of <see cref="InteractionDuplicateWarning"/> in the message store of the slot.</summary>
+        internal static readonly object InteractionDuplicateSource = new();
 
         private struct HandlerEntry
         {
@@ -482,8 +480,7 @@ namespace VL.Qt.Reconciliation
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_handlers, key, out _);
             (entry.Waiting ??= new List<Reconciler>()).Add(reconciler);
-            if (key.State is { } state)
-                state.Warning = InteractionDuplicateWarning;
+            key.SetMessage(InteractionDuplicateSource, MessageKind.Warning, InteractionDuplicateWarning);
         }
 
         /// <summary>Removes one ignored occurrence of <paramref name="key"/>; clears the warning when none is left.</summary>
@@ -495,7 +492,7 @@ namespace VL.Qt.Reconciliation
             if (entry.Waiting.Count > 0)
                 return;
             entry.Waiting = null;
-            ClearWarning(key, InteractionDuplicateWarning);
+            key.SetMessage(InteractionDuplicateSource, MessageKind.Warning, null);
             if (entry.Owner is null)
                 _handlers.Remove(key);
         }

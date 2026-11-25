@@ -318,21 +318,13 @@ namespace VL.Qt.Reconciliation
 
         /// <summary>
         /// Shows <paramref name="error"/> of the Build at <paramref name="item"/> in <paramref name="slot"/> (the parent's), or
-        /// clears what this mirror showed there (null). An error of a sibling that is already shown is kept.
+        /// clears what this mirror showed there (null). Every sibling keeps its own message.
         /// </summary>
         private static void SetBuildError(FeedbackSlot slot, ItemMirror item, string? error)
         {
             if (error == item.BuildError)
                 return;
-            if (error is null)
-            {
-                if (slot.Feedback is { } feedback && feedback.TryGet(slot.Index, out var state) && state.BuildError == item.BuildError)
-                    state.BuildError = null;
-            }
-            else if (slot.State is { } shown && (shown.BuildError is null || shown.BuildError == item.BuildError))
-            {
-                shown.BuildError = error;
-            }
+            slot.SetMessage(item, MessageKind.BuildError, error);
             item.BuildError = error;
         }
 
@@ -709,13 +701,7 @@ namespace VL.Qt.Reconciliation
         {
             if (warning == effect.Warning)
                 return;
-            if (slot.State is { } state)
-            {
-                if (warning is not null && state.Warning is null)
-                    state.Warning = warning;
-                else if (warning is null && state.Warning == effect.Warning)
-                    state.Warning = null;
-            }
+            slot.SetMessage(effect, MessageKind.Warning, warning);
             effect.Warning = warning;
         }
     }
