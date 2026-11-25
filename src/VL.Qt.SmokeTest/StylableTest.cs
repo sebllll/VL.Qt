@@ -108,7 +108,7 @@ public static class StylableTest
         s.Check(w != SceneHandle.Null, "stylable window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
 
         var leftWidget = new PatchedWidget();
         var rightWidget = new PatchedWidget();

@@ -24,7 +24,7 @@ namespace VL.Qt.Reconciliation
     /// Several ids may point to the same slot (one element at several places of the tree, one Qt object and
     /// id per occurrence). Only the primary id (the first occurrence in traversal order, see
     /// <see cref="OccurrenceRegistry"/>) writes state values (Measured, SceneBounds, Media, Error) and resets the slot when
-    /// it is released; events (Click, Value) count from every id. Ids of input handlers are always primary.
+    /// it is released or demoted; events (Click, Value) count from every id. Ids of input handlers are always primary.
     /// </para>
     /// </summary>
     internal sealed class FeedbackRouter
@@ -69,12 +69,17 @@ namespace VL.Qt.Reconciliation
 
         /// <summary>
         /// Demotes <paramref name="feedbackId"/> to a further occurrence (false) or promotes it (true); 0 / unknown: no-op.
+        /// A demotion resets the slot like <see cref="Release"/>: another occurrence becomes primary with a new feedbackId
+        /// and BIND, and QtNative sends only what differs from nothing (an error that is gone would never be cleared).
         /// The reconciler promotes by a new feedbackId and BIND instead, so QtNative sends the current state again.
         /// </summary>
         public void SetPrimary(uint feedbackId, bool primary)
         {
-            if (feedbackId != 0 && _slots.TryGetValue(feedbackId, out var b) && b.Primary != primary)
-                _slots[feedbackId] = new Binding(b.Slot, primary);
+            if (feedbackId == 0 || !_slots.TryGetValue(feedbackId, out var b) || b.Primary == primary)
+                return;
+            _slots[feedbackId] = new Binding(b.Slot, primary);
+            if (!primary)
+                ResetPointerState(b.Slot);
         }
 
         /// <summary>

@@ -80,7 +80,7 @@ public static partial class QtTextureTest
                 return;
             }
             NativeTest.vlqt_test_d3d11_create_shared_texture(_device, W, H, B8G8R8A8Typeless, out _texture, out var handle);
-            R = new OffscreenScene(new OccurrenceRegistry(), W, H);
+            R = new OffscreenScene(new OccurrenceRegistry(), new InteractionRegistry(), W, H);
             _batch = new[] { R.Handle };
             var rc = R.Bind(_device, handle, new Int2(W, H), B8G8R8A8Unorm);
             NativeTest.vlqt_test_close_handle(handle);
@@ -318,7 +318,7 @@ public static partial class QtTextureTest
             return;
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var buf = new byte[1 << 16];
         using var rect = new RectangleNode(_ => new InputRig.NoMessage());
         using var wheel = new WheelNode(_ => new InputRig.NoMessage());

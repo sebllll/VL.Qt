@@ -35,7 +35,7 @@ public static class OpacityZeroTest
         s.Check(w != SceneHandle.Null, "opacity-zero: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var buf = new byte[1 << 16];
         using var rectA = new RectangleNode(_ => new NoMessage());
         using var rectB = new RectangleNode(_ => new NoMessage());

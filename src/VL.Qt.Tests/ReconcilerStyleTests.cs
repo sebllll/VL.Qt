@@ -19,7 +19,7 @@ namespace VL.Qt.Tests
         public void SetUp()
         {
             _sink = new RecordingSink();
-            _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry());
+            _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         }
 
         private static Style Radius(float r) => new() { Frame = new FrameStyle { Radius = default(StateValues<float>).With(StyleStates.Normal, r) } };

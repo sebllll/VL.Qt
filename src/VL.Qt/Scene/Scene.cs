@@ -42,11 +42,12 @@ namespace VL.Qt
         private int _appliedOps;
         private double _reconcileMs;
 
-        /// <param name="registry">Duplicate registry of the app (<see cref="OccurrenceRegistry.ForApp"/>).</param>
+        /// <param name="occurrences">Occurrence registry of the app (<see cref="OccurrenceRegistry.ForApp"/>).</param>
+        /// <param name="interactions">Interaction registry of the app (<see cref="InteractionRegistry.ForApp"/>).</param>
         /// <param name="handle">The created native scene; a null handle if the creation failed (tests: no QtNative).</param>
-        public Scene(OccurrenceRegistry registry, SceneHandle handle)
+        public Scene(OccurrenceRegistry occurrences, InteractionRegistry interactions, SceneHandle handle)
         {
-            _reconciler = new Reconciler(_commands, new IdAllocator(), registry);
+            _reconciler = new Reconciler(_commands, new IdAllocator(), occurrences, interactions);
             _resync = new ResyncController(_reconciler, ResetInQtNative);
             _handle = handle;
             _reconciler.Window = handle;

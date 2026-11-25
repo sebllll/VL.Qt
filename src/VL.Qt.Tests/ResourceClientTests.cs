@@ -724,7 +724,7 @@ namespace VL.Qt.Tests
         public void ImagePin_SendsTheResourceId()
         {
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             var r = _client.CreateImage();
             var image = new QtImage(r);
             rec.Update(new Image { Source = image }, Space.DIPTopLeft);
@@ -743,7 +743,7 @@ namespace VL.Qt.Tests
             var image = new QtImage(r);
             var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(_ => NoWarning.Instance)).ToArray();
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             var children = nodes.Select((n, i) => (Element)n.Update(new Vector2(1, 1), default, RectangleAnchor.Center, image,
                 FillMode.Stretch, true, 1, false, false, null, null, true, out _, out _)).ToArray();
             rec.Update(new Group { Children = System.Collections.Immutable.ImmutableArray.Create(children) }, Space.DIPTopLeft);

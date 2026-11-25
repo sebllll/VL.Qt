@@ -100,7 +100,7 @@ namespace VL.Qt.Tests
         {
             _sink = new RecordingSink();
             _qtNative = new FakeQtNative();
-            _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry());
+            _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             _resets = 0;
             _resync = new ResyncController(_rec, () =>
             {
@@ -196,7 +196,8 @@ namespace VL.Qt.Tests
         public void Scene_ReconcileThrows_DropsTheFrameAndRebuildsNextFrame()
         {
             var registry = new OccurrenceRegistry();
-            var scene = new Scene(registry, SceneHandle.Null);
+            var interactions = new InteractionRegistry();
+            var scene = new Scene(registry, interactions, SceneHandle.Null);
             // Above the size limit of one command (PROTO-02, B7): a failed reconcile, not a truncation.
             var tooLong = new Text { Content = new string('€', Protocol.MaxCommandPayload / 3 + 1) };
 
@@ -218,7 +219,8 @@ namespace VL.Qt.Tests
         public void Scene_ReconcileThrowsTwiceForTheSameInput_GivesUpUntilTheInputChanges()
         {
             var registry = new OccurrenceRegistry();
-            var scene = new Scene(registry, SceneHandle.Null);
+            var interactions = new InteractionRegistry();
+            var scene = new Scene(registry, interactions, SceneHandle.Null);
             var bad = G(new Text { Content = new string('€', Protocol.MaxCommandPayload / 3 + 1) });
 
             scene.Update(bad, Space.DIPTopLeft, default, true);
@@ -292,19 +294,20 @@ namespace VL.Qt.Tests
         public void Resync_ReleasesElementsAndIds()
         {
             var scene = new OccurrenceRegistry();
+            var interactions = new InteractionRegistry();
             var ids = new IdAllocator();
-            var rec = new Reconciler(_sink, ids, scene);
+            var rec = new Reconciler(_sink, ids, scene, interactions);
             var qtNative = new FakeQtNative();
             var resync = new ResyncController(rec, () => qtNative.Apply(new[] { "RESET" }));
             var a = R(1);
             var tree = G(a, R(-1));
             if (resync.ShouldReconcile(tree)) rec.Update(tree, Space.DIPTopLeft);
-            Assert.That(scene.OwnerOf(a), Is.Not.Null);
+            Assert.That(scene.PrimaryOf(a), Is.Not.Null);
             int rc = qtNative.Apply(_sink.Commands);
             _sink.Clear();
             resync.OnApplyResult(rc);
 
-            Assert.That(scene.OwnerOf(a), Is.Null, "element free again, so the rebuild is not treated as a duplicate");
+            Assert.That(scene.PrimaryOf(a), Is.Null, "element free again, so the rebuild is not treated as a duplicate");
             Assert.That(ids.Count, Is.EqualTo(0));
             Assert.That(ids.Allocate(), Is.EqualTo(1u), "ids restart");
         }

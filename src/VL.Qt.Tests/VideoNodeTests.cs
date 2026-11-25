@@ -124,7 +124,7 @@ namespace VL.Qt.Tests
         public void Diff_Create_SendsNonDefaults_PlayingLast()
         {
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             rec.Update(new Video { Path = new Path("c:/a.mp4"), Playing = true, Loop = true, KeepLastFrame = true, Rate = 0.5f, Volume = 0.25f, FillMode = FillMode.Stretch }, Space.DIPTopLeft);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[]
             {
@@ -157,7 +157,7 @@ namespace VL.Qt.Tests
         {
             // Video [VL.Qt] (AudioTap 0) never sends it; Video (VL.Audio) sends it before Playing and switches ids directly.
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             rec.Update(new Video { Playing = true, AudioTap = 5 }, Space.DIPTopLeft);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 AudioTap u64(5)", $"SET 1 Playing bool(1)" }));
             sink.Clear();
@@ -172,7 +172,7 @@ namespace VL.Qt.Tests
         public void Diff_ClampsRateAndVolume()
         {
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             rec.Update(new Video { Rate = -1, Volume = 3 }, Space.DIPTopLeft);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 PlaybackRate f32(0.01)" }), "volume 3 clamps to the default 1");
             sink.Clear();
@@ -187,7 +187,7 @@ namespace VL.Qt.Tests
         public void MediaEvent_ReachesNodeOutputs_DefaultZero()
         {
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             rec.Update(Update(out var pos, out var dur, "c:/a.mp4"), Space.DIPTopLeft);
             Assert.That(pos, Is.EqualTo(0f));
             Assert.That(dur, Is.EqualTo(0f), "defined default until loaded");
@@ -210,7 +210,7 @@ namespace VL.Qt.Tests
         public void ErrorEvent_ShownAtNode_UntilCleared()
         {
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             rec.Update(Update("c:/missing.mp4"), Space.DIPTopLeft);
             Assert.That(_node.Core.Error, Is.Null);
 

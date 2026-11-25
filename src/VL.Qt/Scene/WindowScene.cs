@@ -35,7 +35,8 @@ namespace VL.Qt
         private long _statsAt = long.MinValue;
         private PerfStats _perf;
 
-        /// <param name="registry">Duplicate registry of the app (<see cref="OccurrenceRegistry.ForApp"/>).</param>
+        /// <param name="occurrences">Occurrence registry of the app (<see cref="OccurrenceRegistry.ForApp"/>).</param>
+        /// <param name="interactions">Interaction registry of the app (<see cref="InteractionRegistry.ForApp"/>).</param>
         /// <param name="title">Initial window title.</param>
         /// <param name="bounds">Initial position and size in DIP, like Bounds on create of VL.Skia/VL.Stride (size = client
         /// size, position = outer top-left), set by QtNative before show. Empty bounds give 600x400 centered; bounds on no
@@ -48,7 +49,7 @@ namespace VL.Qt
         /// null = default icon. The result is in <see cref="IconResult"/>, later changes via <see cref="SetIcon"/>.</param>
         /// <param name="samples">MSAA count set before the first show (no window swap at the first frame); not set =
         /// QtNative's creation default. The count used is in <see cref="UsedSamples"/>, later changes via <see cref="SetSamples"/>.</param>
-        public WindowScene(OccurrenceRegistry registry, string? title, RectangleF bounds, bool vSync = true, uint mode = 0, string? iconPath = null,
+        public WindowScene(OccurrenceRegistry occurrences, InteractionRegistry interactions, string? title, RectangleF bounds, bool vSync = true, uint mode = 0, string? iconPath = null,
             Optional<MultisampleCount> samples = default)
         {
             _title = title ?? "";
@@ -57,7 +58,7 @@ namespace VL.Qt
             var window = Native.vlqt_window_create(a.X, a.Y, a.Width, a.Height, _title, vSync ? 1 : 0);
             if (window.IsNull)
                 _createError = Native.LastError();
-            _scene = new Scene(registry, window);
+            _scene = new Scene(occurrences, interactions, window);
             if (!window.IsNull)
             {
                 if (mode != 0)

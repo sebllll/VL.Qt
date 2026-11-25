@@ -46,7 +46,7 @@ public static class ClipVideoPerfTest
         s.Check(w != SceneHandle.Null, "clip-grab: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var rect = new RectangleNode(_ => Disposable());
         var circle = new CircleNode(_ => Disposable());
         var shadow = new DropShadowNode();

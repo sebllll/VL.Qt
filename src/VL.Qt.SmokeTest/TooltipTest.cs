@@ -63,7 +63,8 @@ public static class TooltipTest
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var scene = new OccurrenceRegistry();
-        var rec = new Reconciler(cmd, new IdAllocator(), scene) { Window = w };
+        var interactions = new InteractionRegistry();
+        var rec = new Reconciler(cmd, new IdAllocator(), scene, interactions) { Window = w };
 
         VL.Qt.Elements.Rectangle Big(Color4 fill) => new() { Size = new Vector2(10, 5), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0), Fill = fill };
         var blue = new Color4(0.2f, 0.4f, 1, 1);

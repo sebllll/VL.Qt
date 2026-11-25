@@ -7,7 +7,7 @@ Why elements are immutable descriptions, what that guarantees, and where Qt-side
 
 ## How it is realised
 - `Element` is an immutable description (`init` properties, `ImmutableArray<Element> Children`).
-- The reconciler uses reference equality as a shortcut: a reference-equal description means the subtree is unchanged (see `decisions/reconciler-identity.md`).
+- The reconciler uses reference equality as a shortcut: a reference-equal description means the subtree is unchanged (see [reconciler-identity.md](../design/reconciler-identity.md)).
 
 ## Deliberate exceptions
 Some state exists only in Qt and changes without a new description arriving:

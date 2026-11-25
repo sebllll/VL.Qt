@@ -62,8 +62,10 @@ public static class MultiRendererTest
         client.SetPumping(true);
 
         var registry = new OccurrenceRegistry();
-        var window = new WindowScene(registry, "VL.Qt multi renderer test", new RectangleF(0, 0, WindowW, WindowH));
-        var offscreen = new OffscreenScene(registry, TexW, TexH);
+
+        var interactions = new InteractionRegistry();
+        var window = new WindowScene(registry, interactions, "VL.Qt multi renderer test", new RectangleF(0, 0, WindowW, WindowH));
+        var offscreen = new OffscreenScene(registry, interactions, TexW, TexH);
         check(window.Window != SceneHandle.Null && offscreen.Handle != SceneHandle.Null, $"renderers created ({window.Error}{offscreen.Error})");
         var rc = offscreen.Bind(device, handle, new Int2(TexW, TexH), B8G8R8A8Unorm);
         NativeTest.vlqt_test_close_handle(handle);
@@ -156,10 +158,10 @@ public static class MultiRendererTest
         }
         check(feedback[0].Warning is null && feedback[1].Warning is null, $"no warning in the feedback ({feedback[0].Warning} / {feedback[1].Warning})");
         check(window.Error.Length == 0 && offscreen.Error.Length == 0, $"no renderer error ('{window.Error}' '{offscreen.Error}')");
-        check(registry.OccurrencesOf(rect) == 2 && registry.DuplicatesOf(rect) == 0, $"two occurrences of the rectangle, no duplicate ({registry.OccurrencesOf(rect)})");
+        check(registry.OccurrencesOf(rect) == 2 && registry.PlaceholdersOf(rect) == 0, $"two occurrences of the rectangle, no placeholder ({registry.OccurrencesOf(rect)})");
 
         // 2) State values come from the primary: the window renderer, which shows the group at (1, 0.5) units.
-        check(registry.OwnerReconcilerOf(rect) == window.Reconciler, "the window renderer owns the rectangle");
+        check(registry.OwnerOf(rect) == window.Reconciler, "the window renderer owns the rectangle");
         check(Close(feedback[0].SceneBounds.X, 1.2f) && Close(feedback[0].SceneBounds.Y, 0.7f) && Close(feedback[0].SceneBounds.Width, 1.2f),
             $"SceneBounds from the window ({feedback[0].SceneBounds}, want 1.2, 0.7, 1.2 x 0.8)");
         check(registry.TryLocate(rect, out var located, out _) && located == window.Window, "TryLocate finds the rectangle in the window");
@@ -167,7 +169,7 @@ public static class MultiRendererTest
         // 3) The window renderer goes away: the offscreen renderer takes over in its next update.
         windowAlive = false;
         window.Dispose();
-        bool tookOver = Until(() => registry.OwnerReconcilerOf(rect) == offscreen.Reconciler && Close(feedback[0].SceneBounds.X, 0.2f));
+        bool tookOver = Until(() => registry.OwnerOf(rect) == offscreen.Reconciler && Close(feedback[0].SceneBounds.X, 0.2f));
         check(tookOver, $"offscreen renderer owns the rectangle after the dispose ({feedback[0].SceneBounds})");
         check(Close(feedback[0].SceneBounds.X, 0.2f) && Close(feedback[0].SceneBounds.Y, 0.2f) && Close(feedback[0].SceneBounds.Width, 1.2f),
             $"SceneBounds from the offscreen scene ({feedback[0].SceneBounds}, want 0.2, 0.2, 1.2 x 0.8)");

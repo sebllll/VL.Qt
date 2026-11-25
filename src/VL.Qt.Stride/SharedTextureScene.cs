@@ -54,7 +54,7 @@ namespace VL.Qt.Stride
             // Starts the Qt app, which the render-thread setting and the scene need.
             _renderer = QtTextureRenderer.ForApp(nodeContext.AppHost);
             _renderThreads = new RenderThreadRequest(renderThreads);
-            _scene = new OffscreenScene(OccurrenceRegistry.ForApp(nodeContext.AppHost), 1920, 1080);
+            _scene = new OffscreenScene(OccurrenceRegistry.ForApp(nodeContext.AppHost), InteractionRegistry.ForApp(nodeContext.AppHost), 1920, 1080);
             _input = new NotificationQueue(_scene.Input.Notify);
             _renderer.StrideDeviceGone += OnStrideDeviceGone;
         }

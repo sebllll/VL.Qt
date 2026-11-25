@@ -12,28 +12,29 @@ namespace VL.Qt.Reconciliation
     /// Compares the element tree of one window with the tree of the last frame and writes the minimal
     /// commands (CREATE / SET / REPARENT / DESTROY / BIND) into an <see cref="ICommandSink"/>.
     /// <para>
-    /// Identity rules (docs/decisions/reconciler-identity.md): an object is identified by its position under
-    /// its parent plus its element type. A type change at a position destroys the old object and creates a
-    /// new one. Inserting or removing in the middle of a child list lets the following objects take over the
+    /// Identity rules (docs/design/reconciler-identity.md, "Qt objects: position and type"): an object is identified by
+    /// its position under its parent plus its element type. A type change at a position destroys the old object and
+    /// creates a new one. Inserting or removing in the middle of a child list lets the following objects take over the
     /// data of their neighbours; only the tail is created or destroyed. Moving an element to another parent
     /// therefore creates a new object there. A description that is reference-equal to the last frame's skips
     /// its whole subtree.
     /// </para>
     /// <para>
-    /// An element may hang at several places of this tree (<see cref="OccurrenceRegistry"/>): every occurrence gets
-    /// its own Qt object and its own feedback id on the element's feedback. The first occurrence in traversal order
-    /// (depth-first, children in order; an effect mask counts at its place, before the children) is the primary one
-    /// (<see cref="ItemMirror.IsPrimary"/>): only its feedback id reports state values. A new occurrence is primary if
-    /// the current primary was not reached yet in this pass (positions of existing mirrors never change their order);
-    /// when the primary lets go, the first of the remaining occurrences is picked at the end of the update and re-bound
-    /// with a new feedback id, so QtNative sends its current state again. Other renderers may show the same element at
+    /// An element may hang at several places of this tree (<see cref="OccurrenceRegistry"/>; one element = one
+    /// <see cref="OccurrenceKey"/>, the feedback slot of its node, so a new instance at a position changes no occurrence):
+    /// every occurrence gets its own Qt object and its own feedback id on the element's feedback. The first occurrence in
+    /// traversal order (depth-first, children in order; an effect mask counts at its place, before the children) is the
+    /// primary one (<see cref="ItemMirror.IsPrimary"/>): only its feedback id reports state values. A new occurrence is
+    /// primary if the current primary was not reached yet in this pass (positions of existing mirrors never change their
+    /// order); when the primary lets go, the first of the remaining occurrences is picked at the end of the update and
+    /// re-bound with a new feedback id, so QtNative sends its current state again. Other renderers may show the same element at
     /// the same time, each with its own Qt objects; only the owner renderer (the first one) has the primary occurrence.
     /// When this tree lets go of the last occurrence of an element it owns, it hands the element over at the end of the
     /// update (<see cref="OccurrenceRegistry.HandOver"/>); the next renderer picks its primary in its next update
     /// (<see cref="TakeOver"/>). A video is shown once only, app-wide (inside this tree the first occurrence in traversal
-    /// order wins and takes it over from a later position if needed): an ignored occurrence becomes a placeholder mirror
-    /// without Qt object and sets a warning in the element's feedback. REPARENT indices count only the real objects.
-    /// <see cref="PrimaryOccurrences"/> does this bookkeeping.
+    /// order wins and takes it over from a later position if needed): every other occurrence becomes a placeholder
+    /// mirror without Qt object (<see cref="ItemMirror.IsPlaceholder"/>) and sets a warning in the element's feedback.
+    /// REPARENT indices count only the real objects. <see cref="PrimaryOccurrences"/> does this bookkeeping.
     /// </para>
     /// <para>
     /// Every visited object is bound to the feedback slot of its description (BIND with a feedback id from
@@ -90,7 +91,8 @@ namespace VL.Qt.Reconciliation
 
         private readonly ICommandSink _sink;
         private readonly IdAllocator _ids;
-        private readonly OccurrenceRegistry _scene;
+        private readonly OccurrenceRegistry _occurrences;
+        private readonly InteractionRegistry _interactions;
         private readonly Dictionary<uint, FeedbackSlot> _bindings = new();
         private readonly FeedbackRouter _feedbackRouter = new();
         private readonly PrimaryOccurrences _primaries;
@@ -103,14 +105,16 @@ namespace VL.Qt.Reconciliation
 
         /// <param name="sink">Target of the commands.</param>
         /// <param name="ids">Object id allocator of the window.</param>
-        /// <param name="scene">Occurrence registry of the app (<see cref="OccurrenceRegistry.ForApp"/>), shared by its renderers.</param>
-        public Reconciler(ICommandSink sink, IdAllocator ids, OccurrenceRegistry scene)
+        /// <param name="occurrences">Occurrence registry of the app (<see cref="OccurrenceRegistry.ForApp"/>), shared by its renderers.</param>
+        /// <param name="interactions">Interaction registry of the app (<see cref="InteractionRegistry.ForApp"/>), shared by its renderers.</param>
+        public Reconciler(ICommandSink sink, IdAllocator ids, OccurrenceRegistry occurrences, InteractionRegistry interactions)
         {
             _sink = sink ?? throw new ArgumentNullException(nameof(sink));
             _ids = ids ?? throw new ArgumentNullException(nameof(ids));
-            _scene = scene ?? throw new ArgumentNullException(nameof(scene));
-            _primaries = new PrimaryOccurrences(this, scene, _feedbackRouter, sink);
-            _handlers = new HandlerReconciler(this, sink, ids, _feedbackRouter, scene, _bindings);
+            _occurrences = occurrences ?? throw new ArgumentNullException(nameof(occurrences));
+            _interactions = interactions ?? throw new ArgumentNullException(nameof(interactions));
+            _primaries = new PrimaryOccurrences(this, occurrences, _feedbackRouter, sink);
+            _handlers = new HandlerReconciler(this, sink, ids, _feedbackRouter, interactions, _bindings);
             _properties = new PropertyDiff(sink);
         }
 
@@ -128,15 +132,15 @@ namespace VL.Qt.Reconciliation
 
         /// <summary>
         /// Makes the next <see cref="Update(Element?, in SpaceMapping)"/> visit the whole tree (no reference-equality shortcut), e.g. because
-        /// a video this reconciler ignored as a duplicate became free.
+        /// a video or an interaction this reconciler holds a placeholder of became free.
         /// </summary>
         public void Invalidate() => _invalidated = true;
 
         /// <summary>
-        /// <paramref name="element"/> was handed over to this renderer (<see cref="OccurrenceRegistry.HandOver"/>): the next
-        /// <see cref="Update(Element?, in SpaceMapping)"/> picks the first of its occurrences in this tree as the primary one.
+        /// The element <paramref name="key"/> was handed over to this renderer (<see cref="OccurrenceRegistry.HandOver"/>): the
+        /// next <see cref="Update(Element?, in SpaceMapping)"/> picks the first of its occurrences in this tree as the primary one.
         /// </summary>
-        internal void TakeOver(Element element) => _primaries.TakeOver(element);
+        internal void TakeOver(OccurrenceKey key) => _primaries.TakeOver(key);
 
         /// <summary>
         /// Error of the Build of a stylable passed as root to the last <see cref="Update(Element?, in SpaceMapping)"/>
@@ -184,7 +188,7 @@ namespace VL.Qt.Reconciliation
         }
 
         /// <summary>
-        /// Forgets the whole mirror WITHOUT writing commands (ids, element ownership, duplicates, bindings, the messages it
+        /// Forgets the whole mirror WITHOUT writing commands (ids, occurrences, placeholders, bindings, the messages it
         /// shows) and restarts the id allocator. For the resync after a failed apply or a failed
         /// <see cref="Update(Element?, in SpaceMapping)"/>, once QtNative has been wiped (<see cref="ResyncController"/>). Does
         /// not walk the mirror for the registry: an update an exception cut short leaves occurrences and handlers no mirror
@@ -198,7 +202,8 @@ namespace VL.Qt.Reconciliation
                 ClearMessages(_root);
                 _root = null;
             }
-            _scene.RemoveAll(this);
+            _occurrences.RemoveAll(this);
+            _interactions.RemoveAll(this);
             _primaries.Reset();
             _feedbackRouter.Clear();
             _bindings.Clear();
@@ -332,11 +337,14 @@ namespace VL.Qt.Reconciliation
         private ItemMirror ReconcileElement(ItemMirror? existing, Element next, in Position at)
         {
             var pass = _pass.Pass;
-            if (existing is not null && existing.IsIgnored)
+            if (existing is not null && existing.IsPlaceholder)
             {
-                // Still a duplicate as long as another mirror (in this or another renderer) shows the video.
-                if (!_pass.Force && ReferenceEquals(existing.Element, next) && _primaries.IsShownElsewhere(next))
+                // Still a placeholder as long as another mirror (in this or another renderer) shows the video.
+                if (!_pass.Force && OccurrenceKey.Of(existing.Element!) == OccurrenceKey.Of(next) && _primaries.IsShownElsewhere(next))
+                {
+                    existing.Element = next;
                     return existing;
+                }
                 _primaries.RemovePlaceholder(existing.Element!);
                 existing = null;
             }
@@ -352,14 +360,16 @@ namespace VL.Qt.Reconciliation
 
                 existing.MustVisit = false;
                 existing.VisitedPass = pass;
-                if (!same || (OccurrenceRegistry.IsExclusive(next) && !_primaries.IsPrimaryOf(next, existing)))
+                // A new instance of the same node (same key) is the same element: its occurrence stays as it is.
+                bool sameKey = same || OccurrenceKey.Of(existing.Element!) == OccurrenceKey.Of(next);
+                if (!sameKey || (OccurrenceRegistry.IsShownOnce(next) && !_primaries.IsPrimaryOf(next, existing)))
                 {
-                    if (!_primaries.TryClaimExclusive(next, existing, pass))
+                    if (!_primaries.TryClaimShownOnce(next, existing, pass))
                     {
                         DestroySubtree(existing);
                         return _primaries.CreatePlaceholder(next, at.Parent, pass);
                     }
-                    if (!same)
+                    if (!sameKey)
                         _primaries.Release(existing.Element!, existing);
                     _primaries.Register(next, existing, pass);
                 }
@@ -379,7 +389,7 @@ namespace VL.Qt.Reconciliation
             if (existing is not null)
                 DestroySubtree(existing);
 
-            if (!_primaries.TryClaimExclusive(next, null, pass))
+            if (!_primaries.TryClaimShownOnce(next, null, pass))
                 return _primaries.CreatePlaceholder(next, at.Parent, pass);
 
             var item = new ItemMirror(_ids.Allocate(), next.Type) { Parent = at.Parent, VisitedPass = pass };
@@ -451,7 +461,7 @@ namespace VL.Qt.Reconciliation
             {
                 var child = Reconcile(old[i], children[i], new Position(item, next.Feedback, live, inherited, false));
                 old[i] = child;
-                if (!child.IsIgnored)
+                if (!child.IsPlaceholder)
                     live++;
                 stylable |= child.Stylable is not null || child.ContainsStylable;
             }
@@ -468,7 +478,7 @@ namespace VL.Qt.Reconciliation
                 {
                     var child = Reconcile(null, children[i], new Position(item, next.Feedback, live, inherited, false));
                     old.Add(child);
-                    if (!child.IsIgnored)
+                    if (!child.IsPlaceholder)
                         live++;
                     stylable |= child.Stylable is not null || child.ContainsStylable;
                 }
@@ -526,17 +536,17 @@ namespace VL.Qt.Reconciliation
         /// <summary>DESTROY for the top mirror only (QtNative destroys its children), all ids freed.</summary>
         private void DestroySubtree(ItemMirror item)
         {
-            if (!item.IsIgnored)
+            if (!item.IsPlaceholder)
                 _sink.Destroy(item.Id);
             Forget(item);
         }
 
-        /// <summary>Frees ids, ownership, duplicate registrations and bindings of the whole subtree.</summary>
+        /// <summary>Frees ids, occurrences, placeholders and bindings of the whole subtree.</summary>
         private void Forget(ItemMirror item)
         {
             if (item.BuildError is not null)
                 SetBuildError(item.Parent?.Element?.Feedback ?? default, item, null);
-            if (item.IsIgnored)
+            if (item.IsPlaceholder)
             {
                 _primaries.RemovePlaceholder(item.Element!);
                 return;

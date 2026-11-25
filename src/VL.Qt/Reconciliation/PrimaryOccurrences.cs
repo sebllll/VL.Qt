@@ -6,78 +6,80 @@ namespace VL.Qt.Reconciliation
 {
     /// <summary>
     /// The occurrences of the elements in the tree of one reconciler: registers and releases them in the
-    /// <see cref="OccurrenceRegistry"/>, decides which one is primary (the first in traversal order of the owner renderer),
-    /// keeps videos at one place (<see cref="TryClaimExclusive"/>, <see cref="CreatePlaceholder"/>) and picks the new
-    /// primaries at the end of an update (<see cref="ResolveAtEndOfUpdate"/>). One per reconciler.
+    /// <see cref="OccurrenceRegistry"/> by their <see cref="OccurrenceKey"/>, decides which one is primary (the first in
+    /// traversal order of the owner renderer), keeps videos at one place (<see cref="TryClaimShownOnce"/>,
+    /// <see cref="CreatePlaceholder"/>) and picks the new primaries at the end of an update
+    /// (<see cref="ResolveAtEndOfUpdate"/>). One per reconciler.
     /// </summary>
     internal sealed class PrimaryOccurrences
     {
         private readonly Reconciler _owner;
-        private readonly OccurrenceRegistry _scene;
+        private readonly OccurrenceRegistry _occurrences;
         private readonly FeedbackRouter _feedbackRouter;
         private readonly ICommandSink _sink;
-        private readonly List<Element> _pendingPrimary = new(); // elements whose primary occurrence let go in this pass
+        private readonly List<OccurrenceKey> _pendingPrimary = new(); // elements whose primary occurrence let go in this pass
 
         /// <param name="owner">The reconciler whose tree holds the occurrences.</param>
-        /// <param name="scene">Occurrence registry of the app, shared by its renderers.</param>
+        /// <param name="occurrences">Occurrence registry of the app, shared by its renderers.</param>
         /// <param name="feedbackRouter">Feedback ids of the owner's window.</param>
         /// <param name="sink">Target of the BIND of a promoted occurrence.</param>
-        public PrimaryOccurrences(Reconciler owner, OccurrenceRegistry scene, FeedbackRouter feedbackRouter, ICommandSink sink)
+        public PrimaryOccurrences(Reconciler owner, OccurrenceRegistry occurrences, FeedbackRouter feedbackRouter, ICommandSink sink)
         {
             _owner = owner;
-            _scene = scene;
+            _occurrences = occurrences;
             _feedbackRouter = feedbackRouter;
             _sink = sink;
         }
 
         /// <summary>
-        /// <paramref name="element"/> was handed over to the owner (<see cref="OccurrenceRegistry.HandOver"/>): the next
+        /// <paramref name="key"/> was handed over to the owner (<see cref="OccurrenceRegistry.HandOver"/>): the next
         /// <see cref="ResolveAtEndOfUpdate"/> picks the first of its occurrences in this tree as the primary one.
         /// </summary>
-        public void TakeOver(Element element) => _pendingPrimary.Add(element);
+        public void TakeOver(OccurrenceKey key) => _pendingPrimary.Add(key);
 
         /// <summary>True if <paramref name="item"/> is the primary occurrence of <paramref name="element"/>.</summary>
-        public bool IsPrimaryOf(Element element, ItemMirror item) => ReferenceEquals(_scene.OwnerOf(element), item);
+        public bool IsPrimaryOf(Element element, ItemMirror item) => ReferenceEquals(_occurrences.PrimaryOf(element), item);
 
         /// <summary>
-        /// Whether <paramref name="self"/> (null = a mirror about to be created) may show <paramref name="element"/>.
-        /// Always true, except for a video (shown once only, app-wide): false if another renderer shows it; true if nobody
-        /// shows it, or its occurrence is a mirror of this tree that comes later in this pass (not visited yet,
-        /// or about to be destroyed); then the video is taken over and the old occurrence's subtree is marked
-        /// <see cref="ItemMirror.MustVisit"/>, so it is not skipped and turns into a placeholder when it is visited.
+        /// Whether <paramref name="self"/> (null = a mirror about to be created) may show <paramref name="element"/>; may
+        /// take the element over from a later occurrence. Always true, except for a video (shown once only, app-wide): false
+        /// if another renderer shows it; true if nobody shows it, or its occurrence is a mirror of this tree that comes later
+        /// in this pass (not visited yet, or about to be destroyed); then the video is taken over and the old occurrence's
+        /// subtree is marked <see cref="ItemMirror.MustVisit"/>, so it is not skipped and turns into a placeholder when it
+        /// is visited.
         /// </summary>
-        public bool TryClaimExclusive(Element element, ItemMirror? self, int pass)
+        public bool TryClaimShownOnce(Element element, ItemMirror? self, int pass)
         {
-            var ownerReconciler = _scene.OwnerReconcilerOf(element);
-            if (ownerReconciler is null || !OccurrenceRegistry.IsExclusive(element))
+            var key = OccurrenceKey.Of(element);
+            var primary = _occurrences.PrimaryOf(key, out var owner);
+            if (owner is null || !OccurrenceRegistry.IsShownOnce(element))
                 return true;
-            if (!ReferenceEquals(ownerReconciler, _owner))
+            if (!ReferenceEquals(owner, _owner))
                 return false;
-            var owner = _scene.OwnerOf(element);
-            if (owner is null || ReferenceEquals(owner, self))
+            if (primary is null || ReferenceEquals(primary, self))
                 return true;
-            if (IsVisitedThisPass(owner, pass))
+            if (IsVisitedThisPass(primary, pass))
                 return false;
-            for (var n = owner; n is not null && !n.MustVisit && n.VisitedPass != pass; n = n.Parent)
+            for (var n = primary; n is not null && !n.MustVisit && n.VisitedPass != pass; n = n.Parent)
                 n.MustVisit = true;
-            _scene.RemoveOccurrence(element, owner, _owner, invalidateWaiting: false);
+            _occurrences.RemoveOccurrence(key, primary, _owner, invalidatePlaceholders: false);
             return true;
         }
 
         /// <summary>Whether a placeholder of <paramref name="element"/> has to stay one: it is a video shown at another mirror.</summary>
         public bool IsShownElsewhere(Element element)
-            => OccurrenceRegistry.IsExclusive(element) && _scene.OwnerReconcilerOf(element) is not null;
+            => OccurrenceRegistry.IsShownOnce(element) && _occurrences.OwnerOf(element) is not null;
 
         /// <summary>Placeholder for an occurrence of a video that is shown elsewhere (in this or another renderer).</summary>
         public ItemMirror CreatePlaceholder(Element next, ItemMirror? parent, int pass)
         {
             var item = new ItemMirror(0, next.Type) { Parent = parent, VisitedPass = pass, Element = next };
-            _scene.AddDuplicate(next, _owner);
+            _occurrences.AddPlaceholder(next, _owner);
             return item;
         }
 
         /// <summary>Unregisters the placeholder of <paramref name="element"/>.</summary>
-        public void RemovePlaceholder(Element element) => _scene.RemoveDuplicate(element, _owner);
+        public void RemovePlaceholder(Element element) => _occurrences.RemovePlaceholder(element, _owner);
 
         /// <summary>
         /// Registers <paramref name="item"/> as an occurrence of <paramref name="element"/> and decides whether it is the
@@ -89,17 +91,18 @@ namespace VL.Qt.Reconciliation
         /// </summary>
         public void Register(Element element, ItemMirror item, int pass)
         {
-            if (_scene.AddOccurrence(element, item, _owner))
+            var key = OccurrenceKey.Of(element);
+            if (_occurrences.AddOccurrence(key, item, _owner))
             {
                 item.IsPrimary = true;
                 return;
             }
             item.IsPrimary = false;
-            var primary = _scene.OwnerOf(element, out var owner);
+            var primary = _occurrences.PrimaryOf(key, out var owner);
             if (!ReferenceEquals(owner, _owner) || primary is null || IsVisitedThisPass(primary, pass))
                 return;
             Demote(primary);
-            _scene.SetPrimary(element, item);
+            _occurrences.SetPrimary(key, item);
             item.IsPrimary = true;
         }
 
@@ -109,8 +112,9 @@ namespace VL.Qt.Reconciliation
         /// </summary>
         public void Release(Element element, ItemMirror item)
         {
-            if (_scene.RemoveOccurrence(element, item, _owner))
-                _pendingPrimary.Add(element);
+            var key = OccurrenceKey.Of(element);
+            if (_occurrences.RemoveOccurrence(key, item, _owner))
+                _pendingPrimary.Add(key);
             item.IsPrimary = false;
         }
 
@@ -128,21 +132,21 @@ namespace VL.Qt.Reconciliation
         {
             for (int i = 0; i < _pendingPrimary.Count; i++)
             {
-                var element = _pendingPrimary[i];
-                if (!ReferenceEquals(_scene.OwnerReconcilerOf(element), _owner) || _scene.OwnerOf(element) is not null)
+                var key = _pendingPrimary[i];
+                if (_occurrences.PrimaryOf(key, out var owner) is not null || !ReferenceEquals(owner, _owner))
                     continue;
-                if (_scene.OthersOf(element) is not { Count: > 0 } others)
+                if (_occurrences.FurtherOccurrencesOf(key) is not { Count: > 0 } further)
                 {
-                    _scene.HandOver(element, _owner);
+                    _occurrences.HandOver(key, _owner);
                     continue;
                 }
-                var first = others[0];
-                for (int k = 1; k < others.Count; k++)
+                var first = further[0];
+                for (int k = 1; k < further.Count; k++)
                 {
-                    if (IsBefore(others[k], first))
-                        first = others[k];
+                    if (IsBefore(further[k], first))
+                        first = further[k];
                 }
-                _scene.SetPrimary(element, first);
+                _occurrences.SetPrimary(key, first);
                 first.IsPrimary = true;
                 if (!first.BoundSlot.IsNone)
                     SyncPrimary(first);

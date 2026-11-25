@@ -38,7 +38,7 @@ public static class ContainerNodeTest
         s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var red = new RectangleNode(NoWarning);
         var green = new RectangleNode(NoWarning);
         var blue = new RectangleNode(NoWarning);

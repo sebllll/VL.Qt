@@ -93,7 +93,7 @@ public static class QtImageTest
         s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(_ => throw new InvalidOperationException("unexpected warning"))).ToArray();
         var toQtLog = new NodeLog();
         var toQt = new ToQtImageNode(client, toQtLog.Errors);

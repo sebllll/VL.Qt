@@ -52,7 +52,8 @@ public static class SpaceTest
     private static void Run(Scenario s)
     {
         var scene = new OccurrenceRegistry();
-        var r = new WindowScene(scene, "VL.Qt space test", new RectangleF(100, 100, 800, 600));
+        var interactions = new InteractionRegistry();
+        var r = new WindowScene(scene, interactions, "VL.Qt space test", new RectangleF(100, 100, 800, 600));
         s.Check(r.Window != SceneHandle.Null, "window created " + r.Error);
         if (r.Window == SceneHandle.Null)
             return;

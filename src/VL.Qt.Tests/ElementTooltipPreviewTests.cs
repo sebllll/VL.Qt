@@ -17,6 +17,7 @@ namespace VL.Qt.Tests
         private FakeResourceApi _api = null!;
         private ResourceClient _client = null!;
         private OccurrenceRegistry _scene = null!;
+        private InteractionRegistry _interactions = null!;
         private Reconciler _reconciler = null!;
         private ElementTooltipPreviewNode _node = null!;
         private Rectangle _element = null!;
@@ -30,7 +31,8 @@ namespace VL.Qt.Tests
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
             _client.SetPumping(true);
             _scene = new OccurrenceRegistry();
-            _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene);
+            _interactions = new InteractionRegistry();
+            _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene, _interactions);
             _changes = 0;
             _clock = 100;
             _node = new ElementTooltipPreviewNode(_client, _scene, _ => _changes, () => _clock);

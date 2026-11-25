@@ -27,6 +27,7 @@ namespace VL.Qt.Tests
         private RecordingSink _sink = null!;
         private IdAllocator _ids = null!;
         private OccurrenceRegistry _scene = null!;
+        private InteractionRegistry _interactions = null!;
         private Reconciler _rec = null!;
 
         [SetUp]
@@ -35,7 +36,8 @@ namespace VL.Qt.Tests
             _sink = new RecordingSink();
             _ids = new IdAllocator();
             _scene = new OccurrenceRegistry();
-            _rec = new Reconciler(_sink, _ids, _scene);
+            _interactions = new InteractionRegistry();
+            _rec = new Reconciler(_sink, _ids, _scene, _interactions);
         }
 
         private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
@@ -67,7 +69,7 @@ namespace VL.Qt.Tests
             }));
             Assert.That(_rec.Bindings[2], Is.EqualTo(new FeedbackSlot(a, 0)));
             Assert.That(_rec.FeedbackRouter.Count, Is.EqualTo(1));
-            Assert.That(_scene.HandlerOwnerOf(new FeedbackSlot(a, 0)), Is.Not.Null);
+            Assert.That(_interactions.ActiveHandlerOf(new FeedbackSlot(a, 0)), Is.Not.Null);
         }
 
         [Test]
@@ -119,11 +121,11 @@ namespace VL.Qt.Tests
             Assert.That(_rec.FeedbackRouter.Count, Is.EqualTo(1));
             Assert.That(_rec.Bindings.ContainsKey(3), Is.False);
             Assert.That(b.IsHovered(), Is.False, "released handle resets the slot");
-            Assert.That(_scene.HandlerOwnerOf(new FeedbackSlot(b, 0)), Is.Null);
+            Assert.That(_interactions.ActiveHandlerOf(new FeedbackSlot(b, 0)), Is.Null);
 
             Frame(R(null));
             Assert.That(Commands, Is.EqualTo(new[] { "DESTROY 2" }));
-            Assert.That(_scene.HandlerCount, Is.Zero);
+            Assert.That(_interactions.Count, Is.Zero);
         }
 
         [Test]
@@ -146,7 +148,7 @@ namespace VL.Qt.Tests
             // Group 1, first rectangle 2 + its handler 3, second rectangle 4 without handler.
             Assert.That(_sink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Group", "CREATE 2 Rectangle", $"CREATE 3 {hover}", "CREATE 4 Rectangle" }));
             Assert.That(Commands, Does.Contain("REPARENT 3 2 0"));
-            Assert.That(a.Warning, Is.EqualTo(OccurrenceRegistry.InteractionDuplicateWarning));
+            Assert.That(a.Warning, Is.EqualTo(InteractionRegistry.InteractionPlaceholderWarning));
             Assert.That(_rec.FeedbackRouter.Count, Is.EqualTo(1));
 
             // The first element lets go: the second takes over one update later (reconciler invalidated).
@@ -169,7 +171,7 @@ namespace VL.Qt.Tests
             var chain = new HoverInteraction(new HoverInteraction(null, slot), slot);
             Frame(R(chain));
             Assert.That(_sink.OfOp("CREATE").Count(), Is.EqualTo(2), "item + one handler");
-            Assert.That(a.Warning, Is.EqualTo(OccurrenceRegistry.InteractionDuplicateWarning));
+            Assert.That(a.Warning, Is.EqualTo(InteractionRegistry.InteractionPlaceholderWarning));
 
             Frame(R(H(a)));
             Assert.That(Commands, Is.Empty, "the remaining link keeps the handler");
@@ -180,13 +182,13 @@ namespace VL.Qt.Tests
         public void Duplicate_AcrossRenderers_FirstKeeps()
         {
             var otherSink = new RecordingSink();
-            var other = new Reconciler(otherSink, new IdAllocator(), _scene);
+            var other = new Reconciler(otherSink, new IdAllocator(), _scene, _interactions);
             var a = new ElementFeedback();
             var chain = H(a);
             Frame(R(chain));
             other.Update(R(chain, radius: 0.1f), Space.DIPTopLeft);
             Assert.That(otherSink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Rectangle" }));
-            Assert.That(a.Warning, Is.EqualTo(OccurrenceRegistry.InteractionDuplicateWarning));
+            Assert.That(a.Warning, Is.EqualTo(InteractionRegistry.InteractionPlaceholderWarning));
 
             Frame(null);
             otherSink.Clear();
@@ -211,7 +213,7 @@ namespace VL.Qt.Tests
             Assert.That(Commands, Is.EqualTo(new[] { "DESTROY 1" }));
             Assert.That(_ids.Count, Is.Zero);
             Assert.That(_rec.FeedbackRouter.Count, Is.Zero);
-            Assert.That(_scene.HandlerCount, Is.Zero);
+            Assert.That(_interactions.Count, Is.Zero);
             Assert.That(a.IsHovered(), Is.False);
         }
 
@@ -226,7 +228,7 @@ namespace VL.Qt.Tests
             Assert.That(Commands, Is.EqualTo(new[] { "DESTROY 3" }), "QtNative removes the handler with its item");
             Assert.That(_ids.Count, Is.EqualTo(2));
             Assert.That(_rec.FeedbackRouter.Count, Is.Zero);
-            Assert.That(_scene.HandlerCount, Is.Zero);
+            Assert.That(_interactions.Count, Is.Zero);
         }
 
         [Test]
@@ -238,7 +240,7 @@ namespace VL.Qt.Tests
             var first = Commands;
 
             _rec.Discard();
-            Assert.That(_scene.HandlerCount, Is.Zero);
+            Assert.That(_interactions.Count, Is.Zero);
             Assert.That(_rec.FeedbackRouter.Count, Is.Zero);
             Frame(root);
             Assert.That(Commands.Select(c => c.Replace("BIND 2 2", "BIND 2 1")), Is.EqualTo(first), "same commands, new feedback handle");
@@ -307,7 +309,7 @@ namespace VL.Qt.Tests
                 Assert.That(element.Interaction, Is.SameAs(chain), t.Name);
 
                 var sink = new RecordingSink();
-                var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
+                var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
                 rec.Update(element, Space.DIPTopLeft);
                 Assert.That(sink.OfOp("CREATE").Count(c => c.EndsWith(" " + hover, StringComparison.Ordinal)), Is.EqualTo(1), t.Name + ": one HoverHandler");
                 Assert.That(sink.OfOp("BIND").Count(), Is.GreaterThanOrEqualTo(1), t.Name);
@@ -323,7 +325,7 @@ namespace VL.Qt.Tests
             var rect = new RectangleNode(_ => new Removal());
             var hovered = Channel.Create(false);
             var writer = new CommandWriter();
-            var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
 
             void Run()
             {
@@ -394,7 +396,7 @@ namespace VL.Qt.Tests
             var chain = node.Update(null, null);
             Frame(G(R(chain), R(chain, radius: 0.1f)));
             node.Update(null, null);
-            Assert.That(warnings, Is.EqualTo(new[] { OccurrenceRegistry.InteractionDuplicateWarning }));
+            Assert.That(warnings, Is.EqualTo(new[] { InteractionRegistry.InteractionPlaceholderWarning }));
             Assert.That(node.Core.Warning, Is.Not.Null);
         }
 
@@ -963,7 +965,7 @@ namespace VL.Qt.Tests
             var delta = Channel.Create(Vector2.Zero);
             var wheelValue = Channel.Create(Vector2.Zero);
             var writer = new CommandWriter();
-            var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
 
             void Run()
             {

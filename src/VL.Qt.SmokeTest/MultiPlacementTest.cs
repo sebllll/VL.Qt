@@ -35,7 +35,7 @@ public static class MultiPlacementTest
         s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var buf = new byte[1 << 16];
         int warnings = 0;
         IDisposable Warn(string _) { warnings++; return new NoopDisposable(); }

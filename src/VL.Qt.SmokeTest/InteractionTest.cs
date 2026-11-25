@@ -64,7 +64,7 @@ public static partial class InteractionTest
         s.Check(w != SceneHandle.Null, "chain: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var buf = new byte[1 << 16];
         var hover = new HoverNode(_ => new NoMessage());
         var hover2 = new HoverNode(_ => new NoMessage());
@@ -156,7 +156,7 @@ public static partial class InteractionTest
         s.Check(w != SceneHandle.Null, "elements: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var buf = new byte[1 << 16];
         var hover = new HoverNode(_ => new NoMessage());
         var hovered = Channel.Create(false);
