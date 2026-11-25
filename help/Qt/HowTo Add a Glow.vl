@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="bnNxuY9KYPFuCJas2D88VW" Bounds="85,888,830,174" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Both light an element from its own alpha.&#xD;&#xA;- Glow is a blurred, tinted copy of the element behind it (or on top with Additive). Radius is how far it reaches, Spread makes it denser, Intensity above 1 glows brighter.&#xD;&#xA;- InnerShadow: the shadow falls inside the element, from the left and top edge with a positive Offset (like CSS inset).&#xD;&#xA;- Radius, Offset and the other lengths are in units of the renderer's space. The radius can be animated smoothly up to several hundred DIP; the cost hardly depends on it.&#xD;&#xA;- Both nodes grow the effect area by 1.5 x Radius, so the glow is not cut off at the element.&#xD;&#xA;- Glow and InnerShadow end a run of Blur, DropShadow, ColorAdjust, Colorize and Mask nodes: such a run is merged into one layer, a shader effect costs one of its own.">
+          <Pad Id="bnNxuY9KYPFuCJas2D88VW" Bounds="85,888,830,174" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Both light an element from its own alpha.&#xD;&#xA;- Glow is a blurred, tinted copy of the element behind it (or on top with Additive). Radius is how far it reaches, Spread makes it denser, Intensity above 1 glows brighter.&#xD;&#xA;- InnerShadow: the shadow falls inside the element, from the left and top edge with a positive Offset (like CSS inset).&#xD;&#xA;- Radius, Offset and the other lengths are in DIP, whatever the space of the renderer. The radius can be animated smoothly up to several hundred DIP; the cost hardly depends on it.&#xD;&#xA;- Both nodes grow the effect area by 1.5 x Radius, so the glow is not cut off at the element.&#xD;&#xA;- Glow and InnerShadow end a run of Blur, DropShadow, ColorAdjust, Colorize and Mask nodes: such a run is merged into one layer, a shader effect costs one of its own.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -100,7 +100,7 @@
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="Z7pk7u8pxlUH3WwrIc7Xid" Comment="Radius" Bounds="282,400,35,15" ShowValueBox="true" isIOBox="true" Value="0.3">
+          <Pad Id="Z7pk7u8pxlUH3WwrIc7Xid" Comment="Radius" Bounds="282,400,35,15" ShowValueBox="true" isIOBox="true" Value="30">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
@@ -132,7 +132,7 @@
             <Pin Id="gxE9vTO3KhmpsJhwPChruE" Name="Input" Kind="InputPin" />
             <Pin Id="DVVBZrDfjX9bOwjUNgl5iV" Name="Color" Kind="InputPin" DefaultValue="0.25, 0.05, 0, 0.9" />
             <Pin Id="2fZMvbEbvAIjTilOJB1HIm" Name="Radius" Kind="InputPin" />
-            <Pin Id="77AWapZlRUsvObx3tZhD1W" Name="Offset" Kind="InputPin" DefaultValue="0.05, 0.05" />
+            <Pin Id="77AWapZlRUsvObx3tZhD1W" Name="Offset" Kind="InputPin" DefaultValue="5, 5" />
             <Pin Id="IoebthG962wdzlOKVQKTnM" Name="Spread" Kind="InputPin" IsHidden="true" />
             <Pin Id="sg9KdVGgzkA4rgUdLMiG6h" Name="Intensity" Kind="InputPin" IsHidden="true" />
             <Pin Id="oU2i0ZV3taPLCdevB1LUhr" Name="Output" Kind="OutputPin" />
@@ -171,7 +171,7 @@
             <Pin Id="0J8mE53gQ4A05l2yyvgx4o" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="ybmz8Lye87tWyZJfKG0Twm" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="SFkGike8Jfk6w0imbZx5x5" Comment="Radius" Bounds="689,431,35,15" ShowValueBox="true" isIOBox="true" Value="0.12">
+          <Pad Id="SFkGike8Jfk6w0imbZx5x5" Comment="Radius" Bounds="689,431,35,15" ShowValueBox="true" isIOBox="true" Value="12">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
@@ -181,7 +181,7 @@
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="kslStDjoiPOMtYbXvINS8g" Bounds="520,288,361,59" ShowValueBox="true" isIOBox="true" Value="InnerShadow: the shadow falls from the left and top edge (Offset 0.05, 0.05).">
+          <Pad Id="kslStDjoiPOMtYbXvINS8g" Bounds="520,288,361,59" ShowValueBox="true" isIOBox="true" Value="InnerShadow: the shadow falls from the left and top edge (Offset 5, 5 DIP).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

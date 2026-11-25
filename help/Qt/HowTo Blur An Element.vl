@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="ySq2JcV5oo8EyQUkt1Msgk" Bounds="85,809,834,194" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The blurs smear the element like a long exposure. The picture does not shift: the blur is centred on every pixel. Two passes keep long blurs clean.&#xD;&#xA;- Length is in units. ZoomBlur streaks along rays from Center, growing from nothing at Center to Length at the farthest corner. RadialBlur draws arcs around Center.&#xD;&#xA;- The effect area grows with the blur. RadialBlur cannot know how far the farthest point is from Center: give it room with Padding if the arcs are cut.&#xD;&#xA;- For a motion look, animate Length or Angle (for example with an LFO) and watch the Perf overlay of the Renderer: the blurs run at 60 fps on a Text in 1080p.">
+          <Pad Id="ySq2JcV5oo8EyQUkt1Msgk" Bounds="85,809,834,194" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The blurs smear the element like a long exposure. The picture does not shift: the blur is centred on every pixel. Two passes keep long blurs clean.&#xD;&#xA;- Length is in DIP. ZoomBlur streaks along rays from Center, growing from nothing at Center to Length at the farthest corner. RadialBlur draws arcs around Center.&#xD;&#xA;- The effect area grows with the blur. RadialBlur cannot know how far the farthest point is from Center: give it room with Padding if the arcs are cut.&#xD;&#xA;- For a motion look, animate Length or Angle (for example with an LFO) and watch the Perf overlay of the Renderer: the blurs run at 60 fps on a Text in 1080p.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -92,7 +92,7 @@
             <Pin Id="H6beV7YB1ORmOeg2mASC5m" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="45Ka1YdDpjIqN26DJAhxPZ" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="KCtq8TAZB0PLDxEXUfSIk2" Comment="Length" Bounds="380,520,35,15" ShowValueBox="true" isIOBox="true" Value="0.4">
+          <Pad Id="KCtq8TAZB0PLDxEXUfSIk2" Comment="Length" Bounds="380,520,35,15" ShowValueBox="true" isIOBox="true" Value="40">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
@@ -107,7 +107,7 @@
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="B2y4BMJlcqptH0ibEiPj3m" Bounds="120,348,354,42" ShowValueBox="true" isIOBox="true" Value="DirectionalBlur: Angle 0 = horizontal, Length 0.4 units (40 DIP).">
+          <Pad Id="B2y4BMJlcqptH0ibEiPj3m" Bounds="120,348,354,42" ShowValueBox="true" isIOBox="true" Value="DirectionalBlur: Angle 0 = horizontal, Length 40 DIP.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -131,7 +131,7 @@
             <Pin Id="mqUk6nujJEmE0r8ClykBNw" Name="Length" Kind="InputPin" />
             <Pin Id="XjqvLtrfIk1gfZNhjC3xjc" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="VHDadT1HNFQQKdztgwer5k" Comment="Length" Bounds="580,466,35,15" ShowValueBox="true" isIOBox="true" Value="0.6">
+          <Pad Id="VHDadT1HNFQQKdztgwer5k" Comment="Length" Bounds="580,466,35,15" ShowValueBox="true" isIOBox="true" Value="60">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>

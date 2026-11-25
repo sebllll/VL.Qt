@@ -176,7 +176,7 @@
             </p:NodeReference>
             <Pin Id="GOuKKDow6lmRsOY4vB202o" Name="Input" Kind="InputPin" />
             <Pin Id="F4ZEtifvXOdCSVJ6DPUlqF" Name="Color" Kind="InputPin" DefaultValue="0, 0, 0, 0.8" />
-            <Pin Id="G0XREuVfmTpVQOAip75Pxo" Name="Offset" Kind="InputPin" DefaultValue="0.1, 0.15" />
+            <Pin Id="G0XREuVfmTpVQOAip75Pxo" Name="Offset" Kind="InputPin" DefaultValue="10, 15" />
             <Pin Id="GsbXxTEjArGNzeqn5HtseF" Name="Blur" Kind="InputPin" DefaultValue="0.5" />
             <Pin Id="Fl26Atuft6jIiClrOPKrkB" Name="Scale" Kind="InputPin" IsHidden="true" />
             <Pin Id="FyCSlbawQAtSHRmRUXEZE5" Name="Output" Kind="OutputPin" />

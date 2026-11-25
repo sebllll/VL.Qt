@@ -103,7 +103,7 @@
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="QJmoxgSfHgDOGul03Lmk7A" Name="Input" Kind="InputPin" />
             <Pin Id="vaJRC8gpev0soR1RlCv1P6" Name="Color" Kind="InputPin" DefaultValue="1, 0.2, 0.6, 1" />
-            <Pin Id="xhRnEHF4SLdDoVpBefKaX0" Name="Offset" Kind="InputPin" DefaultValue="0.1, 0.1" />
+            <Pin Id="xhRnEHF4SLdDoVpBefKaX0" Name="Offset" Kind="InputPin" DefaultValue="10, 10" />
             <Pin Id="4eSKb9krMIREKKButEQ9cp" Name="Blur" Kind="InputPin" />
             <Pin Id="WOvMUuAmuaNyOUjdMuKbfC" Name="Scale" Kind="InputPin" IsHidden="true" />
             <Pin Id="Uf9CJ3TFhg08BSTCwADxFb" Name="Output" Kind="OutputPin" />
@@ -129,7 +129,7 @@
             </p:NodeReference>
             <Pin Id="KAuxXYAXINThiaoRCPKxAN" Name="Input" Kind="InputPin" />
             <Pin Id="5PhXBXZGVfFsbEjSFyPkSo" Name="Color" Kind="InputPin" DefaultValue="1, 0.2, 0.6, 1" />
-            <Pin Id="cRAJDfHGCMpecZcR1iJPS9" Name="Offset" Kind="InputPin" DefaultValue="0.1, 0.1" />
+            <Pin Id="cRAJDfHGCMpecZcR1iJPS9" Name="Offset" Kind="InputPin" DefaultValue="10, 10" />
             <Pin Id="VIBdNCug9Zvws1sILHtb0k" Name="Blur" Kind="InputPin" />
             <Pin Id="tAu2zxMWGILTPcujYgCUAt" Name="Scale" Kind="InputPin" IsHidden="true" />
             <Pin Id="L3IpozxIATAMMT8KLhXf1A" Name="Output" Kind="OutputPin" />
@@ -379,7 +379,7 @@
             </p:NodeReference>
             <Pin Id="mun1VelVPNwqu5QrirWxUZ" Name="Input" Kind="InputPin" />
             <Pin Id="oTIKYweMlxOpdVwpaqbrSB" Name="Color" Kind="InputPin" DefaultValue="1, 0.2, 0.6, 1" />
-            <Pin Id="3Y8rQ0A5pqtjViIJzEEpsx" Name="Offset" Kind="InputPin" DefaultValue="0.1, 0.1" />
+            <Pin Id="3Y8rQ0A5pqtjViIJzEEpsx" Name="Offset" Kind="InputPin" DefaultValue="10, 10" />
             <Pin Id="sFAspUrnqkryMjtA2ciVzT" Name="Blur" Kind="InputPin" />
             <Pin Id="zuoBhGIhAgVTrt8dWLqWnj" Name="Scale" Kind="InputPin" IsHidden="true" />
             <Pin Id="1mP22aWpNLRnXRGYLlV5bJ" Name="Output" Kind="OutputPin" />
