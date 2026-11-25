@@ -21,7 +21,7 @@ namespace VL.Qt.Shaders
     internal sealed record ShaderPinModel(
         bool HasInput,
         ImmutableArray<ShaderPin> Pins,
-        ImmutableArray<ShaderAnnotationWarning> Warnings,
+        ImmutableArray<ShaderMessage> Warnings,
         string Error)
     {
         /// <summary>Uniform name of the sampler that becomes the Input pin.</summary>
@@ -35,7 +35,7 @@ namespace VL.Qt.Shaders
             ShaderAnnotations fragA,
             ShaderAnnotations? vertA)
         {
-            var warnings = ImmutableArray.CreateBuilder<ShaderAnnotationWarning>();
+            var warnings = ImmutableArray.CreateBuilder<ShaderMessage>();
             warnings.AddRange(fragA.Warnings);
             if (vertA != null)
                 warnings.AddRange(vertA.Warnings);
@@ -139,7 +139,7 @@ namespace VL.Qt.Shaders
             _ => null,
         };
 
-        private static ShaderPin BuildPin(ReflectedUniform uniform, ShaderPinType type, UniformAnnotation? annotation, ImmutableArray<ShaderAnnotationWarning>.Builder warnings)
+        private static ShaderPin BuildPin(ReflectedUniform uniform, ShaderPinType type, UniformAnnotation? annotation, ImmutableArray<ShaderMessage>.Builder warnings)
         {
             var line = annotation?.Line ?? 0;
             var name = uniform.Name;

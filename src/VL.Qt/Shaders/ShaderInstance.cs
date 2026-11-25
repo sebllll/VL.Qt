@@ -13,7 +13,7 @@ namespace VL.Qt.Shaders
     /// Instance of a generated shader node: a <see cref="ShaderNode"/> fed with the file content (source path)
     /// and the uniform pins as Spread&lt;Uniform&gt;, rebuilt only when a pin changed.
     /// </summary>
-    internal sealed class ShaderNodeInstance : IDisposable
+    internal sealed class ShaderInstance : IDisposable
     {
         private readonly ShaderNode _effect;
         private readonly string _fragmentSource;
@@ -38,13 +38,13 @@ namespace VL.Qt.Shaders
         private readonly ValuePin<RectangleF> _sceneBounds = new(RectangleF.Empty);
         private readonly ValuePin<string> _error = new(string.Empty);
 
-        public ShaderNodeInstance(NodeContext nodeContext, ShaderNodeLayout layout)
+        public ShaderInstance(NodeContext nodeContext, ShaderLayout layout)
             : this(new ShaderNode(nodeContext), layout)
         {
         }
 
         /// <summary>For tests: with a ShaderNode built on the test constructor.</summary>
-        internal ShaderNodeInstance(ShaderNode effect, ShaderNodeLayout layout)
+        internal ShaderInstance(ShaderNode effect, ShaderLayout layout)
         {
             _effect = effect;
             _fragmentSource = layout.FragmentSource;

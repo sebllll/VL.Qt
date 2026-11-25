@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -63,11 +64,23 @@ void main() { fragColor = vec4(phase); }
             return path;
         }
 
-        private ShaderNodeLayout Load(string source, string reflectionText)
+        private (ShaderSource Source, ShaderFile File) LoadSource(string source, string reflectionText)
         {
             var path = Write("Test.frag", source);
             var file = new ShaderFile(path, null, "Test", null, ShaderNodeFactory.DefaultCategory, null, null, true);
-            return ShaderNodeLayout.Load(file, (_, _) => ShaderReflection.Parse(reflectionText), NullLogger.Instance);
+            return (ShaderSource.Load(file, (_, _) => ShaderReflection.Parse(reflectionText)), file);
+        }
+
+        private ShaderLayout Load(string source, string reflectionText)
+        {
+            var (loaded, file) = LoadSource(source, reflectionText);
+            return ShaderLayout.From(loaded, file);
+        }
+
+        private ShaderEffectLayout LoadChain(string source, string reflectionText, string? vertexSource = null)
+        {
+            var (loaded, file) = LoadSource(source, reflectionText);
+            return ShaderEffectLayout.From(vertexSource is null ? loaded : loaded with { VertexSource = vertexSource }, file);
         }
 
         // --- scan and descriptions ---
@@ -125,7 +138,7 @@ void main() { fragColor = vec4(phase); }
         public void Padding_OneNumber_AllSides()
         {
             var a = Annotations("// @padding 6");
-            Assert.That(a.Padding, Is.EqualTo(new RectangleF(6, 6, 6, 6)));
+            Assert.That(a.Padding, Is.EqualTo(ShaderPadding.Fixed(new RectangleF(6, 6, 6, 6))));
             Assert.That(a.Warnings, Is.Empty);
         }
 
@@ -133,7 +146,7 @@ void main() { fragColor = vec4(phase); }
         public void Padding_FourNumbers_LeftTopRightBottom()
         {
             var a = Annotations("// @padding 1, 2.5, 3, 4");
-            Assert.That(a.Padding, Is.EqualTo(new RectangleF(1, 2.5f, 3, 4)));
+            Assert.That(a.Padding, Is.EqualTo(ShaderPadding.Fixed(new RectangleF(1, 2.5f, 3, 4))));
             Assert.That(a.Warnings, Is.Empty);
         }
 
@@ -141,7 +154,7 @@ void main() { fragColor = vec4(phase); }
         public void Padding_Missing_IsZero()
         {
             var a = Annotations("// @summary x");
-            Assert.That(a.Padding, Is.EqualTo(RectangleF.Empty));
+            Assert.That(a.Padding, Is.EqualTo(ShaderPadding.None));
             Assert.That(a.Warnings, Is.Empty);
         }
 
@@ -152,7 +165,7 @@ void main() { fragColor = vec4(phase); }
         public void Padding_Broken_WarnsWithLineAndIsZero(string head)
         {
             var a = Annotations("// first line\n" + head);
-            Assert.That(a.Padding, Is.EqualTo(RectangleF.Empty));
+            Assert.That(a.Padding, Is.EqualTo(ShaderPadding.None));
             var warning = a.Warnings.Single();
             Assert.That(warning.Line, Is.EqualTo(2));
             Assert.That(warning.Text, Does.StartWith("@padding"));
@@ -162,7 +175,7 @@ void main() { fragColor = vec4(phase); }
         public void Padding_AtUniform_Warns()
         {
             var a = ShaderAnnotations.Parse("#version 440\nlayout(std140, binding = 0) uniform buf {\n    float x; // @padding 3\n};\n");
-            Assert.That(a.Padding, Is.EqualTo(RectangleF.Empty));
+            Assert.That(a.Padding, Is.EqualTo(ShaderPadding.None));
             Assert.That(a.Warnings.Single().Text, Does.Contain("@padding").And.Contain("file head"));
         }
 
@@ -171,13 +184,11 @@ void main() { fragColor = vec4(phase); }
         [Test]
         public void Layout_CarriesPadding_ForChainDropsQtNativeUniforms()
         {
-            var layout = Load(filterSource, filterReflection);
-            Assert.That(layout.Padding, Is.EqualTo(new RectangleF(4, 8, 12, 16)));
+            var chain = LoadChain(filterSource, filterReflection);
+            Assert.That(chain.Padding, Is.EqualTo(ShaderPadding.Fixed(new RectangleF(4, 8, 12, 16))));
 
-            var chain = layout.ForChain(NullLogger.Instance, "Test.frag");
             // map (image) and its sampler pin first, then the uniforms; texelSize and weight are QtNative's, glow is reserved (an error at the node).
             Assert.That(chain.Pins.Select(p => p.UniformName), Is.EqualTo(new[] { "map", "map", "amount" }));
-            Assert.That(chain.Padding, Is.EqualTo(layout.Padding));
             Assert.That(chain.Messages.Where(m => m.Type == MessageType.Warning), Is.Empty);
             Assert.That(chain.Messages.Single(m => m.Type == MessageType.Error).Text, Does.Contain("'glow'").And.Contain("reserved"));
         }
@@ -185,23 +196,21 @@ void main() { fragColor = vec4(phase); }
         [Test]
         public void ForChain_NotAFilterAnyMore_IsError()
         {
-            var layout = Load(generatorSource, "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\nuniform phase float 0\n");
-            var chain = layout.ForChain(NullLogger.Instance, "Test.frag");
+            var chain = LoadChain(generatorSource, "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\nuniform phase float 0\n");
             Assert.That(chain.Messages.Single(m => m.Type == MessageType.Error).Text, Does.Contain("sampler2D source"));
         }
 
         [Test]
         public void ForChain_Vertex_IsWarning()
         {
-            var layout = Load(filterSource, filterReflection) with { VertexSource = "#version 440\n" };
-            var chain = layout.ForChain(NullLogger.Instance, "Test.frag");
+            var chain = LoadChain(filterSource, filterReflection, "#version 440\n");
             Assert.That(chain.Messages.Select(m => m.Text), Has.Some.Contain(".vert"));
         }
 
         [Test]
         public void Instance_PinsMatchDescription_InputIsEffect()
         {
-            var layout = Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag");
+            var layout = LoadChain(filterSource, filterReflection);
             using var instance = new ShaderEffectInstance((ResourceClient?)null, layout);
 
             var inputs = ShaderEffectDescription.Inputs(layout);
@@ -233,7 +242,7 @@ void main() { fragColor = vec4(phase); }
         [Test]
         public void Update_NewLinkOnlyOnChange()
         {
-            var layout = Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag");
+            var layout = LoadChain(filterSource, filterReflection);
             using var instance = new ShaderEffectInstance(_client, layout);
             var input = new BlurEffect(null, 0.5f, 32, 0);
             ((IVLPin)instance.Inputs.First()).Value = input;
@@ -271,7 +280,7 @@ void main() { fragColor = vec4(phase); }
         [Test]
         public void Apply_OffPassesTheChainOn_AndTheTextIsTheSharedOne()
         {
-            var layout = Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag");
+            var layout = LoadChain(filterSource, filterReflection);
             using var instance = new ShaderEffectInstance(_client, layout);
             var inputs = ShaderEffectDescription.Inputs(layout);
             Assert.That(inputs[^1].Name, Is.EqualTo("Apply"), "last input pin");
@@ -296,7 +305,7 @@ void main() { fragColor = vec4(phase); }
         [Test]
         public void Dispose_ReleasesTheShader()
         {
-            var layout = Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag");
+            var layout = LoadChain(filterSource, filterReflection);
             var instance = new ShaderEffectInstance(_client, layout);
             instance.Update();
             Assert.That(_api.Released, Is.Empty);
@@ -307,7 +316,7 @@ void main() { fragColor = vec4(phase); }
         [Test]
         public void Update_WithoutShaderId_PassesTheChainOn()
         {
-            var layout = Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag") with { FragmentSource = string.Empty };
+            var layout = LoadChain(filterSource, filterReflection) with { FragmentSource = string.Empty };
             using var instance = new ShaderEffectInstance(_client, layout);
             var input = new BlurEffect(null, 0.5f, 32, 0);
             ((IVLPin)instance.Inputs.First()).Value = input;
@@ -318,7 +327,7 @@ void main() { fragColor = vec4(phase); }
         [Test]
         public void Link_SendsSingleShaderEffectInSetEffectChain()
         {
-            var layout = Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag");
+            var layout = LoadChain(filterSource, filterReflection);
             using var instance = new ShaderEffectInstance(_client, layout);
             ((IVLPin)instance.Inputs.First()).Value = new BlurEffect(null, 0.5f, 32, 0);
             instance.Update();
@@ -356,11 +365,14 @@ void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
 
         private const string blurReflection = "ok\nuniform qt_Matrix mat4 0\nuniform qt_Opacity float 0\nuniform blurLength float 0\nuniform offset vec2 0\nuniform passIndex float 0\nuniform weight float 0\nsampler source 1\n";
 
-        private ShaderNodeLayout LoadBlur(string head) =>
-            Load(head + blurBody, blurReflection).ForChain(NullLogger.Instance, "Test.frag");
+        private ShaderEffectLayout LoadBlur(string head) => LoadChain(head + blurBody, blurReflection);
 
-        private static string[] Errors(ShaderNodeLayout layout) =>
-            layout.Messages.Where(m => m.Type == MessageType.Error).Select(m => m.Text).ToArray();
+        private static string[] Errors(ShaderLayout layout) => Errors(layout.Messages);
+
+        private static string[] Errors(ShaderEffectLayout layout) => Errors(layout.Messages);
+
+        private static string[] Errors(ImmutableArray<Message> messages) =>
+            messages.Where(m => m.Type == MessageType.Error).Select(m => m.Text).ToArray();
 
         [Test]
         public void Passes_DefaultOne_TwoAndOneAreAccepted()
@@ -397,17 +409,15 @@ void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
         public void PaddingUniform_FactorDefaultsToOne_FixedFormStays()
         {
             var a = Annotations("// @padding blurLength");
-            Assert.That((a.PaddingUniform, a.PaddingFactor), Is.EqualTo(("blurLength", 1f)));
-            Assert.That(a.Padding, Is.EqualTo(RectangleF.Empty));
+            Assert.That(a.Padding, Is.EqualTo(ShaderPadding.FromUniform("blurLength", 1f)));
             Assert.That(a.Errors, Is.Empty);
             Assert.That(a.Warnings, Is.Empty);
 
             var b = Annotations("// @padding blurLength 0.5");
-            Assert.That((b.PaddingUniform, b.PaddingFactor), Is.EqualTo(("blurLength", 0.5f)));
+            Assert.That(b.Padding, Is.EqualTo(ShaderPadding.FromUniform("blurLength", 0.5f)));
 
             var fixedPadding = Annotations("// @padding 6");
-            Assert.That(fixedPadding.PaddingUniform, Is.Null);
-            Assert.That(fixedPadding.Padding, Is.EqualTo(new RectangleF(6, 6, 6, 6)));
+            Assert.That(fixedPadding.Padding, Is.EqualTo(ShaderPadding.Fixed(new RectangleF(6, 6, 6, 6))));
         }
 
         [TestCase("// @padding blurLength abc")]
@@ -416,7 +426,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
         public void PaddingUniform_BrokenFactor_IsError(string head)
         {
             var a = Annotations("// first line\n" + head);
-            Assert.That(a.PaddingUniform, Is.Null);
+            Assert.That(a.Padding, Is.EqualTo(ShaderPadding.None));
             var error = a.Errors.Single();
             Assert.That(error.Line, Is.EqualTo(2));
             Assert.That(error.Text, Does.StartWith("@padding"));
@@ -440,7 +450,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
         {
             var chain = LoadBlur(blurHead);
             Assert.That(Errors(chain), Is.Empty);
-            Assert.That((chain.Passes, chain.PaddingUniform, chain.PaddingFactor), Is.EqualTo((2, "blurLength", 0.5f)));
+            Assert.That((chain.Template, chain.Padding), Is.EqualTo((Protocol.EffectTemplate.TwoPass, ShaderPadding.FromUniform("blurLength", 0.5f))));
             // passIndex and weight are QtNative's, no pins.
             Assert.That(chain.Pins.Select(p => p.UniformName), Is.EqualTo(new[] { "blurLength", "offset" }));
         }
@@ -451,7 +461,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
             Assert.That(Errors(LoadBlur("// @passes 3\n")).Single(), Does.Contain("@passes"));
             var broken = LoadBlur("// @padding blurLength x\n");
             Assert.That(Errors(broken).Single(), Does.Contain("@padding"));
-            Assert.That(broken.PaddingUniform, Is.Null);
+            Assert.That(broken.Padding, Is.EqualTo(ShaderPadding.None));
         }
 
         [Test]
@@ -461,7 +471,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
             {
                 var chain = LoadBlur($"// @padding {name}\n");
                 Assert.That(Errors(chain).Single(), Does.Contain(name).And.Contain(expected), name);
-                Assert.That(chain.PaddingUniform, Is.Null, name);
+                Assert.That(chain.Padding, Is.EqualTo(ShaderPadding.None), name);
             }
         }
 

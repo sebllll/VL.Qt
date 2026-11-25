@@ -111,11 +111,11 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
 
         // --- layout (fake reflection) ---
 
-        private ShaderNodeLayout Load(string source, string reflectionText)
+        private ShaderLayout Load(string source, string reflectionText)
         {
             var path = Write("Test.frag", source);
             var file = new ShaderFile(path, null, "Test", null, ShaderNodeFactory.DefaultCategory, null, null);
-            return ShaderNodeLayout.Load(file, (_, _) => ShaderReflection.Parse(reflectionText), NullLogger.Instance);
+            return ShaderLayout.From(ShaderSource.Load(file, (_, _) => ShaderReflection.Parse(reflectionText)), file);
         }
 
         [Test]
@@ -150,7 +150,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
         {
             var path = Write("Test.frag", "#version 440\n");
             var file = new ShaderFile(path, null, "Test", null, ShaderNodeFactory.DefaultCategory, null, null);
-            var layout = ShaderNodeLayout.Load(file, (_, _) => throw new DllNotFoundException("vlqt.dll"), NullLogger.Instance);
+            var layout = ShaderLayout.From(ShaderSource.Load(file, (_, _) => throw new DllNotFoundException("vlqt.dll")), file);
             Assert.That(layout.Messages.Single().Type, Is.EqualTo(MessageType.Error));
             Assert.That(layout.HasInput, Is.False);
         }
@@ -159,7 +159,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
         public void Layout_MissingFile_IsNodeError()
         {
             var file = new ShaderFile(Path.Combine(_dir, "Gone.frag"), null, "Gone", null, ShaderNodeFactory.DefaultCategory, "s", "dup");
-            var layout = ShaderNodeLayout.Load(file, (_, _) => throw new InvalidOperationException("not reached"), NullLogger.Instance);
+            var layout = ShaderLayout.From(ShaderSource.Load(file, (_, _) => throw new InvalidOperationException("not reached")), file);
             Assert.That(layout.Messages.Select(m => m.Type), Is.EqualTo(new[] { MessageType.Error, MessageType.Error }));
             Assert.That(layout.Messages[0].Text, Is.EqualTo("dup"));
             Assert.That(layout.Pins, Is.Empty);
@@ -195,10 +195,10 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
         public void Description_CommonPinHelp_IsTheSharedText()
         {
             var layout = Load(fragmentSource, reflection);
-            var inputs = ShaderNodeDescription.Inputs(layout).ToDictionary(i => i.Name, i => ((IInfo)i).Summary);
+            var inputs = ShaderDescription.Inputs(layout).ToDictionary(i => i.Name, i => ((IInfo)i).Summary);
             foreach (var (pin, name) in new[] { ("Transform", "transform"), ("Anchor", "anchor"), ("Debug", "debug"), ("Interaction", "interaction"), ("Effect", "effect"), ("Enabled", "enabled") })
                 Assert.That(inputs[pin], Is.EqualTo(CommonPinsXml.Param("element", name)), pin);
-            var outputs = ShaderNodeDescription.Outputs.ToDictionary(o => o.Name, o => ((IInfo)o).Summary);
+            var outputs = ShaderDescription.Outputs.ToDictionary(o => o.Name, o => ((IInfo)o).Summary);
             Assert.That(outputs["Measured Size"], Is.EqualTo(CommonPinsXml.Param("element", "measuredSize")));
             Assert.That(outputs["Scene Bounds"], Is.EqualTo(CommonPinsXml.Param("element", "sceneBounds")));
         }
@@ -207,12 +207,12 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
         public void Instance_InputPinsMatchDescriptionOrder()
         {
             var layout = Load(fragmentSource, reflection);
-            using var instance = new ShaderNodeInstance(new Nodes.ShaderNode(_ => System.Reactive.Disposables.Disposable.Empty), layout);
+            using var instance = new ShaderInstance(new Nodes.ShaderNode(_ => System.Reactive.Disposables.Disposable.Empty), layout);
             // Same count, order and type as the description (Input + Input Sampler + 3 uniforms + 12 fixed pins; 4 outputs).
-            Assert.That(instance.Inputs.Select(PinType), Is.EqualTo(ShaderNodeDescription.Inputs(layout).Select(d => d.Type)));
-            Assert.That(instance.Outputs.Select(PinType), Is.EqualTo(ShaderNodeDescription.Outputs.Select(d => d.Type)));
-            Assert.That(ShaderNodeDescription.Inputs(layout).Count, Is.EqualTo(1 + 1 + 3 + 12));
-            Assert.That(ShaderNodeDescription.Inputs(layout).Select(d => d.Name).Take(5), Is.EqualTo(new[] { "Input", "Input Sampler", "Amount", "Size 2", "Tint" }));
+            Assert.That(instance.Inputs.Select(PinType), Is.EqualTo(ShaderDescription.Inputs(layout).Select(d => d.Type)));
+            Assert.That(instance.Outputs.Select(PinType), Is.EqualTo(ShaderDescription.Outputs.Select(d => d.Type)));
+            Assert.That(ShaderDescription.Inputs(layout).Count, Is.EqualTo(1 + 1 + 3 + 12));
+            Assert.That(ShaderDescription.Inputs(layout).Select(d => d.Name).Take(5), Is.EqualTo(new[] { "Input", "Input Sampler", "Amount", "Size 2", "Tint" }));
 
             static Type PinType(IVLPin pin) => pin.GetType().GetInterfaces()
                 .Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IVLPin<>)).GetGenericArguments()[0];
@@ -224,7 +224,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
             // vvvv calls IVLNode.Update only for non-fragmented descriptions; fragmented ones never update and Output stays null.
             var path = Write("Glitch.frag", fragmentSource);
             var file = new ShaderFile(path, null, "Glitch", null, ShaderNodeFactory.DefaultCategory, null, null);
-            var description = ShaderNodeDescription.New(new FakeFactory(), file, NullLogger.Instance);
+            var description = ShaderDescription.New(new FakeFactory(), file, NullLogger.Instance);
             Assert.That(description.Fragmented, Is.False);
         }
 

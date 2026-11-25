@@ -14,7 +14,7 @@ namespace VL.Qt.Shaders
     /// <summary>
     /// Node factory for qtshaders/**/*.frag next to a document or in a package, built on <see cref="FolderNodeFactory"/>
     /// (model: VL.Stride EffectShaderNodes.Init/TrackChanges). The scan reads only the annotations (category/summary); bake
-    /// and reflection happen lazily in the init of the node description (<see cref="ShaderNodeDescription"/>). The node
+    /// and reflection happen lazily in the init of the node description (<see cref="ShaderDescription"/>). The node
     /// instance wraps a <see cref="Nodes.ShaderNode"/> and feeds the file content over the source path.
     /// </summary>
     internal static class ShaderNodeFactory
@@ -75,7 +75,7 @@ namespace VL.Qt.Shaders
                 if (file.ChainOnly && !file.IsFilter)
                     logger.LogWarning("{Shader}: @chainonly needs 'uniform sampler2D source', so there is no node for this file", file.FragmentPath);
                 if (!file.ChainOnly)
-                    nodes.Add(ShaderNodeDescription.New(factory, file, logger));
+                    nodes.Add(ShaderDescription.New(factory, file, logger));
                 if (file.IsFilter)
                     nodes.Add(ShaderEffectDescription.New(factory, file, logger));
             }
@@ -144,7 +144,7 @@ namespace VL.Qt.Shaders
         {
             try
             {
-                return ShaderNodeLayout.IsFilter(File.ReadAllText(fragment));
+                return ShaderSource.IsFilter(File.ReadAllText(fragment));
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {

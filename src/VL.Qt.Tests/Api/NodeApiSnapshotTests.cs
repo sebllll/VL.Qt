@@ -191,8 +191,8 @@ Item {
                 var lines = new List<string> { $"factory Shader | default category {ShaderNodeFactory.DefaultCategory}" };
                 foreach (var file in ShaderNodeFactory.Scan(dir).OrderBy(f => f.FullName, StringComparer.Ordinal))
                 {
-                    var layout = ShaderNodeLayout.Load(file, (_, _) => ShaderReflection.Parse(file.Name == "Plain" ? "ok\n" : testShaderReflection), NullLogger.Instance);
-                    lines.AddRange(GeneratedNodeLines("Shader", file.FullName, file.Category, ShaderNodeDescription.Inputs(layout), ShaderNodeDescription.Outputs));
+                    var layout = ShaderLayout.From(ShaderSource.Load(file, (_, _) => ShaderReflection.Parse(file.Name == "Plain" ? "ok\n" : testShaderReflection)), file);
+                    lines.AddRange(GeneratedNodeLines("Shader", file.FullName, file.Category, ShaderDescription.Inputs(layout), ShaderDescription.Outputs));
                 }
                 return lines;
             }
