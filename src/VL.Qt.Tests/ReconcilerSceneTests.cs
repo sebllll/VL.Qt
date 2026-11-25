@@ -134,6 +134,56 @@ namespace VL.Qt.Tests
             Assert.That(_sink.Commands, Is.Empty);
         }
 
+        /// <summary>Registry, mirror flag and feedback id agree on the primary of every bound mirror of <paramref name="rec"/>.</summary>
+        private static void AssertPrimaryInOnePlace(Reconciler rec, OccurrenceRegistry scene)
+        {
+            void Walk(ItemMirror n)
+            {
+                if (!n.IsPlaceholder && n.Element is { } e && !n.BoundSlot.IsNone)
+                {
+                    var primary = ReferenceEquals(scene.PrimaryOf(e), n);
+                    Assert.That(n.IsPrimary, Is.EqualTo(primary), $"flag of mirror {n.Id}");
+                    Assert.That(rec.FeedbackRouter.IsPrimary(n.BoundFeedbackId), Is.EqualTo(primary), $"feedback id of mirror {n.Id}");
+                }
+                foreach (var c in n.Children)
+                    Walk(c);
+                if (n.Effect is { } effect)
+                    foreach (var o in effect.Objects)
+                        Walk(o);
+            }
+            Walk(rec.Root!);
+        }
+
+        [Test]
+        public void PrimaryFlag_AgreesWithRegistryAndFeedbackId_AfterEveryUpdate()
+        {
+            var e = R(1, new FeedbackSlot(new ElementFeedback(), 0));
+            var s = G(e);
+            // Promotions of bound mirrors (a skipped subtree takes over, an earlier position takes over, the first lets go) and demotions.
+            foreach (var root in new[] { G(R(5), s, e), G(e, s, e), G(R(5), s, e), G(R(5), s), G(s, R(5)), G(R(5), R(6)), G(e) })
+            {
+                Frame(root);
+                AssertPrimaryInOnePlace(_rec, _scene);
+            }
+        }
+
+        [Test]
+        public void FurtherOccurrenceChangesSlot_BecomesPrimaryOfTheNewSlot_FormerSlotKeepsItsState()
+        {
+            var feedback = new ElementFeedback();
+            var a = R(1, new FeedbackSlot(feedback, 0));
+            var b = R(1, new FeedbackSlot(feedback, 1));
+            Frame(G(a, a));
+            var kids = _rec.Root!.Children;
+            _rec.FeedbackRouter.Dispatch(new FeedbackRouterTests.Poll().Error(kids[0].BoundFeedbackId, "x").Bytes);
+
+            Frame(G(a, b));
+            Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {kids[1].Id} {kids[1].BoundFeedbackId}" }), "one BIND, for the new slot");
+            Assert.That(feedback[0].Error, Is.EqualTo("x"), "the primary of the former slot is not touched");
+            Assert.That(_scene.PrimaryOf(b), Is.SameAs(kids[1]));
+            AssertPrimaryInOnePlace(_rec, _scene);
+        }
+
         [Test]
         public void SpreadReordered_SlotDropsTheErrorOfItsFormerObject()
         {

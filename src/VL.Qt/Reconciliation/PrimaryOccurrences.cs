@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
 
@@ -94,16 +95,16 @@ namespace VL.Qt.Reconciliation
             var key = OccurrenceKey.Of(element);
             if (_occurrences.AddOccurrence(key, item, _owner))
             {
-                item.IsPrimary = true;
+                Promote(item, element);
                 return;
             }
-            item.IsPrimary = false;
+            Demote(item);
             var primary = _occurrences.PrimaryOf(key, out var owner);
             if (!ReferenceEquals(owner, _owner) || primary is null || IsVisitedThisPass(primary, pass))
                 return;
             Demote(primary);
             _occurrences.SetPrimary(key, item);
-            item.IsPrimary = true;
+            Promote(item, element);
         }
 
         /// <summary>
@@ -115,7 +116,7 @@ namespace VL.Qt.Reconciliation
             var key = OccurrenceKey.Of(element);
             if (_occurrences.RemoveOccurrence(key, item, _owner))
                 _pendingPrimary.Add(key);
-            item.IsPrimary = false;
+            Demote(item);
         }
 
         /// <summary>Forgets the elements waiting for a new primary (resync: the registry no longer holds the owner's occurrences).</summary>
@@ -147,41 +148,48 @@ namespace VL.Qt.Reconciliation
                         first = further[k];
                 }
                 _occurrences.SetPrimary(key, first);
-                first.IsPrimary = true;
-                if (!first.BoundSlot.IsNone)
-                    SyncPrimary(first);
+                Promote(first, first.Element!);
+                AssertAgree(key, first);
             }
             _pendingPrimary.Clear();
         }
 
         /// <summary>
-        /// Brings the feedback id of <paramref name="item"/> in line with <see cref="ItemMirror.IsPrimary"/>: a promotion takes a
-        /// new primary feedback id and sends BIND (QtNative then sends the current Measured/SceneBounds/Media/Error again), a
-        /// demotion only flips the flag of the feedback id.
+        /// Makes <paramref name="item"/> the primary occurrence of <paramref name="element"/> (the registry is updated by the
+        /// caller). With the feedback slot of the element already bound, it takes a new primary feedback id and sends BIND
+        /// (QtNative then sends the current Measured/SceneBounds/Media/Error again); an unbound mirror, or one about to be bound
+        /// to another slot, acquires its feedback id as primary in <c>Reconciler.BindFeedback</c>.
         /// </summary>
-        public void SyncPrimary(ItemMirror item)
+        private void Promote(ItemMirror item, Element element)
         {
-            if (item.IsPrimary)
-            {
-                _feedbackRouter.Release(item.BoundFeedbackId); // not primary: leaves the slot alone
-                item.BoundFeedbackId = _feedbackRouter.Acquire(item.BoundSlot, primary: true);
-                _sink.Bind(item.Id, item.BoundFeedbackId);
-            }
-            else
-            {
-                _feedbackRouter.SetPrimary(item.BoundFeedbackId, false);
-            }
-            item.BoundPrimary = item.IsPrimary;
+            item.IsPrimary = true;
+            if (item.BoundSlot.IsNone || item.BoundSlot != element.Feedback || _feedbackRouter.IsPrimary(item.BoundFeedbackId))
+                return;
+            _feedbackRouter.Release(item.BoundFeedbackId); // not primary: leaves the slot alone
+            item.BoundFeedbackId = _feedbackRouter.Acquire(item.BoundSlot, primary: true);
+            _sink.Bind(item.Id, item.BoundFeedbackId);
         }
 
         /// <summary>Makes <paramref name="item"/> a further occurrence; its feedback id stops reporting state values right away (no BIND needed).</summary>
         private void Demote(ItemMirror item)
         {
             item.IsPrimary = false;
-            if (item.BoundPrimary)
+            _feedbackRouter.SetPrimary(item.BoundFeedbackId, false);
+        }
+
+        /// <summary>
+        /// DEBUG: after a promotion at the end of an update, the registry, the mirrors and the feedback id of
+        /// <paramref name="primary"/> agree on who the primary occurrence of <paramref name="key"/> is.
+        /// </summary>
+        [Conditional("DEBUG")]
+        private void AssertAgree(OccurrenceKey key, ItemMirror primary)
+        {
+            Debug.Assert(ReferenceEquals(_occurrences.PrimaryOf(key), primary) && primary.IsPrimary, "the registry's primary is the mirror that is marked primary");
+            Debug.Assert(primary.BoundSlot.IsNone || _feedbackRouter.IsPrimary(primary.BoundFeedbackId), "the primary's feedback id is primary");
+            if (_occurrences.FurtherOccurrencesOf(key) is { } further)
             {
-                _feedbackRouter.SetPrimary(item.BoundFeedbackId, false);
-                item.BoundPrimary = false;
+                foreach (var f in further)
+                    Debug.Assert(!f.IsPrimary, "a further occurrence is not marked primary");
             }
         }
 
