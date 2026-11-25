@@ -16,7 +16,7 @@ namespace VL.Qt.Nodes
     /// Channel (author "Qt") and to Value; Bang reports a change by the user. Connect to Renderer [Qt] or a Group.
     /// </summary>
     /// <remarks>QtQuick.Controls Slider, style Basic.</remarks>
-    [ProcessNode(Name = "Slider", Category = Categories.Widgets)]
+    [ProcessNode(Name = "Slider (Float)", Category = Categories.Widgets)]
     public sealed class SliderNode : IDisposable
     {
         internal readonly record struct Props(float Value, float Minimum, float Maximum, float Step, SliderOrientation Orientation, bool Enabled, bool AutoSize, Style? Style);

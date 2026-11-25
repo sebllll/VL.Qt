@@ -17,19 +17,19 @@ namespace VL.Qt.Nodes
     /// Connect to Renderer [Qt] or a Group.
     /// </summary>
     /// <remarks>QtQuick.Controls TextField, style Basic.</remarks>
-    [ProcessNode(Name = "TextInput", Category = Categories.Widgets)]
-    public sealed class TextInputNode : IDisposable
+    [ProcessNode(Name = "Input (String)", Category = Categories.Widgets, Tags = "text, textfield")]
+    public sealed class InputStringNode : IDisposable
     {
         internal readonly record struct Props(string Value, string Placeholder, bool Editable, bool Enabled, bool AutoSize, Style? Style);
 
         private readonly ElementNodeCore<TextField, Props> _node;
         private readonly ValueChannel<string> _value = new(string.Empty);
 
-        public TextInputNode(NodeContext nodeContext)
+        public InputStringNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<TextField, Props>(nodeContext, s_create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal TextInputNode(Func<string, IDisposable> addWarning)
+        internal InputStringNode(Func<string, IDisposable> addWarning)
             => _node = new ElementNodeCore<TextField, Props>(addWarning, s_create);
 
         private static readonly Func<CommonInputs, Props, FeedbackSlot, TextField> s_create = static (c, p, slot) => new TextField(c, slot)

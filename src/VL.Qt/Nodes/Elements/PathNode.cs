@@ -29,7 +29,7 @@ namespace VL.Qt.Nodes
 
         /// <param name="path">Path to draw, in units, in the parent space. null = nothing is drawn. Transform acts around the origin of the parent space, not around the shape; the shape reports (max X, max Y) of the path, control points included, as its size.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='shape']/param[@name='transform']"/>
-        /// <param name="fill">Fill color of the enclosed area. Transparent by default.</param>
+        /// <param name="fillColor">Fill color of the enclosed area. Transparent by default.</param>
         /// <param name="strokeColor">Color of the stroke.</param>
         /// <param name="strokeWidth">Width of the stroke in units, 0 = no stroke.</param>
         /// <param name="cap">Shape of the open ends of the stroke: Flat, Square or Round.</param>
@@ -54,7 +54,7 @@ namespace VL.Qt.Nodes
         public IElement Update(
             QtPath? path,
             Matrix transform,
-            [DefaultValue("0, 0, 0, 0")] Color4 fill,
+            [DefaultValue("0, 0, 0, 0")] Color4 fillColor,
             [DefaultValue("1, 1, 1, 1")] Color4 strokeColor,
             [DefaultValue(0.05f)] float strokeWidth,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(ShapeCap), nameof(ShapeCap.Flat))] ShapeCap cap,
@@ -76,7 +76,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
             var props = new ShapeNodeCore.Props(
-                Spread<Vector2>.Empty, false, fill, strokeColor, strokeWidth,
+                Spread<Vector2>.Empty, false, fillColor, strokeColor, strokeWidth,
                 cap, join, miterLimit, dash ?? Spread<float>.Empty, dashOffset,
                 trimStart, trimEnd, trimOffset, fillRule)
             {

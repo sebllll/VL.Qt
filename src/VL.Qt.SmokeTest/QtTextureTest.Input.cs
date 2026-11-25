@@ -45,7 +45,7 @@ public static partial class QtTextureTest
         private readonly RectangleNode _rectA = new(_ => new NoMessage()), _rectP = new(_ => new NoMessage()), _rectB = new(_ => new NoMessage()), _rectC = new(_ => new NoMessage());
         private readonly GroupNode _group = new(_ => new NoMessage());
         private readonly SliderNode _slider = new(_ => new NoMessage());
-        private readonly TextInputNode _text = new(_ => new NoMessage());
+        private readonly InputStringNode _text = new(_ => new NoMessage());
         private readonly HoverNode _hover = new(_ => new NoMessage());
         private readonly ClickNode _clickA = new(_ => new NoMessage()), _clickMouse = new(_ => new NoMessage()), _clickTouch = new(_ => new NoMessage()), _clickPen = new(_ => new NoMessage());
         private readonly WheelNode _wheel = new(_ => new NoMessage());

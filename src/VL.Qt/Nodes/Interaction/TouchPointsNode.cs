@@ -18,7 +18,7 @@ namespace VL.Qt.Nodes
     /// with other interaction nodes. Values arrive one frame later.
     /// </summary>
     /// <tags>touch, multitouch, finger, fingers, points, pen, pressure, id</tags>
-    [ProcessNode(Name = "Touch Points", Category = Categories.Interaction)]
+    [ProcessNode(Name = "TouchPoints", Category = Categories.Interaction)]
     public sealed class TouchPointsNode : IDisposable
     {
         internal readonly record struct Props(bool Occlusion, PointerDevices Devices);
