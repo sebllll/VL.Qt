@@ -6,6 +6,7 @@
 #include "app/scene_change.h"
 
 #include <QtCore/QLoggingCategory>
+#include <QtGui/QFontDatabase>
 #include <QtGui/QKeyEvent>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
@@ -349,6 +350,8 @@ void PerfMonitor::ensureOverlay()
     // Before the item joins the scene: no layers on the Qt Quick software backend (see qml/perf/perf_overlay.qml).
     if (isSoftwareBackend(m_window))
         item->setProperty("layered", false);
+    // Monospaced: Consolas where it exists (Windows), else the system fixed font (the columns are aligned with spaces).
+    item->setProperty("fontFamilies", QStringList{QStringLiteral("Consolas"), QFontDatabase::systemFont(QFontDatabase::FixedFont).family()});
     item->setObjectName(QLatin1String(vlqt::overlayObjectName)); // not counted as a scene change (app/scene_change.h)
     item->setParentItem(m_window->contentItem());
     item->setZ(1e9); // above the user root

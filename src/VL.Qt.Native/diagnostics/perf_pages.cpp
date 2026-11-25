@@ -1,11 +1,9 @@
-// Private Qt API: QUnifiedTimer::runningAnimationCount (perf page); check on Qt updates (list: elements/elements.h).
 #include "diagnostics/perf_pages.h"
 #include "diagnostics/overlay_software.h"
 #include "diagnostics/perf_items.h"
 #include "scene/scene.h"
 #include "snapshot_resource.h"
 
-#include <QtCore/private/qabstractanimation_p.h> // QUnifiedTimer::runningAnimationCount (CorePrivate via GuiPrivate)
 #include <QtGui/QScreen>
 #include <QtGui/QTextDocumentFragment>
 #include <QtQuick/QQuickWindow>
@@ -376,12 +374,16 @@ QString PerfMonitor::scenePage() const
     h.br().t(lab("elements", L));
     if (m_scene) {
         h.t(QString::number(qulonglong(m_scene->nodes.size())).rightJustified(8));
-        std::map<const TypeDef*, int> byType; // TypeDef::name is the type's name, lower case here
-        for (const auto& kv : m_scene->nodes)
-            byType[kv.second.def]++;
+        // By type id (stable order); the name is TypeDef::name of the one type table, lower case here.
+        std::map<quint16, std::pair<const TypeDef*, int>> byType;
+        for (const auto& kv : m_scene->nodes) {
+            auto& entry = byType[kv.second.def->id];
+            entry.first = kv.second.def;
+            entry.second++;
+        }
         QString parts;
-        for (const auto& [def, count] : byType)
-            parts += QStringLiteral("  %1 %2").arg(QString::fromLatin1(def->name).toLower()).arg(count);
+        for (const auto& kv : byType)
+            parts += QStringLiteral("  %1 %2").arg(QString::fromLatin1(kv.second.first->name).toLower()).arg(kv.second.second);
         h.c(kGrey, parts);
     } else {
         h.t(kNa.rightJustified(8));
@@ -396,10 +398,6 @@ QString PerfMonitor::scenePage() const
     const int effects = countMultiEffects(m_window->contentItem(), m_overlay, m_scene ? m_scene->debugOverlay() : nullptr);
     h.br().t(lab("effects", L)).t(QString::number(layers).rightJustified(8))
         .c(kGrey, QStringLiteral("  effect layers, %1 MultiEffect items").arg(effects));
-    // QUnifiedTimer of this (GUI) thread: QAbstractAnimations + QML animations/animators; process-wide, not per window.
-    const QUnifiedTimer* timer = QUnifiedTimer::instance(false);
-    h.br().t(lab("animations", L)).t(QString::number(timer ? qlonglong(timer->runningAnimationCount()) : 0).rightJustified(8))
-        .c(kGrey, "  running (process)");
     // Ops per apply: commands the host applied to this window per pump (host pumps, ~1 s).
     vlqt_host_pump_stats hs;
     hostStats(&hs);
