@@ -134,8 +134,8 @@ public static class PerfStatsTest
         var ps = PerfStats.From(default, default, hs);
         s.Check(rc == 0 && rc2 == 0 && back.ops == 7 && back.alloc_bytes == 1234 && back.apply == 0.5f && hs.samples == 1 && hs.ops == 7
               && Math.Abs(hs.gc0_per_s - 62.5) < 1e-6 && back.vvvv == 10.5f && back.wait == 2.25f
-              && hs.vvvv_ms == 10.5 && hs.vvvv_ms_max == 10.5 && hs.wait_ms == 2.25 && ps.VvvvMs == 10.5f && ps.VvvvMsMax == 10.5f && ps.WaitMs == 2.25f,
-            $"perfstats: host frame report/read back (rc {rc}/{rc2}, ops {back.ops}, alloc {back.alloc_bytes}, stats n {hs.samples}, gen0/s {hs.gc0_per_s}, vvvv {back.vvvv}/{hs.vvvv_ms}/{ps.VvvvMs}, wait {back.wait}/{hs.wait_ms})");
+              && hs.vvvv_ms == 10.5 && hs.vvvv_ms_max == 10.5 && hs.wait_ms == 2.25 && ps.Host.VvvvMs == 10.5f && ps.Host.VvvvMsMax == 10.5f && ps.Host.WaitMs == 2.25f,
+            $"perfstats: host frame report/read back (rc {rc}/{rc2}, ops {back.ops}, alloc {back.alloc_bytes}, stats n {hs.samples}, gen0/s {hs.gc0_per_s}, vvvv {back.vvvv}/{hs.vvvv_ms}/{ps.Host.VvvvMs}, wait {back.wait}/{hs.wait_ms})");
         s.Pump(1);
         rc = Native.vlqt_scene_get_host_pump(w, out _);
         s.Check(rc == Native.Result.NoData, $"perfstats: next pump without report -> NoData (rc {rc})");
