@@ -53,3 +53,7 @@ W4-17 | category | *                    | Qt.Elements.Uniform    | Qt.Elements.S
 W4-17 | category | Sampler              | Qt.Elements.Uniform    | Qt.Elements.Shaders
 W4-17 | category | QtTexture            | Qt                     | Stride.Textures.Source
 W4-17 | category | ToTexturePixels      | Qt                     | Stride.Input
+
+# W4-95: the click channel of Button is an input like Channel at the other widgets: "On Click", directly after Anchor (the
+# position is the order of the C# parameters; patches reach the pin by its name).
+W4-95 | pin | Qt.Widgets/Button | Is Clicked | On Click

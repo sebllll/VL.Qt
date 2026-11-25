@@ -50,7 +50,7 @@
             <Pin Id="7qJjJIaYgMtfQphmZAqTmx" Name="Text" Kind="InputPin" DefaultValue="From Group" />
             <Pin Id="SYVscgQcsGBN94CtAsP6P0" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="HUo37RHPP5jMo4IGI7KlC8" Name="Auto Repeat" Kind="InputPin" IsHidden="true" />
-            <Pin Id="YNuRj5xcObpJxfo31Lp8Se" Name="Is Clicked" Kind="InputPin" />
+            <Pin Id="YNuRj5xcObpJxfo31Lp8Se" Name="On Click" Kind="InputPin" />
             <Pin Id="14G9lsmFHSChjZsJUp6CrP" Name="Opacity" Kind="InputPin" />
             <Pin Id="LC5CTb2itxEP7bUQSzBHOJ" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="Li5yu8l0LOEMTcNe4ZgheZ" Name="Debug" Kind="InputPin" IsHidden="true" />
@@ -107,7 +107,7 @@
             <Pin Id="mWQ8DKPNIuYgv3WEtMbTCj" Name="Text" Kind="InputPin" DefaultValue="Own Frame" />
             <Pin Id="BZKq9tA9tolOBAdLIXaHAG" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="I36p10Cj16ZNL8e03nlk1t" Name="Auto Repeat" Kind="InputPin" IsHidden="true" />
-            <Pin Id="LsCICiTAwZwr4LFAohZ4og" Name="Is Clicked" Kind="InputPin" />
+            <Pin Id="LsCICiTAwZwr4LFAohZ4og" Name="On Click" Kind="InputPin" />
             <Pin Id="dfNASZyD4FWZfRe2pcHOqN" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="JgfZVD9Wdy6M0kb9aaszrV" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="BoTB3bnXKnYLF9n710kA7d" Name="Debug" Kind="InputPin" IsHidden="true" />

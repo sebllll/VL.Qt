@@ -13,7 +13,7 @@ using VL.Qt.Styles;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Push button that reports each click as Bang and into the Is Clicked channel. A click is a release over the button.
+    /// Push button that reports each click as Bang and into the On Click channel. A click is a release over the button.
     /// Connect to Renderer [Qt] or a Group.
     /// </summary>
     /// <remarks>QtQuick.Controls Button, style Basic.</remarks>
@@ -46,10 +46,10 @@ namespace VL.Qt.Nodes
         /// <param name="autoSize">On: Size is ignored and the implicit size applies (text + padding of the style). Off: Size counts.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
+        /// <param name="onClick">Channel that receives one value per click (author "Qt"). The clicks come from the button itself, no Interaction node is needed.</param>
         /// <param name="text">Label of the button.</param>
         /// <param name="enabled">False greys the button out; it then sends no clicks.</param>
         /// <param name="autoRepeat">Repeats the click while the button is held down.</param>
-        /// <param name="isClicked">Channel: receives one value per click (author "Qt"). The clicks come from the button itself (Qt clicked), no Interaction node is needed.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='widget']/param[@name='opacity']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
@@ -66,10 +66,10 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
+            [DefaultValue(null)] IChannel<Unit>? onClick,
             [DefaultValue("Button")] string text,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] bool autoRepeat,
-            [DefaultValue(null)] IChannel<Unit>? isClicked,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float opacity,
             [Pin(Visibility = PinVisibility.Optional)] bool clip,
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
@@ -81,7 +81,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
             // Clicks come from Qt clicked (EVENT_CLICK for every bound Button).
-            bang = _node.TakeClicks(isClicked) > 0;
+            bang = ClickChannel.Update(onClick, _node.Feedback) > 0;
             return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
                 new Props(text ?? string.Empty, enabled, autoRepeat, autoSize, style),

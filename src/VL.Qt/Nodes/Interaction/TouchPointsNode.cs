@@ -68,12 +68,12 @@ namespace VL.Qt.Nodes
                 _points = points;
                 _lastUpdates = updates;
                 if (updates != 0)
-                    points.SetValueAndAuthor(feedback.TouchPoints(), InteractionNode<Props>.Author);
+                    points.SetValueAndAuthor(feedback.TouchPoints(), ChannelAuthors.QtChannelAuthor);
             }
             else if (updates != _lastUpdates)
             {
                 _lastUpdates = updates;
-                points.SetValueAndAuthor(feedback.TouchPoints(), InteractionNode<Props>.Author);
+                points.SetValueAndAuthor(feedback.TouchPoints(), ChannelAuthors.QtChannelAuthor);
             }
             return output;
         }

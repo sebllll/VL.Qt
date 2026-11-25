@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Reactive;
 using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Lang;
 using VL.Lib.Mathematics;
-using VL.Lib.Reactive;
 using VL.Qt.Elements;
 
 namespace VL.Qt.Nodes
@@ -105,24 +103,6 @@ namespace VL.Qt.Nodes
             measuredSize = Feedback.MeasuredSize();
             sceneBounds = Feedback.SceneBounds();
             return _last;
-        }
-
-        /// <summary>Author of every value written by Qt into a channel.</summary>
-        public const string Author = "Qt";
-
-        /// <summary>
-        /// Takes the clicks (Qt <c>clicked</c>) the feedback received since the last call, writes one <see cref="Unit"/> per
-        /// click into <paramref name="isClicked"/> if connected (author <see cref="Author"/>) and returns their number.
-        /// Button only; call once per Update. Unconnected pins arrive as null (<c>[DefaultValue(null)] IChannel&lt;T&gt;?</c>,
-        /// otherwise vvvv lifts them to a private channel).
-        /// </summary>
-        public int TakeClicks(IChannel<Unit>? isClicked)
-        {
-            var clicks = Feedback.TakeClicks();
-            if (isClicked.IsValid())
-                for (int i = 0; i < clicks; i++)
-                    isClicked.SetValueAndAuthor(Unit.Default, Author);
-            return clicks;
         }
 
         /// <summary>

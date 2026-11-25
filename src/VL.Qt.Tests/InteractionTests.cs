@@ -280,7 +280,7 @@ namespace VL.Qt.Tests
                 var names = t.GetMethod("Update")!.GetParameters().Select(p => p.Name).ToList();
                 Assert.That(names, Does.Contain("interaction"), t.Name);
                 Assert.That(names, Does.Not.Contain("isHovered").And.Not.Contain("isPressed").And.Not.Contain("pointerPosition"), t.Name);
-                Assert.That(names.Contains("isClicked"), Is.EqualTo(t == typeof(ButtonNode)), t.Name + ": IsClicked only at the Button");
+                Assert.That(names.Contains("onClick"), Is.EqualTo(t == typeof(ButtonNode)), t.Name + ": On Click only at the Button");
             }
         }
 

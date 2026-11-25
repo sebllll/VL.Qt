@@ -16,7 +16,7 @@ namespace VL.Qt.Nodes
     /// <item>Unconnected the pin is null (<c>[DefaultValue(null)] IChannel&lt;T&gt;?</c>); the node then keeps its own
     /// value, changed by the user only. A plain value or an IOBox on the pin is lifted by vvvv into a private channel:
     /// start value and setting from the patch.</item>
-    /// <item>A user change (EVENT_VALUE from the feedback) is written into the channel with author <see cref="Author"/> and sets
+    /// <item>A user change (EVENT_VALUE from the feedback) is written into the channel with author <see cref="ChannelAuthors.QtChannelAuthor"/> and sets
     /// <see cref="Bang"/> for one Update. It is not echoed as a channel change. If the patch changed the channel in the
     /// same frame, the user wins.</item>
     /// <item>The node describes <see cref="Value"/>; the reconciler diffs it against the last sent description as usual
@@ -29,9 +29,6 @@ namespace VL.Qt.Nodes
     /// <typeparam name="T">Value type of the element: int, float, bool or string (see <see cref="ElementFeedback.TakeValue{T}"/>).</typeparam>
     internal sealed class ValueChannel<T>
     {
-        /// <summary>Author of every value the user produced in Qt.</summary>
-        public const string Author = "Qt";
-
         private IChannel<T>? _channel;
         private T _lastSeen;
         private T _value;
@@ -94,7 +91,7 @@ namespace VL.Qt.Nodes
                 Bang = true;
                 if (channel.IsValid())
                 {
-                    channel.EnsureValue(user, author: Author);
+                    channel.EnsureValue(user, author: ChannelAuthors.QtChannelAuthor);
                     _lastSeen = user;
                 }
             }
