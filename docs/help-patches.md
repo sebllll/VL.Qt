@@ -138,7 +138,7 @@ See [QML files as elements](user-qml.md).
 
 ## Window and Diagnostics
 
-- `HowTo Set a Window Icon` — `WindowSettings` node on the `Window` pin of the Renderer: icon, title, frame, fullscreen
+- `HowTo Set a Window Icon` — `WindowSettings` node on the `Window` pin of the Renderer: icon and initial bounds
 - `HowTo Read the Window Bounds` — window and client bounds as outputs
 - `HowTo Debug Overlay` — layout overlay via the `Debug` pin
 - `HowTo Read Performance` — perf numbers as node outputs

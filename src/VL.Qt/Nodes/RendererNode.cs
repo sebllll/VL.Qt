@@ -157,12 +157,11 @@ namespace VL.Qt.Nodes
         /// extent, translucent red = children outside the frame (overflow), translucent green = padding and hatched
         /// violet = Row/Column spacing (both inside the frame), magenta cross = origin, yellow diamond = anchor. Text:
         /// green line = baseline, dashed green = ascent, dashed red = descent.</param>
-        /// <param name="window">Window settings (WindowSettings node): icon, title, borderless, fullscreen and bounds
-        /// on create. A value that is set there wins over the matching pin of this node (Title, Borderless, Fullscreen,
-        /// Bounds); values that are not set leave the pin. The icon has no pin here: without WindowSettings or without
-        /// a value the window shows the built-in default icon, a file that cannot be loaded gives a warning at this
-        /// node and keeps the default. Changes apply live without recreating the window (Bounds: on create only). Save
-        /// Bounds and Client Bounds stay on this node.</param>
+        /// <param name="window">Window settings (WindowSettings node): the icon, and the bounds on create (they win over
+        /// the Bounds pin when set). The icon has no pin here: without WindowSettings or without a value the window shows
+        /// the built-in default icon, a file that cannot be loaded gives a warning at this node and keeps the default.
+        /// The icon changes live without recreating the window. Title, Borderless and Fullscreen are pins of this node;
+        /// Save Bounds and Client Bounds stay on this node too.</param>
         /// <param name="fullscreen">Fullscreen on the screen the window is on (largest share), live; off restores
         /// position and size from before. Also applied on create, before the window is shown. F11 / Alt+Enter in the
         /// window toggle it as well (like VL.Skia); the pin only acts when its value changes. While fullscreen, Save
@@ -198,17 +197,13 @@ namespace VL.Qt.Nodes
         {
             Debug.Assert(_app.IsQtThread, "VL.Qt must be used from the thread that created the QGuiApplication");
 
-            // A value set in Window wins over the pin; borderless/fullscreen/title below are the resolved values.
-            var resolved = WindowSettings.Resolve(window, title, borderless, fullscreen);
-            title = resolved.Title!;
-            borderless = resolved.Borderless;
-            fullscreen = resolved.Fullscreen;
+            var iconPath = window?.IconPath;
 
             if (_view is null && !_disposed)
             {
                 _borderless = borderless; // before show: no frame flash
                 _fullscreen = fullscreen;
-                _iconPath = resolved.IconPath;
+                _iconPath = iconPath;
                 _view = new WindowScene(OccurrenceRegistry.ForApp(_nodeContext.AppHost), title, WindowSettings.ResolveBounds(window, _bounds), _vSync,
                     (borderless ? Protocol.WindowMode.Borderless : 0u) | (fullscreen ? Protocol.WindowMode.Fullscreen : 0u),
                     _iconPath, multisampleCount);
@@ -219,9 +214,9 @@ namespace VL.Qt.Nodes
                 if (_boundsSaver is { } saver)
                     _view.GeometryChanged += g => saver.OnGeometry(g, _clock.Elapsed);
             }
-            if (resolved.IconPath != _iconPath && _view is not null)
+            if (iconPath != _iconPath && _view is not null)
             {
-                _iconPath = resolved.IconPath;
+                _iconPath = iconPath;
                 ReportIcon(_view.SetIcon(_iconPath));
             }
             if (borderless != _borderless && _view is not null)

@@ -1625,13 +1625,10 @@ VL.Qt | VL.Qt.Nodes.WheelNode | type sealed class
 VL.Qt | VL.Qt.Nodes.WindowSettingsNode | attr ProcessNode(Name = "WindowSettings", Category = "Qt")
 VL.Qt | VL.Qt.Nodes.WindowSettingsNode | ctor | new
 VL.Qt | VL.Qt.Nodes.WindowSettingsNode | method Update | VL.Qt.WindowSettings
-VL.Qt | VL.Qt.Nodes.WindowSettingsNode | method Update | order Icon, Title, Borderless, Fullscreen, Bounds, Output
-VL.Qt | VL.Qt.Nodes.WindowSettingsNode | method Update | pin Borderless | in VL.Core.Optional<bool> | Pin(Visibility = PinVisibility.Optional) | (borderless)
+VL.Qt | VL.Qt.Nodes.WindowSettingsNode | method Update | order Icon, Bounds, Output
 VL.Qt | VL.Qt.Nodes.WindowSettingsNode | method Update | pin Bounds | in VL.Core.Optional<Stride.Core.Mathematics.RectangleF> | Pin(Visibility = PinVisibility.Optional) | (bounds)
-VL.Qt | VL.Qt.Nodes.WindowSettingsNode | method Update | pin Fullscreen | in VL.Core.Optional<bool> | Pin(Visibility = PinVisibility.Optional) | (fullscreen)
 VL.Qt | VL.Qt.Nodes.WindowSettingsNode | method Update | pin Icon | in VL.Core.Optional<VL.Lib.IO.Path> | Pin(Visibility = PinVisibility.Optional) | (icon)
 VL.Qt | VL.Qt.Nodes.WindowSettingsNode | method Update | pin Output | out VL.Qt.WindowSettings | Pin(Name = "Output") | (return)
-VL.Qt | VL.Qt.Nodes.WindowSettingsNode | method Update | pin Title | in VL.Core.Optional<string> | Pin(Visibility = PinVisibility.Optional) | (title)
 VL.Qt | VL.Qt.Nodes.WindowSettingsNode | type sealed class
 VL.Qt | VL.Qt.Nodes.ZoomBlurNode | attr ProcessNode(Name = "ZoomBlur", Category = "Qt.Effects")
 VL.Qt | VL.Qt.Nodes.ZoomBlurNode | ctor | new

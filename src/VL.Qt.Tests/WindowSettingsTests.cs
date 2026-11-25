@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Core;
@@ -7,36 +8,11 @@ using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Tests
 {
-    /// <summary>Window settings: precedence over the Renderer pins, icon path, node identity.</summary>
+    /// <summary>Window settings: icon path resolved once, bounds on create, node identity.</summary>
     public class WindowSettingsTests
     {
-        private static WindowSettings Settings(Optional<string> icon = default, Optional<string> title = default, Optional<bool> borderless = default,
-            Optional<bool> fullscreen = default, Optional<RectangleF> bounds = default)
-            => new(icon, title, borderless, fullscreen, bounds);
-
-        [Test]
-        public void NoSettings_UsesRendererPins()
-        {
-            var r = WindowSettings.Resolve(null, "pin", true, false);
-            Assert.That(r, Is.EqualTo(new WindowSettings.Resolved("pin", true, false, null)));
-        }
-
-        [Test]
-        public void UnsetValues_UsePins()
-        {
-            var r = WindowSettings.Resolve(Settings(), "pin", true, true);
-            Assert.That(r, Is.EqualTo(new WindowSettings.Resolved("pin", true, true, null)));
-        }
-
-        [Test]
-        public void SetValues_WinOverPins()
-        {
-            var s = Settings(title: "settings", borderless: false, fullscreen: true);
-            var r = WindowSettings.Resolve(s, "pin", true, false);
-            Assert.That(r.Title, Is.EqualTo("settings"));
-            Assert.That(r.Borderless, Is.False); // false wins over a pin of true
-            Assert.That(r.Fullscreen, Is.True);
-        }
+        private static WindowSettings Settings(Optional<string> icon = default, Optional<RectangleF> bounds = default)
+            => new(icon, bounds);
 
         [Test]
         public void Bounds_SettingsWinOnCreate()
@@ -51,15 +27,15 @@ namespace VL.Qt.Tests
         [Test]
         public void Icon_EmptyOrUnset_IsDefault()
         {
-            Assert.That(WindowSettings.Resolve(Settings(icon: ""), "t", false, false).IconPath, Is.Null);
-            Assert.That(WindowSettings.Resolve(Settings(icon: "  "), "t", false, false).IconPath, Is.Null);
-            Assert.That(WindowSettings.Resolve(Settings(), "t", false, false).IconPath, Is.Null);
+            Assert.That(Settings(icon: "").IconPath, Is.Null);
+            Assert.That(Settings(icon: "  ").IconPath, Is.Null);
+            Assert.That(Settings().IconPath, Is.Null);
         }
 
         [Test]
         public void Icon_RelativePath_BecomesFullPath()
         {
-            var full = WindowSettings.Resolve(Settings(icon: System.IO.Path.Combine("img", "app.ico")), "t", false, false).IconPath;
+            var full = Settings(icon: System.IO.Path.Combine("img", "app.ico")).IconPath;
             Assert.That(full, Is.EqualTo(System.IO.Path.GetFullPath(System.IO.Path.Combine("img", "app.ico"))));
             Assert.That(System.IO.Path.IsPathRooted(full), Is.True);
         }
@@ -69,25 +45,35 @@ namespace VL.Qt.Tests
             => Assert.That(WindowSettings.IconFullPath("bad\0path"), Is.EqualTo("bad\0path"));
 
         [Test]
+        public void IconPathAndBounds_ReadPerFrame_AllocateNothing()
+        {
+            // The icon path is resolved in the constructor: reading it every frame costs nothing.
+            var settings = Settings(icon: System.IO.Path.Combine("img", "app.ico"), bounds: new RectangleF(1, 2, 3, 4));
+            var pin = new RectangleF(5, 6, 7, 8);
+            string? path = null;
+            RectangleF bounds = default;
+            Action frame = () => { path = settings.IconPath; bounds = WindowSettings.ResolveBounds(settings, pin); };
+            Assert.That(Allocations.Fewest(frame, 100), Is.EqualTo(0));
+            Assert.That(path, Is.Not.Null);
+        }
+
+        [Test]
         public void Node_SameInputs_SameInstance()
         {
             var node = new WindowSettingsNode();
-            var a = node.Update(new Path("a.png"), "T", default, default, default);
-            Assert.That(node.Update(new Path("a.png"), "T", default, default, default), Is.SameAs(a));
-            Assert.That(node.Update(new Path("b.png"), "T", default, default, default), Is.Not.SameAs(a));
+            var a = node.Update(new Path("a.png"), default);
+            Assert.That(node.Update(new Path("a.png"), default), Is.SameAs(a));
+            Assert.That(node.Update(new Path("b.png"), default), Is.Not.SameAs(a));
         }
 
         [Test]
         public void Node_UnsetPins_StayUnset()
         {
             var node = new WindowSettingsNode();
-            var s = node.Update(default, default, default, default, default);
+            var s = node.Update(default, default);
             Assert.That(s.Icon.HasValue, Is.False);
-            Assert.That(s.Title.HasValue, Is.False);
-            Assert.That(s.Borderless.HasValue, Is.False);
-            Assert.That(s.Fullscreen.HasValue, Is.False);
             Assert.That(s.Bounds.HasValue, Is.False);
-            Assert.That(node.Update(default, default, default, default, default), Is.SameAs(s));
+            Assert.That(node.Update(default, default), Is.SameAs(s));
         }
     }
 }
