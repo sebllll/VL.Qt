@@ -11,48 +11,6 @@ using VL.Qt.Wire;
 
 namespace VL.Qt
 {
-    /// <summary>The resource C-API of QtNative (vlqt_res_*); a fake in unit tests, which have no Qt.</summary>
-    internal interface IResourceApi
-    {
-        Native.Result Create(int kind, out ulong id);
-        Native.Result Release(ulong id);
-        Native.Result Poll(Span<byte> buffer, out int written, out int required);
-        /// <summary>The state of the resource (<see cref="Protocol.ResourceState"/>) or a negative <see cref="Native.Result"/>.</summary>
-        int Wait(ulong id, int timeoutMs);
-        /// <summary>upload: <see cref="Protocol.ImageUpload"/>.</summary>
-        Native.Result LoadImage(ulong id, string utf8Path, uint flags, int upload);
-        Native.Result LoadShader(ulong id, string utf8Path, int stage);
-        Native.Result LoadShaderSource(ulong id, string source, int stage);
-        /// <summary>upload: <see cref="Protocol.ImageUpload"/>.</summary>
-        Native.Result SetPixels(ulong id, in Native.vlqt_pixel_desc desc, ReadOnlySpan<byte> data, int upload);
-        int List(Span<Native.vlqt_res_info> buffer);
-        void Shutdown();
-        Native.Result Snapshot(ulong id, SceneHandle window, uint elementId, float scale);
-        Native.Result ReadSnapshot(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int written, out int required);
-        Native.Result SnapshotFit(ulong id, SceneHandle window, uint elementId, int maxEdgePx);
-        Native.Result ReadPreview(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int written, out int required);
-        Native.Result AudioTapInit(ulong id, int channels, int sampleRate);
-    }
-
-    internal sealed class NativeResourceApi : IResourceApi
-    {
-        public Native.Result Create(int kind, out ulong id) => Native.vlqt_res_create(kind, out id);
-        public Native.Result Release(ulong id) => Native.vlqt_res_release(id);
-        public Native.Result Poll(Span<byte> buffer, out int written, out int required) => Native.ResPoll(buffer, out written, out required);
-        public int Wait(ulong id, int timeoutMs) => Native.vlqt_res_wait(id, timeoutMs);
-        public Native.Result LoadImage(ulong id, string utf8Path, uint flags, int upload) => Native.vlqt_image_load(id, utf8Path, flags, upload);
-        public Native.Result LoadShader(ulong id, string utf8Path, int stage) => Native.vlqt_shader_load(id, utf8Path, stage);
-        public Native.Result LoadShaderSource(ulong id, string source, int stage) => Native.vlqt_shader_load_source(id, source, stage);
-        public Native.Result SetPixels(ulong id, in Native.vlqt_pixel_desc desc, ReadOnlySpan<byte> data, int upload) => Native.ImageSetPixels(id, in desc, data, upload);
-        public int List(Span<Native.vlqt_res_info> buffer) => Native.ResList(buffer);
-        public void Shutdown() => Native.vlqt_res_shutdown();
-        public Native.Result Snapshot(ulong id, SceneHandle window, uint elementId, float scale) => Native.vlqt_snapshot_start(id, window, elementId, scale);
-        public Native.Result ReadSnapshot(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int written, out int required) => Native.SnapshotRead(id, buffer, out desc, out written, out required);
-        public Native.Result SnapshotFit(ulong id, SceneHandle window, uint elementId, int maxEdgePx) => Native.vlqt_snapshot_start_fit(id, window, elementId, maxEdgePx);
-        public Native.Result ReadPreview(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int written, out int required) => Native.ImageReadPreview(id, buffer, out desc, out written, out required);
-        public Native.Result AudioTapInit(ulong id, int channels, int sampleRate) => Native.vlqt_audio_tap_init(id, channels, sampleRate);
-    }
-
     /// <summary>
     /// C# side of QtNative's resource manager, one per <see cref="QtApp"/>:
     /// <list type="bullet">
@@ -75,9 +33,6 @@ namespace VL.Qt
         /// <summary>Longest edge of the tooltip preview QtNative makes.</summary>
         private const int previewMaxEdge = 256;
 
-        /// <summary>Path prefix of a shader shipped with VL.Qt, resolved by QtNative (vlqt_shader_load).</summary>
-        internal const string builtinShaderPrefix = "builtin:";
-
         private readonly IResourceApi _api;
         private readonly int _threadId;
         private readonly Func<ILogger?> _logger;
@@ -88,6 +43,9 @@ namespace VL.Qt
         private byte[] _buffer = new byte[4096];
         private Native.vlqt_res_info[] _list = new Native.vlqt_res_info[64];
         private bool _pumping;
+        // Resources whose load ended in the records just applied; settled after the last record (see Poll).
+        private readonly List<ImageResource> _toSettle = new();
+        private bool _settling;
 
         public ResourceClient(IResourceApi api, int threadId, Func<ILogger?> logger, bool previews = false)
         {
@@ -133,23 +91,37 @@ namespace VL.Qt
         }
 
         /// <summary>New image resource (Loading, no content yet). Throws if QtNative refuses (logged by the node).</summary>
-        public ImageResource CreateImage()
-        {
-            var rc = _api.Create(Protocol.ResourceKind.Image, out var id);
-            if (rc != Native.Result.Ok)
-                throw new InvalidOperationException($"vlqt_res_create failed ({rc})");
-            var resource = new ImageResource(id);
-            _live.Add(id, resource);
-            return resource;
-        }
+        public ImageResource CreateImage() => Create(Protocol.ResourceKind.Image);
 
         /// <summary>
         /// New shader resource (Loading, no content yet); <see cref="ImageResource"/> is the generic resource view
         /// (id, state, error) also for shaders. Throws if QtNative refuses (reported by the node).
         /// </summary>
-        public ImageResource CreateShader()
+        public ImageResource CreateShader() => Create(Protocol.ResourceKind.Shader);
+
+        /// <summary>New snapshot resource: no content until the first <see cref="Snapshot"/> is done. Throws if QtNative refuses.</summary>
+        public ImageResource CreateSnapshot() => Create(Protocol.ResourceKind.Snapshot);
+
+        /// <summary>
+        /// New audio tap (protocol.h "Audio tap") with a fixed format (float, channels, sampleRate): Ready at once,
+        /// its id goes to <see cref="Elements.Video"/>.AudioTap. A new sample rate needs a new tap; release the old one
+        /// with <see cref="Release"/> after the Video switched to the new id. Throws if QtNative refuses.
+        /// </summary>
+        public ImageResource CreateAudioTap(int channels, int sampleRate)
         {
-            var rc = _api.Create(Protocol.ResourceKind.Shader, out var id);
+            var resource = Create(Protocol.ResourceKind.AudioTap);
+            var rc = _api.AudioTapInit(resource.Id, channels, sampleRate);
+            if (rc != Native.Result.Ok)
+            {
+                Release(resource);
+                throw new InvalidOperationException($"vlqt_audio_tap_init failed ({rc}, {channels} channels, {sampleRate} Hz)");
+            }
+            return resource;
+        }
+
+        private ImageResource Create(int kind)
+        {
+            var rc = _api.Create(kind, out var id);
             if (rc != Native.Result.Ok)
                 throw new InvalidOperationException($"vlqt_res_create failed ({rc})");
             var resource = new ImageResource(id);
@@ -158,28 +130,35 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Recognizes <c>builtin:&lt;name&gt;</c>, also after vvvv resolved a Path value against the document directory
-        /// (<c>C:\doc\dir\builtin:wave</c>): then the last path segment carries the prefix.
+        /// Every refused start ends here: fails the resource and settles it, so <see cref="ImageResource.Settled"/> fires and
+        /// the version changes whatever the reason. Returns false.
         /// </summary>
-        internal static bool TryGetBuiltinShader(string path, out string builtin)
+        private bool Refuse(ImageResource resource, string error)
         {
-            var segment = path.AsSpan();
-            var i = path.LastIndexOfAny(new[] { '\\', '/' });
-            if (i >= 0)
-                segment = segment.Slice(i + 1);
-            if (segment.StartsWith(builtinShaderPrefix, StringComparison.Ordinal))
+            resource.Fail(error);
+            Settle(resource);
+            return false;
+        }
+
+        /// <summary><see cref="System.IO.Path.GetFullPath(string)"/>; refuses the resource if the path is invalid.</summary>
+        private bool TryGetFullPath(ImageResource resource, string path, out string fullPath)
+        {
+            try
             {
-                builtin = segment.ToString();
+                fullPath = System.IO.Path.GetFullPath(path);
                 return true;
             }
-            builtin = path;
-            return false;
+            catch (Exception e) when (e is ArgumentException or NotSupportedException or System.IO.PathTooLongException)
+            {
+                fullPath = path;
+                return Refuse(resource, $"Invalid path '{path}': {e.Message}");
+            }
         }
 
         /// <summary>
         /// Starts loading the .qsb <paramref name="path"/> of <paramref name="stage"/> (<see cref="Protocol.ShaderStage"/>) into
         /// <paramref name="resource"/> (asynchronous, errors arrive as status records). <c>builtin:&lt;name&gt;</c> (a shader shipped
-        /// with VL.Qt, see <see cref="TryGetBuiltinShader"/>) is passed as <c>builtin:&lt;name&gt;</c>, any other path is made absolute here. Returns false and fails the resource if
+        /// with VL.Qt, see <see cref="ShaderSlot.TryGetBuiltinShader"/>) is passed as <c>builtin:&lt;name&gt;</c>, any other path is made absolute here. Returns false and fails the resource if
         /// the path is invalid or QtNative refuses.
         /// </summary>
         public bool LoadShader(ImageResource resource, string path, int stage)
@@ -187,29 +166,13 @@ namespace VL.Qt
             if (resource.IsReleased)
                 return false;
             var fullPath = path;
-            if (TryGetBuiltinShader(path, out var builtin))
+            if (ShaderSlot.TryGetBuiltinShader(path, out var builtin))
                 fullPath = builtin;
-            else
-            {
-                try
-                {
-                    fullPath = System.IO.Path.GetFullPath(path);
-                }
-                catch (Exception e) when (e is ArgumentException or NotSupportedException or System.IO.PathTooLongException)
-                {
-                    resource.Fail($"Invalid path '{path}': {e.Message}");
-                    return false;
-                }
-            }
+            else if (!TryGetFullPath(resource, path, out fullPath))
+                return false;
             resource.OnLoadStarted();
             var rc = _api.LoadShader(resource.Id, fullPath, stage);
-            if (rc != Native.Result.Ok)
-            {
-                resource.Fail($"Loading shader '{fullPath}' was refused by QtNative ({rc})");
-                Settle(resource);
-                return false;
-            }
-            return true;
+            return rc == Native.Result.Ok || Refuse(resource, $"Loading shader '{fullPath}' was refused by QtNative ({rc})");
         }
 
         /// <summary>
@@ -223,45 +186,7 @@ namespace VL.Qt
                 return false;
             resource.OnLoadStarted();
             var rc = _api.LoadShaderSource(resource.Id, source, stage);
-            if (rc != Native.Result.Ok)
-            {
-                resource.Fail($"Baking the shader source was refused by QtNative ({rc})");
-                Settle(resource);
-                return false;
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// New audio tap (protocol.h "Audio tap") with a fixed format (float, channels, sampleRate): Ready at once,
-        /// its id goes to <see cref="Elements.Video"/>.AudioTap. A new sample rate needs a new tap; release the old one
-        /// with <see cref="Release"/> after the Video switched to the new id. Throws if QtNative refuses.
-        /// </summary>
-        public ImageResource CreateAudioTap(int channels, int sampleRate)
-        {
-            var rc = _api.Create(Protocol.ResourceKind.AudioTap, out var id);
-            if (rc != Native.Result.Ok)
-                throw new InvalidOperationException($"vlqt_res_create failed ({rc})");
-            var resource = new ImageResource(id);
-            _live.Add(id, resource);
-            rc = _api.AudioTapInit(id, channels, sampleRate);
-            if (rc != Native.Result.Ok)
-            {
-                Release(resource);
-                throw new InvalidOperationException($"vlqt_audio_tap_init failed ({rc}, {channels} channels, {sampleRate} Hz)");
-            }
-            return resource;
-        }
-
-        /// <summary>New snapshot resource: no content until the first <see cref="Snapshot"/> is done. Throws if QtNative refuses.</summary>
-        public ImageResource CreateSnapshot()
-        {
-            var rc = _api.Create(Protocol.ResourceKind.Snapshot, out var id);
-            if (rc != Native.Result.Ok)
-                throw new InvalidOperationException($"vlqt_res_create failed ({rc})");
-            var resource = new ImageResource(id);
-            _live.Add(id, resource);
-            return resource;
+            return rc == Native.Result.Ok || Refuse(resource, $"Baking the shader source was refused by QtNative ({rc})");
         }
 
         /// <summary>
@@ -275,13 +200,7 @@ namespace VL.Qt
                 return false;
             resource.OnLoadStarted();
             var rc = _api.Snapshot(resource.Id, window, elementId, scale);
-            if (rc != Native.Result.Ok)
-            {
-                resource.Fail($"The snapshot of element {elementId} was refused by QtNative ({rc})");
-                Settle(resource);
-                return false;
-            }
-            return true;
+            return rc == Native.Result.Ok || Refuse(resource, $"The snapshot of element {elementId} was refused by QtNative ({rc})");
         }
 
         /// <summary>
@@ -294,13 +213,62 @@ namespace VL.Qt
                 return false;
             resource.OnLoadStarted();
             var rc = _api.SnapshotFit(resource.Id, window, elementId, maxEdgePx);
-            if (rc != Native.Result.Ok)
-            {
-                resource.Fail($"The snapshot of element {elementId} was refused by QtNative ({rc})");
-                Settle(resource);
+            return rc == Native.Result.Ok || Refuse(resource, $"The snapshot of element {elementId} was refused by QtNative ({rc})");
+        }
+
+        /// <summary>
+        /// Starts loading <paramref name="path"/> (made absolute here) into <paramref name="resource"/>, uploaded the way
+        /// <paramref name="upload"/> says. Returns false and fails the resource if the path is invalid or QtNative refuses.
+        /// </summary>
+        public bool Load(ImageResource resource, string path, bool mipmaps, ImageUpload upload = ImageUpload.Auto)
+        {
+            if (resource.IsReleased || !TryGetFullPath(resource, path, out var fullPath))
                 return false;
-            }
-            return true;
+            resource.OnLoadStarted();
+            var flags = (mipmaps ? Protocol.ImageLoadFlags.Mipmaps : 0) | (Previews ? Protocol.ImageLoadFlags.Preview : 0);
+            var rc = _api.LoadImage(resource.Id, fullPath, flags, (int)upload);
+            return rc == Native.Result.Ok || Refuse(resource, $"Loading '{fullPath}' was refused by QtNative ({rc})");
+        }
+
+        /// <summary>
+        /// Replaces the content of <paramref name="resource"/> with pixels (copied synchronously by QtNative), uploaded the
+        /// way <paramref name="upload"/> says. Returns false and fails the resource if the format is not supported or
+        /// QtNative refuses.
+        /// </summary>
+        public bool SetPixels(ImageResource resource, int width, int height, int rowBytes, PixelFormat format, bool premultiplied, ReadOnlySpan<byte> data,
+            ImageUpload upload = ImageUpload.Auto)
+        {
+            if (resource.IsReleased)
+                return false;
+            var qtNativeFormat = PixelFormats.ToQtNative(format);
+            if (qtNativeFormat == 0)
+                return Refuse(resource, $"Pixel format {format} is not supported");
+            resource.OnLoadStarted();
+            var desc = new Native.vlqt_pixel_desc
+            {
+                width = width,
+                height = height,
+                row_bytes = rowBytes,
+                format = qtNativeFormat,
+                premultiplied = premultiplied ? 1 : 0,
+                flags = Previews ? (int)Protocol.ImageLoadFlags.Preview : 0,
+            };
+            var rc = _api.SetPixels(resource.Id, in desc, data, (int)upload);
+            return rc == Native.Result.Ok || Refuse(resource, $"{width} x {height} {format} pixels ({data.Length} bytes, {rowBytes} per row) were refused by QtNative ({rc})");
+        }
+
+        /// <summary>
+        /// Blocks until <paramref name="resource"/> is Ready or Failed (decode on this thread if no worker took it yet,
+        /// upload at once), then applies the status queue so size and state are current.
+        /// </summary>
+        public void Wait(ImageResource resource, int timeoutMs = waitTimeoutMs)
+        {
+            if (resource.IsReleased || resource.State == QtImageState.Failed)
+                return;
+            var state = _api.Wait(resource.Id, timeoutMs);
+            Poll();
+            if (state > 0 && state != Protocol.ResourceState.Ready && state != Protocol.ResourceState.Failed)
+                Logger?.LogWarning("Image resource {Id:X} still loading after {Timeout} ms, it is shown when ready", resource.Id, timeoutMs);
         }
 
         /// <summary>
@@ -311,22 +279,9 @@ namespace VL.Qt
         {
             if (resource.IsReleased)
                 return null;
-            var bytes = new byte[Math.Max(0, resource.Width) * Math.Max(0, resource.Height) * 4];
-            var rc = _api.ReadSnapshot(resource.Id, bytes, out var desc, out var written, out var required);
-            if (rc == Native.Result.BufferTooSmall)
-            {
-                // The snapshot was replaced by one of another size since the last INFO record.
-                bytes = new byte[required];
-                rc = _api.ReadSnapshot(resource.Id, bytes, out desc, out written, out _);
-            }
-            if (rc != Native.Result.Ok || written <= 0)
-            {
-                // No snapshot yet and a stale id are normal.
-                if (rc is not (Native.Result.NoData or Native.Result.UnknownId))
-                    Logger?.LogWarning("vlqt_snapshot_read of snapshot resource {Id:X} returned {Rc}: {Error}", resource.Id, rc, Native.LastError());
-                return null;
-            }
-            return new SnapshotImage(desc.width, desc.height, bytes);
+            // The size of the last INFO record; a snapshot replaced since then is read with a second call.
+            var estimate = Math.Max(0, resource.Width) * Math.Max(0, resource.Height) * 4;
+            return ReadPixels(resource.Id, estimate, _api.ReadSnapshot, "vlqt_snapshot_read");
         }
 
         /// <summary>
@@ -346,144 +301,34 @@ namespace VL.Qt
                 width = Math.Max(1, (int)((long)width * previewMaxEdge / longest));
                 height = Math.Max(1, (int)((long)height * previewMaxEdge / longest));
             }
-            var bytes = new byte[width * height * 4];
-            var rc = _api.ReadPreview(resource.Id, bytes, out var desc, out var written, out var required);
+            return ReadPixels(resource.Id, width * height * 4, _api.ReadPreview, "vlqt_image_read_preview");
+        }
+
+        private delegate Native.Result ReadFn(ulong id, Span<byte> buffer, out Native.vlqt_pixel_desc desc, out int written, out int required);
+
+        /// <summary>
+        /// The pixels <paramref name="read"/> returns as an own BGRA8 premultiplied image, rows packed (width * 4). Null if
+        /// there are none or the call failed (logged; no pixels yet and a stale id are normal).
+        /// </summary>
+        private ByteArrayImage? ReadPixels(ulong id, int estimatedBytes, ReadFn read, string call)
+        {
+            var bytes = new byte[estimatedBytes];
+            var rc = read(id, bytes, out var desc, out var written, out var required);
             if (rc == Native.Result.BufferTooSmall)
             {
                 // The estimate was too small (rounding, or a replacement of another size).
                 bytes = new byte[required];
-                rc = _api.ReadPreview(resource.Id, bytes, out desc, out written, out _);
+                rc = read(id, bytes, out desc, out written, out _);
             }
             if (rc != Native.Result.Ok || written <= 0)
             {
-                // No preview (no flag, not Ready yet) and a stale id are normal.
                 if (rc is not (Native.Result.NoData or Native.Result.UnknownId))
-                    Logger?.LogWarning("vlqt_image_read_preview of image resource {Id:X} returned {Rc}: {Error}", resource.Id, rc, Native.LastError());
+                    Logger?.LogWarning("{Call} of resource {Id:X} returned {Rc}: {Error}", call, id, rc, Native.LastError());
                 return null;
             }
-            return new SnapshotImage(desc.width, desc.height, bytes);
+            var info = new ImageInfo(desc.width, desc.height, PixelFormat.B8G8R8A8, isPremultipliedAlpha: true);
+            return new ByteArrayImage(info, desc.width * 4, bytes);
         }
-
-        /// <summary>The pixels of a finished snapshot: BGRA8 premultiplied, owned by the image, rows packed (width * 4).</summary>
-        private sealed class SnapshotImage : IImage, IImageData
-        {
-            private readonly byte[] _bytes;
-
-            public SnapshotImage(int width, int height, byte[] bytes)
-            {
-                Info = new ImageInfo(width, height, PixelFormat.B8G8R8A8, isPremultipliedAlpha: true);
-                _bytes = bytes;
-            }
-
-            public ImageInfo Info { get; }
-            public bool IsVolatile => false;
-            public IImageData GetData() => this;
-            public ReadOnlyMemory<byte> Bytes => _bytes;
-            public int ScanSize => Info.Width * 4;
-            public void Dispose() { }
-        }
-
-        /// <summary>
-        /// Starts loading <paramref name="path"/> (made absolute here) into <paramref name="resource"/>, uploaded the way
-        /// <paramref name="upload"/> says. Returns false and fails the resource if QtNative refuses.
-        /// </summary>
-        public bool Load(ImageResource resource, string path, bool mipmaps, ImageUpload upload = ImageUpload.Auto)
-        {
-            if (resource.IsReleased)
-                return false;
-            string fullPath;
-            try
-            {
-                fullPath = System.IO.Path.GetFullPath(path);
-            }
-            catch (Exception e) when (e is ArgumentException or NotSupportedException or System.IO.PathTooLongException)
-            {
-                resource.Fail($"Invalid path '{path}': {e.Message}");
-                return false;
-            }
-            resource.OnLoadStarted();
-            var flags = (mipmaps ? Protocol.ImageLoadFlags.Mipmaps : 0) | (Previews ? Protocol.ImageLoadFlags.Preview : 0);
-            var rc = _api.LoadImage(resource.Id, fullPath, flags, (int)upload);
-            if (rc != Native.Result.Ok)
-            {
-                resource.Fail($"Loading '{fullPath}' was refused by QtNative ({rc})");
-                Settle(resource);
-                return false;
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Blocks until <paramref name="resource"/> is Ready or Failed (decode on this thread if no worker took it yet,
-        /// upload at once), then applies the status queue so size and state are current.
-        /// </summary>
-        public void Wait(ImageResource resource, int timeoutMs = waitTimeoutMs)
-        {
-            if (resource.IsReleased || resource.State == QtImageState.Failed)
-                return;
-            var state = _api.Wait(resource.Id, timeoutMs);
-            Poll();
-            if (state > 0 && state != Protocol.ResourceState.Ready && state != Protocol.ResourceState.Failed)
-                Logger?.LogWarning("Image resource {Id:X} still loading after {Timeout} ms, it is shown when ready", resource.Id, timeoutMs);
-        }
-
-        /// <summary>
-        /// Replaces the content of <paramref name="resource"/> with pixels (copied synchronously by QtNative), uploaded the
-        /// way <paramref name="upload"/> says. Returns false and fails the resource if the format is not supported or
-        /// QtNative refuses.
-        /// </summary>
-        public bool SetPixels(ImageResource resource, int width, int height, int rowBytes, PixelFormat format, bool premultiplied, ReadOnlySpan<byte> data,
-            ImageUpload upload = ImageUpload.Auto)
-        {
-            if (resource.IsReleased)
-                return false;
-            var qtNativeFormat = ToQtNativeFormat(format);
-            if (qtNativeFormat == 0)
-            {
-                resource.Fail($"Pixel format {format} is not supported");
-                Settle(resource);
-                return false;
-            }
-            resource.OnLoadStarted();
-            var desc = new Native.vlqt_pixel_desc
-            {
-                width = width,
-                height = height,
-                row_bytes = rowBytes,
-                format = qtNativeFormat,
-                premultiplied = premultiplied ? 1 : 0,
-                flags = Previews ? (int)Protocol.ImageLoadFlags.Preview : 0,
-            };
-            var rc = _api.SetPixels(resource.Id, in desc, data, (int)upload);
-            if (rc != Native.Result.Ok)
-            {
-                resource.Fail($"{width} x {height} {format} pixels ({data.Length} bytes, {rowBytes} per row) were refused by QtNative ({rc})");
-                Settle(resource);
-                return false;
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// VL <see cref="PixelFormat"/> → format number of vlqt_image_set_pixels (protocol.h: the VL numbers, append-only).
-        /// 0 = not supported (Unknown or a format newer than QtNative's table).
-        /// </summary>
-        internal static int ToQtNativeFormat(PixelFormat format) => format switch
-        {
-            PixelFormat.R8 => 1,
-            PixelFormat.R16 => 2,
-            PixelFormat.R32F => 3,
-            PixelFormat.R8G8B8 => 4,
-            PixelFormat.B8G8R8 => 5,
-            PixelFormat.R8G8B8X8 => 6,
-            PixelFormat.R8G8B8A8 => 7,
-            PixelFormat.B8G8R8X8 => 8,
-            PixelFormat.B8G8R8A8 => 9,
-            PixelFormat.R32G32B32A32F => 10,
-            PixelFormat.R32G32F => 11,
-            PixelFormat.R16G16B16A16F => 12,
-            _ => 0,
-        };
 
         /// <summary>
         /// Queues the release of <paramref name="resource"/> (idempotent, any thread). vlqt_res_release runs in the next
@@ -577,8 +422,35 @@ namespace VL.Qt
             _api.Shutdown();
         }
 
-        /// <summary>Applies all queued status records (main thread).</summary>
+        /// <summary>
+        /// Applies all queued status records (main thread), then settles the resources that finished. The records are parsed
+        /// in place in <see cref="_buffer"/>; user code (<see cref="ImageResource.Settled"/>, the On Loaded observable) runs only
+        /// after the last record, so it may poll again (a synchronous load waits) without overwriting the batch.
+        /// </summary>
         internal void Poll()
+        {
+            ApplyRecords();
+            // A nested call (from a Settled handler) only applies records: the outermost call settles what it collected.
+            if (_settling)
+                return;
+            _settling = true;
+            try
+            {
+                for (int i = 0; i < _toSettle.Count; i++)
+                {
+                    var resource = _toSettle[i];
+                    if (!resource.IsReleased)
+                        Settle(resource);
+                }
+            }
+            finally
+            {
+                _toSettle.Clear();
+                _settling = false;
+            }
+        }
+
+        private void ApplyRecords()
         {
             var rc = _api.Poll(_buffer, out var n, out var required);
             if (rc == Native.Result.BufferTooSmall)
@@ -620,7 +492,7 @@ namespace VL.Qt
                 case Protocol.ResourceEventId.State when payload.Length >= 1:
                     resource.OnState(payload[0]);
                     if (resource.State != QtImageState.Loading)
-                        Settle(resource);
+                        _toSettle.Add(resource);
                     break;
                 case Protocol.ResourceEventId.Error:
                     resource.OnError(Encoding.UTF8.GetString(payload));
@@ -632,7 +504,7 @@ namespace VL.Qt
                     resource.OnInfo(width, height);
                     // A replacement keeps the resource Ready: no STATE record, the INFO record marks its end.
                     if (replaced)
-                        Settle(resource);
+                        _toSettle.Add(resource);
                     break;
                 case Protocol.ResourceEventId.Warning:
                     resource.OnWarning(Encoding.UTF8.GetString(payload));

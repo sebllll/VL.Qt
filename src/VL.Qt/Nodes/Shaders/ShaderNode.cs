@@ -26,7 +26,7 @@ namespace VL.Qt.Nodes
     // The node owns the shader resources (path -> vlqt_shader_load, ids in Shader.FragmentShaderId/
     // VertexShaderId); the reconciler sends the properties and the uniform diff (SET_UNIFORMS), only on change.
     // "builtin:<name>" (a shader shipped with VL.Qt) reaches QtNative as such; vvvv resolves a Path IOBox against the document directory, so
-    // ResourceClient.TryGetBuiltinShader also accepts "C:\dir\builtin:<name>" and normalizes it.
+    // ShaderSlot.TryGetBuiltinShader also accepts "C:\dir\builtin:<name>" and normalizes it.
     [ProcessNode(Name = "ShaderEffect", Category = Categories.Shaders), Smell(SymbolSmell.Advanced)]
     public sealed class ShaderNode : IDisposable
     {
