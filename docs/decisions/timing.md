@@ -15,6 +15,11 @@ How time and the frame loop are shared between vvvv and Qt, so that animation, p
 - **No real-time elements.** QML `Timer`, JS `Date` and video run on system time, not on our clock, so they are not offered on the element level. Timing comes from vvvv, and video arrives as a texture from vvvv.
 - **Frame-exact offline capture** comes with the texture output / render control, not with the plain window. The principle then is a fixed time step of the vvvv clock, which the driver follows.
 
+## Several vvvv apps
+- **One pump per app host.** `QtPump` is a service of the `AppHost`, bound to that app's `IFrameClock`; an F8/F5 restart replaces the host, the pump and the clock, while `QtApp` and the Qt application stay. Each pump calls `QtApp.PumpFrame` once per vvvv frame of its app, and only the windows of that app render (`vlqt_app_process_events_for`).
+- **The driver is owned by `QtApp.AdvanceDriver`** (since W4-84): it never runs backwards, whoever advances it (a pump, or the offscreen render of `QtTexture`), and QtNative ignores a time below the current one.
+- **Offset and resync.** A new app clock may start below the driver time (restart) or fall behind another app's clock. `QtPump` then adds an offset to the clock time (`_offset`, resynced when it falls more than `ResyncSeconds` behind), so the driver keeps moving forward at the frame step of the app that pumps.
+
 ## Open questions
 - **Restart after idle:** after closing and reopening a window, a new animation starts about one frame (1.5°) off. It is deterministic; observe whether it matters.
 - **Particles:** check whether they depend on the driver once they are needed.

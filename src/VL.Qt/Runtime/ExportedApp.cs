@@ -8,9 +8,11 @@ using VL.Core;
 namespace VL.Qt
 {
     /// <summary>
-    /// Lifetime of exported apps (L7b). AppHost has no API to end an exported app: its main loop runs while
-    /// AppHost.KeepAlive() is held (KeepAppAlive) or, in the WinForms host, a Form is open (IL of vvvv 8.0-0156,
-    /// VL.AppServices).
+    /// The one place that knows the vvvv export hosts: lifetime of exported apps (L7b). AppHost has no API to end an exported
+    /// app: its main loop runs while AppHost.KeepAlive() is held (KeepAppAlive) or, in the WinForms host, a Form is open (IL of
+    /// vvvv 8.0-0156, VL.AppServices). The Qt window is no Form, so in the WinForms window export the Renderer holds a
+    /// KeepAlive while its window is open (<see cref="HoldWhileWindowOpen"/>); console exports are deliberately not kept alive,
+    /// they need KeepAppAlive [System] in the top-level patch (docs/linux.md).
     /// <list type="bullet">
     /// <item>WinForms host: Application.Exit ends Application.Run, like Exit [System.Application] of VL.CoreLib.Windows.</item>
     /// <item>Console host (Linux, Windows Exe): the keep-alive count (private AppHostBase.refCount) is set to 0, so the loop
@@ -33,14 +35,38 @@ namespace VL.Qt
         private static int s_signals;
         private static volatile bool s_ended; // AppHost.OnExit fired: the regular end ran, _exit is safe
 
+        internal const string WindowsFormsAppHostType = "VL.App.WindowsForms.WindowsFormsAppHost";
+
         /// <summary>
-        /// Called by every Renderer [Qt] on creation. In the exported console host (once per process): signal handlers and,
-        /// on Linux, the _exit after the regular end. Editor and WinForms host: nothing.
+        /// True if the app runs in the WinForms window host of exported apps (OutputType WinExe, package VL.App.WindowsForms).
+        /// AppHost has no API for the host kind, so the generated entry point's host type is checked by name (no WinForms
+        /// reference needed). vvvv 8.0-0156: WinExe → sealed VL.App.WindowsForms.WindowsFormsAppHost, console (Exe) →
+        /// sealed VL.App.ConsoleHost.ConsoleAppHost (VL.App.Console), both derived from VL.AppServices.ExportedAppHost.
+        /// The base chain is walked in case a future host derives from the WinForms host.
         /// </summary>
-        public static void Attach(NodeContext nodeContext)
+        public static bool IsWindowsFormsHost(AppHost appHost)
         {
-            var appHost = nodeContext.AppHost;
-            if (!appHost.IsExported || Nodes.RendererNode.IsWindowsFormsHost(appHost))
+            for (var t = appHost.GetType(); t != null; t = t.BaseType)
+                if (t.FullName == WindowsFormsAppHostType)
+                    return true;
+            return false;
+        }
+
+        /// <summary>
+        /// The keep-alive of a Renderer's open window: in the WinForms window export it keeps the app running until the Qt
+        /// window is closed (X) or the node is disposed, like the former invisible keep-alive Form. Null in the editor and in
+        /// console exports.
+        /// </summary>
+        public static IDisposable? HoldWhileWindowOpen(AppHost appHost)
+            => appHost.IsExported && IsWindowsFormsHost(appHost) ? appHost.KeepAlive() : null;
+
+        /// <summary>
+        /// Called per app host by Initialization.Configure. In the exported console host (once per process): signal handlers
+        /// and, on Linux, the _exit after the regular end, with or without a Renderer. Editor and WinForms host: nothing.
+        /// </summary>
+        public static void Attach(AppHost appHost)
+        {
+            if (!appHost.IsExported || IsWindowsFormsHost(appHost))
                 return;
             lock (s_syncRoot)
             {
@@ -48,7 +74,7 @@ namespace VL.Qt
                     return;
                 s_consoleHost = appHost;
                 s_mainContext = SynchronizationContext.Current ?? appHost.SynchronizationContext;
-                s_logger = nodeContext.GetLogger();
+                s_logger = appHost.LoggerFactory?.CreateLogger(typeof(ExportedApp));
             }
             appHost.OnExit.Subscribe(_ => s_ended = true);
             if (OperatingSystem.IsLinux())
@@ -63,7 +89,7 @@ namespace VL.Qt
         /// <summary>Ends the exported app (Bound To Document, signals). Call on the main (Qt) thread.</summary>
         public static void Exit(AppHost appHost)
         {
-            if (OperatingSystem.IsWindows() && Nodes.RendererNode.IsWindowsFormsHost(appHost)
+            if (OperatingSystem.IsWindows() && IsWindowsFormsHost(appHost)
                 && Type.GetType("System.Windows.Forms.Application, System.Windows.Forms") is { } application
                 && application.GetProperty("MessageLoop")?.GetValue(null) is true
                 && application.GetMethod("Exit", Type.EmptyTypes) is { } exit)

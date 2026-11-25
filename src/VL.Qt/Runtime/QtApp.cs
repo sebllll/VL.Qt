@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using Microsoft.Extensions.Logging;
 using VL.Qt.Interop;
 using VL.Qt.Wire;
@@ -15,11 +16,13 @@ namespace VL.Qt
     internal sealed class QtApp : IQtPumpTarget
     {
         private static QtApp? s_instance;
+        // A failed start is remembered and thrown again: vlqt_app_init may have created the QGuiApplication before it failed,
+        // and a second call would then return 0 for a half-initialized app (g_app is set).
+        private static Exception? s_initError;
 
         private readonly int _threadId;
         private DriverTime _driver = DriverTime.Start;
         private bool _wrongThreadLogged;
-        private static bool s_abiMismatchLogged;
 
         private readonly PumpDiagnostics _diagnostics;
         // Host frame: apply time per participant of the current pump; end of the previous pump of any app.
@@ -53,28 +56,48 @@ namespace VL.Qt
         }
 
         // Before the first window or resource: a vlqt.dll of another ABI version is refused (no window, no QGuiApplication).
-        // Every caller of Get throws again, so every Renderer node shows the error; the log gets it once.
+        // Every caller of Get throws it again (s_initError), so every Renderer node shows the error; the log gets it once.
         private static void CheckAbi()
         {
             var actual = Native.ReadAbiVersion();
             var message = AbiCheck.Describe(actual, Protocol.AbiVersion, QtNativeLibrary.LibraryPath);
             if (message is null)
                 return;
-            if (!s_abiMismatchLogged)
-            {
-                s_abiMismatchLogged = true;
-                QtLog.Logger?.LogError(AbiCheck.Template, QtNativeLibrary.LibraryPath, AbiCheck.ActualText(actual), Protocol.AbiVersion);
-            }
+            QtLog.Logger?.LogError(AbiCheck.Template, QtNativeLibrary.LibraryPath, AbiCheck.ActualText(actual), Protocol.AbiVersion);
             throw new AbiMismatchException(message);
         }
 
-        /// <summary>The process-wide app (created on first use, never released).</summary>
-        public static QtApp Get() => s_instance ??= new QtApp();
+        /// <summary>
+        /// The process-wide app (created on first use, never released). A programming error throws
+        /// <see cref="InvalidOperationException"/>: use from another thread than the one that created Qt. A failed start throws
+        /// its exception again on every call.
+        /// </summary>
+        public static QtApp Get()
+        {
+            if (s_instance is { } app)
+            {
+                if (!app.IsQtThread)
+                    throw new InvalidOperationException($"VL.Qt must be used on the thread that created Qt (thread {app._threadId})");
+                return app;
+            }
+            if (s_initError is { } error)
+                ExceptionDispatchInfo.Capture(error).Throw();
+            try
+            {
+                return s_instance = new QtApp();
+            }
+            catch (Exception e)
+            {
+                s_initError = e;
+                throw;
+            }
+        }
 
         /// <summary>Test hook (SmokeTest 02b): a separate instance, not cached. Driven by a <see cref="QtPump"/> on a simulated clock.</summary>
         internal static QtApp CreateForTest(ILogger? logger)
         {
             QtLog.Reset();
+            s_initError = null;
             if (logger is not null)
                 QtLog.Attach(logger);
             return new QtApp();
