@@ -335,6 +335,29 @@ void main() { fragColor = vec4(phase); }
             Assert.That(chain[1], Does.Contain("amount=f32(0.5)").And.Contain("map=u64(0)"));
         }
 
+        // Both forms of @padding are DIP (docs/effects-and-shaders.md, Annotations): the fixed numbers as written, the
+        // uniform form abs(value) x factor of a uniform that itself reaches the shader as it is. The renderer's space scales
+        // neither (#342: the fixed form went through the unit scale, 40 became 4000 in DIPTopLeft).
+        [TestCase(Space.DIPTopLeft)]
+        [TestCase(Space.Normalized)]
+        [TestCase(Space.PixelTopLeft)]
+        public void Link_PaddingOfBothFormsGoesOutInDip_InEverySpace(Space space)
+        {
+            using var fixedForm = new ShaderEffectInstance(_client, Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag"));
+            fixedForm.Update();
+            using var uniformForm = new ShaderEffectInstance(_client, LoadBlur(blurHead));
+            ((IVLPin<float>)uniformForm.Uniforms.Pins[0]).Value = 40f;
+            uniformForm.Update();
+            foreach (var (instance, pad, uniform) in new[] { (fixedForm, "pad=(4,8,12,16)", "amount=f32"), (uniformForm, "pad=(20,20,20,20)", "blurLength=f32(40)") })
+            {
+                var sink = new RecordingSink();
+                var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
+                rec.Update(new Rectangle { Effect = Output(instance) }, space);
+                var link = sink.OfOp("CHAIN").Single().Split(" | ").Last();
+                Assert.That(link, Does.Contain(pad).And.Contain(uniform), $"{space}: {link}");
+            }
+        }
+
         // --- @passes, @padding <uniform> [factor], @chainonly ---
 
         private const string blurHead = "// @passes 2\n// @padding blurLength 0.5\n";
