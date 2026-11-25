@@ -1,4 +1,5 @@
 ﻿using System;
+using VL.Qt.Images;
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
@@ -161,7 +162,7 @@ namespace VL.Qt.Tests
             Update(new TestImage(2, 2, 1), path, out var done, out var success, write: true);
             Assert.That(done, Is.True);
             Assert.That(success, Is.False);
-            Assert.That(_messages.Logged, Is.EqualTo(new[] { FileWriterNode.NoPathError }));
+            Assert.That(_messages.Logged, Is.EqualTo(new[] { ImageFileWriter.NoPathError }));
             Assert.That(_writes, Is.Empty);
         }
 
@@ -171,7 +172,7 @@ namespace VL.Qt.Tests
             Update(null, "a.png", out var done, out var success, write: true);
             Assert.That(done, Is.True);
             Assert.That(success, Is.False);
-            Assert.That(_messages.Logged, Is.EqualTo(new[] { FileWriterNode.NoImageError }));
+            Assert.That(_messages.Logged, Is.EqualTo(new[] { ImageFileWriter.NoImageError }));
             Assert.That(_writes, Is.Empty);
         }
 
@@ -183,7 +184,7 @@ namespace VL.Qt.Tests
             UpdateElement("a.png", out var done, out var success, write: true);
             Assert.That(done, Is.True);
             Assert.That(success, Is.False);
-            Assert.That(_elementMessages.Logged, Is.EqualTo(new[] { SnapshotNode.NotShownError }));
+            Assert.That(_elementMessages.Logged, Is.EqualTo(new[] { SnapshotGrab.NotShownError }));
             Assert.That(_api.Calls, Is.Empty, "no resource created");
             Assert.That(_writes, Is.Empty);
         }
@@ -195,7 +196,7 @@ namespace VL.Qt.Tests
             UpdateElement("", out var done, out var success, write: true);
             Assert.That(done, Is.True);
             Assert.That(success, Is.False);
-            Assert.That(_elementMessages.Logged, Is.EqualTo(new[] { FileWriterNode.NoPathError }));
+            Assert.That(_elementMessages.Logged, Is.EqualTo(new[] { ImageFileWriter.NoPathError }));
             Assert.That(_api.Calls, Is.Empty);
         }
 
@@ -269,7 +270,7 @@ namespace VL.Qt.Tests
             Assert.That(_elementMessages.Logged, Is.EqualTo(new[] { "no permission" }));
         }
 
-        [Test, Ignore("NODW-03: the first grab to settle is written to the path of the second Write (A's pixels in b.png)")]
+        [Test]
         public void Element_SecondWriteBeforeTheFirstGrabSettled_WritesTheSecondGrabToTheSecondPath()
         {
             Show();

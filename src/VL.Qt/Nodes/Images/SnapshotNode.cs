@@ -17,9 +17,6 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Snapshot", Category = Categories.Images)]
     public sealed class SnapshotNode : IDisposable
     {
-        /// <summary>Error logged when Grab is hit for an element that no renderer shows.</summary>
-        internal const string NotShownError = "Element is not shown in a renderer";
-
         private readonly SnapshotGrab _grab;
         private readonly ResourceNodeReport _report;
         private IImage? _image;
@@ -68,69 +65,6 @@ namespace VL.Qt.Nodes
             _grab.Dispose();
             _image = null;
             _report.Dispose();
-        }
-    }
-
-    /// <summary>
-    /// The grab of Snapshot and FileWriter (Element): locates the element in its renderer, starts the asynchronous snapshot
-    /// into one resource per node and says when it settled. Main thread.
-    /// </summary>
-    internal sealed class SnapshotGrab : IDisposable
-    {
-        private readonly ResourceClient _client;
-        private readonly OccurrenceRegistry _scene;
-        private bool _settled;
-
-        public SnapshotGrab(ResourceClient client, OccurrenceRegistry scene)
-        {
-            _client = client;
-            _scene = scene;
-        }
-
-        /// <summary>The snapshot resource, null until the first <see cref="Start"/> got that far.</summary>
-        public QtResource? Resource { get; private set; }
-
-        /// <summary>
-        /// Starts a snapshot of <paramref name="element"/> (a stylable: the element of its last Build); returns the error at
-        /// once (foreign IElement, not shown, refused by QtNative), empty on success.
-        /// </summary>
-        public string Start(IElement? element, float scale)
-        {
-            if (ElementConversion.IsForeign(element))
-                return ElementConversion.ForeignWarning(element!.GetType());
-            if (ElementConversion.Shown(ElementConversion.ToElement(element)) is not { } shown || !_scene.TryLocate(shown, out var window, out var elementId))
-                return SnapshotNode.NotShownError;
-            try
-            {
-                if (Resource is null)
-                {
-                    Resource = _client.CreateSnapshot();
-                    Resource.Settled = _ => _settled = true;
-                }
-                _client.Snapshot(Resource, window, elementId, scale);
-                return string.Empty;
-            }
-            catch (Exception e) when (e is not OutOfMemoryException)
-            {
-                return e.Message;
-            }
-        }
-
-        /// <summary>True once after a snapshot settled (finished or failed).</summary>
-        public bool TakeSettled()
-        {
-            var settled = _settled;
-            _settled = false;
-            return settled;
-        }
-
-        /// <summary>The finished snapshot as an own copy; null if the resource is not Ready or has none.</summary>
-        public IImage? Read() => Resource is { State: QtImageState.Ready } ? _client.ReadSnapshot(Resource) : null;
-
-        public void Dispose()
-        {
-            _client.Release(Resource);
-            Resource = null;
         }
     }
 }

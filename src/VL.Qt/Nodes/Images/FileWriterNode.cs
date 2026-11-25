@@ -15,11 +15,6 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "FileWriter", Category = Categories.Images)]
     public sealed class FileWriterNode : IDisposable
     {
-        /// <summary>Error logged when Write is hit without a File Path.</summary>
-        internal const string NoPathError = "File Path is empty";
-        /// <summary>Error logged when Write is hit without an Image.</summary>
-        internal const string NoImageError = "Image is empty";
-
         private readonly ImageFileWriter _writer;
         private readonly ResourceNodeReport _report;
         private string _error = string.Empty;
@@ -65,9 +60,9 @@ namespace VL.Qt.Nodes
                 _error = string.Empty;
                 var path = filePath?.Value ?? string.Empty;
                 if (path.Length == 0)
-                    _error = NoPathError;
+                    _error = ImageFileWriter.NoPathError;
                 else if (image is null)
-                    _error = NoImageError;
+                    _error = ImageFileWriter.NoImageError;
                 if (_error.Length > 0)
                     // Nothing is written: Done without Success in the same frame, so a patch waiting for Is Done does not hang.
                     isDone = true;
