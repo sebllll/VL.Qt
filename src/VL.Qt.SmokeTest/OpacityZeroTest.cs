@@ -57,7 +57,7 @@ public static class OpacityZeroTest
         {
             var chain = hover.Update(null, hovered);
             var a = Rect(rectA, new Color4(0, 0, 1, 1), 1, null, null);
-            var b = Rect(rectB, new Color4(1, 0, 0, 1), opacityB, chain, blur.Update(null, 0.6f, 16, 0, true, default), enabledB);
+            var b = Rect(rectB, new Color4(1, 0, 0, 1), opacityB, chain, blur.Update(null, 0.6f, 16, 0, true, default, true), enabledB);
             var c = Rect(rectC, new Color4(0, 1, 0, 1), 1, null, null);
             // Row at (50, 100) DIP, spacing 0.5: A 50..250, B 300..500, C 550..750 (y 100..300).
             var e = row.Update(Spread.Create<IElement?>(a, b, c), true, new Vector2(0, 0), Matrix.Translation(0.5f, 1, 0), RectangleAnchor.TopLeft,
