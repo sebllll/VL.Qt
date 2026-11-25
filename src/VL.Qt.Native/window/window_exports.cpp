@@ -6,6 +6,7 @@
 #include "app/exports.h"
 #include "app/render_gate.h"
 #include "app/scene_change.h"
+#include "offscreen/offscreen.h"
 #include "scene/scene.h"
 #include "diagnostics/perf.h"
 #include "protocol.h"
@@ -267,6 +268,8 @@ VLQT_API int vlqt_scene_apply(vlqt_scene* p, const unsigned char* buf, int len)
         if (len > 0) {
             w.window->update();
             w.changes->markChanged(); // also changes without a dirty item (clear color)
+            if (w.offscreen)
+                vlqt::offscreen::invalidatePolish(w.offscreen.get()); // the last batch's polish has not seen these commands
         }
         return rc;
     });
@@ -293,10 +296,14 @@ VLQT_API int vlqt_scene_poll(vlqt_scene* p, unsigned char* out, int cap, int* wr
             return rc;
         SceneHandle& w = *asSceneHandle(p);
         // No render in this pump (Wayland: UpdateRequest only on the compositor's frame callback; not exposed,
-        // e.g. minimized): Qt has not polished, layouts would report stale geometry. An offscreen scene has no gate and
-        // polishes on every poll (NAPP-15). Not for the retry after a too-small buffer: the scene only drains then.
-        if (!w.scene->eventsCollected && (!w.gate || !w.gate->rendered()))
-            w.scene->polish();
+        // e.g. minimized): Qt has not polished, layouts would report stale geometry. An offscreen scene has no gate: the
+        // render_batch that rendered it polished it, else the poll does (it costs a call per element when something changed).
+        // Not for the retry after a too-small buffer: the scene only drains then.
+        if (!w.scene->eventsCollected) {
+            const bool polished = w.offscreen ? vlqt::offscreen::polishedSinceLastPoll(w.offscreen.get()) : w.gate && w.gate->rendered();
+            if (!polished)
+                w.scene->polish();
+        }
         return w.scene->poll(out, cap, written, required);
     });
 }

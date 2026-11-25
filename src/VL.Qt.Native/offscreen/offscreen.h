@@ -58,6 +58,14 @@ void release(OffscreenScene* state);
 // After the QQuickWindow is deleted: deletes the render control (and with it the scene's QRhi) and state.
 void destroy(OffscreenScene* state);
 
+// --- offscreen_scene.cpp, for the poll (window/window_exports.cpp) ---
+
+// True if the last render_batch polished scene and nothing changed its items since (commands, bind, input); clears the
+// answer, so the next poll decides by itself. A scene has no render gate: the poll polishes it only when this is false.
+bool polishedSinceLastPoll(OffscreenScene* scene);
+// A change the batch's polish has not seen (vlqt_scene_apply): the next poll polishes by itself.
+void invalidatePolish(OffscreenScene* scene);
+
 // --- offscreen_scene.cpp, for snapshots (snapshot_resource.cpp) ---
 
 // True if window is the QQuickWindow of an offscreen scene (never exposed: a snapshot asks for a render instead).

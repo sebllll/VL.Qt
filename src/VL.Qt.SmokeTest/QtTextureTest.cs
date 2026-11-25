@@ -122,6 +122,7 @@ public static partial class QtTextureTest
         OffscreenScene(s);
         ThreadMode(s);
         WrongContext(s);
+        PollPolish(s);
         AdapterAndDeviceLoss(s);
         // Task 1.8. Order matters: the window comparison goes last (a window renders on QtNative's device, which makes an adapter move impossible).
         Formats(s);

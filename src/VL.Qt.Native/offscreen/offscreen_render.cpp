@@ -112,6 +112,8 @@ void renderScenes(const std::vector<OffscreenScene*>& scenes, ID3D11DeviceContex
     for (OffscreenScene* s : scenes) {
         foreign->Signal(s->foreignRead.Get(), ++s->readValue);
         s->renderControl->polishItems();
+        // The poll after this batch need not polish the scene again (polishedSinceLastPoll).
+        s->polished = true;
         // Polish's own changes are in this frame; a change made while syncing or rendering renders next frame.
         s->dirty = false;
     }
