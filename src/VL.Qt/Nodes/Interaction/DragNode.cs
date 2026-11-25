@@ -28,33 +28,26 @@ namespace VL.Qt.Nodes
         private const string limitsError = "Minimum must not be greater than Maximum. The limits are ignored.";
 
         private readonly InteractionNodeCore<Props> _node;
-        private readonly Func<string, IDisposable> _addError;
         private IChannel<bool>? _dragging;
         private IChannel<Vector2>? _delta;
         private bool _lastDragging;
         private int _lastDragUpdates;
-        private IDisposable? _inputErrorMessage;
 
         public DragNode(NodeContext nodeContext)
         {
             _node = new InteractionNodeCore<Props>(nodeContext, Create);
-            _addError = e => nodeContext.AddPersistentMessage(MessageSeverity.Error, e);
         }
 
         /// <summary>For tests: warnings and input errors go to <paramref name="addMessage"/> instead of a NodeContext.</summary>
         internal DragNode(Func<string, IDisposable> addMessage)
         {
             _node = new InteractionNodeCore<Props>(addMessage, Create);
-            _addError = addMessage;
         }
 
         private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new DragInteraction(previous, slot, p.MovesElement, p.Axis, p.Limits, p.Buttons, p.Devices);
 
         internal InteractionNodeCore<Props> Core => _node;
-
-        /// <summary>Error about the inputs currently shown at the node (Minimum greater than Maximum), null if none.</summary>
-        internal string? InputError { get; private set; }
 
         /// <summary>Adds a drag handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
@@ -82,26 +75,12 @@ namespace VL.Qt.Nodes
 
             // Pull: state of the last pump (1 frame latency).
             var feedback = _node.Feedback;
-            if (isDragging.IsValid())
-                InteractionNodeCore<Props>.Write(isDragging, ref _dragging, ref _lastDragging, feedback.IsActive());
-            else
-                _dragging = null;
+            FeedbackChannels.WriteState(isDragging, ref _dragging, ref _lastDragging, feedback.IsActive());
 
-            int updates = feedback.DragUpdates();
-            if (!delta.IsValid())
-                _delta = null;
-            else if (!ReferenceEquals(delta, _delta))
-            {
-                _delta = delta;
-                _lastDragUpdates = updates;
-                delta.EnsureValue(feedback.DragDelta(), author: ChannelAuthors.QtChannelAuthor);
-            }
-            else if (updates != _lastDragUpdates)
-            {
-                // Every EVENT_DRAG counts, also one equal to the last value (a new drag with the same movement).
-                _lastDragUpdates = updates;
-                delta.SetValueAndAuthor(feedback.DragDelta(), ChannelAuthors.QtChannelAuthor);
-            }
+            // Every EVENT_DRAG counts, also one equal to the last value (a new drag with the same movement); a channel
+            // connected before the first drag keeps its own value.
+            if (FeedbackChannels.TakeUpdate(delta, ref _delta, ref _lastDragUpdates, feedback.DragUpdates()))
+                delta!.SetValueAndAuthor(feedback.DragDelta(), ChannelAuthors.QtChannelAuthor);
 
             return output;
         }
@@ -112,25 +91,10 @@ namespace VL.Qt.Nodes
             var min = minimum.HasValue ? minimum.Value : new Vector2(float.NegativeInfinity);
             var max = maximum.HasValue ? maximum.Value : new Vector2(float.PositiveInfinity);
             bool valid = min.X <= max.X && min.Y <= max.Y; // NaN: invalid
-            SetInputError(valid ? null : limitsError);
+            _node.SetInputError(valid ? null : limitsError);
             return valid ? new DragLimits(min.X, min.Y, max.X, max.Y) : DragLimits.None;
         }
 
-        private void SetInputError(string? error)
-        {
-            if (ReferenceEquals(error, InputError))
-                return;
-            _inputErrorMessage?.Dispose();
-            _inputErrorMessage = error is null ? null : _addError(error);
-            InputError = error;
-        }
-
-        public void Dispose()
-        {
-            _inputErrorMessage?.Dispose();
-            _inputErrorMessage = null;
-            InputError = null;
-            _node.Dispose();
-        }
+        public void Dispose() => _node.Dispose();
     }
 }

@@ -56,25 +56,9 @@ namespace VL.Qt.Nodes
             // Pull: state of the last pump (1 frame latency). A new Spread only when Qt reported a change; at rest
             // nothing is built or written. A channel connected later gets the current points, but only if there was
             // any event yet (an untouched feedback would overwrite the value of the channel for nothing).
-            if (!points.IsValid())
-            {
-                _points = null;
-                return output;
-            }
             var feedback = _node.Feedback;
-            int updates = feedback.TouchUpdates();
-            if (!ReferenceEquals(points, _points))
-            {
-                _points = points;
-                _lastUpdates = updates;
-                if (updates != 0)
-                    points.SetValueAndAuthor(feedback.TouchPoints(), ChannelAuthors.QtChannelAuthor);
-            }
-            else if (updates != _lastUpdates)
-            {
-                _lastUpdates = updates;
-                points.SetValueAndAuthor(feedback.TouchPoints(), ChannelAuthors.QtChannelAuthor);
-            }
+            if (FeedbackChannels.TakeUpdate(points, ref _points, ref _lastUpdates, feedback.TouchUpdates()))
+                points!.SetValueAndAuthor(feedback.TouchPoints(), ChannelAuthors.QtChannelAuthor);
             return output;
         }
 

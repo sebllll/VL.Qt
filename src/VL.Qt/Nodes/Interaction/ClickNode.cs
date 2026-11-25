@@ -62,21 +62,17 @@ namespace VL.Qt.Nodes
             // Pull: state of the last pump (1 frame latency). Events (clicks, long presses) are taken every frame, also
             // without a channel, so they do not pile up; states are written only on change.
             var feedback = _node.Feedback;
-            if (isPressed.IsValid())
-                InteractionNodeCore<Props>.Write(isPressed, ref _pressed, ref _lastPressed, feedback.IsPressed());
-            else
-                _pressed = null;
-
-            ClickChannel.Write(isClicked, feedback.TakeClicks());
-            ClickChannel.Write(longPressed, feedback.TakeLongPresses());
+            FeedbackChannels.WriteState(isPressed, ref _pressed, ref _lastPressed, feedback.IsPressed());
+            FeedbackChannels.WriteEvents(isClicked, feedback.TakeClicks());
+            FeedbackChannels.WriteEvents(longPressed, feedback.TakeLongPresses());
 
             // 0 = no tap yet for this feedback (new node, new handler, released handle): not written, the channel keeps
             // the count of the last click until the next one.
             int count = feedback.TapCount();
-            if (!tapCount.IsValid())
+            if (count > 0)
+                FeedbackChannels.WriteState(tapCount, ref _tapCount, ref _lastTapCount, count);
+            else if (!tapCount.IsValid())
                 _tapCount = null;
-            else if (count > 0)
-                InteractionNodeCore<Props>.Write(tapCount, ref _tapCount, ref _lastTapCount, count);
 
             return output;
         }

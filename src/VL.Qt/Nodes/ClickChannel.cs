@@ -13,14 +13,6 @@ namespace VL.Qt.Nodes
     internal static class ClickChannel
     {
         /// <summary>Writes <paramref name="count"/> events into <paramref name="channel"/>, if it is connected.</summary>
-        public static void Write(IChannel<Unit>? channel, int count)
-        {
-            if (!channel.IsValid())
-                return;
-            for (int i = 0; i < count; i++)
-                channel.SetValueAndAuthor(Unit.Default, ChannelAuthors.QtChannelAuthor);
-        }
-
         /// <summary>
         /// Takes the clicks (Qt <c>clicked</c>) the <paramref name="feedback"/> received since the last call, writes them
         /// into <paramref name="channel"/> and returns their number. Call once per Update.
@@ -28,7 +20,7 @@ namespace VL.Qt.Nodes
         public static int Update(IChannel<Unit>? channel, ElementFeedback feedback)
         {
             var clicks = feedback.TakeClicks();
-            Write(channel, clicks);
+            FeedbackChannels.WriteEvents(channel, clicks);
             return clicks;
         }
     }

@@ -807,17 +807,17 @@ namespace VL.Qt.Tests
             int removed = 0;
             using var node = new PinchNode(m => { shown.Add(m); return new Disposer(() => removed++); });
             var a = (PinchInteraction)node.Update(null, null, null, null, null, null, 1, 2, PointerDevices.All);
-            Assert.That(node.InputError, Is.Not.Null);
+            Assert.That(node.Core.InputError, Is.Not.Null);
             Assert.That((a.MinimumPointCount, a.MaximumPointCount), Is.EqualTo((2, 2)), "nothing invalid goes to QtNative");
             node.Update(null, null, null, null, null, null, 1, 2, PointerDevices.All);
             Assert.That(shown, Has.Count.EqualTo(1), "shown once");
 
             var b = (PinchInteraction)node.Update(null, null, null, null, null, null, 4, 3, PointerDevices.All);
-            Assert.That(node.InputError, Is.Not.Null, "minimum above maximum");
+            Assert.That(node.Core.InputError, Is.Not.Null, "minimum above maximum");
             Assert.That(b.MinimumPointCount, Is.EqualTo(2));
 
             var c = (PinchInteraction)node.Update(null, null, null, null, null, null, 2, 3, PointerDevices.All);
-            Assert.That(node.InputError, Is.Null);
+            Assert.That(node.Core.InputError, Is.Null);
             Assert.That(removed, Is.EqualTo(1));
             Assert.That((c.MinimumPointCount, c.MaximumPointCount), Is.EqualTo((2, 3)));
         }
@@ -866,7 +866,7 @@ namespace VL.Qt.Tests
             Assert.That(b, Is.Not.SameAs(a));
             Assert.That(b.Axis, Is.EqualTo(DragAxis.Horizontal));
             Assert.That(b.Limits, Is.EqualTo(new DragLimits(-1, 0, float.PositiveInfinity, float.PositiveInfinity)), "units as given (the reconciler converts), missing max = +inf");
-            Assert.That(node.InputError, Is.Null);
+            Assert.That(node.Core.InputError, Is.Null);
         }
 
         [Test]
@@ -876,7 +876,7 @@ namespace VL.Qt.Tests
             int removed = 0;
             using var node = new DragNode(m => { shown.Add(m); return new Disposer(() => removed++); });
             var a = (DragInteraction)node.Update(null, null, null, true, DragAxis.Both, new Vector2(1, 0), new Vector2(0, 0), PointerButtons.Left, PointerDevices.All);
-            Assert.That(node.InputError, Is.Not.Null);
+            Assert.That(node.Core.InputError, Is.Not.Null);
             Assert.That(shown, Has.Count.EqualTo(1));
             Assert.That(a.Limits, Is.EqualTo(DragLimits.None), "nothing invalid goes to QtNative");
 
@@ -884,7 +884,7 @@ namespace VL.Qt.Tests
             Assert.That(shown, Has.Count.EqualTo(1), "shown once");
 
             node.Update(null, null, null, true, DragAxis.Both, new Vector2(0, 0), new Vector2(1, 0), PointerButtons.Left, PointerDevices.All);
-            Assert.That(node.InputError, Is.Null);
+            Assert.That(node.Core.InputError, Is.Null);
             Assert.That(removed, Is.EqualTo(1));
         }
 
@@ -923,6 +923,64 @@ namespace VL.Qt.Tests
             reg.Dispatch(new FeedbackRouterTests.Poll().Active(h, true).Drag(h, 50, 0).Bytes);
             Update();
             Assert.That(deltas, Is.EqualTo(new[] { new Vector2(0.5f, 0), new Vector2(0.5f, 0) }));
+        }
+
+        [Test]
+        public void DragNode_ConnectedDelta_KeepsItsValueUntilTheFirstDrag()
+        {
+            using var node = new DragNode(_ => new Removal());
+            var delta = Channel.Create(new Vector2(0.3f, 0));
+            void Update(IChannel<Vector2>? d) => node.Update(null, null, d, true, DragAxis.Both, default, default, PointerButtons.Left, PointerDevices.All);
+
+            Update(delta);
+            Update(delta);
+            Assert.That(delta.Value, Is.EqualTo(new Vector2(0.3f, 0)), "an untouched feedback does not overwrite a fresh value");
+
+            var reg = new FeedbackRouter();
+            uint h = reg.Acquire(node.Core.Slot);
+            reg.Dispatch(new FeedbackRouterTests.Poll().Active(h, true).Drag(h, 50, 0).Bytes);
+            Update(delta);
+            Assert.That(delta.Value, Is.EqualTo(new Vector2(0.5f, 0)));
+            Assert.That(delta.LatestAuthor, Is.EqualTo("Qt"));
+
+            // A channel connected after a drag gets the drag's value, as with Pinch and Touch Points.
+            var late = Channel.Create(new Vector2(0.3f, 0));
+            Update(late);
+            Assert.That(late.Value, Is.EqualTo(new Vector2(0.5f, 0)));
+        }
+
+        [Test]
+        public void FeedbackChannels_TakeUpdate_Rules()
+        {
+            var channel = Channel.Create(1f);
+            IChannel<float>? last = null;
+            int lastUpdates = 0;
+            Assert.That(FeedbackChannels.TakeUpdate(channel, ref last, ref lastUpdates, 0), Is.False, "connected before any update");
+            Assert.That(FeedbackChannels.TakeUpdate(channel, ref last, ref lastUpdates, 0), Is.False);
+            Assert.That(FeedbackChannels.TakeUpdate(channel, ref last, ref lastUpdates, 1), Is.True, "updated");
+            Assert.That(FeedbackChannels.TakeUpdate(channel, ref last, ref lastUpdates, 1), Is.False, "at rest");
+            Assert.That(FeedbackChannels.TakeUpdate(null, ref last, ref lastUpdates, 2), Is.False, "unconnected");
+            Assert.That(last, Is.Null);
+            Assert.That(FeedbackChannels.TakeUpdate(channel, ref last, ref lastUpdates, 2), Is.True, "reconnected after an update");
+        }
+
+        [Test]
+        public void FeedbackChannels_WriteState_OnChangeOrNewChannel_ForgetsUnconnected()
+        {
+            var channel = Channel.Create(false);
+            int writes = 0;
+            using var sub = channel.Subscribe(_ => writes++);
+            writes = 0;
+            IChannel<bool>? last = null;
+            bool lastValue = false;
+            FeedbackChannels.WriteState(channel, ref last, ref lastValue, true);
+            FeedbackChannels.WriteState(channel, ref last, ref lastValue, true);
+            Assert.That(writes, Is.EqualTo(1));
+            Assert.That(channel.LatestAuthor, Is.EqualTo("Qt"));
+            FeedbackChannels.WriteState(null, ref last, ref lastValue, true);
+            Assert.That(last, Is.Null);
+            FeedbackChannels.WriteState(channel, ref last, ref lastValue, true);
+            Assert.That(writes, Is.EqualTo(1), "EnsureValue: the value is the same");
         }
 
         [Test]
