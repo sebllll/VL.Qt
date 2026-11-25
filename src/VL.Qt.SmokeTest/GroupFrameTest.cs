@@ -103,7 +103,7 @@ public static class GroupFrameTest
         // 2) Effect layer on the Group (ColorAdjust, saturation -1 = gray): the part in negative coordinates is drawn
         //    in place, not clipped and not shifted to the origin.
         var adjust = new ColorAdjustNode();
-        var fxGroup = new Group { Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(3, 2, 0), Children = [orange, blue], Effect = adjust.Update(null, 0, 0, -1) };
+        var fxGroup = new Group { Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(3, 2, 0), Children = [orange, blue], Effect = adjust.Update(null, 0, 0, 0, true) };
         Frame(new Group { Anchor = RectangleAnchor.TopLeft, Children = [fxGroup] });
         Pump(4);
         using (var a = s.Grab(w, "475_effect_layer.png"))
@@ -180,7 +180,7 @@ public static class GroupFrameTest
         }
 
         // Effect layer on the Center group: drawn in place, also left of / above the origin.
-        var fixedFx = new Group { Anchor = RectangleAnchor.Center, Transform = Matrix.Translation(3, 2, 0), AutoSize = false, Size = new Vector2(3, 2), Children = [orange, blue], Effect = adjust.Update(null, 0, 0, -1) };
+        var fixedFx = new Group { Anchor = RectangleAnchor.Center, Transform = Matrix.Translation(3, 2, 0), AutoSize = false, Size = new Vector2(3, 2), Children = [orange, blue], Effect = adjust.Update(null, 0, 0, 0, true) };
         Frame(new Group { Anchor = RectangleAnchor.TopLeft, Children = [fixedFx] });
         Pump(4);
         using (var a = s.Grab(w, "475_fixed_center_effect.png"))
