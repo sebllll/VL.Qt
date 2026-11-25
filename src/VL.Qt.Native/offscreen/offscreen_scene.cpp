@@ -1,6 +1,7 @@
 // Private Qt API: QQuickRenderControlPrivate::resetRhi, QQuickWindowPrivate (dropRhi); check on Qt updates (list: elements/elements.h).
 #include "offscreen/offscreen_scene.h"
 #include "app/exports.h"
+#include "device/device.h"
 #include "vlqt.h"
 
 #include <QtGui/QGuiApplication>
@@ -11,8 +12,6 @@
 #include <algorithm>
 
 #ifdef Q_OS_WIN
-#include "device/device.h"
-
 // dropRhi: QQuickRenderControlPrivate and QQuickWindowPrivate. Private API, check on Qt updates.
 #include <QtQuick/private/qquickrendercontrol_p.h>
 #include <QtQuick/private/qquickwindow_p.h>
