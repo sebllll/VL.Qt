@@ -37,10 +37,7 @@ namespace VL.Qt.Nodes
         private readonly ElementNodeCore<Shader, Props> _node;
         private readonly ShaderSlot _fragment, _vertex;
         private readonly ElementInput _input;
-        private readonly NodeErrors? _errors;
         private Spread<Uniform>? _checkedUniforms;
-        private string _uniformProblems = string.Empty, _shownUniformProblems = string.Empty, _reservedUniforms = string.Empty;
-        private string _fragmentError = string.Empty, _vertexError = string.Empty, _elementError = string.Empty, _error = string.Empty;
 
         public ShaderNode(NodeContext nodeContext)
         {
@@ -49,7 +46,6 @@ namespace VL.Qt.Nodes
             _input = new ElementInput(_node.Messages);
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
-            _errors = new NodeErrors(nodeContext);
         }
 
         /// <summary>For tests without shader resources (no client, a path is reported as error): warnings go to <paramref name="addWarning"/>.</summary>
@@ -83,16 +79,16 @@ namespace VL.Qt.Nodes
 
         /// <param name="input">Element sampled as sampler2D "source" (hidden itself, only the effect output is drawn). Unconnected = generative shader.</param>
         /// <param name="inputSampler">How the shader reads the Input (filter, wrap, mipmaps), from the Sampler node. Unconnected = as the input's layer is (Nearest, Clamp).</param>
-        /// <param name="fragmentCode">Fragment shader as full Qt GLSL (#version 440), baked at runtime in the background. The default is a commented template. Ignored while Fragment Shader is set. While a new text bakes or if it has errors, the last working version keeps drawing; errors (with line numbers) go to Error.</param>
-        /// <param name="fragmentShader">Baked fragment shader (.qsb or builtin:&lt;name&gt;). Set: used instead of Fragment Code. A broken file = message at Error.</param>
+        /// <param name="fragmentCode">Fragment shader as full Qt GLSL (#version 440), baked at runtime in the background. The default is a commented template. Ignored while Fragment Shader is set. While a new text bakes or if it has errors, the last working version keeps drawing; errors (with line numbers) show at the node and in the log.</param>
+        /// <param name="fragmentShader">Baked fragment shader (.qsb or builtin:&lt;name&gt;). Set: used instead of Fragment Code. A broken file shows as error at the node.</param>
         /// <param name="vertexCode">Vertex shader as full Qt GLSL (#version 440), optional. Empty = Qt's default vertex shader. Ignored while Vertex Shader is set.</param>
         /// <param name="vertexShader">Baked vertex shader (.qsb), optional. Set: used instead of Vertex Code.</param>
-        /// <param name="uniforms">Uniform values by name (nodes of Qt.Elements.Shaders.Uniform). Unknown names or wrong types show as warning; a reserved name (qt_Matrix, qt_Opacity, source) is an error.</param>
+        /// <param name="uniforms">Uniform values by name (nodes of Qt.Elements.Shaders.Uniform). Unknown names or wrong types show as warning at the node; a reserved name (qt_Matrix, qt_Opacity, source) is an error.</param>
         /// <param name="blending">Premultiplied alpha blending with what is behind. Off: the shader output replaces it.</param>
         /// <param name="meshResolution">Grid subdivisions (x, y &gt;= 1) for vertex shaders that deform the element. Unconnected = 1, 1 (one quad).</param>
         /// <param name="size">Size of the element (width, height), only with Auto Size off or without Input. The position comes from Transform and Anchor.</param>
         /// <param name="autoSize">On: with an Input the implicit size (size of the input) applies. Without Input or off: Size counts.</param>
-        /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Set it here, not on the input.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <param name="opacity">Opacity of the effect output (qt_Opacity in the shader). 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
         /// <param name="clip">Clip to the element's size.</param>
@@ -102,7 +98,6 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='measuredSize']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
-        /// <param name="error">Shader load errors and uniform problems (unknown name, wrong type, reserved name), empty if none.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         [return: Pin(Name = "Output")]
         public IElement Update(
@@ -126,47 +121,27 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
-            [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds,
-            out string error)
+            [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
             var mesh = meshResolution.HasValue ? meshResolution.Value : new Int2(1, 1);
             var fragmentId = _fragment.Update(fragmentShader?.Value, fragmentCode);
             var vertexId = _vertex.Update(vertexShader?.Value, vertexCode);
+            var messages = _node.Messages;
             if (!ReferenceEquals(uniforms, _checkedUniforms))
             {
                 _checkedUniforms = uniforms;
-                _uniformProblems = CheckUniforms(uniforms);
-                _reservedUniforms = CheckReserved(uniforms);
-                // At the node (and logged once), like every message of a node; the Error output carries it too.
-                _errors?.Set("Reserved uniforms", MessageSeverity.Error, _reservedUniforms);
+                messages.Set("Reserved uniforms", MessageSeverity.Error, CheckReserved(uniforms));
+                messages.Set("Uniforms", MessageSeverity.Warning, CheckUniforms(uniforms));
             }
+            // Shader load and bake errors; an error Qt reports for the element is shown by the element node.
+            messages.Set("Fragment shader", MessageSeverity.Error, _fragment.Error);
+            messages.Set("Vertex shader", MessageSeverity.Error, _vertex.Error);
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
                 new Props(_input.Update(input), fragmentId, vertexId, uniforms, blending, mesh, autoSize, inputSampler),
                 out measuredSize, out sceneBounds);
-            error = UpdateError();
             return element;
         }
-
-        /// <summary>Joins shader load errors, uniform name problems, reserved uniform names and the element error (Qt) into the Error output, one line each; recomputed only when a part changes.</summary>
-        private string UpdateError()
-        {
-            string fragment = _fragment.Error, vertex = _vertex.Error, element = _node.Error ?? string.Empty;
-            var problems = JoinLines(_reservedUniforms, _uniformProblems);
-            if (fragment != _fragmentError || vertex != _vertexError || element != _elementError || problems != _shownUniformProblems)
-            {
-                _fragmentError = fragment;
-                _vertexError = vertex;
-                _elementError = element;
-                _shownUniformProblems = problems;
-                _error = JoinLines(fragment, vertex, problems, element);
-                // Qt's element error is already logged and shown as warning by the element node, the reserved names by Set in Update.
-                _errors?.LogOnly(JoinLines(fragment, vertex, _uniformProblems, string.Empty));
-            }
-            return _error;
-        }
-
-        private static string JoinLines(params string[] parts) => string.Join('\n', Array.FindAll(parts, static p => p.Length > 0));
 
         /// <summary>Name problems QtNative could not tell (it never sees them): empty or too long names, a name set twice (the last one counts).</summary>
         internal static string CheckUniforms(Spread<Uniform>? uniforms)
@@ -206,7 +181,6 @@ namespace VL.Qt.Nodes
         {
             _fragment.Dispose();
             _vertex.Dispose();
-            _errors?.Dispose();
             _input.Dispose();
             _node.Dispose();
         }

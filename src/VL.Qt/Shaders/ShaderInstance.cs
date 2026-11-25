@@ -21,22 +21,21 @@ namespace VL.Qt.Shaders
         private readonly ValuePin<IElement?>? _input;
         private readonly ValuePin<Sampler?>? _inputSampler;
         private readonly ShaderUniforms _uniforms;
-        private readonly ValuePin<bool> _blending = new(true);
-        private readonly ValuePin<Int2> _meshResolution = new(new Int2(1, 1));
-        private readonly ValuePin<Vector2> _size = new(new Vector2(1f, 1f));
-        private readonly ValuePin<bool> _autoSize = new(true);
-        private readonly ValuePin<Matrix> _transform = new(Matrix.Identity);
-        private readonly ValuePin<RectangleAnchor> _anchor = new(RectangleAnchor.TopLeft);
-        private readonly ValuePin<float> _opacity = new(1f);
-        private readonly ValuePin<bool> _clip = new(false);
-        private readonly ValuePin<bool> _debug = new(false);
-        private readonly ValuePin<Interaction?> _interaction = new(null);
-        private readonly ValuePin<Effect?> _effectChain = new(null);
-        private readonly ValuePin<bool> _enabled = new(true);
+        private readonly ValuePin<bool> _blending = new(ShaderElementPins.Default<bool>("Blending"));
+        private readonly ValuePin<Int2> _meshResolution = new(ShaderElementPins.Default<Int2>("Mesh Resolution"));
+        private readonly ValuePin<bool> _autoSize = new(ShaderElementPins.Default<bool>("Auto Size"));
+        private readonly ValuePin<Vector2> _size = new(ShaderElementPins.Default<Vector2>("Size"));
+        private readonly ValuePin<Matrix> _transform = new(ShaderElementPins.Default<Matrix>("Transform"));
+        private readonly ValuePin<RectangleAnchor> _anchor = new(ShaderElementPins.Default<RectangleAnchor>("Anchor"));
+        private readonly ValuePin<float> _opacity = new(ShaderElementPins.Default<float>("Opacity"));
+        private readonly ValuePin<bool> _clip = new(ShaderElementPins.Default<bool>("Clip"));
+        private readonly ValuePin<bool> _debug = new(ShaderElementPins.Default<bool>("Debug"));
+        private readonly ValuePin<Interaction?> _interaction = new(ShaderElementPins.Default<Interaction?>("Interaction"));
+        private readonly ValuePin<Effect?> _effectChain = new(ShaderElementPins.Default<Effect?>("Effect"));
+        private readonly ValuePin<bool> _enabled = new(ShaderElementPins.Default<bool>("Enabled"));
         private readonly ValuePin<IElement?> _output = new(null);
-        private readonly ValuePin<Vector2> _measuredSize = new(Vector2.Zero);
-        private readonly ValuePin<RectangleF> _sceneBounds = new(RectangleF.Empty);
-        private readonly ValuePin<string> _error = new(string.Empty);
+        private readonly ValuePin<Vector2> _measuredSize = new(ShaderElementPins.Default<Vector2>("Measured Size"));
+        private readonly ValuePin<RectangleF> _sceneBounds = new(ShaderElementPins.Default<RectangleF>("Scene Bounds"));
 
         public ShaderInstance(NodeContext nodeContext, ShaderLayout layout)
             : this(new ShaderNode(nodeContext), layout)
@@ -71,8 +70,8 @@ namespace VL.Qt.Shaders
                     yield return pin;
                 yield return _blending;
                 yield return _meshResolution;
-                yield return _size;
                 yield return _autoSize;
+                yield return _size;
                 yield return _transform;
                 yield return _anchor;
                 yield return _opacity;
@@ -84,7 +83,7 @@ namespace VL.Qt.Shaders
             }
         }
 
-        internal IEnumerable<IVLPin> Outputs => new IVLPin[] { _output, _measuredSize, _sceneBounds, _error };
+        internal IEnumerable<IVLPin> Outputs => new IVLPin[] { _output, _measuredSize, _sceneBounds };
 
         public IVLNode CreateNode(NodeBuilding.NodeInstanceBuildContext context) =>
             context.Node(Inputs, Outputs, update: Update, dispose: Dispose);
@@ -112,11 +111,9 @@ namespace VL.Qt.Shaders
                 _effectChain.Value,
                 _enabled.Value,
                 out var measuredSize,
-                out var sceneBounds,
-                out var error);
+                out var sceneBounds);
             _measuredSize.Value = measuredSize;
             _sceneBounds.Value = sceneBounds;
-            _error.Value = error;
         }
 
         public void Dispose() => _effect.Dispose();

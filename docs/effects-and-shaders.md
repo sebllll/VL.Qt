@@ -56,7 +56,7 @@ Own fragment shaders (optionally with a vertex shader) are written in Qt's GLSL 
 
 **Shader nodes from files (normal way):** every `.frag` file in a `qtshaders/` folder becomes a node with one pin per uniform (see [Shader nodes from files](#shader-nodes-from-files)).
 
-**ShaderEffect node (runtime variant, `Qt.Elements.Shaders`):** for shader code that is built, generated or loaded at runtime, which a file cannot cover. The node is marked advanced, so it only shows in the node browser with the advanced filter. The shader code goes into the `Fragment Code` string pin, or `Fragment Shader` points to a pre-baked `.qsb` file. VL.Qt bakes it in a worker; while a new version is baking or has errors, the last working one keeps drawing. Compile errors show at the `Error` output with their line number. Uniforms come from the nodes in `Qt.Elements.Shaders.Uniform` (also advanced) and are matched by name, an element or Group on `Input` becomes the `source` texture.
+**ShaderEffect node (runtime variant, `Qt.Elements.Shaders`):** for shader code that is built, generated or loaded at runtime, which a file cannot cover. The node is marked advanced, so it only shows in the node browser with the advanced filter. The shader code goes into the `Fragment Code` string pin, or `Fragment Shader` points to a pre-baked `.qsb` file. VL.Qt bakes it in a worker; while a new version is baking or has errors, the last working one keeps drawing. Compile errors show at the node and in the log with their line number. Uniforms come from the nodes in `Qt.Elements.Shaders.Uniform` (also advanced) and are matched by name, an element or Group on `Input` becomes the `source` texture.
 
 ### Sampler node
 

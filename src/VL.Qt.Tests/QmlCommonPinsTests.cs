@@ -21,27 +21,11 @@ namespace VL.Qt.Tests
     {
         private static readonly MethodInfo s_update = typeof(QmlElementNode).GetMethod(nameof(QmlElementNode.Update))!;
 
-        private static string PinName(ParameterInfo p) => p.GetCustomAttribute<PinAttribute>()?.Name ?? PinNames.FromIdentifier(p.Name!);
+        private static string PinName(ParameterInfo p) => PinReflection.PinName(p);
 
-        private static bool IsVisible(ParameterInfo p) => p.GetCustomAttribute<PinAttribute>()?.Visibility != PinVisibility.Optional;
+        private static bool IsVisible(ParameterInfo p) => PinReflection.IsVisible(p);
 
-        // The default as vvvv reads it: DefaultValue(object), DefaultValue(Type, string) or the IOBox string; default(T) without one.
-        private static object? DefaultOf(ParameterInfo p)
-        {
-            var type = p.ParameterType.IsByRef ? p.ParameterType.GetElementType()! : p.ParameterType;
-            if (type == typeof(Matrix))
-                return Matrix.Identity;
-            if (p.GetCustomAttribute<DefaultValueAttribute>() is { } attribute)
-            {
-                if (attribute.Value is string text && type == typeof(Vector2))
-                {
-                    var xy = text.Split(',').Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
-                    return new Vector2(xy[0], xy[1]);
-                }
-                return attribute.Value;
-            }
-            return type.IsValueType ? Activator.CreateInstance(type) : null;
-        }
+        private static object? DefaultOf(ParameterInfo p) => PinReflection.DefaultOf(p);
 
         [Test]
         public void Inputs_AreTheInputsOfQmlElement()
