@@ -22,8 +22,8 @@ namespace VL.Qt.Nodes
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
         /// <param name="points">The points the curve passes through, in units. Fewer than two points add nothing.</param>
         /// <param name="closed">If true, the curve returns smoothly from the last point to the first.</param>
-        /// <param name="alpha">The parametrization: 0 = uniform, 0.5 = centripetal (no loops or cusps), 1 = chordal.</param>
-        /// <param name="tension">How tight the curve is: 0 = smooth, 1 = straight lines between the points.</param>
+        /// <param name="alpha">The parametrization: 0 = uniform, 0.5 = centripetal (no loops or cusps), 1 = chordal; clamped to 0..1.</param>
+        /// <param name="tension">How tight the curve is: 0 = smooth, 1 = straight lines between the points; clamped to 0..1.</param>
         /// <returns>The path with the spline added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
         public QtPath Update(

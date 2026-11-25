@@ -70,6 +70,10 @@ The optional pins (`Cap`, `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Trim St
 - There is no `ConicTo`; Qt has no conics.
 - `PathDirection` and `PathAddMode` replace `SKPathDirection` and `SKPathAddMode`.
 - Angles are in cycles (1 is a full turn), as on Skia's nodes.
+- `AddRoundRect` follows Skia's rules: radii that do not fit are scaled together by one factor (`min(w / 2rx, h / 2ry)`), so a very large radius gives semicircular ends, and the contour starts on the left edge below the top left corner. A radius of zero or less in one direction gives a plain rectangle (Skia adds nothing for a negative radius). The pins default to `Rectangle` `0, 0, 1, 1` and `Radius` `0.1, 0.1`.
+- `AddArc` with a sweep of one cycle or more starts the closed oval at the start angle when that is a multiple of a quarter cycle (as Skia). For other start angles Skia adds only a point; here the full turn from the start angle is added as an open arc.
+- `ArcTo` (SVG, relative) and the tangent form start at the last point of the input path. A path without a `MoveTo` that is added with `AddPath (Extend)` continues the contour of the input, so a `Close` in it returns to that contour's start.
+- `Spline (CatmullRom)`: `Tension` is clamped to 0..1 and `Alpha` to 0..1; a NaN counts as the default (`Tension` 0, `Alpha` 0.5).
 - Queries and operations (`Op`, `Simplify`, sampling) are not part of `Qt.Paths`.
 
 **Limits.** The number of segments is not limited by the protocol; the cost is the limit (see [Limits](#limits) of the point shapes). Arcs and ovals become cubics and count as such.

@@ -51,6 +51,9 @@ namespace VL.Qt.Paths
         // Current point (end of the last segment) and start of the current contour (target of Close), kept per node
         // so that relative nodes read them in O(1).
         private readonly float _lastX, _lastY, _startX, _startY;
+        // Whether the chain contains a Move, and whether its last segment is a Close. A path without Move has no start of
+        // its own: appended to another path, it continues that path's contour (SIP-12).
+        private readonly bool _hasMove, _endsWithClose;
 
         // Written by the first reader. Two threads may both compute it and the results are identical, so no lock is
         // needed: Interlocked.CompareExchange publishes exactly one instance and every reader gets that one.
@@ -78,6 +81,8 @@ namespace VL.Qt.Paths
             _pointCount = previous._pointCount + PointCountOf(verb);
             _startX = previous._startX;
             _startY = previous._startY;
+            _hasMove = previous._hasMove || verb == Protocol.Verb.Move;
+            _endsWithClose = verb == Protocol.Verb.Close;
             switch (verb)
             {
                 case Protocol.Verb.Move:
@@ -110,10 +115,24 @@ namespace VL.Qt.Paths
             _verb = byte.MaxValue;
             _verbCount = previous._verbCount + appended._verbCount;
             _pointCount = previous._pointCount + appended._pointCount;
-            _lastX = appended._lastX;
-            _lastY = appended._lastY;
-            _startX = appended._startX;
-            _startY = appended._startY;
+            _hasMove = previous._hasMove || appended._hasMove;
+            _endsWithClose = appended._endsWithClose;
+            if (appended._hasMove)
+            {
+                _lastX = appended._lastX;
+                _lastY = appended._lastY;
+                _startX = appended._startX;
+                _startY = appended._startY;
+            }
+            else
+            {
+                // Without a Move of its own the appended part continues the contour of the previous path, so a Close
+                // in it returns to that start, not to (0, 0).
+                _startX = previous._startX;
+                _startY = previous._startY;
+                _lastX = appended._endsWithClose ? _startX : appended._lastX;
+                _lastY = appended._endsWithClose ? _startY : appended._lastY;
+            }
         }
 
         private static int PointCountOf(byte verb) => verb switch

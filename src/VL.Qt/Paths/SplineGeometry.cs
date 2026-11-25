@@ -13,11 +13,12 @@ namespace VL.Qt.Paths
         /// <summary>
         /// Catmull-Rom spline that passes through every point, one cubic per span. <paramref name="alpha"/> sets the knot
         /// spacing (0 uniform, 0.5 centripetal without loops or cusps, 1 chordal; clamped to 0..1),
-        /// <paramref name="tension"/> scales the tangents by <c>1 − tension</c> (1 gives straight lines).
+        /// <paramref name="tension"/> scales the tangents by <c>1 − tension</c> (clamped to 0..1; 1 gives straight lines).
+        /// A NaN alpha counts as 0.5 and a NaN tension as 0, the defaults of the node.
         /// Open ends duplicate the end point as phantom point; its knot interval is zero, so an open curve has tangent 0
-        /// at its end points for every alpha (the control point next to an end point is that end point). Spans of length zero are skipped, and the neighbors of a span are
-        /// the nearest points that differ from its ends, so coincident points never divide by zero. Points that all
-        /// coincide return the path unchanged.
+        /// at its end points for every alpha (the control point next to an end point is that end point). Spans of length
+        /// zero are skipped, and the neighbors of a span are the nearest points that differ from its ends, so coincident
+        /// points never divide by zero. Points that all coincide return the path unchanged.
         /// </summary>
         internal static QtPath CatmullRom(QtPath path, ReadOnlySpan<Vector2> points, bool closed, float alpha, float tension)
         {
@@ -28,7 +29,7 @@ namespace VL.Qt.Paths
             var a = Math.Clamp((double)alpha, 0, 1);
             if (double.IsNaN(a))
                 a = 0.5;
-            var scale = (1 - (double)tension) / 3;
+            var scale = (1 - (double.IsNaN(tension) ? 0 : Math.Clamp((double)tension, 0, 1))) / 3;
             var spans = closed ? n : n - 1;
 
             path = path.MoveTo(points[0].X, points[0].Y);
@@ -88,14 +89,14 @@ namespace VL.Qt.Paths
         {
             var n = points.Length;
             // Segment k runs between the points k and k + 1, controlled by k − 1 .. k + 2 (Böhm conversion).
-            var start = Third(points[n - 1], points[0], points[1]);
+            var start = PointAtKnot(points[n - 1], points[0], points[1]);
             path = path.MoveTo(start.X, start.Y);
             for (var k = 0; k < n; k++)
             {
                 var p1 = points[k];
                 var p2 = points[(k + 1) % n];
                 var p3 = points[(k + 2) % n];
-                var end = k == n - 1 ? start : Third(p1, p2, p3);
+                var end = k == n - 1 ? start : PointAtKnot(p1, p2, p3);
                 path = path.CubicTo(
                     (2 * p1.X + p2.X) / 3, (2 * p1.Y + p2.Y) / 3,
                     (p1.X + 2 * p2.X) / 3, (p1.Y + 2 * p2.Y) / 3,
@@ -106,7 +107,7 @@ namespace VL.Qt.Paths
         }
 
         // (p0 + 4·p1 + p2) / 6: the point of a uniform cubic B-spline at the knot of p1.
-        private static Vector2 Third(Vector2 p0, Vector2 p1, Vector2 p2) =>
+        private static Vector2 PointAtKnot(Vector2 p0, Vector2 p1, Vector2 p2) =>
             new Vector2((p0.X + 4 * p1.X + p2.X) / 6, (p0.Y + 4 * p1.Y + p2.Y) / 6);
 
         private static QtPath Clamped(QtPath path, ReadOnlySpan<Vector2> points)

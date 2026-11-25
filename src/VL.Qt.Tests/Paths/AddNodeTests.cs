@@ -84,7 +84,7 @@ namespace VL.Qt.Tests.Paths
         public void AddRoundRect_FourCornersWithLines_BoundsAreTheRectangle()
         {
             var path = new AddRoundRectNode().Update(QtPath.Empty, new RectangleF(0, 0, 10, 6), new Vector2(2, 1));
-            Assert.That(Verbs(path), Is.EqualTo(new[] { M, L, C, L, C, L, C, L, C, Z }));
+            Assert.That(Verbs(path), Is.EqualTo(new[] { M, C, L, C, L, C, L, C, L, Z }));
             AssertBounds(path, 0, 0, 10, 6);
         }
 
@@ -199,6 +199,22 @@ namespace VL.Qt.Tests.Paths
             var other = QtPath.Empty.LineTo(6, 7);
             var path = new AddPathNode().Update(input, other, PathAddMode.Extend);
             Assert.That(Verbs(path), Is.EqualTo(new[] { M, L, L }));
+        }
+
+        [Test]
+        public void AddPath_WithoutMove_Extend_CloseReturnsToTheStartOfTheInputContour()
+        {
+            // The appended part has no Move: its Close goes back to the contour of the input, not to (0, 0).
+            var input = QtPath.Empty.MoveTo(10, 10);
+            var other = QtPath.Empty.LineTo(5, 0).LineTo(5, 5).Close();
+            var path = new AddPathNode().Update(input, other, PathAddMode.Extend);
+            Assert.That(path.LastPoint.X, Is.EqualTo(10f));
+            Assert.That(path.LastPoint.Y, Is.EqualTo(10f));
+
+            // A relative node after it starts there.
+            var next = new LineToRelativeNode().Update(path, new Vector2(1, 2));
+            Assert.That(next.LastPoint.X, Is.EqualTo(11f));
+            Assert.That(next.LastPoint.Y, Is.EqualTo(12f));
         }
 
         [Test]
