@@ -21,7 +21,21 @@ namespace {
 
 Q_LOGGING_CATEGORY(lcDevice, "vlqt.device")
 
+bool s_failNextCreation = false; // failNextCreation, main thread
+
 } // namespace
+
+void failNextCreation()
+{
+    s_failNextCreation = true;
+}
+
+bool takeCreationFailure()
+{
+    const bool fail = s_failNextCreation;
+    s_failNextCreation = false;
+    return fail;
+}
 
 bool isOn12Requested()
 {

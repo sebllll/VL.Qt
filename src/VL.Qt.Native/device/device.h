@@ -17,6 +17,11 @@
  * creates a new QRhi on the imported new device. Same QQuickWindow, same HWND, items keep their state. Listeners
  * then re-upload (restored). Test trigger: vlqt_test_device_lost (vlqt_test.h) on the test device (test/test_device.h).
  *
+ * Creation failed (at the start or in a rebuild): checkLost tries again at most once per second and on success does
+ * rebuild's steps for windows and listeners (handOver), while meanwhile windows use devices of their own (kept until
+ * their next loss), images are not uploaded (CPU copies), offscreen scenes report VLQT_ERR_DEVICE_LOST and the log says
+ * so once.
+ *
  * Adapter (QtTexture): the first device goes on the adapter Qt's D3D11 backend would pick. moveTo rebuilds it
  * on another adapter (that of Stride's device) the same way, but only while no on-screen window renders on it
  * (canMove): Qt replaces a window's QRhi only after it noticed a loss, so a window on a healthy device would stay on
@@ -73,7 +78,8 @@ int clampSamples(int requested, int dxgiFormat, QRhi* rhi);
 int windowSwapChainFormat();
 
 // Twice per pump (start and end): releases retired devices, notices a removed shared device (warning with
-// GetDeviceRemovedReason) and rebuilds. Cheap, allocates nothing while the device is fine.
+// GetDeviceRemovedReason) and rebuilds; without a shared device after a failed creation, retries it once per second.
+// Cheap, allocates nothing while the device is fine.
 void checkLost();
 
 // Changes with every new shared device (starts at 1 with the first one, 0 = none yet). Content made on another

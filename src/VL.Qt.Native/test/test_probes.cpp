@@ -220,7 +220,7 @@ VLQT_API unsigned long long vlqt_test_device_luid(void)
 VLQT_API int vlqt_test_device_lost(int mode)
 {
     return guardedGui("vlqt_test_device_lost", [&]() -> int {
-        if (mode != VLQT_DEVICE_LOST_REMOVE && mode != VLQT_DEVICE_LOST_HANG)
+        if (mode != VLQT_DEVICE_LOST_REMOVE && mode != VLQT_DEVICE_LOST_HANG && mode != VLQT_DEVICE_LOST_REMOVE_FAIL_ONCE)
             return fail(VLQT_ERR_BAD_ARGUMENT, "test_device_lost: unknown mode " + std::to_string(mode));
 #ifdef _WIN32
         if (mode == VLQT_DEVICE_LOST_HANG) {
@@ -235,7 +235,10 @@ VLQT_API int vlqt_test_device_lost(int mode)
         // acquire of the scene's shared texture in its batch without a fence, and destroying the old device (releaseRetired)
         // runs it as ID3D12CommandQueue::Wait(nullptr) - an access violation in D3D12Core (T6, 1 in ~10 threaded runs).
         vlqt::render_thread::drainAll();
-        return vlqt::device::test::removeDevice(dev12);
+        const int rc = vlqt::device::test::removeDevice(dev12);
+        if (rc == 0 && mode == VLQT_DEVICE_LOST_REMOVE_FAIL_ONCE)
+            vlqt::device::test::failNextCreation();
+        return rc;
 #else
         return fail(VLQT_ERR_UNSUPPORTED, "test_device_lost: needs Direct3D 11 (Windows)");
 #endif

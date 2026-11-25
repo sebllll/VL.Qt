@@ -40,10 +40,13 @@ enum vlqt_touch {
  *         shared device created through D3D11On12, i.e. VLQT_TEST_D3D11ON12=1 set before the first window/resource;
  *         deterministic, no admin, works on WARP (CI). Qt then sees the loss itself at the next Present.
  * HANG:   real loss by the driver: an endless shader on the shared device, Windows resets the GPU after ~2 s (TDR).
- *         Affects every application on that GPU, manual checks only. */
+ *         Affects every application on that GPU, manual checks only.
+ * REMOVE_FAIL_ONCE: REMOVE, and the next creation of the shared device (the rebuild's) fails once; QtNative retries it
+ *         about a second later (device.h). */
 enum vlqt_device_lost {
     VLQT_DEVICE_LOST_REMOVE = 1,
-    VLQT_DEVICE_LOST_HANG = 2
+    VLQT_DEVICE_LOST_HANG = 2,
+    VLQT_DEVICE_LOST_REMOVE_FAIL_ONCE = 3
 };
 
 /* Resource kind of vlqt_res_create (int) for vlqt_test_res_start; the product kinds are vlqt_resource_kind (protocol.h). */
@@ -107,15 +110,15 @@ VLQT_API int   vlqt_test_perf_spike(vlqt_scene* window, int phase, float ms);
  * demand, overlay state unchanged: a buffer export (vlqt.h). VLQT_ERR_NULL_HANDLE. */
 VLQT_API int   vlqt_test_perf_text(vlqt_scene* window, int page, char* out, int cap, int* written, int* required);
 /* QRhi of the window and its native device (ID3D11Device* on D3D11, else null). Null window = the upload QRhi on the
- * shared device (creates the device if there is none yet). 0, VLQT_ERR_NO_DATA no QRhi (scenegraph not initialized
- * yet, or no shared device). */
+ * shared device (creates the device if no creation was attempted yet; a failed one only the pump retries, device.h).
+ * 0, VLQT_ERR_NO_DATA no QRhi (scenegraph not initialized yet, or no shared device). */
 VLQT_API int   vlqt_test_device_info(vlqt_scene* window, void** device, void** rhi);
 /* LUID of the adapter of the shared device (LowPart | HighPart << 32), 0 if there is none yet (never creates it), on
  * Linux and for another graphics API. For vlqt_test_d3d11_create_device of the testkit (testkit/testkit.h). */
 VLQT_API unsigned long long vlqt_test_device_luid(void);
 /* Makes the shared graphics device lost, mode = vlqt_device_lost. Returns at once; QtNative notices the loss in the
  * next pump and rebuilds device, windows and resources (device.h). 0, VLQT_ERR_UNSUPPORTED not possible (no shared
- * device, REMOVE without VLQT_TEST_D3D11ON12=1, HANG, not D3D11), VLQT_ERR_BAD_ARGUMENT unknown mode. */
+ * device, REMOVE or REMOVE_FAIL_ONCE without VLQT_TEST_D3D11ON12=1, HANG, not D3D11), VLQT_ERR_BAD_ARGUMENT unknown mode. */
 VLQT_API int   vlqt_test_device_lost(int mode);
 /* Content of a Ready image as RGBA8 premultiplied (texture readback): a buffer export (vlqt.h); width/height set
  * also on VLQT_ERR_BUFFER_TOO_SMALL. VLQT_ERR_UNKNOWN_ID, VLQT_ERR_NO_DATA not Ready, VLQT_ERR_INTERNAL readback

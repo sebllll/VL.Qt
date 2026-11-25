@@ -19,6 +19,8 @@ How Qt gets onto the GPU next to Stride: QtNative owns one D3D11 device, Stride 
 ### Device loss
 `device::checkLost` runs twice per pump and notices a removed device (`GetDeviceRemovedReason`). `device::rebuild` then calls the listeners registered with `device::addListener`: `lost` frees every object of the old device, `restored` runs once the new device and upload `QRhi` exist and uploads again. Every window moves to the new device with `setGraphicsDevice`; Qt notices the loss at that window's next `Present` and recreates its `QRhi`. Same `QQuickWindow`, same HWND, items keep their state.
 
+If the device cannot be created (at the start or in a rebuild), `device::checkLost` tries again once per second. Meanwhile windows use devices of their own and keep them until their next loss, images are not uploaded, offscreen scenes report `DEVICE_LOST` (the caller binds again next frame), and the log says so once. Once a device exists, windows without a `QRhi` (offscreen scenes among them) get it and the listeners upload again.
+
 ### Texture output to Stride
 Stride's device is not Qt's device, so a Qt scene reaches Stride as a texture shared between the two devices; this is `QtTexture` in the companion package `VL.Qt.Stride` (Windows only). Qt renders the scene offscreen on the QtNative device into a shared texture, and shared `ID3D11Fence`s order Qt's write and Stride's read on the GPU (no CPU wait). Details and decisions: [render-texture.md](render-texture.md).
 

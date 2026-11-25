@@ -18,7 +18,8 @@ using VL.Qt;
 /// leaves the process handle count where it was. Tasks 1.3/1.4: an offscreen scene bound to a shared texture, rendered
 /// through the fences and read back (<c>qttexture_scene.png</c>); the full matrix is task 1.8. Task 1.5: a WARP texture
 /// moves QtNative's device while nothing renders on it, else gives ADAPTER_MISMATCH; a device loss of QtNative's device
-/// unbinds the scenes and a rebind renders again (needs VLQT_TEST_D3D11ON12=1, set for "-Only qttexture"); a scene
+/// unbinds the scenes and a rebind renders again, also when the device creation after the loss fails once and QtNative
+/// retries it (needs VLQT_TEST_D3D11ON12=1, set for "-Only qttexture"); a scene
 /// keeps a released foreign device alive until unbind. Task 1.8 (QtTextureTest.Render.cs, .Leak.cs): pixels against a window
 /// render, premultiplied alpha, formats, a batch of two scenes, the leak test.
 /// </summary>
@@ -247,6 +248,7 @@ public static partial class QtTextureTest
             NativeTest.vlqt_test_close_handle(freshHandle);
             NativeTest.vlqt_test_com_release(fresh);
             s.Pump(2);
+            DeviceCreationFails(s, a, hw, hwCtx);
         }
 
         // (iii) The owner releases the foreign device while B is bound: the fences keep it alive, unbind frees it.
@@ -271,6 +273,61 @@ public static partial class QtTextureTest
         NativeTest.vlqt_test_com_release(warpTex);
         check(NativeTest.vlqt_test_d3d11_release_device(hw, hwCtx) == 0, "adapter: device on QtNative's adapter freed");
         check(NativeTest.vlqt_test_d3d11_release_device(warp, warpCtx) == 0, "adapter: WARP device freed");
+    }
+
+    // (ii b) A device loss whose rebuild fails once: no QtNative device, bind = DEVICE_LOST, until QtNative retries the
+    // creation (once per second); then scene a (unbound, on QtNative's adapter) binds and renders again.
+    private static void DeviceCreationFails(Scenario s, SceneHandle a, IntPtr hw, IntPtr hwCtx)
+    {
+        const int w = 64, h = 48;
+        const string red = "255,0,0,255";
+        IntPtr QtDevice() => NativeTest.vlqt_test_device_info(SceneHandle.Null, out var d, out _) == 0 ? d : IntPtr.Zero;
+        string Err(int rc) => rc < 0 ? Native.LastError() : "";
+
+        var rc = (int)NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.RemoveFailOnce);
+        if (rc != 0)
+        {
+            s.Info($"device creation fails: skipped ({rc}, needs VLQT_TEST_D3D11ON12=1: -Only qttexture)");
+            return;
+        }
+        NativeTest.vlqt_test_d3d11_create_shared_texture(hw, w, h, B8G8R8A8Typeless, out var fresh, out var freshHandle);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        double noneMs = -1;
+        int lostBinds = 0, otherBinds = 0, otherRc = 0;
+        while (sw.ElapsedMilliseconds < 5000)
+        {
+            s.Pump(1);
+            if (QtDevice() != IntPtr.Zero)
+            {
+                if (noneMs >= 0)
+                    break;
+                continue;
+            }
+            if (noneMs < 0)
+                noneMs = sw.Elapsed.TotalMilliseconds;
+            rc = (int)Native.vlqt_offscreen_bind(a, hw, freshHandle, w, h, B8G8R8A8Unorm, 1, out _);
+            if (rc == (int)Native.Result.DeviceLost)
+                lostBinds++;
+            else
+            {
+                otherBinds++;
+                otherRc = rc;
+            }
+        }
+        var retryMs = sw.Elapsed.TotalMilliseconds;
+        s.Check(noneMs >= 0 && lostBinds > 0 && otherBinds == 0,
+            $"device creation fails: no QtNative device after the loss ({noneMs:F0} ms), bind = DEVICE_LOST meanwhile ({lostBinds} x; other results {otherBinds}, last {otherRc})");
+        // The retry comes about 1 s after the failed creation; a pump or two later on a slow runner.
+        s.Check(QtDevice() != IntPtr.Zero && retryMs < 2500, $"device creation fails: QtNative device created again after {retryMs:F0} ms ({QtDevice():X})");
+        rc = (int)Native.vlqt_offscreen_bind(a, hw, freshHandle, w, h, B8G8R8A8Unorm, 1, out _);
+        s.Check(rc == 0, $"device creation fails: bind A after the retry ({rc}) {Err(rc)}");
+        rc = Native.OffscreenRenderBatch(hwCtx, new[] { a }, 0);
+        s.Check(rc == 1 && Centre(fresh, w, h) == red, $"device creation fails: A renders again (rc {rc}, centre {Centre(fresh, w, h)}) {Err(rc)}");
+        s.Info($"device creation fails: no device for {retryMs - Math.Max(noneMs, 0):F0} ms, {lostBinds} bind(s) DEVICE_LOST");
+        Native.vlqt_offscreen_unbind(a);
+        NativeTest.vlqt_test_close_handle(freshHandle);
+        NativeTest.vlqt_test_com_release(fresh);
+        s.Pump(2);
     }
 
     // Task 1.3/1.4: a scene bound to a B8G8R8A8_TYPELESS texture of the test device, one render through the fences,
