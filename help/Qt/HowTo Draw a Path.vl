@@ -136,7 +136,7 @@
             <Pin Id="tziN7P5ndDeozYOcKKUjOs" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="nDO2Ps1UYKfS83DzOE1qZA" Name="Path" Kind="InputPin" />
             <Pin Id="YN4kEReO60aowxG79Hf9ri" Name="Transform" Kind="InputPin" />
-            <Pin Id="IvbmAgJxYTgUfFIHadIqws" Name="Fill" Kind="InputPin" />
+            <Pin Id="IvbmAgJxYTgUfFIHadIqws" Name="Fill Color" Kind="InputPin" />
             <Pin Id="P9Tsox80A2TEoRolGXzemh" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="BbLEsMZMetY0acvLOufhfi" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="PqoOs06mucqrf1UK7cSMBt" Name="Output" Kind="OutputPin" />
@@ -238,7 +238,7 @@
             <Pin Id="qB29rs9lU1kU9pqMgKFrXH" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Tr47pHsqveeIRbs4YBVb5e" Name="Path" Kind="InputPin" />
             <Pin Id="nk6PCdkTQjasDzd6UjFYwc" Name="Transform" Kind="InputPin" />
-            <Pin Id="FZfft8C3WIfjgh228TQxPV" Name="Fill" Kind="InputPin" />
+            <Pin Id="FZfft8C3WIfjgh228TQxPV" Name="Fill Color" Kind="InputPin" />
             <Pin Id="uoZGEbrgzqXGOazhbroOw1" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="qCrIPw1DhGKztK890jixIZ" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="5SpNaZsvBS5SjSUzyFJBWv" Name="Output" Kind="OutputPin" />
@@ -325,7 +325,7 @@
             <Pin Id="9E0Ap7tnbRcKVg8sx7IOVI" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="6RdzgNZypVcf95DAqWtMwM" Name="Path" Kind="InputPin" />
             <Pin Id="WJKJs3vlPs692nPMCe0uxb" Name="Transform" Kind="InputPin" />
-            <Pin Id="U0URR1zUwiustMz5c2m1RA" Name="Fill" Kind="InputPin" />
+            <Pin Id="U0URR1zUwiustMz5c2m1RA" Name="Fill Color" Kind="InputPin" />
             <Pin Id="AZhFqb2LnHd1yyOpwZtftM" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="TJGBiVQHedXxLOJKjVqseF" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="0AdIjIaOi6gzkcEv3hdDZX" Name="Output" Kind="OutputPin" />
@@ -417,7 +417,7 @@
             <Pin Id="Vrb0yax1aVMvMa3IKxpKw4" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="d3AWk6FE6VoDegArfTRGwY" Name="Path" Kind="InputPin" />
             <Pin Id="iQgpcfjg9IrvWzqTzllTMh" Name="Transform" Kind="InputPin" />
-            <Pin Id="U2MQEEaNlGFAkQpEuN4w8z" Name="Fill" Kind="InputPin" />
+            <Pin Id="U2MQEEaNlGFAkQpEuN4w8z" Name="Fill Color" Kind="InputPin" />
             <Pin Id="MEYfr4jFm0hoRkUFj3WaWk" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="5QlHnQvmSfoVFQ4ir4Zplv" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="GTWB6oI72DfybSBtuS7ivG" Name="Output" Kind="OutputPin" />

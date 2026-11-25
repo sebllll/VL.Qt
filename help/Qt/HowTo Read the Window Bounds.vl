@@ -66,7 +66,7 @@
             <Pin Id="b3Sh9kuWLCcrYnXMlpaQIB" Name="Size" Kind="InputPin" />
             <Pin Id="giq8WJfGkIREdjj8DfDqh1" Name="Transform" Kind="InputPin" />
             <Pin Id="Iy87I94fJLKMRsEjOKcZyL" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="8a2A1VbarPnZGNcbLnkWYw" Name="Color" Kind="InputPin" />
+            <Pin Id="8a2A1VbarPnZGNcbLnkWYw" Name="Fill Color" Kind="InputPin" />
             <Pin Id="PhcCN4nPKEop6NZt7sBdeA" Name="Radius" Kind="InputPin" />
             <Pin Id="cICA2llS931GbgCtFBipWA" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="A4N0mQ51qB811e7jTvT9UX" Name="Stroke Width" Kind="InputPin" />

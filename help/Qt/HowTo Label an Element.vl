@@ -59,7 +59,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Slider" />
+              <Choice Kind="ProcessAppFlag" Name="Slider (Float)" />
             </p:NodeReference>
             <Pin Id="pwHZSTkXm5Np5plIjCEXX0" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="M0qe983wFKZOk9j9WfORh1" Name="Size" Kind="InputPin" />
@@ -240,7 +240,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="TextInput" />
+              <Choice Kind="ProcessAppFlag" Name="Input (String)" />
             </p:NodeReference>
             <Pin Id="yo6S6x2WWdDHIPSFebeV5V" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="MBYn50jsgPQLXFSIG8RlDS" Name="Size" Kind="InputPin" />

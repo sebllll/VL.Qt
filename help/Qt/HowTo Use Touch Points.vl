@@ -42,7 +42,7 @@
             <p:NodeReference LastCategoryFullName="Qt.Interaction" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Interaction" />
-              <Choice Kind="ProcessAppFlag" Name="Touch Points" />
+              <Choice Kind="ProcessAppFlag" Name="TouchPoints" />
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="9HdWI7jKOSJnBMKZJHDvrl" Name="Node Context" Kind="InputPin" IsHidden="true" />
@@ -66,7 +66,7 @@
             <Pin Id="9ZdTAdlWkit9t3DlopIbXd" Name="Size" Kind="InputPin" DefaultValue="10, 7" />
             <Pin Id="Y2V6NPYmUxuNViz0Hq64SA" Name="Transform" Kind="InputPin" />
             <Pin Id="c6avaAAsaeyVxLlf83HDsb" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="czYhQbZFcZfQSNSXIL4A8R" Name="Color" Kind="InputPin" DefaultValue="0.18, 0.2, 0.26, 1" />
+            <Pin Id="czYhQbZFcZfQSNSXIL4A8R" Name="Fill Color" Kind="InputPin" DefaultValue="0.18, 0.2, 0.26, 1" />
             <Pin Id="uvTMrmfNUwqAGULjS9187h" Name="Radius" Kind="InputPin" />
             <Pin Id="rnEDlENF8W9aUtLsRj8cYz" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="bBtd2JMJWpuIev4nkBU7i4" Name="Stroke Width" Kind="InputPin" />
@@ -120,7 +120,7 @@
                 <Pin Id="jqDRu7Pz8Ga2dWYlWVaQV0" Name="Radius" Kind="InputPin" DefaultValue="0.45" />
                 <Pin Id="r5rnKOpls818bnA3iJwokL" Name="Transform" Kind="InputPin" />
                 <Pin Id="JOOAdvfrXUPj0EIchklmYE" Name="Anchor" Kind="InputPin" />
-                <Pin Id="JdwW9VTSYojA1J1vchFQJc" Name="Color" Kind="InputPin" DefaultValue="1, 0.5, 0, 1" />
+                <Pin Id="JdwW9VTSYojA1J1vchFQJc" Name="Fill Color" Kind="InputPin" DefaultValue="1, 0.5, 0, 1" />
                 <Pin Id="pQkoezemLVb3t5hCKbuhmk" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
                 <Pin Id="4kjoMKyAvUUn8T1S93aARB" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
                 <Pin Id="pPhXRI5QkZL2srlh19m4mj" Name="Opacity" Kind="InputPin" IsHidden="true" />

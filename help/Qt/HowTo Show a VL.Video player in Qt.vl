@@ -94,7 +94,7 @@
             <Pin Id="wecYETY3sQQFQ4cyRs3l4R" Name="Input" Kind="InputPin" />
             <Pin Id="zBuYBF6anAYGIOfAUu87jB" Name="Fallback" Kind="InputPin" />
             <Pin Id="NJU7mLYyequCWu3bm1YKOY" Name="Prefer Push" Kind="InputPin" DefaultValue="True" />
-            <Pin Id="U9J9W8E9UNdt1qTYcuUMJv" Name="Output" Kind="OutputPin" />
+            <Pin Id="U9J9W8E9UNdt1qTYcuUMJv" Name="Image" Kind="OutputPin" />
             <Pin Id="8crCotBD7ZZjzWBrKWyV9S" Name="Error" Kind="OutputPin" />
           </Node>
           <Pad Id="cb5QvahEvmAEn2jkyKRART" Comment="Position" Bounds="197,200,35,28" ShowValueBox="true" isIOBox="true" Value="0.5, 0.5">

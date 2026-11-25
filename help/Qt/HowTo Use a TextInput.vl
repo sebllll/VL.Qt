@@ -22,7 +22,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="TextInput" />
+              <Choice Kind="ProcessAppFlag" Name="Input (String)" />
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="SspaOmGLhrawEO6gN1fucL" Name="Node Context" Kind="InputPin" IsHidden="true" />
@@ -85,7 +85,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="TextInput" />
+              <Choice Kind="ProcessAppFlag" Name="Input (String)" />
             </p:NodeReference>
             <Pin Id="PyhNhvtD3C93ldTcun5mLg" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="oUQOdTG6JOT9fswxBZreJ2" Name="Size" Kind="InputPin" />
@@ -129,7 +129,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="TextInput" />
+              <Choice Kind="ProcessAppFlag" Name="Input (String)" />
             </p:NodeReference>
             <Pin Id="ygInYzkXYogOHisjvygb25" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="W7YXGeQ3aty6KTzRLL277i" Name="Size" Kind="InputPin" />

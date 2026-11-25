@@ -47,7 +47,7 @@
             <Pin Id="SoG8GLaomdsL0kYHzd46Ei" Name="Size" Kind="InputPin" DefaultValue="3.2, 1.6" />
             <Pin Id="EmDORm1t5EILpvYNvZ6I3D" Name="Transform" Kind="InputPin" />
             <Pin Id="UmpQcWjvWIEQRCoHVNn6Kl" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="LXsK6MuS5MpOzrhzP0saS7" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
+            <Pin Id="LXsK6MuS5MpOzrhzP0saS7" Name="Fill Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
             <Pin Id="Sc7yFfYSbjWN3CExVUlCWE" Name="Radius" Kind="InputPin" DefaultValue="0.3" />
             <Pin Id="M1dnp0JJshVPWOYIurLqfW" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="CRJeh5d1nmpNTDznDdAJTb" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -125,7 +125,7 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="IKY3EQZ3nqnOm0cruJCNx6" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Hr4a32GnrWkOIoXONeuV8B" Name="Element" Kind="InputPin" />
+            <Pin Id="Hr4a32GnrWkOIoXONeuV8B" Name="Input" Kind="InputPin" />
             <Pin Id="Aw6zsgrkaHdL8Xvk0oR69a" Name="File Path" Kind="InputPin" />
             <Pin Id="KDVOrCogz74Nstc1muGvs4" Name="Scale" Kind="InputPin" DefaultValue="1" />
             <Pin Id="Hv99VO1JYs3Nz46h6eNMCN" Name="Quality" Kind="InputPin" DefaultValue="90" IsHidden="true" />
@@ -173,7 +173,7 @@
               <Choice Kind="ProcessAppFlag" Name="Snapshot" />
             </p:NodeReference>
             <Pin Id="DEWhai7N8JiLMwt0NoHNGe" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="RAH77bMmm2mPyzWl0TZCFf" Name="Element" Kind="InputPin" />
+            <Pin Id="RAH77bMmm2mPyzWl0TZCFf" Name="Input" Kind="InputPin" />
             <Pin Id="TQGYyIsRrYSOdXBkRhkuxR" Name="Scale" Kind="InputPin" DefaultValue="1" />
             <Pin Id="Fd4AemNkupqNVmvabDA12q" Name="Grab" Kind="InputPin" />
             <Pin Id="RnZjwDs9JI3LOrIYKCBrGn" Name="Image" Kind="OutputPin" />

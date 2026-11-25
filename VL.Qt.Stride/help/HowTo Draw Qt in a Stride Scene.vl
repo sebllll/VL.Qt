@@ -62,7 +62,7 @@
             <Pin Id="GnaCCvY3S0APAIXBq7SiQK" Name="Size" Kind="InputPin" DefaultValue="3.4, 2.4" />
             <Pin Id="Hk6gZ3Id6iyQV77KVVPrBk" Name="Transform" Kind="InputPin" />
             <Pin Id="KvXLQHeg21YMlpuK6brFMu" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="N0hwVwa0a8VPy1F3Qk0Ukj" Name="Color" Kind="InputPin" DefaultValue="1, 0, 0, 0.5" />
+            <Pin Id="N0hwVwa0a8VPy1F3Qk0Ukj" Name="Fill Color" Kind="InputPin" DefaultValue="1, 0, 0, 0.5" />
             <Pin Id="KTuuVYzvKlxPfQ6hlZroTS" Name="Output" Kind="OutputPin" />
             <Pin Id="J08YeFEAQciNJlAdEaeKUx" Name="Radius" Kind="InputPin" IsHidden="true" />
             <Pin Id="TMzwh1ZTGTDOyrBxMJUOuu" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
@@ -106,7 +106,7 @@
             <Pin Id="QtD9p6EfdlTLWB0jtahPOu" Name="Size" Kind="InputPin" DefaultValue="3.4, 2.4" />
             <Pin Id="VLPFhOU7jR3NFqmk3xyjlk" Name="Transform" Kind="InputPin" />
             <Pin Id="PNfx4pl94XLOSYWGWhF6JJ" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="LPh7irIVvIrQLlEWcNDp81" Name="Color" Kind="InputPin" DefaultValue="0, 0, 1, 0.5" />
+            <Pin Id="LPh7irIVvIrQLlEWcNDp81" Name="Fill Color" Kind="InputPin" DefaultValue="0, 0, 1, 0.5" />
             <Pin Id="MmSF8DwpTI5OQ8Z1BOOpAD" Name="Output" Kind="OutputPin" />
             <Pin Id="Ie3s7QII1izL1c2m75u75G" Name="Radius" Kind="InputPin" IsHidden="true" />
             <Pin Id="OVVyqwKOwHlLcCIaDHz8Yd" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
@@ -252,7 +252,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Slider" />
+              <Choice Kind="ProcessAppFlag" Name="Slider (Float)" />
             </p:NodeReference>
             <Pin Id="AsWBu3dhlT5PryVQ87jOtm" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="EQnbYcen1seOLhdiJUR6Kf" Name="Size" Kind="InputPin" DefaultValue="3.5, 0.4" />

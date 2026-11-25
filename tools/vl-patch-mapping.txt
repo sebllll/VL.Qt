@@ -64,3 +64,17 @@ W4-97 | pin | Qt.Elements/Group (Spectral)  | Children | Input
 W4-97 | pin | Qt.Elements/Row (Spectral)    | Children | Input
 W4-97 | pin | Qt.Elements/Column (Spectral) | Children | Input
 W4-97 | pin | Qt.Elements/Labeled           | Element  | Input
+
+# W4-98: the catalog names. The fill color of the four shapes is Fill Color; the widgets after VL.ImGui (Input (String),
+# Slider (Float)); TouchPoints without a space; the main input of Snapshot and FileWriter (Element) is Input; the output
+# of VideoSourceToQtImage is Image like at ToQtImage and LoadImage.
+W4-98 | pin  | Rectangle                        | Color   | Fill Color
+W4-98 | pin  | Circle                           | Color   | Fill Color
+W4-98 | pin  | Polygon                          | Fill    | Fill Color
+W4-98 | pin  | Path                             | Fill    | Fill Color
+W4-98 | node | Qt.Widgets                        | TextInput    | Input (String)
+W4-98 | node | Qt.Widgets                        | Slider       | Slider (Float)
+W4-98 | node | Qt.Interaction                    | Touch Points | TouchPoints
+W4-98 | pin  | Snapshot                         | Element | Input
+W4-98 | pin  | FileWriter (Element)             | Element | Input
+W4-98 | pin  | VideoSourceToQtImage             | Output  | Image

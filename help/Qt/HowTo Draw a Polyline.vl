@@ -25,7 +25,7 @@
               <Pin Id="KYI5jvgrg3amCoR48lqfjZ" Name="Radius" Kind="InputPin" />
               <Pin Id="XEJOOO428eg8Rb2vV1rLH5" Name="Transform" Kind="InputPin" />
               <Pin Id="VXyPiUBu21Rcauum9dMLKj" Name="Anchor" Kind="InputPin" IsHidden="true" />
-              <Pin Id="H4AZpsFGDih37pWw43qxor" Name="Color" Kind="InputPin" />
+              <Pin Id="H4AZpsFGDih37pWw43qxor" Name="Fill Color" Kind="InputPin" />
               <Pin Id="7zXAXA7LWYcnTAnxfMHSu1" Name="Output" Kind="OutputPin" />
               <Pin Id="8ZPoBqJDTfU13lj6v5Pck4" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
               <Pin Id="PxTp77ezv34IYuKCgAQ4N8" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
