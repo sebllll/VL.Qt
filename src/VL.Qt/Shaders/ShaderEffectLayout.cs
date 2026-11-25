@@ -61,6 +61,7 @@ namespace VL.Qt.Shaders
             var annotations = source.FragmentAnnotations;
             foreach (var e in annotations.Errors)
                 errors.Add(e.ToString());
+            ShaderLayout.AddKeptError(source, errors, warnings);
             if (!hasInput && source.FragmentSource.Length > 0 && compiled)
                 errors.Add("the shader has no 'uniform sampler2D source' (any more), it is not a filter and cannot be a link of the effect chain");
 

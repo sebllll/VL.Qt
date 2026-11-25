@@ -228,6 +228,86 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
             Assert.That(description.Fragmented, Is.False);
         }
 
+        // --- keep the last good pins ---
+
+        [Test]
+        public void SourceCache_CompileErrorAfterGoodVersion_KeepsLastGoodPinsAndSource()
+        {
+            var path = Write("Glitch.frag", fragmentSource);
+            var file = new ShaderFile(path, null, "Glitch", null, ShaderNodeFactory.DefaultCategory, null, null, IsFilter: true);
+            var broken = false;
+            var cache = new ShaderSourceCache(NullLogger.Instance, (_, _) => ShaderReflection.Parse(broken ? "error\nfragment code, line 9: 'amount' : syntax error\n" : reflection));
+
+            var good = ShaderLayout.From(cache.Get(file), file);
+            var goodEffect = ShaderEffectLayout.From(cache.Get(file), file);
+            Assert.That(good.Pins, Is.Not.Empty);
+
+            broken = true;
+            File.WriteAllText(path, fragmentSource + "// typo\n");
+            File.SetLastWriteTimeUtc(path, File.GetLastWriteTimeUtc(path).AddSeconds(2));
+            var element = ShaderLayout.From(cache.Get(file), file);
+            var effect = ShaderEffectLayout.From(cache.Get(file), file);
+
+            Assert.That(element.Pins, Is.EqualTo(good.Pins));
+            Assert.That(effect.Pins, Is.EqualTo(goodEffect.Pins));
+            Assert.That(element.FragmentSource, Is.EqualTo(good.FragmentSource), "the instance keeps drawing the last good source");
+            Assert.That(element.HasInput, Is.EqualTo(good.HasInput));
+            foreach (var messages in new[] { element.Messages, effect.Messages })
+            {
+                Assert.That(messages.Single(m => m.Type == MessageType.Error).Text, Does.Contain("line 9"));
+                Assert.That(messages.Select(m => m.Text), Does.Contain(VL.Qt.NodeFactories.LastGood<ShaderSource>.KeptNote));
+            }
+            Assert.That(effect.Padding, Is.EqualTo(goodEffect.Padding));
+        }
+
+        [Test]
+        public void SourceCache_FixedAfterCompileError_ShowsTheNewVersionWithoutErrors()
+        {
+            var path = Write("Glitch.frag", fragmentSource);
+            var file = new ShaderFile(path, null, "Glitch", null, ShaderNodeFactory.DefaultCategory, null, null);
+            var broken = false;
+            var cache = new ShaderSourceCache(NullLogger.Instance, (_, _) => ShaderReflection.Parse(broken ? "error: syntax error\n" : reflection));
+            cache.Get(file);
+
+            broken = true;
+            File.SetLastWriteTimeUtc(path, File.GetLastWriteTimeUtc(path).AddSeconds(2));
+            Assert.That(ShaderLayout.From(cache.Get(file), file).Messages, Is.Not.Empty);
+
+            broken = false;
+            File.SetLastWriteTimeUtc(path, File.GetLastWriteTimeUtc(path).AddSeconds(4));
+            var fixedLayout = ShaderLayout.From(cache.Get(file), file);
+            Assert.That(fixedLayout.Messages.Where(m => m.Type == MessageType.Error), Is.Empty);
+            Assert.That(fixedLayout.Pins, Is.Not.Empty);
+        }
+
+        [Test]
+        public void SourceCache_UnreadableFileAfterGoodVersion_KeepsLastGoodPins()
+        {
+            var path = Write("Glitch.frag", fragmentSource);
+            var file = new ShaderFile(path, null, "Glitch", null, ShaderNodeFactory.DefaultCategory, null, null);
+            var cache = new ShaderSourceCache(NullLogger.Instance, (_, _) => ShaderReflection.Parse(reflection));
+            var good = ShaderLayout.From(cache.Get(file), file);
+
+            // A new version (last-write time) that is locked by the editor that saves it.
+            File.SetLastWriteTimeUtc(path, File.GetLastWriteTimeUtc(path).AddSeconds(2));
+            using var locked = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            var kept = ShaderLayout.From(cache.Get(file), file);
+
+            Assert.That(kept.Pins, Is.EqualTo(good.Pins));
+            Assert.That(kept.Messages.Single(m => m.Type == MessageType.Error).Text, Does.Contain("Could not read"));
+        }
+
+        [Test]
+        public void SourceCache_CompileErrorWithoutGoodVersion_IsTheCurrentBehaviour()
+        {
+            var path = Write("Glitch.frag", fragmentSource);
+            var file = new ShaderFile(path, null, "Glitch", null, ShaderNodeFactory.DefaultCategory, null, null);
+            var cache = new ShaderSourceCache(NullLogger.Instance, (_, _) => ShaderReflection.Parse("error: syntax error\n"));
+            var layout = ShaderLayout.From(cache.Get(file), file);
+            Assert.That(layout.Pins, Is.Empty);
+            Assert.That(layout.Messages.Select(m => m.Text), Does.Not.Contain(VL.Qt.NodeFactories.LastGood<ShaderSource>.KeptNote));
+        }
+
         // --- source cache ---
 
         [Test]

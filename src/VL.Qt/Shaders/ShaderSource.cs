@@ -16,13 +16,18 @@ namespace VL.Qt.Shaders
     /// <param name="VertexAnnotations">Annotations of the .vert, null without .vert.</param>
     /// <param name="PinModel">Pins and messages from the reflection; empty with an error if the reflection failed or the file is not readable.</param>
     /// <param name="ReadError">Why the files could not be read, null if they were.</param>
+    /// <param name="KeptError">
+    /// Set when the file now fails (read or compile error) and the rest of the record is its last good version
+    /// (<see cref="NodeFactories.LastGood{T}"/>): the error of the new version.
+    /// </param>
     internal sealed record ShaderSource(
         string FragmentSource,
         string? VertexSource,
         ShaderAnnotations FragmentAnnotations,
         ShaderAnnotations? VertexAnnotations,
         ShaderPinModel PinModel,
-        string? ReadError)
+        string? ReadError,
+        string? KeptError = null)
     {
         // Used only when the shader does not compile: keeps the Input pin (and its link) through a typo.
         private static readonly Regex s_sourceSampler = new(@"\buniform\s+sampler2D\s+source\b", RegexOptions.CultureInvariant);
@@ -49,6 +54,9 @@ namespace VL.Qt.Shaders
         public bool HasInput => PinModel.Error.Length > 0
             ? s_sourceSampler.IsMatch(FragmentSource) || (VertexSource != null && s_sourceSampler.IsMatch(VertexSource))
             : PinModel.HasInput;
+
+        /// <summary>True if the files could not be read or the shader did not compile or reflect.</summary>
+        public bool Failed => ReadError != null || PinModel.Error.Length > 0;
 
         /// <summary>
         /// Reads, annotates and reflects (<paramref name="reflect"/>, normally <see cref="ShaderReflection.Reflect"/>) the files of

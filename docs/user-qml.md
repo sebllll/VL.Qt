@@ -184,7 +184,7 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 
 ### Errors
 
-- A file that does **not parse** (no root object, unbalanced braces, unterminated string or comment) still gets a node with the common pins, its head tags and the parser messages, so a typo does not drop the node and its links. It gets no property or signal pins until it parses again.
+- A file that does **not parse** (no root object, unbalanced braces, unterminated string or comment) or cannot be read (locked by the editor that saves it) keeps the pins of its last version that did, so a typo does not drop the node, its links and its values; the error shows at the node and in the log. Without an earlier good version the node has the common pins, its head tags and the parser messages, and no property or signal pins until the file parses.
 - A sibling root type that does not parse or cannot be read is **not** an error of the file: the message is a warning (with the sibling's file name) and its declarations are missing.
 - Parser messages show as messages at the node: errors, then warnings, then one info for the declarations without a pin. The same lines go to the vvvv log.
 - Compile, load and type errors of the QML itself, and values that could not be set, show at the node (warning, the message as tooltip) and in the vvvv log, as at `QmlElement`.
