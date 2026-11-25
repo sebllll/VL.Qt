@@ -34,10 +34,8 @@ namespace VL.Qt.Stride
         private MultisampleCount _samples;
         private string _textureError = "", _batchError = "";
         // _created: the texture state matches the inputs seen last (also when it is an error); _hasContent: the scene was
-        // bound to the current texture once, so it holds content; _lastBindCode: result of the last Bind.
-        private bool _created, _hasContent, _scheduled, _enabled, _debug, _disposed;
-        private Native.Result _lastBindCode;
-        private int _rebindWait;
+        // bound to the current texture once, so it holds content; 
+        private bool _created, _hasContent, _scheduled, _enabled, _disposed;
         private const string SamplesPhase = "Multisample Count";
         private const string BuildPhase = "Build";
         private const string SceneErrorPhase = "Scene";
@@ -97,9 +95,10 @@ namespace VL.Qt.Stride
         public void Update(IElement? input, Int2 size, PixelFormat format, Space space, Color4 clearColor, bool clear, bool enabled, bool debug, MultisampleCount samples)
         {
             _enabled = enabled;
-            // The previous frame had no draw (game not drawing): send its commands now, so they do not pile up.
+            // The previous frame had no draw (game not drawing): send its commands now, so they do not pile up. The scene
+            // stays in the batch of QtTextureRenderer (_scheduled stays true) until the draw takes it out.
             if (_scheduled)
-                ApplyCommands();
+                Apply();
 
             // Input acts on the items of the last apply, before this frame's update and before the render in DrawStarted;
             // a disabled (frozen) scene takes no input.
@@ -112,11 +111,7 @@ namespace VL.Qt.Stride
             if (enabled)
                 EnsureTexture(size, format, samples);
 
-            if (debug != _debug && _scene.IsOpen)
-            {
-                _debug = debug;
-                Native.vlqt_scene_set_debug(_scene.Handle, debug ? 1 : 0);
-            }
+            _scene.Debug = debug;
             // Qt does not premultiply the clear colour itself (render-texture.md, task 1.8).
             var premultiplied = new Color4(clearColor.R * clearColor.A, clearColor.G * clearColor.A, clearColor.B * clearColor.A, clearColor.A);
             _scene.Update(_element.Update(input), space, premultiplied, clear, enabled);
@@ -126,7 +121,7 @@ namespace VL.Qt.Stride
             else
                 _errors.Clear(BuildPhase);
 
-            if (enabled && _texture is not null)
+            if (enabled && _texture is not null && !_scheduled)
             {
                 _renderer.Schedule(this);
                 _scheduled = true;
@@ -199,32 +194,30 @@ namespace VL.Qt.Stride
         }
 
         // QtNative unbinds a scene when its device is lost (the Stride texture itself is fine): bind again with a new handle.
-        // Right away after a loss (the last bind was fine) and while QtNative rebuilds its device (DeviceLost); other failures
-        // (adapter, open, fences) are structural and tried again only now and then, so a failing bind costs nothing per frame.
+        // OffscreenScene.ShouldRetryBind decides when (right away after a loss, now and then after a structural failure).
         private void RebindIfUnbound()
         {
             if (_scene.IsBound)
                 return;
-            if (_lastBindCode is Native.Result.Ok or Native.Result.DeviceLost || ++_rebindWait >= 60)
+            if (_scene.ShouldRetryBind())
                 TryBind();
         }
 
         private void TryBind()
         {
-            _rebindWait = 0;
             try
             {
                 var handle = StrideInterop.CreateNtHandle(_texture!);
                 try
                 {
-                    _lastBindCode = _scene.Bind(StrideInterop.GetNativeDevice(_device!), handle, _size, (int)_format, _samples);
+                    _scene.Bind(StrideInterop.GetNativeDevice(_device!), handle, _size, (int)_format, _samples);
                 }
                 finally
                 {
                     // QtNative holds its own reference to the opened texture.
                     StrideInterop.CloseHandle(handle);
                 }
-                _hasContent |= _lastBindCode == Native.Result.Ok;
+                _hasContent |= _scene.LastBindSucceeded;
                 ReportSamples();
             }
             catch (Exception e)
@@ -250,24 +243,30 @@ namespace VL.Qt.Stride
             _texture?.Dispose();
             _texture = null;
             _hasContent = false;
-            _lastBindCode = Native.Result.Ok;
             _batchError = "";
         }
 
         // The count QtNative used is lower than requested (device limit): warning at the node until the next bind fits.
         private void ReportSamples()
         {
-            var warning = _lastBindCode == Native.Result.Ok ? Multisample.ClampWarning(_samples, _scene.UsedSamples) : null;
+            var warning = _scene.LastBindSucceeded ? Multisample.ClampWarning(_samples, _scene.UsedSamples) : null;
             if (warning is not null)
                 _errors.Warn(warning, SamplesPhase);
             else
                 _errors.Clear(SamplesPhase);
         }
 
-        // Called by QtTextureRenderer at the start of the draw, before the batch: sends this frame's commands to QtNative.
+        // Called by QtTextureRenderer at the start of the draw, before the batch: sends this frame's commands to the native scene.
+        // The batch takes the scene out of its list, so the next Update schedules it again.
         internal SceneHandle ApplyCommands()
         {
             _scheduled = false;
+            Apply();
+            return _scene.Handle;
+        }
+
+        private void Apply()
+        {
             try
             {
                 _scene.ApplyCommands();
@@ -277,7 +276,6 @@ namespace VL.Qt.Stride
             {
                 _errors.Report(e, nameof(ApplyCommands));
             }
-            return _scene.Handle;
         }
 
         // Called by QtTextureRenderer after the batch: its error (empty if ok) and the events of the scene.

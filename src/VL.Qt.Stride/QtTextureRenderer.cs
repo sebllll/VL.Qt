@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Stride.Games;
@@ -9,7 +8,6 @@ using VL.Core;
 using VL.Lib.Animation;
 using VL.Qt.Interop;
 using VL.Stride.Games;
-using VL.Qt.Wire;
 using IServiceRegistry = global::Stride.Core.IServiceRegistry;
 
 namespace VL.Qt.Stride
@@ -73,10 +71,10 @@ namespace VL.Qt.Stride
         /// <summary>Stride's graphics device, null before the game has one (or after it was disposed).</summary>
         public GraphicsDevice? GraphicsDevice => _game.GraphicsDevice;
 
-        /// <summary>Renders <paramref name="scene"/> at the start of the next draw (once, however often it is called).</summary>
+        /// <summary>Renders <paramref name="scene"/> at the start of the next draw. The scene calls it once until the draw has taken it out (its flag).</summary>
         public void Schedule(SharedTextureScene scene)
         {
-            if (!_disposed && !_scheduled.Contains(scene))
+            if (!_disposed)
                 _scheduled.Add(scene);
         }
 
@@ -87,11 +85,6 @@ namespace VL.Qt.Stride
 
         private void OnDrawStarted()
         {
-            // Task 3.4 (frame order): the Qt pump (GetFrameFinished) has already run in this frame if the driver time it set
-            // is not behind this frame's clock. Expected: false (draw start comes first).
-            if (_logger.IsEnabled(LogLevel.Debug))
-                _logger.LogDebug("QtTexture: draw start at {Timestamp}, clock {Seconds:F4} s, pump driver {Driver:F4} s, pump already ran {PumpFirst}, {Count} scheduled",
-                    Stopwatch.GetTimestamp(), _clock.Time.Seconds, _app.DriverSeconds, _app.DriverSeconds >= _clock.Time.Seconds, _scheduled.Count);
             if (_disposed || _scheduled.Count == 0)
                 return;
 
@@ -105,10 +98,7 @@ namespace VL.Qt.Stride
 
                 var device = _game.GraphicsDevice;
                 var context = device is null ? IntPtr.Zero : StrideInterop.GetNativeImmediateContext(device);
-                var rc = context == IntPtr.Zero
-                    ? (int)Native.Result.BadArgument
-                    : OffscreenScene.RenderBatch(context, new ReadOnlySpan<SceneHandle>(_batch, 0, count), DriverSeconds());
-                var batchError = rc < 0 ? OffscreenScene.Describe((Native.Result)rc) : "";
+                var batchError = OffscreenScene.RenderBatchError(context, new ReadOnlySpan<SceneHandle>(_batch, 0, count), DriverSeconds());
                 for (int i = 0; i < count; i++)
                     _scheduled[i].AfterRender(batchError);
             }
@@ -125,7 +115,7 @@ namespace VL.Qt.Stride
 
         // The process-wide animation driver must never run backwards (QtApp.PumpFrame): the frame time of this
         // app, or the time the pump already set if that is later (pump offset after an app restart). With the pump at
-        // GetFrameFinished after the draw start this is the current frame's time; the order is task 3.4 of #116.
+        // GetFrameFinished after the draw start this is the current frame's time.
         private double DriverSeconds()
         {
             var seconds = _clock.Time.Seconds;

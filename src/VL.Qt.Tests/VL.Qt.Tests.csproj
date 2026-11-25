@@ -35,7 +35,6 @@
        the package Stride (no native code). -->
   <ItemGroup>
     <PackageReference Include="Stride" Version="$(StrideMathematicsVersion)" />
-    <Compile Include="..\VL.Qt.Stride\NotificationQueue.cs" Link="Stride\NotificationQueue.cs" />
     <Compile Include="..\VL.Qt.Stride\TextureFormats.cs" Link="Stride\TextureFormats.cs" />
     <Compile Include="..\VL.Qt.Stride\LayerComposition.cs" Link="Stride\LayerComposition.cs" />
     <Compile Include="..\VL.Qt.Stride\TexturePixelMapping.cs" Link="Stride\TexturePixelMapping.cs" />

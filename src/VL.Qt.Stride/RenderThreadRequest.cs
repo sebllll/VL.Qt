@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using VL.Qt.Interop;
 
 namespace VL.Qt.Stride
 {
@@ -8,7 +7,7 @@ namespace VL.Qt.Stride
     /// The value of the pin Render Threads of one QtTexture or QtRenderer. QtNative has one pool of render threads per
     /// process: its size is the largest value of all live nodes, so 0 (main-thread mode) applies only when every node asks
     /// for it. QtNative applies a change to the scenes created afterwards; a larger value adds threads at once
-    /// (vlqt_offscreen_set_render_threads). Main thread only, after the Qt app started.
+    /// (OffscreenScene.SetRenderThreads). Main thread only, after the Qt app started.
     /// </summary>
     internal sealed class RenderThreadRequest : IDisposable
     {
@@ -57,7 +56,7 @@ namespace VL.Qt.Stride
             if (max == s_applied)
                 return;
             // Only an argument out of range fails, which the clamp rules out.
-            if (Native.vlqt_offscreen_set_render_threads(max) == Native.Result.Ok)
+            if (OffscreenScene.SetRenderThreads(max))
                 s_applied = max;
         }
     }

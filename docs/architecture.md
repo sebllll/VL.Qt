@@ -134,6 +134,33 @@ The same element instance can hang at several places of the tree; each place get
 
 `QmlElement` (`src/VL.Qt/Elements/Qml/`, native side `src/VL.Qt.Native/user_qml/`) is the one place where Qt Quick content that VL.Qt did not build enters the tree. It follows the same path as every element (CREATE, properties, apply) with two additions: `SET_QML_PROPERTIES` sends the entries of the `Properties` dictionary by name (diffed in C#, converted through `QVariant` in QtNative), and the events `EVENT_QML_PROPERTY` / `EVENT_QML_SIGNAL` carry the declared properties and signals of the file's root back to the node's feedback. The node also owns the file watcher for hot reload (it bumps `QML_RELOAD`). The file is compiled on the per-window `QQmlEngine` from a `file:` URL, the instance lives as a child of the element's item. See [QML files as elements](user-qml.md) and [decisions/user-qml.md](decisions/user-qml.md).
 
+## Companion packages
+
+`VL.Qt.Stride` and `VL.Qt.Audio` are separate assemblies built from the same repository and released with `VL.Qt`. They see the `internal` types of `VL.Qt` through `InternalsVisibleTo` (`src/VL.Qt/VL.Qt.csproj`); there is no public API for them until a third party builds a companion. The rule: **a companion uses only the types and members below**, nothing else of `VL.Qt`. In particular `VL.Qt.Stride` uses no `Native` and no `Protocol`: what it needs from QtNative is a method of a type below. A new need adds a member to one of these types (and a line here), not a direct call into `Interop/` or `Wire/`.
+
+Both companions:
+
+- `NodeErrors`: the messages at a node (shown at the node, logged once per distinct text); `NodeMessage` is the handle of one message source on it.
+- `Multisample.ClampWarning`: the warning when QtNative used fewer MSAA samples than requested.
+
+`VL.Qt.Stride` (`QtTexture`, `QtRenderer`):
+
+- `OffscreenScene` (`Scene/`): the offscreen scene and everything the texture path asks of QtNative: `Bind`, `Unbind`, `Update`, `ApplyCommands`, `PollEvents`, `Handle`, `IsBound`, `UsedSamples`, `Error`, `Input`, `Debug`, `LastBindSucceeded`, `ShouldRetryBind` (the rebind throttle), `Reconciler.RootBuildError`, and the static `RenderBatchError` (one native call for all scenes of a frame) and `SetRenderThreads` (size of the render thread pool).
+- `SceneHandle` (`Interop/`): the handle of a scene in a batch; the companion only passes it on.
+- `NotificationQueue` (`Scene/`): takes the notifications of an `Input Notifications` pin from any thread and hands them to the main thread.
+- `OccurrenceRegistry.ForApp` (`Reconciliation/`): the registry of duplicate elements of the app, which a scene needs.
+- `ElementInput` (`Nodes/`): converts the value of the Input pin to the element the scene gets and warns at the node about a foreign `IElement`.
+- `QtApp.Get` and `QtPump.ForApp` (`Runtime/`): start the Qt app and its per-frame pump, which also serves the offscreen scenes; `QtApp.DriverSeconds` is the animation driver time.
+
+`VL.Qt.Audio` (`Video (VL.Audio)`):
+
+- `ElementNodeCore<TElement, TProps>`, `CommonInputs`, `VideoNode.Props` and `VideoNode.Create` (`Nodes/`): the element node of `Video` that the audio variant extends with the tap.
+- `Categories` (`VL.Qt`): the node category names.
+- `ResourceClient.ForApp` and `ResourceClient.CreateAudioTap` with `ImageResource` (`Images/`): create and release the audio tap of a video.
+- `Native.vlqt_audio_tap_*` (`vlqt_audio_tap_now_ns`, `AudioTapRead`, `AudioTapDrop`, `vlqt_audio_tap_state`) and the flags `Protocol.AudioTap` (`Interop/`, `Wire/`): the reader of the tap ring, behind `IAudioTapReader` in the companion. This is the one place where a companion calls `Native`; it is the audio tap group of the C API.
+
+Public types that the pins of the companion nodes carry (`IElement`, `Space`, `MultisampleCount`, `Video`) are part of the public API, not of this list.
+
 ## Performance
 
 Typical costs measured by the smoke tests; limits are enforced in `src/VL.Qt.SmokeTest/PerfLimits.cs`.
