@@ -69,9 +69,9 @@ namespace VL.Qt.Shaders
                     }
                     if (!seen.Add(sampler.Name))
                         continue;
-                    var summary = FindAnnotation(sampler.Name, fragA, vertA)?.Summary;
-                    pins.Add(new ShaderPin(PinNames.FromIdentifier(sampler.Name), sampler.Name, ShaderPinType.Image, null, null, null, summary));
-                    pins.Add(new ShaderPin(PinNames.FromIdentifier(sampler.Name) + " Sampler", sampler.Name, ShaderPinType.Sampler, null, null, null,
+                    var imageAnnotation = FindAnnotation(sampler.Name, fragA, vertA);
+                    pins.Add(new ShaderPin(PinNames.FromIdentifier(sampler.Name, splitDigits: true), sampler.Name, ShaderPinType.Image, null, null, null, imageAnnotation?.Summary, imageAnnotation?.IsOptional ?? false));
+                    pins.Add(new ShaderPin(PinNames.FromIdentifier(sampler.Name, splitDigits: true) + " Sampler", sampler.Name, ShaderPinType.Sampler, null, null, null,
                         $"How the shader reads '{sampler.Name}' (filter, wrap, mipmaps), from the Sampler node. Unconnected: as the image is."));
                 }
             }
@@ -157,7 +157,7 @@ namespace VL.Qt.Shaders
                 def = Color4.White;
             var min = Read("min", annotation?.Min, true);
             var max = Read("max", annotation?.Max, true);
-            return new ShaderPin(PinNames.FromIdentifier(name), name, type, def, min, max, annotation?.Summary);
+            return new ShaderPin(PinNames.FromIdentifier(name, splitDigits: true), name, type, def, min, max, annotation?.Summary, annotation?.IsOptional ?? false);
         }
 
         private static object? ZeroValue(ShaderPinType type) => type switch

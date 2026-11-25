@@ -18,6 +18,7 @@ namespace VL.Qt.Shaders
     /// <param name="Pins">Image and uniform pins in pin order, names unique.</param>
     /// <param name="Messages">Messages of the node description (errors first).</param>
     /// <param name="Summary">@summary of the file head, null if not given.</param>
+    /// <param name="Remarks">@remarks of the file head, null if not given.</param>
     /// <param name="FragmentSource">Content of the .frag (empty if not readable).</param>
     /// <param name="Template"><see cref="Protocol.EffectTemplate"/> of @passes: Single for 1, TwoPass for 2.</param>
     /// <param name="Padding">@padding of the file head; a uniform only if it is a valid float pin of this layout.</param>
@@ -25,6 +26,7 @@ namespace VL.Qt.Shaders
         ImmutableArray<ShaderPin> Pins,
         ImmutableArray<Message> Messages,
         string? Summary,
+        string? Remarks,
         string FragmentSource,
         ushort Template,
         ShaderPadding Padding)
@@ -84,7 +86,7 @@ namespace VL.Qt.Shaders
             }
 
             var template = annotations.Passes == 2 ? Protocol.EffectTemplate.TwoPass : Protocol.EffectTemplate.Single;
-            return new ShaderEffectLayout(pins, ShaderLayout.ToMessages(errors, warnings), annotations.Summary, source.FragmentSource, template, padding);
+            return new ShaderEffectLayout(pins, ShaderLayout.ToMessages(errors, warnings), annotations.Summary, annotations.Remarks, source.FragmentSource, template, padding);
         }
     }
 }

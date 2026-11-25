@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Stride.Core.Mathematics;
 
@@ -9,11 +10,13 @@ namespace VL.Qt.Shaders
 {
     /// <summary>
     /// Comment annotations of a Qt GLSL file (docs/effects-and-shaders.md): only // comments. File head (comments at
-    /// the start before/after #version up to the first code line): @category, @summary, @padding, @passes, @chainonly. At a uniform:
-    /// @default, @min, @max, @color, @summary. @summary/@category take the rest of the line, following comment lines without @ are appended.
+    /// the start before/after #version up to the first code line): @category, @summary, @remarks, @tags, @padding, @passes, @chainonly. At a uniform:
+    /// @default, @min, @max, @color, @optional, @summary. @summary/@remarks/@category/@tags take the rest of the line, following comment lines without @ are appended.
     /// </summary>
     /// <param name="Category">@category of the file head (absolute with "Qt.", else relative to the default category of each node kind), null = default category (Qt.Elements.Shaders).</param>
     /// <param name="Summary">@summary of the file head (node help), null if not given.</param>
+    /// <param name="Remarks">@remarks of the file head (longer node help, below the summary), null if not given.</param>
+    /// <param name="Tags">@tags of the file head split at commas, trimmed, empty entries dropped (node browser search words).</param>
     /// <param name="ChainOnly">@chainonly given: the factory creates only the effect chain node of this file, no element node.</param>
     /// <param name="Passes">@passes of the file head: 1 (default, template Single) or 2 (template TwoPass); only the effect chain node uses it.</param>
     /// <param name="Padding">@padding of the file head (only the effect chain node uses it): none, fixed DIP or from a uniform.</param>
@@ -27,6 +30,8 @@ namespace VL.Qt.Shaders
     internal sealed record ShaderAnnotations(
         string? Category,
         string? Summary,
+        string? Remarks,
+        ImmutableArray<string> Tags,
         bool ChainOnly,
         int Passes,
         ShaderPadding Padding,
@@ -37,7 +42,7 @@ namespace VL.Qt.Shaders
     {
         /// <summary>No annotations (e.g. a file that could not be read).</summary>
         public static readonly ShaderAnnotations Empty = new(
-            null, null, false, 1, ShaderPadding.None,
+            null, null, null, ImmutableArray<string>.Empty, false, 1, ShaderPadding.None,
             ImmutableDictionary<string, UniformAnnotation>.Empty,
             ImmutableDictionary<string, string>.Empty,
             ImmutableArray<ShaderMessage>.Empty,
@@ -59,7 +64,8 @@ namespace VL.Qt.Shaders
             while (firstCode < lines.Length && IsHeadLine(lines[firstCode].Trim()))
                 firstCode++;
 
-            string? category = null, summary = null;
+            string? category = null, summary = null, remarks = null;
+            var tags = ImmutableArray<string>.Empty;
             var padding = ShaderPadding.None;
             var passes = 1;
             var chainOnly = false;
@@ -79,6 +85,8 @@ namespace VL.Qt.Shaders
                 {
                     case "category": category = tag.Value; break;
                     case "summary": summary = tag.Value; break;
+                    case "remarks": remarks = tag.Value; break;
+                    case "tags": tags = tag.Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToImmutableArray(); break;
                     case "padding":
                         padding = ShaderPadding.Parse(tag.Value, tag.Line, warnings, errors);
                         break;
@@ -150,7 +158,7 @@ namespace VL.Qt.Shaders
             }
             ReadOrphans(above, null, 0, warnings);
 
-            return new ShaderAnnotations(category, summary, chainOnly, passes, padding, uniforms.ToImmutable(), declaredTypes.ToImmutable(), warnings.ToImmutable(),
+            return new ShaderAnnotations(category, summary, remarks, tags, chainOnly, passes, padding, uniforms.ToImmutable(), declaredTypes.ToImmutable(), warnings.ToImmutable(),
                 errors.ToImmutable());
         }
 
@@ -178,7 +186,7 @@ namespace VL.Qt.Shaders
                 reader.Add(trailing, lineNo);
 
             string? def = null, min = null, max = null, summary = null;
-            var isColor = false;
+            bool isColor = false, isOptional = false;
             var any = false;
             foreach (var tag in reader.Tags)
             {
@@ -194,12 +202,13 @@ namespace VL.Qt.Shaders
                     case "min": min = tag.Value; break;
                     case "max": max = tag.Value; break;
                     case "color": isColor = true; break;
+                    case "optional": isOptional = true; break;
                     case "summary": summary = tag.Value; break;
                     default: warnings.Add(new(tag.Line, $"@{tag.Name} is only valid in the file head")); break;
                 }
             }
             if (any)
-                uniforms[name] = new UniformAnnotation(def, min, max, isColor, summary, lineNo);
+                uniforms[name] = new UniformAnnotation(def, min, max, isColor, isOptional, summary, lineNo);
         }
 
         // Tags in comments that belong to no uniform and are not in the head.
@@ -222,16 +231,16 @@ namespace VL.Qt.Shaders
 
         private sealed record Tag(string Name, string Value, int Line);
 
-        /// <summary>Collects @tags of consecutive comment lines; summary/category continue on following lines without @.</summary>
+        /// <summary>Collects @tags of consecutive comment lines; summary/category/remarks/tags continue on following lines without @.</summary>
         private sealed class TagReader
         {
             private static readonly Regex tagStart = new(@"^\s*@(?<name>\w+)\s*(?<rest>.*)$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
             private static readonly Regex nextTag = new(@"(?:^|\s)@\w",RegexOptions.Compiled | RegexOptions.CultureInvariant);
-            private static readonly HashSet<string> known = new(StringComparer.Ordinal) { "category", "summary", "padding", "passes", "chainonly", "default", "min", "max", "color" };
+            private static readonly HashSet<string> known = new(StringComparer.Ordinal) { "category", "summary", "remarks", "tags", "padding", "passes", "chainonly", "default", "min", "max", "color", "optional" };
 
             private readonly ImmutableArray<ShaderMessage>.Builder _warnings;
             private readonly List<Tag> _tags = new();
-            private int _open = -1; // index of the summary/category tag that accepts continuation lines
+            private int _open = -1; // index of the summary/category/remarks/tags tag that accepts continuation lines
 
             public TagReader(ImmutableArray<ShaderMessage>.Builder warnings) => _warnings = warnings;
 
@@ -260,7 +269,7 @@ namespace VL.Qt.Shaders
                     var rest = m.Groups["rest"].Value;
                     var value = rest;
                     string? remainder = null;
-                    if (name is not ("summary" or "category"))
+                    if (name is not ("summary" or "category" or "remarks" or "tags"))
                     {
                         var n = nextTag.Match(rest);
                         if (n.Success)
@@ -274,7 +283,7 @@ namespace VL.Qt.Shaders
                     else
                     {
                         _tags.Add(new Tag(name, value.Trim(), line));
-                        if (name is "summary" or "category")
+                        if (name is "summary" or "category" or "remarks" or "tags")
                             _open = _tags.Count - 1;
                     }
                     m = remainder != null ? tagStart.Match(remainder) : Match.Empty;
