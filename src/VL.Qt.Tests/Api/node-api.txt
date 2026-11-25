@@ -357,6 +357,7 @@ VL.Qt | VL.Qt.Images.QtImage | type sealed class
 VL.Qt | VL.Qt.Images.QtImageState | member Failed = 2
 VL.Qt | VL.Qt.Images.QtImageState | member Loading = 0
 VL.Qt | VL.Qt.Images.QtImageState | member Ready = 1
+VL.Qt | VL.Qt.Images.QtImageState | member Released = 3
 VL.Qt | VL.Qt.Images.QtImageState | type enum
 VL.Qt | VL.Qt.Initialization | attr Smell(SymbolSmell.Hidden)
 VL.Qt | VL.Qt.Initialization | ctor | new

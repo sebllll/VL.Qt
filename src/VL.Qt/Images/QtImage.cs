@@ -9,13 +9,15 @@
         Ready,
         /// <summary>Could not be loaded (see Error); draws nothing.</summary>
         Failed,
+        /// <summary>The node that created the image freed it (it loaded another image or was deleted); draws nothing.</summary>
+        Released,
     }
 
     /// <summary>
     /// GPU-backed image of VL.Qt, created by LoadImage, LoadImage (Async) or ToQtImage. Use it at the Image input of any
     /// number of Image elements in any window: it is uploaded once, switching between loaded images costs nothing.
     /// The node that created it owns it and frees it when it is deleted or loads another image; pass the image around
-    /// freely, it needs no disposing.
+    /// freely, it needs no disposing. An image is valid while its node holds it, afterwards its State is Released.
     /// </summary>
     public sealed class QtImage
     {
@@ -34,8 +36,8 @@
         /// <summary>Height in pixels, 0 until loaded.</summary>
         public int Height => _resource.Height;
 
-        /// <summary>Loading, Ready or Failed.</summary>
-        public QtImageState State => _resource.State;
+        /// <summary>Loading, Ready, Failed or Released.</summary>
+        public QtImageState State => _resource.IsReleased ? QtImageState.Released : _resource.State;
 
         /// <summary>Why loading failed, empty otherwise.</summary>
         public string Error => _resource.Error;
