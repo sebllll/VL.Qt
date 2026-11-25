@@ -76,7 +76,7 @@
             <Pin Id="nfENitYVE9Bgs6lixAVn57" Name="Text" Kind="InputPin" DefaultValue="WAVE" />
             <Pin Id="Y9n6H8VKSeSwRJ51K8SXte" Name="Font Family" Kind="InputPin" />
             <Pin Id="HretjJESV8nUOROP57rQ3a" Name="Font Size" Kind="InputPin" DefaultValue="0.9" />
-            <Pin Id="NgbYplWxHl0JIlXwGrJnr1" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
+            <Pin Id="NgbYplWxHl0JIlXwGrJnr1" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="deAkxzHNkGryjKlFnYpyDi" Name="Italic" Kind="InputPin" />
             <Pin Id="AsyKboz1p8W0JoNlRCVH7e" Name="Color" Kind="InputPin" DefaultValue="0.1, 0.1, 0.15, 1" />
             <Pin Id="269oUiLwNolhD7HoSSMuao" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
@@ -592,7 +592,7 @@
             <Pin Id="PAynKAQbnDiNyKgLhZSy8C" Name="Text" Kind="InputPin" DefaultValue="GROUP" />
             <Pin Id="hCVCbNiC3Wx0W9XgAdKuGo" Name="Font Family" Kind="InputPin" />
             <Pin Id="A3IW4AeJxMa9URBZv0BKdP" Name="Font Size" Kind="InputPin" DefaultValue="0.6" />
-            <Pin Id="rCpNyze9803MnjY6SafkwQ" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
+            <Pin Id="rCpNyze9803MnjY6SafkwQ" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="KyaknHU6j0lc8e5eqXyHyD" Name="Italic" Kind="InputPin" />
             <Pin Id="z4PKpHkvEq3dvtiTyGDBGD" Name="Color" Kind="InputPin" DefaultValue="0.1, 0.1, 0.15, 1" />
             <Pin Id="inoIMd9f1ZLZ3HqtCBRoQC" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />

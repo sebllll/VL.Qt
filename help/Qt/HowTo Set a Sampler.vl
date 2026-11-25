@@ -58,7 +58,7 @@
             <Pin Id="DqpJ7nKb3vc0FuJIDRFXFD" Name="Text" Kind="InputPin" DefaultValue="Sampler" />
             <Pin Id="RJb3PmEqVl3b0DV0AZcEst" Name="Font Family" Kind="InputPin" />
             <Pin Id="RcOI7YGGLHQMjX35FtonJG" Name="Font Size" Kind="InputPin" DefaultValue="0.08" />
-            <Pin Id="FnyMJjZXfTrk0BxZV2Rt05" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
+            <Pin Id="FnyMJjZXfTrk0BxZV2Rt05" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="cGcxEIT3qWlN72EehtPGK7" Name="Italic" Kind="InputPin" IsHidden="true" />
             <Pin Id="Zkq8oV6ZZrkxhORMKxy7oe" Name="Color" Kind="InputPin" DefaultValue="0.95, 0.93, 0.9, 1" />
             <Pin Id="6fbb32MuVzKiQmNKAFqHJt" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
