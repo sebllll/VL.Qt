@@ -1,6 +1,7 @@
 ﻿using System;
 using VL.Core;
 using VL.Core.Import;
+using VL.Model;
 using VL.Lib.Basics.Imaging;
 using VL.Qt.Images;
 
@@ -40,7 +41,7 @@ namespace VL.Qt.Nodes
         /// <returns>The image: a new QtImage for each new Input instance (one GPU resource per node, its content is replaced). A failed upload is shown at the node and logged.</returns>
         [return: Pin(Name = "Image")]
         public QtImage? Update(IImage? input,
-            [Pin(Visibility = Model.PinVisibility.Optional)] ImageUpload upload = ImageUpload.Auto)
+            [Pin(Visibility = PinVisibility.Optional)] ImageUpload upload)
         {
             if (input is null)
             {

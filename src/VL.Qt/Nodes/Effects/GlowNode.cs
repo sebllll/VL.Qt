@@ -61,7 +61,6 @@ namespace VL.Qt.Nodes
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
-            // Pin defaults: see RectangleNode (string-valued [DefaultValue] for Vector2/Color4).
             [DefaultValue("0.2, 0.7, 1, 1")] Color4 color,
             [DefaultValue(0.2f)] float radius,
             [Pin(Visibility = PinVisibility.Optional)] float spread,

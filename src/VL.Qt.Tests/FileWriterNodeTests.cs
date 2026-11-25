@@ -86,10 +86,10 @@ namespace VL.Qt.Tests
         }
 
         private void Update(IImage? image, string? path, out bool isDone, out bool success, bool write = false, int quality = 90)
-            => _node.Update(image, path is null ? null! : new Path(path), out isDone, out success, quality, write);
+            => _node.Update(image, path is null ? null! : new Path(path), quality, write, out isDone, out success);
 
         private void UpdateElement(string? path, out bool isDone, out bool success, bool write = false, float scale = 1, int quality = 90)
-            => _elementNode.Update(_element, path is null ? null! : new Path(path), out isDone, out success, scale, quality, write);
+            => _elementNode.Update(_element, path is null ? null! : new Path(path), scale, quality, write, out isDone, out success);
 
         private ulong SnapshotId() => Convert.ToUInt64(_api.Calls.Where(c => c.StartsWith("snapshot")).Last().Split(' ')[1], 16);
 

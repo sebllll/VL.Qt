@@ -1,6 +1,7 @@
 ﻿using System;
 using VL.Core;
 using VL.Core.Import;
+using VL.Model;
 using VL.Qt.Images;
 using Path = VL.Lib.IO.Path;
 
@@ -41,7 +42,7 @@ namespace VL.Qt.Nodes
         /// <returns>The image, also when loading failed (State Failed, draws nothing; the node shows why and logs it). Nothing for an empty path.</returns>
         [return: Pin(Name = "Image")]
         public QtImage? Update(Path path, bool mipmaps,
-            [Pin(Visibility = Model.PinVisibility.Optional)] ImageUpload upload = ImageUpload.Auto)
+            [Pin(Visibility = PinVisibility.Optional)] ImageUpload upload)
         {
             var p = path?.Value ?? string.Empty;
             if (p != _path || mipmaps != _mipmaps || upload != _upload)

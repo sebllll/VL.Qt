@@ -53,7 +53,7 @@ namespace VL.Qt.Tests
         }
 
         private IImage? Update(out bool isReady, bool grab = false, float scale = 1)
-            => _node.Update(_element, out isReady, scale, grab);
+            => _node.Update(_element, scale, grab, out isReady);
 
         private int Snapshots => _api.Calls.Count(c => c.StartsWith("snapshot"));
 
@@ -70,7 +70,7 @@ namespace VL.Qt.Tests
             Assert.That(_messages.Shown, Is.Null, "a one-shot failure does not mark the node");
             Assert.That(_api.Calls, Is.Empty, "no resource created");
 
-            _ = _node.Update(null, out _, 1, true);
+            _ = _node.Update(null, 1, true, out _);
             Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotNode.NotShownError }), "no element: the same error, logged once");
             Assert.That(_api.Calls, Is.Empty);
         }
@@ -86,7 +86,7 @@ namespace VL.Qt.Tests
             for (var frame = 0; frame < 3; frame++)
             {
                 var next = new Group { Feedback = slot, Opacity = 0.5f + frame * 0.1f };
-                _node.Update(next, out _, 1, grab: true);
+                _node.Update(next, 1, true, out _);
                 Assert.That(_messages.Logged, Is.Empty, $"frame {frame}");
                 _reconciler.Update(next, Space.DIPTopLeft);
             }
@@ -98,11 +98,11 @@ namespace VL.Qt.Tests
         {
             Show();
             var other = new Rectangle { Size = new Vector2(10, 10) };
-            _node.Update(other, out _, 1, grab: true);
+            _node.Update(other, 1, true, out _);
             Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotNode.NotShownError }), "no slot: no place to fall back to");
 
             var foreign = new Rectangle { Feedback = new FeedbackSlot(new ElementFeedback(), 0) };
-            _node.Update(foreign, out _, 1, grab: true);
+            _node.Update(foreign, 1, true, out _);
             Assert.That(Snapshots, Is.Zero, "a slot no renderer has shown");
             Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotNode.NotShownError }), "the same error, logged once");
         }
@@ -119,7 +119,7 @@ namespace VL.Qt.Tests
             Assert.That(_messages.Logged, Has.Count.EqualTo(1), "nothing more logged");
 
             // Cleared: the same error later is logged again.
-            _node.Update(null, out _, 1, true);
+            _node.Update(null, 1, true, out _);
             Assert.That(_messages.Logged, Is.EqualTo(new[] { SnapshotNode.NotShownError, SnapshotNode.NotShownError }));
         }
 

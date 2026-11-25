@@ -151,14 +151,14 @@ public static class SnapshotTest
         // Grab on the node, pump until Is Ready or a logged error; returns the image (or null), what was logged and the frames it took.
         IImage? Snap(SnapshotNode n, Element? element, float scale, out string error, out int frames)
         {
-            var image = n.Update(element, out var ready, scale, true);
+            var image = n.Update(element, scale, true, out var ready);
             error = log.Take();
             frames = 0;
             while (!ready && error.Length == 0 && frames < 120)
             {
                 Pump(1);
                 frames++;
-                image = n.Update(element, out ready, scale);
+                image = n.Update(element, scale, false, out ready);
                 error = log.Take();
             }
             return ready ? image : null;
@@ -242,7 +242,7 @@ public static class SnapshotTest
             var (b, g, r, a) = At(img2, 100, 100, 600);
             s.Check(a == 255 && Near(r, 255, 2) && Near(g, 153, 2) && Near(b, 0, 2), $"Scale 2 rectangle pixel is orange (B{b} G{g} R{r} A{a})");
         }
-        s.Check(ReferenceEquals(node.Update(group, out _, 2, false), img2), "Image stays the last finished snapshot");
+        s.Check(ReferenceEquals(node.Update(group, 2, false, out _), img2), "Image stays the last finished snapshot");
 
         // 2) Latency (frames from Grab to Is Ready); repeat a few times for the range.
         for (int i = 0; i < 8; i++)
@@ -332,7 +332,7 @@ public static class SnapshotTest
         s.Check(!events.Any(e => e.Id == rel), $"release during the grab: no record afterwards ({events.Count(e => e.Id == rel)})");
         s.Check(Native.vlqt_res_wait(rel, 0) == (int)Native.Result.UnknownId, "released snapshot id is stale");
         var viaNode = new SnapshotNode(client, scene);
-        viaNode.Update(group, out _, 1, true);
+        viaNode.Update(group, 1, true, out _);
         var liveBefore = client.LiveCount;
         viaNode.Dispose();
         Pump(6);
@@ -403,7 +403,7 @@ public static class SnapshotTest
                 Frame(new Group { Anchor = RectangleAnchor.TopLeft, Children = [group, m] });
                 if (snapshots)
                 {
-                    perfNode.Update(group, out var ready, 1, i % 10 == 0);
+                    perfNode.Update(group, 1, i % 10 == 0, out var ready);
                     if (ready) done++;
                 }
                 Pump(1);

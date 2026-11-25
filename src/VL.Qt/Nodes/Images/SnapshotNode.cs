@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using VL.Core;
 using VL.Core.Import;
 using VL.Lib.Basics.Imaging;
@@ -43,7 +44,7 @@ namespace VL.Qt.Nodes
         /// <param name="isReady">True in the frame a new image arrived, typically one frame after Grab. A failed snapshot sets no Is Ready and is logged.</param>
         /// <returns>The last finished snapshot as BGRA8 premultiplied (own copy, not volatile); null before the first one.</returns>
         [return: Pin(Name = "Image")]
-        public IImage? Update(IElement? element, out bool isReady, float scale = 1, bool grab = false)
+        public IImage? Update(IElement? element, [DefaultValue(1f)] float scale, bool grab, out bool isReady)
         {
             if (grab)
                 // Every attempt starts clean: an error of an earlier attempt (e.g. not shown yet at the start) does not stay.

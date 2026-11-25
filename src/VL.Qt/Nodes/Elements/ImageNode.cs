@@ -55,7 +55,6 @@ namespace VL.Qt.Nodes
         /// <param name="measuredSize">Natural size of the image, in units (0, 0 until loaded; last frame).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
-        // Pin defaults: see RectangleNode. Image default = null (no image).
         [return: Pin(Name = "Output")]
         public IElement Update(
             [DefaultValue("1, 1")] Vector2 size,

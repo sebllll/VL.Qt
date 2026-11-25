@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Reactive.Subjects;
 using VL.Core;
 using VL.Core.Import;
+using VL.Model;
 using VL.Qt.Images;
 using Path = VL.Lib.IO.Path;
 
@@ -53,9 +54,9 @@ namespace VL.Qt.Nodes
             Path path,
             bool mipmaps,
             [DefaultValue(true)] bool keepPrevious,
+            [Pin(Visibility = PinVisibility.Optional)] ImageUpload upload,
             out bool isLoaded,
-            [Pin(Visibility = Model.PinVisibility.Optional)] out IObservable<QtImage> onLoaded,
-            [Pin(Visibility = Model.PinVisibility.Optional)] ImageUpload upload = ImageUpload.Auto)
+            [Pin(Visibility = PinVisibility.Optional)] out IObservable<QtImage> onLoaded)
         {
             var p = path?.Value ?? string.Empty;
             if (p != _path || mipmaps != _mipmaps || upload != _upload)

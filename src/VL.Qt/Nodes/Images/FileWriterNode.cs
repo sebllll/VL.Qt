@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using VL.Core;
 using VL.Core.Import;
 using VL.Model;
@@ -46,10 +47,10 @@ namespace VL.Qt.Nodes
         public void Update(
             IImage? image,
             Path filePath,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(90)] int quality,
+            bool write,
             out bool isDone,
-            out bool success,
-            [Pin(Visibility = PinVisibility.Optional)] int quality = 90,
-            bool write = false)
+            out bool success)
         {
             isDone = false;
             // Polled before Write is handled: a write never reports in the frame it was started.

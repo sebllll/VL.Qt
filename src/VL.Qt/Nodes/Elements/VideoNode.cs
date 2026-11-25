@@ -86,7 +86,6 @@ namespace VL.Qt.Nodes
         /// <param name="measuredSize">Natural size of the video, in units (0, 0 until the first frame; last frame).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
-        // Pin defaults: see RectangleNode (text form, typeof(T) defaults are ignored by vvvvc).
         [return: Pin(Name = "Output")]
         public IElement Update(
             [DefaultValue("1.6, 0.9")] Vector2 size,
