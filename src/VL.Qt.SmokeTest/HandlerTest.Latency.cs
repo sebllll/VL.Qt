@@ -21,6 +21,13 @@ public static partial class HandlerTest
         public readonly Subject<FrameTimeMessage> Ticks = new();
         private double _t = 20_000; // later than the driver times of the earlier scenarios
         private ulong _n;
+
+        public LatencyClock()
+        {
+            // QtNative ignores a driver time below the current one: the later scenarios (QtHost.Pump) go on after this clock.
+            QtHost.Time = Math.Max(QtHost.Time, _t + 100);
+        }
+
         public Time Time => new(_t);
         public double TimeDifference => 1.0 / 60;
         public IObservable<FrameTimeMessage> GetTicks() => Ticks;
