@@ -13,7 +13,7 @@ namespace VL.Qt.Nodes
 {
     /// <summary>
     /// Integer input with +/- buttons. +/-, the arrow keys and the mouse wheel change the value at once; a typed value
-    /// counts on Enter or focus loss. The value goes into Channel (author "Qt") and to Value; Bang reports a change
+    /// counts on Enter or focus loss. The value goes into Channel (author "Qt") and to Value; Has Changed reports a change
     /// by the user. Connect to Renderer [Qt] or a Group.
     /// </summary>
     /// <remarks>QtQuick.Controls SpinBox, style Basic.</remarks>
@@ -63,7 +63,7 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
         /// <param name="style">Look of the widget. Unset fields come from the enclosing Group's style, else from the base style.</param>
         /// <param name="value">The value shown, clamped to Min…Max (the channel keeps the patch's value). Works without a channel too.</param>
-        /// <param name="bang">True for one frame when the user changed the value since the last frame.</param>
+        /// <param name="hasChanged">True for one frame when the user changed the value since the last frame.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='measuredSize']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
@@ -86,7 +86,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
             [Pin(Visibility = PinVisibility.Optional)] Style? style,
             out int value,
-            out bool bang,
+            out bool hasChanged,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
@@ -94,7 +94,7 @@ namespace VL.Qt.Nodes
             int minimum = _value.Min(min, int.MinValue);
             int maximum = _value.Max(max, int.MaxValue);
             value = _value.Clamped(minimum, maximum);
-            bang = _value.Bang;
+            hasChanged = _value.Bang;
             return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
                 new Props(value, minimum, maximum, step, editable, enabled, autoSize, style),

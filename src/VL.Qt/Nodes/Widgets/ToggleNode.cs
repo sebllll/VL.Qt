@@ -13,7 +13,7 @@ namespace VL.Qt.Nodes
 {
     /// <summary>
     /// Toggle without text, as check box or switch. A click or Space flips the value. The value goes into Channel
-    /// (author "Qt") and to Value; Bang reports a change by the user. Changing Look replaces the element by one of the
+    /// (author "Qt") and to Value; Has Changed reports a change by the user. Changing Look replaces the element by one of the
     /// other type; the value is kept. Connect to Renderer [Qt] or a Group.
     /// </summary>
     /// <remarks>QtQuick.Controls CheckBox or Switch, style Basic.</remarks>
@@ -64,7 +64,7 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
         /// <param name="style">Look of the widget. Unset fields come from the enclosing Group's style, else from the base style.</param>
         /// <param name="value">The state shown. Works without a channel too.</param>
-        /// <param name="bang">True for one frame when the user changed the state since the last frame.</param>
+        /// <param name="hasChanged">True for one frame when the user changed the state since the last frame.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='measuredSize']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
@@ -84,12 +84,12 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
             [Pin(Visibility = PinVisibility.Optional)] Style? style,
             out bool value,
-            out bool bang,
+            out bool hasChanged,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
             value = _value.Update(channel, _node.Feedback);
-            bang = _value.Bang;
+            hasChanged = _value.Bang;
             return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
                 new Props(value, look, enabled, autoSize, style),

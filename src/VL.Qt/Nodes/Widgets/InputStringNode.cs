@@ -13,7 +13,7 @@ namespace VL.Qt.Nodes
 {
     /// <summary>
     /// Single-line text input. The text counts on Enter or focus loss, and only if it changed. It goes into Channel
-    /// (author "Qt") and to Value; Bang reports a change by the user. A null string counts as empty.
+    /// (author "Qt") and to Value; Has Changed reports a change by the user. A null string counts as empty.
     /// Connect to Renderer [Qt] or a Group.
     /// </summary>
     /// <remarks>QtQuick.Controls TextField, style Basic.</remarks>
@@ -59,7 +59,7 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
         /// <param name="style">Look of the widget. Unset fields come from the enclosing Group's style, else from the base style.</param>
         /// <param name="value">The text shown (never null). Works without a channel too.</param>
-        /// <param name="bang">True for one frame when the user changed the text since the last frame.</param>
+        /// <param name="hasChanged">True for one frame when the user changed the text since the last frame.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='measuredSize']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
@@ -80,12 +80,12 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
             [Pin(Visibility = PinVisibility.Optional)] Style? style,
             out string value,
-            out bool bang,
+            out bool hasChanged,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
             value = _value.Update(channel, _node.Feedback) ?? string.Empty;
-            bang = _value.Bang;
+            hasChanged = _value.Bang;
             return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
                 new Props(value, placeholder ?? string.Empty, editable, enabled, autoSize, style),

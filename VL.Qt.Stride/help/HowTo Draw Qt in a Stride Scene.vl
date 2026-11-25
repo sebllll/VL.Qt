@@ -262,7 +262,7 @@
             <Pin Id="TIZOPsAbDDVNgiZVmJ1QZs" Name="Channel" Kind="InputPin" />
             <Pin Id="DdWLCZcMMkZOHHVYvoIhzE" Name="Output" Kind="OutputPin" />
             <Pin Id="KvsXX891CNzNl0QRhhDWg2" Name="Value" Kind="OutputPin" />
-            <Pin Id="JAxnIDAKMulLhjarFy7ZaJ" Name="Bang" Kind="OutputPin" />
+            <Pin Id="JAxnIDAKMulLhjarFy7ZaJ" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="OMWSeRxUv0rQWD1uFaFlAc" Name="Min" Kind="InputPin" />
             <Pin Id="IE1BtlNXMDfO3cUTjckppO" Name="Max" Kind="InputPin" />
             <Pin Id="A7EvCJIyMVzQXnrf9SRYyZ" Name="Step" Kind="InputPin" IsHidden="true" />

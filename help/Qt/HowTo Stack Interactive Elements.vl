@@ -87,10 +87,10 @@
             <Pin Id="SKzDVeyyQ8SbUA9BBC26p0" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="qJ8SQq4Nhw0ORRjUpHk9F5" Name="Input" Kind="InputPin" />
             <Pin Id="d85kSLS4MbxfxhH14qdOBf" Name="Is Pressed" Kind="InputPin" />
-            <Pin Id="FKWVdKoRfYana9qbh8PWhP" Name="Is Clicked" Kind="InputPin" />
+            <Pin Id="FKWVdKoRfYana9qbh8PWhP" Name="On Click" Kind="InputPin" />
             <Pin Id="g5VBytAAH87QbiJunQIvDy" Name="Output" Kind="OutputPin" />
             <Pin Id="jWvAbR39QJUDHl81dirCIg" Name="Tap Count" Kind="InputPin" />
-            <Pin Id="m4QoJ2v7eUmNa380ZilivI" Name="Long Pressed" Kind="InputPin" />
+            <Pin Id="m4QoJ2v7eUmNa380ZilivI" Name="On Long Press" Kind="InputPin" />
             <Pin Id="55rA8HABkccTD3t8Su3BZL" Name="Buttons" Kind="InputPin" DefaultValue="None" />
             <Pin Id="UjmXYvZkF1vDo7dQsTxwtn" Name="Devices" Kind="InputPin" IsHidden="true" />
           </Node>
@@ -236,10 +236,10 @@
             <Pin Id="WiFhlEHWn1yv31SaCx810E" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="cMA5HLveWCXfXaFvs5zBi9" Name="Input" Kind="InputPin" />
             <Pin Id="frwXmLkHHgP1RlyJgEgMxH" Name="Is Pressed" Kind="InputPin" />
-            <Pin Id="WywfZkGPnV3R2gb3l1BDwT" Name="Is Clicked" Kind="InputPin" />
+            <Pin Id="WywfZkGPnV3R2gb3l1BDwT" Name="On Click" Kind="InputPin" />
             <Pin Id="kiSBRemTwvBHrrvgaXJQNs" Name="Output" Kind="OutputPin" />
             <Pin Id="QZ3Kst29i6QIL4w3TvunDG" Name="Tap Count" Kind="InputPin" />
-            <Pin Id="f9R3hiIyNYRg7YmwN9assl" Name="Long Pressed" Kind="InputPin" />
+            <Pin Id="f9R3hiIyNYRg7YmwN9assl" Name="On Long Press" Kind="InputPin" />
             <Pin Id="RPJPSVWvWcQy2cfgVofWuT" Name="Buttons" Kind="InputPin" DefaultValue="None" />
             <Pin Id="VFtgHPcHl6fGjWXXGNmFUw" Name="Devices" Kind="InputPin" IsHidden="true" />
           </Node>

@@ -58,11 +58,11 @@
             <Pin Id="JQAgHnItxCTdnfLjiZ8jZ7" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Sjk3GOmFbhExOIqbmC64uW" Name="Input" Kind="InputPin" />
             <Pin Id="GpPHjnZfnL8jxY6ejXsfNe" Name="Is Dragging" Kind="InputPin" />
-            <Pin Id="BkXXXItQarQZXM1Cqtu0db" Name="Delta" Kind="InputPin" />
+            <Pin Id="BkXXXItQarQZXM1Cqtu0db" Name="Translation" Kind="InputPin" />
             <Pin Id="3BqXx50bZ4HBg8Cu0LZDSu" Name="Moves Element" Kind="InputPin" />
             <Pin Id="Iev9Wzchs5idWrSITy1oct" Name="Axis" Kind="InputPin" />
-            <Pin Id="K69oXo25oeNMRxTvIgHsQh" Name="Minimum" Kind="InputPin" IsHidden="true" />
-            <Pin Id="VlSZaCL3LBnQWRNas4koQJ" Name="Maximum" Kind="InputPin" IsHidden="true" />
+            <Pin Id="K69oXo25oeNMRxTvIgHsQh" Name="Min" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VlSZaCL3LBnQWRNas4koQJ" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="StnZy3WSn6WXJlU5KzoWbE" Name="Buttons" Kind="InputPin" IsHidden="true" />
             <Pin Id="5tcMTF1a0RB7tXHHeoSZzt" Name="Devices" Kind="InputPin" IsHidden="true" />
             <Pin Id="L2vLB3kyKjJtLfvsK8ZnvF" Name="Output" Kind="OutputPin" />
@@ -116,21 +116,21 @@
             <Pin Id="fj1JutmEBkHjysGnrp6t3z" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="tcTDIpy3MFiSduUKHnm52q" Name="Input" Kind="InputPin" />
             <Pin Id="M7FJQe5kQl0iLcE4NEe8zT" Name="Is Dragging" Kind="InputPin" />
-            <Pin Id="SkfeLkcmoLrDcz1TqGFujt" Name="Delta" Kind="InputPin" />
+            <Pin Id="SkfeLkcmoLrDcz1TqGFujt" Name="Translation" Kind="InputPin" />
             <Pin Id="QDFyfuQEzSXjKbkTGQxIYK" Name="Moves Element" Kind="InputPin" />
             <Pin Id="oZjdiI63diM6CqEBNxpoZD" Name="Axis" Kind="InputPin" DefaultValue="Horizontal" />
-            <Pin Id="MDQxyUKt5s1gyupPmd4cFY" Name="Minimum" Kind="InputPin" />
-            <Pin Id="xRXepOohMQgKaPW3weH10b" Name="Maximum" Kind="InputPin" />
+            <Pin Id="MDQxyUKt5s1gyupPmd4cFY" Name="Min" Kind="InputPin" />
+            <Pin Id="xRXepOohMQgKaPW3weH10b" Name="Max" Kind="InputPin" />
             <Pin Id="MX0EOoOfVAGvM8oJbMutoe" Name="Buttons" Kind="InputPin" IsHidden="true" />
             <Pin Id="ofiRPp1sI2GtLRjYDTBr0U" Name="Devices" Kind="InputPin" IsHidden="true" />
             <Pin Id="qIgXeobExjYVwBFanZdH6c" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="oidbpDnELHPb4DGZQ5INih" Comment="Minimum" Bounds="638,915,35,28" ShowValueBox="true" isIOBox="true" Value="0, 0">
+          <Pad Id="oidbpDnELHPb4DGZQ5INih" Comment="Min" Bounds="638,915,35,28" ShowValueBox="true" isIOBox="true" Value="0, 0">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="dvNbZ2OWGajk4uScc0ldx6" Comment="Maximum" Bounds="658,955,35,28" ShowValueBox="true" isIOBox="true" Value="2.66, 0">
+          <Pad Id="dvNbZ2OWGajk4uScc0ldx6" Comment="Max" Bounds="658,955,35,28" ShowValueBox="true" isIOBox="true" Value="2.66, 0">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
@@ -148,7 +148,7 @@
             <Pin Id="nWuWLMjULt0nOTtfFmFsxP" Name="Value" Kind="OutputPin" />
             <Pin Id="jivGOOuX0nqoETqZ3xUVwM" Name="Author" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="WHPze9kdKri63xllO1eI6Y" Comment="Delta" Bounds="626,838,35,28" ShowValueBox="true" isIOBox="true">
+          <Pad Id="WHPze9kdKri63xllO1eI6Y" Comment="Translation" Bounds="626,838,35,28" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
@@ -206,11 +206,11 @@
             <Pin Id="z7OgJKVAN3Ij4mqXUEhSMS" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="PjnPHimiNTndi4wEWNdDXY" Name="Input" Kind="InputPin" />
             <Pin Id="4Pii5v8ucWGBPCU6cSS0Yk" Name="Is Dragging" Kind="InputPin" />
-            <Pin Id="ZFij9xbLejXZ9Kv2qfw58B" Name="Delta" Kind="InputPin" />
+            <Pin Id="ZFij9xbLejXZ9Kv2qfw58B" Name="Translation" Kind="InputPin" />
             <Pin Id="hGeVmVnEBr4EUCatTnY51R" Name="Moves Element" Kind="InputPin" />
             <Pin Id="6UpKFu3dzACPf6Wl2wAeN8" Name="Axis" Kind="InputPin" />
-            <Pin Id="RXYcKUcJkA6PEyp8vjNeJp" Name="Minimum" Kind="InputPin" IsHidden="true" />
-            <Pin Id="AXebbtbV102M58fSRcRi91" Name="Maximum" Kind="InputPin" IsHidden="true" />
+            <Pin Id="RXYcKUcJkA6PEyp8vjNeJp" Name="Min" Kind="InputPin" IsHidden="true" />
+            <Pin Id="AXebbtbV102M58fSRcRi91" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="sqaPwHey1PWLiLn6h6rbvC" Name="Buttons" Kind="InputPin" IsHidden="true" />
             <Pin Id="ab1uaFz14crJPHHswdAYfi" Name="Devices" Kind="InputPin" IsHidden="true" />
             <Pin Id="oM0D6aLlrZzU5kS0xceaPB" Name="Output" Kind="OutputPin" />
@@ -290,11 +290,11 @@
             <Pin Id="x5sCrHVb1Be0mePGDwAfoy" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="GLtkMuUIqtzTLNJxHcTnGw" Name="Input" Kind="InputPin" />
             <Pin Id="6djqjcYV7cJZ8rbpQLFkzV" Name="Is Dragging" Kind="InputPin" />
-            <Pin Id="6YHdf9oaNyikMktNV176bv" Name="Delta" Kind="InputPin" />
+            <Pin Id="6YHdf9oaNyikMktNV176bv" Name="Translation" Kind="InputPin" />
             <Pin Id="P3pAza644ahzQHIxXmUFuE" Name="Moves Element" Kind="InputPin" />
             <Pin Id="boI040ABU6AFICEyZeYOOP" Name="Axis" Kind="InputPin" />
-            <Pin Id="F14nG4wucBKPQacKQtpAIR" Name="Minimum" Kind="InputPin" IsHidden="true" />
-            <Pin Id="LJS9BNYHRS9NaYe85DveTo" Name="Maximum" Kind="InputPin" IsHidden="true" />
+            <Pin Id="F14nG4wucBKPQacKQtpAIR" Name="Min" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LJS9BNYHRS9NaYe85DveTo" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="bcq3ViB0kxud7EIbWN42Ul" Name="Buttons" Kind="InputPin" IsHidden="true" />
             <Pin Id="8mIdIN4QvvEPJiFOU071Us" Name="Devices" Kind="InputPin" IsHidden="true" />
             <Pin Id="o3VHoTVeSddGlIK2xViK1J" Name="Output" Kind="OutputPin" />
@@ -400,11 +400,11 @@
             <Pin Id="zD8ZOuHziXVWWnKfbNX8Fu" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="6ICNm2nYb2ZoUIJbeFRH1L" Name="Input" Kind="InputPin" />
             <Pin Id="2kaP8En86P0j6NFC6gbSsf" Name="Is Dragging" Kind="InputPin" />
-            <Pin Id="N3AcMn1nVxiVJfnOSNyGkb" Name="Delta" Kind="InputPin" />
+            <Pin Id="N3AcMn1nVxiVJfnOSNyGkb" Name="Translation" Kind="InputPin" />
             <Pin Id="RDDEZATdexEue5veGsLALR" Name="Moves Element" Kind="InputPin" />
             <Pin Id="tv645Eiktlt10SDcfvtTUz" Name="Axis" Kind="InputPin" />
-            <Pin Id="BVehb2rqY10LOJSmop1YcM" Name="Minimum" Kind="InputPin" IsHidden="true" />
-            <Pin Id="U3qutyQgx75PpOBMKTTalm" Name="Maximum" Kind="InputPin" IsHidden="true" />
+            <Pin Id="BVehb2rqY10LOJSmop1YcM" Name="Min" Kind="InputPin" IsHidden="true" />
+            <Pin Id="U3qutyQgx75PpOBMKTTalm" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="UcI3ucwMaVSkTmeGpAMcsg" Name="Buttons" Kind="InputPin" IsHidden="true" />
             <Pin Id="KC67NWQXrEISCNTRV5dR6z" Name="Devices" Kind="InputPin" IsHidden="true" />
             <Pin Id="ZXQ5wiKRe2dIWi1eguzrpv" Name="Output" Kind="OutputPin" />
@@ -440,11 +440,11 @@
             <Pin Id="mshaQrUGjfCShLv5u6cA6p" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="gpjQmy0B99xJA6agSsy7JP" Name="Input" Kind="InputPin" />
             <Pin Id="aoNUycASbz6THO9ruj5EF2" Name="Is Dragging" Kind="InputPin" />
-            <Pin Id="ORgJn1wWIxMnxoqYhGk4oj" Name="Delta" Kind="InputPin" />
+            <Pin Id="ORgJn1wWIxMnxoqYhGk4oj" Name="Translation" Kind="InputPin" />
             <Pin Id="JlNf5LMfRvLinjPZ708nhZ" Name="Moves Element" Kind="InputPin" DefaultValue="False" />
             <Pin Id="uiO03Bcv9pMoOrL5wlorGS" Name="Axis" Kind="InputPin" />
-            <Pin Id="ARFyGQSbbdVM1QV7N3zM8B" Name="Minimum" Kind="InputPin" IsHidden="true" />
-            <Pin Id="OFfDrJvJxkDNgtrmifQvEK" Name="Maximum" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ARFyGQSbbdVM1QV7N3zM8B" Name="Min" Kind="InputPin" IsHidden="true" />
+            <Pin Id="OFfDrJvJxkDNgtrmifQvEK" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="tyjXOlURHS0ZkHc1PGlWJz" Name="Buttons" Kind="InputPin" IsHidden="true" />
             <Pin Id="J5ERq9v5RvCVXOrhwkFYAP" Name="Devices" Kind="InputPin" IsHidden="true" />
             <Pin Id="Rv2dEM2O4cKN8b8az1JZcP" Name="Output" Kind="OutputPin" />
@@ -480,7 +480,7 @@
             <Pin Id="hersZVTrKXDAMAsehW4UHh" Name="Value" Kind="OutputPin" />
             <Pin Id="duHHxgnd21YBtSTIpgaSgS" Name="Author" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="J9FpSCQj9FX1Qbqd38X904" Comment="Delta" Bounds="670,2293,35,28" ShowValueBox="true" isIOBox="true">
+          <Pad Id="J9FpSCQj9FX1Qbqd38X904" Comment="Translation" Bounds="670,2293,35,28" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
@@ -556,7 +556,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="G1bp29IQm44FOUOXrvwb27" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="Drag [Qt]: moves an element with mouse, touch or pen&#xD;&#xA;- Interaction pin of the element, or chained with other interaction nodes&#xD;&#xA;- Moves Element (default on): the element follows the drag by itself&#xD;&#xA;- Is Dragging and Delta report the drag&#xD;&#xA;- Axis, Minimum and Maximum limit the drag&#xD;&#xA;- Scene Bounds of the element shows where it really is">
+          <Pad Id="G1bp29IQm44FOUOXrvwb27" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="Drag [Qt]: moves an element with mouse, touch or pen&#xD;&#xA;- Interaction pin of the element, or chained with other interaction nodes&#xD;&#xA;- Moves Element (default on): the element follows the drag by itself&#xD;&#xA;- Is Dragging and Translation report the drag&#xD;&#xA;- Axis, Min and Max limit the drag&#xD;&#xA;- Scene Bounds of the element shows where it really is">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -565,7 +565,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="Obb0XpQiRVhamytIEiF3Rf" Bounds="85,2887,830,270" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Moves Element adds an offset to the position from the Transform pin or from the layout, in the parent's space. Try the five cases in the renderer window with mouse and, if you have one, touch.&#xD;&#xA;- 1: A changed Transform pin puts the element back to the position of the pin: change Position while it is dragged away and a new drag starts from there. After a restart the pin value applies again, nothing is written back into the patch. Values of Is Dragging arrive one frame later.&#xD;&#xA;- 2: Of nested elements the innermost takes the drag: the knob slides, the rest of the panel moves the whole panel. The knob drags on one axis (Horizontal) and is limited by Minimum and Maximum, relative to its position from the Transform pin (here 0 to 2.8 units); a drag mostly along the other axis is left to the panel. Delta of the knob is the slider value. A Group has no area of its own: with Auto Size off and size 0 there is nothing to grab, so here the Size is set; with Auto Size on it measures its children.&#xD;&#xA;- 3: The space in the Row stays reserved and the other children do not move. The same works for a Column and for Groups.&#xD;&#xA;- 4: A changed Transform pin resets the drag every frame, so the animation always wins. This is the usual vvvv pattern, nothing is written back. Scene Bounds follows the animation.&#xD;&#xA;- 5: Delta is the movement of the running drag in the parent's space, after Axis and limits. It stays after the release until the next drag starts. Use it to move something else or to drive a value.&#xD;&#xA;- The Group at the bottom collects the five cases for the Renderer (Space DIPTopLeft, 1 unit = 100 DIP, window 1000 x 700 DIP).">
+          <Pad Id="Obb0XpQiRVhamytIEiF3Rf" Bounds="85,2887,830,270" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Moves Element adds an offset to the position from the Transform pin or from the layout, in the parent's space. Try the five cases in the renderer window with mouse and, if you have one, touch.&#xD;&#xA;- 1: A changed Transform pin puts the element back to the position of the pin: change Position while it is dragged away and a new drag starts from there. After a restart the pin value applies again, nothing is written back into the patch. Values of Is Dragging arrive one frame later.&#xD;&#xA;- 2: Of nested elements the innermost takes the drag: the knob slides, the rest of the panel moves the whole panel. The knob drags on one axis (Horizontal) and is limited by Minimum and Maximum, relative to its position from the Transform pin (here 0 to 2.8 units); a drag mostly along the other axis is left to the panel. Translation of the knob is the slider value. A Group has no area of its own: with Auto Size off and size 0 there is nothing to grab, so here the Size is set; with Auto Size on it measures its children.&#xD;&#xA;- 3: The space in the Row stays reserved and the other children do not move. The same works for a Column and for Groups.&#xD;&#xA;- 4: A changed Transform pin resets the drag every frame, so the animation always wins. This is the usual vvvv pattern, nothing is written back. Scene Bounds follows the animation.&#xD;&#xA;- 5: Delta is the movement of the running drag in the parent's space, after Axis and limits. It stays after the release until the next drag starts. Use it to move something else or to drive a value.&#xD;&#xA;- The Group at the bottom collects the five cases for the Renderer (Space DIPTopLeft, 1 unit = 100 DIP, window 1000 x 700 DIP).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -583,7 +583,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GCZ17HA0TLVQU7535lHwwU" Bounds="489,736,455,46" ShowValueBox="true" isIOBox="true" Value="2  Panel with a slider (orange knob in a grey panel): the Group has a Drag and the knob has its own Drag; Delta of the knob is the slider value">
+          <Pad Id="GCZ17HA0TLVQU7535lHwwU" Bounds="489,736,455,46" ShowValueBox="true" isIOBox="true" Value="2  Panel with a slider (orange knob in a grey panel): the Group has a Drag and the knob has its own Drag; Translation of the knob is the slider value">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -610,7 +610,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="F7UUvqg2TuAEAWjZUuSQL4" Bounds="392,2087,629,30" ShowValueBox="true" isIOBox="true" Value="5  Moves Element off (teal): the element stays, Drag only reports Is Dragging and Delta">
+          <Pad Id="F7UUvqg2TuAEAWjZUuSQL4" Bounds="392,2087,629,30" ShowValueBox="true" isIOBox="true" Value="5  Moves Element off (teal): the element stays, Drag only reports Is Dragging and Translation">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

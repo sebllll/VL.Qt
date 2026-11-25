@@ -208,7 +208,7 @@ VL.Qt | VL.Qt.Elements.TouchPoint | property Id | int { get; init }
 VL.Qt | VL.Qt.Elements.TouchPoint | property Position | Stride.Core.Mathematics.Vector2 { get; init }
 VL.Qt | VL.Qt.Elements.TouchPoint | property Pressure | float { get; init }
 VL.Qt | VL.Qt.Elements.TouchPoint | property Size | Stride.Core.Mathematics.Vector2 { get; init }
-VL.Qt | VL.Qt.Elements.TouchPoint | type sealed class
+VL.Qt | VL.Qt.Elements.TouchPoint | type struct
 VL.Qt | VL.Qt.Elements.Uniform | implements System.IEquatable<VL.Qt.Elements.Uniform>
 VL.Qt | VL.Qt.Elements.Uniform | method Equals(VL.Qt.Elements.Uniform) | bool
 VL.Qt | VL.Qt.Elements.Uniform | method Equals(VL.Qt.Elements.Uniform) | order Other, Output
@@ -580,13 +580,13 @@ VL.Qt | VL.Qt.Nodes.ClickNode | ctor | pin Node Context | in VL.Core.NodeContext
 VL.Qt | VL.Qt.Nodes.ClickNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.ClickNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.ClickNode | method Update | VL.Qt.Elements.Interaction
-VL.Qt | VL.Qt.Nodes.ClickNode | method Update | order Input, Is Pressed, Is Clicked, Tap Count, Long Pressed, Buttons, Devices, Output
+VL.Qt | VL.Qt.Nodes.ClickNode | method Update | order Input, Is Pressed, On Click, Tap Count, On Long Press, Buttons, Devices, Output
 VL.Qt | VL.Qt.Nodes.ClickNode | method Update | pin Buttons | in VL.Qt.Elements.PointerButtons = Left | Pin(Visibility = PinVisibility.Optional) | (buttons)
 VL.Qt | VL.Qt.Nodes.ClickNode | method Update | pin Devices | in VL.Qt.Elements.PointerDevices = All | Pin(Visibility = PinVisibility.Optional) | (devices)
 VL.Qt | VL.Qt.Nodes.ClickNode | method Update | pin Input | in VL.Qt.Elements.Interaction | (input)
-VL.Qt | VL.Qt.Nodes.ClickNode | method Update | pin Is Clicked | in VL.Lib.Reactive.IChannel<System.Reactive.Unit> = null | (isClicked)
 VL.Qt | VL.Qt.Nodes.ClickNode | method Update | pin Is Pressed | in VL.Lib.Reactive.IChannel<bool> = null | (isPressed)
-VL.Qt | VL.Qt.Nodes.ClickNode | method Update | pin Long Pressed | in VL.Lib.Reactive.IChannel<System.Reactive.Unit> = null | Pin(Visibility = PinVisibility.Optional) | (longPressed)
+VL.Qt | VL.Qt.Nodes.ClickNode | method Update | pin On Click | in VL.Lib.Reactive.IChannel<System.Reactive.Unit> = null | (onClick)
+VL.Qt | VL.Qt.Nodes.ClickNode | method Update | pin On Long Press | in VL.Lib.Reactive.IChannel<System.Reactive.Unit> = null | Pin(Visibility = PinVisibility.Optional) | (onLongPress)
 VL.Qt | VL.Qt.Nodes.ClickNode | method Update | pin Output | out VL.Qt.Elements.Interaction | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.ClickNode | method Update | pin Tap Count | in VL.Lib.Reactive.IChannel<int> = null | Pin(Visibility = PinVisibility.Optional) | (tapCount)
 VL.Qt | VL.Qt.Nodes.ClickNode | type sealed class
@@ -728,17 +728,17 @@ VL.Qt | VL.Qt.Nodes.DragNode | ctor | pin Node Context | in VL.Core.NodeContext 
 VL.Qt | VL.Qt.Nodes.DragNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.DragNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.DragNode | method Update | VL.Qt.Elements.Interaction
-VL.Qt | VL.Qt.Nodes.DragNode | method Update | order Input, Is Dragging, Delta, Moves Element, Axis, Minimum, Maximum, Buttons, Devices, Output
+VL.Qt | VL.Qt.Nodes.DragNode | method Update | order Input, Is Dragging, Translation, Moves Element, Axis, Min, Max, Buttons, Devices, Output
 VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Axis | in VL.Qt.Elements.DragAxis = Both | (axis)
 VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Buttons | in VL.Qt.Elements.PointerButtons = Left | Pin(Visibility = PinVisibility.Optional) | (buttons)
-VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Delta | in VL.Lib.Reactive.IChannel<Stride.Core.Mathematics.Vector2> = null | (delta)
 VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Devices | in VL.Qt.Elements.PointerDevices = All | Pin(Visibility = PinVisibility.Optional) | (devices)
 VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Input | in VL.Qt.Elements.Interaction | (input)
 VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Is Dragging | in VL.Lib.Reactive.IChannel<bool> = null | (isDragging)
-VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Maximum | in VL.Core.Optional<Stride.Core.Mathematics.Vector2> | Pin(Visibility = PinVisibility.Optional) | (maximum)
-VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Minimum | in VL.Core.Optional<Stride.Core.Mathematics.Vector2> | Pin(Visibility = PinVisibility.Optional) | (minimum)
+VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Max | in VL.Core.Optional<Stride.Core.Mathematics.Vector2> | Pin(Visibility = PinVisibility.Optional) | (max)
+VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Min | in VL.Core.Optional<Stride.Core.Mathematics.Vector2> | Pin(Visibility = PinVisibility.Optional) | (min)
 VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Moves Element | in bool = true | (movesElement)
 VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Output | out VL.Qt.Elements.Interaction | Pin(Name = "Output") | (return)
+VL.Qt | VL.Qt.Nodes.DragNode | method Update | pin Translation | in VL.Lib.Reactive.IChannel<Stride.Core.Mathematics.Vector2> = null | (translation)
 VL.Qt | VL.Qt.Nodes.DragNode | type sealed class
 VL.Qt | VL.Qt.Nodes.DropShadowNode | attr ProcessNode(Name = "DropShadow", Category = "Qt.Effects")
 VL.Qt | VL.Qt.Nodes.DropShadowNode | ctor | new
@@ -923,16 +923,16 @@ VL.Qt | VL.Qt.Nodes.InputIntNode | ctor | pin Node Context | in VL.Core.NodeCont
 VL.Qt | VL.Qt.Nodes.InputIntNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | order Auto Size, Size, Transform, Anchor, Channel, Min, Max, Step, Editable, Enabled, Opacity, Clip, Debug, Interaction, Effect, Style, Value, Bang, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | order Auto Size, Size, Transform, Anchor, Channel, Min, Max, Step, Editable, Enabled, Opacity, Clip, Debug, Interaction, Effect, Style, Value, Has Changed, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
-VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Bang | out bool | (bang)
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Channel | in VL.Lib.Reactive.IChannel<int> = null | (channel)
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Editable | in bool = true | Pin(Visibility = PinVisibility.Optional) | (editable)
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
+VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Has Changed | out bool | (hasChanged)
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Max | in VL.Core.Optional<int> | (max)
 VL.Qt | VL.Qt.Nodes.InputIntNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
@@ -953,16 +953,16 @@ VL.Qt | VL.Qt.Nodes.InputStringNode | ctor | pin Node Context | in VL.Core.NodeC
 VL.Qt | VL.Qt.Nodes.InputStringNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | order Auto Size, Size, Transform, Anchor, Channel, Placeholder, Editable, Enabled, Opacity, Clip, Debug, Interaction, Effect, Style, Value, Bang, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | order Auto Size, Size, Transform, Anchor, Channel, Placeholder, Editable, Enabled, Opacity, Clip, Debug, Interaction, Effect, Style, Value, Has Changed, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
-VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Bang | out bool | (bang)
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Channel | in VL.Lib.Reactive.IChannel<string> = null | (channel)
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Editable | in bool = true | Pin(Visibility = PinVisibility.Optional) | (editable)
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
+VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Has Changed | out bool | (hasChanged)
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
 VL.Qt | VL.Qt.Nodes.InputStringNode | method Update | pin Opacity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (opacity)
@@ -1166,12 +1166,12 @@ VL.Qt | VL.Qt.Nodes.PinchNode | ctor | pin Node Context | in VL.Core.NodeContext
 VL.Qt | VL.Qt.Nodes.PinchNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.PinchNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.PinchNode | method Update | VL.Qt.Elements.Interaction
-VL.Qt | VL.Qt.Nodes.PinchNode | method Update | order Input, Is Active, Scale, Rotation, Translation, Pivot, Minimum Point Count, Maximum Point Count, Devices, Output
+VL.Qt | VL.Qt.Nodes.PinchNode | method Update | order Input, Is Pinching, Scale, Rotation, Translation, Pivot, Min Point Count, Max Point Count, Devices, Output
 VL.Qt | VL.Qt.Nodes.PinchNode | method Update | pin Devices | in VL.Qt.Elements.PointerDevices = All | Pin(Visibility = PinVisibility.Optional) | (devices)
 VL.Qt | VL.Qt.Nodes.PinchNode | method Update | pin Input | in VL.Qt.Elements.Interaction | (input)
-VL.Qt | VL.Qt.Nodes.PinchNode | method Update | pin Is Active | in VL.Lib.Reactive.IChannel<bool> = null | (isActive)
-VL.Qt | VL.Qt.Nodes.PinchNode | method Update | pin Maximum Point Count | in int = 2 | Pin(Visibility = PinVisibility.Optional) | (maximumPointCount)
-VL.Qt | VL.Qt.Nodes.PinchNode | method Update | pin Minimum Point Count | in int = 2 | Pin(Visibility = PinVisibility.Optional) | (minimumPointCount)
+VL.Qt | VL.Qt.Nodes.PinchNode | method Update | pin Is Pinching | in VL.Lib.Reactive.IChannel<bool> = null | (isPinching)
+VL.Qt | VL.Qt.Nodes.PinchNode | method Update | pin Max Point Count | in int = 2 | Pin(Visibility = PinVisibility.Optional) | (maxPointCount)
+VL.Qt | VL.Qt.Nodes.PinchNode | method Update | pin Min Point Count | in int = 2 | Pin(Visibility = PinVisibility.Optional) | (minPointCount)
 VL.Qt | VL.Qt.Nodes.PinchNode | method Update | pin Output | out VL.Qt.Elements.Interaction | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.PinchNode | method Update | pin Pivot | in VL.Lib.Reactive.IChannel<Stride.Core.Mathematics.Vector2> = null | (pivot)
 VL.Qt | VL.Qt.Nodes.PinchNode | method Update | pin Rotation | in VL.Lib.Reactive.IChannel<float> = null | (rotation)
@@ -1543,15 +1543,15 @@ VL.Qt | VL.Qt.Nodes.SliderNode | ctor | pin Node Context | in VL.Core.NodeContex
 VL.Qt | VL.Qt.Nodes.SliderNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.SliderNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.SliderNode | method Update | order Auto Size, Size, Transform, Anchor, Channel, Min, Max, Step, Orientation, Enabled, Opacity, Clip, Debug, Interaction, Effect, Style, Value, Bang, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.SliderNode | method Update | order Auto Size, Size, Transform, Anchor, Channel, Min, Max, Step, Orientation, Enabled, Opacity, Clip, Debug, Interaction, Effect, Style, Value, Has Changed, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
-VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Bang | out bool | (bang)
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Channel | in VL.Lib.Reactive.IChannel<float> = null | (channel)
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
+VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Has Changed | out bool | (hasChanged)
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Max | in VL.Core.Optional<float> | (max)
 VL.Qt | VL.Qt.Nodes.SliderNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
@@ -1653,15 +1653,15 @@ VL.Qt | VL.Qt.Nodes.ToggleNode | ctor | pin Node Context | in VL.Core.NodeContex
 VL.Qt | VL.Qt.Nodes.ToggleNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | order Auto Size, Size, Transform, Anchor, Channel, Look, Enabled, Opacity, Clip, Debug, Interaction, Effect, Style, Value, Bang, Measured Size, Scene Bounds, Output
+VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | order Auto Size, Size, Transform, Anchor, Channel, Look, Enabled, Opacity, Clip, Debug, Interaction, Effect, Style, Value, Has Changed, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
-VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Bang | out bool | (bang)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Channel | in VL.Lib.Reactive.IChannel<bool> = null | (channel)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
+VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Has Changed | out bool | (hasChanged)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Look | in VL.Qt.Elements.ToggleLook = Checkbox | (look)
 VL.Qt | VL.Qt.Nodes.ToggleNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)

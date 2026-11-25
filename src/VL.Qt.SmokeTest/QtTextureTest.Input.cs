@@ -493,7 +493,7 @@ public static partial class QtTextureTest
             rig.Frames(2);
         }
         rig.Frames();
-        s.Check(rig.PinchActive.Value && rig.PinchActive.LatestAuthor == "Qt", $"pinch: Is Active while two fingers pinch ({rig.PinchActive.Value})");
+        s.Check(rig.PinchActive.Value && rig.PinchActive.LatestAuthor == "Qt", $"pinch: Is Pinching while two fingers pinch ({rig.PinchActive.Value})");
         s.Check(rig.PinchScale.Value > 1.8f && rig.PinchScale.Value < 2.2f, $"pinch: spread 40 -> 80 px -> Scale about 2 ({rig.PinchScale.Value})");
         s.Check(MathF.Abs(rig.PinchRotation.Value) < 0.05f, $"pinch: no rotation ({rig.PinchRotation.Value})");
         p = rig.Points.Value ?? Spread<TouchPoint>.Empty;

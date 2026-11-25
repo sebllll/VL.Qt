@@ -33,7 +33,7 @@
             <Pin Id="me4Ys7T7E6L3D68wwhUAGP" Name="Channel" Kind="InputPin" />
             <Pin Id="UcfcMLatLYLq96PyUMXEPI" Name="Output" Kind="OutputPin" />
             <Pin Id="aDI7MCSmzyv6HJJOJOc9PA" Name="Value" Kind="OutputPin" />
-            <Pin Id="krQmVq2haUw7YkNkEooJbF" Name="Bang" Kind="OutputPin" />
+            <Pin Id="krQmVq2haUw7YkNkEooJbF" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="NjlmeqtQjyKLEZ5vdvS73I" Name="Min" Kind="InputPin" />
             <Pin Id="M5ciMsghKTVPKUODNfQYMT" Name="Max" Kind="InputPin" />
             <Pin Id="VgZIC9kYivDPne6oLkBhQ6" Name="Step" Kind="InputPin" IsHidden="true" />
@@ -58,7 +58,7 @@
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="l5QHC1GZ7mDO9gUsoVV5bM" Comment="Bang" Bounds="224,429,35,35" ShowValueBox="true" isIOBox="true">
+          <Pad Id="l5QHC1GZ7mDO9gUsoVV5bM" Comment="Has Changed" Bounds="224,429,35,35" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -88,7 +88,7 @@
             <Pin Id="DF0oKfnXuqTNBn0rYFEECR" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="PMCaiCXEsEWQUTMRpjegrm" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="HtJtwleUwq1OQHB3ewRUYK" Name="Interaction" Kind="InputPin" IsHidden="true" />
-            <Pin Id="RIZTKEK1RW3LBvPTIeJBVf" Name="Bang" Kind="OutputPin" />
+            <Pin Id="RIZTKEK1RW3LBvPTIeJBVf" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="IbZV11rckTyN4nmgJEoGmE" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="OcdymzQHN2ZOMBDDXibzfm" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="SLKqEnhj6uqNOr7k2HBbJn" Name="Effect" Kind="InputPin" IsHidden="true" />
@@ -157,7 +157,7 @@
             <Pin Id="DEbjAWLMdHYLvlY9lvR3M7" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="RITcpVRkrMcPF5ICl02J9E" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="HOslPBV65oVLLyoOLmuuxw" Name="Value" Kind="OutputPin" />
-            <Pin Id="NQaLd2DVcFVPz4aGHYVLGy" Name="Bang" Kind="OutputPin" />
+            <Pin Id="NQaLd2DVcFVPz4aGHYVLGy" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="L6tWOUVGIEMMU3Sghb34LI" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="QJFLPioSx4GLB0chDchAr0" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="NZhdWtFOVC6PoxM2pYdzUQ" Name="Effect" Kind="InputPin" IsHidden="true" />
@@ -188,7 +188,7 @@
             <Pin Id="Ss2eC1MzVtDMivEVTAdPeI" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="AcMV5XokH9lL3cTYDZg4gh" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="E8tpZSHTFDkPkjE1vnEDwe" Name="Value" Kind="OutputPin" />
-            <Pin Id="LQVwHwtDzIONNGUfSEBbZz" Name="Bang" Kind="OutputPin" />
+            <Pin Id="LQVwHwtDzIONNGUfSEBbZz" Name="Has Changed" Kind="OutputPin" />
             <Pin Id="LqgoR5JpV79LglloUFQYZS" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="CEPLErAoaQgN8fkKRZ2PvE" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="ORyb1xVO1pDMVHXzxMg0NZ" Name="Effect" Kind="InputPin" IsHidden="true" />
@@ -361,7 +361,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="x2y9qnClcjJQI9ImzVTaPl" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Slider (Float) [Qt]&#xD;&#xA;- Channel: binds the value, the user writes back (IOBox 0.3 = start value)&#xD;&#xA;- Min, Max, Step (0 = stepless; here 0..100 in steps of 10)&#xD;&#xA;- Orientation: horizontal or vertical&#xD;&#xA;- Value: current value; Bang: true for one frame when the user changed it">
+          <Pad Id="x2y9qnClcjJQI9ImzVTaPl" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Slider (Float) [Qt]&#xD;&#xA;- Channel: binds the value, the user writes back (IOBox 0.3 = start value)&#xD;&#xA;- Min, Max, Step (0 = stepless; here 0..100 in steps of 10)&#xD;&#xA;- Orientation: horizontal or vertical&#xD;&#xA;- Value: current value; Has Changed: true for one frame when the user changed it">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
