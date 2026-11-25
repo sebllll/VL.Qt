@@ -61,8 +61,24 @@ struct ThreadBatch
     int current = 0;
     bool used = false;     // in the batch being built
     bool software = false; // a scene of it is bound to a software device
+    bool posted = false;   // its render job of the last batch may still run (finishPostedRenders)
 };
 std::vector<ThreadBatch> s_threadBatches; // one per render thread that ever rendered
+
+// Waits until every render job posted by the last batch ran. The scenes of all threads share Qt's immediate context,
+// and the foreign context waits for the write values of the last batch before it signals the read values of the next
+// one: a Wait for a read value of the next batch queued on Qt's context ahead of a frame of the last batch makes Qt's
+// GPU wait for the foreign GPU, which waits for that frame, while its render thread waits in endFrame for Qt's GPU.
+// So no scene of the next batch begins (Wait + beginFrame) before every frame of the last one is submitted. Main thread.
+void finishPostedRenders()
+{
+    for (ThreadBatch& b : s_threadBatches) {
+        if (!b.posted)
+            continue;
+        b.thread->drain();
+        b.posted = false;
+    }
+}
 
 // beginFrame (after Qt's GPU waited for the read value) and sync of one scene. Render thread, blocking job.
 void beginAndSync(OffscreenScene* s)
@@ -111,9 +127,9 @@ void renderAndSignal(OffscreenScene* s, unsigned long long writeValue)
 // that waits for the read value, begins the frame and syncs its scenes (the main thread waits, items stay untouched);
 // the foreign context's GPU wait for each write value (it waits for a value signalled later, its CPU never waits);
 // then per render thread one posted job that renders, ends the frame, signals the write value and flushes. The next
-// batch's sync job queues behind these renders: a render thread more than a frame behind blocks the main thread
-// there (back pressure, at most one frame in flight per scene). Software devices: the job is blocking and the wait
-// is queued after it.
+// batch waits for these renders before anything else (finishPostedRenders): at most one frame in flight per scene,
+// and the main thread runs ahead of the render threads by at most one batch. Software devices: the job is blocking
+// and the wait is queued after it.
 void renderThreaded(const std::vector<OffscreenScene*>& scenes, ID3D11DeviceContext4* foreign)
 {
     for (OffscreenScene* s : scenes) {
@@ -165,10 +181,12 @@ void renderThreaded(const std::vector<OffscreenScene*>& scenes, ID3D11DeviceCont
             for (const auto& [s, writeValue] : *list)
                 renderAndSignal(s, writeValue);
         };
-        if (b.software)
+        if (b.software) {
             b.thread->call(job);
-        else
+        } else {
             b.thread->post(job);
+            b.posted = true;
+        }
     }
     for (const ThreadBatch& b : s_threadBatches)
         if (b.used && b.software)
@@ -183,6 +201,7 @@ int renderBatch(void* context, vlqt_scene* const* scenes, int count, double driv
     if (!qGuiApp || QQuickWindow::graphicsApi() != QSGRendererInterface::Direct3D11)
         return fail(VLQT_ERR_UNSUPPORTED, "render_batch: needs Direct3D 11 and an initialized app");
     vlqt_app_advance_animations(driverSeconds);
+    finishPostedRenders();
     ComPtr<ID3D11DeviceContext4> foreign;
     int rendered = 0;
     static std::vector<OffscreenScene*> threaded; // reused: no allocation per frame
