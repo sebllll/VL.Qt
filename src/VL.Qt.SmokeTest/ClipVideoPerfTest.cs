@@ -52,7 +52,7 @@ public static class ClipVideoPerfTest
         var shadow = new DropShadowNode();
 
         // Units are 1/100 DIP (DIPTopLeft): a 200 x 150 DIP rectangle and a circle of radius 100 DIP at (300, 200) and (300, 200).
-        Effect? Shadow(bool on) => on ? shadow.Update(null, new Color4(0, 0, 0, 1), new Vector2(0.15f, 0.15f), 1, 1, true, default) : null;
+        Effect? Shadow(bool on) => on ? shadow.Update(null, new Color4(0, 0, 0, 1), new Vector2(15f, 15f), 1, 1, true, default) : null; // offset in DIP
         Element Rect(bool clip, bool stroke, bool fx)
         {
             var origin = Matrix.Translation(3, 2, 0);

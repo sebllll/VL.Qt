@@ -24,10 +24,10 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Element? Layer, Sampler? LayerSampler, BlendMode Mode, float Opacity);
 
-        private static readonly string[] s_shaders = { "blend" };
+        private static readonly ShaderEffectSource[] s_shaders = { ShaderEffectSource.Builtin("blend") };
 
-        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
-            new BuiltinShaderEffect(previous, Protocol.EffectTemplate.Single, ids,
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
+            new ShaderEffect(previous, Protocol.EffectTemplate.Single, ids,
                 new[]
                 {
                     Uniform.Int("mode", (int)p.Mode),

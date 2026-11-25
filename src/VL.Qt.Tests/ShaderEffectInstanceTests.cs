@@ -208,7 +208,7 @@ void main() { fragColor = vec4(phase); }
             Assert.That(inputs.Select(d => d.Name), Is.EqualTo(new[] { "Input", "Map", "Map Sampler", "Amount" }));
             Assert.That(inputs[0].Type, Is.EqualTo(typeof(Effect)));
             Assert.That(instance.Inputs.Select(PinType), Is.EqualTo(inputs.Select(d => d.Type)));
-            Assert.That(ShaderEffectDescription.Outputs.Select(d => d.Name), Is.EqualTo(new[] { "Output", "Error" }));
+            Assert.That(ShaderEffectDescription.Outputs.Select(d => d.Name), Is.EqualTo(new[] { "Output" }), "no Error output: shader problems show at the node");
             Assert.That(ShaderEffectDescription.Outputs[0].Type, Is.EqualTo(typeof(Effect)));
             Assert.That(instance.Outputs.Select(PinType), Is.EqualTo(ShaderEffectDescription.Outputs.Select(d => d.Type)));
 

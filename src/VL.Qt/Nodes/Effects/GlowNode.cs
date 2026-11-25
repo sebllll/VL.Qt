@@ -22,13 +22,13 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Color4 Color, float Radius, float Spread, float Intensity, bool Additive);
 
-        private static readonly string[] s_shaders = { "glow_prefilter", "glow_composite" };
+        private static readonly ShaderEffectSource[] s_shaders = { ShaderEffectSource.Builtin("glow_prefilter"), ShaderEffectSource.Builtin("glow_composite") };
 
-        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
         {
             var radius = Math.Max(p.Radius, 0f);
             var pad = 1.5f * radius;
-            return new BuiltinShaderEffect(previous, Protocol.EffectTemplate.Pyramid, ids,
+            return new ShaderEffect(previous, Protocol.EffectTemplate.Pyramid, ids,
                 new[]
                 {
                     Uniform.Color("color", p.Color),

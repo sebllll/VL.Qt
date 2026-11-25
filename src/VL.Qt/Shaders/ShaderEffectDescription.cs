@@ -9,14 +9,13 @@ namespace VL.Qt.Shaders
     /// <summary>
     /// Node description of the effect chain link of one filter shader file: same name as the element node, category
     /// <see cref="ShaderFile.LinkCategory"/>. Same lifecycle as <see cref="ShaderNodeDescription"/> (lazy init, content
-    /// change invalidates the node and keeps links on pins with the same name, errors red at the node).
+    /// change invalidates the node and keeps links on pins with the same name, shader problems at the node).
     /// </summary>
     internal static class ShaderEffectDescription
     {
         private static readonly IVLPinDescription[] s_outputs =
         {
             new FilePinDescription("Output", typeof(Effect), null, null),
-            new FilePinDescription("Error", typeof(string), string.Empty, "Shader bake errors at runtime (with line numbers), empty if none."),
         };
 
         private const string inputSummary = "Effect chain to extend: what the other effect nodes before this one made of the element. This link works on that result.";

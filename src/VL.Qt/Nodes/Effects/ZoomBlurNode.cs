@@ -22,13 +22,13 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Vector2 Center, float Length);
 
-        private static readonly string[] s_shaders = { "zoom_blur" };
+        private static readonly ShaderEffectSource[] s_shaders = { ShaderEffectSource.Builtin("zoom_blur") };
 
-        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
         {
             var length = Math.Max(p.Length, 0f);
             var pad = 0.6f * length;
-            return new BuiltinShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
+            return new ShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
                 new[] { Uniform.Vector2("center", p.Center), Uniform.Float("blurLength", length) }.ToSpread(),
                 new RectangleF(pad, pad, pad, pad));
         };
