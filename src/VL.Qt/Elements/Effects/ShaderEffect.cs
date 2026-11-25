@@ -8,11 +8,12 @@ namespace VL.Qt.Elements
     /// A filter shader as link of the Effect chain: driven by QtNative's pass driver with a template (protocol.h
     /// "Effect chain", passes: docs/effects-and-shaders.md). Ends a MultiEffect run in <see cref="Effect.Segment"/>.
     /// QtNative sets texelSize, dpr, weight, elementRect, source and the template's inputs itself; <see cref="Uniforms"/> must not use them.
+    /// Built by <c>ShaderEffectBuilder</c> for the built-in shader effect nodes and the generated nodes of shader files alike.
     /// </summary>
-    internal abstract class ShaderEffect : Effect
+    internal sealed class ShaderEffect : Effect
     {
-        protected ShaderEffect(Effect? previous, ushort template, ImmutableArray<ulong> shaderIds, Spread<Uniform>? uniforms,
-            RectangleF padding, float strength)
+        public ShaderEffect(Effect? previous, ushort template, ImmutableArray<ulong> shaderIds, Spread<Uniform>? uniforms,
+            RectangleF padding, float strength = 0f)
             : base(previous)
         {
             Template = template;

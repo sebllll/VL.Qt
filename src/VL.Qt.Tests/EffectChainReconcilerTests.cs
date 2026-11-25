@@ -14,13 +14,8 @@ namespace VL.Qt.Tests
     /// <summary>SET_EFFECT_CHAIN (plan effects/08 task 5): what the reconciler sends for the Effect chain of an element.</summary>
     public class EffectChainReconcilerTests
     {
-        private sealed class TestShaderEffect : ShaderEffect
-        {
-            public TestShaderEffect(Effect? previous, params Uniform[] uniforms)
-                : base(previous, Protocol.EffectTemplate.Single, ImmutableArray.Create(7UL), uniforms.ToSpread(), new RectangleF(1, 2, 3, 4), 10)
-            {
-            }
-        }
+        private static ShaderEffect TestShaderEffect(Effect? previous, params Uniform[] uniforms) =>
+            new(previous, Protocol.EffectTemplate.Single, ImmutableArray.Create(7UL), uniforms.ToSpread(), new RectangleF(1, 2, 3, 4), 10);
 
         private RecordingSink _sink = null!;
         private IdAllocator _ids = null!;
@@ -59,7 +54,7 @@ namespace VL.Qt.Tests
         public void Order_StartOfChainFirst()
         {
             // vvvv: Blur -> Shader -> DropShadow -> (Effect pin).
-            var chain = Shadow(new TestShaderEffect(Blur()));
+            var chain = Shadow(TestShaderEffect(Blur()));
             Frame(new Rectangle { Effect = chain });
             var links = Links();
             Assert.That(links, Has.Length.EqualTo(3));
@@ -69,7 +64,7 @@ namespace VL.Qt.Tests
             Assert.That(links[2], Does.Not.Contain($"{nameof(Protocol.MultiEffectKey.BlurEnabled)}="));
 
             // Swapping the order swaps the links.
-            Frame(new Rectangle { Effect = Blur(new TestShaderEffect(Shadow())) });
+            Frame(new Rectangle { Effect = Blur(TestShaderEffect(Shadow())) });
             links = Links();
             Assert.That(links[0], Does.StartWith($"multi {nameof(Protocol.MultiEffectKey.ShadowEnabled)}=bool(1)"));
             Assert.That(links[2], Does.StartWith($"multi {nameof(Protocol.MultiEffectKey.BlurEnabled)}=bool(1)"));
@@ -78,7 +73,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ShaderOnly_NoMultiLink()
         {
-            Frame(new Rectangle { Effect = new TestShaderEffect(null, Uniform.Float("amount", 0.25f)) });
+            Frame(new Rectangle { Effect = TestShaderEffect(null, Uniform.Float("amount", 0.25f)) });
             var links = Links();
             Assert.That(links, Has.Length.EqualTo(1));
             Assert.That(links[0], Does.EndWith("strength=10 amount=f32(0.25)"));
@@ -87,7 +82,7 @@ namespace VL.Qt.Tests
         [Test]
         public void SendsOnlyOnChange()
         {
-            var chain = new TestShaderEffect(Blur());
+            var chain = TestShaderEffect(Blur());
             Frame(new Rectangle { Effect = chain });
             Assert.That(Chains, Has.Length.EqualTo(1));
 
@@ -96,7 +91,7 @@ namespace VL.Qt.Tests
             Assert.That(_sink.Commands.Any(c => c.StartsWith("CHAIN ")), Is.False);
 
             // A new instance is a change: the whole chain once.
-            Frame(new Rectangle { Effect = new TestShaderEffect(Blur()) });
+            Frame(new Rectangle { Effect = TestShaderEffect(Blur()) });
             Assert.That(Chains, Has.Length.EqualTo(1));
             // The MULTI keys (833..855) are no properties of SET; Enabled is also a property of its own (704).
             var keyNames = typeof(Protocol.MultiEffectKey).GetFields().Select(f => f.Name).Except(typeof(Protocol.PropertyId).GetFields().Select(f => f.Name)).ToHashSet();
@@ -108,7 +103,7 @@ namespace VL.Qt.Tests
         {
             // Run 1: Blur + Colorize; Shader; run 2: DropShadow.
             Effect chain = new ColorizeEffect(Blur(), Color4.White, 0.5f);
-            chain = new TestShaderEffect(chain);
+            chain = TestShaderEffect(chain);
             chain = Shadow(chain);
             Frame(new Rectangle { Effect = chain });
             var links = Links();
@@ -125,13 +120,13 @@ namespace VL.Qt.Tests
             var feedback = new ElementFeedback();
             var slot = new FeedbackSlot(feedback, 0);
             Effect chain = Blur(Blur());
-            chain = new TestShaderEffect(chain);
+            chain = TestShaderEffect(chain);
             chain = Blur(Blur(chain));
             Frame(new Rectangle { Feedback = slot, Effect = chain });
             Assert.That(feedback.Warning, Is.Not.Null);
             Assert.That(feedback.Warning!.Split("Blur is used more than once").Length - 1, Is.EqualTo(2), feedback.Warning);
 
-            Frame(new Rectangle { Feedback = slot, Effect = new TestShaderEffect(Blur()) });
+            Frame(new Rectangle { Feedback = slot, Effect = TestShaderEffect(Blur()) });
             Assert.That(feedback.Warning, Is.Null);
         }
 
@@ -169,7 +164,7 @@ namespace VL.Qt.Tests
         {
             var a = new Text { Content = "A" };
             var b = new Text { Content = "B" };
-            var chain = Mask(new TestShaderEffect(Mask(null, a)), b);
+            var chain = Mask(TestShaderEffect(Mask(null, a)), b);
             Frame(new Rectangle { Effect = chain });
 
             var links = Links();
@@ -222,7 +217,7 @@ namespace VL.Qt.Tests
         public void ShaderTextureUniform_IsObjectOfItsOwn()
         {
             var map = new Rectangle();
-            var chain = new TestShaderEffect(null, Uniform.Float("amount", 1), Uniform.FromTexture("map", map));
+            var chain = TestShaderEffect(null, Uniform.Float("amount", 1), Uniform.FromTexture("map", map));
             Frame(new Rectangle { Effect = chain });
             var links = Links();
             Assert.That(links[0], Does.EndWith("amount=f32(1) map=ref(2)"));
@@ -231,12 +226,12 @@ namespace VL.Qt.Tests
             Assert.That(IndexOf("CREATE 2 "), Is.LessThan(IndexOf("CHAIN ")));
 
             // A new link with the same texture element keeps the object.
-            Frame(new Rectangle { Effect = new TestShaderEffect(null, Uniform.FromTexture("map", map)) });
+            Frame(new Rectangle { Effect = TestShaderEffect(null, Uniform.FromTexture("map", map)) });
             Assert.That(_sink.OfOp("CREATE").Count() + _sink.OfOp("DESTROY").Count(), Is.EqualTo(0));
             Assert.That(Links()[0], Does.EndWith("map=ref(2)"));
 
             // A different texture element of the same type is updated in place (same id).
-            Frame(new Rectangle { Effect = new TestShaderEffect(null, Uniform.FromTexture("map", new Rectangle { Opacity = 0.5f })) });
+            Frame(new Rectangle { Effect = TestShaderEffect(null, Uniform.FromTexture("map", new Rectangle { Opacity = 0.5f })) });
             Assert.That(_sink.OfOp("CREATE").Count() + _sink.OfOp("DESTROY").Count(), Is.EqualTo(0));
             Assert.That(Links()[0], Does.EndWith("map=ref(2)"));
         }
@@ -245,8 +240,8 @@ namespace VL.Qt.Tests
         public void SameTextureTwice_OneObject()
         {
             var map = new Rectangle();
-            var first = new TestShaderEffect(null, Uniform.FromTexture("map", map));
-            var chain = new TestShaderEffect(first, Uniform.FromTexture("other", map));
+            var first = TestShaderEffect(null, Uniform.FromTexture("map", map));
+            var chain = TestShaderEffect(first, Uniform.FromTexture("other", map));
             Frame(new Rectangle { Effect = chain });
             Assert.That(_sink.OfOp("CREATE").Count(), Is.EqualTo(2));
             var links = Links();
@@ -257,7 +252,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ImageUniform_SentAsResourceId()
         {
-            var chain = new TestShaderEffect(null, Uniform.FromImage("img", null));
+            var chain = TestShaderEffect(null, Uniform.FromImage("img", null));
             Frame(new Rectangle { Effect = chain });
             Assert.That(Links()[0], Does.EndWith("img=u64(0)"));
         }
@@ -265,7 +260,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Teardown_RemovingElementFreesObjects()
         {
-            var chain = Mask(new TestShaderEffect(null, Uniform.FromTexture("map", new Rectangle())), new Text());
+            var chain = Mask(TestShaderEffect(null, Uniform.FromTexture("map", new Rectangle())), new Text());
             Frame(new Group
             {
                 Children = ImmutableArray.Create<Element>(new Rectangle { Effect = chain }),
@@ -282,7 +277,7 @@ namespace VL.Qt.Tests
         {
             for (int i = 0; i < 5; i++)
             {
-                Frame(new Rectangle { Effect = Mask(new TestShaderEffect(null, Uniform.FromTexture("map", new Rectangle())), new Text()) });
+                Frame(new Rectangle { Effect = Mask(TestShaderEffect(null, Uniform.FromTexture("map", new Rectangle())), new Text()) });
                 Frame(new Rectangle { Effect = Blur() });
                 Frame(new Rectangle());
             }

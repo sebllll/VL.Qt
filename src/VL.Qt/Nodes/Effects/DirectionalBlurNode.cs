@@ -22,16 +22,16 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(float Angle, float Length);
 
-        private static readonly string[] s_shaders = { "directional_blur" };
+        private static readonly ShaderEffectSource[] s_shaders = { ShaderEffectSource.Builtin("directional_blur") };
 
-        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
         {
             var length = Math.Max(p.Length, 0f);
             var half = length / 2 + length / 64;
             var a = 2 * MathF.PI * p.Angle;
             var padX = half * MathF.Abs(MathF.Cos(a));
             var padY = half * MathF.Abs(MathF.Sin(a));
-            return new BuiltinShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
+            return new ShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
                 new[] { Uniform.Float("angle", p.Angle), Uniform.Float("blurLength", length) }.ToSpread(),
                 new RectangleF(padX, padY, padX, padY));
         };

@@ -274,7 +274,7 @@ namespace VL.Qt.Tests
         public void StylableAsUniformTexture_IsBuiltEveryUpdate()
         {
             var s = new Delegating { Next = new Rectangle() };
-            var root = new Rectangle { Effect = new TextureEffect(Uniform.FromTexture("map", ElementConversion.ToElement(s))) };
+            var root = new Rectangle { Effect = TextureEffect(Uniform.FromTexture("map", ElementConversion.ToElement(s))) };
 
             Update(root);
             Update(root);
@@ -299,13 +299,8 @@ namespace VL.Qt.Tests
             Assert.That(_rec.Root!.ContainsStylable, Is.False);
         }
 
-        private sealed class TextureEffect : ShaderEffect
-        {
-            public TextureEffect(params Uniform[] uniforms)
-                : base(null, Wire.Protocol.EffectTemplate.Single, ImmutableArray.Create(7UL), uniforms.ToSpread(), default, 1)
-            {
-            }
-        }
+        private static ShaderEffect TextureEffect(params Uniform[] uniforms) =>
+            new(null, Wire.Protocol.EffectTemplate.Single, ImmutableArray.Create(7UL), uniforms.ToSpread(), default, 1);
 
         private sealed class ThrowingStylable : IStylable
         {

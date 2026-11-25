@@ -24,13 +24,13 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Element? Map, Sampler? MapSampler, float Displacement);
 
-        private static readonly string[] s_shaders = { "displace" };
+        private static readonly ShaderEffectSource[] s_shaders = { ShaderEffectSource.Builtin("displace") };
 
-        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
         {
             var shift = p.Displacement;
             var pad = MathF.Abs(shift);
-            return new BuiltinShaderEffect(previous, Protocol.EffectTemplate.Single, ids,
+            return new ShaderEffect(previous, Protocol.EffectTemplate.Single, ids,
                 new[]
                 {
                     Uniform.Float("displacement", shift),

@@ -22,12 +22,12 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Vector2 Center, float Angle, float Padding);
 
-        private static readonly string[] s_shaders = { "radial_blur" };
+        private static readonly ShaderEffectSource[] s_shaders = { ShaderEffectSource.Builtin("radial_blur") };
 
-        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
         {
             var pad = Math.Max(p.Padding, 0f);
-            return new BuiltinShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
+            return new ShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
                 new[] { Uniform.Vector2("center", p.Center), Uniform.Float("angle", Math.Max(p.Angle, 0f)) }.ToSpread(),
                 new RectangleF(pad, pad, pad, pad));
         };

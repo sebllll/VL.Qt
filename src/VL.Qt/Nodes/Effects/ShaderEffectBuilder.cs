@@ -1,38 +1,29 @@
 ﻿using System;
 using System.Collections.Immutable;
-using Stride.Core.Mathematics;
-using VL.Lib.Collections;
+using VL.Qt.Images;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// A link of the Effect chain driven by shaders shipped with VL.Qt (<c>builtin:</c>): template, shader ids,
-    /// padding, radius and uniforms as <see cref="ShaderEffect"/> describes them; padding, radius and length uniforms in DIP
-    /// (the reconciler rounds the padding up to whole DIP). TwoPass shaders tell
-    /// their passes apart by the float uniform passIndex that QtNative sets (0, then 1).
+    /// One shader of a <see cref="ShaderEffect"/>: either a path (<c>builtin:&lt;name&gt;</c>, shipped with VL.Qt) or GLSL
+    /// source (a shader file), with the label that starts its error text.
     /// </summary>
-    internal sealed class BuiltinShaderEffect : ShaderEffect
+    internal readonly record struct ShaderEffectSource(string Label, string? Path, string? Code)
     {
-        /// <param name="previous">The link before this one in the chain.</param>
-        /// <param name="template">The pass template (Single, TwoPass, Pyramid).</param>
-        /// <param name="shaderIds">Ids of the built-in shaders the template uses.</param>
-        /// <param name="uniforms">Uniform values sent to the shaders.</param>
-        /// <param name="padding">Space around the element the effect may draw into, in DIP.</param>
-        /// <param name="radius">Pyramid: radius in DIP; Single and TwoPass: unused.</param>
-        public BuiltinShaderEffect(Effect? previous, ushort template, ImmutableArray<ulong> shaderIds, Spread<Uniform> uniforms,
-            RectangleF padding, float radius = 0f)
-            : base(previous, template, shaderIds, uniforms, padding, radius)
-        {
-        }
+        /// <summary>A shader shipped with VL.Qt.</summary>
+        public static ShaderEffectSource Builtin(string name) => new(name, ShaderSlot.builtinShaderPrefix + name, null);
+
+        /// <summary>A fragment shader given as source text.</summary>
+        public static ShaderEffectSource Fragment(string code) => new("Fragment shader", null, code);
     }
 
     /// <summary>
-    /// Shared core of the shader effect nodes (Glow, InnerShadow, DirectionalBlur, ZoomBlur, RadialBlur, Displace): owns the
-    /// shader resources of one node, builds a new link only if the chain at Input, a shader id or the node specific
+    /// Shared core of the shader effect nodes, built-in (Glow, InnerShadow, DirectionalBlur, ZoomBlur, RadialBlur, Displace, Blend)
+    /// and generated from shader files: owns the shader resources of one node, builds a new link only if the chain at Input, a shader id or the node specific
     /// <typeparamref name="TProps"/> changed (the reconciler compares by reference). Without shader ids (still creating, failed,
-    /// no resource client) the chain passes on unchanged and the problem shows at the node. Main thread only.
+    /// no resource client) the chain passes on unchanged and the problem shows at the node (one <see cref="NodeErrors"/> entry). Main thread only.
     /// </summary>
     /// <typeparam name="TProps">Node specific inputs; a readonly record struct (value equality, no allocation).</typeparam>
     internal sealed class ShaderEffectBuilder<TProps> : IDisposable
@@ -41,30 +32,27 @@ namespace VL.Qt.Nodes
         private const string phase = "Shader";
 
         private readonly ShaderSlot[] _slots;
-        private readonly string[] _paths;
-        private readonly Func<Effect?, ImmutableArray<ulong>, TProps, Effect> _create;
+        private readonly ShaderEffectSource[] _sources;
+        private readonly Func<Effect?, ImmutableArray<ulong>, TProps, ShaderEffect> _create;
         private readonly NodeErrors? _errors;
-        private Effect? _last;
+        private ShaderEffect? _last;
         private Effect? _lastInput;
         private ulong _id0, _id1;
         private TProps _props;
 
         /// <param name="client">Creates the shader resources, may be null (tests): the chain then passes on unchanged.</param>
-        /// <param name="shaders">Names of the built-in shaders by role (see <see cref="ShaderEffect.ShaderIds"/>).</param>
+        /// <param name="shaders">The shaders by role (see <see cref="ShaderEffect.ShaderIds"/>).</param>
         /// <param name="create">Builds the link; use a static lambda (no capture → no allocation).</param>
         /// <param name="errors">Shows shader problems at the node, may be null.</param>
-        public ShaderEffectBuilder(ResourceClient? client, string[] shaders, Func<Effect?, ImmutableArray<ulong>, TProps, Effect> create,
+        public ShaderEffectBuilder(ResourceClient? client, ShaderEffectSource[] shaders, Func<Effect?, ImmutableArray<ulong>, TProps, ShaderEffect> create,
             NodeErrors? errors = null)
         {
             _create = create;
             _errors = errors;
-            _paths = new string[shaders.Length];
+            _sources = shaders;
             _slots = new ShaderSlot[shaders.Length];
             for (var i = 0; i < shaders.Length; i++)
-            {
-                _paths[i] = "builtin:" + shaders[i];
-                _slots[i] = new ShaderSlot(client, Protocol.ShaderStage.Fragment, shaders[i]);
-            }
+                _slots[i] = new ShaderSlot(client, Protocol.ShaderStage.Fragment, shaders[i].Label);
         }
 
         /// <summary>Number of links created so far (tests).</summary>
@@ -73,8 +61,8 @@ namespace VL.Qt.Nodes
         /// <summary>The link for the inputs: the last instance if nothing changed, else a new one; <paramref name="input"/> while a shader is missing. Call once per Update.</summary>
         public Effect? Describe(Effect? input, in TProps props)
         {
-            var id0 = _slots[0].Update(_paths[0], null);
-            var id1 = _slots.Length > 1 ? _slots[1].Update(_paths[1], null) : 1;
+            var id0 = _slots[0].Update(_sources[0].Path, _sources[0].Code);
+            var id1 = _slots.Length > 1 ? _slots[1].Update(_sources[1].Path, _sources[1].Code) : 1;
             ReportErrors();
             if (id0 == 0 || id1 == 0)
             {
