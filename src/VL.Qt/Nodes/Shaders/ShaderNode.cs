@@ -174,7 +174,7 @@ namespace VL.Qt.Nodes
             if (uniforms is null || uniforms.Count == 0)
                 return string.Empty;
             var lines = new System.Collections.Generic.List<string>();
-            var seen = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+            var seen = new System.Collections.Generic.HashSet<UniformKey>();
             for (int i = 0; i < uniforms.Count; i++)
             {
                 var u = uniforms[i];
@@ -184,7 +184,7 @@ namespace VL.Qt.Nodes
                     lines.Add(string.IsNullOrEmpty(u.Name)
                         ? $"Uniform #{i}: the name is empty"
                         : $"Uniform #{i}: the name is longer than {Protocol.UniformNameMax} bytes");
-                else if (!seen.Add(u.Name))
+                else if (!seen.Add(UniformKey.Of(u)))
                     lines.Add($"Uniform '{u.Name}' is set more than once, the last one counts");
             }
             return string.Join('\n', lines);
