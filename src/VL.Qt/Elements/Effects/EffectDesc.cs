@@ -4,7 +4,7 @@ namespace VL.Qt.Elements
 {
     /// <summary>
     /// The folded effect chain: all values of one Qt MultiEffect (the Effect layer properties of protocol.h). Defaults
-    /// are Qt's, everything off. Lengths in units of the renderer's space (the reconciler converts them).
+    /// are Qt's, everything off. Lengths in DIP.
     /// </summary>
     internal readonly record struct EffectDesc
     {
@@ -18,14 +18,14 @@ namespace VL.Qt.Elements
         public bool BlurEnabled { get; init; }
         /// <summary>0..1.</summary>
         public float Blur { get; init; }
-        /// <summary>Maximum blur radius in pixels (Qt blurMax, default 32); also limits the shadow blur. Changing it switches shaders.</summary>
+        /// <summary>Maximum blur radius in DIP (Qt blurMax, default 32); also limits the shadow blur. Changing it switches shaders.</summary>
         public int BlurMax { get; init; } = 32;
         /// <summary>0..; values above 0 enlarge the blur beyond BlurMax with lower quality (Qt default 0).</summary>
         public float BlurMultiplier { get; init; }
 
         public bool ShadowEnabled { get; init; }
         public Color4 ShadowColor { get; init; } = Color4.Black;
-        /// <summary>Shadow offset in units.</summary>
+        /// <summary>Shadow offset in DIP.</summary>
         public Vector2 ShadowOffset { get; init; }
         /// <summary>0..1 (Qt default 1).</summary>
         public float ShadowBlur { get; init; } = 1;
@@ -46,7 +46,7 @@ namespace VL.Qt.Elements
 
         /// <summary>On (Qt default): the effect area grows by what blur and shadow need. Off: <see cref="PaddingRect"/> applies.</summary>
         public bool AutoPadding { get; init; } = true;
-        /// <summary>Extra effect area in units with AutoPadding off: x = left, y = top, width = right, height = bottom.</summary>
+        /// <summary>Extra effect area in DIP with AutoPadding off: x = left, y = top, width = right, height = bottom.</summary>
         public RectangleF PaddingRect { get; init; }
 
         /// <summary>Element used as alpha mask (its own description, reconciled as hidden texture source); null = no mask.</summary>

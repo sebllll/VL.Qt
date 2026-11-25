@@ -505,7 +505,7 @@ namespace VL.Qt.Reconciliation
 
         /// <summary>
         /// Reconciles the Effect pin of <paramref name="item"/>: a new chain instance is segmented and sent, an unchanged one
-        /// only retries its objects (and is sent again for a new unit scale).
+        /// only retries its objects.
         /// </summary>
         private void ReconcileEffect(ItemMirror item, Element next, Style inherited)
         {
@@ -516,10 +516,7 @@ namespace VL.Qt.Reconciliation
             var effect = item.Effect ??= new EffectChainMirror();
             if (ReferenceEquals(chain, effect.Chain))
             {
-                var sent = RetryEffectObjects(item, effect, inherited);
-                // A new unit scale changes the lengths of the chain.
-                if (_pass.Rescale && !sent && chain is not null)
-                    EffectChainWriter.Send(_sink, item.Id, effect, _pass.Mapping);
+                RetryEffectObjects(item, effect, inherited);
                 return;
             }
 
@@ -538,7 +535,7 @@ namespace VL.Qt.Reconciliation
             var old = effect.Objects;
             if (elements.Count == 0 && old.Count == 0)
             {
-                EffectChainWriter.Send(_sink, item.Id, effect, _pass.Mapping);
+                EffectChainWriter.Send(_sink, item.Id, effect);
                 return;
             }
 
@@ -561,7 +558,7 @@ namespace VL.Qt.Reconciliation
                     objects.Add(Reconcile(matches![i], elements[i], new Position(item, default, 0, inherited, Attached: true)));
                 effect.ReplaceObjects(objects);
 
-                EffectChainWriter.Send(_sink, item.Id, effect, _pass.Mapping);
+                EffectChainWriter.Send(_sink, item.Id, effect);
 
                 // The chain no longer refers to the objects it did not reuse.
                 for (int i = 0; i < old.Count; i++)
@@ -581,9 +578,9 @@ namespace VL.Qt.Reconciliation
         /// <summary>
         /// Unchanged chain: the objects are reconciled again (their element may have changed inside, and a video shown
         /// elsewhere stays a placeholder that is retried every pass); the chain is sent again when an object got
-        /// another id (returns true then).
+        /// another id.
         /// </summary>
-        private bool RetryEffectObjects(ItemMirror item, EffectChainMirror effect, Style inherited)
+        private void RetryEffectObjects(ItemMirror item, EffectChainMirror effect, Style inherited)
         {
             var objects = effect.Objects;
             var elements = effect.Elements;
@@ -596,8 +593,7 @@ namespace VL.Qt.Reconciliation
                     resend = true;
             }
             if (resend)
-                EffectChainWriter.Send(_sink, item.Id, effect, _pass.Mapping);
-            return resend;
+                EffectChainWriter.Send(_sink, item.Id, effect);
         }
 
         /// <summary>First unused old object of <paramref name="element"/> itself (<paramref name="sameElement"/>) or of its type.</summary>

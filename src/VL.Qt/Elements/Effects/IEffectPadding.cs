@@ -6,7 +6,7 @@ namespace VL.Qt.Elements
     internal interface IEffectPadding
     {
         bool AutoPadding { get; }
-        /// <summary>Extra area in units: x = left, y = top, width = right, height = bottom (used with AutoPadding off).</summary>
+        /// <summary>Extra area in DIP: x = left, y = top, width = right, height = bottom (used with AutoPadding off).</summary>
         RectangleF Padding { get; }
     }
 }

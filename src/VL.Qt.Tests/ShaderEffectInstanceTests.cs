@@ -306,7 +306,7 @@ void main() { fragColor = vec4(phase); }
             var chain = sink.OfOp("CHAIN").Single().Split(" | ").Skip(1).ToArray();
             Assert.That(chain, Has.Length.EqualTo(2));
             Assert.That(chain[0], Does.StartWith("multi"));
-            Assert.That(chain[1], Does.StartWith($"shader {Protocol.EffectTemplate.Single} [{id}] pad=(400,800,1200,1600) strength=0"));
+            Assert.That(chain[1], Does.StartWith($"shader {Protocol.EffectTemplate.Single} [{id}] pad=(4,8,12,16) strength=0"));
             Assert.That(chain[1], Does.Contain("amount=f32(0.5)").And.Contain("map=u64(0)"));
         }
 

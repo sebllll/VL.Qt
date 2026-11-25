@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
             var padX = half * MathF.Abs(MathF.Cos(a));
             var padY = half * MathF.Abs(MathF.Sin(a));
             return new BuiltinShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
-                new[] { Uniform.Float("angle", p.Angle), Uniform.Length("blurLength", length) }.ToSpread(),
+                new[] { Uniform.Float("angle", p.Angle), Uniform.Float("blurLength", length) }.ToSpread(),
                 new RectangleF(padX, padY, padX, padY));
         };
 
@@ -51,12 +51,12 @@ namespace VL.Qt.Nodes
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
         /// <param name="angle">Direction of the blur in cycles (1 = full turn): 0 = horizontal, 0.25 = vertical, increases clockwise on screen.</param>
-        /// <param name="length">Length of the blur line in units of the renderer's space (total, 0 = no blur).</param>
+        /// <param name="length">Length of the blur line in DIP (total, 0 = no blur).</param>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             float angle,
-            [DefaultValue(0.1f)] float length)
+            [DefaultValue(10f)] float length)
             => _link.Describe(input, new Props(angle, length));
 
         public void Dispose() => _link.Dispose();
