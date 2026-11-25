@@ -41,7 +41,7 @@ namespace VL.Qt.Tests
 
         private Element Update(out bool value, out bool bang, IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox,
             bool enabled = true, bool autoSize = true)
-            => (Element)_node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, channel, look, enabled,
+            => (Element)_node.Update(autoSize, DefaultSize, default, RectangleAnchor.Center, channel, look, enabled,
                 1, false, false, null, null, null, out value, out bang, out _, out _);
 
         private Element Update(IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox)
@@ -191,8 +191,8 @@ namespace VL.Qt.Tests
             Assert.That(Allocations.Fewest(() => Update(ch)), Is.EqualTo(0), "connected");
 
             var unconnected = new ToggleNode(_ => NoWarning);
-            for (int i = 0; i < 100; i++) unconnected.Update(DefaultSize, true, default, RectangleAnchor.Center, null, ToggleLook.Switch, true, 1, false, false, null, null, null, out _, out _, out _, out _);
-            Assert.That(Allocations.Fewest(() => unconnected.Update(DefaultSize, true, default, RectangleAnchor.Center, null, ToggleLook.Switch, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "unconnected (null)");
+            for (int i = 0; i < 100; i++) unconnected.Update(true, DefaultSize, default, RectangleAnchor.Center, null, ToggleLook.Switch, true, 1, false, false, null, null, null, out _, out _, out _, out _);
+            Assert.That(Allocations.Fewest(() => unconnected.Update(true, DefaultSize, default, RectangleAnchor.Center, null, ToggleLook.Switch, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "unconnected (null)");
             unconnected.Dispose();
         }
     }

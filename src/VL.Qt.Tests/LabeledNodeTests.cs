@@ -17,8 +17,23 @@ namespace VL.Qt.Tests
 
         private static Element Labeled(LabeledNode n, Element? element, string text = "Volume", float labelWidth = 1.5f,
             LabelPosition position = LabelPosition.Left)
-            => (Element)n.Update(element, text, labelWidth, position, 0.1f, default, RectangleAnchor.Center, 0.2f, 1, null,
+            => (Element)n.Update(element, text, position, labelWidth, 0.2f, 0.1f, default, RectangleAnchor.Center, 1, false, false, null,
                 null, true, out _, out _);
+
+        [Test]
+        public void ClipAndDebug_ReachTheLayout()
+        {
+            using var n = new LabeledNode(NoWarning);
+            foreach (var position in new[] { LabelPosition.Left, LabelPosition.Top })
+            {
+                var e = (Element)n.Update(A, "Volume", position, 1.5f, 0.2f, 0.1f, default, RectangleAnchor.Center, 1, true, true, null,
+                    null, true, out _, out _);
+                Assert.That((e.Clip, e.Debug), Is.EqualTo((true, true)), position.ToString());
+                e = (Element)n.Update(A, "Volume", position, 1.5f, 0.2f, 0.1f, default, RectangleAnchor.Center, 1, false, false, null,
+                    null, true, out _, out _);
+                Assert.That((e.Clip, e.Debug), Is.EqualTo((false, false)), position.ToString());
+            }
+        }
 
         [Test]
         public void Left_IsRow_LabelThenElement()

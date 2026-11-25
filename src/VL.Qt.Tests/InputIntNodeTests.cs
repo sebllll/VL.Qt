@@ -44,7 +44,7 @@ namespace VL.Qt.Tests
         // Pin defaults as declared on Update.
         private SpinBox Update(out int value, out bool bang, IChannel<int>? channel = null, Optional<int> min = default, Optional<int> max = default,
             int step = 1, bool editable = true, bool enabled = true, bool autoSize = true)
-            => (SpinBox)_node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, channel, min, max, step, editable, enabled,
+            => (SpinBox)_node.Update(autoSize, DefaultSize, default, RectangleAnchor.Center, channel, min, max, step, editable, enabled,
                 1, false, false, null, null, null, out value, out bang, out _, out _);
 
         private SpinBox Update(IChannel<int>? channel = null, Optional<int> min = default, Optional<int> max = default)
@@ -235,8 +235,8 @@ namespace VL.Qt.Tests
             Assert.That(Allocations.Fewest(() => Update(ch)), Is.EqualTo(0), "connected");
 
             var unconnected = new InputIntNode(_ => NoWarning);
-            for (int i = 0; i < 100; i++) unconnected.Update(DefaultSize, true, default, RectangleAnchor.Center, null, default, default, 1, true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
-            Assert.That(Allocations.Fewest(() => unconnected.Update(DefaultSize, true, default, RectangleAnchor.Center, null, default, default, 1, true, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "unconnected (null)");
+            for (int i = 0; i < 100; i++) unconnected.Update(true, DefaultSize, default, RectangleAnchor.Center, null, default, default, 1, true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
+            Assert.That(Allocations.Fewest(() => unconnected.Update(true, DefaultSize, default, RectangleAnchor.Center, null, default, default, 1, true, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "unconnected (null)");
             unconnected.Dispose();
         }
     }

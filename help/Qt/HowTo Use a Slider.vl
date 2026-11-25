@@ -255,7 +255,7 @@
               <Choice Kind="ProcessAppFlag" Name="Labeled" />
             </p:NodeReference>
             <Pin Id="MJP5EmkEfgpO6VofqgrbmT" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Lbr4L3BDxXfM1SyZtdaXCa" Name="Element" Kind="InputPin" />
+            <Pin Id="Lbr4L3BDxXfM1SyZtdaXCa" Name="Input" Kind="InputPin" />
             <Pin Id="UTqdEWBL9QDNVrjNbS3Rsy" Name="Text" Kind="InputPin" DefaultValue="Channel with IOBox (0.3)" />
             <Pin Id="KcF7lLhEoWDO7fvkBnQyFv" Name="Label Width" Kind="InputPin" />
             <Pin Id="AWd2BZU8yhJLihSfGOIJmj" Name="Label Position" Kind="InputPin" />
@@ -276,7 +276,7 @@
               <Choice Kind="ProcessAppFlag" Name="Labeled" />
             </p:NodeReference>
             <Pin Id="CTVFzuwjkuyLAjOMBTg8XF" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="KZWIaUtjECIPLi6Zm6OhzL" Name="Element" Kind="InputPin" />
+            <Pin Id="KZWIaUtjECIPLi6Zm6OhzL" Name="Input" Kind="InputPin" />
             <Pin Id="FhMhD6zMESKMhRXqHyEtWy" Name="Text" Kind="InputPin" DefaultValue="Min 0, Max 100, Step 10" />
             <Pin Id="HAubJu9HRmzMUnFx2UIgZq" Name="Label Width" Kind="InputPin" />
             <Pin Id="GBsbsOqI1BdOaUK9e7ZO42" Name="Label Position" Kind="InputPin" />
@@ -297,7 +297,7 @@
               <Choice Kind="ProcessAppFlag" Name="Labeled" />
             </p:NodeReference>
             <Pin Id="L3ROGBhNlbkMRvMtG6YuPi" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="HoluOzuLw1CMk82ojOPm2q" Name="Element" Kind="InputPin" />
+            <Pin Id="HoluOzuLw1CMk82ojOPm2q" Name="Input" Kind="InputPin" />
             <Pin Id="AltX6tSTBaWNz2Osfhwzly" Name="Text" Kind="InputPin" DefaultValue="Min 0, Max 100, Step 10" />
             <Pin Id="RJde3a4xN8PQY7oBUCAm7T" Name="Label Width" Kind="InputPin" />
             <Pin Id="VbA2hFeRBFYPpNNa0lI7rv" Name="Label Position" Kind="InputPin" />

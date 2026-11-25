@@ -820,8 +820,8 @@ namespace VL.Qt.Tests
 
         private QmlElement Update(out Dictionary<string, object> changed, out Spread<QmlSignal> signals, out string error,
             Dictionary<string, object>? properties = null, string? file = "", bool autoSize = true)
-            => (QmlElement)_node.Update(file is null ? null : new Path(file == "" ? _file : file), properties, new Vector2(1, 1), autoSize,
-                Matrix.Identity, RectangleAnchor.TopLeft, 1, false, false, null, null,
+            => (QmlElement)_node.Update(autoSize, new Vector2(1, 1),
+                Matrix.Identity, RectangleAnchor.TopLeft, file is null ? null : new Path(file == "" ? _file : file), properties, 1, false, false, null, null,
                 true,
                 out changed, out signals, out _, out _, out error);
 

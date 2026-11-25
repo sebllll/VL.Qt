@@ -223,7 +223,7 @@
               <Choice Kind="ProcessAppFlag" Name="Group (Spectral)" />
             </p:NodeReference>
             <Pin Id="NO3krj3l8XeOUceEGHx65C" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="VMqrfFi2V9aMskDoIaAYzF" Name="Children" Kind="InputPin" />
+            <Pin Id="VMqrfFi2V9aMskDoIaAYzF" Name="Input" Kind="InputPin" />
             <Pin Id="JYB7EjnAvtbLI0ivTabCBg" Name="Output" Kind="OutputPin" />
             <Pin Id="BRlCoSbq3NjNpngx2IZuwl" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="PihFoLJiMSdPYD3pCxDtZn" Name="Auto Size" Kind="InputPin" IsHidden="true" />

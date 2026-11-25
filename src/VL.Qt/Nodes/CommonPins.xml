@@ -9,6 +9,7 @@
   parameter name (the compiler checks it):
     element   every element node (Rectangle, Text, Image, Video, Group, Row, Column, Labeled, QML, Shader, widgets)
     autosize  the Size of the nodes that have an Auto Size pin
+    container Group, Row, Column and their Spectral nodes: the Style pin
     plain     Rectangle, Circle and the shapes: no content size of their own (Measured Size); Rectangle and Circle: Clip
     shape     Line, Polyline, Polygon, Path: their extent comes from the points
     widget    Button, Slider, Toggle, TextInput, InputInt
@@ -40,6 +41,9 @@
     <param name="transform">Position, rotation and scale, applied around the origin of the parent space. Inside Row/Column the layout places the element and Transform is only visual.</param>
     <param name="clip">Clips the drawing to the extent (0, 0) to (max X, max Y) of the points: the stroke and points outside it are cut.</param>
     <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input. Hit-testing uses the extent (0, 0) to (max X, max Y) of the points, not the stroke.</param>
+  </set>
+  <set name="container">
+    <param name="style">Style passed on to the widgets inside (field by field; a widget's own style overrides it).</param>
   </set>
   <set name="widget">
     <param name="opacity">Opacity of the widget. 0 = not drawn and costs no render time, but the widget keeps its space in Row/Column and still receives input.</param>

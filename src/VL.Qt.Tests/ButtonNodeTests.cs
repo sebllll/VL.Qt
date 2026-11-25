@@ -31,7 +31,7 @@ namespace VL.Qt.Tests
         // Pin defaults as declared on Update.
         private Button Update(out bool bang, string text = "Button", bool enabled = true, bool autoRepeat = false, bool autoSize = true,
             IChannel<Unit>? onClick = null, Interaction? interaction = null)
-            => (Button)_node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, onClick, text, enabled, autoRepeat,
+            => (Button)_node.Update(autoSize, DefaultSize, default, RectangleAnchor.Center, onClick, text, enabled, autoRepeat,
                 1, false, false, interaction, null, null, out bang, out _, out _);
 
         private Button Update(string text = "Button", bool enabled = true, bool autoRepeat = false, bool autoSize = true)

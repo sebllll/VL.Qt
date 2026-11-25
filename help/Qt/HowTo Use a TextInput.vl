@@ -251,7 +251,7 @@
               <Choice Kind="ProcessAppFlag" Name="Labeled" />
             </p:NodeReference>
             <Pin Id="KDlGqFVEbZXSpDDEaaBC1Y" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="gTL59EwbsjsIABe02aXUHV" Name="Element" Kind="InputPin" />
+            <Pin Id="gTL59EwbsjsIABe02aXUHV" Name="Input" Kind="InputPin" />
             <Pin Id="kWbB93ftXhvyphk4u7d8yk" Name="Text" Kind="InputPin" />
             <Pin Id="MNaYxOenGL01xFaMz7zKS4" Name="Label Width" Kind="InputPin" />
             <Pin Id="hkQAZocpWAXj0Upg63F97v" Name="Label Position" Kind="InputPin" />
@@ -277,7 +277,7 @@
               <Choice Kind="ProcessAppFlag" Name="Labeled" />
             </p:NodeReference>
             <Pin Id="l7W73KFYiVQ1r4ax0KNfxs" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="mWxeextGIiFWQPdJfF34lL" Name="Element" Kind="InputPin" />
+            <Pin Id="mWxeextGIiFWQPdJfF34lL" Name="Input" Kind="InputPin" />
             <Pin Id="rtXawIsCKZVdhy6Nz9nCEq" Name="Text" Kind="InputPin" />
             <Pin Id="cUGhAzMW9qWQTvC4ZQs7ry" Name="Label Width" Kind="InputPin" />
             <Pin Id="rQjmZUfwCIAXtD7n6BkzpK" Name="Label Position" Kind="InputPin" />
@@ -303,7 +303,7 @@
               <Choice Kind="ProcessAppFlag" Name="Labeled" />
             </p:NodeReference>
             <Pin Id="Sg45V1MOgRoPqlyhNpp8vt" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="tFDf0YNgbZIWFq6JskkW9F" Name="Element" Kind="InputPin" />
+            <Pin Id="tFDf0YNgbZIWFq6JskkW9F" Name="Input" Kind="InputPin" />
             <Pin Id="Z4JBvpZNGqRmfGbKrM4TMC" Name="Text" Kind="InputPin" />
             <Pin Id="1UDPPkYK56bs8bFZJLavMq" Name="Label Width" Kind="InputPin" />
             <Pin Id="LW0BRSYATxeT2ckgBp08On" Name="Label Position" Kind="InputPin" />

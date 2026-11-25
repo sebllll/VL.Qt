@@ -58,12 +58,12 @@ public static class AnchorTest
 
         // Row (implicit size, 2 children): anchor Center + Rot90 · T(2, 1.5) rotates around (200, 150) DIP.
         Element Row(float redWidth = 1) => (Element)row.Update(Spread.Create<IElement?>(Rect(red, Red, w: redWidth), Rect(green, Green)),
-            new Vector2(0, 0), true, RotAround(2, 1.5f), RectangleAnchor.Center, 0, 0, VerticalAlignment.Top, 1, false, false,
-            null, null, true, out _, out _);
+            true, new Vector2(0, 0), RotAround(2, 1.5f), RectangleAnchor.Center, 0, 0, VerticalAlignment.Top, 1, false, false,
+            null, null, null, true, out _, out _);
 
         Element Group(Vector2 size, bool autoSize, RectangleAnchor anchor, Matrix m, float cx, float cy)
             => (Element)group.Update(Spread.Create<IElement?>(Rect(red, Red, cx, cy), Rect(green, Green, cx + 1, cy)),
-                size, autoSize, m, anchor, 1, false, false,
+                autoSize, size, m, anchor, 1, false, false,
                 null, null, null, true, out _, out _);
 
         void Frame(Element root, string what, bool clear = false)
@@ -186,8 +186,8 @@ public static class AnchorTest
         {
             var greenRot = green.Update(new Vector2(2, 1), Rot90, RectangleAnchor.Center, Green, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
                 null, null, true, out _, out _);
-            Frame((Element)row.Update(Spread.Create<IElement?>(Rect(red, Red), greenRot), new Vector2(0, 0), true, Matrix.Translation(1, 1, 0),
-                RectangleAnchor.TopLeft, 0, 0, VerticalAlignment.Top, 1, false, false, null, null, true, out _, out _), "row child anchor", clear: true);
+            Frame((Element)row.Update(Spread.Create<IElement?>(Rect(red, Red), greenRot), true, new Vector2(0, 0), Matrix.Translation(1, 1, 0),
+                RectangleAnchor.TopLeft, 0, 0, VerticalAlignment.Top, 1, false, false, null, null, null, true, out _, out _), "row child anchor", clear: true);
             using var a = s.Grab(w, "88_row_child_anchor.png");
             s.Check(IsRed(Px(a, 150, 150)) && IsGreen(Px(a, 300, 60)) && IsGreen(Px(a, 300, 240)) && IsBg(Px(a, 220, 150)) && IsBg(Px(a, 380, 150)),
                 $"Row child: anchor Center = pivot only, rotated in its cell ({Px(a, 150, 150)}, {Px(a, 300, 60)}, {Px(a, 300, 240)}, {Px(a, 220, 150)}, {Px(a, 380, 150)})");

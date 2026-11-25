@@ -261,7 +261,7 @@
               <Choice Kind="ProcessAppFlag" Name="Group (Spectral)" />
             </p:NodeReference>
             <Pin Id="ivub0TmrcVrKGtSKULjNxp" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="EVPm0fGUXlEQXntvUoZ2gL" Name="Children" Kind="InputPin" />
+            <Pin Id="EVPm0fGUXlEQXntvUoZ2gL" Name="Input" Kind="InputPin" />
             <Pin Id="HuZoeFERPVceudGuFZhTPL" Name="Output" Kind="OutputPin" />
             <Pin Id="mkKNAm44c0X1Jv3VYKmeBw" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="uhYaiVMlNZ8f3W0YqQ0O6v" Name="Auto Size" Kind="InputPin" IsHidden="true" />
@@ -285,7 +285,7 @@
               <Choice Kind="ProcessAppFlag" Name="Group (Spectral)" />
             </p:NodeReference>
             <Pin Id="fAcKPZ83AkoVC5X0CxxOKz" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="y6SXpTu7SrdTurLFqT54O3" Name="Children" Kind="InputPin" />
+            <Pin Id="y6SXpTu7SrdTurLFqT54O3" Name="Input" Kind="InputPin" />
             <Pin Id="doTsjYxedPUsCwYXPFjcop" Name="Output" Kind="OutputPin" />
             <Pin Id="nzBtFgrTm4mWRuphjS0eoC" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="nug1quLOhlbzYZIDtslrcS" Name="Auto Size" Kind="InputPin" IsHidden="true" />

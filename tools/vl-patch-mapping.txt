@@ -57,3 +57,10 @@ W4-17 | category | ToTexturePixels      | Qt                     | Stride.Input
 # W4-95: the click channel of Button is an input like Channel at the other widgets: "On Click", directly after Anchor (the
 # position is the order of the C# parameters; patches reach the pin by its name).
 W4-95 | pin | Qt.Widgets/Button | Is Clicked | On Click
+
+# W4-97: the three Spectral containers call their input Input like the non-spectral ones and Skia; Labeled's first pin is
+# Input (was Element). The new order of the pins needs no row: a patch reaches a pin by its name.
+W4-97 | pin | Qt.Elements/Group (Spectral)  | Children | Input
+W4-97 | pin | Qt.Elements/Row (Spectral)    | Children | Input
+W4-97 | pin | Qt.Elements/Column (Spectral) | Children | Input
+W4-97 | pin | Qt.Elements/Labeled           | Element  | Input

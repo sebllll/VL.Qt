@@ -58,7 +58,7 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='interaction']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
-        /// <param name="style">Style passed on to the widgets inside (field by field; a widget's own style overrides it). The group itself draws nothing.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='container']/param[@name='style']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
         /// <param name="measuredSize">Size of the group's frame, in units (last frame; see Auto Size).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
@@ -66,8 +66,8 @@ namespace VL.Qt.Nodes
         [return: Pin(Name = "Output")]
         public IElement Update(
             [Pin(Name = "Input", PinGroupKind = PinGroupKind.Collection, PinGroupDefaultCount = 2)] Spread<IElement?> children,
-            [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional)] Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float opacity,

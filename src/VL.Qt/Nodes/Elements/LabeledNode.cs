@@ -48,7 +48,7 @@ namespace VL.Qt.Nodes
             _text = new ElementNodeCore<Text, TextProps>(messages, s_createText, "Label ");
             _row = new ElementNodeCore<Row, LayoutProps>(messages, s_createRow, "Row ");
             _column = new ElementNodeCore<Column, LayoutProps>(messages, s_createColumn, "Column ");
-            _element = new ElementInput(messages, "Element");
+            _element = new ElementInput(messages, "Input");
         }
 
         // The label box is Label Width x Label Height (the Size of s_label): the text is aligned left and vertically
@@ -76,15 +76,17 @@ namespace VL.Qt.Nodes
                 ChildAlignment = HorizontalAlignment.Left,
             };
 
-        /// <param name="element">The element to label (Button, Slider, Input, …). Unconnected: only the label is shown.</param>
+        /// <param name="input">The element to label (Button, Slider, Input, …). Unconnected: only the label is shown.</param>
         /// <param name="text">The label text (plain, no markup).</param>
-        /// <param name="labelWidth">Width of the label box. Use the same value on all Labeled nodes of a panel so the elements line up. With the label above the element it only limits the box, not the layout.</param>
         /// <param name="labelPosition">Label left of the element or above it.</param>
+        /// <param name="labelWidth">Width of the label box. Use the same value on all Labeled nodes of a panel so the elements line up. With the label above the element it only limits the box, not the layout.</param>
+        /// <param name="labelHeight">Height of the label box; the text is vertically centered in it. Must be at least the text height (12 DIP font: about 0.2).</param>
         /// <param name="spacing">Gap between label and element.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
-        /// <param name="labelHeight">Height of the label box; the text is vertically centered in it. Must be at least the text height (12 DIP font: about 0.2).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
         /// <param name="interaction">Chain of interaction nodes (Hover, Click, …) for label and element together. Without interaction the label row is transparent for input; the element keeps its own Interaction.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
@@ -93,22 +95,24 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         [return: Pin(Name = "Output")]
         public IElement Update(
-            IElement? element,
+            IElement? input,
             [DefaultValue("Label")] string text,
-            [DefaultValue(1.5f)] float labelWidth,
             [DefaultValue(typeof(LabelPosition), nameof(LabelPosition.Left))] LabelPosition labelPosition,
+            [DefaultValue(1.5f)] float labelWidth,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(0.2f)] float labelHeight,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(0.1f)] float spacing,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
-            [Pin(Visibility = PinVisibility.Optional), DefaultValue(0.2f)] float labelHeight,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float opacity,
+            [Pin(Visibility = PinVisibility.Optional)] bool clip,
+            [Pin(Visibility = PinVisibility.Optional)] bool debug,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
-            var shown = _element.Update(element);
+            var shown = _element.Update(input);
             var label = _text.Describe(
                 s_label with { Size = new Vector2(labelWidth, labelHeight) },
                 new TextProps(text ?? string.Empty),
@@ -122,8 +126,7 @@ namespace VL.Qt.Nodes
                     : ImmutableArray.Create(label, shown);
             }
 
-            // Labeled has no Clip and no Debug pin (yet): the layout never clips and draws no debug overlay.
-            var common = new CommonInputs(default, transform, anchor, opacity, false, false, interaction, effect, enabled);
+            var common = new CommonInputs(default, transform, anchor, opacity, clip, debug, interaction, effect, enabled);
             var props = new LayoutProps(_children, spacing);
             // Only the active layout is described: the other one must not keep a message it showed before the switch.
             if (labelPosition == LabelPosition.Top)

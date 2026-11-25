@@ -184,8 +184,8 @@ public static class EffectChainTest
         {
             var a = Rect(rectA, blue, new RectangleF(0, 0, 2, 1.5f), fx, out ab);
             var b = Rect(rectB, red, new RectangleF(0, 0, 1, 1.5f), null, out bb);
-            return (Element)row.Update(Spread.Create<IElement?>(a, b), new Vector2(0, 0), true, Matrix.Translation(0.5f, 0.5f, 0), RectangleAnchor.TopLeft,
-                0.1f, 0, VerticalAlignment.Top, 1, false, false, null, null, true, out _, out rb);
+            return (Element)row.Update(Spread.Create<IElement?>(a, b), true, new Vector2(0, 0), Matrix.Translation(0.5f, 0.5f, 0), RectangleAnchor.TopLeft,
+                0.1f, 0, VerticalAlignment.Top, 1, false, false, null, null, null, true, out _, out rb);
         }
         // Row layout is checked on the image (the sceneBounds outputs only fill from QtNative events): extent of blue (A) and red (B) on y = 100.
         (int blue, int red) Extent(Bitmap a)

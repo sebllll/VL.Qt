@@ -41,7 +41,7 @@ namespace VL.Qt.Tests
 
         private TextField Update(out string value, out bool bang, IChannel<string>? channel = null, string? placeholder = "",
             bool editable = true, bool enabled = true, bool autoSize = true)
-            => (TextField)_node.Update(DefaultSize, autoSize, default, RectangleAnchor.Center, channel, placeholder, editable, enabled,
+            => (TextField)_node.Update(autoSize, DefaultSize, default, RectangleAnchor.Center, channel, placeholder, editable, enabled,
                 1, false, false, null, null, null, out value, out bang, out _, out _);
 
         private TextField Update(IChannel<string>? channel = null) => Update(out _, out _, channel);
@@ -182,13 +182,13 @@ namespace VL.Qt.Tests
             // a patch value with equal content but a new string instance must not allocate or describe again either
             var ch2 = Channel.Create("abc");
             var node = new TextInputNode(_ => NoWarning);
-            for (int i = 0; i < 100; i++) node.Update(DefaultSize, true, default, RectangleAnchor.Center, ch2, "ph", true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
-            Assert.That(Allocations.Fewest(() => node.Update(DefaultSize, true, default, RectangleAnchor.Center, ch2, "ph", true, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "with placeholder");
+            for (int i = 0; i < 100; i++) node.Update(true, DefaultSize, default, RectangleAnchor.Center, ch2, "ph", true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
+            Assert.That(Allocations.Fewest(() => node.Update(true, DefaultSize, default, RectangleAnchor.Center, ch2, "ph", true, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "with placeholder");
             node.Dispose();
 
             var unconnected = new TextInputNode(_ => NoWarning);
-            for (int i = 0; i < 100; i++) unconnected.Update(DefaultSize, true, default, RectangleAnchor.Center, null, null, true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
-            Assert.That(Allocations.Fewest(() => unconnected.Update(DefaultSize, true, default, RectangleAnchor.Center, null, null, true, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "unconnected (null)");
+            for (int i = 0; i < 100; i++) unconnected.Update(true, DefaultSize, default, RectangleAnchor.Center, null, null, true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
+            Assert.That(Allocations.Fewest(() => unconnected.Update(true, DefaultSize, default, RectangleAnchor.Center, null, null, true, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "unconnected (null)");
             unconnected.Dispose();
         }
     }

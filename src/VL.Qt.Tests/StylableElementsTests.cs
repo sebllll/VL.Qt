@@ -10,11 +10,11 @@ namespace VL.Qt.Tests
     public class StylableElementsTests
     {
         private static readonly Type[] s_widgets = { typeof(Button), typeof(SpinBox), typeof(CheckBox), typeof(Switch), typeof(Slider), typeof(TextField) };
-        private static readonly Type[] s_resolveOnly = { typeof(Group) };
+        private static readonly Type[] s_resolveOnly = { typeof(Group), typeof(Row), typeof(Column) };
 
         // Every other concrete element class passes the inherited style on. A new element class goes into one of the three lists.
         private static readonly Type[] s_passThrough =
-            { typeof(Rectangle), typeof(Text), typeof(Image), typeof(Row), typeof(Column), typeof(Video), typeof(Shader), typeof(QmlElement), typeof(Shape), typeof(StylableElement) };
+            { typeof(Rectangle), typeof(Text), typeof(Image), typeof(Video), typeof(Shader), typeof(QmlElement), typeof(Shape), typeof(StylableElement) };
 
         private static Element Create(Type type) => type == typeof(StylableElement)
             ? new StylableElement(new NoStylable())
@@ -33,7 +33,7 @@ namespace VL.Qt.Tests
             var listed = s_widgets.Concat(s_resolveOnly).Concat(s_passThrough);
 
             Assert.That(listed, Is.EquivalentTo(concrete),
-                "A new element class must be added to StylableElements (widget or Group) or to s_passThrough of this test.");
+                "A new element class must be added to StylableElements (widget or container) or to s_passThrough of this test.");
         }
 
         [TestCaseSource(nameof(Widgets))]
@@ -45,11 +45,12 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void Group_ResolvesStyleButSendsNothing()
+        [TestCaseSource(nameof(ResolveOnly))]
+        public void Container_ResolvesStyleButSendsNothing(Type type)
         {
-            var group = new Group();
-            Assert.That(StylableElements.ResolvesStyle(group), Is.True);
-            Assert.That(StylableElements.IsWidget(group), Is.False);
+            var container = Create(type);
+            Assert.That(StylableElements.ResolvesStyle(container), Is.True);
+            Assert.That(StylableElements.IsWidget(container), Is.False);
         }
 
         [TestCaseSource(nameof(PassThrough))]
@@ -61,6 +62,8 @@ namespace VL.Qt.Tests
         }
 
         private static Type[] Widgets() => s_widgets;
+
+        private static Type[] ResolveOnly() => s_resolveOnly;
 
         private static Type[] PassThrough() => s_passThrough;
     }

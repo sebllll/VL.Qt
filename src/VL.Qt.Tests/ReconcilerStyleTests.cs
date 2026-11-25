@@ -61,6 +61,19 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void ColumnAndRowStyle_ReachTheWidgetsInside_WithoutAGroup()
+        {
+            var column = Radius(13);
+            var row = Radius(21);
+            Update(new Column { Style = column, Children = Kids(new Button(), new Row { Style = row, Children = Kids(new Slider()) }) });
+
+            var styles = _sink.OfOp("STYLE").ToArray();
+            Assert.That(styles, Has.Length.EqualTo(2));
+            Assert.That(styles[0], Does.Contain(RadiusEntry(13)), "the Button takes the Column's style");
+            Assert.That(styles[1], Does.Contain(RadiusEntry(21)), "the Row's style overrides the Column's for the Slider");
+        }
+
+        [Test]
         public void WidgetStyle_OverridesGroupField()
         {
             Update(new Group { Style = Radius(13), Children = Kids(new Button { Style = Radius(21) }) });

@@ -66,8 +66,8 @@ public static class ContainerNodeTest
         // 1) Column node with 3 Rectangle nodes (1 x 1 units each), implicit size at 0,0, spacing 0.1, Left:
         //    red 0..100, green 110..210, blue 220..320 DIP (y), x 0..100.
         var e = column.Update(Spread.Create<IElement?>(Rect(red, Red), null, Rect(green, Green), Rect(blue, Blue)),
-            default, true, Matrix.Identity, RectangleAnchor.TopLeft, 0.1f, 0, HorizontalAlignment.Left, 1, false, false,
-            null, null, true, out _, out _);
+            true, default, Matrix.Identity, RectangleAnchor.TopLeft, 0.1f, 0, HorizontalAlignment.Left, 1, false, false,
+            null, null, null, true, out _, out _);
         Frame((Element)e, "column of 3 rectangle nodes", clear: true);
         using (var a = s.Grab(w, "07d_column.png"))
         {
@@ -82,8 +82,8 @@ public static class ContainerNodeTest
         // 2) Same column, Center, different widths (red 2, green 1, blue 0.5 units): implicit width = 200 DIP,
         //    green x 50..150, blue x 75..125. Unchanged children → same Rectangle descriptions, only the column changes.
         e = column.Update(Spread.Create<IElement?>(Rect(red, Red, w: 2), Rect(green, Green), Rect(blue, Blue, w: 0.5f)),
-            default, true, Matrix.Identity, RectangleAnchor.TopLeft, 0.1f, 0, HorizontalAlignment.Center, 1, false, false,
-            null, null, true, out _, out _);
+            true, default, Matrix.Identity, RectangleAnchor.TopLeft, 0.1f, 0, HorizontalAlignment.Center, 1, false, false,
+            null, null, null, true, out _, out _);
         Frame((Element)e, "column centered");
         using (var a = s.Grab(w, "07d_column_center.png"))
         {
@@ -98,8 +98,8 @@ public static class ContainerNodeTest
         //    red x 110..210, green 230..330 at y 160..210, blue 350..450 at y 185..210. The Rectangle nodes have no position
         //    (Transform identity), the row places them.
         e = row.Update(Spread.Create<IElement?>(Rect(red, Red), Rect(green, Green, h: 0.5f), Rect(blue, Blue, h: 0.25f)),
-            new Vector2(0, 0), true, Matrix.Translation(1, 1, 0), RectangleAnchor.TopLeft, 0.2f, 0.1f, VerticalAlignment.Bottom, 1, false, false,
-            null, null, true, out _, out _);
+            true, new Vector2(0, 0), Matrix.Translation(1, 1, 0), RectangleAnchor.TopLeft, 0.2f, 0.1f, VerticalAlignment.Bottom, 1, false, false,
+            null, null, null, true, out _, out _);
         Frame((Element)e, "row bottom");
         using (var a = s.Grab(w, "07d_row.png"))
         {
@@ -113,7 +113,7 @@ public static class ContainerNodeTest
 
         // 4) Group at (2, 1) units: children keep their position (red at 0,0, green at 1,1) → red (200,100), green (300,200).
         e = group.Update(Spread.Create<IElement?>(Rect(red, Red), null, Rect(green, Green, x: 1, y: 1)),
-            new Vector2(0, 0), true, Matrix.Translation(2, 1, 0), RectangleAnchor.TopLeft, 1, false, false,
+            true, new Vector2(0, 0), Matrix.Translation(2, 1, 0), RectangleAnchor.TopLeft, 1, false, false,
             null, null, null, true, out _, out _);
         Frame((Element)e, "group");
         using (var a = s.Grab(w, "07d_group.png"))
