@@ -9,8 +9,8 @@ namespace VL.Qt.Shaders
 {
     /// <summary>
     /// Everything the init of a generated shader effect node (the effect chain node of a filter file) needs: the layout of the
-    /// shader node without the uniforms QtNative sets itself (<see cref="ReservedUniforms.ChainAutomatic"/>: texelSize, dpr,
-    /// weight, ...), plus an error for each uniform of a name the chain reserves (<see cref="ReservedUniforms.ChainReserved"/>:
+    /// shader node without the uniforms QtNative sets itself (<see cref="ReservedUniforms.ChainAutomatic"/>:
+    /// weight, elementRect, passIndex; those of <see cref="ReservedUniforms.Item"/> get no pin from the pin model already), plus an error for each uniform of a name the chain reserves (<see cref="ReservedUniforms.ChainReserved"/>:
     /// base, glow, shadow; no pin), messages for a file that is no filter (any more) and for a .vert, which an effect does not
     /// use. Errors too: a wrong @passes or @padding tag, and an @padding uniform the shader does not have or that is not a
     /// float (then <see cref="Padding"/> is <see cref="ShaderPadding.None"/>).

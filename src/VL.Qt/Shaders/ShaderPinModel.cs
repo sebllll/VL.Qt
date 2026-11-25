@@ -81,7 +81,7 @@ namespace VL.Qt.Shaders
             {
                 foreach (var uniform in reflection.Uniforms)
                 {
-                    if (uniform.Name.StartsWith("qt_", StringComparison.Ordinal))
+                    if (uniform.Name.StartsWith("qt_", StringComparison.Ordinal) || ReservedUniforms.IsItemReserved(uniform.Name))
                         continue;
                     if (!seen.Add(uniform.Name))
                         continue;

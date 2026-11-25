@@ -43,7 +43,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="ljKxMTIHhjGvhBKa6lMbWK" Bounds="88,272,480,65" ShowValueBox="true" isIOBox="true" Value="1  RGBSplit.frag is a filter: its sampler2D source is the Input pin. Amount has @min/@max, Direction a @default, Tint is a @color, Scanlines a bool.">
+          <Pad Id="ljKxMTIHhjGvhBKa6lMbWK" Bounds="88,272,480,65" ShowValueBox="true" isIOBox="true" Value="1  RGBSplit.frag is a filter: its sampler2D source is the Input pin. Amount (DIP) has @min/@max, Direction a @default, Tint is a @color, Scanlines a bool.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -147,7 +147,7 @@
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="O6pTaB0eWtFi9UeXcGU7OT" Comment="Amount" Bounds="122,447,35,15" ShowValueBox="true" isIOBox="true" Value="0.03">
+          <Pad Id="O6pTaB0eWtFi9UeXcGU7OT" Comment="Amount" Bounds="122,447,35,15" ShowValueBox="true" isIOBox="true" Value="12">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>

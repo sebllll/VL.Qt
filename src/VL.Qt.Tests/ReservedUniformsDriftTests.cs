@@ -20,6 +20,7 @@ namespace VL.Qt.Tests
         {
             var header = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "shader_item.h"));
             Assert.That(Names(header, "kItemReservedUniforms"), Is.EquivalentTo(ReservedUniforms.Item), "kItemReservedUniforms <-> ReservedUniforms.Item");
+            Assert.That(Names(header, "kItemAutomaticUniforms"), Is.EquivalentTo(ReservedUniforms.ItemAutomatic), "kItemAutomaticUniforms <-> ReservedUniforms.ItemAutomatic");
             Assert.That(Names(header, "kChainAutomaticUniforms"), Is.EquivalentTo(ReservedUniforms.ChainAutomatic), "kChainAutomaticUniforms <-> ReservedUniforms.ChainAutomatic");
             Assert.That(Names(header, "kChainReservedUniforms"), Is.EquivalentTo(ReservedUniforms.ChainReserved), "kChainReservedUniforms <-> ReservedUniforms.ChainReserved");
         }
@@ -27,10 +28,12 @@ namespace VL.Qt.Tests
         [Test]
         public void ChainReservedIsTheUnionOfTheThreeLists()
         {
-            foreach (var name in ReservedUniforms.Item.Concat(ReservedUniforms.ChainAutomatic).Concat(ReservedUniforms.ChainReserved))
+            foreach (var name in ReservedUniforms.Item.Concat(ReservedUniforms.ItemAutomatic).Concat(ReservedUniforms.ChainAutomatic).Concat(ReservedUniforms.ChainReserved))
                 Assert.That(ReservedUniforms.IsChainReserved(name), Is.True, name);
             Assert.That(ReservedUniforms.IsChainReserved("amount"), Is.False);
-            Assert.That(ReservedUniforms.IsItemReserved("texelSize"), Is.False, "texelSize is only reserved in an effect chain");
+            foreach (var name in new[] { "texelSize", "dpr", "viewSize" })
+                Assert.That(ReservedUniforms.IsItemReserved(name), Is.True, name);
+            Assert.That(ReservedUniforms.IsItemReserved("weight"), Is.False, "weight is only reserved in an effect chain");
         }
 
         // The string literals of "inline constexpr std::string_view <name>[] = {...};".
