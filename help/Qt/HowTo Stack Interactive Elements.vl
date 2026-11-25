@@ -53,7 +53,7 @@
             <Pin Id="WXlwhdjUchKOsZHXZLVciz" Name="Size" Kind="InputPin" />
             <Pin Id="CJpWCdzZvCC9KQx1CIGkTJ" Name="Transform" Kind="InputPin" />
             <Pin Id="Da3SILNkhvKPDL18sz85yZ" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Amhv7VCpu6IJnlHdxq4XCj" Name="Color" Kind="InputPin" />
+            <Pin Id="Amhv7VCpu6IJnlHdxq4XCj" Name="Fill Color" Kind="InputPin" />
             <Pin Id="rQ0KMZt4ep84P4E8pZlMWh" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
             <Pin Id="YH189480SEMqDp4PqnpBCy" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="206BGCQv8nzI1ukaoo8tgx" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -204,7 +204,7 @@
             <Pin Id="u1h0OlyKUwQEnIiCfgJnv9" Name="Size" Kind="InputPin" />
             <Pin Id="MHRHbwWHH3bu33JWmjqYW2" Name="Transform" Kind="InputPin" />
             <Pin Id="CmnyZovmVMQOKZ6sbKDp3l" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="iQZ3214tkjgFfxkAz8TCt7" Name="Color" Kind="InputPin" />
+            <Pin Id="iQZ3214tkjgFfxkAz8TCt7" Name="Fill Color" Kind="InputPin" />
             <Pin Id="rtbE87WipfAQNdorvVyFYf" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
             <Pin Id="x3ANIq8z2x0GoZuvJSS3O1" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="MYvUk2rQ3oA6b9UByWpnkn" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -353,7 +353,7 @@
             <Pin Id="lBqx0neKJVazo9JHJVy5NY" Name="Size" Kind="InputPin" />
             <Pin Id="sT7ygTY2ahYRc1L0afQPV0" Name="Transform" Kind="InputPin" />
             <Pin Id="LH4gfcuH77mN96h1831lUT" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="ZdGCOukM0uWIT7h6oUnQg7" Name="Color" Kind="InputPin" />
+            <Pin Id="ZdGCOukM0uWIT7h6oUnQg7" Name="Fill Color" Kind="InputPin" />
             <Pin Id="rDIsTnr6SLg9NboSE2nxok" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
             <Pin Id="MrE3cDaH1gHn3zBUBPcp1v" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="Rm4PTQ5Z8BeNfRz87n0Ro1" Name="Stroke Width" Kind="InputPin" />

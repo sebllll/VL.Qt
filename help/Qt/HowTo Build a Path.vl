@@ -163,7 +163,7 @@
             <Pin Id="GN4b3uvmAidPqnmDUwY0ya" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="oJHPs5w6k5hwtenN40C1yJ" Name="Path" Kind="InputPin" />
             <Pin Id="dVLuELx9jj0DH3sVzCK7tv" Name="Transform" Kind="InputPin" />
-            <Pin Id="yHAuObDxDxLP1UTWkYtTMP" Name="Fill" Kind="InputPin" />
+            <Pin Id="yHAuObDxDxLP1UTWkYtTMP" Name="Fill Color" Kind="InputPin" />
             <Pin Id="tRNhXp8jhLFbRYl2NQKxc2" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="wUj6p7BP8SZAojOf01GpMF" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="CEC2Aq6VStYNWZVcGy4EYH" Name="Output" Kind="OutputPin" />
@@ -306,7 +306,7 @@
             <Pin Id="7I1ru9kgwN8WCEbLgGyqCu" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="KwSuuOHCBf02K4EdAHLFiX" Name="Path" Kind="InputPin" />
             <Pin Id="Mhm7MVghXHBj5nVYWvqtwq" Name="Transform" Kind="InputPin" />
-            <Pin Id="8eJNjzCJa5irC2bonHgZO7" Name="Fill" Kind="InputPin" />
+            <Pin Id="8eJNjzCJa5irC2bonHgZO7" Name="Fill Color" Kind="InputPin" />
             <Pin Id="LoZI7Gw0fNVywHyvuP3GQv" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="CqJnsPWHlLV8VKpv5AYmgi" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="YNCJKY1zno91ekgOCsgg0o" Name="Output" Kind="OutputPin" />
@@ -372,7 +372,7 @@
             <Pin Id="AXSa3lB0A028IdwTk7M94z" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="35ShUwvB7eMahepH9eDwZI" Name="Path" Kind="InputPin" />
             <Pin Id="tqwxnI6GrGbDKeajyMsO0l" Name="Transform" Kind="InputPin" />
-            <Pin Id="SUsBSV0wjNOdY8DuA8ADSh" Name="Fill" Kind="InputPin" />
+            <Pin Id="SUsBSV0wjNOdY8DuA8ADSh" Name="Fill Color" Kind="InputPin" />
             <Pin Id="26OLz2GYfVP7BWwcjcCiJ8" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="nSrJDoLuaELDmMyX3csccB" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="MGzeXXv7E357WLuwZWM7Xd" Name="Output" Kind="OutputPin" />

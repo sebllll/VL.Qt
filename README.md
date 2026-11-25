@@ -22,7 +22,7 @@ Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-progra
 | [**Elements**](docs/help-patches.md#drawing) | Rectangle, Circle, Text, Image, Video, Group, Row, Column, ShaderEffect, QmlElement, Labeled; the same element can be placed several times in the tree |
 | [**Paths**](#lines-shapes-and-paths) | Line, Polyline, Polygon and Path elements with fill and stroke, Bezier and spline generators, a `Qt.Paths` builder chain; draggable points in the help patches |
 | [**Layout**](docs/help-patches.md#structure-and-layout) | automatic sizing and spacing with Row/Column, also fed with a spread of elements (Spectral) |
-| [**Widgets**](docs/help-patches.md#widgets-and-styles) | Button, Toggle, Slider, TextInput, Input (Int), with value channels |
+| [**Widgets**](docs/help-patches.md#widgets-and-styles) | Button, Toggle, Slider (Float), Input (String), Input (Int), with value channels |
 | [**Styles**](docs/styles.md) | own base style VLQt, Style pin on widgets and Group (inherited down the tree), style nodes per part and state, Dark/Light presets, `IStylable` for self-patched widgets |
 | [**Interaction**](docs/help-patches.md#interaction) | hover, press, click and pointer position as channels on every element; drag, mouse wheel, multitouch (pinch, rotate, touch points) |
 | [**Images**](docs/images.md) | LoadImage (Async) in the background, ToQtImage from other libraries, VideoSourceToQtImage for VL.Video sources, Snapshot of any element as `IImage` |
@@ -114,7 +114,7 @@ The same path for x64 and arm64; use the architecture of the machine that runs W
 
 ## Styles
 
-All widgets (Button, Toggle, Slider, TextInput, Input (Int)) are drawn in VL.Qt's own base style **VLQt**: flat, neutral, the same on Windows and Linux. Every widget and every `Group [Qt]` has a `Style` pin to change it:
+All widgets (Button, Toggle, Slider (Float), Input (String), Input (Int)) are drawn in VL.Qt's own base style **VLQt**: flat, neutral, the same on Windows and Linux. Every widget and every `Group [Qt]` has a `Style` pin to change it:
 
 - A style only holds what you set; everything else is inherited: base style → each Group on the way → the widget's own Style pin.
 - A Group passes its style to everything inside, also to Row/Column and nested Groups.

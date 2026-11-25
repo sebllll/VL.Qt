@@ -42,7 +42,7 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='size']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
-        /// <param name="color">Fill color.</param>
+        /// <param name="fillColor">Fill color.</param>
         /// <param name="radius">Corner radius.</param>
         /// <param name="strokeColor">Border color.</param>
         /// <param name="strokeWidth">Border width, 0 = no border.</param>
@@ -60,7 +60,7 @@ namespace VL.Qt.Nodes
             [DefaultValue("1, 1")] Vector2 size,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
-            [DefaultValue("1, 1, 1, 1")] Color4 color,
+            [DefaultValue("1, 1, 1, 1")] Color4 fillColor,
             [Pin(Visibility = PinVisibility.Optional)] float radius,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue("0, 0, 0, 1")] Color4 strokeColor,
             [Pin(Visibility = PinVisibility.Optional)] float strokeWidth,
@@ -75,7 +75,7 @@ namespace VL.Qt.Nodes
         {
             return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
-                new Props(color, radius, strokeColor, strokeWidth),
+                new Props(fillColor, radius, strokeColor, strokeWidth),
                 out measuredSize, out sceneBounds);
         }
 

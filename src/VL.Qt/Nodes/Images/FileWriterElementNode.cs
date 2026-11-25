@@ -46,7 +46,7 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>Grabs Element on Write and writes it to File Path.</summary>
-        /// <param name="element">Element or Group to write; it has to be shown in a renderer.</param>
+        /// <param name="input">Element or Group to write; it has to be shown in a renderer.</param>
         /// <param name="filePath">Target file; the extension picks the format (png, jpg, bmp, ...). Missing folders are created, an existing file is overwritten.</param>
         /// <param name="isDone">True in the frame the write ended, also when the grab or the write failed (see Success).</param>
         /// <param name="success">True if the last write that ended wrote the file; set in the frame of Is Done and held until the next one. A failure is logged.</param>
@@ -54,7 +54,7 @@ namespace VL.Qt.Nodes
         /// <param name="quality">0..100 for lossy formats (JPG, WebP); ignored for PNG and BMP.</param>
         /// <param name="write">Grabs the element and starts writing it. A Write while another write runs waits; of several waiting Writes only the newest is written.</param>
         public void Update(
-            IElement? element,
+            IElement? input,
             Path filePath,
             [DefaultValue(1f)] float scale,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(90)] int quality,
@@ -75,7 +75,7 @@ namespace VL.Qt.Nodes
                 _path = filePath?.Value ?? string.Empty;
                 _quality = quality;
                 _grabbing = false;
-                _error = _path.Length == 0 ? FileWriterNode.NoPathError : _grab.Start(element, scale);
+                _error = _path.Length == 0 ? FileWriterNode.NoPathError : _grab.Start(input, scale);
                 if (_error.Length > 0)
                     // Nothing is written: Done without Success in the same frame, so a patch waiting for Is Done does not hang.
                     isDone = true;

@@ -28,7 +28,7 @@ namespace VL.Qt.Nodes
 
         /// <param name="points">Vertices in units, in the parent space. Transform acts around the origin of the parent space, not around the shape; the shape reports (max X, max Y) of the points as its size.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='shape']/param[@name='transform']"/>
-        /// <param name="fill">Fill color of the enclosed area.</param>
+        /// <param name="fillColor">Fill color of the enclosed area.</param>
         /// <param name="strokeColor">Color of the stroke.</param>
         /// <param name="strokeWidth">Width of the stroke in units, 0 = no stroke.</param>
         /// <param name="join">Shape of the stroke at corners: Miter, Bevel or Round.</param>
@@ -49,8 +49,8 @@ namespace VL.Qt.Nodes
         public IElement Update(
             Spread<Vector2> points,
             Matrix transform,
-            [DefaultValue("1, 1, 1, 1")] Color4 fill,
-            [DefaultValue("1, 1, 1, 1")] Color4 strokeColor,
+            [DefaultValue("1, 1, 1, 1")] Color4 fillColor,
+            [DefaultValue("0, 0, 0, 1")] Color4 strokeColor,
             float strokeWidth,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(ShapeJoin), nameof(ShapeJoin.Miter))] ShapeJoin join,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(4f)] float miterLimit,
@@ -67,7 +67,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
             var props = new ShapeNodeCore.Props(
-                points ?? Spread<Vector2>.Empty, true, fill, strokeColor, strokeWidth,
+                points ?? Spread<Vector2>.Empty, true, fillColor, strokeColor, strokeWidth,
                 ShapeCap.Flat, join, miterLimit, dash ?? Spread<float>.Empty, dashOffset,
                 0f, 1f, 0f, fillRule);
             return _core.Describe(new CommonInputs(Vector2.Zero, transform, RectangleAnchor.TopLeft, opacity, clip, debug, interaction, effect, enabled), props, out measuredSize, out sceneBounds);

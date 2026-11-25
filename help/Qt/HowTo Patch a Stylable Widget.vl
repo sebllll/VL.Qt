@@ -542,7 +542,7 @@
                   <Pin Id="CEb7xvsnJC8OknGXcJDp1i" Name="Size" Kind="InputPin" />
                   <Pin Id="E4ZzAzUMWH4MyjZGSTSOsV" Name="Transform" Kind="InputPin" />
                   <Pin Id="Vn8Ambv0uQ8NpbSGp1f5IX" Name="Anchor" Kind="InputPin" />
-                  <Pin Id="I1VHWe4aJZsNqqtGLnTNaB" Name="Color" Kind="InputPin" />
+                  <Pin Id="I1VHWe4aJZsNqqtGLnTNaB" Name="Fill Color" Kind="InputPin" />
                   <Pin Id="Hleb59FQDiKONoEq6xsLzQ" Name="Radius" Kind="InputPin" />
                   <Pin Id="RAQrlEfaZSgP3HZRnpXtnM" Name="Stroke Color" Kind="InputPin" />
                   <Pin Id="P6nyJKzXylRLmGdow7Z7dc" Name="Stroke Width" Kind="InputPin" />
@@ -679,7 +679,7 @@
                   <Pin Id="DngUjwPdKV9Ltf6WqcbPv4" Name="Radius" Kind="InputPin" />
                   <Pin Id="AAJPHk3w44tMREN8YMjJuY" Name="Transform" Kind="InputPin" />
                   <Pin Id="AvWHHM5Mco6NYTWq1Ac52s" Name="Anchor" Kind="InputPin" DefaultValue="Center" />
-                  <Pin Id="VnscdiVsOEnOri0uBpsr8C" Name="Color" Kind="InputPin" />
+                  <Pin Id="VnscdiVsOEnOri0uBpsr8C" Name="Fill Color" Kind="InputPin" />
                   <Pin Id="Oho7ikhfXuuPjDv4tmOOlf" Name="Stroke Color" Kind="InputPin" />
                   <Pin Id="GkeKklPcyU6MJNO14RUnky" Name="Stroke Width" Kind="InputPin" />
                   <Pin Id="E1rTQTSDEIgOBGgmA1msfH" Name="Opacity" Kind="InputPin" />

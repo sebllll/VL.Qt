@@ -14,13 +14,13 @@ using P = VL.Qt.Wire.Protocol.PropertyId;
 namespace VL.Qt.Tests
 {
     /// <summary>TextInput node: description, property diff, value channel (string), null/empty handling, EVENT_VALUE.</summary>
-    public class TextInputNodeTests
+    public class InputStringNodeTests
     {
         private static readonly Vector2 DefaultSize = new(2, 0.4f);
         private static readonly IDisposable NoWarning = new Nop();
         private sealed class Nop : IDisposable { public void Dispose() { } }
 
-        private TextInputNode _node = null!;
+        private InputStringNode _node = null!;
         private FeedbackRouter _registry = null!;
         private uint _handle;
         private RecordingSink _sink = null!;
@@ -29,7 +29,7 @@ namespace VL.Qt.Tests
         [SetUp]
         public void SetUp()
         {
-            _node = new TextInputNode(_ => NoWarning);
+            _node = new InputStringNode(_ => NoWarning);
             _registry = new FeedbackRouter();
             _handle = _registry.Acquire(new FeedbackSlot(_node.Core.Feedback, 0));
             _sink = new RecordingSink();
@@ -181,12 +181,12 @@ namespace VL.Qt.Tests
 
             // a patch value with equal content but a new string instance must not allocate or describe again either
             var ch2 = Channel.Create("abc");
-            var node = new TextInputNode(_ => NoWarning);
+            var node = new InputStringNode(_ => NoWarning);
             for (int i = 0; i < 100; i++) node.Update(true, DefaultSize, default, RectangleAnchor.Center, ch2, "ph", true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
             Assert.That(Allocations.Fewest(() => node.Update(true, DefaultSize, default, RectangleAnchor.Center, ch2, "ph", true, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "with placeholder");
             node.Dispose();
 
-            var unconnected = new TextInputNode(_ => NoWarning);
+            var unconnected = new InputStringNode(_ => NoWarning);
             for (int i = 0; i < 100; i++) unconnected.Update(true, DefaultSize, default, RectangleAnchor.Center, null, null, true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
             Assert.That(Allocations.Fewest(() => unconnected.Update(true, DefaultSize, default, RectangleAnchor.Center, null, null, true, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "unconnected (null)");
             unconnected.Dispose();

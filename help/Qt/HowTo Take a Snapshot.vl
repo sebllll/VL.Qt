@@ -26,7 +26,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="U3SItlSkcI51GxlBNgor02" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Snapshot [Qt]&#xD;&#xA;- Element: element or Group to grab, shown in a renderer&#xD;&#xA;- Grab, Scale: pixel size = size in DIP * Scale&#xD;&#xA;- Is Ready, Image (IImage); a failed grab goes to the log&#xD;&#xA;- Here: FromImage [Skia] and DrawImage show the result">
+          <Pad Id="U3SItlSkcI51GxlBNgor02" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Snapshot [Qt]&#xD;&#xA;- Input: element or Group to grab, shown in a renderer&#xD;&#xA;- Grab, Scale: pixel size = size in DIP * Scale&#xD;&#xA;- Is Ready, Image (IImage); a failed grab goes to the log&#xD;&#xA;- Here: FromImage [Skia] and DrawImage show the result">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -72,7 +72,7 @@
             <Pin Id="mQ9Ge9RYZ2JNM2ZzwGVkXl" Name="Size" Kind="InputPin" />
             <Pin Id="UhlD9niyBfsTTGYYGGtZL2" Name="Transform" Kind="InputPin" />
             <Pin Id="e3gT7hg4NboP64D5sX2SrW" Name="Anchor" Kind="InputPin" />
-            <Pin Id="hKCBHKTihFCW8WVyElRltT" Name="Color" Kind="InputPin" />
+            <Pin Id="hKCBHKTihFCW8WVyElRltT" Name="Fill Color" Kind="InputPin" />
             <Pin Id="Jx8kgs8TTJSSDCshlF58sw" Name="Radius" Kind="InputPin" IsHidden="true" />
             <Pin Id="fxktKmyYY92NXGq4xf9fLd" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="jaIBGJjUm74BKsCb1h6kBo" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -187,7 +187,7 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="kgfCFukQsTOL54jWslTqUt" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="S7KmeHKWhUltjiuAmggbcL" Name="Element" Kind="InputPin" />
+            <Pin Id="S7KmeHKWhUltjiuAmggbcL" Name="Input" Kind="InputPin" />
             <Pin Id="W3p43ZObfDQubVCJBBwrBn" Name="Scale" Kind="InputPin" DefaultValue="1" />
             <Pin Id="4RGmHAC66klPuvBt5wOaSP" Name="Grab" Kind="InputPin" />
             <Pin Id="R4w6VVqOcR9vo4zsqXeiho" Name="Image" Kind="OutputPin" />

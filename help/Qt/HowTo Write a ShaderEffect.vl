@@ -231,7 +231,7 @@
             <Pin Id="XiHFxV5vUQ9h83L1Lsn6Me" Name="Size" Kind="InputPin" DefaultValue="2.4, 1.3" />
             <Pin Id="91dEFTKdgeSXtlYWeIGGup" Name="Transform" Kind="InputPin" />
             <Pin Id="CFb9Pc0j1jONVKY35wSndN" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="4rEIfpiA1y7YKwU8F30rMi" Name="Color" Kind="InputPin" DefaultValue="0.95, 0.5, 0.1, 1" />
+            <Pin Id="4rEIfpiA1y7YKwU8F30rMi" Name="Fill Color" Kind="InputPin" DefaultValue="0.95, 0.5, 0.1, 1" />
             <Pin Id="PrQqQlToTDh8lnm2WwyKG2" Name="Radius" Kind="InputPin" DefaultValue="0.25" />
             <Pin Id="l4qQOnvdks4eQPqb8gzu69" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="5bhnCYVz9o9DW60r2mRthc" Name="Stroke Width" Kind="InputPin" />
@@ -623,7 +623,7 @@
             <Pin Id="7twJ4pcxck9bQo7mDWiFCU" Name="Size" Kind="InputPin" DefaultValue="1.2, 0.8" />
             <Pin Id="wicl8xkbdJlbQr4PhuhFTF" Name="Transform" Kind="InputPin" />
             <Pin Id="8zUoIfC3atuHUlDQBjxJQL" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="DcDkDQFLjZXkcGJ4TBRvLp" Name="Color" Kind="InputPin" DefaultValue="0.95, 0.5, 0.1, 1" />
+            <Pin Id="DcDkDQFLjZXkcGJ4TBRvLp" Name="Fill Color" Kind="InputPin" DefaultValue="0.95, 0.5, 0.1, 1" />
             <Pin Id="0tK5MA7nP6TL1sdAk3pNfI" Name="Radius" Kind="InputPin" DefaultValue="0.15" />
             <Pin Id="R7pC7ZwJ8LEd17FEOAa3IK" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="FNgcMi08Y7IuMCfPGmb8JR" Name="Stroke Width" Kind="InputPin" />

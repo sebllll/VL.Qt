@@ -56,7 +56,7 @@ namespace VL.Qt.Nodes
         /// <param name="preferPush">True: frames are grabbed on a thread of their own as they arrive. False: one frame is grabbed per vvvv frame on the main thread.</param>
         /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
         /// <returns>The image: the same QtImage for all frames (one GPU resource per node, its content is replaced). A failed source or upload is shown at the node and logged.</returns>
-        [return: Pin(Name = "Output")]
+        [return: Pin(Name = "Image")]
         public QtImage? Update(IVideoSource? input, QtImage? fallback, [DefaultValue(true)] bool preferPush,
             [Pin(Visibility = PinVisibility.Optional)] ImageUpload upload)
         {

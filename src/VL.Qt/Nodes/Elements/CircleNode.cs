@@ -32,7 +32,7 @@ namespace VL.Qt.Nodes
         /// <param name="radius">Radius; the circle takes 2 × Radius in width and height. 0 = not drawn. The position comes from Transform and Anchor (default TopLeft: the corner of the bounding square; Center: the circle's center at the origin).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
-        /// <param name="color">Fill color.</param>
+        /// <param name="fillColor">Fill color.</param>
         /// <param name="strokeColor">Border color.</param>
         /// <param name="strokeWidth">Border width, 0 = no border.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
@@ -49,7 +49,7 @@ namespace VL.Qt.Nodes
             [DefaultValue(0.5f)] float radius,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
-            [DefaultValue("1, 1, 1, 1")] Color4 color,
+            [DefaultValue("1, 1, 1, 1")] Color4 fillColor,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue("0, 0, 0, 1")] Color4 strokeColor,
             [Pin(Visibility = PinVisibility.Optional)] float strokeWidth,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float opacity,
@@ -64,7 +64,7 @@ namespace VL.Qt.Nodes
             var r = Math.Max(radius, 0f);
             return _node.Describe(
                 new CommonInputs(new Vector2(2 * r, 2 * r), transform, anchor, opacity, clip, debug, interaction, effect, enabled),
-                new RectangleNode.Props(color, r, strokeColor, strokeWidth),
+                new RectangleNode.Props(fillColor, r, strokeColor, strokeWidth),
                 out measuredSize, out sceneBounds);
         }
 

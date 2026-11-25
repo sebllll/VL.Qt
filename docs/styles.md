@@ -1,6 +1,6 @@
 # Styles
 
-All widgets (Button, Toggle, Slider, TextInput, Input (Int)) are drawn in VL.Qt's own base style **VLQt**: flat, neutral, the same on Windows and Linux. Every widget and every `Group [Qt]` has a `Style` pin to change it:
+All widgets (Button, Toggle, Slider (Float), Input (String), Input (Int)) are drawn in VL.Qt's own base style **VLQt**: flat, neutral, the same on Windows and Linux. Every widget and every `Group [Qt]` has a `Style` pin to change it:
 
 - A style only holds what you set; everything else is inherited. It is resolved top-down: base style → each Group on the way → the widget's own Style pin.
 - A Group passes its style to everything inside, also to Row/Column and nested Groups. A Style on a single widget overrides only its set fields.

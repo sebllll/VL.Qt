@@ -25,7 +25,7 @@
               <Pin Id="jaSSCHM1pRwwrxU32052gq" Name="Radius" Kind="InputPin" />
               <Pin Id="OLxBk3kVar6zDdEQsGwh6y" Name="Transform" Kind="InputPin" />
               <Pin Id="HMQafylaLhv25hlPfmCkCY" Name="Anchor" Kind="InputPin" IsHidden="true" />
-              <Pin Id="M9vcduJZUSc51ydHlEvcvR" Name="Color" Kind="InputPin" />
+              <Pin Id="M9vcduJZUSc51ydHlEvcvR" Name="Fill Color" Kind="InputPin" />
               <Pin Id="3a9UKeiE1diJbN349thhwP" Name="Output" Kind="OutputPin" />
               <Pin Id="3wNBUPzBwD9jaUhkuuZG3g" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
               <Pin Id="4M4vfxhV4ZCDmVFbXfN1Wn" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -134,7 +134,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="DwY2UFYqT4f5LCF1yaFllr" Bounds="85,85,520,135" ShowValueBox="true" isIOBox="true" Value="Polygon [Qt]&#xD;&#xA;- Points: a Spread of positions, always closed and filled&#xD;&#xA;- Fill, plus an optional stroke: Stroke Color and Stroke Width&#xD;&#xA;- Join: Miter, Bevel or Round corners&#xD;&#xA;- Fill Rule: NonZero (default) or EvenOdd for outlines that cross themselves&#xD;&#xA;- Position and rotation via Transform">
+          <Pad Id="DwY2UFYqT4f5LCF1yaFllr" Bounds="85,85,520,135" ShowValueBox="true" isIOBox="true" Value="Polygon [Qt]&#xD;&#xA;- Points: a Spread of positions, always closed and filled&#xD;&#xA;- Fill Color, plus an optional stroke: Stroke Color and Stroke Width&#xD;&#xA;- Join: Miter, Bevel or Round corners&#xD;&#xA;- Fill Rule: NonZero (default) or EvenOdd for outlines that cross themselves&#xD;&#xA;- Position and rotation via Transform">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -312,7 +312,7 @@
             <Pin Id="gzOhfpUToyKOH7OEQ3Td2M" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="37f3XTuavggvY37dXOoQZz" Name="Points" Kind="InputPin" />
             <Pin Id="5XN0Akr7uxEGeXzPifiWZV" Name="Transform" Kind="InputPin" />
-            <Pin Id="gPYYcAnq9mj15Zc3dmeVD6" Name="Fill" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
+            <Pin Id="gPYYcAnq9mj15Zc3dmeVD6" Name="Fill Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
             <Pin Id="rniqmG7m68G49sliLRWBFV" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="1HXU1tfqWcKSE8ba67Z6IU" Name="Stroke Width" Kind="InputPin" DefaultValue="0.05" />
             <Pin Id="fnzceyPV2MCmAIkz1DDvGu" Name="Output" Kind="OutputPin" />
@@ -340,7 +340,7 @@
             <Pin Id="5S7FPKWTwOzudK2DZK2bNq" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="ORw08ehYm8Vo1IJhtpaYNJ" Name="Points" Kind="InputPin" />
             <Pin Id="wSvPjJUL6RncsGjM0cJX1p" Name="Transform" Kind="InputPin" />
-            <Pin Id="a0LjJgZwzIPrbALQQpdWFx" Name="Fill" Kind="InputPin" DefaultValue="0.15, 0.78, 1, 1" />
+            <Pin Id="a0LjJgZwzIPrbALQQpdWFx" Name="Fill Color" Kind="InputPin" DefaultValue="0.15, 0.78, 1, 1" />
             <Pin Id="tqh2NLDW9AAOCI5P7SEh2f" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="8WtkLpk5ZfXO5pPtxWEsRf" Name="Stroke Width" Kind="InputPin" DefaultValue="0.06" />
             <Pin Id="denm0QRpDXvM70G6f65Tzp" Name="Output" Kind="OutputPin" />
@@ -387,7 +387,7 @@
             <Pin Id="wbI0UdhEOSimS6MgKfKV2n" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="reSb4RgByLszCQkAjFnE0W" Name="Points" Kind="InputPin" />
             <Pin Id="qe56YEWXDbIixmXGYbntUW" Name="Transform" Kind="InputPin" />
-            <Pin Id="fbuxC7Vf1vlTXsaasEQtVN" Name="Fill" Kind="InputPin" DefaultValue="0.15, 0.78, 1, 1" />
+            <Pin Id="fbuxC7Vf1vlTXsaasEQtVN" Name="Fill Color" Kind="InputPin" DefaultValue="0.15, 0.78, 1, 1" />
             <Pin Id="dj9oIBpp0lTMkIDTIfTwOj" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="nkx9FgsndZm3UAFH3mlgXF" Name="Stroke Width" Kind="InputPin" DefaultValue="0.06" />
             <Pin Id="obOs0MQgVczenP4CGCTp55" Name="Output" Kind="OutputPin" />

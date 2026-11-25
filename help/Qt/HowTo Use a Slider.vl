@@ -22,7 +22,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Slider" />
+              <Choice Kind="ProcessAppFlag" Name="Slider (Float)" />
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="RwGAmSIPO8iOucbJ7cVnHP" Name="Node Context" Kind="InputPin" IsHidden="true" />
@@ -69,7 +69,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Slider" />
+              <Choice Kind="ProcessAppFlag" Name="Slider (Float)" />
             </p:NodeReference>
             <Pin Id="C0h9OIHKnA2XBfJcA70q8N" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="OHsbk2PUQvyakjYnV3IpUi" Name="Size" Kind="InputPin" />
@@ -138,7 +138,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Slider" />
+              <Choice Kind="ProcessAppFlag" Name="Slider (Float)" />
             </p:NodeReference>
             <Pin Id="qqJKaHjOQcdx0zIu15JuWp" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="knIAecedbupfMP1H8IH8gS" Name="Size" Kind="InputPin" DefaultValue="0.28, 0.7" />
@@ -169,7 +169,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Slider" />
+              <Choice Kind="ProcessAppFlag" Name="Slider (Float)" />
             </p:NodeReference>
             <Pin Id="M1lF5t2jLkWaAgZ8XiqMp1" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="79uOGlynDqNpPwBP1Vc839" Name="Size" Kind="InputPin" />
@@ -361,7 +361,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="x2y9qnClcjJQI9ImzVTaPl" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Slider [Qt]&#xD;&#xA;- Channel: binds the value, the user writes back (IOBox 0.3 = start value)&#xD;&#xA;- Min, Max, Step (0 = stepless; here 0..100 in steps of 10)&#xD;&#xA;- Orientation: horizontal or vertical&#xD;&#xA;- Value: current value; Bang: true for one frame when the user changed it">
+          <Pad Id="x2y9qnClcjJQI9ImzVTaPl" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Slider (Float) [Qt]&#xD;&#xA;- Channel: binds the value, the user writes back (IOBox 0.3 = start value)&#xD;&#xA;- Min, Max, Step (0 = stepless; here 0..100 in steps of 10)&#xD;&#xA;- Orientation: horizontal or vertical&#xD;&#xA;- Value: current value; Bang: true for one frame when the user changed it">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

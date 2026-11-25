@@ -91,7 +91,7 @@ A change that renames a node or a pin or moves a category does not edit the patc
 ## Widgets and Styles
 
 - `HowTo Use a Button` — click as Bang and channel
-- `HowTo Use a Toggle`, `HowTo Use a Slider`, `HowTo Use a TextInput`, `HowTo Use Input (Int)` — input widgets with value channels
+- `HowTo Use a Toggle`, `HowTo Use a Slider`, `HowTo Use Input (String)`, `HowTo Use Input (Int)` — input widgets with value channels
 - `HowTo Style a Widget` — chain style nodes into the Style pin, per state
 - `HowTo Style Control Parts` — indicator and track of Toggle/Slider, Merge with a preset
 - `HowTo Style Widgets with a Group` — one style for everything inside a Group, overrides per widget

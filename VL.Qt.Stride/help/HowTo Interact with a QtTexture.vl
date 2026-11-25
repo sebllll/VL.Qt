@@ -122,7 +122,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Slider" />
+              <Choice Kind="ProcessAppFlag" Name="Slider (Float)" />
             </p:NodeReference>
             <Pin Id="SdkOMXoKWbOLzpUnt7xScR" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="KWPLKL79BHvLUfFCOZQxvu" Name="Size" Kind="InputPin" DefaultValue="5.2, 0.5" />

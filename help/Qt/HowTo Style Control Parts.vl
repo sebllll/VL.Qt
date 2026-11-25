@@ -133,7 +133,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Slider" />
+              <Choice Kind="ProcessAppFlag" Name="Slider (Float)" />
             </p:NodeReference>
             <Pin Id="KiaEdFrRgSnRFsTHsDDDXh" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="5Jmtf7EbsDe0G9Cryn687n" Name="Size" Kind="InputPin" />
@@ -164,7 +164,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Slider" />
+              <Choice Kind="ProcessAppFlag" Name="Slider (Float)" />
             </p:NodeReference>
             <Pin Id="bOApZOXzcycDeZ6dqmVe5M" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="vxrv99NcqVTSu7rtaUWM6Z" Name="Size" Kind="InputPin" />
@@ -500,7 +500,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Slider" />
+              <Choice Kind="ProcessAppFlag" Name="Slider (Float)" />
             </p:NodeReference>
             <Pin Id="Qhf1NYc6TdzSJuRPCJQuDK" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="aEVP2EGvLIyp0OYV3ywTez" Name="Size" Kind="InputPin" />
