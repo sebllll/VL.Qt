@@ -15,40 +15,49 @@ namespace VL.Qt.Nodes
     /// receiver of its events;</item>
     /// <item>change detection (<see cref="ChainMemo{TEffect, TProps}"/>): a new link only if the chain at Input (by reference) or the node
     /// specific <typeparamref name="TProps"/> changed, otherwise the last instance (reference equal → no QtNative ops);</item>
-    /// <item>the feedback warning (interaction used more than once) as persistent node warning, the feedback error (e.g. a
-    /// handler property Qt rejected) as persistent node warning, logged (<see cref="NodeErrors"/>).</item>
+    /// <item>the messages at the node, all through <see cref="NodeErrors"/> except the first: the feedback warning
+    /// (interaction used more than once, persistent node warning), the handler error (e.g. a property Qt rejected, a
+    /// warning in phase "Qt") and the input error (inputs the node cannot use, an error in phase "Input", see
+    /// <see cref="SetInputError"/>).</item>
     /// </list>
-    /// The public node pulls the feedback state into its channels in its Update (<see cref="Write{T}"/>: only on change,
-    /// author <see cref="ChannelAuthors.QtChannelAuthor"/>). No static state. Main thread only.
+    /// The public node pulls the feedback state into its channels in its Update with <see cref="FeedbackChannels"/>.
+    /// No static state. Main thread only.
     /// </summary>
     /// <typeparam name="TProps">Node specific inputs that go to QtNative; a readonly record struct (value equality, no allocation).</typeparam>
     internal sealed class InteractionNodeCore<TProps> : IDisposable
         where TProps : struct, IEquatable<TProps>
     {
-        private const string errorPhase = "Qt";
+        private const string handlerPhase = "Qt";
+        private const string inputPhase = "Input";
 
         private readonly Func<string, IDisposable> _addWarning;
-        private readonly NodeErrors? _errors;
+        private readonly NodeErrors _errors;
         private readonly Func<Interaction?, TProps, FeedbackSlot, Interaction> _create;
         private ChainMemo<Interaction, TProps> _memo;
         private string? _warning;
         private IDisposable? _warningMessage;
-        private string? _error;
+        private string? _handlerError;
+        private string? _inputError;
 
-        /// <param name="nodeContext">Context of the public node (warning and error are shown there).</param>
+        /// <param name="nodeContext">Context of the public node (all messages are shown there).</param>
         /// <param name="create">Builds a link; use a static lambda (no capture → no allocation).</param>
         public InteractionNodeCore(NodeContext nodeContext, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
-            : this(w => nodeContext.AddPersistentMessage(MessageSeverity.Warning, w), create)
+            : this(w => nodeContext.AddPersistentMessage(MessageSeverity.Warning, w), new NodeErrors(nodeContext), create)
         {
-            _errors = new NodeErrors(nodeContext);
         }
 
-        /// <param name="addWarning">Shows a warning, the result removes it (tests: no NodeContext/AppHost needed; the
-        /// error is then only tracked in <see cref="Error"/>).</param>
+        /// <param name="addMessage">Shows a message, the result removes it (tests: no NodeContext/AppHost needed; every
+        /// message goes here whatever its severity).</param>
         /// <param name="create">Builds a link; use a static lambda (no capture → no allocation).</param>
-        public InteractionNodeCore(Func<string, IDisposable> addWarning, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
+        public InteractionNodeCore(Func<string, IDisposable> addMessage, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
+            : this(addMessage, NodeErrors.ShownBy(addMessage), create)
+        {
+        }
+
+        private InteractionNodeCore(Func<string, IDisposable> addWarning, NodeErrors errors, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
         {
             _addWarning = addWarning;
+            _errors = errors;
             _create = create;
         }
 
@@ -61,8 +70,11 @@ namespace VL.Qt.Nodes
         /// <summary>Warning currently shown at the node, null if none.</summary>
         public string? Warning => _warning;
 
-        /// <summary>Error currently shown at the node, null if none.</summary>
-        public string? Error => _error;
+        /// <summary>Error of the handler (e.g. a property Qt rejected) currently shown at the node as a warning, null if none.</summary>
+        public string? HandlerError => _handlerError;
+
+        /// <summary>Error about the inputs currently shown at the node (e.g. Minimum greater than Maximum), null if none.</summary>
+        public string? InputError => _inputError;
 
         /// <summary>Number of links created so far (for tests).</summary>
         public int Created => _memo.Created;
@@ -80,17 +92,18 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>
-        /// Writes <paramref name="value"/> into <paramref name="channel"/> with author <see cref="ChannelAuthors.QtChannelAuthor"/> if it differs
-        /// from the value last written there (or the channel is another one than last time). Pull, no subscription.
+        /// Shows <paramref name="error"/> at the node as an error until it is called with another text or null (the node
+        /// shows it once; null removes it). Call every Update with the verdict about the inputs.
         /// </summary>
-        public static void Write<T>(IChannel<T> channel, ref IChannel<T>? last, ref T lastValue, T value)
-            where T : struct, IEquatable<T>
+        public void SetInputError(string? error)
         {
-            if (ReferenceEquals(channel, last) && lastValue.Equals(value))
+            if (error == _inputError)
                 return;
-            last = channel;
-            lastValue = value;
-            channel.EnsureValue(value, author: ChannelAuthors.QtChannelAuthor);
+            _inputError = error;
+            if (error is null)
+                _errors.Clear(inputPhase);
+            else
+                _errors.Set(inputPhase, MessageSeverity.Error, error);
         }
 
         private void UpdateWarning()
@@ -106,21 +119,20 @@ namespace VL.Qt.Nodes
         private void UpdateError()
         {
             var error = Feedback.Error;
-            if (ReferenceEquals(error, _error) || error == _error)
+            if (error == _handlerError)
                 return;
-            _error = error;
-            if (_errors is null)
-                return;
+            _handlerError = error;
             if (error is null)
-                _errors.Clear(errorPhase);
+                _errors.Clear(handlerPhase);
             else
-                _errors.Warn(error, errorPhase);
+                _errors.Warn(error, handlerPhase);
         }
 
         public void Dispose()
         {
-            _errors?.Dispose();
-            _error = null;
+            _errors.Dispose();
+            _handlerError = null;
+            _inputError = null;
             _warningMessage?.Dispose();
             _warningMessage = null;
             _warning = null;

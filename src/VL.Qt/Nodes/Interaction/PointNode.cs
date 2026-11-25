@@ -58,15 +58,8 @@ namespace VL.Qt.Nodes
 
             // Pull: state of the last pump (1 frame latency); writes only on change.
             var feedback = _node.Feedback;
-            if (isActive.IsValid())
-                InteractionNodeCore<Props>.Write(isActive, ref _active, ref _lastActive, feedback.IsActive());
-            else
-                _active = null;
-
-            if (position.IsValid())
-                InteractionNodeCore<Props>.Write(position, ref _position, ref _lastPosition, feedback.PointerPosition());
-            else
-                _position = null;
+            FeedbackChannels.WriteState(isActive, ref _active, ref _lastActive, feedback.IsActive());
+            FeedbackChannels.WriteState(position, ref _position, ref _lastPosition, feedback.PointerPosition());
 
             return output;
         }

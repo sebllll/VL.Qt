@@ -48,10 +48,7 @@ namespace VL.Qt.Nodes
 
             // Pull: state of the last pump (1 frame latency); writes only on change.
             var feedback = _node.Feedback;
-            if (isHovered.IsValid())
-                InteractionNodeCore<Props>.Write(isHovered, ref _hovered, ref _lastHovered, feedback.IsHovered());
-            else
-                _hovered = null;
+            FeedbackChannels.WriteState(isHovered, ref _hovered, ref _lastHovered, feedback.IsHovered());
 
             return output;
         }

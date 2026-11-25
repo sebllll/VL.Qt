@@ -30,7 +30,6 @@ namespace VL.Qt.Nodes
         private const string countError = "Minimum and Maximum Point Count must be at least 2, and Minimum must not be greater than Maximum. 2 and 2 are used.";
 
         private readonly InteractionNodeCore<Props> _node;
-        private readonly Func<string, IDisposable> _addError;
         private IChannel<bool>? _active;
         private IChannel<float>? _scale;
         private IChannel<float>? _rotation;
@@ -41,28 +40,22 @@ namespace VL.Qt.Nodes
         private int _rotationUpdates;
         private int _translationUpdates;
         private int _pivotUpdates;
-        private IDisposable? _inputErrorMessage;
 
         public PinchNode(NodeContext nodeContext)
         {
             _node = new InteractionNodeCore<Props>(nodeContext, Create);
-            _addError = e => nodeContext.AddPersistentMessage(MessageSeverity.Error, e);
         }
 
         /// <summary>For tests: warnings and input errors go to <paramref name="addMessage"/> instead of a NodeContext.</summary>
         internal PinchNode(Func<string, IDisposable> addMessage)
         {
             _node = new InteractionNodeCore<Props>(addMessage, Create);
-            _addError = addMessage;
         }
 
         private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new PinchInteraction(previous, slot, p.MinimumPointCount, p.MaximumPointCount, p.Devices);
 
         internal InteractionNodeCore<Props> Core => _node;
-
-        /// <summary>Error about the inputs currently shown at the node (point counts), null if none.</summary>
-        internal string? InputError { get; private set; }
 
         /// <summary>Adds a pinch handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
@@ -87,7 +80,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(PointerDevices), nameof(PointerDevices.All))] PointerDevices devices)
         {
             bool valid = minimumPointCount >= 2 && maximumPointCount >= 2 && minimumPointCount <= maximumPointCount;
-            SetInputError(valid ? null : countError);
+            _node.SetInputError(valid ? null : countError);
             var output = _node.Describe(input, valid
                 ? new Props(minimumPointCount, maximumPointCount, devices)
                 : new Props(PinchInteraction.DefaultPointCount, PinchInteraction.DefaultPointCount, devices));
@@ -95,50 +88,20 @@ namespace VL.Qt.Nodes
             // Pull: state of the last pump (1 frame latency). The values are written once per EVENT_PINCH; a channel
             // connected later gets the current value only if a gesture happened (the channel's own value stays otherwise).
             var feedback = _node.Feedback;
-            if (isActive.IsValid())
-                InteractionNodeCore<Props>.Write(isActive, ref _active, ref _lastActive, feedback.IsActive());
-            else
-                _active = null;
+            FeedbackChannels.WriteState(isActive, ref _active, ref _lastActive, feedback.IsActive());
 
             int updates = feedback.PinchUpdates();
-            Pull(scale, ref _scale, ref _scaleUpdates, updates, feedback.PinchScale());
-            Pull(rotation, ref _rotation, ref _rotationUpdates, updates, feedback.PinchRotation());
-            Pull(translation, ref _translation, ref _translationUpdates, updates, feedback.PinchTranslation());
-            Pull(pivot, ref _pivot, ref _pivotUpdates, updates, feedback.PinchPivot());
+            if (FeedbackChannels.TakeUpdate(scale, ref _scale, ref _scaleUpdates, updates))
+                scale!.SetValueAndAuthor(feedback.PinchScale(), ChannelAuthors.QtChannelAuthor);
+            if (FeedbackChannels.TakeUpdate(rotation, ref _rotation, ref _rotationUpdates, updates))
+                rotation!.SetValueAndAuthor(feedback.PinchRotation(), ChannelAuthors.QtChannelAuthor);
+            if (FeedbackChannels.TakeUpdate(translation, ref _translation, ref _translationUpdates, updates))
+                translation!.SetValueAndAuthor(feedback.PinchTranslation(), ChannelAuthors.QtChannelAuthor);
+            if (FeedbackChannels.TakeUpdate(pivot, ref _pivot, ref _pivotUpdates, updates))
+                pivot!.SetValueAndAuthor(feedback.PinchPivot(), ChannelAuthors.QtChannelAuthor);
             return output;
         }
 
-        private static void Pull<T>(IChannel<T>? channel, ref IChannel<T>? last, ref int lastUpdates, int updates, T value)
-        {
-            if (!channel.IsValid())
-            {
-                last = null;
-                return;
-            }
-            bool connected = !ReferenceEquals(channel, last);
-            if (!connected && updates == lastUpdates)
-                return;
-            last = channel;
-            lastUpdates = updates;
-            if (updates != 0)
-                channel.SetValueAndAuthor(value, ChannelAuthors.QtChannelAuthor);
-        }
-
-        private void SetInputError(string? error)
-        {
-            if (ReferenceEquals(error, InputError))
-                return;
-            _inputErrorMessage?.Dispose();
-            _inputErrorMessage = error is null ? null : _addError(error);
-            InputError = error;
-        }
-
-        public void Dispose()
-        {
-            _inputErrorMessage?.Dispose();
-            _inputErrorMessage = null;
-            InputError = null;
-            _node.Dispose();
-        }
+        public void Dispose() => _node.Dispose();
     }
 }
