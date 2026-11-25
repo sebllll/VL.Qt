@@ -8,16 +8,13 @@ using VL.Qt.Elements;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Uses an element as alpha mask (Qt MultiEffect mask), e.g. a Text as window onto a Video. The mask element is not
-    /// drawn itself and does not count for layout, auto size or hit-testing. It lies in the coordinates of the element's
-    /// parent like a sibling: with its own Size, Anchor and Transform it masks exactly the pixels it would cover as a sibling in
-    /// the same Group, it is not stretched. Moving, rotating or scaling the masked element (also its place in a Row or
-    /// Column) leaves the mask window where it is, and so do Blur or DropShadow growing the effect area. Where the mask
-    /// has no content the element is invisible (Inverted flips that).
-    /// Connect Output to the Effect pin of an element, or chain it with other effect nodes; the order of the nodes
-    /// does not matter within a run.
-    /// Blur, DropShadow, ColorAdjust, Colorize and Mask next to each other in a chain are merged into one layer with one
-    /// shader, Qt's fixed order applies inside it; a shader effect (e.g. Glow) ends the run, between runs the patch order applies.
+    /// Uses an element as alpha mask (Qt MultiEffect mask), e.g. a Text as window onto a Video. The mask element is not drawn
+    /// itself and does not count for layout, auto size or hit-testing. It lies in the coordinates of the element's parent
+    /// like a sibling: with its own Size, Anchor and Transform it masks exactly the pixels it would cover as a sibling in the
+    /// same Group, it is not stretched. Moving, rotating or scaling the masked element (also its place in a Row or Column)
+    /// leaves the mask window where it is, and so do Blur or DropShadow growing the effect area. Where the mask has no
+    /// content the element is invisible (Inverted flips that).
+    /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/para"/>
     /// </summary>
     [ProcessNode(Name = "Mask", Category = Categories.Effects)]
     public sealed class MaskNode : IDisposable
@@ -56,6 +53,7 @@ namespace VL.Qt.Nodes
         /// <param name="spreadAtMax">Softness of the edge at Threshold Max, 0..1.</param>
         /// <param name="inverted">Shows the element where the mask is transparent.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,

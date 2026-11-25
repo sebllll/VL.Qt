@@ -29,7 +29,7 @@ namespace VL.Qt.Nodes
         /// <param name="close">If true, the contour ends with a line back to the first point.</param>
         /// <returns>The path with the contour added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
-        public QtPath Update(QtPath? input, Spread<Vector2>? points, bool close = false)
+        public QtPath Update(QtPath? input, Spread<Vector2>? points, bool close)
             => _memo.Get(input, new Props(points ?? Spread<Vector2>.Empty, close), s_create);
 
         private static QtPath Build(QtPath path, Spread<Vector2> points, bool close)

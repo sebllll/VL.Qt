@@ -12,12 +12,11 @@ using VL.Qt.Wire;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Shifts the pixels of the element by a displacement map (an element), like Qt5Compat Displace: map red moves in x, green
-    /// in y, 0.5 = no shift, the alpha of the map scales the shift. The map is stretched over the element's own size, also
-    /// behind a Blur or other effects that make the picture bigger (outside the element the edge of the map continues); it is not
-    /// drawn itself and does not count for layout. Without a Map the chain passes on unchanged.
-    /// Connect Output to the Effect pin of an element, or chain it with other effect nodes (data flow order: the node at the
-    /// Effect pin acts last). A shader effect ends a run of Blur/DropShadow/... nodes and costs a layer of its own.
+    /// Shifts the pixels of the element by a displacement map (an element), like Qt5Compat Displace: map red moves in x,
+    /// green in y, 0.5 = no shift, the alpha of the map scales the shift. The map is stretched over the element's own size,
+    /// also behind a Blur or other effects that make the picture bigger (outside the element the edge of the map continues);
+    /// it is not drawn itself and does not count for layout. Without a Map the chain passes on unchanged.
+    /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/para"/>
     /// </summary>
     [ProcessNode(Name = "Displace", Category = Categories.Effects)]
     public sealed class DisplaceNode : IDisposable
@@ -29,6 +28,8 @@ namespace VL.Qt.Nodes
         private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
         {
             var shift = p.Displacement;
+            // No factor: displace.frag moves a pixel by at most `displacement` (map alpha and channels are at most 1),
+            // in any direction, so the content can come from or land that far outside the element on every side.
             var pad = MathF.Abs(shift);
             return new ShaderEffect(previous, Protocol.EffectTemplate.Single, ids,
                 new[]
@@ -61,6 +62,7 @@ namespace VL.Qt.Nodes
         /// <param name="mapSampler">How the map is read (filter, wrap, mipmaps), from the Sampler node. Outside the element the map continues as its Address says (Clamp: its edge). Unconnected: as the map is.</param>
         /// <param name="displacement">Largest shift in DIP (a map value of 0 or 1 moves the pixels by this).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,

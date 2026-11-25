@@ -12,10 +12,9 @@ using VL.Qt.Wire;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Soft glow around the element: its alpha, blurred and tinted, behind the element or added on top. Uses a blur pyramid, so
-    /// the cost hardly depends on the radius, and the radius can be animated smoothly up to several hundred DIP.
-    /// Connect Output to the Effect pin of an element, or chain it with other effect nodes (data flow order: the node at the
-    /// Effect pin acts last). A shader effect ends a run of Blur/DropShadow/... nodes and costs a layer of its own.
+    /// Soft glow around the element: its alpha, blurred and tinted, behind the element or added on top. Uses a blur pyramid,
+    /// so the cost hardly depends on the radius, and the radius can be animated smoothly up to several hundred DIP.
+    /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/para"/>
     /// </summary>
     [ProcessNode(Name = "Glow", Category = Categories.Effects)]
     public sealed class GlowNode : IDisposable
@@ -27,7 +26,8 @@ namespace VL.Qt.Nodes
         private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
         {
             var radius = Math.Max(p.Radius, 0f);
-            var pad = 1.5f * radius;
+            // Room for the blur: the glow reaches about 3 sigma, see PyramidPadding.
+            var pad = PyramidPadding.RadiusFactor * radius;
             return new ShaderEffect(previous, Protocol.EffectTemplate.Pyramid, ids,
                 new[]
                 {
@@ -59,6 +59,7 @@ namespace VL.Qt.Nodes
         /// <param name="intensity">Strength of the glow; values above 1 glow brighter.</param>
         /// <param name="additive">Off: the glow lies behind the element. On: it is added on top of the element.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,

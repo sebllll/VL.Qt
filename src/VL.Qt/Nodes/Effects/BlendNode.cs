@@ -16,8 +16,7 @@ namespace VL.Qt.Nodes
     /// size, also behind a Blur or other effects that make the picture bigger (outside the element the layer is transparent),
     /// and is not drawn itself and does not count for layout. Where the layer is transparent the base stays unchanged.
     /// Without a Layer the chain passes on unchanged.
-    /// Connect Output to the Effect pin of an element, or chain it with other effect nodes (data flow order: the node at the
-    /// Effect pin acts last). A shader effect ends a run of Blur/DropShadow/... nodes and costs a layer of its own.
+    /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/para"/>
     /// </summary>
     [ProcessNode(Name = "Blend", Category = Categories.Effects)]
     public sealed class BlendNode : IDisposable
@@ -59,6 +58,7 @@ namespace VL.Qt.Nodes
         /// <param name="blendMode">How the layer and the base are combined.</param>
         /// <param name="opacity">Strength of the layer, 0 = base only, 1 = full blend.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,

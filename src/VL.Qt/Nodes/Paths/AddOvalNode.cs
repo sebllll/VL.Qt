@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
@@ -22,7 +23,7 @@ namespace VL.Qt.Nodes
         /// <param name="direction">The direction in which the contour runs.</param>
         /// <returns>The path with the contour added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
-        public QtPath Update(QtPath? input, RectangleF bounds = default, PathDirection direction = PathDirection.Clockwise)
+        public QtPath Update(QtPath? input, [DefaultValue("0, 0, 1, 1")] RectangleF bounds, PathDirection direction)
             => _memo.Get(input, new Props(bounds, direction), s_create);
     }
 }

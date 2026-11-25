@@ -14,8 +14,7 @@ namespace VL.Qt.Nodes
     /// <summary>
     /// Zoom blur: streaks along rays from Center, growing linearly from nothing at Center to Length at the farthest corner of
     /// the element area. Two passes of the same shader keep long blurs clean.
-    /// Connect Output to the Effect pin of an element, or chain it with other effect nodes (data flow order: the node at the
-    /// Effect pin acts last). A shader effect ends a run of Blur/DropShadow/... nodes and costs a layer of its own.
+    /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/para"/>
     /// </summary>
     [ProcessNode(Name = "ZoomBlur", Category = Categories.Effects)]
     public sealed class ZoomBlurNode : IDisposable
@@ -27,6 +26,9 @@ namespace VL.Qt.Nodes
         private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
         {
             var length = Math.Max(p.Length, 0f);
+            // The streak is `length` long at the farthest corner and centred on the pixel, so it reaches length / 2 to
+            // each side there (less elsewhere); pass 2 adds length / 128 (see zoom_blur.frag). 0.6 covers the 0.508 of
+            // that with a margin; the shader file template of effects-and-shaders.md uses 0.52.
             var pad = 0.6f * length;
             return new ShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
                 new[] { Uniform.Vector2("center", p.Center), Uniform.Float("blurLength", length) }.ToSpread(),
@@ -50,6 +52,7 @@ namespace VL.Qt.Nodes
         /// <param name="center">Center of the zoom, 0..1 of the element area (0.5, 0.5 = middle).</param>
         /// <param name="length">Streak length at the farthest corner, in DIP (0 = no blur).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,

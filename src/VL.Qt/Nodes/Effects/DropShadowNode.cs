@@ -8,11 +8,8 @@ using VL.Qt.Elements;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Draws a soft shadow behind the element (Qt MultiEffect shadow). Connect Output to the Effect pin of an element, or
-    /// chain it with other effect nodes; the order of the nodes
-    /// does not matter within a run.
-    /// Blur, DropShadow, ColorAdjust, Colorize and Mask next to each other in a chain are merged into one layer with one
-    /// shader, Qt's fixed order applies inside it; a shader effect (e.g. Glow) ends the run, between runs the patch order applies.
+    /// Draws a soft shadow behind the element (Qt MultiEffect shadow).
+    /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/para"/>
     /// The shadow does not change the element's size or layout.
     /// </summary>
     [ProcessNode(Name = "DropShadow", Category = Categories.Effects)]
@@ -35,6 +32,7 @@ namespace VL.Qt.Nodes
         /// <param name="autoPadding">On: the effect area grows by what the shadow needs. Off: Padding applies. Qt has one effect area per element: if any Blur or DropShadow in the chain has this off, the area is the side-wise maximum of the Padding of all those links.</param>
         /// <param name="padding">Extra effect area around the element in DIP (x = left, y = top, width = right, height = bottom); only used with Auto Padding off.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,

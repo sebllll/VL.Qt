@@ -47,6 +47,7 @@ namespace VL.Qt.Nodes
         /// <param name="onLongPress">Optional channel: receives one value when the press is held long enough (Qt's long press time).</param>
         /// <param name="buttons">Mouse buttons that count. None reacts to touch and pen only.</param>
         /// <param name="devices">Input devices that count.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]
         public Interaction Update(
             Interaction? input,

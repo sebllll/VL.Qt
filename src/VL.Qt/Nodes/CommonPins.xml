@@ -13,7 +13,9 @@
     plain     Rectangle, Circle and the shapes: no content size of their own (Measured Size); Rectangle and Circle: Clip
     shape     Line, Polyline, Polygon, Path: their extent comes from the points
     widget    Button, Slider, Toggle, TextInput, InputInt
-    effect    every effect node (Blur, DropShadow, ColorAdjust, Glow, Blend, …) and the effect nodes of shader files: the Apply pin
+    effect    every effect node (Blur, DropShadow, ColorAdjust, Glow, Blend, …) and the effect nodes of shader files: the Apply pin, <returns>, and the chain rule
+              (<para>, taken inside a <summary> with path="docs/set[@name='effect']/para")
+    interaction  every interaction node (Hover, Click, Drag, …): <returns>
   Texts that only one node needs stay at the node. Write for the patcher, not for the Qt implementation.
 -->
 <docs>
@@ -53,5 +55,10 @@
   </set>
   <set name="effect">
     <param name="apply">On: the effect is applied. Off: the effect chain passes on unchanged, as if this node was not there.</param>
+    <returns>The effect chain with this effect added; connect it to the Effect pin of an element or to the next effect node.</returns>
+    <para>Connect Output to the Effect pin of an element, or chain it with other effect nodes: the node at the Effect pin acts last. Neighbouring merged effects (Blur, DropShadow, ColorAdjust, Colorize, Mask) are drawn together in Qt's fixed order among themselves; a shader effect (all other effect nodes) ends such a run and costs a Qt layer of its own.</para>
+  </set>
+  <set name="interaction">
+    <returns>The interaction chain with this handler added; connect it to the Interaction pin of an element or to the next interaction node.</returns>
   </set>
 </docs>

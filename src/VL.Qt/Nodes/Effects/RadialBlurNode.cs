@@ -12,10 +12,9 @@ using VL.Qt.Wire;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Radial (rotational) blur: arcs around Center, a box blur over a rotation of Angle cycles (centred, the picture does not
-    /// turn). Two passes of the same shader keep large angles clean.
-    /// Connect Output to the Effect pin of an element, or chain it with other effect nodes (data flow order: the node at the
-    /// Effect pin acts last). A shader effect ends a run of Blur/DropShadow/... nodes and costs a layer of its own.
+    /// Radial (rotational) blur: arcs around Center, a box blur over a rotation of Angle cycles (centred, the picture does
+    /// not turn). Two passes of the same shader keep large angles clean.
+    /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/para"/>
     /// </summary>
     [ProcessNode(Name = "RadialBlur", Category = Categories.Effects)]
     public sealed class RadialBlurNode : IDisposable
@@ -50,6 +49,7 @@ namespace VL.Qt.Nodes
         /// <param name="angle">Total rotation of the blur in cycles (1 = full turn, 0 = no blur).</param>
         /// <param name="padding">Extra area around the element in DIP so the arcs have room: about half the angle in radians (Angle times 2π) times the distance of the farthest point from Center.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
