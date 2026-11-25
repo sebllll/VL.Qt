@@ -11,18 +11,18 @@ namespace VL.Qt.Nodes
     /// <summary>
     /// Value of a value input element (Input (Int); Toggle, Slider, TextInput) and its optional channel pin,
     /// in the spirit of VL.ImGui's <c>ChannelWidget&lt;T&gt;</c>. Pull, no subscription: <see cref="Update"/> reads
-    /// <c>channel.Value</c> once per frame and compares it with the last value it saw.
+    /// <c>channel.Value</c> once per frame. The channel is the truth of the widget.
     /// <list type="bullet">
     /// <item>Unconnected the pin is null (<c>[DefaultValue(null)] IChannel&lt;T&gt;?</c>); the node then keeps its own
     /// value, changed by the user only. A plain value or an IOBox on the pin is lifted by vvvv into a private channel:
     /// start value and setting from the patch.</item>
     /// <item>A user change (EVENT_VALUE from the feedback) is written into the channel with author <see cref="ChannelAuthors.QtChannelAuthor"/> and sets
-    /// <see cref="Bang"/> for one Update. It is not echoed as a channel change. If the patch changed the channel in the
-    /// same frame, the user wins.</item>
+    /// <see cref="Bang"/> for one Update. If the patch changed the channel in the same frame, the user wins.</item>
     /// <item>The node describes <see cref="Value"/>; the reconciler diffs it against the last sent description as usual
     /// (no "last sent = user value").</item>
-    /// <item>Qt clamps a SET without an event, so the node clamps the own copy with <see cref="Clamp"/>; the channel keeps
-    /// the patch's value.</item>
+    /// <item>Qt clamps a SET without an event, so what the node shows is the copy <see cref="Clamped"/> returns. The
+    /// channel keeps the patch's value, and so does <see cref="Value"/>: when the range is widened the widget shows the
+    /// channel's value again.</item>
     /// </list>
     /// Main thread only. No allocation per frame (the attributes of a channel are read once per change).
     /// </summary>
@@ -30,7 +30,6 @@ namespace VL.Qt.Nodes
     internal sealed class ValueChannel<T>
     {
         private IChannel<T>? _channel;
-        private T _lastSeen;
         private T _value;
         private IChannel<Spread<Attribute>>? _attributes;
         private Spread<Attribute>? _lastAttributes;
@@ -41,10 +40,9 @@ namespace VL.Qt.Nodes
         public ValueChannel(T initial)
         {
             _value = initial;
-            _lastSeen = initial;
         }
 
-        /// <summary>The value the node shows (patch value, user change, clamped).</summary>
+        /// <summary>The value of the channel (the own value while unconnected), not clamped.</summary>
         public T Value => _value;
 
         /// <summary>True for one Update after a user change in Qt.</summary>
@@ -52,13 +50,11 @@ namespace VL.Qt.Nodes
 
         /// <summary>
         /// Takes the patch's channel value and the user's change from <paramref name="feedback"/> and returns the new
-        /// <see cref="Value"/>. Call once per Update, before <see cref="Clamp"/> and the description.
+        /// <see cref="Value"/>. Call once per Update, before <see cref="Clamped"/> and the description.
         /// </summary>
         public T Update(IChannel<T>? channel, ElementFeedback feedback, int index = 0)
         {
             Bang = false;
-            bool fromPatch = false;
-            T patchValue = default!;
             if (!ReferenceEquals(channel, _channel))
             {
                 _channel = channel;
@@ -66,54 +62,32 @@ namespace VL.Qt.Nodes
                 _lastAttributes = null;
                 _attributeMin = default;
                 _attributeMax = default;
-                if (channel.IsValid())
-                {
-                    patchValue = channel.Value!;
-                    fromPatch = true;
-                    _lastSeen = patchValue;
-                }
-            }
-            else if (channel.IsValid())
-            {
-                var v = channel.Value!;
-                if (!EqualityComparer<T>.Default.Equals(v, _lastSeen))
-                {
-                    patchValue = v;
-                    fromPatch = true;
-                    _lastSeen = v;
-                }
             }
 
             if (feedback.TakeValue<T>(out var user, index))
             {
-                // the user wins over a patch change of the same frame
+                // the user wins over a patch change of the same frame: written first, read back below
                 _value = user;
                 Bang = true;
                 if (channel.IsValid())
-                {
                     channel.EnsureValue(user, author: ChannelAuthors.QtChannelAuthor);
-                    _lastSeen = user;
-                }
             }
-            else if (fromPatch)
-                _value = patchValue;
+
+            if (channel.IsValid())
+                _value = channel.Value!;
             return _value;
         }
 
         /// <summary>
-        /// Clamps the own copy like Qt does (bounds in any order, as Qt's SpinBox and Slider allow from &gt; to) and
-        /// returns it. The channel is not written.
+        /// Returns <see cref="Value"/> clamped like Qt does (bounds in any order, as Qt's SpinBox and Slider allow
+        /// from &gt; to). Neither <see cref="Value"/> nor the channel is changed.
         /// </summary>
-        public T Clamp(T min, T max)
+        public T Clamped(T min, T max)
         {
             var c = Comparer<T>.Default;
             var lo = c.Compare(min, max) <= 0 ? min : max;
             var hi = c.Compare(min, max) <= 0 ? max : min;
-            if (c.Compare(_value, lo) < 0)
-                _value = lo;
-            else if (c.Compare(_value, hi) > 0)
-                _value = hi;
-            return _value;
+            return c.Compare(_value, lo) < 0 ? lo : c.Compare(_value, hi) > 0 ? hi : _value;
         }
 
         /// <summary>Lower bound: the pin if set, else the channel's <see cref="MinAttribute"/>, else <paramref name="fallback"/>.</summary>

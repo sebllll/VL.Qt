@@ -92,7 +92,7 @@ namespace VL.Qt.Nodes
             _value.Update(channel, _node.Feedback);
             float minimum = _value.Min(min, 0f);
             float maximum = _value.Max(max, 1f);
-            value = _value.Clamp(minimum, maximum);
+            value = _value.Clamped(minimum, maximum);
             bang = _value.Bang;
             return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),

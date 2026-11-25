@@ -166,7 +166,7 @@ namespace VL.Qt.Tests
         }
 
         [Test]
-        public void Clamp_OwnCopyOnly_BoundsBeforeValue()
+        public void Clamp_ShownOnly_TheChannelIsTheTruth()
         {
             var ch = Channel.Create(50);
             Frame(ch);
@@ -188,6 +188,14 @@ namespace VL.Qt.Tests
             // A bound change resends Value even if it stayed the same (Qt may have clamped with an intermediate range).
             cmds = Frame(out value, out _, ch, 0, 20);
             Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 Minimum i32(0)", $"SET 1 Maximum i32(20)", SetValue(0) }));
+
+            // The range is widened without any change of the channel: the widget shows the channel's value again.
+            ch.Value = 50;
+            Frame(out value, out _, ch, 0, 10);
+            Assert.That((value, ch.Value), Is.EqualTo((10, 50)), "shown clamped, the channel keeps 50");
+            cmds = Frame(out value, out _, ch, 0, 100);
+            Assert.That(value, Is.EqualTo(50), "the widget never disagrees with its channel once the range allows it");
+            Assert.That(cmds, Is.EqualTo(new[] { $"SET 1 Maximum i32(100)", SetValue(50) }));
         }
 
         [Test]
@@ -199,7 +207,7 @@ namespace VL.Qt.Tests
             Assert.That((s.Minimum, s.Maximum, value), Is.EqualTo((-2, 100, 100)));
 
             s = Update(out value, out _, ch, max: 300);
-            Assert.That((s.Minimum, s.Maximum, value), Is.EqualTo((-2, 300, 100)), "the pin wins; the clamped copy stays clamped like in Qt");
+            Assert.That((s.Minimum, s.Maximum, value), Is.EqualTo((-2, 300, 300)), "the pin wins; the widened range shows the channel's 500, clamped to 300");
 
             ch.Attributes().Value = Spread<Attribute>.Empty;
             s = Update(out _, out _, ch);
