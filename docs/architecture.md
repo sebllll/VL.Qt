@@ -150,7 +150,7 @@ Both companions:
 - `OffscreenScene` (`Scene/`): the offscreen scene and everything the texture path asks of QtNative: `Bind`, `Unbind`, `Update`, `ApplyCommands`, `PollEvents`, `Handle`, `IsBound`, `UsedSamples`, `Error`, `Input`, `Debug`, `LastBindSucceeded`, `ShouldRetryBind` (the rebind throttle), `Reconciler.RootBuildError`, and the static `RenderBatchError` (one native call for all scenes of a frame) and `SetRenderThreads` (size of the render thread pool).
 - `SceneHandle` (`Interop/`): the handle of a scene in a batch; the companion only passes it on.
 - `NotificationQueue` (`Scene/`): takes the notifications of an `Input Notifications` pin from any thread and hands them to the main thread.
-- `OccurrenceRegistry.ForApp` (`Reconciliation/`): the registry of duplicate elements of the app, which a scene needs.
+- `OccurrenceRegistry.ForApp` and `InteractionRegistry.ForApp` (`Reconciliation/`): where the elements and the interactions of the app are shown, across all its renderers, which a scene needs.
 - `ElementInput` (`Nodes/`): converts the value of the Input pin to the element the scene gets and warns at the node about a foreign `IElement`.
 - `QtApp.Get` and `QtPump.ForApp` (`Runtime/`): start the Qt app and its per-frame pump, which also serves the offscreen scenes; `QtApp.DriverSeconds` is the animation driver time.
 

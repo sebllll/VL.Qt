@@ -26,8 +26,8 @@ namespace VL.Qt.Reconciliation
         /// <summary>
         /// Sends the difference between the uniforms of <paramref name="effect"/> and <paramref name="sent"/> (null = nothing
         /// sent yet) and returns the table QtNative holds afterwards. <paramref name="children"/> are the mirrors of the
-        /// effect's children (same order as <see cref="Element.ChildItems"/>); a texture of an ignored (duplicate) element
-        /// is sent as 0 = none.
+        /// effect's children (same order as <see cref="Element.ChildItems"/>); a texture whose mirror is a placeholder (a video
+        /// shown elsewhere) is sent as 0 = none.
         /// </summary>
         public static Dictionary<string, UniformValue>? Write(
             ICommandSink sink, uint id, Shader effect, IReadOnlyList<ItemMirror> children, Dictionary<string, UniformValue>? sent)
@@ -111,7 +111,7 @@ namespace VL.Qt.Reconciliation
                 {
                     if (ReferenceEquals(kids[i], texture))
                     {
-                        handle = children[i].Id; // 0 for a placeholder of a duplicate
+                        handle = children[i].Id; // 0 for a placeholder
                         break;
                     }
                 }

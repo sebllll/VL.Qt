@@ -120,7 +120,8 @@ public static class SnapshotTest
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var scene = new OccurrenceRegistry();
-        var rec = new Reconciler(cmd, new IdAllocator(), scene) { Window = w };
+        var interactions = new InteractionRegistry();
+        var rec = new Reconciler(cmd, new IdAllocator(), scene, interactions) { Window = w };
 
         // Group at (100, 100) DIP, 300 x 200 (fixed size): orange rectangle 100 x 100 at its origin, white text right of it.
         var orange = new VL.Qt.Elements.Rectangle { Size = new Vector2(1, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0), Fill = new Color4(1, 0.6f, 0, 1) };

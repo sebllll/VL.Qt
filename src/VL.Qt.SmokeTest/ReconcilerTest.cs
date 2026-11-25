@@ -51,7 +51,7 @@ public static class ReconcilerTest
         s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
 
         // One renderer frame: Reset, Update, apply (skipped when the reconciler wrote nothing, like Renderer).
         int Frame(Element? root, string what, bool clear = false)
@@ -134,7 +134,7 @@ public static class ReconcilerTest
     {
         const int N = 1000, Frames = 1000;
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var children = new Element[N];
         for (int i = 0; i < N; i++)
             children[i] = new Rectangle { Size = new Vector2(0.15f, 0.15f), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(i % 40 * 0.2f, i / 40 * 0.2f, 0), Fill = Color4.White };

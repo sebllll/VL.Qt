@@ -28,6 +28,7 @@ namespace VL.Qt.Tests
         private FakeResourceApi _api = null!;
         private ResourceClient _client = null!;
         private OccurrenceRegistry _scene = null!;
+        private InteractionRegistry _interactions = null!;
         private Reconciler _reconciler = null!;
         private ImageFileWriter _elementWriter = null!;
         private FileWriterElementNode _elementNode = null!;
@@ -55,7 +56,8 @@ namespace VL.Qt.Tests
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
             _client.SetPumping(true);
             _scene = new OccurrenceRegistry();
-            _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene);
+            _interactions = new InteractionRegistry();
+            _reconciler = new Reconciler(new RecordingSink(), new IdAllocator(), _scene, _interactions);
             _elementWriter = NewWriter();
             _elementMessages = new RecordingMessages();
             _elementNode = new FileWriterElementNode(_client, _scene, _elementWriter, _elementMessages.Errors);

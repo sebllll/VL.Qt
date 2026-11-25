@@ -22,7 +22,7 @@ namespace VL.Qt.Tests
         {
             _sink = new RecordingSink();
             _ids = new IdAllocator();
-            _rec = new Reconciler(_sink, _ids, new OccurrenceRegistry());
+            _rec = new Reconciler(_sink, _ids, new OccurrenceRegistry(), new InteractionRegistry());
         }
 
         private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };

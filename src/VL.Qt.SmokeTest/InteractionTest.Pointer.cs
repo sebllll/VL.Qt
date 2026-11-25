@@ -36,7 +36,7 @@ public static partial class InteractionTest
         {
             _tag = tag;
             _s = s;
-            _rec = new Reconciler(_cmd, new IdAllocator(), new OccurrenceRegistry());
+            _rec = new Reconciler(_cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             W = NativeCalls.CreateWindow(800, 600, "VL.Qt " + tag + " test");
             s.Check(W != SceneHandle.Null, tag + ": window_create");
             Native.vlqt_window_show(W);

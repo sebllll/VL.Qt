@@ -19,13 +19,13 @@ namespace VL.Qt.Reconciliation
         // Identity
 
         /// <summary>
-        /// Object id in QtNative; 0 (the window root id) marks a placeholder for an ignored occurrence (a video shown
-        /// elsewhere), which has no Qt object, no children and no binding.
+        /// Object id in QtNative; 0 (the window root id) marks a placeholder (a video shown elsewhere), which has no Qt
+        /// object, no children and no binding.
         /// </summary>
         public uint Id { get; }
 
         /// <summary>Placeholder for a video that is shown elsewhere (<see cref="OccurrenceRegistry"/>).</summary>
-        public bool IsIgnored => Id == 0;
+        public bool IsPlaceholder => Id == 0;
 
         /// <summary>CREATE type; a different type at this position means destroy + create.</summary>
         public ElementType Type { get; }

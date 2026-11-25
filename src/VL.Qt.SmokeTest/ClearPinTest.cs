@@ -119,7 +119,8 @@ public static class ClearPinTest
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var scene = new OccurrenceRegistry();
-        var rec = new Reconciler(cmd, new IdAllocator(), scene) { Window = w };
+        var interactions = new InteractionRegistry();
+        var rec = new Reconciler(cmd, new IdAllocator(), scene, interactions) { Window = w };
         string P(string name) => Path.Combine(s.OutDir, $"clear_pin_{name}.png");
 
         // Orange 50 x 50 DIP at (x, 100); blurred red rectangle at (300, 400) (effect layer); optional black fade.

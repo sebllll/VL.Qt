@@ -5,8 +5,8 @@ namespace VL.Qt.Reconciliation
 {
     /// <summary>
     /// Mirror of one input handler object as the reconciler last sent it: id, type, key (the feedback of the
-    /// interaction node), the description it was last updated from and its feedback id. Id 0 marks a placeholder for
-    /// an ignored occurrence (the interaction is active elsewhere, see <see cref="OccurrenceRegistry"/>).
+    /// interaction node), the description it was last updated from and its feedback id. Id 0 marks a placeholder (the
+    /// interaction is active at another handler, see <see cref="InteractionRegistry"/>).
     /// </summary>
     internal sealed class HandlerMirror
     {
@@ -21,7 +21,7 @@ namespace VL.Qt.Reconciliation
         public uint Id { get; }
 
         /// <summary>Placeholder for an interaction that is active at another handler.</summary>
-        public bool IsIgnored => Id == 0;
+        public bool IsPlaceholder => Id == 0;
 
         /// <summary>CREATE type (<see cref="Protocol.ElementType"/>, from 32).</summary>
         public ushort Type { get; }

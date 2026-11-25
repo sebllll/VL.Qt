@@ -140,8 +140,9 @@ namespace VL.Qt.Tests
         {
             // Several times in one tree and in two renderers is fine.
             var scene = new OccurrenceRegistry();
-            var rec = new Reconciler(new RecordingSink(), new IdAllocator(), scene);
-            var rec2 = new Reconciler(new RecordingSink(), new IdAllocator(), scene);
+            var interactions = new InteractionRegistry();
+            var rec = new Reconciler(new RecordingSink(), new IdAllocator(), scene, interactions);
+            var rec2 = new Reconciler(new RecordingSink(), new IdAllocator(), scene, interactions);
             var e = Update();
             rec.Update(new Group { Children = ImmutableArray.Create(e, e) }, Space.DIPTopLeft);
             rec2.Update(new Group { Children = ImmutableArray.Create(e) }, Space.DIPTopLeft);
@@ -150,17 +151,17 @@ namespace VL.Qt.Tests
             Assert.That(_warnings, Is.EqualTo(0));
 
             // A warning in the feedback slot (e.g. a video duplicate) is shown at the node once and removed with it.
-            _node.Core.Feedback[0].SetMessage(OccurrenceRegistry.VideoDuplicateSource, MessageKind.Warning, OccurrenceRegistry.VideoDuplicateWarning);
+            _node.Core.Feedback[0].SetMessage(OccurrenceRegistry.VideoPlaceholderSource, MessageKind.Warning, OccurrenceRegistry.VideoPlaceholderWarning);
             Update();
             Assert.That(_warnings, Is.EqualTo(1));
             Update();
             Assert.That(_warnings, Is.EqualTo(1), "added once");
 
-            _node.Core.Feedback[0].SetMessage(OccurrenceRegistry.VideoDuplicateSource, MessageKind.Warning, null);
+            _node.Core.Feedback[0].SetMessage(OccurrenceRegistry.VideoPlaceholderSource, MessageKind.Warning, null);
             Update();
             Assert.That(_warnings, Is.EqualTo(0), "removed");
 
-            _node.Core.Feedback[0].SetMessage(OccurrenceRegistry.VideoDuplicateSource, MessageKind.Warning, OccurrenceRegistry.VideoDuplicateWarning);
+            _node.Core.Feedback[0].SetMessage(OccurrenceRegistry.VideoPlaceholderSource, MessageKind.Warning, OccurrenceRegistry.VideoPlaceholderWarning);
             Update();
             Assert.That(_warnings, Is.EqualTo(1));
             _node.Dispose();

@@ -132,7 +132,7 @@ namespace VL.Qt.Tests
         public void ColumnOfThreeRectangleNodes_ThroughReconciler()
         {
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             var rects = Enumerable.Range(0, 3).Select(_ => new RectangleNode(NoWarning)).ToArray();
             using var column = new ColumnNode(NoWarning);
 
@@ -190,7 +190,7 @@ namespace VL.Qt.Tests
         public void AutoSize_ThroughReconciler_OnlyFlagIsSent_ZeroBytesWhenUnchanged()
         {
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             using var row = new RowNode(NoWarning);
             using var group = new GroupNode(NoWarning);
 

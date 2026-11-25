@@ -805,7 +805,7 @@ namespace VL.Qt.Tests
             _registry = new FeedbackRouter();
             _handle = _registry.Acquire(new FeedbackSlot(_node.Core.Feedback, 0));
             _sink = new RecordingSink();
-            _reconciler = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry());
+            _reconciler = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         }
 
         [TearDown]

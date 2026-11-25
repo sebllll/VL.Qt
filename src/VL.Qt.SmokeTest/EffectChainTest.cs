@@ -73,7 +73,7 @@ public static class EffectChainTest
         s.Check(w != SceneHandle.Null, "effect-chain: window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
 
         var warnings = new List<string>();
         IDisposable Warn(string m) { warnings.Add(m); return new Remove(warnings, m); }

@@ -43,7 +43,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Mapping_FollowsTheReconcilerUpdate()
         {
-            var reg = new Reconciler(new RecordingSink(), new IdAllocator(), new OccurrenceRegistry());
+            var reg = new Reconciler(new RecordingSink(), new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             reg.Update(null, Normalized600);
             Assert.That(reg.FeedbackRouter.Mapping, Is.EqualTo(Normalized600));
             var resized = new SpaceMapping(Space.Normalized, new Vector2(400, 300), 1f);

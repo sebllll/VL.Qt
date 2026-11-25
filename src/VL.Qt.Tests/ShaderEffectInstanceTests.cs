@@ -300,7 +300,7 @@ void main() { fragColor = vec4(phase); }
             var id = ((ShaderEffect)Output(instance)!).ShaderIds[0];
 
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             rec.Update(new Rectangle { Effect = Output(instance) }, Space.DIPTopLeft);
 
             var chain = sink.OfOp("CHAIN").Single().Split(" | ").Skip(1).ToArray();

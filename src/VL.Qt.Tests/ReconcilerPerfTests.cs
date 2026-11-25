@@ -33,7 +33,7 @@ namespace VL.Qt.Tests
         private static Scenario Alternating(string label, Element a, Element b, int expectedSets, int minFirstFrame = N * 3)
         {
             var writer = new CommandWriter();
-            var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             rec.Update(a, Space.DIPTopLeft);
             Assert.That(writer.Count, Is.GreaterThan(minFirstFrame), "first frame creates the whole tree");
             int frame = 0;
@@ -150,7 +150,7 @@ namespace VL.Qt.Tests
                 alt[i] = new Rectangle { Size = new Vector2(2, 1), Feedback = new FeedbackSlot(feedback, i) };
             }
             var writer = new CommandWriter();
-            var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             var builder = ImmutableArray.Create(children).ToBuilder();
             rec.Update(new Group { Children = builder.ToImmutable() }, Space.DIPTopLeft);
             int f = 0;
@@ -214,17 +214,21 @@ namespace VL.Qt.Tests
             return Alternating("Tap + Drag handlers changing every frame:", Make(PointerButtons.Left, DragAxis.Both), Make(PointerButtons.Right, DragAxis.Vertical), expectedSets: 3, minFirstFrame: 5);
         }
 
-        /// <summary>Two reconcilers (own writers) on one registry; the shared element is a new instance of one slot every frame.</summary>
+        /// <summary>
+        /// Two reconcilers (own writers) on one registry; the shared element and its Group are a new instance of their node's
+        /// slot every frame (every element node has one; an element without a slot is keyed by its instance).
+        /// </summary>
         private static Scenario TwoRenderersSharedElement(bool aFirst)
         {
             var scene = new OccurrenceRegistry();
-            var slot = new FeedbackSlot(new ElementFeedback(), 0);
+            var interactions = new InteractionRegistry();
+            var feedback = new ElementFeedback();
             var wa = new CommandWriter();
             var wb = new CommandWriter();
-            var ra = new Reconciler(wa, new IdAllocator(), scene);
-            var rb = new Reconciler(wb, new IdAllocator(), scene);
-            var a = SharedRoot(slot, 1);
-            var b = SharedRoot(slot, 2);
+            var ra = new Reconciler(wa, new IdAllocator(), scene, interactions);
+            var rb = new Reconciler(wb, new IdAllocator(), scene, interactions);
+            var a = SharedRoot(feedback, 1);
+            var b = SharedRoot(feedback, 2);
             ra.Update(a, Space.DIPTopLeft);
             rb.Update(a, Space.DIPTopLeft);
             int frame = 0;
@@ -249,7 +253,9 @@ namespace VL.Qt.Tests
             return Warm(new Scenario($"Two renderers, shared element changing, {(aFirst ? "A then B" : "B then A")}:", step, () => wa.Count + wb.Count, 2));
         }
 
-        private static Group SharedRoot(FeedbackSlot slot, float width) => new() { Children = [new Rectangle { Size = new Vector2(width, 1), Feedback = slot }] };
+        /// <summary>A Group (slot 0 of <paramref name="feedback"/>) with one Rectangle (slot 1).</summary>
+        private static Group SharedRoot(ElementFeedback feedback, float width)
+            => new() { Feedback = new FeedbackSlot(feedback, 0), Children = [new Rectangle { Size = new Vector2(width, 1), Feedback = new FeedbackSlot(feedback, 1) }] };
 
         [Test]
         public void Group_1000Rectangles_OneChangePerFrame_NoAllocations() => AssertNoAllocation(GroupOneColorChange());
@@ -305,30 +311,31 @@ namespace VL.Qt.Tests
         [Test, Category("Perf")]
         public void Element_TapAndDragHandlersChangingEveryFrame_Fast() => AssertFast(HandlersChangingEveryFrame());
 
-        [TestCase(true, IgnoreReason = "REC-10: old instance released and new one registered per frame (192 B/frame measured: RendererOccurrences and list, hand-over)")]
-        [TestCase(false, IgnoreReason = "REC-10: order B then A writes 3 commands instead of 2 (hand-over/owner flip), and allocates per frame")]
+        [TestCase(true)]
+        [TestCase(false)]
         public void TwoRenderers_SharedElementChangingInstance_NoAllocations(bool aFirst) => AssertNoAllocation(TwoRenderersSharedElement(aFirst));
 
         [TestCase(true)]
-        [TestCase(false, IgnoreReason = "REC-10: B registers the new instance first and becomes its owner; the owner is the renderer that updates first after a change")]
+        [TestCase(false)]
         public void TwoRenderers_SharedElementChangingInstance_OwnerStaysTheFirstRenderer(bool aFirst)
         {
             // A2: the element is keyed by its slot; whichever renderer updates first after a change, A (first to show it) stays the owner.
             var scene = new OccurrenceRegistry();
-            var slot = new FeedbackSlot(new ElementFeedback(), 0);
-            var ra = new Reconciler(new CommandWriter(), new IdAllocator(), scene);
-            var rb = new Reconciler(new CommandWriter(), new IdAllocator(), scene);
-            var first = SharedRoot(slot, 1);
+            var interactions = new InteractionRegistry();
+            var feedback = new ElementFeedback();
+            var ra = new Reconciler(new CommandWriter(), new IdAllocator(), scene, interactions);
+            var rb = new Reconciler(new CommandWriter(), new IdAllocator(), scene, interactions);
+            var first = SharedRoot(feedback, 1);
             ra.Update(first, Space.DIPTopLeft);
             rb.Update(first, Space.DIPTopLeft);
             var ownerNode = ra.Root!.Children[0];
             for (var i = 0; i < 6; i++)
             {
-                var root = SharedRoot(slot, 2 + i);
+                var root = SharedRoot(feedback, 2 + i);
                 if (aFirst) { ra.Update(root, Space.DIPTopLeft); rb.Update(root, Space.DIPTopLeft); }
                 else { rb.Update(root, Space.DIPTopLeft); ra.Update(root, Space.DIPTopLeft); }
                 var element = root.Children[0];
-                Assert.That(scene.OwnerOf(element, out var owner), Is.SameAs(ownerNode), $"frame {i}");
+                Assert.That(scene.PrimaryOf(element, out var owner), Is.SameAs(ownerNode), $"frame {i}");
                 Assert.That(owner, Is.SameAs(ra), $"frame {i}");
                 Assert.That(scene.OccurrencesOf(element), Is.EqualTo(2), $"frame {i}");
             }

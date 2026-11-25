@@ -46,7 +46,8 @@ public static class GroupFrameTest
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var scene = new OccurrenceRegistry();
-        var rec = new Reconciler(cmd, new IdAllocator(), scene) { Window = w };
+        var interactions = new InteractionRegistry();
+        var rec = new Reconciler(cmd, new IdAllocator(), scene, interactions) { Window = w };
 
         var orange = new VL.Qt.Elements.Rectangle { Size = new Vector2(1, 1), Anchor = RectangleAnchor.Center, Transform = Matrix.Translation(0, 0, 0), Fill = new Color4(1, 0.6f, 0, 1) };
         var blue = new VL.Qt.Elements.Rectangle { Size = new Vector2(1, 0.5f), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(1, 0.5f, 0), Fill = new Color4(0.2f, 0.4f, 1, 1) };

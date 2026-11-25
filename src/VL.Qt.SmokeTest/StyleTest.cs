@@ -184,7 +184,7 @@ public static class StyleTest
         s.Check(w != SceneHandle.Null, "inherit window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
 
         // Positions in units (1 unit = 100 DIP), relative to the group.
         var ownStyle = new Style { Frame = new FrameStyle { Color = default(StateValues<Color4>).With(StyleStates.All, Rgb(ownFrame)) } };
@@ -260,7 +260,7 @@ public static class StyleTest
         s.Check(w != SceneHandle.Null, "nodeset window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry());
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
 
         var groupStyle = FrameNodes.Frame(
             StyleNodes.Colors(null, frame: new(Rgb(groupFrame)), trackFill: new(Rgb(groupFill))),

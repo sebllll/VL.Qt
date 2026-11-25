@@ -175,7 +175,7 @@ namespace VL.Qt.Nodes
                 // Starts from the bounds the window opens at, so opening the patch does not mark the document changed.
                 if (_session is not null)
                     _boundsSaver = new BoundsSaver(createBounds);
-                _view = new WindowScene(OccurrenceRegistry.ForApp(_nodeContext.AppHost), title, createBounds, _vSync,
+                _view = new WindowScene(OccurrenceRegistry.ForApp(_nodeContext.AppHost), InteractionRegistry.ForApp(_nodeContext.AppHost), title, createBounds, _vSync,
                     (borderless ? Protocol.WindowMode.Borderless : 0u) | (fullscreen ? Protocol.WindowMode.Fullscreen : 0u),
                     _iconPath, multisampleCount);
                 _samples = multisampleCount;

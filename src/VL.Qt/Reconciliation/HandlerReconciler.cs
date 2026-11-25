@@ -10,7 +10,7 @@ namespace VL.Qt.Reconciliation
     /// property SETs, REPARENT to the item, BIND to a new feedback id), the same instance costs nothing, a changed instance
     /// sends the changed properties, a missing key is destroyed (ids and feedback id freed). An interaction that is already
     /// active at another handler (another element, the same chain twice, another renderer) gets a placeholder and the
-    /// duplicate warning (<see cref="OccurrenceRegistry"/>); it takes over once the owner lets go (next update).
+    /// placeholder warning (<see cref="InteractionRegistry"/>); it takes over once the active handler lets go (next update).
     /// One per reconciler.
     /// </summary>
     internal sealed class HandlerReconciler
@@ -19,23 +19,23 @@ namespace VL.Qt.Reconciliation
         private readonly ICommandSink _sink;
         private readonly IdAllocator _ids;
         private readonly FeedbackRouter _feedbackRouter;
-        private readonly OccurrenceRegistry _scene;
+        private readonly InteractionRegistry _interactions;
         private readonly Dictionary<uint, FeedbackSlot> _bindings;
 
         /// <param name="owner">The reconciler whose items carry the handlers.</param>
         /// <param name="sink">Target of the commands.</param>
         /// <param name="ids">Object id allocator of the window (handlers share the id space of the items).</param>
         /// <param name="feedbackRouter">Feedback ids of the window.</param>
-        /// <param name="scene">Registry of the app that knows which handler serves an interaction.</param>
+        /// <param name="interactions">Registry of the app that knows which handler serves an interaction.</param>
         /// <param name="bindings">Object id → feedback slot of every bound object of the window.</param>
         public HandlerReconciler(Reconciler owner, ICommandSink sink, IdAllocator ids, FeedbackRouter feedbackRouter,
-            OccurrenceRegistry scene, Dictionary<uint, FeedbackSlot> bindings)
+            InteractionRegistry interactions, Dictionary<uint, FeedbackSlot> bindings)
         {
             _owner = owner;
             _sink = sink;
             _ids = ids;
             _feedbackRouter = feedbackRouter;
-            _scene = scene;
+            _interactions = interactions;
             _bindings = bindings;
         }
 
@@ -79,7 +79,7 @@ namespace VL.Qt.Reconciliation
         }
 
         /// <summary>
-        /// Matches one link (after the links before it, so ids and the first occurrence of a duplicate follow the patch
+        /// Matches one link (after the links before it, so ids and the active handler of an interaction used twice follow the patch
         /// order; recursion depth = chain length).
         /// </summary>
         private void ReconcileLink(ItemMirror item, List<HandlerMirror> list, Interaction link, in PassInfo pass)
@@ -95,11 +95,11 @@ namespace VL.Qt.Reconciliation
             }
 
             var h = list[k];
-            if (h.IsIgnored)
+            if (h.IsPlaceholder)
             {
-                if (_scene.HandlerOwnerOf(link.Feedback) is null)
+                if (_interactions.ActiveHandlerOf(link.Feedback) is null)
                 {
-                    _scene.RemoveHandlerDuplicate(h.Key, _owner);
+                    _interactions.RemovePlaceholder(h.Key, _owner);
                     list[k] = Create(item, link, pass);
                 }
                 else
@@ -140,14 +140,14 @@ namespace VL.Qt.Reconciliation
         /// <summary>New handler at <paramref name="item"/>, or a placeholder if the interaction is active elsewhere.</summary>
         private HandlerMirror Create(ItemMirror item, Interaction link, in PassInfo pass)
         {
-            if (_scene.HandlerOwnerOf(link.Feedback) is not null)
+            if (_interactions.ActiveHandlerOf(link.Feedback) is not null)
             {
-                _scene.AddHandlerDuplicate(link.Feedback, _owner);
+                _interactions.AddPlaceholder(link.Feedback, _owner);
                 return new HandlerMirror(0, link.HandlerType, link.Feedback) { SeenPass = pass.Pass, Last = link };
             }
 
             var h = new HandlerMirror(_ids.Allocate(), link.HandlerType, link.Feedback) { SeenPass = pass.Pass, Last = link };
-            _scene.SetHandlerOwner(h, _owner);
+            _interactions.Activate(h, _owner);
             _sink.Create(h.Id, h.Type);
             HandlerPropertyDiff.Write(_sink, h.Id, link, null, pass.Mapping);
             _sink.Reparent(h.Id, item.Id, 0);
@@ -160,20 +160,20 @@ namespace VL.Qt.Reconciliation
         /// <summary>DESTROY of one handler (placeholders have no QtNative object), then <see cref="ForgetHandler"/>.</summary>
         private void Destroy(HandlerMirror h)
         {
-            if (!h.IsIgnored)
+            if (!h.IsPlaceholder)
                 _sink.Destroy(h.Id);
             ForgetHandler(h);
         }
 
-        /// <summary>Frees id, feedback id (resets the slot: not hovered), binding and ownership of a handler.</summary>
+        /// <summary>Frees id, feedback id (resets the slot: not hovered), binding and activation of a handler.</summary>
         private void ForgetHandler(HandlerMirror h)
         {
-            if (h.IsIgnored)
+            if (h.IsPlaceholder)
             {
-                _scene.RemoveHandlerDuplicate(h.Key, _owner);
+                _interactions.RemovePlaceholder(h.Key, _owner);
                 return;
             }
-            _scene.ReleaseHandler(h);
+            _interactions.Deactivate(h);
             _bindings.Remove(h.Id);
             _feedbackRouter.Release(h.BoundFeedbackId);
             h.BoundFeedbackId = 0;

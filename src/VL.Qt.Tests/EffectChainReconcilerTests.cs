@@ -31,7 +31,7 @@ namespace VL.Qt.Tests
         {
             _sink = new RecordingSink();
             _ids = new IdAllocator();
-            _rec = new Reconciler(_sink, _ids, new OccurrenceRegistry());
+            _rec = new Reconciler(_sink, _ids, new OccurrenceRegistry(), new InteractionRegistry());
         }
 
         private void Frame(Element? root)

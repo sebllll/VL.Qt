@@ -64,7 +64,7 @@ public static class BorderlessTest
 
         const string title = "VL.Qt borderless test";
         var bounds = new RectangleF(200, 160, 400, 300);
-        var r = new WindowScene(new OccurrenceRegistry(), title, bounds);
+        var r = new WindowScene(new OccurrenceRegistry(), new InteractionRegistry(), title, bounds);
         var g0 = Shown(r, title);
         var c0 = Client(title);
         s.Check(g0 is { } a0 && Close(a0.Bounds, bounds), $"framed window at Bounds ({g0?.Bounds})");
@@ -109,7 +109,7 @@ public static class BorderlessTest
         // Created borderless (mode before show): reported geometry = Bounds, small size possible right away.
         const string title2 = "VL.Qt borderless on create";
         var small = new RectangleF(260, 220, 100, 60);
-        var r2 = new WindowScene(new OccurrenceRegistry(), title2, small, mode: Protocol.WindowMode.Borderless);
+        var r2 = new WindowScene(new OccurrenceRegistry(), new InteractionRegistry(), title2, small, mode: Protocol.WindowMode.Borderless);
         var g5 = Shown(r2, title2);
         var c5 = Client(title2);
         s.Check(g5 is { } s5 && s5.Bounds.Width == small.Width && s5.Bounds.Height == small.Height, $"created borderless: size 100x60 ({g5?.Bounds} vs {small})");

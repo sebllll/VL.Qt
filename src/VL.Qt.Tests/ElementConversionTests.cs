@@ -61,7 +61,7 @@ namespace VL.Qt.Tests
         public void SetUp()
         {
             _sink = new RecordingSink();
-            _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry());
+            _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         }
 
         private void Update(Element? root) => _rec.Update(root, Space.DIPTopLeft);

@@ -63,7 +63,7 @@ namespace VL.Qt.Tests
         public void Reconciler_SendsAutoPaddingAndPaddingRect()
         {
             var sink = new RecordingSink();
-            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             rec.Update(new Rectangle { Effect = Blur(null, false, new RectangleF(1, 2, 3, 4)) }, Space.DIPTopLeft);
             var chain = sink.OfOp("CHAIN").Single();
             Assert.That(chain, Does.Contain($" {nameof(K.AutoPadding)}=bool(0)"));

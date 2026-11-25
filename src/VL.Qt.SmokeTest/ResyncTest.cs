@@ -30,9 +30,10 @@ public static class ResyncTest
     private static void Run(Scenario s)
     {
         var scene = new OccurrenceRegistry();
+        var interactions = new InteractionRegistry();
         var clear = new Color4(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         var bounds = new RectangleF(100, 100, 800, 600);
-        var r = new WindowScene(scene, "VL.Qt resync test", bounds);
+        var r = new WindowScene(scene, interactions, "VL.Qt resync test", bounds);
         s.Check(r.Window != SceneHandle.Null, "window created " + r.Error);
         if (r.Window == SceneHandle.Null)
             return;

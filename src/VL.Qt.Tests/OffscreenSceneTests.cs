@@ -40,7 +40,7 @@ namespace VL.Qt.Tests
         public void Lifecycle_WithoutOrWithNativeScene()
         {
             ShaderReflectNativeTests.LinkNative();
-            var r = new OffscreenScene(new OccurrenceRegistry(), 64, 32);
+            var r = new OffscreenScene(new OccurrenceRegistry(), new InteractionRegistry(), 64, 32);
             Assert.That(r.IsBound, Is.False);
             if (r.Handle == SceneHandle.Null)
             {
@@ -67,7 +67,7 @@ namespace VL.Qt.Tests
         public void RenderBatch_NullContextIsAnError()
         {
             ShaderReflectNativeTests.LinkNative();
-            var r = new OffscreenScene(new OccurrenceRegistry(), 16, 16);
+            var r = new OffscreenScene(new OccurrenceRegistry(), new InteractionRegistry(), 16, 16);
             try
             {
                 Assert.That(OffscreenScene.RenderBatch(IntPtr.Zero, new[] { r.Handle }, 0), Is.LessThan(0));

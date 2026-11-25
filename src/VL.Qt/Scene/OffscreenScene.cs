@@ -24,10 +24,11 @@ namespace VL.Qt
         private int _rebindWait;
         private bool _debug;
 
-        /// <param name="registry">Duplicate registry of the app (<see cref="OccurrenceRegistry.ForApp"/>).</param>
+        /// <param name="occurrences">Occurrence registry of the app (<see cref="OccurrenceRegistry.ForApp"/>).</param>
+        /// <param name="interactions">Interaction registry of the app (<see cref="InteractionRegistry.ForApp"/>).</param>
         /// <param name="width">Initial scene width in DIP (1 DIP = 1 texture pixel); <see cref="Bind"/> sets the final size.</param>
         /// <param name="height">Initial scene height in DIP.</param>
-        public OffscreenScene(OccurrenceRegistry registry, int width, int height)
+        public OffscreenScene(OccurrenceRegistry occurrences, InteractionRegistry interactions, int width, int height)
         {
             var handle = Native.vlqt_offscreen_create(width, height);
             if (handle.IsNull)
@@ -35,7 +36,7 @@ namespace VL.Qt
                 var text = Native.LastError();
                 _createError = text.Length > 0 ? text : "Qt could not create the offscreen scene";
             }
-            _scene = new Scene(registry, handle);
+            _scene = new Scene(occurrences, interactions, handle);
             Input = new OffscreenInput(this);
         }
 
