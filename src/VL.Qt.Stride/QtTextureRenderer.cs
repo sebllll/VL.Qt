@@ -40,7 +40,7 @@ namespace VL.Qt.Stride
                 ?? throw new InvalidOperationException("VL.Qt.Stride: the app host has no VLGame (VL.Stride not loaded)");
             _clock = appHost.Services.GetService(typeof(IFrameClock)) as IFrameClock
                 ?? throw new InvalidOperationException("VL.Qt.Stride: the app host has no IFrameClock");
-            _app = QtApp.Get(appHost.LoggerFactory);
+            _app = QtApp.Get();
             // The window pump also serves the scenes: it processes Qt events, pumps image resources and advances the
             // animation driver once per frame, also when the patch has no Renderer [Qt].
             QtPump.ForApp(appHost);

@@ -35,10 +35,10 @@ namespace VL.Qt.Tests
         }
 
         [SetUp]
-        public void Reset() => QtLog.SetLogger(null);
+        public void Reset() => QtLog.Reset();
 
         [TearDown]
-        public void Clear() => QtLog.SetLogger(null);
+        public void Clear() => QtLog.Reset();
 
         [TestCase(0, LogLevel.Debug)]
         [TestCase(1, LogLevel.Information)]
@@ -59,7 +59,7 @@ namespace VL.Qt.Tests
         public void QtCategoryBecomesLogCategory()
         {
             var factory = new Factory();
-            QtLog.SetFactory(factory);
+            QtLog.Attach(factory);
             QtLog.Receive(2, "qml", "Cannot assign to non-existent property \"foo\"");
             QtLog.Receive(3, "default", "boom");
             QtLog.Logger!.LogInformation("own {Value}", 1);
@@ -77,7 +77,7 @@ namespace VL.Qt.Tests
         {
             QtLog.Receive(2, "qt.qpa", "early");
             var factory = new Factory();
-            QtLog.SetFactory(factory);
+            QtLog.Attach(factory);
 
             Assert.That(factory.Entries, Is.EqualTo(new[] { new Entry("qt.qpa", LogLevel.Warning, "early") }));
         }
@@ -88,23 +88,36 @@ namespace VL.Qt.Tests
             for (int i = 0; i < 300; i++)
                 QtLog.Receive(0, "x", "m");
             var factory = new Factory();
-            QtLog.SetFactory(factory);
+            QtLog.Attach(factory);
 
             Assert.That(factory.Entries, Has.Count.EqualTo(257));
             Assert.That(factory.Entries[^1].Message, Does.Contain("44 Qt messages were dropped"));
         }
 
         [Test]
-        public void NewFactoryReplacesTheOld()
+        public void NewestFactoryReceives_DetachFallsBackToThePreviousOne_NoneLeftQueues()
         {
-            var first = new Factory();
-            var second = new Factory();
-            QtLog.SetFactory(first);
-            QtLog.SetFactory(second);
-            QtLog.Receive(1, "qml", "after restart");
+            var a = new Factory();
+            var b = new Factory();
+            var c = new Factory();
+            var detachA = QtLog.Attach(a);
+            var detachB = QtLog.Attach(b);
+            QtLog.Receive(1, "qml", "to b");
+            Assert.That(a.Entries, Is.Empty);
+            Assert.That(b.Entries, Has.Count.EqualTo(1));
 
-            Assert.That(first.Entries, Is.Empty);
-            Assert.That(second.Entries, Has.Count.EqualTo(1));
+            detachB.Dispose();
+            QtLog.Receive(1, "qml", "to a");
+            Assert.That(a.Entries, Has.Count.EqualTo(1));
+            Assert.That(b.Entries, Has.Count.EqualTo(1));
+
+            detachA.Dispose();
+            QtLog.Receive(1, "qml", "queued");
+            Assert.That(QtLog.Logger, Is.Null);
+            Assert.That(a.Entries, Has.Count.EqualTo(1));
+
+            QtLog.Attach(c);
+            Assert.That(c.Entries, Is.EqualTo(new[] { new Entry("qml", LogLevel.Information, "queued") }));
         }
     }
 }

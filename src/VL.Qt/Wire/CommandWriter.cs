@@ -645,7 +645,7 @@ namespace VL.Qt.Wire
                     catch (Exception e) when (e is IOException or UnauthorizedAccessException)
                     {
                         s_failed = true;
-                        QtApp.Logger?.LogWarning(e, "VL.Qt: command trace disabled, {Path} is not writable", FilePath);
+                        QtLog.Logger?.LogWarning(e, "VL.Qt: command trace disabled, {Path} is not writable", FilePath);
                     }
                 }
             }

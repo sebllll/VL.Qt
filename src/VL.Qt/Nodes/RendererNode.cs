@@ -88,7 +88,7 @@ namespace VL.Qt.Nodes
             _boundToDocument = boundToDocument;
             _dialogIfDocumentChanged = dialogIfDocumentChanged;
             _pump = QtPump.ForApp(nodeContext.AppHost);
-            _app = QtApp.Get(null);
+            _app = QtApp.Get();
             Debug.Assert(_app.IsQtThread, "VL.Qt must be used from the thread that created the QGuiApplication");
             // Exported apps end once the host no longer needs to stay alive (IL of vvvv 8.0-0156, VL.AppServices:
             // AppHostBase.ShouldStayAlive = ref count of AppHost.KeepAlive() > 0; the WinForms host additionally

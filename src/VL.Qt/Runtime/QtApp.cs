@@ -36,7 +36,7 @@ namespace VL.Qt
             CheckAbi();
             if (QtTreePathCheck.PathsTooLong)
             {
-                Logger?.LogWarning("VL.Qt: the Qt files are installed under a path that is too long for Windows (MAX_PATH {MaxPath}): "
+                QtLog.Logger?.LogWarning("VL.Qt: the Qt files are installed under a path that is too long for Windows (MAX_PATH {MaxPath}): "
                     + "{Length} characters for {Path}. Qt cannot load plugins from there and reports them as \"not found\". "
                     + "Move the package or exported app to a shorter path (base path {NativeDir}, {BaseLength} characters).",
                     QtTreePathCheck.windowsMaxPath, QtTreePathCheck.LongestPath.Length, QtTreePathCheck.LongestPath.Path, QtNativeLibrary.Directory, QtNativeLibrary.Directory.Length);
@@ -49,7 +49,7 @@ namespace VL.Qt
             if (initResult != Native.Result.Ok)
                 throw new InvalidOperationException("VL.Qt: vlqt_app_init failed: " + Native.LastError());
             _diagnostics = new PumpDiagnostics();
-            _resources = new ResourceClient(new NativeResourceApi(), _threadId, static () => Logger);
+            _resources = new ResourceClient(new NativeResourceApi(), _threadId, static () => QtLog.Logger);
         }
 
         // Before the first window or resource: a vlqt.dll of another ABI version is refused (no window, no QGuiApplication).
@@ -63,31 +63,22 @@ namespace VL.Qt
             if (!s_abiMismatchLogged)
             {
                 s_abiMismatchLogged = true;
-                Logger?.LogError(AbiCheck.Template, QtNativeLibrary.LibraryPath, AbiCheck.ActualText(actual), Protocol.AbiVersion);
+                QtLog.Logger?.LogError(AbiCheck.Template, QtNativeLibrary.LibraryPath, AbiCheck.ActualText(actual), Protocol.AbiVersion);
             }
             throw new AbiMismatchException(message);
         }
 
-        /// <summary>
-        /// The process-wide app (created on first use, never released). A non-null <paramref name="loggerFactory"/> replaces
-        /// the previous one (<see cref="QtLog"/>): after an app restart the logger factory of the old app host is gone.
-        /// </summary>
-        public static QtApp Get(ILoggerFactory? loggerFactory)
-        {
-            if (loggerFactory != null)
-                QtLog.SetFactory(loggerFactory);
-            return s_instance ??= new QtApp();
-        }
+        /// <summary>The process-wide app (created on first use, never released).</summary>
+        public static QtApp Get() => s_instance ??= new QtApp();
 
         /// <summary>Test hook (SmokeTest 02b): a separate instance, not cached. Driven by a <see cref="QtPump"/> on a simulated clock.</summary>
         internal static QtApp CreateForTest(ILogger? logger)
         {
-            QtLog.SetLogger(logger);
+            QtLog.Reset();
+            if (logger is not null)
+                QtLog.Attach(logger);
             return new QtApp();
         }
-
-        /// <summary>Process-wide "VL.Qt" logger (pump, stats); node messages use the node's own logger.</summary>
-        internal static ILogger? Logger => QtLog.Logger;
 
         public bool IsQtThread => Environment.CurrentManagedThreadId == _threadId;
 
@@ -123,7 +114,7 @@ namespace VL.Qt
                 if (!_wrongThreadLogged)
                 {
                     _wrongThreadLogged = true;
-                    Logger?.LogError("VL.Qt: frame finished on thread {Thread}, but Qt lives on thread {QtThread}. Qt is not pumped.",
+                    QtLog.Logger?.LogError("VL.Qt: frame finished on thread {Thread}, but Qt lives on thread {QtThread}. Qt is not pumped.",
                         Environment.CurrentManagedThreadId, _threadId);
                 }
                 return;
