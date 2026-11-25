@@ -120,7 +120,7 @@ public static class EffectChainTest
             {
                 e => adjust.Update(e, 0.2f, 0, 0),
                 e => blur.Update(e, 0.6f, 16, 0, true, default),
-                e => shadow.Update(e, new Color4(0, 1, 0, 1), new Vector2(0.2f, 0.2f), 0, 1, true, default),
+                e => shadow.Update(e, new Color4(0, 1, 0, 1), new Vector2(20f, 20f), 0, 1, true, default), // offset in DIP
             };
             Effect? chain = null;
             if (shadowFirst) for (int i = 0; i < 3; i++) chain = steps[i](chain);
@@ -202,7 +202,7 @@ public static class EffectChainTest
         Frame(RowOf(null, out _, out _, out _), "row plain");
         using var rowPlain = s.Grab(w, "effect_chain_row_off.png");
         var e0 = Extent(rowPlain);
-        var shadowFx = shadow2.Update(null, new Color4(0, 1, 0, 1), new Vector2(0.3f, 0.3f), 0, 1, true, default);
+        var shadowFx = shadow2.Update(null, new Color4(0, 1, 0, 1), new Vector2(30f, 30f), 0, 1, true, default); // offset in DIP
         Frame(RowOf(shadowFx, out _, out _, out _), "row with effect");
         var cRowOn = Counts(w);
         s.Check(cRowOn.layers == 1 && cRowOn.effects == 1, $"effect-chain: one effect in the Row -> one MultiEffect ({cRowOn})");
