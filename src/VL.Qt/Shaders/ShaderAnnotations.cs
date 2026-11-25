@@ -12,7 +12,7 @@ namespace VL.Qt.Shaders
     /// the start before/after #version up to the first code line): @category, @summary, @padding, @passes, @chainonly. At a uniform:
     /// @default, @min, @max, @color, @summary. @summary/@category take the rest of the line, following comment lines without @ are appended.
     /// </summary>
-    /// <param name="Category">@category of the file head, null = default category (Qt.Elements.Shaders).</param>
+    /// <param name="Category">@category of the file head (absolute with "Qt.", else relative to the default category of each node kind), null = default category (Qt.Elements.Shaders).</param>
     /// <param name="Summary">@summary of the file head (node help), null if not given.</param>
     /// <param name="ChainOnly">@chainonly given: the factory creates only the effect chain node of this file, no element node.</param>
     /// <param name="Passes">@passes of the file head: 1 (default, template Single) or 2 (template TwoPass); only the effect chain node uses it.</param>

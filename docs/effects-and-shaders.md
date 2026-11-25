@@ -123,7 +123,7 @@ Annotations are `//` comments. Unknown tags show at the node.
 
 | Tag | Meaning |
 |---|---|
-| `@category <path>` | node category of the element node; with `@chainonly` the category of the effect chain node (default `Qt.Effects`) |
+| `@category <path>` | node category. A path that starts with `Qt.` is absolute and moves the element node (with `@chainonly` the effect chain node, default `Qt.Effects`). Any other path is relative and is appended to the default category of each node: `@category Examples` gives `Qt.Elements.Shaders.Examples` and `Qt.Effects.Examples`. A change takes effect at once |
 | `@summary <text>` | node help; goes on in the following comment lines until the next blank line |
 | `@padding <left, top, right, bottom>` | room around the element in DIP (like the shader's pixel uniforms: no conversion by the renderer's space) that the shader may draw into as an effect chain node; one number for all four sides, or four numbers. Without it the shader stays inside the element |
 | `@padding <uniform> [factor]` | all four sides = `abs(value of that float uniform pin) * factor` (factor default 1), recomputed when the pin value changes. A uniform that does not exist or is not a `float` is an error at the node |
@@ -155,6 +155,8 @@ Where pass 1 needs no more than 64 samples, pass 2 blurs by less than a pixel an
 The five built-in shader effects stay C# nodes (`Blend`, `Displace`, `DirectionalBlur`, `ZoomBlur`, `RadialBlur`). Their shader code is also in `help/Qt/qtshaders/` as annotated templates, chain-only files in the category `Qt.Effects.Examples`:
 
 `ExampleBlend.frag`, `ExampleDisplace.frag`, `ExampleDirectionalBlur.frag`, `ExampleZoomBlur.frag`, `ExampleRadialBlur.frag`.
+
+A node is identified by its name and category. If two shader files make the same node (e.g. `Glow.frag` and `Glow_.frag`), or the effect chain node of a file has the name of a built-in effect node in `Qt.Effects` (e.g. `Blur.frag`), the node shows an error that names the files; rename one of them. The same file name in different categories is fine.
 
 To make an effect of your own: copy a file into a `qtshaders/` folder next to your patch, rename it (the file name is the node name), change the code and the annotations. The templates carry the comments that explain `@passes`, `@padding` and the premultiplied alpha. They show up as nodes in `Qt.Effects` next to the built-in ones.
 
