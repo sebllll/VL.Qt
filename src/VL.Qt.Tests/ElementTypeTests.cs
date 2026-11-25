@@ -38,8 +38,8 @@ namespace VL.Qt.Tests
             Assert.That(e.Anchor, Is.EqualTo(RectangleAnchor.TopLeft));
             Assert.That(e.Opacity, Is.EqualTo(1f));
             Assert.That(e.Transform, Is.EqualTo(Matrix.Identity));
-            Assert.That(e.Children.IsDefault, Is.False);
-            Assert.That(e.Children, Is.Empty);
+            Assert.That(e.ChildItems.IsDefault, Is.False);
+            Assert.That(e.ChildItems, Is.Empty);
         }
 
         [Test]
@@ -170,17 +170,8 @@ namespace VL.Qt.Tests
             Assert.That(new Group { Children = kids }.Children, Is.EqualTo(kids));
             Assert.That(new Row { Children = kids }.Children, Is.EqualTo(kids));
             Element col = new Column { Children = kids };
-            Assert.That(col.Children, Is.EqualTo(kids));
+            Assert.That(col.ChildItems, Is.EqualTo(kids));
             Assert.That(new Group { Children = default }.Children, Is.Empty);
-        }
-
-        [Test]
-        public void Leaves_RejectChildren()
-        {
-            var kids = ImmutableArray.Create<Element>(new Group());
-            Assert.Throws<NotSupportedException>(() => _ = new Elements.Rectangle { Children = kids });
-            Assert.Throws<NotSupportedException>(() => _ = new Video { Children = kids });
-            Assert.That(new Text { Children = ImmutableArray<Element>.Empty }.Children, Is.Empty);
         }
     }
 }

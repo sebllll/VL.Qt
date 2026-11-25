@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Qt.Nodes;
@@ -75,21 +74,9 @@ namespace VL.Qt.Elements
         public Style? Style { get; init; }
 
         /// <summary>
-        /// Child elements. Containers (Group, Row, Column) override this with a settable value;
-        /// on all other elements setting a non-empty value throws.
+        /// The items the reconciler creates under this element, in order: the children of a <see cref="Container"/>,
+        /// the hidden texture sources of a <see cref="Shader"/>, none otherwise.
         /// </summary>
-        public virtual ImmutableArray<Element> Children
-        {
-            get => ImmutableArray<Element>.Empty;
-            init
-            {
-                if (!value.IsDefaultOrEmpty)
-                    throw new NotSupportedException($"{GetType().Name} has no children.");
-            }
-        }
-
-        /// <summary>Maps default(ImmutableArray) to Empty, so Children is never default.</summary>
-        protected static ImmutableArray<Element> Normalize(ImmutableArray<Element> value)
-            => value.IsDefault ? ImmutableArray<Element>.Empty : value;
+        internal virtual ImmutableArray<Element> ChildItems => ImmutableArray<Element>.Empty;
     }
 }

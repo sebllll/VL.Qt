@@ -82,7 +82,7 @@ namespace VL.Qt.Tests
         public void NoElement_OnlyLabel()
         {
             using var n = new LabeledNode(NoWarning);
-            Assert.That(Labeled(n, null).Children, Has.Length.EqualTo(1));
+            Assert.That(Labeled(n, null).ChildItems, Has.Length.EqualTo(1));
         }
     }
 }

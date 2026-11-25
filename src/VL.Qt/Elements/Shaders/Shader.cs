@@ -14,7 +14,8 @@ namespace VL.Qt.Elements
     {
         private readonly Element? _input;
         private readonly Spread<Uniform> _uniforms = Spread<Uniform>.Empty;
-        private readonly ImmutableArray<Element> _children = ImmutableArray<Element>.Empty;
+        // default = not computed yet; the element is immutable, so the first read is cached for good.
+        private ImmutableArray<Element> _childItems;
 
         public Shader() : base(ElementType.Shader) { }
         internal Shader(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Shader, common, feedback) { }
@@ -26,11 +27,7 @@ namespace VL.Qt.Elements
         public Element? Input
         {
             get => _input;
-            init
-            {
-                _input = value;
-                _children = BuildChildren(value, _uniforms);
-            }
+            init => _input = value;
         }
 
         /// <summary>How the sampler "source" reads the Input (null = as its layer is).</summary>
@@ -40,11 +37,7 @@ namespace VL.Qt.Elements
         public Spread<Uniform> Uniforms
         {
             get => _uniforms;
-            init
-            {
-                _uniforms = value ?? Spread<Uniform>.Empty;
-                _children = BuildChildren(_input, _uniforms);
-            }
+            init => _uniforms = value ?? Spread<Uniform>.Empty;
         }
 
         /// <summary>Shader resource id (VLQT_RESOURCE_KIND_SHADER, stage fragment) owned by the node; 0 = none, nothing drawn.</summary>
@@ -59,14 +52,23 @@ namespace VL.Qt.Elements
         /// <summary>Grid subdivisions of the mesh, x and y &gt;= 1 (default 1, 1 = one quad).</summary>
         public Int2 MeshResolution { get; init; } = new Int2(1, 1);
 
-        public override ImmutableArray<Element> Children => _children;
+        /// <summary>The hidden texture sources: <see cref="Input"/> first, then the texture uniforms, each element once.</summary>
+        internal override ImmutableArray<Element> ChildItems
+        {
+            get
+            {
+                if (_childItems.IsDefault)
+                    _childItems = BuildChildItems();
+                return _childItems;
+            }
+        }
 
-        private static ImmutableArray<Element> BuildChildren(Element? input, Spread<Uniform> uniforms)
+        private ImmutableArray<Element> BuildChildItems()
         {
             var builder = ImmutableArray.CreateBuilder<Element>();
-            if (input is not null)
-                builder.Add(input);
-            foreach (var u in uniforms)
+            if (_input is not null)
+                builder.Add(_input);
+            foreach (var u in _uniforms)
                 if (u?.Texture is { } t && !builder.Contains(t))
                     builder.Add(t);
             return builder.Count == 0 ? ImmutableArray<Element>.Empty : builder.ToImmutable();

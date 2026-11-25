@@ -26,7 +26,7 @@ namespace VL.Qt.Tests
             Assert.That(e.Interaction, Is.Null);
             Assert.That(e.Transform, Is.EqualTo(Matrix.Identity));
             Assert.That(e.Feedback.IsNone, Is.True);
-            Assert.That(e.Children, Is.Empty);
+            Assert.That(e.ChildItems, Is.Empty);
         }
 
         [Test]
