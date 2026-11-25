@@ -1,5 +1,6 @@
 ﻿using System;
-using Stride.Core.Mathematics;
+using System.Collections.Generic;
+using System.Text;
 using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Wire;
@@ -84,46 +85,48 @@ namespace VL.Qt.Styles
             over.Pressed.HasValue ? over.Pressed : under.Pressed,
             over.Disabled.HasValue ? over.Disabled : under.Disabled,
             over.Checked.HasValue ? over.Checked : under.Checked);
+
+        /// <summary>The states that are set as text for <see cref="Style.ToString"/>: "All" or a list like "Normal,Hovered".</summary>
+        public string StatesText()
+        {
+            if (Normal.HasValue && Hovered.HasValue && Pressed.HasValue && Disabled.HasValue && Checked.HasValue)
+                return "All";
+            var names = new List<string>(5);
+            for (var s = StyleState.Normal; s <= StyleState.Checked; s++)
+                if (this[s].HasValue)
+                    names.Add(s.ToString());
+            return string.Join(",", names);
+        }
     }
 
-    /// <summary>Frame part of a style (background of the control).</summary>
-    internal sealed record FrameStyle
+    /// <summary>
+    /// Counts per field of a part merge whether the result equals the lower or the upper part, so that the merge can
+    /// return one of them unchanged. A field that does not go through <see cref="Pick"/> is missing in the result
+    /// and is noticed by the per-field merge test.
+    /// </summary>
+    internal struct MergeTally
     {
-        public StateValues<Color4> Color { get; init; }
-        public StateValues<Color4> BorderColor { get; init; }
-        public StateValues<float> Radius { get; init; }
-        public StateValues<float> BorderWidth { get; init; }
-        public StateValues<float> PaddingX { get; init; }
-        public StateValues<float> PaddingY { get; init; }
-        public StateValues<float> MinWidth { get; init; }
-        public StateValues<float> MinHeight { get; init; }
-    }
+        private int _fields;
+        private int _equalUnder;
+        private int _equalOver;
 
-    /// <summary>Text part of a style. Font size in px; font family "" = Qt's default font.</summary>
-    internal sealed record TextStyle
-    {
-        public StateValues<Color4> Color { get; init; }
-        public StateValues<string> FontFamily { get; init; }
-        public StateValues<float> FontSize { get; init; }
-        public StateValues<int> FontWeight { get; init; }
-    }
+        /// <summary><see cref="StateValues{T}.Merge"/> of one field, counted.</summary>
+        public StateValues<T> Pick<T>(in StateValues<T> under, in StateValues<T> over)
+        {
+            var m = StateValues<T>.Merge(under, over);
+            _fields++;
+            if (m == under)
+                _equalUnder++;
+            if (m == over)
+                _equalOver++;
+            return m;
+        }
 
-    /// <summary>Indicator part: slider handle, check mark, switch knob, SpinBox -/+.</summary>
-    internal sealed record IndicatorStyle
-    {
-        public StateValues<Color4> Color { get; init; }
-        public StateValues<float> Size { get; init; }
-        public StateValues<float> Radius { get; init; }
-        public StateValues<float> BorderWidth { get; init; }
-    }
+        /// <summary>True if every field of the result equals the lower part.</summary>
+        public bool AllUnder => _equalUnder == _fields;
 
-    /// <summary>Track part: slider groove, switch track, check box; FillColor = slider value, switch on, text selection.</summary>
-    internal sealed record TrackStyle
-    {
-        public StateValues<Color4> Color { get; init; }
-        public StateValues<Color4> FillColor { get; init; }
-        public StateValues<float> Thickness { get; init; }
-        public StateValues<float> Radius { get; init; }
+        /// <summary>True if every field of the result equals the upper part.</summary>
+        public bool AllOver => _equalOver == _fields;
     }
 
     /// <summary>
@@ -147,5 +150,26 @@ namespace VL.Qt.Styles
         internal TextStyle? Text { get; init; }
         internal IndicatorStyle? Indicator { get; init; }
         internal TrackStyle? Track { get; init; }
+
+        /// <summary>Lists the set entries compactly, e.g. <c>Frame.Color[Normal,Hovered], Text.FontSize[All]</c>.</summary>
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            Frame?.Describe(sb);
+            Text?.Describe(sb);
+            Indicator?.Describe(sb);
+            Track?.Describe(sb);
+            return sb.Length == 0 ? "Style (empty)" : sb.ToString();
+        }
+
+        /// <summary>Appends <paramref name="name"/> and its set states to <paramref name="sb"/>; nothing if no state is set.</summary>
+        internal static void Describe<T>(StringBuilder sb, string name, in StateValues<T> values)
+        {
+            if (values.IsEmpty)
+                return;
+            if (sb.Length > 0)
+                sb.Append(", ");
+            sb.Append(name).Append('[').Append(values.StatesText()).Append(']');
+        }
     }
 }

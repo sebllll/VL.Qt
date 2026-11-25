@@ -205,9 +205,11 @@ def import_category(attribute, ns):
 
 
 def load_api(path):
-    """Node name -> pin names (process nodes, generated nodes, operations) and the categories of the snapshot."""
+    """Node name -> pin names (process nodes, generated nodes, operations), the categories of the snapshot and the
+    (category, name) of its process nodes and the pin names per (category, name) where the category is known."""
     lines = [line.rstrip('\n').split(' | ') for line in open(path, encoding='utf-8')]
-    nodes, cats, process, imports = {}, set(), {}, {}
+    nodes, cats, process, imports, processes = {}, set(), {}, {}, set()
+    catpins, typecat = {}, {}
     for f in lines:
         if len(f) >= 3 and f[1] == 'assembly' and f[2].startswith('attr ImportAsIs'):
             ns = re.search(r'Namespace\s*=\s*"([^"]*)"', f[2])
@@ -219,6 +221,8 @@ def load_api(path):
             cat = re.search(r'Category\s*=\s*"([^"]+)"', f[2])
             process[f[1]] = name.group(1) if name else re.sub(r'Node$', '', f[1].rsplit('.', 1)[-1])
             cats.add(cat.group(1) if cat else 'Qt')
+            typecat[f[1]] = cat.group(1) if cat else 'Qt'
+            processes.add((typecat[f[1]], process[f[1]]))
     for f in lines:
         if f[0].startswith('factory '):
             if f[1].startswith('default category '):
@@ -235,7 +239,8 @@ def load_api(path):
         typ = f[1]
         if f[2].startswith('attr Category('):
             # [Category] of a static class of operations (UniformNodes): the category of its nodes.
-            cats.add(re.search(r'"([^"]*)"', f[2]).group(1))
+            typecat[typ] = re.search(r'"([^"]*)"', f[2]).group(1)
+            cats.add(typecat[typ])
         if f[2].startswith('type '):
             ns, _, name = typ.rpartition('.')
             cat = import_category(imports.get(f[0], ('', '')), ns)
@@ -247,21 +252,24 @@ def load_api(path):
                 pins = nodes.setdefault(process[typ], set())
                 if f[3].startswith('pin '):
                     pins.add(f[3][len('pin '):])
+                    catpins.setdefault((typecat[typ], process[typ]), set()).add(f[3][len('pin '):])
             continue
         if f[2].startswith('method ') and len(f) >= 4:
             pins = nodes.setdefault(f[2][len('method '):], set())
             if f[3].startswith('pin '):
                 pins.add(f[3][len('pin '):])
+                if typ in typecat:
+                    catpins.setdefault((typecat[typ], f[2][len('method '):]), set()).add(f[3][len('pin '):])
     for name in process.values():
         nodes.setdefault(name, set())
-    return nodes, cats
+    return nodes, cats, processes, catpins
 
 
 def check_api(steps, path, mapping_path):
     """Errors for rows whose new name, carried through the later steps, is not in the snapshot."""
     if not os.path.isfile(path):
         return [f'{display(path)}: node-API snapshot not found (or use --no-api-check)']
-    nodes, cats = load_api(path)
+    nodes, cats, _, _ = load_api(path)
     errors = []
 
     def node_after(step, name):
@@ -495,8 +503,18 @@ def reference(el):
     return ('type' if symbol.attr('Kind') == 'TypeFlag' else 'node'), symbol
 
 
-def migrate(raw, steps):
-    """(new bytes, change lines, error lines) of one patch."""
+def known_pins(api, cat, name, pins):
+    """True if the snapshot knows the node and every pin of the patch is one of its pins (a pin of a group, Input 3,
+    counts as its group)."""
+    known = api[3].get((cat, name)) or api[0].get(name)
+    return bool(known) and all(p in known or re.sub(r' \d+$', '', p) in known for p in pins)
+
+
+def migrate(raw, steps, api=None):
+    """(new bytes, change lines, error lines) of one patch. `api` is load_api of the snapshot (or None): the Kind of a
+    reference follows it (a node that is a process node there is ProcessAppFlag, not OperationCallFlag), and it breaks a
+    tie between versions by the pins of the node (a setter Frame has an Output pin, the getter Frame that took its name has
+    none)."""
     bom = raw.startswith(BOM)
     text = raw[len(BOM):].decode('utf-8') if bom else raw.decode('utf-8')
     if not steps:
@@ -519,6 +537,12 @@ def migrate(raw, steps):
         label = f'{ident[2]} [{el.ident_id()}]' if kind == 'node' else f'type {ident[2]} [{el.ident_id()}]'
         results = evaluate(steps, ident, pins)
         outcomes = set(results.values())
+        if len(outcomes) > 1 and api is not None:
+            fitting = {r for r in outcomes if known_pins(api, r[0][1], r[0][2], r[1])}
+            # A node that is valid as it stands (a getter Frame) is not migrated again.
+            unchanged = {r for r in fitting if r == ((kind, el.attr('LastCategoryFullName'), symbol.attr('Name')), tuple(pins))}
+            if unchanged or fitting:
+                outcomes = unchanged or fitting
         if not outcomes:
             errors.append(f'{label}: no step of the mapping fits its names ({ident[1]}; pins mix old and new names)')
             continue
@@ -537,6 +561,9 @@ def migrate(raw, steps):
             if new_name != ident[2]:
                 local.append(attr_edit(symbol, 'Name', new_name))
                 changes.append(f'{label}: node {ident[2]} -> {new_name}')
+            if api is not None and kind == 'node' and symbol.attr('Kind') == 'OperationCallFlag'                     and (new_cat, new_name) in api[2]:
+                local.append(attr_edit(symbol, 'Kind', 'ProcessAppFlag'))
+                changes.append(f'{label}: operation -> process node')
             before = [(p.attr('Kind'), p.attr('Name')) for p in pin_els if p.tag == 'Pin']
             after = [(p.attr('Kind'), new) for p, new in zip(pin_els, new_pins) if p.tag == 'Pin']
             if len(set(after)) < len(set(before)):
@@ -609,6 +636,7 @@ def main(argv):
         return 2
 
     files = expand([a for a in argv if not a.startswith('--')])
+    snapshot = load_api(api) if not opts.get('--no-api-check') and os.path.isfile(api) else None
     pending, problems = {}, 0
     for f in files:
         if not os.path.isfile(f):
@@ -617,7 +645,7 @@ def main(argv):
             continue
         raw = open(f, 'rb').read()
         try:
-            new, changes, errs = migrate(raw, steps)
+            new, changes, errs = migrate(raw, steps, snapshot)
         except (MigrateError, ET.ParseError, UnicodeDecodeError) as e:
             changes, errs, new = [], [f'cannot read: {e}'], raw
         for c in changes:
