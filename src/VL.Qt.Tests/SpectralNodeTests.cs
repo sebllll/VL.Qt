@@ -23,7 +23,7 @@ namespace VL.Qt.Tests
         public void Group_SpreadChildren_NullsSkipped_SameInstanceWhenUnchanged()
         {
             using var n = new GroupSpectralNode(NoWarning);
-            Element Run(Spread<IElement?> c) => (Element)n.Update(c, default, true, default, RectangleAnchor.Center, 1, false, false,
+            Element Run(Spread<IElement?> c) => (Element)n.Update(c, true, default, default, RectangleAnchor.Center, 1, false, false,
                 null, null, null, true, out _, out _);
             var first = (Group)Run(S(A, null, B));
             Assert.That(first.Children, Is.EqualTo(new Element[] { A, B }));
@@ -36,14 +36,14 @@ namespace VL.Qt.Tests
         public void Row_And_Column_SpreadChildren()
         {
             using var r = new RowSpectralNode(NoWarning);
-            var row = (Row)r.Update(S(A, B), default, true, default, RectangleAnchor.Center, 0.1f, 0, VerticalAlignment.Top, 1, false, false,
-                null, null, true, out _, out _);
+            var row = (Row)r.Update(S(A, B), true, default, default, RectangleAnchor.Center, 0.1f, 0, VerticalAlignment.Top, 1, false, false,
+                null, null, null, true, out _, out _);
             Assert.That(row.Children, Is.EqualTo(new Element[] { A, B }));
             Assert.That(row.Spacing, Is.EqualTo(0.1f));
 
             using var c = new ColumnSpectralNode(NoWarning);
-            var col = (Column)c.Update(S(B, A), default, true, default, RectangleAnchor.Center, 0, 0.2f, HorizontalAlignment.Left, 1, false, false,
-                null, null, true, out _, out _);
+            var col = (Column)c.Update(S(B, A), true, default, default, RectangleAnchor.Center, 0, 0.2f, HorizontalAlignment.Left, 1, false, false,
+                null, null, null, true, out _, out _);
             Assert.That(col.Children, Is.EqualTo(new Element[] { B, A }));
             Assert.That(col.Padding, Is.EqualTo(0.2f));
         }
@@ -55,18 +55,18 @@ namespace VL.Qt.Tests
             var children = Spread.Create<Element>(A, B);
 
             using var g = new GroupSpectralNode(NoWarning);
-            var group = (Group)g.Update(children, default, true, default, RectangleAnchor.Center, 1, false, false,
+            var group = (Group)g.Update(children, true, default, default, RectangleAnchor.Center, 1, false, false,
                 null, null, null, true, out _, out _);
             Assert.That(group.Children, Is.EqualTo(new Element[] { A, B }));
 
             using var r = new RowSpectralNode(NoWarning);
-            var row = (Row)r.Update(children, default, true, default, RectangleAnchor.Center, 0, 0, VerticalAlignment.Top, 1, false, false,
-                null, null, true, out _, out _);
+            var row = (Row)r.Update(children, true, default, default, RectangleAnchor.Center, 0, 0, VerticalAlignment.Top, 1, false, false,
+                null, null, null, true, out _, out _);
             Assert.That(row.Children, Is.EqualTo(new Element[] { A, B }));
 
             using var c = new ColumnSpectralNode(NoWarning);
-            var col = (Column)c.Update(children, default, true, default, RectangleAnchor.Center, 0, 0, HorizontalAlignment.Left, 1, false, false,
-                null, null, true, out _, out _);
+            var col = (Column)c.Update(children, true, default, default, RectangleAnchor.Center, 0, 0, HorizontalAlignment.Left, 1, false, false,
+                null, null, null, true, out _, out _);
             Assert.That(col.Children, Is.EqualTo(new Element[] { A, B }));
         }
     }

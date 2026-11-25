@@ -36,7 +36,7 @@ namespace VL.Qt.Nodes
             _children = new ChildrenInput(_node.Messages);
         }
 
-        /// <param name="children">Spread (or any sequence) of child elements, e.g. a Spread of Element or of a self-made widget; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
+        /// <param name="input">Spread (or any sequence) of child elements, e.g. a Spread of Element or of a self-made widget; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='autosize']/param[@name='size']"/>
         /// <param name="autoSize">On: Size is ignored and the frame is the extent of the children (incl. their Transform) and of the group origin; it is the size, hit area and clip rect of the group. Off: Size counts, also 0.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
@@ -46,16 +46,16 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='interaction']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
-        /// <param name="style">Style passed on to the widgets inside (field by field; a widget's own style overrides it). The group itself draws nothing.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='container']/param[@name='style']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
         /// <param name="measuredSize">Size of the group's frame, in units (last frame; see Auto Size).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         [return: Pin(Name = "Output")]
         public IElement Update(
-            IEnumerable<IElement?> children,
-            [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
+            IEnumerable<IElement?> input,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional)] Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float opacity,
@@ -70,7 +70,7 @@ namespace VL.Qt.Nodes
         {
             return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
-                new GroupNode.Props(_children.Update(children), autoSize, style),
+                new GroupNode.Props(_children.Update(input), autoSize, style),
                 out measuredSize, out sceneBounds);
         }
 

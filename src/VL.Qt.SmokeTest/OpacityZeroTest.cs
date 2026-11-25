@@ -60,8 +60,8 @@ public static class OpacityZeroTest
             var b = Rect(rectB, new Color4(1, 0, 0, 1), opacityB, chain, blur.Update(null, 0.6f, 16, 0, true, default), enabledB);
             var c = Rect(rectC, new Color4(0, 1, 0, 1), 1, null, null);
             // Row at (50, 100) DIP, spacing 0.5: A 50..250, B 300..500, C 550..750 (y 100..300).
-            var e = row.Update(Spread.Create<IElement?>(a, b, c), new Vector2(0, 0), true, Matrix.Translation(0.5f, 1, 0), RectangleAnchor.TopLeft,
-                0.5f, 0, VerticalAlignment.Top, 1, false, false, null, null, true, out _, out _);
+            var e = row.Update(Spread.Create<IElement?>(a, b, c), true, new Vector2(0, 0), Matrix.Translation(0.5f, 1, 0), RectangleAnchor.TopLeft,
+                0.5f, 0, VerticalAlignment.Top, 1, false, false, null, null, null, true, out _, out _);
             cmd.Clear();
             if (clear)
             {

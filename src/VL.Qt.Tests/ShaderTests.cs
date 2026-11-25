@@ -274,7 +274,7 @@ namespace VL.Qt.Tests
         private Shader Update(string? fragment, string? vertex, Spread<Uniform>? uniforms, out string error)
         {
             var element = _node.Update(null, null, null, fragment is null ? null : new Path(fragment), null, vertex is null ? null : new Path(vertex), uniforms, true,
-                default, new Vector2(1, 1), true, Matrix.Identity, RectangleAnchor.Center, 1f, false, false, null, null,
+                default, true, new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, 1f, false, false, null, null,
                 true,
                 out _, out _, out error);
             return (Shader)element;
@@ -419,7 +419,7 @@ namespace VL.Qt.Tests
         private Shader UpdateCode(string? fragmentCode, string? fragmentPath, string? vertexCode, out string error)
         {
             var element = _node.Update(null, null, fragmentCode, fragmentPath is null ? null : new Path(fragmentPath), vertexCode, null, null, true,
-                default, new Vector2(1, 1), true, Matrix.Identity, RectangleAnchor.Center, 1f, false, false, null, null,
+                default, true, new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, 1f, false, false, null, null,
                 true,
                 out _, out _, out error);
             return (Shader)element;

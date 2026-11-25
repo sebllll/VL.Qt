@@ -91,12 +91,12 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         [return: Pin(Name = "Output")]
         public IElement Update(
-            Path? file,
-            Dictionary<string, object>? properties,
-            [DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
+            Path? file,
+            Dictionary<string, object>? properties,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float opacity,
             [Pin(Visibility = PinVisibility.Optional)] bool clip,
             [Pin(Visibility = PinVisibility.Optional)] bool debug,

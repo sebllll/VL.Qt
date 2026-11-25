@@ -121,12 +121,12 @@ public static partial class QtTextureTest
                 Rect(_rectA, 20, 20, 100, 80, new Color4(1, 0, 0, 1), interactionA),
                 Rect(_rectP, 140, 20, 100, 80, new Color4(0, 0, 1, 1), interactionP),
                 Rect(_rectC, 20, 120, 120, 80, new Color4(1, 1, 0, 1), interactionC),
-                _slider.Update(Sz(220, 30), false, At(160, 130), RectangleAnchor.TopLeft, SliderValue, 0f, 1f, 0f, SliderOrientation.Horizontal, true, 1, false, false,
+                _slider.Update(false, Sz(220, 30), At(160, 130), RectangleAnchor.TopLeft, SliderValue, 0f, 1f, 0f, SliderOrientation.Horizontal, true, 1, false, false,
                     null, null, null, out _, out _, out _, out _),
-                _text.Update(Sz(220, 30), false, At(160, 170), RectangleAnchor.TopLeft, TextValue, "", true, true, 1, false, false,
+                _text.Update(false, Sz(220, 30), At(160, 170), RectangleAnchor.TopLeft, TextValue, "", true, true, 1, false, false,
                     null, null, null, out _, out _, out _, out _),
                 Rect(_rectB, 260, 20, 120, 80, new Color4(0, 1, 0, 1), interactionB));
-            return (Element)_group.Update(children, default, true, Matrix.Identity, RectangleAnchor.TopLeft, 1, false, false, null, null, null, true, out _, out _);
+            return (Element)_group.Update(children, true, default, Matrix.Identity, RectangleAnchor.TopLeft, 1, false, false, null, null, null, true, out _, out _);
         }
 
         /// <summary>One host frame: update, apply, render batch, s, poll events.</summary>

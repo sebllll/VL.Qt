@@ -9,6 +9,7 @@ using VL.Lib.Mathematics;
 using VL.Lib.Reactive;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Styles;
 
 namespace VL.Qt.Nodes
 {
@@ -36,7 +37,7 @@ namespace VL.Qt.Nodes
             _children = new ChildrenInput(_node.Messages);
         }
 
-        /// <param name="children">Spread (or any sequence) of child elements, e.g. a Spread of Element or of a self-made widget, left to right; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
+        /// <param name="input">Spread (or any sequence) of child elements, e.g. a Spread of Element or of a self-made widget, left to right; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='autosize']/param[@name='size']"/>
         /// <param name="autoSize">On: Size is ignored and the implicit size applies (content + padding). Off: Size counts, also 0.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
@@ -49,15 +50,16 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='interaction']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='container']/param[@name='style']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
         /// <param name="measuredSize">Size the row takes with Auto Size on (content + padding), in units (last frame).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         [return: Pin(Name = "Output")]
         public IElement Update(
-            IEnumerable<IElement?> children,
-            [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
+            IEnumerable<IElement?> input,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoSize,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue("1, 1")] Vector2 size,
             [Pin(Visibility = PinVisibility.Optional)] Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
             [Pin(Visibility = PinVisibility.Optional)] float spacing,
@@ -68,13 +70,14 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
+            [Pin(Visibility = PinVisibility.Optional)] Style? style,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
             [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
             return _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
-                new RowNode.Props(_children.Update(children), spacing, padding, childAlignment, autoSize),
+                new RowNode.Props(_children.Update(input), spacing, padding, childAlignment, autoSize, style),
                 out measuredSize, out sceneBounds);
         }
 

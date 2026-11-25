@@ -24,19 +24,40 @@ namespace VL.Qt.Tests
 
         private static Spread<IElement?> S(params IElement?[] e) => Spread.Create(e);
 
+        [Test]
+        public void RowAndColumn_TakeAStyle_AndNewStyleIsNewDescription()
+        {
+            var style = new Styles.Style();
+            using var row = new RowNode(NoWarning);
+            using var column = new ColumnNode(NoWarning);
+            var children = S(A);
+            var r = (Row)row.Update(children, true, default, default, RectangleAnchor.Center, 0, 0, VerticalAlignment.Top, 1, false, false,
+                null, null, style, true, out _, out _);
+            var c = (Column)column.Update(children, true, default, default, RectangleAnchor.Center, 0, 0, HorizontalAlignment.Left, 1, false, false,
+                null, null, style, true, out _, out _);
+            Assert.That((r.Style, c.Style), Is.EqualTo((style, style)));
+
+            var r2 = (Row)row.Update(children, true, default, default, RectangleAnchor.Center, 0, 0, VerticalAlignment.Top, 1, false, false,
+                null, null, style, true, out _, out _);
+            Assert.That(r2, Is.SameAs(r), "same inputs: same instance");
+            var r3 = (Row)row.Update(children, true, default, default, RectangleAnchor.Center, 0, 0, VerticalAlignment.Top, 1, false, false,
+                null, null, null, true, out _, out _);
+            Assert.That(r3.Style, Is.Null);
+        }
+
         private static Element Group(GroupNode n, Spread<IElement?> children, float opacity = 1, bool autoSize = true)
-            => (Element)n.Update(children, default, autoSize, default, RectangleAnchor.Center, opacity, false, false,
+            => (Element)n.Update(children, autoSize, default, default, RectangleAnchor.Center, opacity, false, false,
                 null, null, null, true, out _, out _);
 
         private static Element Column(ColumnNode n, Spread<IElement?> children, float spacing = 0, float padding = 0,
             HorizontalAlignment align = HorizontalAlignment.Left, bool autoSize = true)
-            => (Element)n.Update(children, default, autoSize, default, RectangleAnchor.Center, spacing, padding, align, 1, false, false,
-                null, null, true, out _, out _);
+            => (Element)n.Update(children, autoSize, default, default, RectangleAnchor.Center, spacing, padding, align, 1, false, false,
+                null, null, null, true, out _, out _);
 
         private static Element Row(RowNode n, Spread<IElement?> children, float spacing = 0, float padding = 0,
             VerticalAlignment align = VerticalAlignment.Top, bool autoSize = true)
-            => (Element)n.Update(children, default, autoSize, default, RectangleAnchor.Center, spacing, padding, align, 1, false, false,
-                null, null, true, out _, out _);
+            => (Element)n.Update(children, autoSize, default, default, RectangleAnchor.Center, spacing, padding, align, 1, false, false,
+                null, null, null, true, out _, out _);
 
         [Test]
         public void Group_UnconnectedInputsSkipped_DefaultsAndFeedback()

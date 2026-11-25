@@ -118,7 +118,7 @@ namespace VL.Qt.Qml
             if (dirty)
                 RebuildProperties();
 
-            var element = _element.Update(_file, _properties, _size.Value, _autoSize.Value, _transform.Value, _anchor.Value, _opacity.Value,
+            var element = _element.Update(_autoSize.Value, _size.Value, _transform.Value, _anchor.Value, _file, _properties, _opacity.Value,
                 _clip.Value, _debug.Value, _interaction.Value, _effect.Value, _enabled.Value,
                 out var changed, out var signals, out var measuredSize, out var sceneBounds, out var error);
 
