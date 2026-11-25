@@ -26,7 +26,7 @@ namespace VL.Qt.Reconciliation
         /// <summary>
         /// Sends the difference between the uniforms of <paramref name="effect"/> and <paramref name="sent"/> (null = nothing
         /// sent yet) and returns the table QtNative holds afterwards. <paramref name="children"/> are the mirrors of the
-        /// effect's children (same order as <see cref="Element.Children"/>); a texture of an ignored (duplicate) element
+        /// effect's children (same order as <see cref="Element.ChildItems"/>); a texture of an ignored (duplicate) element
         /// is sent as 0 = none.
         /// </summary>
         public static Dictionary<string, UniformValue>? Write(
@@ -106,7 +106,7 @@ namespace VL.Qt.Reconciliation
             ulong handle = 0;
             if (u.Texture is { } texture)
             {
-                var kids = effect.Children;
+                var kids = effect.ChildItems;
                 for (int i = 0; i < kids.Length && i < children.Count; i++)
                 {
                     if (ReferenceEquals(kids[i], texture))

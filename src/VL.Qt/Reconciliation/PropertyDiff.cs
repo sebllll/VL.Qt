@@ -530,7 +530,7 @@ namespace VL.Qt.Reconciliation
         {
             var shader = item.Shader ??= new ShaderMirror();
             var kids = item.Children;
-            // Input is the first child (Shader.Children), texture elements follow.
+            // Input is the first child (Shader.ChildItems), texture elements follow.
             ItemMirror? source = next.Input is not null && kids.Count > 0 ? kids[0] : null;
             if (!ReferenceEquals(source, shader.Source))
             {

@@ -188,7 +188,7 @@ namespace VL.Qt.Nodes
         {
             if (element is Video)
                 return true;
-            foreach (var child in element.Children)
+            foreach (var child in element.ChildItems)
                 if (ElementConversion.Shown(child) is { } shown && ContainsVideo(shown))
                     return true;
             for (var effect = element.Effect; effect is not null; effect = effect.Previous)

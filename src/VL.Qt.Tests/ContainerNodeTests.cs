@@ -79,7 +79,7 @@ namespace VL.Qt.Tests
             void Changed(Element e, Element[] expected, string what)
             {
                 Assert.That(e, Is.Not.SameAs(last), what);
-                Assert.That(e.Children, Is.EqualTo(expected), what);
+                Assert.That(e.ChildItems, Is.EqualTo(expected), what);
                 last = e;
             }
 

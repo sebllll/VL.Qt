@@ -193,6 +193,22 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void ChildItems_InputFirst_EachTextureOnce_ComputedOnceAndCached()
+        {
+            var input = new Rectangle();
+            var tex = new Rectangle();
+            var shader = new Shader
+            {
+                Uniforms = U(Uniform.FromTexture("a", tex), Uniform.FromTexture("b", input), Uniform.FromTexture("c", tex), Uniform.Float("f", 1)),
+                Input = input,
+            };
+            Assert.That(shader.ChildItems, Is.EqualTo(new Element[] { input, tex }));
+            Assert.That(shader.ChildItems.Equals(shader.ChildItems), "same array on every read");
+            Assert.That(new Shader().ChildItems.IsDefault, Is.False);
+            Assert.That(new Shader().ChildItems, Is.Empty);
+        }
+
+        [Test]
         public void ImageUniform_SendsResourceId_ChangeResends()
         {
             var a = new QtImage(new ImageResource(0x100000003));

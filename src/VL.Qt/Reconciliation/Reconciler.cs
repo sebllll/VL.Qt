@@ -420,7 +420,7 @@ namespace VL.Qt.Reconciliation
         /// <summary>Reconciles the children and updates <see cref="ItemMirror.ContainsStylable"/> of <paramref name="item"/>.</summary>
         private void ReconcileChildren(ItemMirror item, Element next, Style inherited)
         {
-            ImmutableArray<Element> children = next.Children;
+            ImmutableArray<Element> children = next.ChildItems;
             List<ItemMirror> old = item.Children;
             int newCount = children.Length;
             int oldCount = old.Count;
