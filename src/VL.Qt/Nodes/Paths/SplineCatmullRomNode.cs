@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
@@ -11,12 +12,17 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "Spline (CatmullRom)", Category = Categories.Paths)]
     public sealed class SplineCatmullRomNode
     {
-        private QtPath? _input;
-        private Spread<Vector2>? _points;
-        private bool _closed;
-        private float _alpha;
-        private float _tension;
-        private QtPath? _output;
+        internal readonly record struct Props(Spread<Vector2> Points, bool Closed, float Alpha, float Tension)
+        {
+            public bool Equals(Props other)
+                => Closed == other.Closed && Alpha == other.Alpha && Tension == other.Tension && SpreadEquality.SameContent(Points, other.Points);
+
+            public override int GetHashCode() => HashCode.Combine(Points.Count, Closed, Alpha, Tension);
+        }
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => SplineGeometry.CatmullRom(input ?? QtPath.Empty, p.Points.AsSpan(), p.Closed, p.Alpha, p.Tension);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with a smooth curve that runs through all points.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -32,21 +38,6 @@ namespace VL.Qt.Nodes
             bool closed = false,
             [DefaultValue(0.5f)] float alpha = 0.5f,
             [DefaultValue(0f)] float tension = 0f)
-        {
-            input ??= QtPath.Empty;
-            points ??= Spread<Vector2>.Empty;
-            // A new spread with the same content (VL may rebuild it every frame) is not a change.
-            if (_output == null || !ReferenceEquals(input, _input) || closed != _closed || alpha != _alpha
-                || tension != _tension || !ShapeNodeCore.SameContent(points, _points!))
-            {
-                _input = input;
-                _points = points;
-                _closed = closed;
-                _alpha = alpha;
-                _tension = tension;
-                _output = SplineGeometry.CatmullRom(input, points.AsSpan(), closed, alpha, tension);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(points ?? Spread<Vector2>.Empty, closed, alpha, tension), s_create);
     }
 }

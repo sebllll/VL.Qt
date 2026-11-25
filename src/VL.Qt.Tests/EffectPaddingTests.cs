@@ -52,8 +52,8 @@ namespace VL.Qt.Tests
         public void Nodes_PaddingPins_FlowIntoEffect()
         {
             var pad = new RectangleF(1, 2, 3, 4);
-            var blur = (BlurEffect)new BlurNode().Core.Describe(null, new BlurNode.Props(0.5f, 32, 0, false, pad))!;
-            var shadow = (DropShadowEffect)new DropShadowNode().Core.Describe(blur, new DropShadowNode.Props(Color4.Black, Vector2.Zero, 1, 1, true, default))!;
+            var blur = (BlurEffect)new BlurNode().Update(null, 0.5f, 32, 0, false, pad, true)!;
+            var shadow = (DropShadowEffect)new DropShadowNode().Update(blur, Color4.Black, Vector2.Zero, 1, 1, true, default, true)!;
             Assert.That(blur.AutoPadding, Is.False);
             Assert.That(blur.Padding, Is.EqualTo(pad));
             Assert.That(SingleRun(shadow).PaddingRect, Is.EqualTo(pad));

@@ -11,10 +11,11 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "QuadTo", Category = Categories.Paths)]
     public sealed class QuadToNode
     {
-        private QtPath? _input;
-        private Vector2 _controlPoint;
-        private Vector2 _endPoint;
-        private QtPath? _output;
+        internal readonly record struct Props(Vector2 ControlPoint, Vector2 EndPoint);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => (input ?? QtPath.Empty).QuadTo(p.ControlPoint.X, p.ControlPoint.Y, p.EndPoint.X, p.EndPoint.Y);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with a quadratic curve added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -23,27 +24,22 @@ namespace VL.Qt.Nodes
         /// <returns>The path with the segment added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
         public QtPath Update(QtPath? input, [Pin(Name = "Control Point")] Vector2 controlPoint, [Pin(Name = "End Point")] Vector2 endPoint)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || controlPoint != _controlPoint || endPoint != _endPoint)
-            {
-                _input = input;
-                _controlPoint = controlPoint;
-                _endPoint = endPoint;
-                _output = input.QuadTo(controlPoint.X, controlPoint.Y, endPoint.X, endPoint.Y);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(controlPoint, endPoint), s_create);
     }
 
     /// <summary>Adds a quadratic Bézier curve with control and end point relative to the last point (Skia QuadTo (Relative)).</summary>
     [ProcessNode(Name = "QuadTo (Relative)", Category = Categories.Paths)]
     public sealed class QuadToRelativeNode
     {
-        private QtPath? _input;
-        private Vector2 _controlPoint;
-        private Vector2 _endPoint;
-        private QtPath? _output;
+        internal readonly record struct Props(Vector2 ControlPoint, Vector2 EndPoint);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => {
+            var path = input ?? QtPath.Empty;
+            var last = path.LastPoint;
+            return path.QuadTo(last.X + p.ControlPoint.X, last.Y + p.ControlPoint.Y, last.X + p.EndPoint.X, last.Y + p.EndPoint.Y);
+        };
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with a quadratic curve added, its points offset by the last point.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>
@@ -52,17 +48,6 @@ namespace VL.Qt.Nodes
         /// <returns>The path with the segment added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
         public QtPath Update(QtPath? input, [Pin(Name = "Control Point")] Vector2 controlPoint, [Pin(Name = "End Point")] Vector2 endPoint)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || controlPoint != _controlPoint || endPoint != _endPoint)
-            {
-                _input = input;
-                _controlPoint = controlPoint;
-                _endPoint = endPoint;
-                var last = input.LastPoint;
-                _output = input.QuadTo(last.X + controlPoint.X, last.Y + controlPoint.Y, last.X + endPoint.X, last.Y + endPoint.Y);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(controlPoint, endPoint), s_create);
     }
 }

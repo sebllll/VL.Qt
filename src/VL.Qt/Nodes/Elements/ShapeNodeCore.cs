@@ -34,7 +34,7 @@ namespace VL.Qt.Nodes
                 => Closed == other.Closed && Fill == other.Fill && StrokeColor == other.StrokeColor && StrokeWidth == other.StrokeWidth
                     && Cap == other.Cap && Join == other.Join && MiterLimit == other.MiterLimit && DashOffset == other.DashOffset
                     && TrimStart == other.TrimStart && TrimEnd == other.TrimEnd && TrimOffset == other.TrimOffset && FillRule == other.FillRule
-                    && SameContent(Points, other.Points) && SameContent(Dash, other.Dash)
+                    && SpreadEquality.SameContent(Points, other.Points) && SpreadEquality.SameContent(Dash, other.Dash)
                     && (ReferenceEquals(Path, other.Path) || (Path is not null && Path.ContentEquals(other.Path)));
 
             public override int GetHashCode()
@@ -87,24 +87,6 @@ namespace VL.Qt.Nodes
         public void Dispose()
         {
             _node.Dispose();
-        }
-
-        internal static bool SameContent(Spread<Vector2> a, Spread<Vector2> b)
-        {
-            if (ReferenceEquals(a, b))
-                return true;
-            if (a.Count != b.Count)
-                return false;
-            return MemoryMarshal.Cast<Vector2, float>(a.AsSpan()).SequenceEqual(MemoryMarshal.Cast<Vector2, float>(b.AsSpan()));
-        }
-
-        internal static bool SameContent(Spread<float> a, Spread<float> b)
-        {
-            if (ReferenceEquals(a, b))
-                return true;
-            if (a.Count != b.Count)
-                return false;
-            return a.AsSpan().SequenceEqual(b.AsSpan());
         }
     }
 }

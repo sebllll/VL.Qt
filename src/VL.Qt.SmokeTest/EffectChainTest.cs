@@ -118,9 +118,9 @@ public static class EffectChainTest
         {
             var steps = new Func<Effect?, Effect>[]
             {
-                e => adjust.Update(e, 0.2f, 0, 0),
-                e => blur.Update(e, 0.6f, 16, 0, true, default),
-                e => shadow.Update(e, new Color4(0, 1, 0, 1), new Vector2(20f, 20f), 0, 1, true, default), // offset in DIP
+                e => adjust.Update(e, 0.2f, 0, 1, true),
+                e => blur.Update(e, 0.6f, 16, 0, true, default, true),
+                e => shadow.Update(e, new Color4(0, 1, 0, 1), new Vector2(20f, 20f), 0, 1, true, default, true), // offset in DIP
             };
             Effect? chain = null;
             if (shadowFirst) for (int i = 0; i < 3; i++) chain = steps[i](chain);
@@ -202,7 +202,7 @@ public static class EffectChainTest
         Frame(RowOf(null, out _, out _, out _), "row plain");
         using var rowPlain = s.Grab(w, "effect_chain_row_off.png");
         var e0 = Extent(rowPlain);
-        var shadowFx = shadow2.Update(null, new Color4(0, 1, 0, 1), new Vector2(30f, 30f), 0, 1, true, default); // offset in DIP
+        var shadowFx = shadow2.Update(null, new Color4(0, 1, 0, 1), new Vector2(30f, 30f), 0, 1, true, default, true); // offset in DIP
         Frame(RowOf(shadowFx, out _, out _, out _), "row with effect");
         var cRowOn = Counts(w);
         s.Check(cRowOn.layers == 1 && cRowOn.effects == 1, $"effect-chain: one effect in the Row -> one MultiEffect ({cRowOn})");
@@ -225,7 +225,7 @@ public static class EffectChainTest
         // Red 300 x 200 at (200, 200); text mask "MASK" at (220, 220), glyphs ~225..435 x 245..310 (to ~450 with the wider
         // DejaVu Sans of Linux): red only there.
         Element Masked(Element? m)
-            => Rect(rectM, red, new RectangleF(2, 2, 3, 2), m is null ? null : mask.Update(null, m, 0, 0, 1, 0, false), out _);
+            => Rect(rectM, red, new RectangleF(2, 2, 3, 2), m is null ? null : mask.Update(null, m, 0, 0, 1, 0, false, true), out _);
         Frame(Masked(Text(maskText, "MASK", new RectangleF(2.2f, 2.2f, 2, 1), 0.8f, null)), "mask");
         using (var a = s.Grab(w, "effect_chain_mask.png"))
         {
@@ -247,11 +247,11 @@ public static class EffectChainTest
 
         // 8) Duplicate kind in the chain: warning at the element node (read at the next Update, from the last frame's feedback).
         warnings.Clear();
-        var dup = blur2.Update(blur2.Update(null, 0.3f, 32, 0, true, default), 0.6f, 32, 0, true, default);
+        var dup = blur2.Update(blur2.Update(null, 0.3f, 32, 0, true, default, true), 0.6f, 32, 0, true, default, true);
         Frame(Text(text, "Fx", textBounds, 1.5f, dup), "duplicate");
         Text(text, "Fx", textBounds, 1.5f, dup);
         s.Check(warnings.Count == 1 && warnings[0].Contains("Blur"), $"effect-chain: duplicate Blur -> warning at the Text node ({string.Join("|", warnings)})");
-        var single = blur2.Update(null, 0.6f, 32, 0, true, default);
+        var single = blur2.Update(null, 0.6f, 32, 0, true, default, true);
         Frame(Text(text, "Fx", textBounds, 1.5f, single), "duplicate gone");
         Text(text, "Fx", textBounds, 1.5f, single);
         s.Check(warnings.Count == 0, $"effect-chain: warning gone with the duplicate ({warnings.Count})");

@@ -73,6 +73,10 @@ Copy `src/VL.Qt/Nodes/Elements/RectangleNode.cs`, the template, and change only 
 5. A help patch `help/Qt/HowTo ….vl`, its line in `help/Help.xml`, then `python tools/vl-patch-check.py` (its pin catalog reads the new node from the C# sources) and `tools/vvvvc.ps1 -File` on the patch.
 6. Regenerate `src/VL.Qt.Tests/Api/node-api.txt` (`VLQT_UPDATE_SNAPSHOT=1`) and add a test that two `Update`s with equal inputs return the same instance.
 
+## Chain nodes
+
+The nodes of a chain (effects, interactions, paths) return a link that extends the link at their `Input`. Each holds a `ChainMemo<TEffect, TProps>` (`src/VL.Qt/Nodes/ChainMemo.cs`) in a non-readonly field: its `Get` returns the previous link while the input link (by reference) and the node's `readonly record struct Props` are equal, so an unchanged chain stays the same instance between frames. The create delegate is a `static` lambda (`s_create`); state it needs but that does not count as change (the feedback slot of an interaction) goes in as `TState`. A `Props` with a spread compares its content with `SpreadEquality.SameContent` (`src/VL.Qt/SpreadEquality.cs`), the one comparison of spreads in nodes and reconciler. Test: two `Update`s with equal inputs return the same instance (`Is.SameAs`).
+
 ## Lifetime
 
 QtNative lives as long as the process: unloading it (`FreeLibrary`, `dlclose`) is not supported, and .NET never unloads a native library.

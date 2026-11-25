@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using Stride.Core.Mathematics;
 using VL.Core.Import;
 using VL.Model;
@@ -19,9 +20,11 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(Color4 Color, Vector2 Offset, float Blur, float Scale, bool AutoPadding = true, RectangleF Padding = default);
 
-        private readonly EffectNode<Props> _node = new(static (previous, p) => new DropShadowEffect(previous, p.Color, p.Offset, p.Blur, p.Scale, p.AutoPadding, p.Padding));
+        private static readonly Func<Effect?, Props, Effect> s_create = static (previous, p) => new DropShadowEffect(previous, p.Color, p.Offset, p.Blur, p.Scale, p.AutoPadding, p.Padding);
 
-        internal EffectNode<Props> Core => _node;
+        private ChainMemo<Effect, Props> _memo;
+
+        internal ChainMemo<Effect, Props> Core => _memo;
 
         /// <summary>Adds a drop shadow to the effect chain.</summary>
         /// <param name="input">Effect chain to extend (other effect nodes).</param>
@@ -42,6 +45,6 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool autoPadding,
             [Pin(Visibility = PinVisibility.Optional)] RectangleF padding,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
-            => apply ? _node.Describe(input, new Props(color, offset, blurAmount, scale, autoPadding, padding)) : input;
+            => apply ? _memo.Get(input, new Props(color, offset, blurAmount, scale, autoPadding, padding), s_create) : input;
     }
 }

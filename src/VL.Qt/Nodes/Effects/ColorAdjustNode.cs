@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using VL.Core.Import;
 using VL.Model;
 using VL.Qt.Elements;
@@ -17,9 +18,11 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(float Brightness, float Contrast, float Saturation);
 
-        private readonly EffectNode<Props> _node = new(static (previous, p) => new ColorAdjustEffect(previous, p.Brightness, p.Contrast, p.Saturation - 1f));
+        private static readonly Func<Effect?, Props, Effect> s_create = static (previous, p) => new ColorAdjustEffect(previous, p.Brightness, p.Contrast, p.Saturation - 1f);
 
-        internal EffectNode<Props> Core => _node;
+        private ChainMemo<Effect, Props> _memo;
+
+        internal ChainMemo<Effect, Props> Core => _memo;
 
         /// <summary>Adds a color adjustment to the effect chain.</summary>
         /// <param name="input">Effect chain to extend (other effect nodes).</param>
@@ -34,6 +37,6 @@ namespace VL.Qt.Nodes
             float contrast,
             float saturation,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
-            => apply ? _node.Describe(input, new Props(brightness, contrast, saturation)) : input;
+            => apply ? _memo.Get(input, new Props(brightness, contrast, saturation), s_create) : input;
     }
 }

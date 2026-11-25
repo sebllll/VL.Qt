@@ -1,4 +1,5 @@
-﻿using Stride.Core.Mathematics;
+﻿using System;
+using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
@@ -9,10 +10,11 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "AddRect", Category = Categories.Paths)]
     public sealed class AddRectNode
     {
-        private QtPath? _input;
-        private RectangleF _rectangle;
-        private PathDirection _direction;
-        private QtPath? _output;
+        internal readonly record struct Props(RectangleF Rectangle, PathDirection Direction);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => Build(input ?? QtPath.Empty, p.Rectangle, p.Direction);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with a rectangle that starts at the top left corner.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -21,17 +23,7 @@ namespace VL.Qt.Nodes
         /// <returns>The path with the contour added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
         public QtPath Update(QtPath? input, RectangleF rectangle = default, PathDirection direction = PathDirection.Clockwise)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || rectangle != _rectangle || direction != _direction)
-            {
-                _input = input;
-                _rectangle = rectangle;
-                _direction = direction;
-                _output = Build(input, rectangle, direction);
-            }
-            return _output;
-        }
+            => _memo.Get(input, new Props(rectangle, direction), s_create);
 
         private static QtPath Build(QtPath path, RectangleF rect, PathDirection direction)
         {

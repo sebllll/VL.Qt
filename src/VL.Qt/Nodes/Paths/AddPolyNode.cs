@@ -1,4 +1,5 @@
-﻿using Stride.Core.Mathematics;
+﻿using System;
+using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
 using VL.Lib.Collections;
@@ -10,10 +11,17 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "AddPoly", Category = Categories.Paths)]
     public sealed class AddPolyNode
     {
-        private QtPath? _input;
-        private Spread<Vector2>? _points;
-        private bool _close;
-        private QtPath? _output;
+        internal readonly record struct Props(Spread<Vector2> Points, bool Close)
+        {
+            public bool Equals(Props other)
+                => Close == other.Close && SpreadEquality.SameContent(Points, other.Points);
+
+            public override int GetHashCode() => HashCode.Combine(Points.Count, Close);
+        }
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => Build(input ?? QtPath.Empty, p.Points, p.Close);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with a contour that moves to the first point and runs through the others with lines.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -22,33 +30,7 @@ namespace VL.Qt.Nodes
         /// <returns>The path with the contour added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
         public QtPath Update(QtPath? input, Spread<Vector2>? points, bool close = false)
-        {
-            input ??= QtPath.Empty;
-            points ??= Spread<Vector2>.Empty;
-            // A new spread with the same content (VL may rebuild it every frame) is not a change.
-            if (_output == null || !ReferenceEquals(input, _input) || close != _close || !SameContent(points, _points))
-            {
-                _input = input;
-                _points = points;
-                _close = close;
-                _output = Build(input, points, close);
-            }
-            return _output;
-        }
-
-        private static bool SameContent(Spread<Vector2> a, Spread<Vector2>? b)
-        {
-            if (ReferenceEquals(a, b))
-                return true;
-            if (b == null || a.Count != b.Count)
-                return false;
-            for (var i = 0; i < a.Count; i++)
-            {
-                if (a[i] != b[i])
-                    return false;
-            }
-            return true;
-        }
+            => _memo.Get(input, new Props(points ?? Spread<Vector2>.Empty, close), s_create);
 
         private static QtPath Build(QtPath path, Spread<Vector2> points, bool close)
         {

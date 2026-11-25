@@ -293,6 +293,15 @@ namespace VL.Qt.Tests.Paths
         }
 
         [Test]
+        public void AddPoly_NaNInNewSpread_SameInstance()
+        {
+            var node = new AddPolyNode();
+            var a = node.Update(QtPath.Empty, Spread.Create(new Vector2(0, 0), new Vector2(float.NaN, 1)), true);
+            var again = node.Update(QtPath.Empty, Spread.Create(new Vector2(0, 0), new Vector2(float.NaN, 1)), true);
+            Assert.That(again, Is.SameAs(a));
+        }
+
+        [Test]
         public void AddPoly_ChangedContentOrClose_NewInstance()
         {
             var node = new AddPolyNode();

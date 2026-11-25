@@ -13,8 +13,8 @@ namespace VL.Qt.Nodes
     /// <list type="bullet">
     /// <item>one <see cref="ElementFeedback"/> per node instance (slot 0): key of the handler in the reconciler and
     /// receiver of its events;</item>
-    /// <item>change detection: a new link only if the chain at Input (by reference) or the node specific
-    /// <typeparamref name="TProps"/> changed, otherwise the last instance (reference equal → no QtNative ops);</item>
+    /// <item>change detection (<see cref="ChainMemo{TEffect, TProps}"/>): a new link only if the chain at Input (by reference) or the node
+    /// specific <typeparamref name="TProps"/> changed, otherwise the last instance (reference equal → no QtNative ops);</item>
     /// <item>the feedback warning (interaction used more than once) as persistent node warning, the feedback error (e.g. a
     /// handler property Qt rejected) as persistent node warning, logged (<see cref="NodeErrors"/>).</item>
     /// </list>
@@ -22,7 +22,7 @@ namespace VL.Qt.Nodes
     /// author <see cref="ChannelAuthors.QtChannelAuthor"/>). No static state. Main thread only.
     /// </summary>
     /// <typeparam name="TProps">Node specific inputs that go to QtNative; a readonly record struct (value equality, no allocation).</typeparam>
-    internal sealed class InteractionNode<TProps> : IDisposable
+    internal sealed class InteractionNodeCore<TProps> : IDisposable
         where TProps : struct, IEquatable<TProps>
     {
         private const string errorPhase = "Qt";
@@ -30,16 +30,14 @@ namespace VL.Qt.Nodes
         private readonly Func<string, IDisposable> _addWarning;
         private readonly NodeErrors? _errors;
         private readonly Func<Interaction?, TProps, FeedbackSlot, Interaction> _create;
-        private Interaction? _last;
-        private Interaction? _input;
-        private TProps _props;
+        private ChainMemo<Interaction, TProps> _memo;
         private string? _warning;
         private IDisposable? _warningMessage;
         private string? _error;
 
         /// <param name="nodeContext">Context of the public node (warning and error are shown there).</param>
         /// <param name="create">Builds a link; use a static lambda (no capture → no allocation).</param>
-        public InteractionNode(NodeContext nodeContext, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
+        public InteractionNodeCore(NodeContext nodeContext, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
             : this(w => nodeContext.AddPersistentMessage(MessageSeverity.Warning, w), create)
         {
             _errors = new NodeErrors(nodeContext);
@@ -48,7 +46,7 @@ namespace VL.Qt.Nodes
         /// <param name="addWarning">Shows a warning, the result removes it (tests: no NodeContext/AppHost needed; the
         /// error is then only tracked in <see cref="Error"/>).</param>
         /// <param name="create">Builds a link; use a static lambda (no capture → no allocation).</param>
-        public InteractionNode(Func<string, IDisposable> addWarning, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
+        public InteractionNodeCore(Func<string, IDisposable> addWarning, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
         {
             _addWarning = addWarning;
             _create = create;
@@ -67,7 +65,7 @@ namespace VL.Qt.Nodes
         public string? Error => _error;
 
         /// <summary>Number of links created so far (for tests).</summary>
-        public int Created { get; private set; }
+        public int Created => _memo.Created;
 
         /// <summary>
         /// Returns the link for the inputs: the last instance if nothing changed, else a new one. Also updates the node
@@ -75,16 +73,10 @@ namespace VL.Qt.Nodes
         /// </summary>
         public Interaction Describe(Interaction? input, in TProps props)
         {
-            if (_last is null || !ReferenceEquals(_input, input) || !_props.Equals(props))
-            {
-                _last = _create(input, props, Slot);
-                _input = input;
-                _props = props;
-                Created++;
-            }
+            var link = _memo.Get(input, props, Slot, _create);
             UpdateWarning();
             UpdateError();
-            return _last;
+            return link;
         }
 
         /// <summary>
@@ -132,8 +124,7 @@ namespace VL.Qt.Nodes
             _warningMessage?.Dispose();
             _warningMessage = null;
             _warning = null;
-            _last = null;
-            _input = null;
+            _memo.Reset();
         }
     }
 }

@@ -21,23 +21,23 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(PointerButtons Buttons, PointerDevices Devices);
 
-        private readonly InteractionNode<Props> _node;
+        private readonly InteractionNodeCore<Props> _node;
         private IChannel<bool>? _pressed;
         private IChannel<int>? _tapCount;
         private bool _lastPressed;
         private int _lastTapCount;
 
         public ClickNode(NodeContext nodeContext)
-            => _node = new InteractionNode<Props>(nodeContext, Create);
+            => _node = new InteractionNodeCore<Props>(nodeContext, Create);
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
         internal ClickNode(Func<string, IDisposable> addWarning)
-            => _node = new InteractionNode<Props>(addWarning, Create);
+            => _node = new InteractionNodeCore<Props>(addWarning, Create);
 
         private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new ClickInteraction(previous, slot, p.Buttons, p.Devices);
 
-        internal InteractionNode<Props> Core => _node;
+        internal InteractionNodeCore<Props> Core => _node;
 
         /// <summary>Adds a click (tap) handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
@@ -63,7 +63,7 @@ namespace VL.Qt.Nodes
             // without a channel, so they do not pile up; states are written only on change.
             var feedback = _node.Feedback;
             if (isPressed.IsValid())
-                InteractionNode<Props>.Write(isPressed, ref _pressed, ref _lastPressed, feedback.IsPressed());
+                InteractionNodeCore<Props>.Write(isPressed, ref _pressed, ref _lastPressed, feedback.IsPressed());
             else
                 _pressed = null;
 
@@ -76,7 +76,7 @@ namespace VL.Qt.Nodes
             if (!tapCount.IsValid())
                 _tapCount = null;
             else if (count > 0)
-                InteractionNode<Props>.Write(tapCount, ref _tapCount, ref _lastTapCount, count);
+                InteractionNodeCore<Props>.Write(tapCount, ref _tapCount, ref _lastTapCount, count);
 
             return output;
         }
