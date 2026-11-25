@@ -25,7 +25,8 @@ namespace VL.Qt
 
         private string _createError = "";
         private Native.vlqt_perf _lastPerf;
-        private bool _perfChanged;
+        // Pumps seen by AfterEvents and the pump the Perf getter last read at: the native summary is read once per pump, on demand.
+        private long _pumps, _perfPump;
         // percentiles sort two rings in QtNative, so they are recomputed at most every kPercentileIntervalMs
         // (the ring spans ~1 s, ~4 updates per second are enough); the averages of _lastPerf stay per pump.
         private const long kPercentileIntervalMs = 250;
@@ -114,24 +115,32 @@ namespace VL.Qt
         /// <summary>Number of resyncs after failed applies.</summary>
         internal int Resyncs => _scene.Resyncs;
 
-        /// <summary>Perf of the last pump; a new record only when the values changed.</summary>
+        /// <summary>
+        /// Perf of the last pump; the native summary is read here, once per pump, only when someone reads Perf, and a new
+        /// record is built only when the values changed.
+        /// </summary>
         public PerfStats Perf
         {
             get
             {
-                if (_perfChanged)
+                if (_perfPump == _pumps)
+                    return _perf;
+                _perfPump = _pumps;
+                // Compare raw bytes: only build a new record when the values changed.
+                if (!_scene.IsOpen || Native.vlqt_scene_get_perf(Window, out var p) != Native.Result.Ok
+                    || MemoryMarshal.AsBytes(new ReadOnlySpan<Native.vlqt_perf>(in p))
+                        .SequenceEqual(MemoryMarshal.AsBytes(new ReadOnlySpan<Native.vlqt_perf>(in _lastPerf))))
+                    return _perf;
+                _lastPerf = p;
+                // Percentiles sort the rings: queried at most every kPercentileIntervalMs.
+                var now = Environment.TickCount64;
+                if (now - _statsAt >= kPercentileIntervalMs)
                 {
-                    _perfChanged = false;
-                    // Percentiles sort the rings: queried only when read and at most every kPercentileIntervalMs.
-                    var now = Environment.TickCount64;
-                    if (_scene.IsOpen && now - _statsAt >= kPercentileIntervalMs)
-                    {
-                        _statsAt = now;
-                        Native.vlqt_scene_get_perf_stats(Window, out _stats);
-                        Native.vlqt_scene_get_host_pump_stats(Window, out _host);
-                    }
-                    _perf = PerfStats.From(_lastPerf, _stats, _host);
+                    _statsAt = now;
+                    Native.vlqt_scene_get_perf_stats(Window, out _stats);
+                    Native.vlqt_scene_get_host_pump_stats(Window, out _host);
                 }
+                _perf = PerfStats.From(_lastPerf, _stats, _host);
                 return _perf;
             }
         }
@@ -178,16 +187,7 @@ namespace VL.Qt
 
             PollEvents();
 
-            // Compare raw bytes: PerfStats is a record, only build a new one when the values changed.
-            if (Native.vlqt_scene_get_perf(Window, out var p) == Native.Result.Ok)
-            {
-                if (!MemoryMarshal.AsBytes(new ReadOnlySpan<Native.vlqt_perf>(in p))
-                        .SequenceEqual(MemoryMarshal.AsBytes(new ReadOnlySpan<Native.vlqt_perf>(in _lastPerf))))
-                {
-                    _lastPerf = p;
-                    _perfChanged = true;
-                }
-            }
+            _pumps++;
         }
 
         /// <summary>

@@ -151,7 +151,13 @@ namespace VL.Qt
             gcPauseMsPerSecond = GcPauseMsPerSecond; allocatedBytesPerFrame = AllocatedBytesPerFrame;
         }
 
-        internal static PerfStats From(in Native.vlqt_perf p, in Native.vlqt_perf_stats s, in Native.vlqt_host_pump_stats h) => From(p) with
+        internal static PerfStats From(in Native.vlqt_perf p, in Native.vlqt_perf_stats s, in Native.vlqt_host_pump_stats h) => new(
+            (float)p.fps,
+            (float)p.frame_ms, (float)p.frame_ms_max,
+            (float)p.pump_ms, (float)p.pump_ms_max,
+            (float)p.sync_ms, (float)p.render_ms, (float)p.present_ms,
+            (float)p.gpu_ms, (float)p.gpu_ms_max,
+            (float)p.swaps_per_pump)
         {
             BudgetMs = (float)s.budget_ms,
             FrameMsP50 = (float)s.frame_p50, FrameMsP95 = (float)s.frame_p95, FrameMsP99 = (float)s.frame_p99,

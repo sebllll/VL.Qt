@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="DwtJfBV7tnlOHZdOUSILaq" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Window Settings [Qt]: icon of the Renderer window (title bar, taskbar, Alt-Tab)&#xD;&#xA;- Output to the Window pin of Renderer [Qt]&#xD;&#xA;- Icon: .ico, .png, .svg or anything Qt reads, relative to this patch&#xD;&#xA;- Title, Borderless, Fullscreen, Bounds: optional pins, win over Renderer [Qt]">
+          <Pad Id="DwtJfBV7tnlOHZdOUSILaq" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Window Settings [Qt]: icon of the Renderer window (title bar, taskbar, Alt-Tab)&#xD;&#xA;- Output to the Window pin of Renderer [Qt]&#xD;&#xA;- Icon: .ico, .png, .svg or anything Qt reads, relative to this patch&#xD;&#xA;- Bounds: optional, initial position and size, wins over the Bounds pin of Renderer [Qt] (Title, Borderless and Fullscreen are pins of Renderer [Qt])">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -55,9 +55,6 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="9ZXKPbOoT7w9iTjhheW0nm" Name="Icon" Kind="InputPin" />
-            <Pin Id="7tW0z1OeryW93mel38zj7v" Name="Title" Kind="InputPin" IsHidden="true" />
-            <Pin Id="7U5wqBOKheF94gxEk4BbTR" Name="Borderless" Kind="InputPin" IsHidden="true" />
-            <Pin Id="SnsIkG2VzxFJek7wqy5yP0" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="MPzliTWPhEcsDFTL87jfo8" Name="Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="uqo7oy4fj6KxugPNYasxkS" Name="Output" Kind="OutputPin" />
           </Node>

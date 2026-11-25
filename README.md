@@ -33,7 +33,7 @@ Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-progra
 | [**Stride texture**](#stride-texture) | `QtTexture` (package `VL.Qt.Stride`, Windows only, experimental) renders an element tree offscreen into a Stride `Texture`, on the GPU, in the same frame; `QtRenderer` draws it as a layer into a Stride render target |
 | [**QML**](docs/user-qml.md) | QmlElement loads your own `.qml` file into the element tree; every `.qml` file in a `qml/` folder becomes a node with one pin per property and signal (experimental) |
 | [**Animation**](docs/architecture.md#timing-and-animation) | driven by vvvv's `IFrameClock`, so scrubbing and pausing are deterministic |
-| [**Window**](docs/help-patches.md#window-and-diagnostics) | WindowSettings node (Icon, Title, Borderless, Fullscreen, Bounds), Fullscreen (F11 / Alt+Enter), Save Bounds, VSync on by default (see `HowTo Avoid Tearing`) |
+| [**Window**](docs/help-patches.md#window-and-diagnostics) | WindowSettings node (Icon, Bounds), Renderer pins Title, Borderless and Fullscreen, Fullscreen (F11 / Alt+Enter), Save Bounds, VSync on by default (see `HowTo Avoid Tearing`) |
 | [**Tooltips**](docs/tooltips.md) | hovering a link with `Element` or `QtImage` in the vvvv editor shows a preview image (editor only) |
 | [**Diagnostics**](docs/diagnostics.md) | `F2` perfmeter, `F5` stats panel, `Debug` pin for a layout overlay; Qt errors show up at the node and in the vvvv Log window |
 
