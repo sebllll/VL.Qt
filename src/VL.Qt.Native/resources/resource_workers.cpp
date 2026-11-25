@@ -32,12 +32,16 @@ void WorkerPool::submit(uint64_t id, Kind* kind, std::shared_ptr<Content> work)
             m_threads.emplace_back([this, i] { workerLoop(i); });
         qCInfo(lcRes, "%d resource worker(s) started", n);
     }
-    m_jobs.push_back({id, kind, std::move(work)});
+    {
+        std::lock_guard lock(m_mutex);
+        m_jobs.push_back({id, kind, std::move(work)});
+    }
     m_jobCv.notify_one();
 }
 
 bool WorkerPool::takeQueued(uint64_t id, Job& out)
 {
+    std::lock_guard lock(m_mutex);
     auto queued = std::find_if(m_jobs.begin(), m_jobs.end(), [id](const Job& j) { return j.id == id; });
     if (queued == m_jobs.end())
         return false;
@@ -46,13 +50,9 @@ bool WorkerPool::takeQueued(uint64_t id, Job& out)
     return true;
 }
 
-void WorkerPool::putResult(Result result)
-{
-    m_results.push_back(std::move(result));
-}
-
 bool WorkerPool::popResult(Result& out)
 {
+    std::lock_guard lock(m_mutex);
     if (m_results.empty())
         return false;
     out = std::move(m_results.front());
@@ -60,9 +60,9 @@ bool WorkerPool::popResult(Result& out)
     return true;
 }
 
-bool WorkerPool::waitFor(std::unique_lock<std::mutex>& lock, uint64_t id, std::chrono::steady_clock::time_point deadline,
-    Result& out)
+bool WorkerPool::waitFor(uint64_t id, std::chrono::steady_clock::time_point deadline, Result& out)
 {
+    std::unique_lock lock(m_mutex);
     auto mine = [&] {
         return std::find_if(m_results.begin(), m_results.end(), [id](const Result& r) { return r.id == id; });
     };
@@ -74,26 +74,29 @@ bool WorkerPool::waitFor(std::unique_lock<std::mutex>& lock, uint64_t id, std::c
     return true;
 }
 
-std::vector<std::thread> WorkerPool::stop()
+int WorkerPool::queuedJobs() const
 {
-    m_stop = true;
-    std::vector<std::thread> threads;
-    threads.swap(m_threads);
-    return threads;
+    std::lock_guard lock(m_mutex);
+    return int(m_jobs.size());
 }
 
-void WorkerPool::join(std::vector<std::thread>& threads)
+int WorkerPool::shutdown()
 {
+    {
+        std::lock_guard lock(m_mutex);
+        m_stop = true;
+    }
     m_jobCv.notify_all();
-    for (std::thread& t : threads)
+    // Without the lock: a worker finishes its decode (its Content is cancelled) and leaves at the next look at m_stop.
+    for (std::thread& t : m_threads)
         t.join();
-}
-
-void WorkerPool::reset()
-{
+    const int joined = int(m_threads.size());
+    m_threads.clear();
+    std::lock_guard lock(m_mutex);
     m_jobs.clear();
     m_results.clear();
     m_stop = false; // the next submit creates the workers again
+    return joined;
 }
 
 // Worker thread: only the queues under the mutex, decode on pure data without it. Never logs.

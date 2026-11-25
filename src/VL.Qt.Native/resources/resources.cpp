@@ -1,5 +1,6 @@
 #include "resources/resources.h"
 
+#include "resources/image_resource.h"
 #include "resources/resource_manager.h"
 #include "snapshot_resource.h"
 #include "vlqt.h"
@@ -61,6 +62,7 @@ void endFrame()
     snapshot::endFrame(); // finished / hanging grabs -> Ready or Failed, before released resources are freed
     if (Manager* m = existingManager())
         m->endFrame();
+    image::endFrame(); // after the frees: textures and buffers of freed images go back to their pools first
 }
 
 int testTransition(uint64_t id, int from, int to) { return manager().testTransition(id, from, to); }

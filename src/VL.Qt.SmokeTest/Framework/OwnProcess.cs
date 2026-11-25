@@ -17,6 +17,7 @@ internal static class OwnProcess
         ["qttexture"] = QtTextureTest.Run,
         ["QtTextureInput"] = QtTextureTest.RunInput,
         ["qttextureperf"] = QtTexturePerfTest.Run,
+        ["image-retire"] = ImageRetireTest.Run,
         ["readme-images"] = ReadmeImagesTest.Run,
         ["readme-gallery"] = ReadmeGalleryTest.Run,
         ["reference-scenes"] = ReferenceScenesTest.Run,

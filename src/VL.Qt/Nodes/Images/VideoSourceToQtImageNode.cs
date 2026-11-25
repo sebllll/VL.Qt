@@ -21,6 +21,7 @@ namespace VL.Qt.Nodes
         private IVideoSource? _source;
         private int _ticket;
         private bool _preferPush;
+        private ImageUpload _upload;
         private VideoFrameStream? _stream;
         private ImageResource? _resource;
         private QtImage? _image;
@@ -51,10 +52,14 @@ namespace VL.Qt.Nodes
         /// <param name="input">The video source, e.g. VideoPlayer or VideoIn. Nothing = Fallback.</param>
         /// <param name="fallback">Returned until the first frame of the current source is uploaded.</param>
         /// <param name="preferPush">True: frames are grabbed on a thread of their own as they arrive. False: one frame is grabbed per vvvv frame on the main thread.</param>
+        /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
         /// <returns>The image: the same QtImage for all frames (one GPU resource per node, its content is replaced). A failed source or upload is shown at the node and logged.</returns>
         [return: Pin(Name = "Output")]
-        public QtImage? Update(IVideoSource? input, QtImage? fallback, bool preferPush = true)
+        public QtImage? Update(IVideoSource? input, QtImage? fallback, bool preferPush = true,
+            [Pin(Visibility = Model.PinVisibility.Optional)] ImageUpload upload = ImageUpload.Auto)
         {
+            // A new mode applies from the next frame on.
+            _upload = upload;
             var ticket = GetChangedTicket(input);
             if (!ReferenceEquals(input, _source) || ticket != _ticket || preferPush != _preferPush)
             {
@@ -107,7 +112,7 @@ namespace VL.Qt.Nodes
                 }
                 _resource ??= _client.CreateImage();
                 _image ??= new QtImage(_resource);
-                _client.SetPixels(_resource, frame.Width, frame.Height, frame.RowLengthInBytes, frame.PixelFormat, false, memory.Span);
+                _client.SetPixels(_resource, frame.Width, frame.Height, frame.RowLengthInBytes, frame.PixelFormat, false, memory.Span, _upload);
                 _hasFrame = true;
                 _error = string.Empty;
             }

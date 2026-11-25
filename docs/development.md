@@ -243,18 +243,16 @@ src/VL.Qt.Native/           # QtNative (C++)
   effects/                  # effect chain, Shader item and its material, layer requests
   user_qml/                 # QmlElement: loads a user .qml file (qml_item), watches its root (qml_watcher), wire values (qml_wire)
   style/                    # VlStyle (vl_style), the attached style of the Controls, and the base style VLQt/*.qml
-  resources/                # resource manager (resources.h, resource_*.h/cpp), pixel formats
+  resources/                # resource manager (resources.h, resource_*.h/cpp), pixel formats, Image element (qt_image_item), audio tap (audio_tap: the sound of a Video element as samples)
   offscreen/                # QtTexture scenes: binding, rendering, input, exports, linear pass
   diagnostics/              # perf monitor (perf_*), F2/F5 overlays, debug overlay
   test/                     # the test exports of vlqt_test.h
   testkit/                  # vlqt_testkit, the stand-in D3D11 device of the SmokeTest (not packed)
   tools/glprobe.c           # vlqt-glprobe, the OpenGL check under WSLg (Linux)
-  device.h/cpp              # shared D3D11 device, device loss
+  device/                   # shared D3D11 device, device loss
   render_thread.h/cpp       # Qt render threads of the QtTexture scenes
-  *_resource.h/cpp          # images, shaders, snapshots
-  qtimageitem.h/cpp         # Image element: draws an image resource
+  *_resource.h/cpp          # shaders, snapshots
   image_writer.h/cpp        # writes pixels to an image file (vlqt_image_write_file)
-  audio_tap.h/cpp           # audio tap: the sound of a Video element as samples
 src/VL.Qt.Tests/            # C# unit tests
 src/VL.Qt.SmokeTest/        # native smoke + perf tests
 src/VL.Qt.Probe/            # one Qt window from C# without vvvv

@@ -151,7 +151,7 @@ public static class ClipVideoPerfTest
         var frames = Math.Max(60, int.TryParse(Environment.GetEnvironmentVariable("VLQT_SMOKE_VIDEOUPLOADFRAMES"), out var f) ? f : 240);
         var gpu = NativeTest.vlqt_test_device_info(SceneHandle.Null, out _, out var uploadRhi) == 0 && uploadRhi != IntPtr.Zero;
         s.Info($"video-upload-perf: {(gpu ? "GPU upload (shared upload QRhi)" : "CPU copy, no upload QRhi")}, {runs} runs of {frames} frames, paced 60 Hz, "
-            + $"{System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture}, {Environment.ProcessorCount} cores, VLQT_IMG_UPLOAD={Environment.GetEnvironmentVariable("VLQT_IMG_UPLOAD") ?? "(auto)"}");
+            + $"{System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture}, {Environment.ProcessorCount} cores, upload Auto (pixels: main thread)");
 
         using var timer = PumpTest.HighResTimer(); // 1 ms timer resolution like vvvv
         var w = Native.vlqt_window_create(60, 60, 960, 540, "VL.Qt video upload", 0);

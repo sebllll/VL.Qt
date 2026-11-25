@@ -3,7 +3,7 @@
 // Private Qt API: QQuickWindowPrivate::ensureCustomRenderTarget; check on Qt updates (list: elements/elements.h).
 #include "offscreen/offscreen_scene.h"
 #include "app/exports.h"
-#include "device.h"
+#include "device/device.h"
 #include "vlqt.h"
 
 #include <QtQuick/QQuickRenderControl>
@@ -162,7 +162,7 @@ int bind(OffscreenScene* s, void* device, void* ntHandle, int width, int height,
     if (!foreignLuid)
         return fail(VLQT_ERR_BAD_ARGUMENT, "bind: device is no D3D11 device with a DXGI adapter");
     // A failed initialize after a device rebuild (deviceRestored) is retried here.
-    if (!s->window->rhi() && s->window->property("_vlqt_shared_device").toBool())
+    if (!s->window->rhi() && vlqt::device::isOnSharedDevice(s->window))
         onRenderThread(s, [s] { s->renderControl->initialize(); });
     ID3D11Device* qt = qtDevice(s);
     if (!qt)

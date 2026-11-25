@@ -3,10 +3,10 @@
 // any thread (guarded): vlqt_shader_reflect, vlqt_image_write_file, vlqt_audio_tap_read, vlqt_audio_tap_now_ns.
 #include "window/scene_handle.h"
 #include "app/exports.h"
-#include "audio_tap.h"
 #include "scene/scene.h"
-#include "image_resource.h"
+#include "resources/image_resource.h"
 #include "image_writer.h"
+#include "resources/audio_tap.h"
 #include "resources/resources.h"
 #include "shader_resource.h"
 #include "snapshot_resource.h"
@@ -115,7 +115,8 @@ VLQT_API int vlqt_image_read_preview(unsigned long long id, unsigned char* dst, 
         [&] { return vlqt::res::image::readPreview(id, dst, cap, desc, written, required); });
 }
 
-// Audio taps: audio_tap.h. init on the GUI thread, read on VL.Audio's audio thread.
+// Audio taps: resources/audio_tap.h. init on the GUI thread, read on VL.Audio's audio thread (no lock, one reader per
+// tap).
 VLQT_API int vlqt_audio_tap_init(unsigned long long id, int channels, int sampleRate)
 {
     return guardedGui("vlqt_audio_tap_init", [&] { return vlqt::res::audio::init(id, channels, sampleRate); });

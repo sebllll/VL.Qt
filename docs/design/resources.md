@@ -1,6 +1,6 @@
 # Resources
 
-The resource manager of QtNative: one process-wide table of resources (images, snapshots, shaders, audio taps) that is independent of any window. Code: `src/VL.Qt.Native/resources/` (`resources.h` is the interface that the exports in `resource_exports.cpp` and the pump in `app/app.cpp` call, `resource_kind.h` the interface of a resource kind), the kinds in `image_resource.*`, `snapshot_resource.*`, `shader_resource.*` and `audio_tap.*`. User pages: [images.md](../images.md), [video-audio.md](../video-audio.md).
+The resource manager of QtNative: one process-wide table of resources (images, snapshots, shaders, audio taps) that is independent of any window. Code: `src/VL.Qt.Native/resources/` (`resources.h` is the interface that the exports in `resource_exports.cpp` and the pump in `app/app.cpp` call, `resource_kind.h` the interface of a resource kind), the kinds in `image_resource.*`, `snapshot_resource.*`, `shader_resource.*` and `resources/audio_tap.*`. User pages: [images.md](../images.md), [video-audio.md](../video-audio.md).
 
 ## Context
 
@@ -18,9 +18,9 @@ An id is a u64: index in the low 32 bits, generation in the high 32 bits, assign
 
 ### Threads
 
-- Every entry point runs on the vvvv main thread (the thread of `vlqt_app_process_events_for`). One mutex still guards the table, so a stray call from another thread cannot corrupt it.
-- A fixed worker pool (default `min(4, cores - 1)`, environment variable `VLQT_RES_WORKERS`, started at the first job) runs only `Kind::decode` on pure data (bytes, `QImage`). Workers never touch Qt Quick, the RHI or the table and never log. Results come back through one queue guarded by the same mutex.
-- Upload (`Kind::upload`) and destroy (`Kind::destroy`) run on the main thread: uploads in `beginFrame` within the byte budget per frame, frees in `endFrame`.
+- The table, the event queue, the upload queue and the free list belong to the vvvv main thread (the thread of `vlqt_app_process_events_for`) and have no lock. Every entry point checks the thread: a call from another thread returns `VLQT_ERR_WRONG_THREAD` (or nothing) and logs a critical message once.
+- A fixed worker pool (default `min(4, cores - 1)`, environment variable `VLQT_RES_WORKERS`, started at the first job) runs only `Kind::decode` on pure data (bytes, `QImage`). Workers see only the Content of their job and never touch Qt Quick, the RHI or the table and never log. Jobs and results go through the two queues of the pool, guarded by its own mutex, the only one of the manager; it is never held across a decode or GPU work.
+- Upload (`Kind::upload`) and destroy (`Kind::destroy`) run on the main thread: uploads in `beginFrame` within the byte budget per frame, frees in `endFrame`. An upload that has to wait (`UploadStatus::Waiting`, e.g. its copy task still runs) moves to the back of the queue and the next one goes; `beginFrame` stops when the budget is used or a whole pass only waited.
 
 ### Reference counts
 
@@ -41,6 +41,8 @@ A resource has one host reference (C#, dropped by `vlqt_res_release`) and elemen
 
 `start` on a Ready resource decodes and uploads a second content next to the current one. The state stays Ready (no STATE record). When the new upload is complete the current content is swapped (the old one is destroyed) and a new INFO record is sent. A failed replacement makes the resource Failed. `start` on a Failed resource starts over (Failed -> Decoding). `start` while a decode or upload runs keeps only the newest content and starts it afterwards.
 
+Content replaced every frame (a video through `vlqt_image_set_pixels`) costs no new GPU texture and no new raw buffer per frame: the image kind fills again a texture of the same size, format and flags that no content and no window wrapper holds any more (texture pool, `resources/gpu_texture.h`), and takes the raw buffer of an earlier frame of the same size (`resources/image_kind.cpp`). Both pools keep at most a few free entries and free those nobody took for about a second (`image::endFrame`), and the texture pool forgets everything on a device loss.
+
 ### External content
 
 A snapshot (`snapshot_resource.h`) is made on the main thread (`beginExternal` / `finishExternal`) without a worker and without an upload, so Decoding -> Ready is allowed for that kind only. `vlqt_res_wait` does not block on it. An audio tap is Ready at its init.
@@ -58,7 +60,7 @@ The manager is a device listener (`device.h`).
 ## Consequences
 
 - A new resource kind implements `Kind` and is registered in `resource_registry.cpp`, the only file that names every kind.
-- The mutex is held across `Kind::upload` and `Kind::destroy`, so no worker can take a job or hand back a result meanwhile.
+- Workers take jobs and hand back results while the main thread uploads or destroys: no lock is held across GPU work.
 - Content a worker holds is never touched by the main thread until the worker hands it back; `destroy` is called only for content no worker holds.
 
 ## Alternatives considered

@@ -49,4 +49,24 @@ bool hasAlpha(int format)
     }
 }
 
+bool isDeep(int format)
+{
+    switch (VlPixelFormat(format)) {
+    case VlPixelFormat::R16:
+    case VlPixelFormat::R16G16B16A16F:
+    case VlPixelFormat::R32G32B32A32F: return true;
+    default:                           return false;
+    }
+}
+
+bool holdsPixels(int len, int width, int height, int rowBytes, int format)
+{
+    const int bpp = bytesPerPixel(format);
+    if (bpp == 0 || width <= 0 || height <= 0 || len < 0)
+        return false;
+    const qsizetype row = qsizetype(width) * bpp;
+    const qsizetype stride = rowBytes > 0 ? rowBytes : row;
+    return stride >= row && qsizetype(len) >= stride * (height - 1) + row;
+}
+
 } // namespace vlqt::res

@@ -2,6 +2,7 @@
 
 #include "app/last_error.h"
 #include "app/thread_name.h"
+#include "offscreen/offscreen.h"
 #include "vlqt.h"
 
 #include <QtCore/QLoggingCategory>
@@ -94,6 +95,14 @@ void drainAll()
 {
     for (RenderThread* t : s_pool)
         t->drain();
+}
+
+void retire(QQuickWindow* window, std::shared_ptr<void> resource)
+{
+    if (!resource)
+        return;
+    if (RenderThread* t = offscreen::renderThreadOf(window))
+        t->post([resource = std::move(resource)]() mutable { resource.reset(); });
 }
 
 } // namespace vlqt::render_thread

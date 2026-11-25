@@ -8,11 +8,11 @@ using VL.Qt;
 using NAudio.CoreAudioApi;
 #endif
 
-// COMP-03: a Video whose audio tap is already attached to another Video is ignored by setVideoTap ("ignored until it
-// detaches", audio_tap.cpp) and keeps Qt's own AudioOutput. The C# node sets Volume 1 whenever it has a tap, so that
-// item would play through the system device while the first one plays through VL.Audio. The probe is the audio session
-// meter of this process (Windows Core Audio): it moves only when Qt itself plays sound. Control: a plain Video without a
-// tap must make the meter move, a Video with a tap alone must not.
+// COMP-03: a Video whose audio tap is already attached to another Video must not keep Qt's own AudioOutput (the C# node
+// sets Volume 1 whenever it has a tap, so that item would play through the system device while the first one plays
+// through VL.Audio). setVideoTap (resources/audio_tap.cpp) mutes it and refuses the prop with ApplyBadValue. The probe
+// is the audio session meter of this process (Windows Core Audio): it moves only when Qt itself plays sound. Control: a
+// plain Video without a tap must make the meter move, a Video with a tap alone must not.
 // Asset: help/Qt/assets/qt-help-video-audio.mp4 (video with an audio track).
 [TestFixture, NonParallelizable]
 public static class VideoAudioOwnedTapTest
@@ -21,7 +21,6 @@ public static class VideoAudioOwnedTapTest
 
     /// <summary>COMP-03: a second Video on an owned audio tap must not play Qt's sound.</summary>
     [Test, Category("videoaudio-owned")]
-    [Ignore("COMP-03: setVideoTap returns without muting the item when the tap is owned by another Video, its player keeps Qt's AudioOutput (fails: second Video on the owned tap moves the process audio meter, peak 0.29 vs 0.00 for the owner alone)")]
     public static void VideoAudioOwnedTap() => Scenario.Run(Run);
 
 #if WINDOWS
@@ -90,17 +89,21 @@ public static class VideoAudioOwnedTapTest
             }
             return peak;
         }
-        void CreateVideo(uint id, ulong tap, float volume, int x)
+        // tapLast: the tap after everything else, so a refused tap (the apply stops at the bad command) still leaves a
+        // playing item in the tree.
+        void CreateVideo(uint id, ulong tap, float volume, int x, bool tapLast = false)
         {
             cmd.Create(id, Protocol.ElementType.Video);
             cmd.SetPlace(id, x, 0, 200, 112);
             cmd.SetString(id, Protocol.PropertyId.Source, a);
             cmd.SetBool(id, Protocol.PropertyId.Loop, true);
             cmd.SetF32(id, Protocol.PropertyId.Volume, volume);
-            if (tap != 0)
+            if (tap != 0 && !tapLast)
                 cmd.SetU64(id, Protocol.PropertyId.AudioTap, tap);
             cmd.SetBool(id, Protocol.PropertyId.Playing, true);
             cmd.Reparent(id, 0, 0);
+            if (tap != 0 && tapLast)
+                cmd.SetU64(id, Protocol.PropertyId.AudioTap, tap);
         }
 
         var rc0 = Native.vlqt_res_create(Protocol.ResourceKind.AudioTap, out var tap);
@@ -128,9 +131,13 @@ public static class VideoAudioOwnedTapTest
         var quiet = Watch(1500);
         s.Check(quiet < 0.001f, $"videoaudio-owned: quiet again after the control (peak {quiet:F4})");
 
-        // The suspicion: a second Video on the owned tap, Volume 1 like VideoAudioNode sends.
-        CreateVideo(Video2Id, tap, 1f, 200);
-        Apply("second video on the owned tap");
+        // A second Video on the owned tap, Volume 1 like VideoAudioNode sends: refused (ApplyBadValue) and muted.
+        CreateVideo(Video2Id, tap, 1f, 200, tapLast: true);
+        var rc2 = Native.Apply(w, cmd.EndFrame());
+        cmd.Reset();
+        var err2 = rc2 != 0 ? Native.LastError() : "";
+        s.Check(rc2 == Native.Result.BadArgument && err2.Contains("already used by another Video"),
+            $"videoaudio-owned: the owned tap is refused on the second Video ({rc2}) {err2}");
         Watch(1000);
         var second = Watch(2500);
         s.Info($"videoaudio-owned: second Video on the owned tap: peak {second:F4}");

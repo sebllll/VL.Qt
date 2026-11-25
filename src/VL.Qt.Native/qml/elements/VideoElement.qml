@@ -29,7 +29,7 @@ Item {
   readonly property alias vlqtPosition: player.position
   readonly property alias vlqtDuration: player.duration
   property string vlqtError: ""
-  readonly property alias vlqtPlayer: player // audio tap (audio_tap.cpp)
+  readonly property alias vlqtPlayer: player // audio tap (resources/audio_tap.cpp)
   readonly property alias vlqtOut: out
   // Local path of a file URL for messages (file:///C:/a%20b.png -> C:/a b.png, file:///home/x -> /home/x).
   function vlqtPath(u) { return decodeURIComponent(String(u).replace(/^file:\/\/(\/(?=[A-Za-z]:))?/, "")); }

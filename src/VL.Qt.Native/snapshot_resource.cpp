@@ -67,9 +67,9 @@ public:
     const char* name() const override { return "snapshot"; }
     // Never queued: snapshots come through beginExternal / finishExternal.
     std::string decode(Content&) override { return "snapshot: no decode"; }
-    int64_t upload(Content&, int64_t, bool& done, std::string&) override
+    int64_t upload(Content&, int64_t, UploadStatus& status, std::string&) override
     {
-        done = true;
+        status = UploadStatus::Done;
         return 0;
     }
     void destroy(Content& work) override { static_cast<SnapshotContent&>(work).image = QImage(); }
@@ -90,8 +90,17 @@ struct Grab
     ~Grab()
     {
         QObject::disconnect(connection);
-        if (frameSource) // after ready or given up: the grab no longer renders it
+        releaseFrameSource();
+    }
+
+    // The hidden ShaderEffectSource renders its Group into an offscreen texture every frame while it lives: it goes as
+    // soon as the grab no longer counts (given up, superseded, released) or is done. A grab Qt still holds then never
+    // completes (as for a destroyed item) and is dropped at abandonMs.
+    void releaseFrameSource()
+    {
+        if (frameSource)
             frameSource->deleteLater();
+        frameSource.clear();
     }
 
     QMetaObject::Connection connection;
@@ -114,6 +123,7 @@ std::vector<std::unique_ptr<Grab>> s_grabs;
 void failGrab(Grab& g, const std::string& error)
 {
     g.current = false;
+    g.releaseFrameSource();
     finishExternal(g.id, nullptr, 0, error);
 }
 
@@ -243,8 +253,10 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
     if (rc != okRc)
         return rc;
     for (auto& g : s_grabs) // only the newest grab of the id counts
-        if (g->id == id)
+        if (g->id == id) {
             g->current = false;
+            g->releaseFrameSource();
+        }
 
     std::string error;
     QRectF frame;
@@ -409,6 +421,7 @@ void endFrame()
             continue;
         if (g.current && kindOfId(g.id, nullptr) < 0) { // released during the grab: result dropped
             g.current = false;
+            g.releaseFrameSource();
             qCDebug(lcRes, "%s: snapshot dropped (released during the grab)", idText(g.id).constData());
         }
         if (!g.window || !g.item) { // Qt never finishes it: delete now

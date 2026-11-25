@@ -3,17 +3,21 @@
  * vlqt.h (vlqt_audio_tap_init, vlqt_audio_tap_read, vlqt_audio_tap_now_ns).
  *
  * A tap is external content of the resource manager (resources.h beginExternal / finishExternal): init makes it Ready
- * at once, there is no worker and no upload. Besides the manager's table the taps live in a registry of this file
- * (id -> shared_ptr<TapContent>) that the audio thread can read without the manager's mutex; Kind::destroy (main thread,
- * after the host release and the last element reference) removes it there. A reader that holds a TapContent keeps it alive
- * past destroy, so a read never touches freed memory.
+ * at once, there is no worker and no upload. Besides the manager's table the taps live in a fixed slot table of this
+ * file (maxTaps slots: id, reader count, shared_ptr<TapContent>) that the reader finds a tap in without a lock and
+ * without ever owning a reference: it announces itself in the slot's reader count, re-checks the id and uses the raw
+ * pointer. Only the main thread writes the table: init fills a free slot and publishes its id last; Kind::destroy
+ * (after the host release and the last element reference) clears the id, waits until the slot has no reader (one read,
+ * microseconds) and drops the reference there, so the reader never blocks on the main thread and never frees a tap.
+ * init fails (VLQT_ERR_BAD_ARGUMENT, "too many audio taps") when all slots are used.
  *
  * Threads: init, the Video prop and destroy on the main thread; the producer (audioBufferReceived) on a worker thread
- * of the player; read on any thread (VL.Audio's audio thread).
+ * of the player; read on any thread (VL.Audio's audio thread), one reader per tap at a time (the ring has one reader).
  *
  * Attach: a QObject child of the Video item (TapAttachment in audio_tap.cpp) owns the QAudioBufferOutput on the item's
  * QMediaPlayer and the element reference; its destructor (DESTROY of the element) detaches. The window is never
- * involved, so a window swap (MSAA) does not touch the tap.
+ * involved, so a window swap (MSAA) does not touch the tap. One player per tap: a Video that asks for a tap another
+ * Video writes into is muted (no Qt output, no tap) and its prop is refused.
  */
 #pragma once
 
@@ -59,7 +63,7 @@ struct TapContent final : Content
 {
     static constexpr int recordCapacity = 512; // Qt buffers are 10-40 ms: far more than 500 ms of them
 
-    uint64_t id = 0;     // resource id (registry key)
+    uint64_t id = 0;     // resource id (slot table key)
     int channels = 0;    // interleaved float frames of channels samples
     int sampleRate = 0;
     int capacity = 0;    // ring size in frames (about 500 ms)
@@ -99,16 +103,18 @@ struct TapContent final : Content
 Kind* kind();
 
 // --- C API backends (vlqt.h) ---
-// Main thread: format of a Pending tap, Pending -> Decoding -> Ready. 0 / -7 / -9.
+// Main thread: format of a Pending tap, Pending -> Decoding -> Ready. 0 / -7 (also: all slots used) / -9.
 int init(uint64_t id, int channels, int sampleRate);
-// Any thread, allocation free. Returns frames copied/dropped, -7 or -9 (vlqt.h vlqt_audio_tap_read).
+// Any thread, one reader per tap at a time; no lock, no allocation. Returns frames copied/dropped, -7 or -9 (vlqt.h
+// vlqt_audio_tap_read).
 int read(uint64_t id, float* dst, int maxFrames, int channels, vlqt_audio_tap_state* state);
 // std::chrono::steady_clock in ns.
 long long nowNs();
 
 // --- Video element (elements/type_video.cpp videoProps), main thread ---
 // Setter of VLQT_PROPERTY_AUDIO_TAP (u64): attaches the tap to the element's player and turns Qt's own output off, 0
-// detaches and restores it (protocol.h "Audio tap"). false + err: not a Ready tap (ApplyBadValue).
+// detaches and restores it (protocol.h "Audio tap"). false + err (ApplyBadValue): not a Ready tap, or a tap another
+// Video writes into (the item is muted then).
 bool setVideoTap(Elements& els, ElementEntry& node, const ResolvedProp& rp, const Value& v, std::string& err);
 // Before a Video item is deleted (DESTROY, scene teardown), with its player still alive: detaches the tap and
 // unlinks the QAudioBufferOutput from the player (~QMediaPlayer does not, deleting the output afterwards would call
