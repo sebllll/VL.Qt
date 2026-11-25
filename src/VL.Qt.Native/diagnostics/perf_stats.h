@@ -4,6 +4,7 @@
 
 #include "vlqt.h"
 
+#include <algorithm>
 #include <array>
 
 namespace vlqt {
@@ -28,6 +29,11 @@ struct PerfSample {
     // what the host (C#) measured around this pump, reported after it (vlqt_scene_report_host_pump).
     vlqt_host_pump host{};
     bool hostReported = false;
+
+    // Qt work of this pump: events + sync + render, i.e. the pump without the vsync wait and the present (both wait for
+    // the display refresh or the GPU). The one definition behind over budget, the work colours, the timeline's red
+    // highlight, the F2 series "work" and vlqt_perf_sample.work, which the C# slow-frame warning reads. >= 0.
+    float workMs() const { return std::max(0.f, pump - vsync - present); }
 };
 
 // Running counters of a window's pumps: since start and over the last kRecentSeconds (1 s buckets).
@@ -38,7 +44,7 @@ public:
     static constexpr int kRecentSeconds = 10;
     struct Counts {
         long long pumps = 0;
-        long long overBudget = 0; // pump > budget
+        long long overBudget = 0; // workMs() > budget
         long long longFrames = 0; // frame interval > 1.5 x budget after a pump with a frame (missed refresh)
         long long idle = 0;       // swaps == 0: no frame in this pump (mostly: nothing changed)
         long long multiSwap = 0;  // swaps > 1

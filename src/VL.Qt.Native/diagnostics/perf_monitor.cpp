@@ -6,7 +6,6 @@
 
 #include <QtCore/QLoggingCategory>
 #include <QtGui/QKeyEvent>
-#include <QtGui/QScreen>
 #include <QtQml/QQmlComponent>
 #include <QtQml/QQmlEngine>
 #include <QtQuick/QQuickWindow>
@@ -157,7 +156,8 @@ void PerfMonitor::endPump(float pumpMs)
     }
     m_cur.pump = pumpMs;
     m_cur.events = std::max(0.0f, pumpMs - m_cur.vsync - m_cur.sync - m_cur.render - m_cur.present);
-    m_counters.add(m_cur, nowMs(), budgetMs());
+    m_budgetMs = s_frameBudgetMs;
+    m_counters.add(m_cur, nowMs(), m_budgetMs);
     m_ring[(m_head + m_count) % kHistory] = m_cur;
     if (m_count < kHistory)
         m_count++;
@@ -177,6 +177,7 @@ void PerfMonitor::summary(vlqt_perf* out) const
         const PerfSample& s = sample(i);
         out->pump_ms += s.pump;
         out->pump_ms_max = std::max(out->pump_ms_max, double(s.pump));
+        out->work_ms += s.workMs();
         swaps += s.swaps;
         if (s.swaps == 0)
             continue;
@@ -199,6 +200,7 @@ void PerfMonitor::summary(vlqt_perf* out) const
     if (n == 0)
         return;
     out->pump_ms /= n;
+    out->work_ms /= n;
     out->swaps_per_pump = double(swaps) / n;
     int pumpsWithSwap = 0;
     for (int i = m_count - n; i < m_count; i++)
@@ -215,14 +217,6 @@ void PerfMonitor::summary(vlqt_perf* out) const
     }
     if (gpus)
         out->gpu_ms /= gpus;
-}
-
-double PerfMonitor::budgetMs() const
-{
-    // QScreen::refreshRate is a cached value; cheap enough per pump.
-    const QScreen* screen = m_window->screen();
-    const double hz = screen ? screen->refreshRate() : 0;
-    return 1000.0 / (hz >= 1 && hz <= 1000 ? hz : 60.0);
 }
 
 bool PerfMonitor::lastSample(PerfSample* out) const
@@ -450,8 +444,8 @@ void PerfMonitor::updateOverlay()
         // Colors double as the graph legend (kGraphSeries).
         m_overlay->setProperty("meterText", QStringLiteral(
             "%1 fps  frame %2  <font color='#ff6eb4'>vvvv %3</font>  <font color='#50dc78'>gpu %4</font>  "
-            "<font color='#ffa028'>cpu %5</font>")
-            .arg(f(p.fps, 1), f(p.frame_ms, 1), opt(hs.vvvv_ms), opt(p.gpu_ms), f(p.pump_ms, 1)));
+            "<font color='#ffa028'>work %5</font>")
+            .arg(f(p.fps, 1), f(p.frame_ms, 1), opt(hs.vvvv_ms), opt(p.gpu_ms), f(p.work_ms, 1)));
     }
 
     if (!stats || (m_frozen && !forced))

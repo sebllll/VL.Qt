@@ -13,7 +13,7 @@ void PerfCounters::add(const PerfSample& s, double tMs, double budgetMs)
         m_buckets[b] = Counts{};
         m_bucketSec[b] = sec;
     }
-    const bool over = s.pump > budgetMs;
+    const bool over = s.workMs() > budgetMs;
     // after idle pumps (on-demand rendering) the interval spans the idle time, not a missed refresh.
     const bool longFrame = s.swaps > 0 && m_prevSwap && s.frameInterval > 1.5 * budgetMs;
     m_prevSwap = s.swaps > 0;

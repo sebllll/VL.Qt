@@ -12,6 +12,8 @@ namespace VL.Qt.Interop
             public double sync_ms, render_ms, present_ms, gpu_ms, gpu_ms_max, swaps_per_pump;
             public int samples;
             public double vsync_ms;
+            /// <summary>Qt work per pump, average (vlqt_perf_sample.work).</summary>
+            public double work_ms;
         }
 
         /// <summary>One pump of a window (vlqt.h vlqt_perf_sample), ms.</summary>
@@ -21,6 +23,9 @@ namespace VL.Qt.Interop
             public float frame_interval, pump, sync, render, present, gpu, events;
             public int swaps;
             public float vsync;
+            /// <summary>Qt work = events + sync + render = pump - vsync - present (>= 0), filled by QtNative: the one
+            /// definition behind over budget and the slow-frame warning.</summary>
+            public float work;
         }
 
         /// <summary>Percentiles over the ring, counters since start and over the last 10 s, budget (vlqt.h vlqt_perf_stats).</summary>

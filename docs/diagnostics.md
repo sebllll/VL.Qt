@@ -13,7 +13,7 @@ Press these keys in a Qt window (no modifiers). Both overlays are drawn by QtNat
 
 | Key | Action |
 |---|---|
-| F2 | Meter: small frame/pump graph in the corner, on/off |
+| F2 | Meter: small graph in the corner (frame interval, vvvv, GPU, Qt work), on/off |
 | F5 | Stats overlay on, then page by page: Summary, Timeline, Scene, System, Resources (live images: state, size, upload queue/budget, stuck or failed first), then off (the last page is remembered) |
 | Shift+F5 | Stats overlay hide/show, page kept |
 | F6 | Freeze the stats (only while the stats are visible, otherwise F6 goes to the scene) |
@@ -21,7 +21,13 @@ Press these keys in a Qt window (no modifiers). Both overlays are drawn by QtNat
 
 The keys belong to QtNative: the scene never sees them. A patch that needs F2, F5, F6 or F7 itself (a text field, its own shortcut) switches them off with the optional `Enable Keyboard Shortcuts` pin of `Renderer [Qt]` (default on); the keys then reach the elements and an open overlay stays as it is.
 
-The Qt phases of a frame are events, vsync wait, sync, render and present. "vsync wait" is the start of the frame (`QRhi::beginFrame`): with the Renderer's `VSync` pin on (the default) Direct3D 11 waits there for the display refresh, not in Present; with `VSync` off it waits there only when the GPU is behind. The wait and the present are not counted as Qt work. The System page also shows "allow tearing yes/no" and "refresh N Hz". Several VSync windows keep the refresh rate on Windows as long as the host dispatches window messages between the pumps (vvvv does); see the [timing decision](decisions/timing.md).
+The Qt phases of a frame are events, vsync wait, sync, render and present. "vsync wait" is the start of the frame (`QRhi::beginFrame`): with the Renderer's `VSync` pin on (the default) Direct3D 11 waits there for the display refresh, not in Present; with `VSync` off it waits there only when the GPU is behind. The System page also shows "allow tearing yes/no" and "refresh N Hz". Several VSync windows keep the refresh rate on Windows as long as the host dispatches window messages between the pumps (vvvv does); see the [timing decision](decisions/timing.md).
+
+Three words hold the numbers together:
+
+- **Pump**: the whole `vlqt_app_process_events_for` call, with the vsync wait and the present. It is what the frame costs on the vvvv thread; the tables and percentiles show it as it is, not judged against the budget.
+- **Qt work**: events + sync + render, i.e. the pump without the vsync wait and the present, which wait for the display refresh or the GPU. QtNative computes it once per pump (`vlqt_perf_sample.work`, `PerfStats.WorkMs` as average). Everything that judges Qt against the budget uses it: the `over budget` counter (`PerfStats.OverBudget`, `RecentOverBudget`), the "work" row and bar of the Summary page, the red highlight of the Timeline page, the F2 series "work" and the slow-frame warning in the vvvv log.
+- **Budget**: vvvv's frame interval, which QtNative renders in step with. VL.Qt hands it to QtNative before each pump (`vlqt_app_set_frame_budget`); C# and QtNative judge against the same value (`PerfStats.BudgetMs`, "budget" on the pages; 60 Hz before the first frame). `long frames` counts frame intervals above 1.5 x the budget.
 
 The same numbers are available in a patch: `Renderer [Qt]` has an optional `Perf` output (`PerfStats`), see `help/Qt/HowTo Read Performance.vl`. `PerfStats (Split)` exposes the frame, pump, sync, render, present and GPU timings; `Split Vsync` the vsync wait, `Split Percentiles`, `Split Counters`, `Split Host` (vvvv, wait, apply, reconcile, ops) and `Split Gc` read the further fields.
 
@@ -31,7 +37,7 @@ The overlays are cheap: with a typical scene the native pump takes a few hundred
 
 ### Pump spikes: where they come from
 
-When a pump takes longer than the frame budget, the warning in the vvvv log ends with the Qt phases of each window's last pump (`vlqt_scene_get_perf_sample`: vsync wait, sync, render, present, gpu, events, swaps; the time the warning reports is the pump minus vsync wait and present). Use them to find out which phase a spike is in.
+When the Qt work of a pump takes more than half the frame budget, the warning in the vvvv log reports it (the largest `work` of the windows' last pumps) with the host pump, and ends with the Qt phases of each window's last pump (`vlqt_scene_get_perf_sample`: vsync wait, sync, render, present, gpu, events, swaps). Use them to find out which phase a spike is in.
 
 The replay attributes spikes the same way: `dotnet run --project src/VL.Qt.SmokeTest -c Release -- --replay anim[:frames[:rects]] [outDir] --paced [--loop N] [--load N]` plays a built-in animated scene (moving semi-transparent rectangles plus texts that change every frame) at 60 fps. Every spike above 8 ms goes to its largest phase (apply, advance, events, sync, render, present), and the run ends with a `REPLAY spike attribution` line and the number of pumps whose present took longer than 4 ms. `--load N` keeps N threads busy on the CPU meanwhile.
 

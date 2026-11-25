@@ -37,8 +37,8 @@
 // VLQT_ABI_VERSION (protocol.h). All members are 8-, 4- or 2-byte types (long long, double, int, float, pointer on a
 // 64-bit target), so the numbers are the same on Windows (x64, arm64) and Linux.
 static_assert(sizeof(void*) == 8, "the layouts below assume a 64-bit target");
-static_assert(sizeof(vlqt_perf) == 104 && offsetof(vlqt_perf, vsync_ms) == 96, "vlqt_perf layout");
-static_assert(sizeof(vlqt_perf_sample) == 36 && offsetof(vlqt_perf_sample, vsync) == 32, "vlqt_perf_sample layout");
+static_assert(sizeof(vlqt_perf) == 112 && offsetof(vlqt_perf, work_ms) == 104, "vlqt_perf layout");
+static_assert(sizeof(vlqt_perf_sample) == 40 && offsetof(vlqt_perf_sample, work) == 36, "vlqt_perf_sample layout");
 static_assert(sizeof(vlqt_perf_stats) == 160 && offsetof(vlqt_perf_stats, recent_multi_swap) == 152, "vlqt_perf_stats layout");
 static_assert(sizeof(vlqt_apply_error) == 24 && offsetof(vlqt_apply_error, reason) == 16, "vlqt_apply_error layout");
 static_assert(sizeof(vlqt_host_pump) == 56 && offsetof(vlqt_host_pump, wait) == 52, "vlqt_host_pump layout");
@@ -203,6 +203,16 @@ VLQT_API int vlqt_app_process_events_for(vlqt_scene* const* windows, int count)
                 if (perf)
                     perf->endPump(ms);
         return 0;
+    });
+}
+
+VLQT_API int vlqt_app_set_frame_budget(double ms)
+{
+    return guardedGui("vlqt_app_set_frame_budget", [&]() -> int {
+        if (!(ms > 0 && ms < 1000))
+            return fail(VLQT_ERR_BAD_ARGUMENT, "set_frame_budget: ms must be > 0 and < 1000");
+        PerfMonitor::setFrameBudget(ms);
+        return VLQT_OK;
     });
 }
 

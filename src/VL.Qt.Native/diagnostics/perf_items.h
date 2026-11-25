@@ -29,7 +29,7 @@ private:
 };
 
 // F5 Timeline page: stacked bars per pump in frame order (host: vvvv, GC, apply, F7 toggles them; Qt: events, sync,
-// render, present), GPU line, budget line, over-budget highlight (Qt pump), max-hold line and peak markers. No JS/Canvas:
+// render, present), GPU line, budget line, over-budget highlight (Qt work), max-hold line and peak markers. No JS/Canvas:
 // with QRhi two geometry nodes with vertex colors; on the Qt Quick software backend (no custom geometry there)
 // one rectangle node per primitive.
 class PerfTimeline : public QQuickItem
