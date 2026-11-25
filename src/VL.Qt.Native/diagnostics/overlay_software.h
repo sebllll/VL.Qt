@@ -3,6 +3,8 @@
 // shown by one image node. This is everything of that path except the QPainter body of each item.
 #pragma once
 
+#include "device/renderer_info.h"
+
 #include <QtGui/QImage>
 #include <QtGui/QPainter>
 #include <QtQuick/QQuickItem>
@@ -13,16 +15,6 @@
 #include <algorithm>
 
 namespace vlqt {
-
-// true if the window renders with the Qt Quick software backend (no QRhi). sceneGraphBackend() already tells before the
-// window has a renderer interface (an item that is set up before the scene graph starts).
-inline bool isSoftwareBackend(QQuickWindow* window)
-{
-    if (QQuickWindow::sceneGraphBackend() == QLatin1String("software"))
-        return true;
-    const QSGRendererInterface* ri = window ? window->rendererInterface() : nullptr;
-    return ri && ri->graphicsApi() == QSGRendererInterface::Software;
-}
 
 // Paints the item into `cache` (resized to the item in device pixels, cleared transparent) with paint(QPainter&), which
 // draws in item coordinates (the painter is scaled by the device pixel ratio), and returns the image node that shows

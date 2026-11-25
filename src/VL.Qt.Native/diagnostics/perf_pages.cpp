@@ -1,5 +1,5 @@
 #include "diagnostics/perf_pages.h"
-#include "diagnostics/overlay_software.h"
+#include "device/renderer_info.h"
 #include "diagnostics/perf_items.h"
 #include "scene/scene.h"
 #include "snapshot_resource.h"
@@ -14,10 +14,6 @@
 #include <array>
 #include <cmath>
 #include <map>
-
-#ifdef Q_OS_WIN
-#include <dxgi1_5.h>
-#endif
 
 namespace vlqt {
 namespace {
@@ -44,30 +40,6 @@ const char* const kPhaseName[PerfMonitor::PhaseCount] = {"events", "sync", "rend
 constexpr int kPhaseOrder[PerfMonitor::PhaseCount] = {PerfMonitor::PhaseEvents, PerfMonitor::PhaseVsync,
     PerfMonitor::PhaseSync, PerfMonitor::PhaseRender, PerfMonitor::PhasePresent};
 const char* const kPageName[PerfMonitor::PageCount] = {"SUMMARY", "TIMELINE", "SCENE", "SYSTEM", "RESOURCES"};
-
-#ifdef Q_OS_WIN
-// Same query as QRhiD3D11::create(): IDXGIFactory5::CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING),
-// qtbase v6.12.0 src/gui/rhi/qrhid3d11.cpp:211-219 (supportsAllowTearing). Asked once per process.
-bool dxgiAllowTearingSupported()
-{
-    static const bool supported = [] {
-        bool result = false;
-        IDXGIFactory1* factory = nullptr;
-        if (SUCCEEDED(CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&factory)))) {
-            IDXGIFactory5* factory5 = nullptr;
-            if (SUCCEEDED(factory->QueryInterface(__uuidof(IDXGIFactory5), reinterpret_cast<void**>(&factory5)))) {
-                BOOL allowTearing = FALSE;
-                if (SUCCEEDED(factory5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing))))
-                    result = allowTearing != FALSE;
-                factory5->Release();
-            }
-            factory->Release();
-        }
-        return result;
-    }();
-    return supported;
-}
-#endif
 
 float phaseMs(const PerfSample& s, int phase)
 {
@@ -433,27 +405,24 @@ QString PerfMonitor::systemPage() const
     Html h;
     pageHeader(h, System, m_frozen);
     constexpr int L = 14; // "allow tearing" + 1
-    QRhi* rhi = m_window->rhi();
-    const bool quickSoftware = isSoftwareBackend(m_window);
+    const RendererInfo ri = describeRenderer(m_window);
     h.br().t(lab("backend", L));
-    if (rhi)
-        h.t(QString::fromLatin1(rhi->backendName())).c(kGrey, "  QRhi");
-    else if (quickSoftware)
+    if (ri.hasRhi)
+        h.t(ri.backendName).c(kGrey, "  QRhi");
+    else if (ri.quickSoftware)
         h.t("software").c(kGrey, "  Qt Quick 2D renderer, no QRhi");
     else
         h.t(kNa);
-    const QRhiDriverInfo info = rhi ? rhi->driverInfo() : QRhiDriverInfo{};
-    const QString device = QString::fromUtf8(info.deviceName);
-    h.br().t(lab("adapter", L)).t(device.isEmpty() ? kNa : device);
-    if (const char* type = rhi ? deviceTypeName(info.deviceType) : nullptr)
+    h.br().t(lab("adapter", L)).t(ri.adapter.isEmpty() ? kNa : ri.adapter);
+    if (const char* type = ri.hasRhi ? deviceTypeName(ri.deviceType) : nullptr)
         h.c(kGrey, QStringLiteral("  %1").arg(QString::fromLatin1(type)));
     h.br().t(lab("rendering", L));
     if (!m_rendererKnown)
         h.c(kGrey, kNa);
-    else if (m_software.isEmpty())
+    else if (m_renderer.software.isEmpty())
         h.c(kGreen, "GPU");
     else
-        h.c(kRed, QStringLiteral("CPU (%1)").arg(m_software));
+        h.c(kRed, QStringLiteral("CPU (%1)").arg(m_renderer.software));
     const qreal dpr = m_window->devicePixelRatio();
     const QSize px = m_window->size() * dpr;
     h.br().t(lab("window", L)).t(QStringLiteral("%1x%2 px").arg(px.width()).arg(px.height()))
@@ -473,34 +442,28 @@ QString PerfMonitor::systemPage() const
     if (QRhiSwapChain* sc = m_window->swapChain()) {
         const bool vsync = !(sc->flags() & QRhiSwapChain::NoVSync);
         h.t(QString::number(vsync ? 1 : 0)).c(kGrey, vsync ? "  VSync on, Present waits" : "  VSync off, Present does not wait");
-    } else if (rhi) {
+    } else if (ri.hasRhi) {
         h.t(QString::number(m_window->format().swapInterval())).c(kGrey, "  requested");
     } else {
         h.t(kNa);
-        if (quickSoftware)
+        if (ri.quickSoftware)
             h.c(kGrey, "  software backend presents via the backing store");
     }
     // Does Qt call Present with DXGI_PRESENT_ALLOW_TEARING? D3D11 only. QRhiD3D11::beginFrame/endFrame
     // (qrhid3d11.cpp:1561-1562, v6.12.0) sets it when swapInterval == 0 and the swap chain has
     // DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING; that flag is set when NoVSync and supportsAllowTearing
-    // (qrhid3d11.cpp:5422-5430) = dxgiAllowTearingSupported() here.
+    // (qrhid3d11.cpp:5422-5430) = RendererInfo::allowTearingSupported.
     h.br().t(lab("allow tearing", L));
     QRhiSwapChain* tearSc = m_window->swapChain();
-#ifdef Q_OS_WIN
-    if (rhi && rhi->backend() == QRhi::D3D11 && tearSc) {
+    if (ri.hasRhi && ri.backend == QRhi::D3D11 && tearSc) {
         const bool noVsync = tearSc->flags() & QRhiSwapChain::NoVSync;
-        const bool supported = dxgiAllowTearingSupported();
-        const bool tearing = noVsync && supported;
+        const bool tearing = noVsync && ri.allowTearingSupported;
         h.c(tearing ? kYellow : kGreen, tearing ? "yes" : "no");
         h.c(kGrey, tearing ? "  Present uses ALLOW_TEARING, frames may tear"
             : !noVsync ? "  VSync on" : "  not supported by the system, Present(0) in the flip model may still wait");
     } else {
         h.c(kGrey, kNa);
     }
-#else
-    Q_UNUSED(tearSc);
-    h.c(kGrey, kNa);
-#endif
     h.br().t(lab("Qt", L)).t(QString::fromLatin1(qVersion()));
     return h.str();
 }
