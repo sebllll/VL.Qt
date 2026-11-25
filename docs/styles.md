@@ -31,6 +31,17 @@ Sizes in a style are px. Rectangles and Text have no Style pin: they are primiti
 
 A patched class that implements `IStylable` behaves like a built-in widget: connect it wherever an element goes (Group, Row, Column, Renderer, Labeled, an effect input), and its `Build` operation is called with the style resolved at that position; the returned element is shown. Build may return another stylable, which is built in turn; one that returns itself or a cycle shows nothing and warns. Inside Build, use the getters to read colors, radius and font for the current state and draw the widget from primitives. Build runs once per frame; element nodes return the same instance while nothing changes, so the scene stays untouched. The output pin of Build must be named `Result`.
 
+## Adding a style field
+
+A field lives in its part file (`src/VL.Qt/Styles/FrameStyle.cs`, `TextStyle.cs`, `IndicatorStyle.cs`, `TrackStyle.cs`). The part holds the property, its merge (`Merge`, through `MergeTally.Pick`), its wire mapping (`Visit`) and its text for `Style.ToString` (`Describe`). Editing a new field, in this order:
+
+1. Part file: property, one line each in `Merge` (`Pick`, and the initializer), `Visit` and `Describe`.
+2. `BaseStyle.cs`: the default value of the VLQt base style.
+3. `StyleNodes.cs`: the setter (Advanced aspect) and the getter, and `Apply` of the part node.
+4. `protocol.h` and `Wire/Protocol.cs` (`StyleField` id), mirrored by hand; run the drift tests.
+5. QtNative: the entry in the style table.
+6. `StyleTests`: add the field to `fieldCases`; the test sets it alone on the upper style and checks that `Merge` keeps it and `ToString` lists it. A field missing from `Merge` fails there.
+
 ## Help patches
 
 `HowTo Style a Widget`, `HowTo Style Control Parts`, `HowTo Style Widgets with a Group`, `HowTo Patch a Stylable Widget`. See [Help patches](help-patches.md).
