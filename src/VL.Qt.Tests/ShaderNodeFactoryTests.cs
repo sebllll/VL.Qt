@@ -224,8 +224,72 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
             // vvvv calls IVLNode.Update only for non-fragmented descriptions; fragmented ones never update and Output stays null.
             var path = Write("Glitch.frag", fragmentSource);
             var file = new ShaderFile(path, null, "Glitch", null, ShaderNodeFactory.DefaultCategory, null, null);
-            var description = ShaderDescription.New(new FakeFactory(), file, NullLogger.Instance);
+            var description = ShaderDescription.New(new FakeFactory(), file, NullLogger.Instance, new ShaderSourceCache(NullLogger.Instance));
             Assert.That(description.Fragmented, Is.False);
+        }
+
+        // --- source cache ---
+
+        [Test]
+        public void SourceCache_FilterFile_ReflectsOncePerStageAndVersion()
+        {
+            var path = Write("Glitch.frag", fragmentSource);
+            var vertex = Write("Glitch.vert", "#version 440\nvoid main() {}\n");
+            var file = new ShaderFile(path, vertex, "Glitch", null, ShaderNodeFactory.DefaultCategory, null, null, IsFilter: true);
+            var reflections = 0;
+            var cache = new ShaderSourceCache(NullLogger.Instance, (_, _) => { reflections++; return ShaderReflection.Parse(reflection); });
+
+            // The element node and the chain node of the file both ask for the source.
+            var element = ShaderLayout.From(cache.Get(file), file);
+            var effect = ShaderEffectLayout.From(cache.Get(file), file);
+            Assert.That(reflections, Is.EqualTo(2), "one for the .frag, one for the .vert");
+            Assert.That(element.Pins, Is.Not.Empty);
+            Assert.That(effect.Pins, Is.Not.Empty);
+
+            File.WriteAllText(path, fragmentSource + "// changed\n");
+            File.SetLastWriteTimeUtc(path, File.GetLastWriteTimeUtc(path).AddSeconds(2));
+            cache.Get(file);
+            cache.Get(file);
+            Assert.That(reflections, Is.EqualTo(4), "a new version reflects again, once");
+        }
+
+        [Test]
+        public void SourceCache_UnreadableFile_IsNotRemembered()
+        {
+            var file = new ShaderFile(Path.Combine(_dir, "Missing.frag"), null, "Missing", null, ShaderNodeFactory.DefaultCategory, null, null);
+            var cache = new ShaderSourceCache(NullLogger.Instance, (_, _) => ShaderReflection.Parse(reflection));
+            Assert.That(cache.Get(file).ReadError, Is.Not.Null);
+
+            Write("Missing.frag", fragmentSource);
+            Assert.That(cache.Get(file).ReadError, Is.Null);
+        }
+
+        [Test]
+        public void SourceCache_LogOnce_SameTextOfAVersionIsLoggedOnce()
+        {
+            var path = Write("Broken.frag", fragmentSource);
+            var file = new ShaderFile(path, null, "Broken", null, ShaderNodeFactory.DefaultCategory, null, null);
+            var logger = new CountingLogger();
+            var cache = new ShaderSourceCache(logger, (_, _) => ShaderReflection.Parse("error: syntax error\n"));
+
+            var element = ShaderLayout.From(cache.Get(file), file);
+            var effect = ShaderEffectLayout.From(cache.Get(file), file);
+            cache.LogOnce(file, element.Messages);
+            cache.LogOnce(file, effect.Messages);
+            Assert.That(element.Messages, Is.Not.Empty);
+            Assert.That(logger.Errors, Is.EqualTo(1), "the compile error of both nodes");
+        }
+
+        private sealed class CountingLogger : Microsoft.Extensions.Logging.ILogger
+        {
+            public int Errors { get; private set; }
+            public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+            public bool IsEnabled(Microsoft.Extensions.Logging.LogLevel logLevel) => true;
+            public void Log<TState>(Microsoft.Extensions.Logging.LogLevel logLevel, Microsoft.Extensions.Logging.EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            {
+                if (logLevel == Microsoft.Extensions.Logging.LogLevel.Error)
+                    Errors++;
+            }
         }
 
         private sealed class FakeFactory : IVLNodeDescriptionFactory

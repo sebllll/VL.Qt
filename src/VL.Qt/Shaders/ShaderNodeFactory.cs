@@ -54,30 +54,35 @@ namespace VL.Qt.Shaders
         /// Nodes of &lt;path&gt;/qtshaders/ (recursive). invalidated: qtshaders/ created/deleted or .frag/.vert files
         /// added/deleted/renamed (NodeBuilding.WatchDir). Without the folder: empty factory that still watches path for it.
         /// </summary>
-        public static NodeBuilding.FactoryImpl ForPath(string path, IVLNodeDescriptionFactory factory, ILogger logger) =>
-            FolderNodeFactory.ForPath(
+        public static NodeBuilding.FactoryImpl ForPath(string path, IVLNodeDescriptionFactory factory, ILogger logger)
+        {
+            // One cache for the folder, across scans: a rescan or a recompile does not bake unchanged files again.
+            var cache = new ShaderSourceCache(logger);
+            return FolderNodeFactory.ForPath(
                 path,
                 FolderName,
                 logger,
                 scan: Scan,
                 duplicateError: static file => file.DuplicateError,
-                createDescriptions: files => CreateDescriptions(files, factory, logger),
+                createDescriptions: files => CreateDescriptions(files, factory, logger, cache),
                 isNewOrDeleted: IsNewOrDeletedShaderFile,
                 watchContent: WatchContent,
                 headChanged: HeadChanged);
+        }
 
         /// <summary>One element node per file (none for @chainonly), plus the link node of the effect chain for every filter.</summary>
-        internal static ImmutableArray<IVLNodeDescription> CreateDescriptions(IEnumerable<ShaderFile> files, IVLNodeDescriptionFactory factory, ILogger logger)
+        internal static ImmutableArray<IVLNodeDescription> CreateDescriptions(IEnumerable<ShaderFile> files, IVLNodeDescriptionFactory factory, ILogger logger, ShaderSourceCache? cache = null)
         {
+            cache ??= new ShaderSourceCache(logger);
             var nodes = ImmutableArray.CreateBuilder<IVLNodeDescription>();
             foreach (var file in files)
             {
                 if (file.ChainOnly && !file.IsFilter)
                     logger.LogWarning("{Shader}: @chainonly needs 'uniform sampler2D source', so there is no node for this file", file.FragmentPath);
                 if (!file.ChainOnly)
-                    nodes.Add(ShaderDescription.New(factory, file, logger));
+                    nodes.Add(ShaderDescription.New(factory, file, logger, cache));
                 if (file.IsFilter)
-                    nodes.Add(ShaderEffectDescription.New(factory, file, logger));
+                    nodes.Add(ShaderEffectDescription.New(factory, file, logger, cache));
             }
             return nodes.ToImmutable();
         }
@@ -103,8 +108,9 @@ namespace VL.Qt.Shaders
             {
                 var vertex = Path.ChangeExtension(fragment, vertexExtension);
                 var (name, version) = FileNodeNames.Split(Path.GetFileNameWithoutExtension(fragment));
-                var annotations = ReadHead(fragment);
-                var isFilter = ReadIsFilter(fragment) ?? false;
+                var head = ShaderFileHead.Read(fragment);
+                var annotations = head?.Annotations ?? ShaderAnnotations.Empty;
+                var isFilter = head?.IsFilter ?? false;
                 var hasCategory = !string.IsNullOrWhiteSpace(annotations.Category);
                 var category = hasCategory ? annotations.Category!.Trim() : DefaultCategory;
                 if (annotations.ChainOnly)
@@ -126,39 +132,13 @@ namespace VL.Qt.Shaders
             return result.MoveToImmutable();
         }
 
-        /// <summary>Annotations for the NodeBrowser only; a file that cannot be read now gets the defaults (init reports it).</summary>
-        private static ShaderAnnotations ReadHead(string fragment)
-        {
-            try
-            {
-                return ShaderAnnotations.Parse(File.ReadAllText(fragment));
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-            {
-                return ShaderAnnotations.Empty;
-            }
-        }
-
-        /// <summary>Whether the .frag declares <c>sampler2D source</c>; null if it cannot be read now.</summary>
-        private static bool? ReadIsFilter(string fragment)
-        {
-            try
-            {
-                return ShaderSource.IsFilter(File.ReadAllText(fragment));
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-            {
-                return null;
-            }
-        }
-
         /// <summary>
         /// True if a content change turned a generator into a filter or back, or added or removed @chainonly: that adds or
         /// removes a node. False if the file cannot be read now.
         /// </summary>
         private static bool HeadChanged(ShaderFile file) =>
-            ReadIsFilter(file.FragmentPath) is { } isFilter
-                && (isFilter != file.IsFilter || ReadHead(file.FragmentPath).ChainOnly != file.ChainOnly);
+            ShaderFileHead.Read(file.FragmentPath) is { } head
+                && (head.IsFilter != file.IsFilter || head.Annotations.ChainOnly != file.ChainOnly);
 
         /// <summary>Content change of <paramref name="file"/>'s own .frag/.vert (filtered NodeBuilding.WatchDir of its folder).</summary>
         public static IObservable<object> WatchContent(ShaderFile file)
