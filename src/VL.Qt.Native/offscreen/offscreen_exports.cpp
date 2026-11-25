@@ -30,7 +30,7 @@ VLQT_API int vlqt_offscreen_bind(vlqt_scene* scene, void* device, void* ntHandle
     if (usedSamples)
         *usedSamples = 0;
     return withOffscreen(scene, "vlqt_offscreen_bind", [&](OffscreenScene& state) -> int {
-#ifdef _WIN32
+#ifdef Q_OS_WIN
         // bind unbinds first and takes the new binding only after every check: a failure leaves the scene unbound.
         return bind(&state, device, ntHandle, width, height, format, samples, usedSamples);
 #else
@@ -49,7 +49,7 @@ VLQT_API int vlqt_offscreen_bind(vlqt_scene* scene, void* device, void* ntHandle
 VLQT_API int vlqt_offscreen_unbind(vlqt_scene* scene)
 {
     return withOffscreen(scene, "vlqt_offscreen_unbind", [&](OffscreenScene& state) -> int {
-#ifdef _WIN32
+#ifdef Q_OS_WIN
         OffscreenScene* s = &state;
         s->executor.call([s] { unbind(s); });
 #else
@@ -76,7 +76,7 @@ VLQT_API int vlqt_offscreen_render_batch(void* context, vlqt_scene* const* scene
     return guardedGui("vlqt_offscreen_render_batch", [&]() -> int {
         if (!context || count < 0 || (!scenes && count > 0))
             return vlqt::fail(VLQT_ERR_BAD_ARGUMENT, "vlqt_offscreen_render_batch: null context, null scenes or negative count");
-#ifdef _WIN32
+#ifdef Q_OS_WIN
         return renderBatch(context, scenes, count, driverSeconds);
 #else
         (void)driverSeconds;

@@ -7,13 +7,14 @@
 
 #include <QtCore/QLoggingCategory>
 
+#include <string>
 #include <vector>
 
 namespace vlqt::render_thread {
 
 namespace {
 
-Q_LOGGING_CATEGORY(lcRenderThread, "vlqt.offscreen")
+Q_LOGGING_CATEGORY(lcRenderThread, "vlqt.renderthread")
 
 int s_count = -1;      // the pool size for new scenes, -1 = not set yet (1 at the first scene)
 int s_next = 0;        // round robin
@@ -47,7 +48,7 @@ void logJobError(std::exception_ptr error)
 int setThreadCount(int count)
 {
     if (count < 0 || count > maxThreads)
-        return fail(VLQT_ERR_BAD_ARGUMENT, "offscreen set_render_threads: thread count out of range 0 ... 16");
+        return fail(VLQT_ERR_BAD_ARGUMENT, ("offscreen set_render_threads: thread count out of range 0 ... " + std::to_string(maxThreads)).c_str());
     if (count != s_count) {
         if (count == 0)
             qCInfo(lcRenderThread, "offscreen scenes created from now on render on the main thread");

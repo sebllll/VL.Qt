@@ -10,7 +10,7 @@
 
 #include <algorithm>
 
-#ifdef _WIN32
+#ifdef Q_OS_WIN
 #include "device/device.h"
 
 // dropRhi: QQuickRenderControlPrivate and QQuickWindowPrivate. Private API, check on Qt updates.
@@ -26,7 +26,7 @@ namespace {
 
 std::vector<OffscreenScene*> s_scenes;
 
-#ifdef _WIN32
+#ifdef Q_OS_WIN
 // Drops scene graph and QRhi as ~QQuickRenderControl does: initialize() reuses an existing QRhi, so a new one (on a
 // new device) needs resetRhi. The window has no QRhi afterwards. On the scene's render thread.
 void dropRhi(OffscreenScene* s)
@@ -118,7 +118,7 @@ vlqt_scene* create(int width, int height)
         [state] { state->dirty = true; });
     QObject::connect(state->renderControl, &QQuickRenderControl::renderRequested, state->renderControl,
         [state] { state->dirty = true; });
-#ifdef _WIN32
+#ifdef Q_OS_WIN
     static const bool listening = [] {
         vlqt::device::addListener({ deviceLost, deviceRestored });
         return true;
@@ -131,7 +131,7 @@ vlqt_scene* create(int width, int height)
 
 void release(OffscreenScene* state)
 {
-#ifdef _WIN32
+#ifdef Q_OS_WIN
     state->executor.call([state] {
         unbind(state);
         // The render thread's scene graph and QRhi go there, before the main thread deletes window and render control.

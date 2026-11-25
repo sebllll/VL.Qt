@@ -69,7 +69,6 @@ Goal set by the user: half-transparent Qt content drawn over a Stride scene look
 
 - Main-thread time per QtTexture drops from 0.7–2.8 ms to 0.07–0.34 ms (polish + blocking sync + hand-off; sync alone 0.06–0.19 ms). Every frame of every run held its own marker (0 of 230 misses): same frame.
 - More threads shorten the frame only for several heavy scenes, and pay with CPU: render time per scene grows 1.4× (pool 2) to 3× (per scene) through contention (cores shared with vvvv, Qt-global locks, the context lock: 0.12–0.16 ms wait per scene frame per scene vs < 0.001 ms with one thread). Round 1 of the first matrix showed ±50 % run-to-run noise on this laptop for the 4- and 8-scene cases; the trend held.
-- `VLQT_OFFSCREEN_FOREIGN_FLUSH=1` (flush Stride's context after its read signal) changed nothing measurable here (the test's Map flushes anyway); in vvvv Stride flushes only at Present, so without it Qt's GPU work could not start before Stride's first flush.
 - The `qttexture` suite (bind/unbind, formats, batch, alpha, adapter move, device loss of QtNative's device via D3D11On12, foreign release, 1000× leak test, window comparison) passes with one render thread: 208 PASS, 0 FAIL.
 - WARP: the foreign context waiting for a value the render thread signals later deadlocks (9 of 10 runs; hardware: never). QtNative falls back for a binding with a software device: the main thread waits until the render thread has submitted the signal, then queues the wait (no gain, correct; 2 of 2 runs).
 

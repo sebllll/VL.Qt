@@ -1,11 +1,7 @@
-// Offscreen scenes (QtTexture): a Qt scene without a native window (QQuickRenderControl) on the shared D3D11
-// device, rendering into a texture of a foreign device (Stride's), ordered by two shared fences. C ABI: the
-// vlqt_offscreen_* exports in vlqt.h; design: docs/decisions/render-texture.md. Called on the main thread only; the
-// scene graph and QRhi of a scene may live on a render thread (render_thread.h, offscreen_scene.cpp).
-//
-// A scene is a scene handle (vlqt_scene*, vlqt::SceneHandle of window/scene_handle.h) whose QQuickWindow is driven by a
-// QQuickRenderControl: window/window.cpp creates the parts every handle shares (engine, scene, gate, perf, graphics
-// configuration), this part owns the render control and the binding.
+// offscreen.h - offscreen scenes (QtTexture): a scene handle whose QQuickWindow a QQuickRenderControl drives, rendering
+// into a texture of a foreign device. This part owns the render control and the binding; window/window.cpp creates what
+// every handle shares. Threads: main; a scene's scene graph and QRhi live on its render thread (device/render_thread.h).
+// C ABI: the vlqt_offscreen_* exports in vlqt.h. Design: docs/design/render-thread.md, docs/decisions/render-texture.md.
 #pragma once
 
 #include <QtCore/QPointF>
