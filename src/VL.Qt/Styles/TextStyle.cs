@@ -4,7 +4,7 @@ using VL.Qt.Wire;
 
 namespace VL.Qt.Styles
 {
-    /// <summary>Text part of a style. Font size in px; font family "" = Qt's default font.</summary>
+    /// <summary>Text part of a style. Font size in DIP; font family "" = the default font.</summary>
     internal sealed record TextStyle
     {
         public StateValues<Color4> Color { get; init; }
