@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using VL.Lib.IO.Notifications;
 
-namespace VL.Qt.Stride
+namespace VL.Qt
 {
     /// <summary>
     /// Takes the notifications of an Input Notifications pin from whatever thread they arrive on and hands them to the

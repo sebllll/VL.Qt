@@ -20,6 +20,9 @@ namespace VL.Qt
         private readonly Scene _scene;
         private string _createError = "", _bindError = "";
         private int _usedSamples;
+        private Native.Result _lastBind = Native.Result.Ok;
+        private int _rebindWait;
+        private bool _debug;
 
         /// <param name="registry">Duplicate registry of the app (<see cref="OccurrenceRegistry.ForApp"/>).</param>
         /// <param name="width">Initial scene width in DIP (1 DIP = 1 texture pixel); <see cref="Bind"/> sets the final size.</param>
@@ -54,6 +57,34 @@ namespace VL.Qt
         /// <summary>MSAA count of the last successful <see cref="Bind"/> (what QtNative used, clamped to the device); 0 while unbound.</summary>
         public int UsedSamples => _usedSamples;
 
+        /// <summary>
+        /// Sets the debug overlay for all elements of the scene (same as the Debug pin of Renderer [Qt]); no-op while the scene
+        /// is not open or the value is unchanged.
+        /// </summary>
+        public bool Debug
+        {
+            get => _debug;
+            set
+            {
+                if (value == _debug || !_scene.IsOpen)
+                    return;
+                _debug = value;
+                Native.vlqt_scene_set_debug(Handle, value ? 1 : 0);
+            }
+        }
+
+        /// <summary>Returns true if the last <see cref="Bind"/> succeeded (also before the first one and after <see cref="Unbind"/>).</summary>
+        public bool LastBindSucceeded => _lastBind == Native.Result.Ok;
+
+        /// <summary>
+        /// Returns true if the caller should try <see cref="Bind"/> again now, for a scene that is unbound. QtNative unbinds a
+        /// scene when its device is lost: bind again right away after such a loss (the last bind was fine) and while QtNative
+        /// rebuilds its device (DeviceLost); other failures (adapter, open, fences) are structural and tried again only every
+        /// 60 calls, so a failing bind costs nothing per frame. Call it once per frame while unbound.
+        /// </summary>
+        public bool ShouldRetryBind()
+            => _lastBind is Native.Result.Ok or Native.Result.DeviceLost || ++_rebindWait >= 60;
+
         /// <summary>First of: scene creation, last bind, last apply, last poll error. Empty if ok.</summary>
         public string Error =>
             _createError.Length > 0 ? _createError
@@ -76,7 +107,9 @@ namespace VL.Qt
         {
             if (!_scene.IsOpen)
                 return Native.Result.NullHandle;
+            _rebindWait = 0;
             var rc = Native.vlqt_offscreen_bind(Handle, device, ntHandle, size.X, size.Y, format, (int)samples, out var used);
+            _lastBind = rc;
             _usedSamples = rc == Native.Result.Ok ? used : 0;
             _bindError = rc == Native.Result.Ok ? "" : Describe(rc);
             return rc;
@@ -88,6 +121,7 @@ namespace VL.Qt
             if (!_scene.IsOpen)
                 return;
             Native.vlqt_offscreen_unbind(Handle);
+            _lastBind = Native.Result.Ok;
             _bindError = "";
             _usedSamples = 0;
         }
@@ -168,6 +202,24 @@ namespace VL.Qt
         /// </summary>
         public static int RenderBatch(IntPtr context, ReadOnlySpan<SceneHandle> scenes, double driverSeconds)
             => Native.OffscreenRenderBatch(context, scenes, driverSeconds);
+
+        /// <summary>
+        /// Like <see cref="RenderBatch"/>, returns the text of the failure instead of the code, empty if ok (also for a null
+        /// <paramref name="context"/>, which is an error).
+        /// </summary>
+        public static string RenderBatchError(IntPtr context, ReadOnlySpan<SceneHandle> scenes, double driverSeconds)
+        {
+            var rc = context == IntPtr.Zero ? (int)Native.Result.BadArgument : RenderBatch(context, scenes, driverSeconds);
+            return rc < 0 ? Describe((Native.Result)rc) : "";
+        }
+
+        /// <summary>
+        /// Sets the size of QtNative's pool of render threads (0 ... 16; 0 renders on the main thread), process-wide, for the
+        /// scenes created afterwards; a larger value adds threads at once. Returns false if QtNative refused the value.
+        /// Main thread only, after the Qt app started.
+        /// </summary>
+        public static bool SetRenderThreads(int count)
+            => Native.vlqt_offscreen_set_render_threads(count) == Native.Result.Ok;
 
         /// <summary>Returns the text of a <see cref="Native.Result"/>, empty for <see cref="Native.Result.Ok"/>.</summary>
         public static string Describe(Native.Result code) => code switch

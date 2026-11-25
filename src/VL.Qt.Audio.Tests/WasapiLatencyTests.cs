@@ -8,11 +8,11 @@ using NUnit.Framework;
 namespace VL.Qt.Audio.Tests
 {
     /// <summary>
-    /// COMP-04 / C19: which WASAPI latency does VL.Audio's stream run with, against what <c>VideoAudioSignal</c> assumes
-    /// (<c>AudioClient.MinimumDevicePeriod</c>)? Opens the default render device exactly as VL.Audio's <c>WasapiInOut</c>
-    /// does (<c>new WasapiOut(device, Shared, true, ceil(MinimumDevicePeriod / 10000))</c>, VL.Audio 1.9.21) and prints
-    /// the periods, the stream's buffer and <c>StreamLatency</c>. Needs an audio render device (ignored without one);
-    /// numbers only, a difference above 1 ms is a warning (category <c>Perf</c>, see <c>PerfLimit</c> in VL.Qt.Tests).
+    /// Which WASAPI latency does VL.Audio's stream run with? Opens the default render device exactly as VL.Audio's
+    /// <c>WasapiInOut</c> does (<c>new WasapiOut(device, Shared, true, ceil(MinimumDevicePeriod / 10000))</c>, VL.Audio
+    /// 1.9.21), prints the periods, the stream's buffer and <c>StreamLatency</c>, and checks that
+    /// <see cref="WasapiOutputLatency"/>, which <c>VideoAudioSignal</c> uses, reads the buffer length of that stream.
+    /// Needs an audio render device (ignored without one); category <c>Perf</c> (see <c>PerfLimit</c> in VL.Qt.Tests).
     /// </summary>
     [TestFixture, NonParallelizable]
     public sealed class WasapiLatencyTests
@@ -28,9 +28,9 @@ namespace VL.Qt.Audio.Tests
             }
         }
 
-        /// <summary>The latency of the stream VL.Audio opens (shared mode, event sync) next to the minimum device period.</summary>
+        /// <summary>The buffer of the stream VL.Audio opens (shared mode, event sync) against what the signal reads.</summary>
         [Test, Category("Perf")]
-        public void StreamLatencyAgainstMinimumDevicePeriod()
+        public void StreamBufferIsWhatTheSignalUses()
         {
             MMDevice device;
             try
@@ -70,9 +70,9 @@ namespace VL.Qt.Audio.Tests
                     $"requested {latencyMs} ms, stream buffer {client.BufferSize} frames = {bufferMs:F2} ms, StreamLatency {streamLatencyMs:F2} ms"));
                 output.Stop();
 
-                if (Math.Abs(streamLatencyMs - assumedMs) > 1)
-                    Assert.Warn(string.Create(CultureInfo.InvariantCulture,
-                        $"StreamLatency {streamLatencyMs:F2} ms differs from MinimumDevicePeriod {assumedMs:F2} ms by more than 1 ms"));
+                var used = WasapiOutputLatency.StreamBufferNs(device);
+                Assert.That(used, Is.Not.Null, "WasapiOutputLatency could not open a client on the default device");
+                Assert.That(used!.Value / 1e6, Is.EqualTo(bufferMs).Within(0.5), "buffer of the real stream (ms)");
             }
         }
     }

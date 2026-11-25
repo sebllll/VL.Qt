@@ -100,14 +100,15 @@ def test_stride_catalog():
     expect(pc.find_pin(tex, 'Format')['default'] == 'B8G8R8A8_UNorm_SRgb', 'stride: Format default from nameof(PixelFormat...)')
     expect(pc.find_pin(tex, 'Enabled')['default'] == 'True' and pc.find_pin(tex, 'Debug')['optional'],
            'stride: Enabled default and optional Debug')
-    expect(all(pc.find_pin(tex, n)['direction'] == 'out' for n in ('Output', 'Error', 'Perf')), 'stride: out pins')
+    expect(pc.find_pin(tex, 'Output')['direction'] == 'out' and pc.find_pin(tex, 'Error') is None and pc.find_pin(tex, 'Perf') is None,
+           'stride: Output is the only out pin (Error and Perf are gone)')
     expect(pc.find_pin(tex, 'Node Context') is None, 'stride: the hidden NodeContext is skipped')
 
 
 def test_stride_patch(tmp):
     canvas = (node('T', 'QtTexture', 'Stride.Textures.Source', [('TInput', 'Input', 'InputPin', ''), ('TSize', 'Size', 'InputPin', ''),
                                                                 ('TFormat', 'Format', 'InputPin', ''), ('TEnabled', 'Enabled', 'InputPin', ' IsHidden="true"'),
-                                                                ('TOutput', 'Output', 'OutputPin', ''), ('TError', 'Error', 'OutputPin', '')])
+                                                                ('TOutput', 'Output', 'OutputPin', '')])
               + pad('PSize', '1280, 720', 'Size') + pad('PFormat', 'B8G8R8A8_UNorm_SRgb', 'Format') + pad('POut', None, 'Output'))
     links = [('PSize', 'TSize'), ('PFormat', 'TFormat'), ('TOutput', 'POut')]
     path = os.path.join(tmp, 'stride.vl')
