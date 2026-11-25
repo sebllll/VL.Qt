@@ -22,6 +22,10 @@ namespace VL.Qt
             // Qt messages and process-wide VL.Qt messages go to the newest live app host's logger (before any node).
             QtLog.Attach(appHost);
 
+            // Exported console app: SIGTERM/SIGINT and the clean end, also without a Renderer (e.g. a console export that only writes files).
+            if (appHost.IsExported)
+                ExportedApp.Attach(appHost);
+
             // Shader nodes from qtshaders/**/*.frag next to documents and in packages.
             Shaders.ShaderNodeFactory.Register(appHost);
 

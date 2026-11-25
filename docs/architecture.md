@@ -24,10 +24,12 @@ vvvv's `IFrameClock` is the single time source:
 per vvvv frame:
   0. frame start (clock tick): vlqt_app_deliver_input(): Qt delivers the queued input without rendering,
      each renderer polls it into its feedback
-  1. Reconciler.Update(element tree)
-  2. vlqt_app_advance_animations(clock.Time)
-  3. vlqt_app_process_events_for(): Qt handles input and renders each changed window (at most once)
-  4. events are polled back (vlqt_scene_poll)
+  1. Reconciler.Update(element tree): the node update writes the commands
+  2. frame end, one pump per app (QtApp.PumpFrame): every renderer applies its commands (vlqt_scene_apply),
+     the image resource queues run
+  3. QtApp.AdvanceDriver(clock.Time) -> vlqt_app_advance_animations
+  4. vlqt_app_process_events_for(windows of this app): Qt handles input and renders each changed window (at most once)
+  5. resource queues, then the events are polled back (vlqt_scene_poll)
 ```
 
 - **Deterministic:** same tree and time, same output for everything vvvv computes from the time

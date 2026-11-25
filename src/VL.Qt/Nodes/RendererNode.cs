@@ -31,7 +31,6 @@ namespace VL.Qt.Nodes
 
         // Pump and scene registry of this vvvv app (new per F8/F5); QtApp itself is process-wide.
         private readonly QtPump _pump;
-        private readonly QtApp _app;
         private readonly NodeContext _nodeContext;
         private readonly NodeErrors _errors; // the messages at the node: warnings, QtNative errors, pump exceptions
         private readonly NodeMessage _qtError;
@@ -42,7 +41,7 @@ namespace VL.Qt.Nodes
         private readonly bool _vSync;
         private bool _fullscreen; // last Fullscreen pin value sent to QtNative
         private readonly IDevSession? _session; // editor only (null in exported apps): Save Bounds writes the Bounds pin
-        private readonly BoundsSaver? _boundsSaver;
+        private BoundsSaver? _boundsSaver; // created with the window, from its create bounds
         private readonly Stopwatch _clock = Stopwatch.StartNew(); // wall time for the Save Bounds delay (the frame clock may pause)
         private WindowScene? _view; // created in the first Update (Title/Size are update pins)
         private bool _disposed;
@@ -57,16 +56,15 @@ namespace VL.Qt.Nodes
         /// <param name="bounds">Initial position and size of the window in DIP (on create only, like Bounds of
         /// VL.Skia/VL.Stride; a change recreates the node). Size = client size, position = outer top-left. Empty
         /// bounds: 600x400 centered on the primary screen; bounds on no screen: centered. Applied before the window is
-        /// shown, on all platforms (Wayland: size only, the compositor places the window). A node added live or
-        /// restored by Undo/Redo gets no pin value from vvvv and opens at the default bounds until the next
-        /// restart.</param>
+        /// shown, on all platforms (Wayland: size only, the compositor places the window).</param>
         /// <param name="vSync">Synchronize presenting with the display refresh (swap interval 1). On (default): no
         /// tearing; the frame may wait for the refresh (F5 segment vsync wait), that wait does not count as Qt work.
         /// Off: Present never waits, vvvv alone sets the frame rate, tearing is possible. On create only (a change
         /// recreates the node, like Bounds).</param>
         /// <param name="boundToDocument">Closing the window (X) closes the document of this node in the editor (like
         /// VL.Skia/VL.Stride) and ends an exported app, even if KeepAppAlive still holds it (unlike VL.Skia/VL.Stride,
-        /// where the pin only acts in the editor). False: X only closes the window, the app keeps running.</param>
+        /// where the pin only acts in the editor). False: X hides the window. The editor keeps the app running; an exported
+        /// app ends when nothing else keeps it alive (KeepAppAlive).</param>
         /// <param name="dialogIfDocumentChanged">Ask to save when closing a changed document via X.</param>
         /// <param name="saveBounds">In the editor, moving or resizing the window writes its geometry to the Bounds pin
         /// ~0.5 s after the last change (like VL.Skia/VL.Stride), without recreating the node; save the document to
@@ -88,40 +86,10 @@ namespace VL.Qt.Nodes
             _boundToDocument = boundToDocument;
             _dialogIfDocumentChanged = dialogIfDocumentChanged;
             _pump = QtPump.ForApp(nodeContext.AppHost);
-            _app = QtApp.Get();
-            Debug.Assert(_app.IsQtThread, "VL.Qt must be used from the thread that created the QGuiApplication");
-            // Exported apps end once the host no longer needs to stay alive (IL of vvvv 8.0-0156, VL.AppServices:
-            // AppHostBase.ShouldStayAlive = ref count of AppHost.KeepAlive() > 0; the WinForms host additionally
-            // Application.OpenForms.Count > 0). The Qt window is no Form, so in the WinForms window export the Renderer holds
-            // a KeepAlive until the Qt window is closed (X) or the node is disposed - same behaviour as the former invisible
-            // keep-alive Form, which also only worked there. Console exports (Linux/Windows) are deliberately not kept alive:
-            // they need KeepAppAlive [System] in the top-level patch (docs/linux.md).
-            if (nodeContext.AppHost.IsExported && IsWindowsFormsHost(nodeContext.AppHost))
-                _keepAlive = nodeContext.AppHost.KeepAlive();
-            ExportedApp.Attach(nodeContext); // console export: signals, clean end (L7b)
+            _keepAlive = ExportedApp.HoldWhileWindowOpen(nodeContext.AppHost);
             if (saveBounds && !nodeContext.AppHost.IsExported && IDevSession.Current is { } session)
-            {
                 _session = session;
-                _boundsSaver = new BoundsSaver(_bounds);
-            }
             _pump.Register(this);
-        }
-
-        internal const string WindowsFormsAppHostType = "VL.App.WindowsForms.WindowsFormsAppHost";
-
-        /// <summary>
-        /// True if the app runs in the WinForms window host of exported apps (OutputType WinExe, package VL.App.WindowsForms).
-        /// AppHost has no API for the host kind, so the generated entry point's host type is checked by name (no WinForms
-        /// reference needed). vvvv 8.0-0156: WinExe → sealed VL.App.WindowsForms.WindowsFormsAppHost, console (Exe) →
-        /// sealed VL.App.ConsoleHost.ConsoleAppHost (VL.App.Console), both derived from VL.AppServices.ExportedAppHost.
-        /// The base chain is walked in case a future host derives from the WinForms host.
-        /// </summary>
-        internal static bool IsWindowsFormsHost(AppHost appHost)
-        {
-            for (var t = appHost.GetType(); t != null; t = t.BaseType)
-                if (t.FullName == WindowsFormsAppHostType)
-                    return true;
-            return false;
         }
 
         /// <summary>Renders the element tree into a Qt window.</summary>
@@ -195,8 +163,6 @@ namespace VL.Qt.Nodes
             [Pin(Name = "Multisample Count", Visibility = VL.Model.PinVisibility.Optional), DefaultValue(typeof(MultisampleCount), nameof(MultisampleCount.X4))] MultisampleCount multisampleCount,
             [Pin(Name = "Enable Keyboard Shortcuts", Visibility = VL.Model.PinVisibility.Optional), DefaultValue(true)] bool enableKeyboardShortcuts)
         {
-            Debug.Assert(_app.IsQtThread, "VL.Qt must be used from the thread that created the QGuiApplication");
-
             var iconPath = window?.IconPath;
 
             if (_view is null && !_disposed)
@@ -204,7 +170,11 @@ namespace VL.Qt.Nodes
                 _borderless = borderless; // before show: no frame flash
                 _fullscreen = fullscreen;
                 _iconPath = iconPath;
-                _view = new WindowScene(OccurrenceRegistry.ForApp(_nodeContext.AppHost), title, WindowSettings.ResolveBounds(window, _bounds), _vSync,
+                var createBounds = WindowSettings.ResolveBounds(window, _bounds);
+                // Starts from the bounds the window opens at, so opening the patch does not mark the document changed.
+                if (_session is not null)
+                    _boundsSaver = new BoundsSaver(createBounds);
+                _view = new WindowScene(OccurrenceRegistry.ForApp(_nodeContext.AppHost), title, createBounds, _vSync,
                     (borderless ? Protocol.WindowMode.Borderless : 0u) | (fullscreen ? Protocol.WindowMode.Fullscreen : 0u),
                     _iconPath, multisampleCount);
                 _samples = multisampleCount;
@@ -348,8 +318,8 @@ namespace VL.Qt.Nodes
         }
 
         // Mirrors VL.Skia's SkiaRendererNode.FormClosing: editor → hide, or close the document when bound;
-        // exported → the window closes (here: hides; in the WinForms host releasing the AppHost keep-alive ends the app,
-        // in console exports KeepAppAlive [System] in the top-level patch decides); bound → the app ends.
+        // exported → the window closes (here: hides; in the WinForms host releasing the keep-alive ends the app, in console
+        // exports KeepAppAlive [System] in the top-level patch decides); bound → the app ends (ExportedApp.Exit).
         private void OnCloseRequested()
         {
             if (_boundToDocument && !_nodeContext.AppHost.IsExported)

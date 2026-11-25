@@ -21,9 +21,9 @@ namespace VL.Qt
         /// attribute, only C# parameter defaults, otherwise the VL default of the type, for RectangleF (-0.5, -0.5, 1, 1).
         /// That gave a 1x1 DIP window (Windows: just a caption, centered as partly off screen) until the app was
         /// restarted. A Bounds equal to <paramref name="typeDefault"/> is therefore read as "no value" → <see cref="DefaultBounds"/>.
-        /// A Bounds value set in the patch is not passed by the hotswap either; such a node opens at the default bounds
-        /// until the next restart (Save Bounds writes only once the window is moved, so the pin keeps its value).
         /// </summary>
+        // The same holds for a Bounds value set in the patch: the hotswap does not pass it either, so such a node opens at the
+        // default bounds until the next restart (Save Bounds writes only once the window is moved, so the pin keeps its value).
         public static RectangleF CreateBounds(RectangleF bounds, RectangleF typeDefault)
             => bounds == typeDefault ? DefaultBounds : bounds;
 
