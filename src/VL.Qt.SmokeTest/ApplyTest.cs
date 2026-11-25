@@ -167,8 +167,8 @@ public static class ApplyTest
         {
             var r = Native.Apply(w, b.Clear().Cmd(op, p.ToArray()).Span);
             var e = Native.LastError();
-            var got = Native.vlqt_scene_get_apply_error(w, out var ae);
-            var ok = r == expected && (expected == Native.Result.Ok || (e.Contains(mustContain) && got == 0 && ae.rc == (int)expected && ae.Reason.Contains(mustContain)));
+            var got = Native.GetApplyError(w, out var ae);
+            var ok = r == expected && (expected == Native.Result.Ok || (e.Contains(mustContain) && got == 0 && ae.Rc == (int)expected && ae.Reason.Contains(mustContain)));
             s.Check(ok, $"reject {what} -> {r} \"{(expected == 0 ? "" : e)}\"");
         }
         const ushort uni = Protocol.Op.SetUniforms, qop = Protocol.Op.SetQmlProperties, chain = Protocol.Op.SetEffectChain;
@@ -331,35 +331,35 @@ public static class ApplyTest
         s.Check(Native.Apply(SceneHandle.Null, b.Span) == Native.Result.NullHandle, "apply: null window -> NullHandle");
 
         // Structured error: object id, op and property of the bad command, reason without prefix.
-        Native.vlqt_apply_error ae = default;
+        ApplyError ae = default;
         rc = Apply(b.Clear().Create(9, Protocol.ElementType.Group).SetFloats(9, Protocol.PropertyId.Size, Protocol.ValueType.F32, 1));
-        s.Check(rc == Native.Result.BadArgument && Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.rc == (int)Native.Result.BadArgument && ae.command == 1 && ae.id == 9
-            && ae.op == Protocol.Op.Set && ae.prop == Protocol.PropertyId.Size && ae.Reason.StartsWith("property ")
-            && Native.LastError().Contains("id 9"), $"apply error id: SET -> id {ae.id} op {ae.op} prop {ae.prop} \"{ae.Reason}\"");
+        s.Check(rc == Native.Result.BadArgument && Native.GetApplyError(w, out ae) == 0 && ae.Rc == (int)Native.Result.BadArgument && ae.Command == 1 && ae.Id == 9
+            && ae.Op == Protocol.Op.Set && ae.Prop == Protocol.PropertyId.Size && ae.Reason.StartsWith("property ")
+            && Native.LastError().Contains("id 9"), $"apply error id: SET -> id {ae.Id} op {ae.Op} prop {ae.Prop} \"{ae.Reason}\"");
         Err("unknown property id", b.Clear().Color(9, 1, 1, 1), Native.Result.UnknownProperty, "id 9");
-        s.Check(Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.id == 9 && ae.prop == Protocol.PropertyId.Color, $"apply error id: -6 -> {ae.id}/{ae.prop}");
+        s.Check(Native.GetApplyError(w, out ae) == 0 && ae.Id == 9 && ae.Prop == Protocol.PropertyId.Color, $"apply error id: -6 -> {ae.Id}/{ae.Prop}");
         Err("clear color, no id", b.Clear().Raw(Protocol.Op.SetClearColor, 4, 4), Native.Result.BadLength, "expected 16");
-        s.Check(Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.id == 0 && ae.op == Protocol.Op.SetClearColor, $"apply error id: CLEAR_COLOR -> id {ae.id}");
+        s.Check(Native.GetApplyError(w, out ae) == 0 && ae.Id == 0 && ae.Op == Protocol.Op.SetClearColor, $"apply error id: CLEAR_COLOR -> id {ae.Id}");
         // The op table checks the minimum length of a variable payload; id and property still come from the row (W4-33).
         var shortSet = new byte[6];
         BinaryPrimitives.WriteUInt32LittleEndian(shortSet, 9);
         BinaryPrimitives.WriteUInt16LittleEndian(shortSet.AsSpan(4), Protocol.PropertyId.Color);
         Err("SET shorter than its fields", b.Clear().Cmd(Protocol.Op.Set, shortSet), Native.Result.BadLength, "(op 4 SET, id 9, offset 0)");
-        s.Check(Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.id == 9 && ae.op == Protocol.Op.Set && ae.prop == Protocol.PropertyId.Color
-            && ae.Reason == $"payloadLen 6 too short for SET (>= {Protocol.SetFieldsSize})", $"apply error id: short SET -> {ae.id}/{ae.prop} \"{ae.Reason}\"");
-        s.Check(Apply(b.Clear().Destroy(9)) == 0 && Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.rc == 0 && ae.id == 0 && ae.Reason.Length == 0,
+        s.Check(Native.GetApplyError(w, out ae) == 0 && ae.Id == 9 && ae.Op == Protocol.Op.Set && ae.Prop == Protocol.PropertyId.Color
+            && ae.Reason == $"payloadLen 6 too short for SET (>= {Protocol.SetFieldsSize})", $"apply error id: short SET -> {ae.Id}/{ae.Prop} \"{ae.Reason}\"");
+        s.Check(Apply(b.Clear().Destroy(9)) == 0 && Native.GetApplyError(w, out ae) == 0 && ae.Rc == 0 && ae.Id == 0 && ae.Reason.Length == 0,
             "apply error id: cleared by a successful apply");
-        s.Check(Native.vlqt_scene_get_apply_error(SceneHandle.Null, out _) == Native.Result.NullHandle, "apply error id: null window -> NullHandle");
+        s.Check(Native.GetApplyError(SceneHandle.Null, out _) == Native.Result.NullHandle, "apply error id: null window -> NullHandle");
         s.Check(Apply(b.Clear()) == 0, "apply: empty buffer ok");
 
         // An invalid buffer resets the apply error too: it must not report the apply before it (here: rc -2, command 0).
         Err("clear color, no id again", b.Clear().Raw(Protocol.Op.SetClearColor, 4, 4), Native.Result.BadLength, "expected 16");
         var nullBuf = MemoryMarshal.CreateReadOnlySpan(ref Unsafe.NullRef<byte>(), 4);
         rc = Native.Apply(w, nullBuf);
-        s.Check(rc == Native.Result.BadLength && Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.rc == (int)Native.Result.BadLength
-            && ae.command == 0 && ae.id == 0 && ae.op == 0 && ae.Reason.Contains("invalid buffer"),
-            $"apply error id: null buffer after a failed apply -> rc {ae.rc} command {ae.command} op {ae.op} \"{ae.Reason}\" ({rc})");
-        s.Check(Apply(b.Clear()) == 0 && Native.vlqt_scene_get_apply_error(w, out ae) == 0 && ae.rc == 0, "apply error id: empty buffer clears the error");
+        s.Check(rc == Native.Result.BadLength && Native.GetApplyError(w, out ae) == 0 && ae.Rc == (int)Native.Result.BadLength
+            && ae.Command == 0 && ae.Id == 0 && ae.Op == 0 && ae.Reason.Contains("invalid buffer"),
+            $"apply error id: null buffer after a failed apply -> rc {ae.Rc} command {ae.Command} op {ae.Op} \"{ae.Reason}\" ({rc})");
+        s.Check(Apply(b.Clear()) == 0 && Native.GetApplyError(w, out ae) == 0 && ae.Rc == 0, "apply error id: empty buffer clears the error");
 
         // Earlier commands of a failing buffer stay applied.
         rc = Apply(b.Clear().Color(4, 1, 1, 0).Place(777, 0, 0, 1, 1).Color(4, 1, 0, 1));

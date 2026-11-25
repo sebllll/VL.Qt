@@ -181,21 +181,21 @@ namespace VL.Qt.Tests
         [Test]
         public void DescribeApplyError_NamesPropertyOrOp()
         {
+            var e = new ApplyError(-7, 0, 3, Protocol.Op.Set, Protocol.PropertyId.FillMode, "property 545: value 4 not allowed");
+            Assert.That(Scene.DescribeApplyError(e), Is.EqualTo("Qt rejected FillMode: property 545: value 4 not allowed"));
+            Assert.That(Scene.DescribeApplyError(e with { Op = Protocol.Op.Reparent }), Does.StartWith("Qt rejected Reparent: "));
+            Assert.That(Scene.DescribeApplyError(e with { Prop = 9999 }), Does.StartWith("Qt rejected property 9999: "));
+        }
+
+        [Test]
+        public void CopyApplyError_CopiesTheReasonBeforeTheNativeTextIsFreed()
+        {
             var reason = System.Runtime.InteropServices.Marshal.StringToCoTaskMemUTF8("property 545: value 4 not allowed");
-            try
-            {
-                var e = new Native.vlqt_apply_error { rc = -7, id = 3, op = Protocol.Op.Set, prop = Protocol.PropertyId.FillMode, reason = reason };
-                Assert.That(Scene.DescribeApplyError(e), Is.EqualTo("Qt rejected FillMode: property 545: value 4 not allowed"));
-                e.op = Protocol.Op.Reparent;
-                Assert.That(Scene.DescribeApplyError(e), Does.StartWith("Qt rejected Reparent: "));
-                e.op = Protocol.Op.Set;
-                e.prop = 9999;
-                Assert.That(Scene.DescribeApplyError(e), Does.StartWith("Qt rejected property 9999: "));
-            }
-            finally
-            {
-                System.Runtime.InteropServices.Marshal.FreeCoTaskMem(reason);
-            }
+            var raw = new Native.vlqt_apply_error { rc = -7, command = 2, id = 3, op = Protocol.Op.Set, prop = Protocol.PropertyId.FillMode, reason = reason };
+            var copy = Native.CopyApplyError(in raw);
+            System.Runtime.InteropServices.Marshal.FreeCoTaskMem(reason);
+            Assert.That(copy, Is.EqualTo(new ApplyError(-7, 2, 3, Protocol.Op.Set, Protocol.PropertyId.FillMode, "property 545: value 4 not allowed")));
+            Assert.That(Native.CopyApplyError(default(Native.vlqt_apply_error)).Reason, Is.SameAs(""), "no reason, no allocation");
         }
 
         [Test]

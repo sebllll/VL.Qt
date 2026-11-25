@@ -57,19 +57,19 @@ public static class ApplyFuzzTest
         void Probe(string what, byte[] buf)
         {
             var rc = Native.Apply(w, buf);
-            var got = Native.vlqt_scene_get_apply_error(w, out var ae);
+            var got = Native.GetApplyError(w, out var ae);
             applies++;
             string? problem = null;
             if (rc > Native.Result.Ok || rc < Native.Result.Invalid || rc == Native.Result.NullHandle)
                 problem = $"return code {rc} is not 0 or a negative ApplyResult";
             else if (got != Native.Result.Ok)
                 problem = $"apply_error returned {got}";
-            else if (ae.rc != (int)rc)
-                problem = $"apply_error.rc {ae.rc} differs from the return code {rc}";
-            else if (rc == 0 && (ae.Reason.Length != 0 || ae.id != 0 || ae.command != 0))
-                problem = $"success, but apply_error holds \"{ae.Reason}\" (id {ae.id}, command {ae.command})";
-            else if (rc < 0 && (ae.Reason.Length == 0 || ae.command < 0 || !Native.LastError().Contains("apply: command #" + ae.command)))
-                problem = $"failure {rc}, but apply_error has reason \"{ae.Reason}\", command {ae.command}, last error \"{Native.LastError()}\"";
+            else if (ae.Rc != (int)rc)
+                problem = $"apply_error.rc {ae.Rc} differs from the return code {rc}";
+            else if (rc == 0 && (ae.Reason.Length != 0 || ae.Id != 0 || ae.Command != 0))
+                problem = $"success, but apply_error holds \"{ae.Reason}\" (id {ae.Id}, command {ae.Command})";
+            else if (rc < 0 && (ae.Reason.Length == 0 || ae.Command < 0 || !Native.LastError().Contains("apply: command #" + ae.Command)))
+                problem = $"failure {rc}, but apply_error has reason \"{ae.Reason}\", command {ae.Command}, last error \"{Native.LastError()}\"";
             if (rc == 0)
                 accepted++;
             if (problem != null)

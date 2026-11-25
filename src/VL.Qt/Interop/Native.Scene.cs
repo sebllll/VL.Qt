@@ -15,22 +15,36 @@ namespace VL.Qt.Interop
 
         public static Result Apply(SceneHandle w, ReadOnlySpan<byte> buf) => vlqt_scene_apply(w, in MemoryMarshal.GetReference(buf), buf.Length);
 
-        /// <summary>Details of the last apply of a scene (vlqt.h); rc 0 = it succeeded.</summary>
+        /// <summary>Raw details of the last apply of a scene (vlqt.h); <c>reason</c> is valid only until the next apply: read through <see cref="GetApplyError"/>.</summary>
         [StructLayout(LayoutKind.Sequential)]
-        public struct vlqt_apply_error
+        internal struct vlqt_apply_error
         {
             public int rc, command;
             public uint id;
             public ushort op, prop;
             public IntPtr reason;
-
-            /// <summary>Reason text without the "apply: command #n" prefix (allocates; only on errors).</summary>
-            public readonly string Reason => Marshal.PtrToStringUTF8(reason) ?? "";
         }
 
-        /// <summary>Structured last apply error of the window (failing object id, op, property).</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Result vlqt_scene_get_apply_error(SceneHandle w, out vlqt_apply_error error);
+        private static extern Result vlqt_scene_get_apply_error(SceneHandle w, out vlqt_apply_error error);
+
+        /// <summary>
+        /// Structured last apply error of the scene (failing object id, op, property), with the reason copied. Allocates only
+        /// when there is a reason, i.e. after an error.
+        /// </summary>
+        internal static Result GetApplyError(SceneHandle scene, out ApplyError error)
+        {
+            var result = vlqt_scene_get_apply_error(scene, out var raw);
+            error = result == Result.Ok ? CopyApplyError(in raw) : new ApplyError(0, 0, 0, 0, 0, "");
+            return result;
+        }
+
+        internal static ApplyError CopyApplyError(in vlqt_apply_error raw)
+        {
+            // An empty or missing text (success) needs no string.
+            var reason = raw.reason == IntPtr.Zero || Marshal.ReadByte(raw.reason) == 0 ? "" : Marshal.PtrToStringUTF8(raw.reason) ?? "";
+            return new ApplyError(raw.rc, raw.command, raw.id, raw.op, raw.prop, reason);
+        }
 
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern Result vlqt_scene_poll(SceneHandle w, ref byte @out, int cap, out int written, out int required);

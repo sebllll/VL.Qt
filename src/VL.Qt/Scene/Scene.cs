@@ -174,8 +174,8 @@ namespace VL.Qt
         {
             var text = Native.LastError();
             ClearApplyErrors(); // only the latest failure is shown (the retry after a resync reports it again)
-            if (Native.vlqt_scene_get_apply_error(_handle, out var e) != Native.Result.Ok || e.id == 0
-                || !_reconciler.Bindings.TryGetValue(e.id, out var slot) || slot.State is not { } state)
+            if (Native.GetApplyError(_handle, out var e) != Native.Result.Ok || e.Id == 0
+                || !_reconciler.Bindings.TryGetValue(e.Id, out var slot) || slot.State is not { } state)
                 return text;
             state.ApplyError = DescribeApplyError(e);
             if (!_applyErrorSlots.Contains(state))
@@ -193,17 +193,17 @@ namespace VL.Qt
         }
 
         /// <summary>Element-facing text, e.g. "Qt rejected FillMode: property 545: value 4 not allowed" (allocates; errors only).</summary>
-        internal static string DescribeApplyError(in Native.vlqt_apply_error e)
+        internal static string DescribeApplyError(in ApplyError e)
         {
-            if (e.op != Protocol.Op.Set)
+            if (e.Op != Protocol.Op.Set)
             {
                 var reason = e.Reason;
                 // a plugin under a path beyond MAX_PATH is reported as "not found" although it is there.
                 if (reason.Contains("plugin", StringComparison.Ordinal) && reason.Contains("not found", StringComparison.Ordinal) && QtTreePathCheck.PathsTooLong)
                     reason += ". " + QtTreePathCheck.PathTooLongHint;
-                return $"Qt rejected {ConstantName(typeof(Protocol.Op), e.op) ?? "command " + e.op}: {reason}";
+                return $"Qt rejected {ConstantName(typeof(Protocol.Op), e.Op) ?? "command " + e.Op}: {reason}";
             }
-            return $"Qt rejected {ConstantName(typeof(Protocol.PropertyId), e.prop) ?? "property " + e.prop}: {e.Reason}";
+            return $"Qt rejected {ConstantName(typeof(Protocol.PropertyId), e.Prop) ?? "property " + e.Prop}: {e.Reason}";
         }
 
         private static string? ConstantName(Type constants, ushort value)
