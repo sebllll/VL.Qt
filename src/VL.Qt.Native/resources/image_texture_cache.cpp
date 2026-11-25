@@ -2,6 +2,7 @@
 #include "resources/image_texture_cache.h"
 
 #include "device/device.h"
+#include "render_thread.h"
 #include "resources/gpu_texture.h"
 #include "resources/image_resource.h"
 
@@ -124,6 +125,15 @@ std::shared_ptr<ImageTexture> imageTextureFor(QQuickWindow* window, const std::s
     if (t)
         s_textures.push_back(t);
     return t;
+}
+
+void retireImageTexture(std::shared_ptr<ImageTexture>& t)
+{
+    if (!t)
+        return;
+    QQuickWindow* window = t->window;
+    render_thread::retire(window, std::move(t));
+    t.reset();
 }
 
 } // namespace vlqt

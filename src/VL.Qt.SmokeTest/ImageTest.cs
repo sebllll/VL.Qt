@@ -15,12 +15,12 @@ public static class ImageTest
     private const string AssetName = "stripes_rgb_30x10.png";
     private const uint Stretch = 1, Smooth = 2, Fit = 3, Crop = 4, Tile = 5, Missing = 6, Unicode = 7;
 
-    /// <summary>Finds src/VL.Qt.SmokeTest/assets by walking up from the output directory (no copy step needed).</summary>
-    internal static string? FindAsset(string name = AssetName)
+    /// <summary>Finds a file of src/VL.Qt.SmokeTest/assets (or another folder of it) by walking up from the output directory (no copy step needed).</summary>
+    internal static string? FindAsset(string name = AssetName, string folder = "assets")
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
-            var p = Path.Combine(d.FullName, "src", "VL.Qt.SmokeTest", "assets", name);
+            var p = Path.Combine(d.FullName, "src", "VL.Qt.SmokeTest", folder, name);
             if (File.Exists(p))
                 return p;
         }

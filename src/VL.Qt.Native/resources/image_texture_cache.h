@@ -61,4 +61,8 @@ struct ImageTexture
 // Texture of content in window from the cache, made on a miss; nullptr if it cannot be drawn there (see above).
 std::shared_ptr<ImageTexture> imageTextureFor(QQuickWindow* window, const std::shared_ptr<res::image::ImageContent>& content);
 
+// Drops the holder's reference where the texture's window renders (render_thread::retire), and leaves t empty. Main
+// thread; on the window's render thread (updatePaintNode, invalidateSceneGraph) a plain reset is right.
+void retireImageTexture(std::shared_ptr<ImageTexture>& t);
+
 } // namespace vlqt
