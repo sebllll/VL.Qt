@@ -122,23 +122,29 @@ namespace VL.Qt.Tests
         public void UniformSampler(ReadOnlySpan<char> name, ulong packed) => _uniforms.Append($" {name.ToString()}=sampler({packed:x})");
         public void EndUniforms() => Add(_uniforms.ToString());
 
-        // SET_QML_PROPERTIES is recorded as one line: "QML id flags name=value ..."; the entries go through the Uniform*
-        // methods (and QmlRect / QmlString) into the same builder.
+        // SET_QML_PROPERTIES is recorded as one line: "QML id flags name=value ..." (the entries use the builder of the uniforms).
         public void BeginQmlProperties(uint id, ushort flags) => _uniforms.Clear().Append($"QML {id} {flags}");
-        public void QmlRect(ReadOnlySpan<char> name, float x, float y, float width, float height) => _uniforms.Append($" {name.ToString()}=rect({F(x)},{F(y)},{F(width)},{F(height)})");
-        public void QmlString(ReadOnlySpan<char> name, ReadOnlySpan<char> value) => _uniforms.Append($" {name.ToString()}=string({value.ToString()})");
+        public void QmlPropertyF32(ReadOnlySpan<char> name, float value) => UniformF32(name, value);
+        public void QmlPropertyI32(ReadOnlySpan<char> name, int value) => UniformI32(name, value);
+        public void QmlPropertyBool(ReadOnlySpan<char> name, bool value) => UniformBool(name, value);
+        public void QmlPropertyColor(ReadOnlySpan<char> name, float r, float g, float b, float a) => UniformColor(name, r, g, b, a);
+        public void QmlPropertyVec2(ReadOnlySpan<char> name, float x, float y) => UniformVec2(name, x, y);
+        public void QmlPropertyVec3(ReadOnlySpan<char> name, float x, float y, float z) => UniformVec3(name, x, y, z);
+        public void QmlPropertyVec4(ReadOnlySpan<char> name, float x, float y, float z, float w) => UniformVec4(name, x, y, z, w);
+        public void QmlPropertyRect(ReadOnlySpan<char> name, float x, float y, float width, float height) => _uniforms.Append($" {name.ToString()}=rect({F(x)},{F(y)},{F(width)},{F(height)})");
+        public void QmlPropertyString(ReadOnlySpan<char> name, ReadOnlySpan<char> value) => _uniforms.Append($" {name.ToString()}=string({value.ToString()})");
         public void EndQmlProperties() => Add(_uniforms.ToString());
 
         // SET_EFFECT_CHAIN is recorded as one line: "CHAIN id | multi prop=value ... | shader template ids pad=(l,t,r,b) strength=x name=value ...".
         // Uniform entries of a shader link go through the Uniform* methods into the same builder.
         public void BeginEffectChain(uint id) => _uniforms.Clear().Append($"CHAIN {id}");
         public void BeginMultiLink() => _uniforms.Append(" | multi");
-        public void EffectBool(ushort prop, bool value) => _uniforms.Append($" {PropName(prop)}=bool({(value ? 1 : 0)})");
-        public void EffectF32(ushort prop, float value) => _uniforms.Append($" {PropName(prop)}=f32({F(value)})");
-        public void EffectI32(ushort prop, int value) => _uniforms.Append($" {PropName(prop)}=i32({value})");
-        public void EffectColor(ushort prop, float r, float g, float b, float a) => _uniforms.Append($" {PropName(prop)}=color({F(r)},{F(g)},{F(b)},{F(a)})");
-        public void EffectRect(ushort prop, float x, float y, float width, float height) => _uniforms.Append($" {PropName(prop)}=rect({F(x)},{F(y)},{F(width)},{F(height)})");
-        public void EffectRef(ushort prop, uint refId) => _uniforms.Append($" {PropName(prop)}=ref({refId})");
+        public void MultiEffectBool(ushort prop, bool value) => _uniforms.Append($" {PropName(prop)}=bool({(value ? 1 : 0)})");
+        public void MultiEffectF32(ushort prop, float value) => _uniforms.Append($" {PropName(prop)}=f32({F(value)})");
+        public void MultiEffectI32(ushort prop, int value) => _uniforms.Append($" {PropName(prop)}=i32({value})");
+        public void MultiEffectColor(ushort prop, float r, float g, float b, float a) => _uniforms.Append($" {PropName(prop)}=color({F(r)},{F(g)},{F(b)},{F(a)})");
+        public void MultiEffectRect(ushort prop, float x, float y, float width, float height) => _uniforms.Append($" {PropName(prop)}=rect({F(x)},{F(y)},{F(width)},{F(height)})");
+        public void MultiEffectRef(ushort prop, uint refId) => _uniforms.Append($" {PropName(prop)}=ref({refId})");
 
         public void BeginEffectChainLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop,
             float paddingRight, float paddingBottom, float strength)

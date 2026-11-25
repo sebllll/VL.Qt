@@ -192,7 +192,7 @@ public static class InnerShadowTest
             cmd.SetF32(Txt, Protocol.PropertyId.Opacity, text ? 1 : 0);
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         cmd.Create(Src, Protocol.ElementType.Rectangle);
         cmd.SetColor(Src, Protocol.PropertyId.Color, 0, 0, 0, 0);
@@ -254,7 +254,7 @@ public static class InnerShadowTest
 
         Bitmap Shot(string name, bool text, float radius, float ox = 0, float oy = 0, float spread = 0, float intensity = 1, float alpha = 1)
         {
-            cmd.Reset();
+            cmd.Clear();
             Show(text);
             SetShadow(radius, ox, oy, spread, intensity, alpha);
             CheckApply($"innershadow {name}");
@@ -363,7 +363,7 @@ public static class InnerShadowTest
         DrainErrors();
         s.Check(errors.Count == 0, $"no EVENT_ERROR from the passes ({string.Join("; ", errors)})");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.Destroy(Fx);
         CheckApply("destroy");
         s.Pump(3);

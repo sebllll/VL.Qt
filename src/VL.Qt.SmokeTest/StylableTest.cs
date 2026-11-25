@@ -132,7 +132,7 @@ public static class StylableTest
 
         void Frame(Element root, string what, bool clear = false)
         {
-            cmd.Reset();
+            cmd.Clear();
             if (clear)
                 cmd.ClearColor(BgGray, BgGray, BgGray, 1);
             rec.Update(root, Space.DIPTopLeft);

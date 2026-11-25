@@ -87,7 +87,7 @@ public static class TooltipTest
         Element current = Tree(big, false);
         void Frame(bool clear = false)
         {
-            cmd.Reset();
+            cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
             rec.Update(current, Space.DIPTopLeft);
             if (cmd.Length > 0)
@@ -603,7 +603,7 @@ public static class TooltipTest
 
         // Cleanup: the window goes, the count of a destroyed window is not asked again.
         client.SetPumping(false);
-        cmd.Reset();
+        cmd.Clear();
         rec.Clear();
         Native.Apply(w, cmd.EndFrame());
         Native.vlqt_scene_destroy(w);

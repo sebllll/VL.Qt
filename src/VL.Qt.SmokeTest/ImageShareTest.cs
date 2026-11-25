@@ -59,7 +59,7 @@ public static class ImageShareTest
         var stripes = ImageTest.Load(stripesPath, s.Check, "stripes");
         foreach (var w in new[] { w1, w2 })
         {
-            cmd.Reset();
+            cmd.Clear();
             cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
             for (uint i = 0; i < Elements; i++)
             {
@@ -90,7 +90,7 @@ public static class ImageShareTest
         Color P1(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 400, y * a.Height / 300);
         Native.vlqt_res_create(Protocol.ResourceKind.Image, out var big);
         Native.vlqt_image_load(big, p4k, 0);
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetU64(1, Protocol.PropertyId.Image, big);
         s.Check(Native.Apply(w1, cmd.EndFrame()) == 0, "SET image to a loading resource");
         s.Pump(1);
@@ -133,10 +133,10 @@ public static class ImageShareTest
         // 4. Destroy an element while its resource loads, release the resource: no crash, nothing left.
         Native.vlqt_res_create(Protocol.ResourceKind.Image, out var loading);
         Native.vlqt_image_load(loading, p4k, 0);
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetU64(2, Protocol.PropertyId.Image, loading);
         Native.Apply(w1, cmd.EndFrame());
-        cmd.Reset();
+        cmd.Clear();
         cmd.Destroy(2);
         s.Check(Native.Apply(w1, cmd.EndFrame()) == 0, "destroy an element whose resource loads");
         Native.vlqt_res_release(loading);
@@ -149,7 +149,7 @@ public static class ImageShareTest
 
         // 5. Mipmaps: the 4K image into a 40x30 element, smooth.
         var mips = ImageTest.Load(p4k, s.Check, "4K with mipmaps", Protocol.ImageLoadFlags.Mipmaps);
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetU64(3, Protocol.PropertyId.Image, mips);
         cmd.SetBool(3, Protocol.PropertyId.Smooth, true);
         s.Check(Native.Apply(w1, cmd.EndFrame()) == 0, "mipmapped resource set");
@@ -185,7 +185,7 @@ public static class ImageShareTest
                 next += period;
                 if (clock.Elapsed.TotalMilliseconds > next) next = clock.Elapsed.TotalMilliseconds;
                 while (clock.Elapsed.TotalMilliseconds < next) Thread.SpinWait(50);
-                cmd.Reset();
+                cmd.Clear();
                 cmd.SetPlace(4, i % 360, 30, 39, 29); // something moves in both runs
                 if (switching)
                     cmd.SetU64(1, Protocol.PropertyId.Image, ids[i % ids.Count]);
@@ -211,7 +211,7 @@ public static class ImageShareTest
             s.Perf("image-share.apply_set_image_median", setMedian);
             PerfLimits.Below(s, setMedian, 0.1, "apply with SET image (switch between preloaded 4K), median ms");
             PerfLimits.Below(s, Rate(switching), Math.Max(Rate(background) * 3, 5), "hitch rate while switching 50 x 4K per frame in the range of the background, %");
-            cmd.Reset();
+            cmd.Clear();
             cmd.SetU64(1, Protocol.PropertyId.Image, big);
             Native.Apply(w1, cmd.EndFrame());
             foreach (var id in ids) Native.vlqt_res_release(id);

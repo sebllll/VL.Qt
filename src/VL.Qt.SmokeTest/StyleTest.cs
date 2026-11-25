@@ -57,18 +57,18 @@ public static class StyleTest
         {
             var rc = Apply();
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         void Mouse(int type, float x, float y) => s.Check(NativeTest.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
         void ExpectRc(Native.Result expected, string what)
         {
             var rc = Apply();
             s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
-            cmd.Reset();
+            cmd.Clear();
         }
 
         // Button 200 x 60 at (100, 100), fixed size; the probe point (110, 110) lies in the frame, away from the text.
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(BgGray, BgGray, BgGray, 1);
         cmd.Create(Btn, Protocol.ElementType.Button);
         cmd.SetBool(Btn, Protocol.PropertyId.AutoSize, false);
@@ -208,7 +208,7 @@ public static class StyleTest
 
         void Frame(Element root, string what, bool clear = false)
         {
-            cmd.Reset();
+            cmd.Clear();
             if (clear)
                 cmd.ClearColor(BgGray, BgGray, BgGray, 1);
             rec.Update(root, Space.DIPTopLeft);
@@ -283,7 +283,7 @@ public static class StyleTest
                 }),
         };
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(BgGray, BgGray, BgGray, 1);
         rec.Update(root, Space.DIPTopLeft);
         var rc = Native.Apply(w, cmd.EndFrame());
@@ -325,7 +325,7 @@ public static class StyleTest
             return id;
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x18 / 255f, 0x18 / 255f, 0x18 / 255f, 1);
         const float c0 = 30, c1 = 230, c2 = 430, c3 = 630;
         float y = 30;
@@ -377,7 +377,7 @@ public static class StyleTest
         cmd.SetString(t, Protocol.PropertyId.Value, "Disabled");
         var rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"gallery apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-        cmd.Reset();
+        cmd.Clear();
         NativeTest.vlqt_test_send_mouse(w, TestProtocol.Mouse.Move, c0 + 10, 40);
         s.Pump(10);
         var path = Path.Combine(s.OutDir, "style-gallery.png");

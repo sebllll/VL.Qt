@@ -86,7 +86,7 @@ public static class ChainTextureReparentTest
 
         // The host REPARENTs the texture element under the root: refused, nothing changes.
         errors = "";
-        cmd.Reset();
+        cmd.Clear();
         cmd.Reparent(L, 0, 1);
         rc = Native.Apply(w, cmd.EndFrame());
         var message = rc != 0 ? Native.LastError() : "";
@@ -103,7 +103,7 @@ public static class ChainTextureReparentTest
         }
 
         // Chain off: no chain samples L any more, so a REPARENT shows it in the tree.
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginEffectChain(R);
         cmd.EndEffectChain();
         cmd.Reparent(L, 0, 1);
@@ -118,7 +118,7 @@ public static class ChainTextureReparentTest
             s.Check(Orangeish(e), $"the element is drawn without the chain ({e})");
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.Destroy(R);
         cmd.Destroy(L);
         Native.Apply(w, cmd.EndFrame());

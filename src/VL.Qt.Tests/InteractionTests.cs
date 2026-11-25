@@ -331,7 +331,7 @@ namespace VL.Qt.Tests
             {
                 var chain = hoverNode.Update(null, hovered);
                 var e = rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false, chain, null, true, out _, out _);
-                writer.Reset();
+                writer.Clear();
                 rec.Update((Element)e, Space.DIPTopLeft);
                 writer.EndFrame();
             }
@@ -975,7 +975,7 @@ namespace VL.Qt.Tests
                 chain = dragNode.Update(chain, dragging, dragDelta, true, DragAxis.Horizontal, new Vector2(-1, 0), new Vector2(1, 0),
                     PointerButtons.Left, PointerDevices.All);
                 var e = rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false, chain, null, true, out _, out _);
-                writer.Reset();
+                writer.Clear();
                 rec.Update((Element)e, Space.DIPTopLeft);
                 writer.EndFrame();
             }

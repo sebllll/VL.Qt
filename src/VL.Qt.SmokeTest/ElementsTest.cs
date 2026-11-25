@@ -46,7 +46,7 @@ public static class ElementsTest
         }
 
         // Group 400x200 at (200,200): red left half, green right half (local coordinates).
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         cmd.Create(Group, Protocol.ElementType.Group);
         cmd.SetPlace(Group, 200, 200, 400, 200);
@@ -67,7 +67,7 @@ public static class ElementsTest
                 $"group children at group position ({Px(a, 300, 250)}, {Px(a, 500, 250)}, {Px(a, 450, 180)})");
 
         // Translation only: Stride row-major puts it in M41..M43; QtNative must transpose for Qt.
-        cmd.Reset();
+        cmd.Clear();
         PlaceGroupXf(200, 200, 400, 200, Matrix.Translation(100, 50, 0));
         CheckApply("translation");
         s.Pump(3);
@@ -80,7 +80,7 @@ public static class ElementsTest
         var rot = Matrix.RotationZ(MathUtil.PiOverTwo);
         for (int i = 0; i < 3; i++) // the same matrix again must not compound (Matrix4x4 attached once)
         {
-            cmd.Reset();
+            cmd.Clear();
             PlaceGroupXf(200, 200, 400, 200, rot);
             CheckApply($"rotation 90 #{i}");
         }
@@ -94,7 +94,7 @@ public static class ElementsTest
         }
 
         // Opacity / Clip on the group (Opacity 0 replaces Visible).
-        cmd.Reset();
+        cmd.Clear();
         PlaceGroupXf(200, 200, 400, 200, Matrix.Identity);
         cmd.SetF32(Group, Protocol.PropertyId.Opacity, 0.5f);
         CheckApply("opacity 0.5");
@@ -102,7 +102,7 @@ public static class ElementsTest
         using (var a = s.Grab(w, "05_group_opacity.png"))
             s.Check(Near(Px(a, 300, 250), 143, 16, 16), $"opacity 0.5 blends red with background ({Px(a, 300, 250)})");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetF32(Group, Protocol.PropertyId.Opacity, 1);
         cmd.SetPlace(Group, 200, 200, 300, 200); // green half outside now
         cmd.SetBool(Group, Protocol.PropertyId.Clip, true);
@@ -111,7 +111,7 @@ public static class ElementsTest
         using (var a = s.Grab(w, "05_group_clip.png"))
             s.Check(IsGreen(Px(a, 450, 250)) && IsBg(Px(a, 550, 250)), $"clip cuts children at group bounds ({Px(a, 450, 250)}, {Px(a, 550, 250)})");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetF32(Group, Protocol.PropertyId.Opacity, 0);
         CheckApply("opacity 0");
         s.Pump(3);
@@ -123,7 +123,7 @@ public static class ElementsTest
         var hits0 = Hits(); // ApplyTest logged the same message for its own window (cache is per engine)
         for (int i = 0; i < 2; i++)
         {
-            cmd.Reset();
+            cmd.Clear();
             cmd.SetColor(Group, Protocol.PropertyId.Color, 1, 1, 1, 1);
             var rc = Apply();
             var e = Native.LastError();
@@ -131,7 +131,7 @@ public static class ElementsTest
         }
         var hits = Hits() - hits0;
         s.Check(hits == 1, $"unknown property logged once (vlqt.elements, {hits}x)");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetF32(Group, Protocol.PropertyId.Opacity, 1);
         CheckApply("scene usable after error");
         s.Pump(2);
@@ -139,7 +139,7 @@ public static class ElementsTest
             s.Check(IsRed(Px(a, 300, 250)), $"group visible again after error ({Px(a, 300, 250)})");
 
         // Perf: 1000 groups (QQmlComponent::create) + first frame.
-        cmd.Reset();
+        cmd.Clear();
         for (uint i = 0; i < 1000; i++)
         {
             cmd.Create(100 + i, Protocol.ElementType.Group);
@@ -160,7 +160,7 @@ public static class ElementsTest
         var times = new double[10];
         for (int run = 0; run < times.Length; run++)
         {
-            cmd.Reset();
+            cmd.Clear();
             var m = Matrix.RotationZ(run * 0.1f);
             for (uint i = 0; i < 1000; i++)
                 cmd.SetMat4(100 + i, Protocol.PropertyId.Transform, m);

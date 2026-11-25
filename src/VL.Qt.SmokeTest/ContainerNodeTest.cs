@@ -52,7 +52,7 @@ public static class ContainerNodeTest
 
         void Frame(Element root, string what, bool clear = false)
         {
-            cmd.Reset();
+            cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
             rec.Update(root, Space.DIPTopLeft);
             if (cmd.Length > 0)
@@ -126,7 +126,7 @@ public static class ContainerNodeTest
 
         foreach (var n in new IDisposable[] { red, green, blue, column, row, group })
             n.Dispose();
-        cmd.Reset();
+        cmd.Clear();
         rec.Clear();
         Native.Apply(w, cmd.EndFrame());
         Native.vlqt_scene_destroy(w);

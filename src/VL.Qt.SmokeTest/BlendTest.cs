@@ -104,7 +104,7 @@ public static class BlendTest
             cmd.EndUniforms();
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         for (var m = 0; m < Names.Length; m++) Fx(m, m, 1, 1);
         Fx(13, 1, 0, 1);
@@ -133,7 +133,7 @@ public static class BlendTest
         var quarter = Sample(14);
         gpu(Near(quarter, 0, 0.25f), $"Normal, layer alpha 0.5 x opacity 0.5 = a quarter layer: ({quarter.R}, {quarter.G}, {quarter.B}) expected {Want(0, 0.25f)}");
 
-        cmd.Reset();
+        cmd.Clear();
         for (uint id = 10; id < next; id += 3) cmd.Destroy(id);
         Apply("destroy");
         s.Pump(3);

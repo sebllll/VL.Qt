@@ -50,7 +50,7 @@ public static class CoreTest
         }
 
         // SET Bounds + Color, REPARENT into a group at (4,3) units: rect lands at (4.5,3.5)..(5.5,4.5).
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(GroupId, Protocol.ElementType.Group);
         cmd.SetPlace(GroupId, 4 * U, 3 * U, 3 * U, 2 * U);
         cmd.Reparent(GroupId, 0, 0);
@@ -66,20 +66,20 @@ public static class CoreTest
         }
 
         // Broken buffer: error code, message, earlier state stays.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetPlace(777, 0, 0, 1, 1);
         var rc = Native.Apply(w, cmd.EndFrame());
         var err = Native.LastError();
         s.Check(rc == Native.Result.UnknownObject && err.Contains("777"), $"broken buffer returns error ({rc}: {err})");
 
         // DESTROY (recursive): group and rect gone.
-        cmd.Reset();
+        cmd.Clear();
         cmd.Destroy(GroupId);
         CheckApply(s, w, cmd, "apply destroy");
         s.Pump(3);
         using (var a = s.Grab(w, "grab3.png"))
             s.Check(IsBg(Px(a, 500, 400)), $"rect: gone after DESTROY ({Px(a, 500, 400)})");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetColor(RectId, Protocol.PropertyId.Color, 1, 1, 1, 1);
         s.Check(Native.Apply(w, cmd.EndFrame()) == Native.Result.UnknownObject, "rect id released with its group");
         Native.vlqt_scene_destroy(w);
@@ -97,7 +97,7 @@ public static class CoreTest
         int frame = 0;
         void MoveRect()
         {
-            cmd.Reset();
+            cmd.Clear();
             cmd.SetPlace(RectId, (1 + (frame++ % 100) * 0.01f) * U, 1 * U, 3 * U, 2 * U);
             Native.Apply(w, cmd.EndFrame());
         }
@@ -130,7 +130,7 @@ public static class CoreTest
         }
 
         // 10 000 SETs in one apply, written by CommandWriter (acceptance: < 2 ms, Release).
-        cmd.Reset();
+        cmd.Clear();
         for (uint i = 0; i < 100; i++)
         {
             cmd.Create(100 + i, Protocol.ElementType.Rectangle);
@@ -146,7 +146,7 @@ public static class CoreTest
             for (int run = 0; run < applyMs.Length; run++)
             {
                 var t = Stopwatch.StartNew();
-                cmd.Reset();
+                cmd.Clear();
                 for (int i = 0; i < 10_000; i++)
                     // one SET per item like the old BOUNDS: the position = TRANSFORM translation (SIZE/ANCHOR set above).
                     cmd.SetMat4(100 + (uint)(i % 100), Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation(i % 700, run, 0));
@@ -207,7 +207,7 @@ public static class CoreTest
         var alloc0 = GC.GetAllocatedBytesForCurrentThread();
         for (int f = 0; f < 1000; f++)
         {
-            cmd.Reset();
+            cmd.Clear();
             for (uint i = 0; i < 100; i++)
                 cmd.SetPlace(100 + i, f % 700, i, 10, 10);
             Native.Apply(w, cmd.EndFrame());
@@ -220,7 +220,7 @@ public static class CoreTest
     {
         var w = NativeCalls.CreateWindow(800, 600, "VL.Qt SmokeTest");
         s.Check(w != SceneHandle.Null, "window_create " + (w == SceneHandle.Null ? Native.LastError() : ""));
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         cmd.Create(RectId, Protocol.ElementType.Rectangle);
         cmd.SetPlace(RectId, 1 * U, 1 * U, 3 * U, 2 * U);

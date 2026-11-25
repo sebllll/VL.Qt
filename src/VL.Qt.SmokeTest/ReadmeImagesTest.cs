@@ -88,19 +88,19 @@ public static class ReadmeImagesTest
         static void Blur(CommandWriter c, float s)
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
-            c.EffectF32(Protocol.MultiEffectKey.Blur, 0.22f);
-            c.EffectI32(Protocol.MultiEffectKey.BlurMax, (int)MathF.Round(16 * s));
+            c.MultiEffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Blur, 0.22f);
+            c.MultiEffectI32(Protocol.MultiEffectKey.BlurMax, (int)MathF.Round(16 * s));
             c.EndLink();
         }
         static void Shadow(CommandWriter c, float s)
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
-            c.EffectColor(Protocol.MultiEffectKey.ShadowColor, 1, 0.55f, 0.2f, 0.9f);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 16 * s);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 16 * s);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowBlur, 0.15f);
+            c.MultiEffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.MultiEffectColor(Protocol.MultiEffectKey.ShadowColor, 1, 0.55f, 0.2f, 0.9f);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 16 * s);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 16 * s);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowBlur, 0.15f);
             c.EndLink();
         }
         void Split(CommandWriter c, float s)
@@ -234,7 +234,7 @@ public static class ReadmeImagesTest
 
         void Render(string name, int width, float winW, float winH, params (string kind, string label)[] cells)
         {
-            cmd.Reset();
+            cmd.Clear();
             next = 1;
             var w = NativeCalls.CreateWindow((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme images");
             s.Check(w != SceneHandle.Null, $"readme-images {name}: window_create");
@@ -251,7 +251,7 @@ public static class ReadmeImagesTest
             }
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"readme-images {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
             s.Pump(10);
             var grabPath = Path.Combine(s.OutDir, $"readme-images_{name}.png");
             using (var a = s.Grab(w, grabPath))

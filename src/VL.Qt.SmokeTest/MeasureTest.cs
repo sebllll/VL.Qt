@@ -68,7 +68,7 @@ public static class MeasureTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         List<Rec> Poll()
         {
@@ -88,7 +88,7 @@ public static class MeasureTest
 
         const uint TextId = 1, ColId = 2, PlainId = 3;
         const uint HText = 7;
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(TextId, Protocol.ElementType.Text);
         cmd.SetPlace(TextId, 50, 40, 400, 60);
         cmd.SetString(TextId, Protocol.PropertyId.Text, "Hello");
@@ -276,7 +276,7 @@ public static class MeasureTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         List<Rec> Poll()
         {
@@ -386,7 +386,7 @@ public static class MeasureTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         Rec? Bounds(uint handle)
         {
@@ -407,8 +407,8 @@ public static class MeasureTest
         cmd.Bind(ChainRect, ChainRect);
         cmd.BeginEffectChain(ChainGroup);
         cmd.BeginMultiLink();
-        cmd.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
-        cmd.EffectF32(Protocol.MultiEffectKey.Blur, 0.5f);
+        cmd.MultiEffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+        cmd.MultiEffectF32(Protocol.MultiEffectKey.Blur, 0.5f);
         cmd.EndLink();
         cmd.EndEffectChain();
 
@@ -479,7 +479,7 @@ public static class MeasureTest
         }
         var rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"{count} bound rectangles ({rc})");
-        cmd.Reset();
+        cmd.Clear();
         s.Pump(2);
         int first = NativeCalls.Poll(w, buf);
         var firstRecs = Parse(buf.AsSpan(0, Math.Max(first, 0)), s);
@@ -505,7 +505,7 @@ public static class MeasureTest
         {
             cmd.SetPlace(10, 1 + f % 2, 0, 12, 10); // starts at x 0 -> every frame moves
             Native.Apply(w, cmd.EndFrame());
-            cmd.Reset();
+            cmd.Clear();
             s.Pump(1);
             var t = Stopwatch.StartNew();
             int n = NativeCalls.Poll(w, buf);

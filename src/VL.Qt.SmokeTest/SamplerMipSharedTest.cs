@@ -62,7 +62,7 @@ public static class SamplerMipSharedTest
         uint next = 10;
         (uint fx, uint group)[] cells = new (uint, uint)[5];
         ulong[][] states = { new[] { S(0, 2, 1, 1), S(1, 0, 1, 1) }, new[] { S(1, 0, 1, 1), S(0, 2, 1, 1) }, new[] { S(1, 0, 1, 1), S(1, 0, 1, 1) }, new[] { S(0, 2, 1, 1), 0UL }, new[] { 0UL, S(0, 2, 1, 1) } };
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         for (int i = 0; i < 5; i++)
         {
@@ -127,7 +127,7 @@ public static class SamplerMipSharedTest
                 gpu(off0 == 0, $"frame {frame}: mip filter on the lower binding, none on the higher one: the mean ({off0} off)");
                 gpu(off1 == 0, $"frame {frame}: mip filter on the higher binding, none on the lower one: the mean ({off1} off)");
             }
-            cmd.Reset();
+            cmd.Clear();
             // Sending a sampler state marks the layer requests dirty, whatever its value.
             for (int i = 0; i < 2; i++)
             {
@@ -146,7 +146,7 @@ public static class SamplerMipSharedTest
             s.Pump(6);
         }
 
-        cmd.Reset();
+        cmd.Clear();
         foreach (var (fx, _) in cells)
             cmd.Destroy(fx);
         Apply("destroy");

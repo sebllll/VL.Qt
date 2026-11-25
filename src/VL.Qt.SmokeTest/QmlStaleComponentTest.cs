@@ -58,7 +58,7 @@ public static class QmlStaleComponentTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         void Qml(uint id, uint handle, float x)
         {
@@ -84,7 +84,7 @@ public static class QmlStaleComponentTest
         File.SetLastWriteTimeUtc(file, DateTime.UtcNow.AddSeconds(2));
         Qml(Q2, H2, 400);
         cmd.BeginQmlProperties(Q2, 0);
-        cmd.UniformF32("extra", 1);
+        cmd.QmlPropertyF32("extra", 1);
         cmd.EndQmlProperties();
         Apply("item 2 (same Source, reload 0) with the new property extra");
         s.Pump(3);

@@ -58,7 +58,7 @@ public static class QmlRequiredPropertyTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
 
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
@@ -69,8 +69,8 @@ public static class QmlRequiredPropertyTest
         cmd.Reparent(Q, 0, 1000);
         cmd.Bind(Q, H);
         cmd.BeginQmlProperties(Q, 0);
-        cmd.UniformF32("value", 200);
-        cmd.UniformColor("tint", 1, 0, 0, 1);
+        cmd.QmlPropertyF32("value", 200);
+        cmd.QmlPropertyColor("tint", 1, 0, 0, 1);
         cmd.EndQmlProperties();
         Apply("Bar.qml with its required properties in the first frame");
         s.Pump(3);
@@ -85,7 +85,7 @@ public static class QmlRequiredPropertyTest
 
         // A later value is written as before.
         cmd.BeginQmlProperties(Q, 0);
-        cmd.UniformF32("value", 100);
+        cmd.QmlPropertyF32("value", 100);
         cmd.EndQmlProperties();
         Apply("value 100");
         s.Pump(3);

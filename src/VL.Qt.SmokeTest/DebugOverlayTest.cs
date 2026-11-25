@@ -83,7 +83,7 @@ public static class DebugOverlayTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"debug: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         List<Rec> Frame(int n = 1)
         {
@@ -102,7 +102,7 @@ public static class DebugOverlayTest
             cmd.Reparent(id, parent, 1000);
         }
         var all = new List<uint>();
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // Column, Auto Size, padding 10, spacing 20.
         cmd.Create(Col, Protocol.ElementType.Column);

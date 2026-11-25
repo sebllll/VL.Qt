@@ -137,7 +137,7 @@ public static class PumpTest
         {
             Handle = NativeCalls.CreateWindow(400, 300, title);
             if (Handle == SceneHandle.Null) throw new InvalidOperationException(Native.LastError());
-            _cmd.Reset();
+            _cmd.Clear();
             _cmd.ClearColor(0.125f, 0.125f, 0.125f, 1);
             _cmd.Create(RectId, Protocol.ElementType.Rectangle);
             _cmd.SetColor(RectId, Protocol.PropertyId.Color, 1, 0.6f, 0, 1);
@@ -146,7 +146,7 @@ public static class PumpTest
                 _cmd.Create(FxId, Protocol.ElementType.Group);
                 _cmd.SetPlace(FxId, 0, 0, 4 * U, 3 * U);
                 _cmd.Reparent(FxId, 0, 0);
-                _cmd.Chain(FxId, c => c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true));
+                _cmd.Chain(FxId, c => c.MultiEffectBool(Protocol.MultiEffectKey.ShadowEnabled, true));
                 _cmd.Reparent(RectId, FxId, 0);
             }
             else
@@ -162,7 +162,7 @@ public static class PumpTest
         private void Move() => _cmd.SetMat4(RectId, Protocol.PropertyId.Transform, Stride.Core.Mathematics.Matrix.Translation((0.5f + (Frame++ % 100) * 0.01f) * U, 1 * U, 0));
 
         // "Update()": write the commands of this frame (before the pump).
-        public void Update() { _cmd.Reset(); Move(); }
+        public void Update() { _cmd.Clear(); Move(); }
 
         // only the windows of the pumping app render in its pump.
         public SceneHandle Window => Handle;

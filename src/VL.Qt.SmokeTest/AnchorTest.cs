@@ -68,7 +68,7 @@ public static class AnchorTest
 
         void Frame(Element root, string what, bool clear = false)
         {
-            cmd.Reset();
+            cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
             rec.Update(root, Space.DIPTopLeft);
             if (cmd.Length > 0)
@@ -195,7 +195,7 @@ public static class AnchorTest
 
         foreach (var n in new IDisposable[] { red, green, row, group })
             n.Dispose();
-        cmd.Reset();
+        cmd.Clear();
         rec.Clear();
 
         // 10) ANCHOR errors (raw): one horizontal and one vertical Qt::AlignmentFlag, i32 only. Valid on every type.
@@ -203,10 +203,10 @@ public static class AnchorTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == expected, $"{what} -> {expected} ({rc}: {Native.LastError()})");
-            cmd.Reset();
+            cmd.Clear();
         }
         const uint Raw = 900;
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(Raw, Protocol.ElementType.Rectangle);
         cmd.SetI32(Raw, Protocol.PropertyId.Anchor, 0x42);
         Expect(0, "ANCHOR BottomRight on a Rectangle");

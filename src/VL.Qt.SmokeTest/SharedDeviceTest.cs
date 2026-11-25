@@ -38,7 +38,7 @@ public static class SharedDeviceTest
         {
             var w = Native.vlqt_window_create(x, 100, 400, 300, title, swapInterval);
             s.Check(w != SceneHandle.Null, $"create {title} " + (w == SceneHandle.Null ? Native.LastError() : ""));
-            cmd.Reset();
+            cmd.Clear();
             cmd.ClearColor(0.1f, 0.1f, 0.1f, 1);
             cmd.Create(Rect, Protocol.ElementType.Rectangle);
             cmd.SetPlace(Rect, 20, 20, 100, 60);
@@ -52,7 +52,7 @@ public static class SharedDeviceTest
         int frame = 0;
         void Animate(SceneHandle w)
         {
-            cmd.Reset();
+            cmd.Clear();
             cmd.SetPlace(Rect, 20 + frame % 200, 20, 100, 60);
             Native.Apply(w, cmd.EndFrame());
         }

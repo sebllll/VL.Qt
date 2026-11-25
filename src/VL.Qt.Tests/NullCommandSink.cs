@@ -48,17 +48,24 @@ namespace VL.Qt.Tests
         public virtual void UniformSampler(ReadOnlySpan<char> name, ulong packed) { }
         public virtual void EndUniforms() { }
         public virtual void BeginQmlProperties(uint id, ushort flags) { }
-        public virtual void QmlRect(ReadOnlySpan<char> name, float x, float y, float width, float height) { }
-        public virtual void QmlString(ReadOnlySpan<char> name, ReadOnlySpan<char> value) { }
+        public virtual void QmlPropertyF32(ReadOnlySpan<char> name, float value) { }
+        public virtual void QmlPropertyI32(ReadOnlySpan<char> name, int value) { }
+        public virtual void QmlPropertyBool(ReadOnlySpan<char> name, bool value) { }
+        public virtual void QmlPropertyColor(ReadOnlySpan<char> name, float r, float g, float b, float a) { }
+        public virtual void QmlPropertyVec2(ReadOnlySpan<char> name, float x, float y) { }
+        public virtual void QmlPropertyVec3(ReadOnlySpan<char> name, float x, float y, float z) { }
+        public virtual void QmlPropertyVec4(ReadOnlySpan<char> name, float x, float y, float z, float w) { }
+        public virtual void QmlPropertyRect(ReadOnlySpan<char> name, float x, float y, float width, float height) { }
+        public virtual void QmlPropertyString(ReadOnlySpan<char> name, ReadOnlySpan<char> value) { }
         public virtual void EndQmlProperties() { }
         public virtual void BeginEffectChain(uint id) { }
         public virtual void BeginMultiLink() { }
-        public virtual void EffectBool(ushort prop, bool value) { }
-        public virtual void EffectF32(ushort prop, float value) { }
-        public virtual void EffectI32(ushort prop, int value) { }
-        public virtual void EffectColor(ushort prop, float r, float g, float b, float a) { }
-        public virtual void EffectRect(ushort prop, float x, float y, float width, float height) { }
-        public virtual void EffectRef(ushort prop, uint refId) { }
+        public virtual void MultiEffectBool(ushort prop, bool value) { }
+        public virtual void MultiEffectF32(ushort prop, float value) { }
+        public virtual void MultiEffectI32(ushort prop, int value) { }
+        public virtual void MultiEffectColor(ushort prop, float r, float g, float b, float a) { }
+        public virtual void MultiEffectRect(ushort prop, float x, float y, float width, float height) { }
+        public virtual void MultiEffectRef(ushort prop, uint refId) { }
         public virtual void BeginEffectChainLink(ushort template, ReadOnlySpan<ulong> shaderIds, float paddingLeft, float paddingTop, float paddingRight, float paddingBottom, float strength) { }
         public virtual void EndLink() { }
         public virtual void EndEffectChain() { }

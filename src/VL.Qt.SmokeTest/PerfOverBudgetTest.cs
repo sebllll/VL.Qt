@@ -87,7 +87,7 @@ public static class PerfOverBudgetTest
         double vsyncSum = 0, workSum = 0, pumpSum = 0;
         for (int i = 0; i < n; i++)
         {
-            cmd.Reset();
+            cmd.Clear();
             cmd.SetPlace(1, 100 + 50 * MathF.Sin(i * 0.2f), 200, 100, 60);
             Native.Apply(w, cmd.EndFrame());
             HostFrame();
@@ -114,7 +114,7 @@ public static class PerfOverBudgetTest
         s.Check(read == n ? counted == workOver : counted <= workOver,
             $"changing scene with VSync: over budget counts only pumps whose Qt work is above the budget (counter {counted}, Qt work over {workOver}, pump over {pumpOver}, {read} of {n} samples read)");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.Destroy(1);
         Native.Apply(w, cmd.EndFrame());
         s.Pump(2);

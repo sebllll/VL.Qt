@@ -84,7 +84,7 @@ public static class EffectLayerTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"effect-layer: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         bool? Hover(float x, float y)
         {
@@ -96,30 +96,30 @@ public static class EffectLayerTest
         // A = hard red shadow (30, 30) + saturation -1 (grey); T = blur + green shadow + brightness.
         static void RunA(CommandWriter c)
         {
-            c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
-            c.EffectColor(Protocol.MultiEffectKey.ShadowColor, 1, 0, 0, 1);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 30);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 30);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowBlur, 0);
-            c.EffectF32(Protocol.MultiEffectKey.Saturation, -1);
+            c.MultiEffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.MultiEffectColor(Protocol.MultiEffectKey.ShadowColor, 1, 0, 0, 1);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 30);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 30);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowBlur, 0);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Saturation, -1);
         }
         static void RunT(CommandWriter c)
         {
-            c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
-            c.EffectF32(Protocol.MultiEffectKey.Blur, 0.6f);
-            c.EffectI32(Protocol.MultiEffectKey.BlurMax, 16);
-            c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
-            c.EffectColor(Protocol.MultiEffectKey.ShadowColor, 0, 1, 0, 1);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 20);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 20);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowBlur, 0);
-            c.EffectF32(Protocol.MultiEffectKey.Brightness, 0.2f);
+            c.MultiEffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Blur, 0.6f);
+            c.MultiEffectI32(Protocol.MultiEffectKey.BlurMax, 16);
+            c.MultiEffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.MultiEffectColor(Protocol.MultiEffectKey.ShadowColor, 0, 1, 0, 1);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 20);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 20);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowBlur, 0);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Brightness, 0.2f);
         }
         void EffectA(bool on) { if (on) cmd.Chain(A, RunA); else cmd.Chain(A); }
         void EffectT(bool on) { if (on) cmd.Chain(T, RunT); else cmd.Chain(T); }
 
         // Scene: Row (50, 50) with A (blue 200x150, hover handler) and B (green 100x150); Text "Fx" at (450, 300).
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         cmd.Create(Row, Protocol.ElementType.Row);
         cmd.SetPlace(Row, 50, 50, 0, 0);
@@ -233,13 +233,13 @@ public static class EffectLayerTest
         static void BlueShadowRun(CommandWriter c) => Shadow(c, 0, 0, 1);
         static void Shadow(CommandWriter c, float r, float g, float b)
         {
-            c.EffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
-            c.EffectColor(Protocol.MultiEffectKey.ShadowColor, r, g, b, 1);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 30);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 30);
-            c.EffectF32(Protocol.MultiEffectKey.ShadowBlur, 0);
+            c.MultiEffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.MultiEffectColor(Protocol.MultiEffectKey.ShadowColor, r, g, b, 1);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 30);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 30);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowBlur, 0);
         }
-        static void GreyRun(CommandWriter c) => c.EffectF32(Protocol.MultiEffectKey.Saturation, -1);
+        static void GreyRun(CommandWriter c) => c.MultiEffectF32(Protocol.MultiEffectKey.Saturation, -1);
         cmd.Chain(A, ShadowRun, GreyRun);
         CheckApply("two runs");
         s.Pump(5);
@@ -276,11 +276,11 @@ public static class EffectLayerTest
         // Errors: SET with an EFFECT_* property -> UnknownProperty (only via SET_EFFECT_CHAIN); a chain on a handler -> UnknownProperty.
         cmd.SetBool(A, Protocol.MultiEffectKey.ShadowEnabled, true);
         var rc1 = Native.Apply(w, cmd.EndFrame());
-        cmd.Reset();
+        cmd.Clear();
         s.Check(rc1 == Native.Result.UnknownProperty, $"effect-layer: SET EFFECT_SHADOW_ENABLED -> UnknownProperty ({rc1})");
         cmd.Chain(H, RunA);
         var rc2 = Native.Apply(w, cmd.EndFrame());
-        cmd.Reset();
+        cmd.Clear();
         s.Check(rc2 == Native.Result.UnknownProperty, $"effect-layer: effect chain on a handler -> UnknownProperty ({rc2})");
 
         // DESTROY with the effect on: its MultiEffect goes too.

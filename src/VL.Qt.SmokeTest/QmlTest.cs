@@ -96,12 +96,12 @@ public static class QmlTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         Native.Result Expect(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            cmd.Reset();
+            cmd.Clear();
             return rc;
         }
         // One poll: everything that came since the last one (also tracks the last error and the measured size per handle).
@@ -187,7 +187,7 @@ public static class QmlTest
             cmd.EndQmlProperties();
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
 
         // ---- 1. load: picture, implicit size, no events of the initial state --------------------------------------------------
@@ -358,11 +358,11 @@ public static class QmlTest
         cmd.Reparent(other, 0, 0);
         CheckApply("create a Rectangle");
         cmd.BeginQmlProperties(other, 0);
-        cmd.UniformF32("a", 1);
+        cmd.QmlPropertyF32("a", 1);
         cmd.EndQmlProperties();
         s.Check(Expect("") == Native.Result.UnknownProperty, $"SET_QML_PROPERTIES on a Rectangle -> UnknownProperty ({Native.LastError()})");
         cmd.BeginQmlProperties(4242, 0);
-        cmd.UniformF32("a", 1);
+        cmd.QmlPropertyF32("a", 1);
         cmd.EndQmlProperties();
         s.Check(Expect("") == Native.Result.UnknownObject, $"SET_QML_PROPERTIES on an unknown id -> UnknownObject ({Native.LastError()})");
         cmd.Destroy(other);
@@ -549,14 +549,14 @@ public static class QmlTest
     {
         private readonly CommandWriter _w;
         public QmlProps(CommandWriter w) => _w = w;
-        public void F32(string name, float v) => _w.UniformF32(name, v);
-        public void I32(string name, int v) => _w.UniformI32(name, v);
-        public void Bool(string name, bool v) => _w.UniformBool(name, v);
-        public void String(string name, string v) => _w.QmlString(name, v);
-        public void Color(string name, float r, float g, float b, float a) => _w.UniformColor(name, r, g, b, a);
-        public void Vec2(string name, float x, float y) => _w.UniformVec2(name, x, y);
-        public void Vec3(string name, float x, float y, float z) => _w.UniformVec3(name, x, y, z);
-        public void Vec4(string name, float x, float y, float z, float w) => _w.UniformVec4(name, x, y, z, w);
-        public void Rect(string name, float x, float y, float width, float height) => _w.QmlRect(name, x, y, width, height);
+        public void F32(string name, float v) => _w.QmlPropertyF32(name, v);
+        public void I32(string name, int v) => _w.QmlPropertyI32(name, v);
+        public void Bool(string name, bool v) => _w.QmlPropertyBool(name, v);
+        public void String(string name, string v) => _w.QmlPropertyString(name, v);
+        public void Color(string name, float r, float g, float b, float a) => _w.QmlPropertyColor(name, r, g, b, a);
+        public void Vec2(string name, float x, float y) => _w.QmlPropertyVec2(name, x, y);
+        public void Vec3(string name, float x, float y, float z) => _w.QmlPropertyVec3(name, x, y, z);
+        public void Vec4(string name, float x, float y, float z, float w) => _w.QmlPropertyVec4(name, x, y, z, w);
+        public void Rect(string name, float x, float y, float width, float height) => _w.QmlPropertyRect(name, x, y, width, height);
     }
 }

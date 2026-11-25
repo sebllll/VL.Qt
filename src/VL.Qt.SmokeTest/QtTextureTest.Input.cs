@@ -332,7 +332,7 @@ public static partial class QtTextureTest
             {
                 var e = rect.Update(new Vector2(1, 0.8f), Matrix.Translation(0.2f, 0.2f, 0), RectangleAnchor.TopLeft, new Color4(1, 0, 0, 1), 0,
                     new Color4(0, 0, 0, 1), 0, 1, false, false, wheel.Update(null, delta, null, PointerDevices.All), null, true, out _, out _);
-                cmd.Reset();
+                cmd.Clear();
                 rec.Update((Element)e, Space.DIPTopLeft);
                 if (cmd.Length > 0)
                     s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "wheel reference: apply " + Native.LastError());
@@ -360,7 +360,7 @@ public static partial class QtTextureTest
             Frames();
             horizontal = values.Count > 0 ? values[0] : null;
         }
-        cmd.Reset();
+        cmd.Clear();
         rec.Update(null, Space.DIPTopLeft);
         if (cmd.Length > 0)
             Native.Apply(w, cmd.EndFrame());

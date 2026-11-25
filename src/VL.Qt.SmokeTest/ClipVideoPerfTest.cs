@@ -68,7 +68,7 @@ public static class ClipVideoPerfTest
 
         Bitmap Frame(Element root, string name)
         {
-            cmd.Reset();
+            cmd.Clear();
             cmd.ClearColor(0.9f, 0.9f, 0.9f, 1);
             rec.Update(root, Space.DIPTopLeft);
             if (cmd.Length > 0)
@@ -105,7 +105,7 @@ public static class ClipVideoPerfTest
         // Rectangle 150 x 100 DIP with a child 150 x 100 DIP shifted by (100, 50); Clip off, then on, on the native element itself.
         void Control(bool clip)
         {
-            cmd.Reset();
+            cmd.Clear();
             if (!clip)
             {
                 cmd.Create(900001, Protocol.ElementType.Rectangle);
@@ -174,7 +174,7 @@ public static class ClipVideoPerfTest
 
             Native.vlqt_res_create(Protocol.ResourceKind.Image, out var res);
             Native.ImageSetPixels(res, desc, data);
-            cmd.Reset();
+            cmd.Clear();
             if (!created)
             {
                 cmd.Create(1, Protocol.ElementType.Image);

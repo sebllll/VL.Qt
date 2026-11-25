@@ -111,7 +111,7 @@ public static class DisplaceTest
             cmd.EndUniforms();
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         var (rx, ry) = Cell(0, 0);
         Hal(Ref, 0, 0);
@@ -193,7 +193,7 @@ public static class DisplaceTest
             $"constant map R = 0, displacement 24: content moves 24 DIP right ({right})");
 
         // live: the displacement uniform of the effect at (2,0) goes 24 -> 0 without a new scene
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(13, 0);
         cmd.UniformF32("displacement", 0);
         cmd.EndUniforms();
@@ -205,7 +205,7 @@ public static class DisplaceTest
             gpu(dLive < 0.02f, $"displacement set to 0 live: back to the reference ({dLive:P1} differ)");
         }
 
-        cmd.Reset();
+        cmd.Clear();
         for (uint id = 10; id < next; id += 3) cmd.Destroy(id);
         cmd.Destroy(Ref);
         Apply("destroy");

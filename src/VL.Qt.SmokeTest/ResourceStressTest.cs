@@ -259,7 +259,7 @@ public static class ResourceStressTest
             Act("element create");
             var w = windows[rng.Next(windows.Count)];
             var e = new Elem(nextElement++, w);
-            cmd.Reset();
+            cmd.Clear();
             cmd.Create(e.Id, Protocol.ElementType.Image);
             cmd.SetPlace(e.Id, rng.Next(0, 250), rng.Next(0, 150), rng.Next(10, 120), rng.Next(10, 100));
             var img = PickAnyId();
@@ -274,7 +274,7 @@ public static class ResourceStressTest
             if (elements.Count == 0) return;
             Act("element retarget");
             var e = elements[rng.Next(elements.Count)];
-            cmd.Reset();
+            cmd.Clear();
             cmd.SetU64(e.Id, Protocol.PropertyId.Image, PickAnyId());
             Apply(e.Win, "element retarget", Native.Result.BadArgument);
         }
@@ -286,7 +286,7 @@ public static class ResourceStressTest
             var i = rng.Next(elements.Count);
             var e = elements[i];
             elements.RemoveAt(i);
-            cmd.Reset();
+            cmd.Clear();
             cmd.Destroy(e.Id);
             Apply(e.Win, "element destroy");
         }
@@ -316,7 +316,7 @@ public static class ResourceStressTest
             Act("hotswap");
             foreach (var w in windows.Skip(1)) Native.vlqt_scene_destroy(w);
             windows.RemoveRange(1, windows.Count - 1);
-            cmd.Reset();
+            cmd.Clear();
             foreach (var e in elements.Where(e => e.Win == windows[0])) cmd.Destroy(e.Id);
             Apply(windows[0], "hotswap destroy elements");
             elements.Clear();
@@ -375,7 +375,7 @@ public static class ResourceStressTest
         lastAction = "cleanup";
         foreach (var w in windows.Skip(1)) Native.vlqt_scene_destroy(w);
         windows.RemoveRange(1, windows.Count - 1);
-        cmd.Reset();
+        cmd.Clear();
         foreach (var e in elements.Where(e => e.Win == windows[0])) cmd.Destroy(e.Id);
         Apply(windows[0], "cleanup destroy elements");
         Frame();

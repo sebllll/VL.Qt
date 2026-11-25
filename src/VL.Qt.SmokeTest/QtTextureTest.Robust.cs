@@ -305,7 +305,7 @@ public static partial class QtTextureTest
             return;
         }
         var cmd = new CommandWriter();
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0.125f, 0.25f, 0.5f, 1);
         cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetPlace(1, 20, 20, 100, 60);

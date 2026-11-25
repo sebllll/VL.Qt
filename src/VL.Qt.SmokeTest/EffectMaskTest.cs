@@ -81,18 +81,18 @@ public static class EffectMaskTest
         public void Write(CommandWriter c)
         {
             if (Mask != 0)
-                c.EffectRef(Protocol.MultiEffectKey.MaskSource, Mask);
+                c.MultiEffectRef(Protocol.MultiEffectKey.MaskSource, Mask);
             if (Inverted)
-                c.EffectBool(Protocol.MultiEffectKey.MaskInverted, true);
+                c.MultiEffectBool(Protocol.MultiEffectKey.MaskInverted, true);
             if (Blur)
             {
-                c.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
-                c.EffectF32(Protocol.MultiEffectKey.Blur, 0.1f);
+                c.MultiEffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+                c.MultiEffectF32(Protocol.MultiEffectKey.Blur, 0.1f);
             }
             if (Padding)
             {
-                c.EffectBool(Protocol.MultiEffectKey.AutoPadding, false);
-                c.EffectRect(Protocol.MultiEffectKey.PaddingRect, 200, 0, 0, 0);
+                c.MultiEffectBool(Protocol.MultiEffectKey.AutoPadding, false);
+                c.MultiEffectRect(Protocol.MultiEffectKey.PaddingRect, 200, 0, 0, 0);
             }
         }
     }
@@ -110,12 +110,12 @@ public static class EffectMaskTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"effect-mask: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         Native.Result Rc()
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            cmd.Reset();
+            cmd.Clear();
             return rc;
         }
         void Fx(uint id, FxRun run) => cmd.Chain(id, run.Write);
@@ -124,7 +124,7 @@ public static class EffectMaskTest
 
         // Scene: Row (50, 50) with R (red 400x200, effect layer on) and B (green 100x200). Mask T: Text "MASK", white,
         // 400x200, created without REPARENT (like the reconciler), attached to R.
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         cmd.Create(Row, Protocol.ElementType.Row);
         cmd.SetPlace(Row, 50, 50, 0, 0);

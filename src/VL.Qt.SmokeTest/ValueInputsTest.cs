@@ -65,7 +65,7 @@ public static class ValueInputsTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         List<Rec> Frame()
         {
@@ -116,7 +116,7 @@ public static class ValueInputsTest
         }
 
         // --- Toggle: CheckBox and Switch, no text. AUTO_SIZE default on -> indicator + padding; SET VALUE no echo.
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(C, Protocol.ElementType.CheckBox);
         VL.Qt.Styles.BaseStyle.Write(cmd, C); // like the Reconciler
         cmd.SetPlace(C, 100, 100, 0, 0);
@@ -308,7 +308,7 @@ public static class ValueInputsTest
         ExpectF32(Frame(), HL2, 7.5f, 0.001f, "slider vertical click (top = maximum)");
         cmd.SetI32(Sl, Protocol.PropertyId.Orientation, 3);
         var badRc = Native.Apply(w, cmd.EndFrame());
-        cmd.Reset();
+        cmd.Clear();
         s.Check(badRc != 0, $"slider orientation 3 is rejected ({badRc})");
         cmd.Destroy(Sl);
         CheckApply("slider destroy");

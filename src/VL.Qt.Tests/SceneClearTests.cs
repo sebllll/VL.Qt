@@ -14,7 +14,7 @@ namespace VL.Qt.Tests
         // Written commands of the next Update, without a native handle (Apply does not run).
         private static int Written(Scene core, bool clear, Color4 color)
         {
-            core.Commands.Reset();
+            core.Commands.Clear();
             core.Update(null, Space.DIPTopLeft, color, clear);
             return core.Commands.Length;
         }

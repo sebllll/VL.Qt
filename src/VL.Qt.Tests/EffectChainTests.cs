@@ -53,8 +53,8 @@ namespace VL.Qt.Tests
             {
                 w.BeginEffectChain(3);
                 w.BeginMultiLink();
-                w.EffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
-                w.EffectF32(Protocol.MultiEffectKey.Blur, 0.5f);
+                w.MultiEffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+                w.MultiEffectF32(Protocol.MultiEffectKey.Blur, 0.5f);
                 w.EndLink();
                 w.BeginEffectChainLink(Protocol.EffectTemplate.TwoPass, new ulong[] { 5 }, 1, 2, 3, 4, 0);
                 w.UniformF32("angle", 45);
@@ -93,7 +93,7 @@ namespace VL.Qt.Tests
             var w = new CommandWriter();
             Assert.Throws<InvalidOperationException>(() => w.BeginMultiLink());
             w.BeginEffectChain(1);
-            Assert.Throws<InvalidOperationException>(() => w.EffectF32(Protocol.MultiEffectKey.Blur, 1));
+            Assert.Throws<InvalidOperationException>(() => w.MultiEffectF32(Protocol.MultiEffectKey.Blur, 1));
             Assert.Throws<InvalidOperationException>(() => w.UniformF32("x", 1));
             w.BeginMultiLink();
             Assert.Throws<InvalidOperationException>(() => w.UniformF32("x", 1));

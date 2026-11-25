@@ -71,7 +71,7 @@ public static class VideoStopTest
             Thread.Sleep(15);
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(Id, Protocol.ElementType.Video);
         cmd.SetPlace(Id, 0, 0, 320, 180);
         cmd.SetString(Id, Protocol.PropertyId.Source, a);
@@ -80,7 +80,7 @@ public static class VideoStopTest
         cmd.Reparent(Id, 0, 0);
         cmd.Bind(Id, Handle);
         s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"{tag}: create playing video");
-        cmd.Reset();
+        cmd.Clear();
         var sw = Stopwatch.StartNew();
         while (sw.ElapsedMilliseconds < 5000 && !(dur > 0 && pos > 0.3f))
             Frame();
@@ -102,7 +102,7 @@ public static class VideoStopTest
         {
             cmd.Destroy(Id);
             s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"{tag}: destroy video ({Native.LastError()})");
-            cmd.Reset();
+            cmd.Clear();
         }
         step = "window_destroy";
         Native.vlqt_scene_destroy(w);

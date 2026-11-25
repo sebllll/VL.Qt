@@ -154,7 +154,7 @@ public static class TearingTest
                 var barW = w * BarFraction;
                 var phase = (now / (2 * SweepSeconds)) % 1.0;
                 var tri = (float)Math.Abs(phase * 2 - 1); // 0..1..0
-                cmd.Reset();
+                cmd.Clear();
                 cmd.SetPlace(1, tri * (w - barW), 0, barW, h);
                 Native.Apply(windows[i], cmd.EndFrame());
             }

@@ -64,7 +64,7 @@ public static class TextTest
             cmd.Reparent(id, 0, 1000);
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         Text(Plain, "Hello", 20, 20, 360, 60, 40);
         Text(Right, "Hi", 420, 20, 360, 60, 40);
@@ -114,7 +114,7 @@ public static class TextTest
         }
 
         // Updates: font read-modify-write keeps the other font fields.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetI32(Plain, Protocol.PropertyId.FontWeight, 900);
         cmd.SetBool(Plain, Protocol.PropertyId.FontItalic, true);
         cmd.SetF32(Right, Protocol.PropertyId.LetterSpacing, 20);
@@ -136,7 +136,7 @@ public static class TextTest
         }
 
         // Empty family = default font again; text change.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetString(Elided, Protocol.PropertyId.FontFamily, "");
         cmd.SetString(Plain, Protocol.PropertyId.Text, "Hello VL.Qt");
         CheckApply("text reset family + new text");
@@ -148,26 +148,26 @@ public static class TextTest
         }
 
         // Errors: invalid enum / size -> BadArgument, Rectangle-only property -> UnknownProperty, no crash.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetI32(Right, Protocol.PropertyId.HorizontalAlignment, 3);
         var rc = Apply();
         s.Check(rc == Native.Result.BadArgument, $"invalid alignment -> BadArgument ({rc}: {Native.LastError()})");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetF32(Plain, Protocol.PropertyId.FontSize, 0);
         rc = Apply();
         s.Check(rc == Native.Result.BadArgument, $"font size 0 -> BadArgument ({rc}: {Native.LastError()})");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetF32(Plain, Protocol.PropertyId.Radius, 1);
         rc = Apply();
         s.Check(rc == Native.Result.UnknownProperty, $"radius on text -> UnknownProperty ({rc}: {Native.LastError()})");
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetF32(Plain, Protocol.PropertyId.FontWeight, 700);
         rc = Apply();
         s.Check(rc == Native.Result.BadArgument, $"weight as f32 -> BadArgument ({rc}: {Native.LastError()})");
 
         // Real glyphs: without any font all characters are the same empty box (tofu), "iiiiiiii" would be as
         // wide as "WWWWWWWW". Own scene: the checks above scan regions this one would disturb.
-        cmd.Reset();
+        cmd.Clear();
         foreach (var id in new[] { Plain, Right, Bottom, Wrapped, Elided, Fit })
             cmd.Destroy(id);
         Text(7, "iiiiiiii", 20, 20, 360, 60, 40);

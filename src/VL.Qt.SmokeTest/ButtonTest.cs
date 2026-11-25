@@ -51,7 +51,7 @@ public static class ButtonTest
         {
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            cmd.Clear();
         }
         List<Rec> Frame()
         {
@@ -78,7 +78,7 @@ public static class ButtonTest
         static string S(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
 
         // Created with text, bound without flags; Bounds size 0 + AUTO_SIZE default on -> implicit size.
-        cmd.Reset();
+        cmd.Clear();
         cmd.Create(B, Protocol.ElementType.Button);
         VL.Qt.Styles.BaseStyle.Write(cmd, B); // like the Reconciler
         cmd.SetPlace(B, 100, 100, 0, 0);

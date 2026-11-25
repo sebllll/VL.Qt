@@ -95,7 +95,7 @@ public static class FontTest
             var r = Native.Apply(w, cmd.EndFrame());
             s.Check(r == 0, $"{what} ({r}) {(r != 0 ? Native.LastError() : "")}");
         }
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         cmd.Create(Line, Protocol.ElementType.Text);
         cmd.SetPlace(Line, 20, 40, 760, 100);
@@ -108,13 +108,13 @@ public static class FontTest
         s.Pump(3);
         using var loaded = s.Grab(w, "15_font_loaded.png");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetString(Line, Protocol.PropertyId.FontFamily, Missing);
         Apply("family that is not installed");
         s.Pump(3);
         using var missing = s.Grab(w, "15_font_missing.png");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetString(Line, Protocol.PropertyId.FontFamily, "");
         Apply("empty family (default font)");
         s.Pump(3);
@@ -132,12 +132,12 @@ public static class FontTest
         // Warning for the family Qt does not have: once per name (re-set and switched back and forth), not for "" or the loaded family.
         for (var i = 0; i < 3; i++)
         {
-            cmd.Reset();
+            cmd.Clear();
             cmd.SetString(Line, Protocol.PropertyId.FontFamily, i % 2 == 0 ? Missing : family);
             Apply("family switched " + i);
             s.Pump(2);
         }
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetString(Line, Protocol.PropertyId.FontFamily, Missing);
         Apply("family missing again");
         s.Pump(2);
@@ -174,7 +174,7 @@ public static class FontTest
         s.Pump(2);
         s.Check(NativeTest.vlqt_test_font_refs(h4) == (int)Native.Result.UnknownId, "removed again");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.Destroy(Line);
         Apply("destroy text");
         Native.vlqt_scene_destroy(w);

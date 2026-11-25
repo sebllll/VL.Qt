@@ -38,7 +38,7 @@ public static class MsaaTest
     // Thin bar + rotated square, white on black: hard edges without AA.
     private static void Scene(CommandWriter cmd)
     {
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0, 0, 0, 1);
         cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetPlaceXf(1, 60, 140, 280, 3, Matrix.RotationZ(MathUtil.DegreesToRadians(11)));
@@ -209,7 +209,7 @@ public static class MsaaTest
         none?.Dispose();
         x4?.Dispose();
         // Scene still alive and editable after the changes: recolour, check.
-        cmd.Reset();
+        cmd.Clear();
         cmd.SetColor(2, Protocol.PropertyId.Color, 1, 0, 0, 1);
         s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "msaa: apply after changes");
         s.Pump(3);
@@ -240,7 +240,7 @@ public static class MsaaTest
         const string title = Title + " clear off";
         var w = NativeCalls.CreateWindow(W, H, title);
         var cmd = new CommandWriter();
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0, 0, 0, 0); // alpha 0: pure accumulation (an opaque colour with Clear off is Clear on since #138)
         cmd.SetClear(false);
         cmd.Create(1, Protocol.ElementType.Rectangle);
@@ -255,7 +255,7 @@ public static class MsaaTest
         {
             for (int i = 0; i < steps; i++)
             {
-                cmd.Reset();
+                cmd.Clear();
                 cmd.SetPlace(1, x0 + i * 40, 130, 30, 30);
                 s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "msaa: clear-off move");
                 s.Pump(1);
