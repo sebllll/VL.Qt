@@ -48,6 +48,7 @@ bool setSpacing(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v,
 bool setPadding(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     positionerOf(n)->setPadding(v.f[0]);
+    n.padding = v.f[0];
     return true;
 }
 

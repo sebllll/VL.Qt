@@ -34,7 +34,14 @@ QQuickItem* makeText()
 
 QQuickText* text(ElementEntry& n) { return static_cast<QQuickText*>(n.item); }
 
-bool setText(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
+// The one place that writes the font: drops the metrics the debug overlay cached for it (diagnostics/debug_overlay.cpp).
+void setFont(ElementEntry& n, const QFont& font)
+{
+    text(n)->setFont(font);
+    n.fontMetricsValid = false;
+}
+
+bool setText(Elements&,ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     text(n)->setText(toQString(v));
     return true;
@@ -55,7 +62,7 @@ bool setFontFamily(Elements&, ElementEntry& n, const ResolvedProp&, const Value&
     QFont font = text(n)->font();
     if (font.family() != family) {
         font.setFamily(family);
-        text(n)->setFont(font);
+        setFont(n, font);
     }
     return true;
 }
@@ -72,7 +79,7 @@ bool setFontPixelSize(Elements&, ElementEntry& n, const ResolvedProp&, const Val
     QFont font = text(n)->font();
     if (font.pixelSize() != px) {
         font.setPixelSize(px);
-        text(n)->setFont(font);
+        setFont(n, font);
     }
     return true;
 }
@@ -86,7 +93,7 @@ bool setFontWeight(Elements&, ElementEntry& n, const ResolvedProp&, const Value&
     QFont font = text(n)->font();
     if (font.weight() != QFont::Weight(v.i)) {
         font.setWeight(QFont::Weight(v.i));
-        text(n)->setFont(font);
+        setFont(n, font);
     }
     return true;
 }
@@ -96,7 +103,7 @@ bool setFontItalic(Elements&, ElementEntry& n, const ResolvedProp&, const Value&
     QFont font = text(n)->font();
     if (font.italic() != v.b) {
         font.setItalic(v.b);
-        text(n)->setFont(font);
+        setFont(n, font);
     }
     return true;
 }
@@ -106,7 +113,7 @@ bool setLetterSpacing(Elements&, ElementEntry& n, const ResolvedProp&, const Val
     QFont font = text(n)->font();
     if (font.letterSpacingType() != QFont::AbsoluteSpacing || font.letterSpacing() != v.f[0]) {
         font.setLetterSpacing(QFont::AbsoluteSpacing, v.f[0]);
-        text(n)->setFont(font);
+        setFont(n, font);
     }
     return true;
 }
