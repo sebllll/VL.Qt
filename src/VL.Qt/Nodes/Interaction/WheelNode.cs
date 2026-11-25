@@ -41,6 +41,7 @@ namespace VL.Qt.Nodes
         /// <param name="delta">Optional channel: wheel motion since the last frame in notches (one notch = 120 wheel units; trackpads give fractions), x horizontal, y vertical, positive y = away from the user. Written every frame with motion, then once (0, 0) (author "Qt").</param>
         /// <param name="value">Optional channel: accumulated wheel motion in notches (same unit as Delta). Each frame with motion adds the delta to the current value of the channel (author "Qt"), so it can be set or reset from outside. No limits.</param>
         /// <param name="devices">Input devices that count.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]
         public Interaction Update(
             Interaction? input,

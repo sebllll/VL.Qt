@@ -59,6 +59,7 @@ namespace VL.Qt.Nodes
         /// <param name="max">Optional largest offset of the element in units, relative to its position from the Transform pin or layout. Not set: no limit. Must not be smaller than Min.</param>
         /// <param name="buttons">Mouse buttons that drag. None reacts to touch and pen only.</param>
         /// <param name="devices">Input devices that drag.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]
         public Interaction Update(
             Interaction? input,

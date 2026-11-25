@@ -8,11 +8,8 @@ using VL.Qt.Elements;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Tints the element with a color (Qt MultiEffect colorization). Connect Output to the Effect pin of an element, or
-    /// chain it with other effect nodes; the order of the nodes
-    /// does not matter within a run.
-    /// Blur, DropShadow, ColorAdjust, Colorize and Mask next to each other in a chain are merged into one layer with one
-    /// shader, Qt's fixed order applies inside it; a shader effect (e.g. Glow) ends the run, between runs the patch order applies.
+    /// Tints the element with a color (Qt MultiEffect colorization).
+    /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/para"/>
     /// </summary>
     [ProcessNode(Name = "Colorize", Category = Categories.Effects)]
     public sealed class ColorizeNode
@@ -30,6 +27,7 @@ namespace VL.Qt.Nodes
         /// <param name="color">Tint color.</param>
         /// <param name="amount">Strength of the tint, 0..1 (0 = off).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,

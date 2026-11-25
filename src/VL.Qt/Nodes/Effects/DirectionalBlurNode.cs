@@ -14,8 +14,7 @@ namespace VL.Qt.Nodes
     /// <summary>
     /// Linear motion blur: smears the element along a line, centred on each pixel (the picture does not shift). Two passes of
     /// the same shader keep long blurs clean.
-    /// Connect Output to the Effect pin of an element, or chain it with other effect nodes (data flow order: the node at the
-    /// Effect pin acts last). A shader effect ends a run of Blur/DropShadow/... nodes and costs a layer of its own.
+    /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/para"/>
     /// </summary>
     [ProcessNode(Name = "DirectionalBlur", Category = Categories.Effects)]
     public sealed class DirectionalBlurNode : IDisposable
@@ -27,6 +26,9 @@ namespace VL.Qt.Nodes
         private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
         {
             var length = Math.Max(p.Length, 0f);
+            // Reach of the blur on each side of a pixel along the line: half of the blur line of pass 1, plus the
+            // half-length of pass 2, which blurs by length / 64 (the sample spacing of pass 1, see directional_blur.frag).
+            // length / 64 is a full spacing, so the sum is slightly more than the reach of length / 2 + length / 128: a margin.
             var half = length / 2 + length / 64;
             var a = 2 * MathF.PI * p.Angle;
             var padX = half * MathF.Abs(MathF.Cos(a));
@@ -53,6 +55,7 @@ namespace VL.Qt.Nodes
         /// <param name="angle">Direction of the blur in cycles (1 = full turn): 0 = horizontal, 0.25 = vertical, increases clockwise on screen.</param>
         /// <param name="length">Length of the blur line in DIP (total, 0 = no blur).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,

@@ -39,6 +39,7 @@ namespace VL.Qt.Nodes
         /// <summary>Adds a hover handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
         /// <param name="isHovered">Optional channel: true while the pointer is over the element (written by Qt, author "Qt").</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]
         public Interaction Update(
             Interaction? input,

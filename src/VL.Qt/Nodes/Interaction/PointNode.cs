@@ -46,6 +46,7 @@ namespace VL.Qt.Nodes
         /// <param name="position">Optional channel: position of the point local to the element, in units, written on change while active (author "Qt"). Keeps the last position after the release or when the mouse leaves.</param>
         /// <param name="buttons">Mouse buttons that count. None: the mouse counts while it hovers the element (no press needed), touch and pen while down.</param>
         /// <param name="devices">Input devices that count.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]
         public Interaction Update(
             Interaction? input,

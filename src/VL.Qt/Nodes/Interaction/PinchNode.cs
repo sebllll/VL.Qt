@@ -67,6 +67,7 @@ namespace VL.Qt.Nodes
         /// <param name="minPointCount">Fingers needed to start the gesture, at least 2.</param>
         /// <param name="maxPointCount">Most fingers the gesture follows, at least 2. With more fingers the gesture pauses, it goes on when a finger is lifted.</param>
         /// <param name="devices">Input devices that count.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]
         public Interaction Update(
             Interaction? input,

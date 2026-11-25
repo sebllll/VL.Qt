@@ -12,11 +12,10 @@ using VL.Qt.Wire;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Shadow inside the element, like CSS <c>inset</c>: the inverted alpha of the element, shifted by Offset and blurred, laid
-    /// over the element only where the element has content. A positive Offset lets the shadow fall from the left and top
+    /// Shadow inside the element, like CSS <c>inset</c>: the inverted alpha of the element, shifted by Offset and blurred,
+    /// laid over the element only where the element has content. A positive Offset lets the shadow fall from the left and top
     /// edge. Uses a blur pyramid, so the cost hardly depends on the radius.
-    /// Connect Output to the Effect pin of an element, or chain it with other effect nodes (data flow order: the node at the
-    /// Effect pin acts last). A shader effect ends a run of Blur/DropShadow/... nodes and costs a layer of its own.
+    /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/para"/>
     /// </summary>
     [ProcessNode(Name = "InnerShadow", Category = Categories.Effects)]
     public sealed class InnerShadowNode : IDisposable
@@ -28,7 +27,8 @@ namespace VL.Qt.Nodes
         private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
         {
             var radius = Math.Max(p.Radius, 0f);
-            var pad = 1.5f * radius;
+            // Room for the blur of the inverted alpha: it reaches about 3 sigma, see PyramidPadding.
+            var pad = PyramidPadding.RadiusFactor * radius;
             return new ShaderEffect(previous, Protocol.EffectTemplate.Pyramid, ids,
                 new[]
                 {
@@ -60,6 +60,7 @@ namespace VL.Qt.Nodes
         /// <param name="spread">0..1: denser shadow, 0 = soft fall-off, towards 1 a nearly hard edge.</param>
         /// <param name="intensity">Strength of the shadow; values above 1 make it denser.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
