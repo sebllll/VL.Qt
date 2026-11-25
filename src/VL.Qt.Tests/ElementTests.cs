@@ -69,10 +69,30 @@ namespace VL.Qt.Tests
             Assert.That(feedback[0].IsHovered, Is.False);
             Assert.That(feedback.TryGet(5, out _), Is.False);
             Assert.That(feedback.Count, Is.EqualTo(3));
-            feedback.Resize(1);
+            feedback.TrimTo(1);
             Assert.That(feedback.Count, Is.EqualTo(1));
-            Assert.That(new FeedbackSlot(feedback, 0).State, Is.SameAs(feedback[0]));
-            Assert.That(default(FeedbackSlot).State, Is.Null);
+            feedback.TrimTo(4);
+            Assert.That(feedback.Count, Is.EqualTo(1), "TrimTo never grows");
+        }
+
+        [Test]
+        public void FeedbackSlot_TryGetStateDoesNotGrow_GetOrAddStateDoes()
+        {
+            var feedback = new ElementFeedback();
+            var slot = new FeedbackSlot(feedback, 2);
+            Assert.That(slot.TryGetState(out var state), Is.False);
+            Assert.That(state, Is.Null);
+            Assert.That(feedback.Count, Is.EqualTo(0), "reading creates no slot");
+
+            var created = slot.GetOrAddState();
+            Assert.That(feedback.Count, Is.EqualTo(3));
+            Assert.That(created, Is.SameAs(feedback[2]));
+            Assert.That(slot.TryGetState(out state), Is.True);
+            Assert.That(state, Is.SameAs(created));
+
+            Assert.That(default(FeedbackSlot).TryGetState(out state), Is.False);
+            Assert.That(state, Is.Null);
+            Assert.That(() => default(FeedbackSlot).GetOrAddState(), Throws.InvalidOperationException);
         }
 
         [Test]

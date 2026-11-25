@@ -201,8 +201,10 @@ namespace VL.Qt
             var text = Native.LastError();
             ClearApplyErrors(); // only the latest failure is shown (the retry after a resync reports it again)
             if (Native.GetApplyError(_handle, out var e) != Native.Result.Ok || e.Id == 0
-                || !_reconciler.Bindings.TryGetValue(e.Id, out var slot) || slot.State is not { } state)
+                || !_reconciler.Bindings.TryGetValue(e.Id, out var slot) || slot.IsNone)
                 return text;
+            // the failed element may not have received an event yet, so the slot is created for the error
+            var state = slot.GetOrAddState();
             state.ApplyError = DescribeApplyError(e);
             if (!_applyErrorSlots.Contains(state))
                 _applyErrorSlots.Add(state);
