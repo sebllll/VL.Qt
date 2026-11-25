@@ -59,7 +59,9 @@ namespace VL.Qt.Tests
             Assert.That(c[0].Id, Is.Not.EqualTo(c[1].Id));
             Assert.That(c[0].BoundFeedbackId, Is.Not.EqualTo(c[1].BoundFeedbackId));
             Assert.That(_sink.OfOp("BIND"), Is.EqualTo(new[] { $"BIND {c[0].Id} {c[0].BoundFeedbackId}", $"BIND {c[1].Id} {c[1].BoundFeedbackId}" }));
-            Assert.That(_rec.FeedbackRouter.TryResolve(c[1].BoundFeedbackId, out var slot) && slot == new FeedbackSlot(feedback, 0), Is.True);
+            _rec.FeedbackRouter.Dispatch(new FeedbackRouterTests.Poll().Click(c[1].BoundFeedbackId, 1).Bytes);
+            Assert.That(feedback[0].PendingClicks, Is.EqualTo(1), "the second occurrence's id leads to the slot");
+            feedback[0].PendingClicks = 0;
             Assert.That(_rec.Bindings.Count, Is.EqualTo(2));
             Assert.That(Structural, Does.Contain($"REPARENT {c[2].Id} {_rec.Root.Id} 2"));
             Assert.That(feedback[0].Warning, Is.Null);
@@ -112,6 +114,37 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void Dispose_WhileHoveredAndPressed_ReleasesTheSlot()
+        {
+            var feedback = new ElementFeedback();
+            var e = R(1, new FeedbackSlot(feedback, 0));
+            Frame(G(e, e));
+            var c = _rec.Root!.Children;
+            _rec.FeedbackRouter.Dispatch(new FeedbackRouterTests.Poll().Hover(c[0].BoundFeedbackId, true).Hover(c[1].BoundFeedbackId, true).Press(c[1].BoundFeedbackId, true).Bytes);
+            Assert.That(feedback.IsHovered() && feedback.IsPressed(), Is.True);
+
+            _rec.Clear(); // renderer dispose: the window is gone, nothing leaves the element node hovered
+            Assert.That(feedback.IsHovered() || feedback.IsPressed(), Is.False);
+            Assert.That(_rec.FeedbackRouter.Count, Is.Zero);
+            Assert.That(feedback[0].HoverCount + feedback[0].PressCount, Is.Zero);
+        }
+
+        [Test]
+        public void SecondOccurrenceRemoved_FirstStillHovered_SlotStaysHovered()
+        {
+            var feedback = new ElementFeedback();
+            var e = R(1, new FeedbackSlot(feedback, 0));
+            Frame(G(e, e));
+            var c = _rec.Root!.Children;
+            _rec.FeedbackRouter.Dispatch(new FeedbackRouterTests.Poll().Hover(c[0].BoundFeedbackId, true).Hover(c[1].BoundFeedbackId, true).Bytes);
+
+            Frame(G(e));
+            Assert.That(feedback.IsHovered(), Is.True, "the first occurrence is still hovered");
+            _rec.FeedbackRouter.Dispatch(new FeedbackRouterTests.Poll().Hover(c[0].BoundFeedbackId, false).Bytes);
+            Assert.That(feedback.IsHovered(), Is.False);
+        }
+
+        [Test]
         public void FirstRemoved_SecondBecomesPrimary_ReboundWithNewHandle()
         {
             var feedback = new ElementFeedback();
@@ -126,7 +159,7 @@ namespace VL.Qt.Tests
             Assert.That(_scene.PrimaryOf(e), Is.SameAs(second));
             Assert.That(second.BoundFeedbackId, Is.Not.EqualTo(old));
             Assert.That(IsPrimaryHandle(second), Is.True);
-            Assert.That(_rec.FeedbackRouter.TryResolve(old, out _), Is.False, "old handle released");
+            Assert.That(_rec.FeedbackRouter.Dispatch(new FeedbackRouterTests.Poll().Click(old, 1).Bytes).Ignored, Is.EqualTo(1), "old handle released");
             Assert.That(_sink.OfOp("BIND"), Does.Contain($"BIND {second.Id} {second.BoundFeedbackId}"), "QtNative sends its state again");
             Assert.That(feedback[0].Error, Is.Null, "reset with the old primary; the new one reports its own");
 
