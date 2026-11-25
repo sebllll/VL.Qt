@@ -41,6 +41,9 @@ struct OffscreenScene
     // e.g. QQuickWindow::update() in vlqt_scene_apply); bind sets it too. render_batch renders a bound scene only
     // while it is set, so an unchanged scene costs nothing.
     bool dirty = true;
+    // The last render_batch polished the scene and nothing has changed its items since (apply, bind, input): the poll then
+    // needs no polish of its own (polishedSinceLastPoll).
+    bool polished = false;
     bool bound = false;
     unsigned long long readValue = 0;  // last value signalled on the read fence
     unsigned long long writeValue = 0; // last value signalled on the write fence

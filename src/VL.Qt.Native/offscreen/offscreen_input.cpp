@@ -277,6 +277,7 @@ void setFocus(OffscreenScene* s, bool focused, Qt::FocusReason reason)
 {
     if (s->focused == focused)
         return;
+    s->polished = false; // input can change items (here the focus): the poll polishes by itself
     if (!focused)
         releaseFocus(s->window);
     // Before the event: SceneRenderControlPrivate reads it while QQuickWindow handles FocusIn.
@@ -287,6 +288,7 @@ void setFocus(OffscreenScene* s, bool focused, Qt::FocusReason reason)
 
 int sendPointer(OffscreenScene* s, int device, int type, int id, QPointF pos, int buttons, int modifiers)
 {
+    s->polished = false; // input can change items (hover, drag): the poll polishes by itself
     const auto mods = Qt::KeyboardModifiers(modifiers);
     const ulong ts = timestamp(s);
     // Like a window: a press inside the scene focuses it, outside unfocuses it, before the press is delivered (so the
@@ -311,6 +313,7 @@ int sendPointer(OffscreenScene* s, int device, int type, int id, QPointF pos, in
 
 int sendWheel(OffscreenScene* s, QPointF pos, int dx, int dy, int modifiers)
 {
+    s->polished = false;
     QQuickWindow* w = s->window;
     QWheelEvent ev(pos, w->mapToGlobal(pos), QPoint(), QPoint(dx, dy), s->buttons, Qt::KeyboardModifiers(modifiers),
         Qt::NoScrollPhase, false, Qt::MouseEventNotSynthesized, mouseOf(s));
@@ -321,6 +324,7 @@ int sendWheel(OffscreenScene* s, QPointF pos, int dx, int dy, int modifiers)
 
 int sendKey(OffscreenScene* s, int type, int key, int modifiers, bool autoRepeat)
 {
+    s->polished = false;
     if (type != VLQT_KEY_EVENT_PRESS && type != VLQT_KEY_EVENT_RELEASE)
         return badArgument("send_key: type " + std::to_string(type) + " unknown");
     if (!s->focused)
@@ -335,6 +339,7 @@ int sendKey(OffscreenScene* s, int type, int key, int modifiers, bool autoRepeat
 // takes input method events gets the text as a QInputMethodEvent commit.
 int sendText(OffscreenScene* s, const char* utf8, int length)
 {
+    s->polished = false;
     if (length < 0 || (!utf8 && length > 0))
         return badArgument("send_text: null text or negative length");
     if (length == 0 || !s->focused)

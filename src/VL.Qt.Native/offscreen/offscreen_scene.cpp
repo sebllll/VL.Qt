@@ -9,6 +9,7 @@
 #include <QtQuick/QSGRendererInterface>
 
 #include <algorithm>
+#include <utility>
 
 #ifdef Q_OS_WIN
 #include "device/device.h"
@@ -154,6 +155,16 @@ OffscreenScene* sceneOf(const QQuickWindow* window)
 {
     const auto it = std::find_if(s_scenes.begin(), s_scenes.end(), [window](const OffscreenScene* s) { return s->window == window; });
     return it != s_scenes.end() ? *it : nullptr;
+}
+
+bool polishedSinceLastPoll(OffscreenScene* scene)
+{
+    return std::exchange(scene->polished, false);
+}
+
+void invalidatePolish(OffscreenScene* scene)
+{
+    scene->polished = false;
 }
 
 bool isScene(const QQuickWindow* window)

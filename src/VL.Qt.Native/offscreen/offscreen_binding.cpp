@@ -229,6 +229,7 @@ int bind(OffscreenScene* s, void* device, void* ntHandle, int width, int height,
     target.setDevicePixelRatio(1.0);
     s->window->setGeometry(0, 0, width, height);
     s->window->setRenderTarget(target);
+    s->polished = false;
 
     s->texture = std::move(texture);
     s->foreignDevice = foreign;
