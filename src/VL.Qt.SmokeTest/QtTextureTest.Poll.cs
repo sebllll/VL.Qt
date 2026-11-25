@@ -24,7 +24,7 @@ public static partial class QtTextureTest
         var scene = Native.vlqt_offscreen_create(w, h);
         IntPtr tex = IntPtr.Zero, handle = IntPtr.Zero;
         if (!check(scene != SceneHandle.Null && NewTarget(device, w, h, B8G8R8A8Typeless, out tex, out handle),
-            "poll polish: setup " + Native.LastError()))
+            "poll polish: setup (scene, texture)"))
         {
             NativeTest.vlqt_test_d3d11_release_device(device, context);
             return;
