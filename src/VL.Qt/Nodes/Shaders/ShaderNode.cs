@@ -180,7 +180,7 @@ namespace VL.Qt.Nodes
                 var u = uniforms[i];
                 if (u is null)
                     continue;
-                if (!UniformWriter.IsValidName(u.Name))
+                if (!Protocol.IsValidName(u.Name))
                     lines.Add(string.IsNullOrEmpty(u.Name)
                         ? $"Uniform #{i}: the name is empty"
                         : $"Uniform #{i}: the name is longer than {Protocol.UniformNameMax} bytes");

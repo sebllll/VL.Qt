@@ -21,16 +21,5 @@ namespace VL.Qt.Elements
         public int MinimumPointCount { get; }
         public int MaximumPointCount { get; }
         public PointerDevices Devices { get; }
-
-        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping)
-        {
-            var p = previous as PinchInteraction;
-            if (MinimumPointCount != (p?.MinimumPointCount ?? DefaultPointCount))
-                sink.SetI32(id, Protocol.PropertyId.MinimumPointCount, MinimumPointCount);
-            if (MaximumPointCount != (p?.MaximumPointCount ?? DefaultPointCount))
-                sink.SetI32(id, Protocol.PropertyId.MaximumPointCount, MaximumPointCount);
-            PointerProps.Write(sink, id, PointerMasks.DefaultButtons, Devices, PointerMasks.DefaultButtons,
-                p?.Devices ?? PointerMasks.DefaultDevices, writeButtons: false);
-        }
     }
 }

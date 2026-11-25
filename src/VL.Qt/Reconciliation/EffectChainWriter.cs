@@ -127,7 +127,7 @@ namespace VL.Qt.Reconciliation
             sink.BeginEffectChainLink(shader.Template, shader.ShaderIds.AsSpan(), padX, padY, padW, padH, mapping.ToQt(shader.Strength));
             foreach (var u in shader.Uniforms)
             {
-                if (u is null || !UniformWriter.IsValidName(u.Name))
+                if (u is null || !Protocol.IsValidName(u.Name))
                     continue;
                 ulong handle = 0;
                 if (u.Texture is { } texture)
@@ -140,7 +140,7 @@ namespace VL.Qt.Reconciliation
                     UniformWriter.WriteEntry(sink, u.Name, new UniformValue(u.ValueType, numbers, u.Integer, handle));
                 }
                 if (u.Sampler is { } sampler)
-                    sink.UniformSampler(u.Name, sampler.Pack());
+                    sink.UniformSampler(u.Name, UniformWriter.PackSampler(sampler));
             }
         }
 

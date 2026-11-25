@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Elements
@@ -15,15 +14,15 @@ namespace VL.Qt.Elements
     internal sealed class QmlProperties
     {
         /// <summary>No properties.</summary>
-        public static readonly QmlProperties Empty = new(new Dictionary<string, QmlValue>(StringComparer.Ordinal), 0, string.Empty);
+        public static readonly QmlProperties Empty = new(new Dictionary<string, QmlValue>(StringComparer.Ordinal), Array.Empty<Rejected>(), string.Empty);
 
         private readonly Dictionary<string, QmlValue> _values;
-        private readonly int _invalid;
+        private readonly Rejected[] _rejected;
 
-        private QmlProperties(Dictionary<string, QmlValue> values, int invalid, string problems)
+        private QmlProperties(Dictionary<string, QmlValue> values, Rejected[] rejected, string problems)
         {
             _values = values;
-            _invalid = invalid;
+            _rejected = rejected;
             Problems = problems;
         }
 
@@ -56,11 +55,11 @@ namespace VL.Qt.Elements
                 return Empty;
             var values = new Dictionary<string, QmlValue>(source.Count, StringComparer.Ordinal);
             StringBuilder? problems = null;
-            int invalid = 0;
+            List<Rejected>? rejected = null;
             foreach (var (name, value) in source)
             {
                 string problem;
-                if (!IsValidName(name))
+                if (!Protocol.IsValidName(name))
                     problem = $"Property name '{name}' is empty or longer than {Protocol.UniformNameMax} bytes, ignored";
                 else if (QmlValue.TryConvert(value, out var converted))
                 {
@@ -69,30 +68,49 @@ namespace VL.Qt.Elements
                 }
                 else
                     problem = QmlValue.Describe(name, value);
-                invalid++;
+                (rejected ??= new List<Rejected>()).Add(new Rejected(name, RejectedType(name, value)));
                 (problems ??= new StringBuilder()).AppendLine(problem);
             }
-            return new QmlProperties(values, invalid, problems is null ? string.Empty : problems.ToString().TrimEnd());
+            return new QmlProperties(values, rejected is null ? Array.Empty<Rejected>() : rejected.ToArray(), problems is null ? string.Empty : problems.ToString().TrimEnd());
         }
-
-        /// <summary>Whether <paramref name="name"/> can be sent (1..<see cref="Protocol.UniformNameMax"/> UTF-8 bytes).</summary>
-        public static bool IsValidName(string? name) => UniformWriter.IsValidName(name);
 
         private bool Matches(Dictionary<string, object> source)
         {
-            int valid = 0, invalid = 0;
+            int valid = 0, rejected = 0;
             foreach (var (name, value) in source)
             {
-                if (IsValidName(name) && QmlValue.TryConvert(value, out var converted))
+                if (Protocol.IsValidName(name) && QmlValue.TryConvert(value, out var converted))
                 {
                     if (!_values.TryGetValue(name, out var mine) || mine != converted)
                         return false;
                     valid++;
                 }
                 else
-                    invalid++;
+                {
+                    // The problem text depends on name and type only, so the same pair keeps the snapshot.
+                    if (!IsRejected(name, RejectedType(name, value)))
+                        return false;
+                    rejected++;
+                }
             }
-            return valid == _values.Count && invalid == _invalid;
+            return valid == _values.Count && rejected == _rejected.Length;
         }
+
+        /// <summary>The part of a refused value its problem text depends on: null for an invalid name (its text names the name only) and for a null value.</summary>
+        private static Type? RejectedType(string name, object? value) => Protocol.IsValidName(name) ? value?.GetType() : null;
+
+        // A linear search: the list is almost always empty, and nothing is allocated.
+        private bool IsRejected(string name, Type? type)
+        {
+            foreach (var entry in _rejected)
+            {
+                if (entry.Type == type && string.Equals(entry.Name, name, StringComparison.Ordinal))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>An entry that is not sent: its name and the type of its value (see <see cref="RejectedType"/>).</summary>
+        private readonly record struct Rejected(string Name, Type? Type);
     }
 }

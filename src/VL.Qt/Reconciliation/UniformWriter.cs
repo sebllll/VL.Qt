@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
 
@@ -17,9 +16,12 @@ namespace VL.Qt.Reconciliation
         /// <summary>Suffix of the table key of a sampler entry: a texture and its sampler share a name, so they need two keys.</summary>
         private const char SamplerKey = '\u0001';
 
-        /// <summary>Whether <paramref name="name"/> can be sent (1..<see cref="Protocol.UniformNameMax"/> UTF-8 bytes).</summary>
-        public static bool IsValidName(string? name)
-            => !string.IsNullOrEmpty(name) && Encoding.UTF8.GetByteCount(name) <= Protocol.UniformNameMax;
+        /// <summary>The state of <paramref name="sampler"/> as the wire carries it (protocol.h "Sampler"): bytes filter, mip filter, address U, address V.</summary>
+        public static ulong PackSampler(Sampler sampler)
+            => (ulong)sampler.Filter
+                | (ulong)sampler.MipFilter << 8
+                | (ulong)sampler.AddressU << 16
+                | (ulong)sampler.AddressV << 24;
 
         /// <summary>
         /// Sends the difference between the uniforms of <paramref name="effect"/> and <paramref name="sent"/> (null = nothing
@@ -33,18 +35,18 @@ namespace VL.Qt.Reconciliation
             Dictionary<string, UniformValue>? next = null;
             foreach (var u in effect.Uniforms)
             {
-                if (u is null || !IsValidName(u.Name))
+                if (u is null || !Protocol.IsValidName(u.Name))
                     continue;
                 next ??= new Dictionary<string, UniformValue>(StringComparer.Ordinal);
                 if (u.ValueType != Protocol.ValueType.Sampler)
                     next[u.Name] = Resolve(u, effect, children);
                 if (u.Sampler is { } sampler)
-                    next[u.Name + SamplerKey] = new UniformValue(Protocol.ValueType.Sampler, default, 0, sampler.Pack());
+                    next[u.Name + SamplerKey] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(sampler));
             }
             if (effect.InputSampler is { } inputSampler)
             {
                 next ??= new Dictionary<string, UniformValue>(StringComparer.Ordinal);
-                next["source" + SamplerKey] = new UniformValue(Protocol.ValueType.Sampler, default, 0, inputSampler.Pack());
+                next["source" + SamplerKey] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(inputSampler));
             }
 
             bool clear = false;

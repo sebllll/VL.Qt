@@ -32,13 +32,5 @@ namespace VL.Qt.Elements
 
         /// <summary>CREATE type of the handler (<see cref="Protocol.ElementType"/>, from 32).</summary>
         internal ushort HandlerType { get; }
-
-        /// <summary>
-        /// Writes the SETs of the handler properties that differ from <paramref name="previous"/> (same handler type;
-        /// null = just created, send only values that differ from QtNative's defaults).
-        /// <paramref name="mapping"/> converts lengths (Drag limits) to logical pixels; when its scale changes the reconciler
-        /// passes <paramref name="previous"/> = null so every non-default value is sent again.
-        /// </summary>
-        internal abstract void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping);
     }
 }

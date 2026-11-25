@@ -193,11 +193,11 @@ namespace VL.Qt.Tests
         [Test]
         public void NameLimit_InUtf8Bytes()
         {
-            Assert.That(QmlProperties.IsValidName(new string('a', Protocol.UniformNameMax)), Is.True);
-            Assert.That(QmlProperties.IsValidName(new string('a', Protocol.UniformNameMax + 1)), Is.False);
-            Assert.That(QmlProperties.IsValidName(new string('ä', Protocol.UniformNameMax / 2 + 1)), Is.False, "2 bytes per char");
-            Assert.That(QmlProperties.IsValidName(null), Is.False);
-            Assert.That(QmlProperties.IsValidName(""), Is.False);
+            Assert.That(Protocol.IsValidName(new string('a', Protocol.UniformNameMax)), Is.True);
+            Assert.That(Protocol.IsValidName(new string('a', Protocol.UniformNameMax + 1)), Is.False);
+            Assert.That(Protocol.IsValidName(new string('ä', Protocol.UniformNameMax / 2 + 1)), Is.False, "2 bytes per char");
+            Assert.That(Protocol.IsValidName(null), Is.False);
+            Assert.That(Protocol.IsValidName(""), Is.False);
             Assert.That(QmlProperties.From(new() { [new string('a', 300)] = 1 }).Problems, Does.Contain("longer than 255 bytes"));
         }
 
@@ -245,6 +245,46 @@ namespace VL.Qt.Tests
             d.Remove("bad2");
             d["a"] = 1f;
             Assert.That(QmlProperties.Update(p, d).Problems, Is.Empty);
+        }
+
+        [Test]
+        public void Update_RejectedEntryChanges_GivesANewProblemText()
+        {
+            var d = new Dictionary<string, object> { ["a"] = 1f, ["bad"] = new double[] { 1 } };
+            var p = QmlProperties.Update(QmlProperties.Empty, d);
+            Assert.That(p.Problems, Does.Contain("Property 'bad': type Double[]"));
+
+            d["bad"] = Matrix.Identity;
+            var q = QmlProperties.Update(p, d);
+            Assert.That(q, Is.Not.SameAs(p), "another unsupported type");
+            Assert.That(q.Problems, Does.Contain("type Matrix"));
+
+            d.Remove("bad");
+            d["colr"] = Matrix.Identity;
+            var r = QmlProperties.Update(q, d);
+            Assert.That(r, Is.Not.SameAs(q), "renamed key");
+            Assert.That(r.Problems, Does.Contain("Property 'colr'").And.Not.Contain("'bad'"));
+
+            d["colr"] = null!;
+            var s = QmlProperties.Update(r, d);
+            Assert.That(s, Is.Not.SameAs(r), "unsupported value to null");
+            Assert.That(s.Problems, Does.Contain("the value is not set"));
+
+            var tooLong = new string('a', Protocol.UniformNameMax + 1);
+            d.Remove("colr");
+            d[tooLong] = 1f;
+            var t = QmlProperties.Update(s, d);
+            Assert.That(t.Problems, Does.Contain("longer than"));
+            Assert.That(QmlProperties.Update(t, d), Is.SameAs(t), "the same refused entries keep the snapshot");
+        }
+
+        [Test]
+        public void Update_RejectedEntriesUnchanged_AllocatesNothing()
+        {
+            var d = new Dictionary<string, object> { ["a"] = 1f, ["bad"] = Matrix.Identity, ["colr"] = null! };
+            var p = QmlProperties.Update(QmlProperties.Empty, d);
+            Action frame = () => QmlProperties.Update(p, d);
+            Assert.That(Allocations.Fewest(frame), Is.EqualTo(0L));
         }
     }
 
@@ -440,8 +480,8 @@ namespace VL.Qt.Tests
         }
     }
 
-    /// <summary>QmlEvents: decoding of EVENT_QML_PROPERTY and EVENT_QML_SIGNAL, for every value type and for broken payloads.</summary>
-    public class QmlEventsTests
+    /// <summary>QmlEventDecoder: decoding of EVENT_QML_PROPERTY and EVENT_QML_SIGNAL, for every value type and for broken payloads.</summary>
+    public class QmlEventDecoderTests
     {
         private static IEnumerable<TestCaseData> Values()
         {
@@ -461,7 +501,7 @@ namespace VL.Qt.Tests
         [TestCaseSource(nameof(Values))]
         public void Property_EachValueType(ushort type, byte[] value, object expected)
         {
-            Assert.That(QmlEvents.TryDecodeProperty(QmlWire.Property("prop", type, value), out var name, out var v), Is.True);
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("prop", type, value), out var name, out var v), Is.True);
             Assert.That(name, Is.EqualTo("prop"));
             Assert.That(v, Is.EqualTo(expected));
             Assert.That(v.GetType(), Is.EqualTo(expected.GetType()));
@@ -472,7 +512,7 @@ namespace VL.Qt.Tests
         {
             foreach (var name in new[] { "a", "ab", "abc", "abcd", "abcde", "größe", "x€" })
             {
-                Assert.That(QmlEvents.TryDecodeProperty(QmlWire.Property(name, Protocol.ValueType.I32, QmlWire.I32(9)), out var n, out var v), Is.True, name);
+                Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property(name, Protocol.ValueType.I32, QmlWire.I32(9)), out var n, out var v), Is.True, name);
                 Assert.That((n, v), Is.EqualTo((name, (object)9)), name);
             }
         }
@@ -481,22 +521,22 @@ namespace VL.Qt.Tests
         public void Property_Malformed_IsRejected()
         {
             var good = QmlWire.Property("abc", Protocol.ValueType.F32, QmlWire.F(1));
-            Assert.That(QmlEvents.TryDecodeProperty(good, out _, out _), Is.True);
-            Assert.That(QmlEvents.TryDecodeProperty(good.AsSpan(0, 3), out _, out _), Is.False, "shorter than the header");
-            Assert.That(QmlEvents.TryDecodeProperty(good.AsSpan(0, good.Length - 1), out _, out _), Is.False, "truncated value");
-            Assert.That(QmlEvents.TryDecodeProperty(good.AsSpan(0, 6), out _, out _), Is.False, "name cut off");
-            Assert.That(QmlEvents.TryDecodeProperty(QmlWire.Property("", Protocol.ValueType.F32, QmlWire.F(1)), out _, out _), Is.False, "empty name");
-            Assert.That(QmlEvents.TryDecodeProperty(QmlWire.Property("a", Protocol.ValueType.Mat4, new byte[64]), out _, out _), Is.False, "unsupported value type");
-            Assert.That(QmlEvents.TryDecodeProperty(QmlWire.Property("a", 0, new byte[4]), out _, out _), Is.False, "value type 0");
+            Assert.That(QmlEventDecoder.TryDecodeProperty(good, out _, out _), Is.True);
+            Assert.That(QmlEventDecoder.TryDecodeProperty(good.AsSpan(0, 3), out _, out _), Is.False, "shorter than the header");
+            Assert.That(QmlEventDecoder.TryDecodeProperty(good.AsSpan(0, good.Length - 1), out _, out _), Is.False, "truncated value");
+            Assert.That(QmlEventDecoder.TryDecodeProperty(good.AsSpan(0, 6), out _, out _), Is.False, "name cut off");
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("", Protocol.ValueType.F32, QmlWire.F(1)), out _, out _), Is.False, "empty name");
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("a", Protocol.ValueType.Mat4, new byte[64]), out _, out _), Is.False, "unsupported value type");
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("a", 0, new byte[4]), out _, out _), Is.False, "value type 0");
             // string whose length field points beyond the payload
             var bad = QmlWire.Property("a", Protocol.ValueType.String, QmlWire.Str("hello"));
-            Assert.That(QmlEvents.TryDecodeProperty(bad.AsSpan(0, bad.Length - 3), out _, out _), Is.False, "string cut off");
+            Assert.That(QmlEventDecoder.TryDecodeProperty(bad.AsSpan(0, bad.Length - 3), out _, out _), Is.False, "string cut off");
         }
 
         [Test]
         public void Signal_NoArguments()
         {
-            Assert.That(QmlEvents.TryDecodeSignal(QmlWire.Signal("done"), out var s), Is.True);
+            Assert.That(QmlEventDecoder.TryDecodeSignal(QmlWire.Signal("done"), out var s), Is.True);
             Assert.That(s.Name, Is.EqualTo("done"));
             Assert.That(s.Arguments.Count, Is.EqualTo(0));
         }
@@ -504,7 +544,7 @@ namespace VL.Qt.Tests
         [TestCaseSource(nameof(Values))]
         public void Signal_OneArgument_EachValueType(ushort type, byte[] value, object expected)
         {
-            Assert.That(QmlEvents.TryDecodeSignal(QmlWire.Signal("sig", (type, value)), out var s), Is.True);
+            Assert.That(QmlEventDecoder.TryDecodeSignal(QmlWire.Signal("sig", (type, value)), out var s), Is.True);
             Assert.That(s.Arguments.Count, Is.EqualTo(1));
             Assert.That(s.Arguments[0], Is.EqualTo(expected));
             Assert.That(s.Arguments[0].GetType(), Is.EqualTo(expected.GetType()));
@@ -519,7 +559,7 @@ namespace VL.Qt.Tests
                 (Protocol.ValueType.F32, QmlWire.F(1)),
                 (Protocol.ValueType.Color, QmlWire.F(1, 0, 0, 1)),
                 (Protocol.ValueType.I32, QmlWire.I32(7)));
-            Assert.That(QmlEvents.TryDecodeSignal(payload, out var s), Is.True);
+            Assert.That(QmlEventDecoder.TryDecodeSignal(payload, out var s), Is.True);
             Assert.That(s.Name, Is.EqualTo("finished"));
             Assert.That(s.Arguments.ToArray(), Is.EqualTo(new object[] { "done", true, 1f, new Color4(1, 0, 0, 1), 7 }));
         }
@@ -528,16 +568,16 @@ namespace VL.Qt.Tests
         public void Signal_Malformed_IsRejected()
         {
             var good = QmlWire.Signal("clicked", (Protocol.ValueType.I32, QmlWire.I32(1)), (Protocol.ValueType.F32, QmlWire.F(2)));
-            Assert.That(QmlEvents.TryDecodeSignal(good, out _), Is.True);
-            Assert.That(QmlEvents.TryDecodeSignal(good.AsSpan(0, 3), out _), Is.False, "shorter than the header");
-            Assert.That(QmlEvents.TryDecodeSignal(good.AsSpan(0, good.Length - 4), out _), Is.False, "second argument missing");
-            Assert.That(QmlEvents.TryDecodeSignal(good.AsSpan(0, good.Length - 1), out _), Is.False, "second argument truncated");
-            Assert.That(QmlEvents.TryDecodeSignal(QmlWire.Signal("", (Protocol.ValueType.I32, QmlWire.I32(1))), out _), Is.False, "empty name");
-            Assert.That(QmlEvents.TryDecodeSignal(QmlWire.Signal("s", (Protocol.ValueType.Mat4, new byte[64])), out _), Is.False, "unknown argument type");
+            Assert.That(QmlEventDecoder.TryDecodeSignal(good, out _), Is.True);
+            Assert.That(QmlEventDecoder.TryDecodeSignal(good.AsSpan(0, 3), out _), Is.False, "shorter than the header");
+            Assert.That(QmlEventDecoder.TryDecodeSignal(good.AsSpan(0, good.Length - 4), out _), Is.False, "second argument missing");
+            Assert.That(QmlEventDecoder.TryDecodeSignal(good.AsSpan(0, good.Length - 1), out _), Is.False, "second argument truncated");
+            Assert.That(QmlEventDecoder.TryDecodeSignal(QmlWire.Signal("", (Protocol.ValueType.I32, QmlWire.I32(1))), out _), Is.False, "empty name");
+            Assert.That(QmlEventDecoder.TryDecodeSignal(QmlWire.Signal("s", (Protocol.ValueType.Mat4, new byte[64])), out _), Is.False, "unknown argument type");
             var tooMany = QmlWire.Signal("s", Enumerable.Repeat((Protocol.ValueType.I32, QmlWire.I32(1)), 65).ToArray());
-            Assert.That(QmlEvents.TryDecodeSignal(tooMany, out _), Is.False, "more than 64 arguments");
+            Assert.That(QmlEventDecoder.TryDecodeSignal(tooMany, out _), Is.False, "more than 64 arguments");
             var many = QmlWire.Signal("s", Enumerable.Repeat((Protocol.ValueType.I32, QmlWire.I32(1)), 64).ToArray());
-            Assert.That(QmlEvents.TryDecodeSignal(many, out var s) && s.Arguments.Count == 64, Is.True);
+            Assert.That(QmlEventDecoder.TryDecodeSignal(many, out var s) && s.Arguments.Count == 64, Is.True);
         }
 
         // --- through the registry into the slot ---

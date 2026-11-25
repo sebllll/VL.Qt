@@ -16,7 +16,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Pack_DefaultIsAllZero_AndFieldsLandInTheirBytes()
         {
-            Assert.That(new Sampler().Pack(), Is.EqualTo(0UL), "Linear, None, Clamp, Clamp = Qt defaults = zero");
+            Assert.That(UniformWriter.PackSampler(new Sampler()), Is.EqualTo(0UL), "Linear, None, Clamp, Clamp = Qt defaults = zero");
             var s = new Sampler
             {
                 Filter = SamplerFilter.Point,
@@ -24,7 +24,7 @@ namespace VL.Qt.Tests
                 AddressU = SamplerAddress.Wrap,
                 AddressV = SamplerAddress.Mirror,
             };
-            Assert.That(s.Pack(), Is.EqualTo(0x02_01_02_01UL));
+            Assert.That(UniformWriter.PackSampler(s), Is.EqualTo(0x02_01_02_01UL));
         }
 
         [Test]

@@ -69,7 +69,7 @@ public static class KeyboardShortcutsTest
                 if (len < 4 || off + 8 + len > b.Length)
                     break;
                 if (ev == Protocol.EventId.QmlProperty && BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)) == ProbeHandle
-                    && QmlEvents.TryDecodeProperty(b.Slice(off + 12, len - 4), out var name, out var value))
+                    && QmlEventDecoder.TryDecodeProperty(b.Slice(off + 12, len - 4), out var name, out var value))
                 {
                     if (name == "count") count = Convert.ToInt64(value);
                     else if (name == "lastKey") lastKey = Convert.ToInt64(value);

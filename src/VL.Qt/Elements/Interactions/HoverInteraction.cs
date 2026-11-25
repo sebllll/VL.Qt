@@ -9,10 +9,5 @@ namespace VL.Qt.Elements
             : base(Protocol.ElementType.HoverHandler, previous, feedback)
         {
         }
-
-        /// <summary>No properties: QtNative defaults are all a Hover handler has.</summary>
-        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping)
-        {
-        }
     }
 }

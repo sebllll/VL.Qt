@@ -60,7 +60,7 @@ public static class AnimationScrubTest
                     break;
                 uint handle = BinaryPrimitives.ReadUInt32LittleEndian(b[(off + 8)..]);
                 var payload = b.Slice(off + 12, len - 4);
-                if (handle == HQ && ev == Protocol.EventId.QmlProperty && QmlEvents.TryDecodeProperty(payload, out var name, out var value) && name == "v" && value is float f)
+                if (handle == HQ && ev == Protocol.EventId.QmlProperty && QmlEventDecoder.TryDecodeProperty(payload, out var name, out var value) && name == "v" && value is float f)
                     v = f;
                 else if (handle == HQ && ev == Protocol.EventId.Error)
                     error = System.Text.Encoding.UTF8.GetString(payload);

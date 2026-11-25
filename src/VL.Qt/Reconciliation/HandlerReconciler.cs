@@ -119,7 +119,7 @@ namespace VL.Qt.Reconciliation
                 if (pass.Rescale || !ReferenceEquals(h.Last, link))
                 {
                     // A new scale sends the limits again: previous = null writes every non-default value.
-                    link.WriteProperties(_sink, h.Id, pass.Rescale ? null : h.Last, pass.Mapping);
+                    HandlerPropertyDiff.Write(_sink, h.Id, link, pass.Rescale ? null : h.Last, pass.Mapping);
                     h.Last = link;
                 }
             }
@@ -149,7 +149,7 @@ namespace VL.Qt.Reconciliation
             var h = new HandlerMirror(_ids.Allocate(), link.HandlerType, link.Feedback) { SeenPass = pass.Pass, Last = link };
             _scene.SetHandlerOwner(h);
             _sink.Create(h.Id, h.Type);
-            link.WriteProperties(_sink, h.Id, null, pass.Mapping);
+            HandlerPropertyDiff.Write(_sink, h.Id, link, null, pass.Mapping);
             _sink.Reparent(h.Id, item.Id, 0);
             h.BoundFeedbackId = _feedbackRouter.Acquire(h.Key);
             _sink.Bind(h.Id, h.BoundFeedbackId);
