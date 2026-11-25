@@ -22,7 +22,7 @@ namespace VL.Qt.Nodes
     {
         // The path is compared as string (value equality); the Path object is rebuilt only when it changes.
         // Shared with Video (VL.Audio) in VL.Qt.Audio: it sets AudioTap, this node never does.
-        internal readonly record struct Props(string Path, bool Play, bool Loop, bool KeepLastFrame, float Rate, float Volume, VideoFillMode FillMode, ulong AudioTap = 0);
+        internal readonly record struct Props(string Path, bool Play, bool Loop, bool KeepLastFrame, float Rate, float Volume, FillMode FillMode, ulong AudioTap = 0);
 
         private readonly ElementNodeCore<Video, Props> _node;
 
@@ -48,6 +48,23 @@ namespace VL.Qt.Nodes
 
         internal ElementNodeCore<Video, Props> Core => _node;
 
+        private const string FillModePhase = "Fill Mode";
+
+        /// <summary>
+        /// Returns the fill mode to send: a video cannot tile, so Tile becomes Stretch and the node shows a warning until
+        /// another mode is set. Also used by Video (VL.Audio) in VL.Qt.Audio.
+        /// </summary>
+        internal static FillMode ResolveFillMode(FillMode fillMode, NodeErrors errors)
+        {
+            if (fillMode != FillMode.Tile)
+            {
+                errors.Clear(FillModePhase);
+                return fillMode;
+            }
+            errors.Warn("Fill Mode Tile is not supported by a video, it is drawn as Stretch.", FillModePhase);
+            return FillMode.Stretch;
+        }
+
         /// <summary>Describes the video. A new description is only created when an input changes.</summary>
         /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor. Size 0 = not drawn.</param>
         /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
@@ -58,7 +75,7 @@ namespace VL.Qt.Nodes
         /// <param name="keepLastFrame">When playback ends (Loop off), the last frame stays visible; otherwise the element is cleared.</param>
         /// <param name="rate">Playback speed (1 = normal). Values below 0.01 are clamped (no reverse playback).</param>
         /// <param name="volume">Audio volume 0..1 (linear, clamped).</param>
-        /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill).</param>
+        /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill). Tile is not supported by a video: it is drawn as Stretch and the node shows a warning.</param>
         /// <param name="opacity">Opacity of the element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
         /// <param name="clip">Clip children to the element's size.</param>
         /// <param name="debug">Debug overlay for this element only (not its children; the Renderer's Debug shows all). Does not affect layout or hit-testing. Cyan frame = actual size (solid: Size, dashed: Auto Size on), orange = implicit size, i.e. what Auto Size would give (only where it differs), blue dotted = children extent, translucent red = children outside the frame (overflow), translucent green = padding and hatched violet = Row/Column spacing (both inside the frame), magenta cross = origin, yellow diamond = anchor. Text: green line = baseline, dashed green = ascent, dashed red = descent.</param>
@@ -81,7 +98,7 @@ namespace VL.Qt.Nodes
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool keepLastFrame,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float rate,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float volume,
-            [DefaultValue(typeof(VideoFillMode), nameof(VideoFillMode.Fit))] VideoFillMode fillMode,
+            [DefaultValue(typeof(FillMode), nameof(FillMode.Fit))] FillMode fillMode,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float opacity,
             [Pin(Visibility = PinVisibility.Optional)] bool clip,
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
@@ -95,7 +112,7 @@ namespace VL.Qt.Nodes
         {
             var element = _node.Describe(
                 new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
-                new Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, volume, fillMode),
+                new Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, volume, ResolveFillMode(fillMode, _node.Messages)),
                 out measuredSize, out sceneBounds);
             position = _node.Feedback.MediaPosition();
             duration = _node.Feedback.MediaDuration();

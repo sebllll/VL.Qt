@@ -181,7 +181,7 @@
           </Node>
           <Pad Id="EK7nHp7ofFMMjmcg6AL82L" Comment="Fill Mode" Bounds="162,570,62,15" ShowValueBox="true" isIOBox="true" Value="Fit">
             <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
-              <Choice Kind="TypeFlag" Name="ImageFillMode" />
+              <Choice Kind="TypeFlag" Name="FillMode" />
             </p:TypeAnnotation>
           </Pad>
         </Canvas>

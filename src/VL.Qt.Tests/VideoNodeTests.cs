@@ -29,10 +29,10 @@ namespace VL.Qt.Tests
 
         // Pin defaults as declared on Update.
         private Element Update(string? path = null, bool play = true, bool loop = true, bool keepLast = true, float rate = 1, float volume = 1,
-            VideoFillMode fill = VideoFillMode.Fit) => Update(out _, out _, path, play, loop, keepLast, rate, volume, fill);
+            FillMode fill = FillMode.Fit) => Update(out _, out _, path, play, loop, keepLast, rate, volume, fill);
 
         private Element Update(out float position, out float duration, string? path = null, bool play = true, bool loop = true, bool keepLast = true,
-            float rate = 1, float volume = 1, VideoFillMode fill = VideoFillMode.Fit)
+            float rate = 1, float volume = 1, FillMode fill = FillMode.Fit)
             => (Element)_node.Update(new Vector2(1.6f, 0.9f), default, RectangleAnchor.Center, path is null ? Path.Default : new Path(path),
                 play, loop, keepLast, rate, volume, fill, 1, false, false, null, null, true, out position, out duration,
                 out _, out _);
@@ -70,20 +70,20 @@ namespace VL.Qt.Tests
             Assert.That(v.KeepLastFrame, Is.False);
             Assert.That(v.Rate, Is.EqualTo(1f));
             Assert.That(v.Volume, Is.EqualTo(1f));
-            Assert.That(v.FillMode, Is.EqualTo(VideoFillMode.Fit));
-            Assert.That((int)VideoFillMode.Crop, Is.EqualTo(2));
+            Assert.That(v.FillMode, Is.EqualTo(FillMode.Fit));
+            Assert.That((int)FillMode.Crop, Is.EqualTo(2));
         }
 
         [Test]
         public void Node_Describes_Video_WithFeedback()
         {
-            var v = (Video)Update("c:/a.mp4", rate: 2, volume: 0.5f, fill: VideoFillMode.Crop);
+            var v = (Video)Update("c:/a.mp4", rate: 2, volume: 0.5f, fill: FillMode.Crop);
             Assert.That(v.Path.Value, Is.EqualTo("c:/a.mp4"));
             Assert.That(v.Playing && v.Loop && v.KeepLastFrame, Is.True);
             Assert.That(((Video)Update("c:/a.mp4", keepLast: false)).KeepLastFrame, Is.False);
             Assert.That(v.Rate, Is.EqualTo(2f));
             Assert.That(v.Volume, Is.EqualTo(0.5f));
-            Assert.That(v.FillMode, Is.EqualTo(VideoFillMode.Crop));
+            Assert.That(v.FillMode, Is.EqualTo(FillMode.Crop));
             Assert.That(v.Feedback.Feedback, Is.SameAs(_node.Core.Feedback));
         }
 
@@ -97,9 +97,27 @@ namespace VL.Qt.Tests
             long before = GC.GetAllocatedBytesForCurrentThread();
             var path = new Path("c:/b.mp4");
             for (int i = 0; i < 1000; i++)
-                _node.Update(new Vector2(1.6f, 0.9f), default, RectangleAnchor.Center, path, true, true, true, 1, 1, VideoFillMode.Fit,
+                _node.Update(new Vector2(1.6f, 0.9f), default, RectangleAnchor.Center, path, true, true, true, 1, 1, FillMode.Fit,
                     1, false, false, null, null, true, out _, out _, out _, out _);
             Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.LessThan(100));
+        }
+
+        [Test]
+        public void Node_TileFillMode_SendsStretchAndWarnsUntilChanged()
+        {
+            var warnings = new System.Collections.Generic.List<string>();
+            using var node = new VideoNode(text => { warnings.Add(text); return NoWarning; });
+            var path = new Path("c:/a.mp4");
+            Element Describe(FillMode fill) => (Element)node.Update(new Vector2(1.6f, 0.9f), default, RectangleAnchor.Center, path, true, true, true, 1, 1, fill,
+                1, false, false, null, null, true, out _, out _, out _, out _);
+
+            var tiled = (Video)Describe(FillMode.Tile);
+            Assert.That(tiled.FillMode, Is.EqualTo(FillMode.Stretch));
+            Assert.That(warnings, Has.Count.EqualTo(1).And.One.Contains("Tile"));
+            Assert.That(Describe(FillMode.Tile), Is.SameAs(tiled));
+            Assert.That(warnings, Has.Count.EqualTo(1), "one warning, not one per frame");
+
+            Assert.That(((Video)Describe(FillMode.Crop)).FillMode, Is.EqualTo(FillMode.Crop));
         }
 
         [Test]
@@ -107,7 +125,7 @@ namespace VL.Qt.Tests
         {
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry());
-            rec.Update(new Video { Path = new Path("c:/a.mp4"), Playing = true, Loop = true, KeepLastFrame = true, Rate = 0.5f, Volume = 0.25f, FillMode = VideoFillMode.Stretch }, Space.DIPTopLeft);
+            rec.Update(new Video { Path = new Path("c:/a.mp4"), Playing = true, Loop = true, KeepLastFrame = true, Rate = 0.5f, Volume = 0.25f, FillMode = FillMode.Stretch }, Space.DIPTopLeft);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[]
             {
                 $"SET 1 Source string(c:/a.mp4)",

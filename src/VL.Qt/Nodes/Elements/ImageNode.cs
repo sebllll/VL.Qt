@@ -20,7 +20,7 @@ namespace VL.Qt.Nodes
     public sealed class ImageNode : IDisposable
     {
         // The image is compared by reference: a new QtImage is a new image.
-        internal readonly record struct Props(QtImage? Image, ImageFillMode FillMode, bool Smooth);
+        internal readonly record struct Props(QtImage? Image, FillMode FillMode, bool Smooth);
 
         private readonly ElementNodeCore<Image, Props> _node;
 
@@ -62,7 +62,7 @@ namespace VL.Qt.Nodes
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
             QtImage? image,
-            [DefaultValue(typeof(ImageFillMode), nameof(ImageFillMode.Stretch))] ImageFillMode fillMode,
+            [DefaultValue(typeof(FillMode), nameof(FillMode.Stretch))] FillMode fillMode,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool smooth,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float opacity,
             [Pin(Visibility = PinVisibility.Optional)] bool clip,

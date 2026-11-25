@@ -16,6 +16,15 @@ namespace VL.Qt.Stride
     [SupportedOSPlatform("windows")]
     internal static class StrideInterop
     {
+        /// <summary>Returns the VL.Qt count of Stride's <paramref name="samples"/> (by name: the two enums do not promise the same numbers).</summary>
+        public static MultisampleCount ToQtSamples(StrideMultisampleCount samples) => samples switch
+        {
+            StrideMultisampleCount.X2 => MultisampleCount.X2,
+            StrideMultisampleCount.X4 => MultisampleCount.X4,
+            StrideMultisampleCount.X8 => MultisampleCount.X8,
+            _ => MultisampleCount.None,
+        };
+
         /// <summary>
         /// Returns the largest width and height of a Texture2D at the device's feature level (D3D11 limits per level;
         /// the QtNative bind accepts up to 16384).

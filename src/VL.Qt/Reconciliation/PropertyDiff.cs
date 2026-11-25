@@ -333,7 +333,7 @@ namespace VL.Qt.Reconciliation
             if (created || _rescale || _mapping.ToFontPixels(p.FontSize) != _mapping.ToFontPixels(n.FontSize))
                 _sink.SetF32(id, P.FontSize, _mapping.ToFontPixels(n.FontSize));
             if (p.Weight != n.Weight)
-                _sink.SetI32(id, P.FontWeight, (int)n.Weight);
+                _sink.SetI32(id, P.FontWeight, n.Weight);
             if (p.Italic != n.Italic)
                 _sink.SetBool(id, P.FontItalic, n.Italic);
             if (p.Color != n.Color)

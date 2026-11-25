@@ -255,7 +255,7 @@
 /* One number for the command protocol (this file) and the C ABI (vlqt.h, vlqt_test.h): vlqt_app_get_abi_version() returns it, VL.Qt.dll
  * compares it with Protocol.AbiVersion before the first window or resource and refuses a vlqt.dll with another one.
  * Bump it on EVERY change to a constant, a struct layout or an exported signature (also additions); mirror it in Protocol.cs. */
-#define VLQT_ABI_VERSION 24
+#define VLQT_ABI_VERSION 25
 #define VLQT_COMMAND_ALIGN 4
 #define VLQT_HEADER_SIZE 8 /* command, poll record and resource record: u16 op/event, u16 flags (0), u32 len */
 #define VLQT_MAX_COMMAND_PAYLOAD 67108864 /* sanity cap of payloadLen (64 MB); above it the apply fails with VLQT_ERR_BAD_LENGTH */
@@ -399,7 +399,7 @@ enum vlqt_property {
     VLQT_PROPERTY_LETTER_SPACING = 522,
     VLQT_PROPERTY_FONT_SIZE_MODE = 523,
     VLQT_PROPERTY_SOURCE = 544,
-    VLQT_PROPERTY_FILL_MODE = 545,
+    VLQT_PROPERTY_FILL_MODE = 545, /* i32 vlqt_fill_mode, Image and Video (Video: no TILE) */
     VLQT_PROPERTY_SMOOTH = 546,
     VLQT_PROPERTY_IMAGE = 547, /* u64 image resource id (vlqt_res_*), 0 = no image; the old one stays until the new one is Ready */
     VLQT_PROPERTY_SPACING = 576,
@@ -599,6 +599,15 @@ enum vlqt_space {
     VLQT_SPACE_DIP = 1,           /* origin at the centre */
     VLQT_SPACE_DIP_TOP_LEFT = 2,  /* origin at the top left (the default) */
     VLQT_SPACE_PIXEL_TOP_LEFT = 3 /* origin at the top left */
+};
+
+/* Values of PROP_FILL_MODE (i32), the order of VL.Qt.Elements.FillMode. Image takes all four; Video takes STRETCH, FIT and CROP
+ * (TILE -> ApplyBadValue: the Video node sends STRETCH for a Tile pin value and warns). Centered like QML Image. */
+enum vlqt_fill_mode {
+    VLQT_FILL_MODE_STRETCH = 0, /* fills the size, the aspect ratio is not kept */
+    VLQT_FILL_MODE_FIT = 1,     /* keeps the aspect ratio, fits inside the size */
+    VLQT_FILL_MODE_CROP = 2,    /* keeps the aspect ratio, fills the size, the overflow is cut off */
+    VLQT_FILL_MODE_TILE = 3     /* repeats the image at its natural size (Image only) */
 };
 
 /* Pointer events of vlqt_offscreen_send_pointer (vlqt.h, QtTexture input), not part of the command buffer. */

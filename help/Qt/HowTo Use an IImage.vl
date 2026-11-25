@@ -141,7 +141,7 @@
           </Node>
           <Pad Id="Hhq1btI3WbAOIYl2MOvGab" Comment="Fill Mode" Bounds="496,545,62,15" ShowValueBox="true" isIOBox="true" Value="Fit">
             <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
-              <Choice Kind="TypeFlag" Name="ImageFillMode" />
+              <Choice Kind="TypeFlag" Name="FillMode" />
             </p:TypeAnnotation>
           </Pad>
           <Node Bounds="351,282,84,69" Id="ReaCKohl3lKNqdZLKpW8NV">

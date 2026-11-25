@@ -11,7 +11,7 @@ namespace VL.Qt.Wire
     internal static class Protocol
     {
         /// <summary>Version of the command protocol and the C ABI of vlqt.h; QtApp refuses a vlqt.dll with another one. Bump with every change (see protocol.h).</summary>
-        public const int AbiVersion = 24;
+        public const int AbiVersion = 25;
         public const int CommandAlign = 4;
         /// <summary>Header of a command, a poll record and a resource record: u16 op/event, u16 flags (0, reserved), u32 length.</summary>
         public const int HeaderSize = 8;
@@ -504,6 +504,15 @@ namespace VL.Qt.Wire
             public const uint Dip = 1;
             public const uint DipTopLeft = 2;
             public const uint PixelTopLeft = 3;
+        }
+
+        /// <summary>Values of <see cref="PropertyId.FillMode"/> (i32), the order of <see cref="VL.Qt.Elements.FillMode"/>. Video does not take <see cref="Tile"/>.</summary>
+        internal static class FillMode
+        {
+            public const int Stretch = 0;
+            public const int Fit = 1;
+            public const int Crop = 2;
+            public const int Tile = 3;
         }
 
         /// <summary>Pointer events of vlqt_offscreen_send_pointer (QtTexture input), not part of the command buffer.</summary>

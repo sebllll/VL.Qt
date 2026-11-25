@@ -105,7 +105,7 @@ public static class EffectChainTest
         }
 
         Element Text(TextNode n, string s, RectangleF bounds, float size, Effect? effect)
-            => (Element)n.Update(bounds.Sz(), bounds.Tr(), RectangleAnchor.TopLeft, s, "", size, FontWeight.Normal, false, new Color4(1, 1, 1, 1),
+            => (Element)n.Update(bounds.Sz(), bounds.Tr(), RectangleAnchor.TopLeft, s, "", size, 400, false, new Color4(1, 1, 1, 1),
                 TextHorizontalAlignment.Left, VerticalAlignment.Top, TextWrap.NoWrap, TextElide.None, 1, 0, TextAutofit.Fixed,
                 1, false, false, null, effect, true, out _, out _);
 

@@ -14,11 +14,13 @@
  *
  * Device lost: the old image is not drawn until its replacement is Ready (image_texture_cache.h).
  *
- * Fill modes as QML Image (values of Image.fillMode, centered): Stretch, PreserveAspectFit, PreserveAspectCrop and
- * Tile (one image node per tile, at most kMaxTiles). smooth (QQuickItem) picks linear or nearest filtering, linear
+ * Fill modes of the protocol (vlqt_fill_mode: Stretch, Fit, Crop, Tile; centered like QML Image); Tile makes one image node
+ * per tile, at most kMaxTiles. smooth (QQuickItem) picks linear or nearest filtering, linear
  * also uses the mipmaps of a resource loaded with VLQT_IMAGE_LOAD_MIPMAPS. Implicit size = image size.
  */
 #pragma once
+
+#include "protocol.h"
 
 #include <QtQuick/QQuickItem>
 
@@ -38,14 +40,12 @@ struct ImageTexture;
 class QtImageItem final : public QQuickItem
 {
     Q_OBJECT
-    Q_PROPERTY(int fillMode READ fillMode WRITE setFillMode NOTIFY fillModeChanged)
 
 public:
     explicit QtImageItem(QQuickItem* parent = nullptr);
     ~QtImageItem() override;
 
-    int fillMode() const { return m_fillMode; }
-    void setFillMode(int mode);
+    void setFillMode(vlqt_fill_mode mode);
 
     // PROP_IMAGE: false + err for an unknown or released id (the current image stays).
     bool setResource(uint64_t id, std::string& err);
@@ -53,9 +53,6 @@ public:
     // Once per pump after res::beginFrame: only the items whose resource got new content (res::changedThisFrame)
     // take it and draw it in this pump.
     static void afterResourceFrame();
-
-signals:
-    void fillModeChanged();
 
 public slots:
     // Called by Qt Quick on window teardown (cleanupNodesOnShutdown) while the QRhi still exists.
@@ -74,7 +71,7 @@ private:
     uint64_t m_shownId = 0; // id of m_content (element reference held; == m_wantId once that is Ready)
     std::shared_ptr<res::image::ImageContent> m_content;
     std::shared_ptr<ImageTexture> m_texture; // texture of m_content in window()
-    int m_fillMode = 0;
+    vlqt_fill_mode m_fillMode = VLQT_FILL_MODE_STRETCH;
 };
 
 } // namespace vlqt

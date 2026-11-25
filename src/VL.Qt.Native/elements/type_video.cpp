@@ -28,6 +28,22 @@ bool setMediaSource(Elements&, ElementEntry& n, const ResolvedProp& rp, const Va
 
 constexpr const char* kVideoQml = "qrc:/vlqt/qml/elements/VideoElement.qml";
 
+/* PROP_FILL_MODE: Stretch, Fit and Crop become the VideoOutput.fillMode values (Stretch, PreserveAspectFit, PreserveAspectCrop); Tile is refused. */
+bool setVideoFillMode(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
+{
+    switch (v.i) {
+    case VLQT_FILL_MODE_STRETCH:
+        return writeQml(n.item, rp, 0, err);
+    case VLQT_FILL_MODE_FIT:
+        return writeQml(n.item, rp, 1, err);
+    case VLQT_FILL_MODE_CROP:
+        return writeQml(n.item, rp, 2, err);
+    default:
+        err = "fill mode " + std::to_string(v.i) + " is not supported by a video";
+        return false;
+    }
+}
+
 /* f32 that must be > 0 (playback rate; reverse/zero playback is not supported by the backend). Finiteness is checked in Elements::set. */
 bool setQmlPositiveReal(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& v, std::string& err)
 {
@@ -65,8 +81,7 @@ std::vector<PropDef> videoProps()
 {
     return {
         {VLQT_PROPERTY_SOURCE, VLQT_VALUE_TYPE_STRING, setMediaSource, "source"},
-        // VideoOutput.Stretch/PreserveAspectFit/PreserveAspectCrop (= C# VideoFillMode)
-        {VLQT_PROPERTY_FILL_MODE, VLQT_VALUE_TYPE_I32, setQmlEnum<0, 1, 2>, "fillMode"},
+        {VLQT_PROPERTY_FILL_MODE, VLQT_VALUE_TYPE_I32, setVideoFillMode, "fillMode"},
         {VLQT_PROPERTY_PLAYING, VLQT_VALUE_TYPE_BOOL, setQmlBool, "playing"},
         {VLQT_PROPERTY_LOOP, VLQT_VALUE_TYPE_BOOL, setQmlBool, "loop"},
         // VideoOutput.endOfStreamPolicy (Qt 6.9+): KeepLastFrame / ClearOutput (Qt default)

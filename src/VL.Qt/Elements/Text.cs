@@ -17,7 +17,8 @@ namespace VL.Qt.Elements
         public string FontFamily { get; init; } = string.Empty;
         /// <summary>Font pixel size in units.</summary>
         public float FontSize { get; init; } = DefaultFontSize;
-        public FontWeight Weight { get; init; } = FontWeight.Normal;
+        /// <summary>Font weight 1..1000 (CSS and Qt scale, 400 = Normal, 700 = Bold).</summary>
+        public int Weight { get; init; } = 400;
         public bool Italic { get; init; }
         public Color4 Color { get; init; } = Color4.Black;
         public TextHorizontalAlignment HAlign { get; init; } = TextHorizontalAlignment.Left;

@@ -167,7 +167,7 @@ public static partial class InteractionTest
         var bounds = new RectangleF(1, 1, 2, 1);
         var factories = new (string Name, Func<Interaction?, Element> Make)[]
         {
-            ("Text", i => (Element)text.Update(bounds.Sz(), bounds.Tr(), RectangleAnchor.TopLeft, "Hover", "", 1f, FontWeight.Normal, false,
+            ("Text", i => (Element)text.Update(bounds.Sz(), bounds.Tr(), RectangleAnchor.TopLeft, "Hover", "", 1f, 400, false,
                 new Color4(1, 1, 1, 1), TextHorizontalAlignment.Left, VerticalAlignment.Top, TextWrap.NoWrap, TextElide.None, 1, 0,
                 TextAutofit.Fixed, 1, false, false, i, null, true, out _, out _)),
             ("Group", i => (Element)group.Update(Spread.Create<IElement?>(new Rectangle { Size = new Vector2(2, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0) }), bounds.Sz(), false, bounds.Tr(),
