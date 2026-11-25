@@ -1260,14 +1260,13 @@ VL.Qt | VL.Qt.Nodes.QmlElementNode | ctor | pin Node Context | in VL.Core.NodeCo
 VL.Qt | VL.Qt.Nodes.QmlElementNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | VL.Qt.Elements.IElement
-VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | order Auto Size, Size, Transform, Anchor, File, Properties, Opacity, Clip, Debug, Interaction, Effect, Enabled, Properties, Signals, Measured Size, Scene Bounds, Error, Output
+VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | order Auto Size, Size, Transform, Anchor, File, Properties, Opacity, Clip, Debug, Interaction, Effect, Enabled, Properties, Signals, Measured Size, Scene Bounds, Output
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Anchor | in VL.Lib.Mathematics.RectangleAnchor = TopLeft | Pin(Visibility = PinVisibility.Optional) | (anchor)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Auto Size | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoSize)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Clip | in bool | Pin(Visibility = PinVisibility.Optional) | (clip)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Debug | in bool | Pin(Visibility = PinVisibility.Optional) | (debug)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Effect | in VL.Qt.Elements.Effect | Pin(Visibility = PinVisibility.Optional) | (effect)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Enabled | in bool = true | Pin(Visibility = PinVisibility.Optional) | (enabled)
-VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Error | out string | (error)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin File | in VL.Lib.IO.Path | (file)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Interaction | in VL.Qt.Elements.Interaction | Pin(Visibility = PinVisibility.Optional) | (interaction)
 VL.Qt | VL.Qt.Nodes.QmlElementNode | method Update | pin Measured Size | out Stride.Core.Mathematics.Vector2 | Pin(Visibility = PinVisibility.Optional) | (measuredSize)
@@ -2508,7 +2507,7 @@ VL.Qt.Stride | VL.Qt.Stride.ToTexturePixelsNode | type sealed class
 VL.Qt.Stride | assembly | attr ImportAsIs(Namespace = "VL.Qt.Stride", Category = "Qt")
 factory Qml | default category Qt.Elements.Qml
 factory Qml | node Snapshot (Variant) | category Qt.Elements.Qml
-factory Qml | node Snapshot (Variant) | order Level, Accent, Label, Active, Derived, Properties, Size, Auto Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Enabled, Output, Level, Accent, Label, Active, Count, Derived, Clicked, Moved, Measured Size, Scene Bounds, Error
+factory Qml | node Snapshot (Variant) | order Auto Size, Size, Transform, Anchor, Level, Accent, Label, Active, Derived, Properties, Opacity, Clip, Debug, Interaction, Effect, Enabled, Output, Level, Accent, Label, Active, Count, Derived, Clicked, Moved, Measured Size, Scene Bounds
 factory Qml | node Snapshot (Variant) | pin Accent | in Stride.Core.Mathematics.Color4 = 1, 0, 0, 1 | visible
 factory Qml | node Snapshot (Variant) | pin Accent | out Stride.Core.Mathematics.Color4 = 1, 0, 0, 1 | optional
 factory Qml | node Snapshot (Variant) | pin Active | in bool = false | visible
@@ -2523,7 +2522,6 @@ factory Qml | node Snapshot (Variant) | pin Derived | in float = 0 | visible
 factory Qml | node Snapshot (Variant) | pin Derived | out float = 0 | visible
 factory Qml | node Snapshot (Variant) | pin Effect | in VL.Qt.Elements.Effect | optional
 factory Qml | node Snapshot (Variant) | pin Enabled | in bool = true | optional
-factory Qml | node Snapshot (Variant) | pin Error | out string = "" | visible
 factory Qml | node Snapshot (Variant) | pin Interaction | in VL.Qt.Elements.Interaction | optional
 factory Qml | node Snapshot (Variant) | pin Label | in string = "x" | visible
 factory Qml | node Snapshot (Variant) | pin Label | out string = "x" | optional
@@ -2535,7 +2533,7 @@ factory Qml | node Snapshot (Variant) | pin Opacity | in float = 1 | optional
 factory Qml | node Snapshot (Variant) | pin Output | out VL.Qt.Elements.IElement | visible
 factory Qml | node Snapshot (Variant) | pin Properties | in System.Collections.Generic.Dictionary<string, object> | optional
 factory Qml | node Snapshot (Variant) | pin Scene Bounds | out Stride.Core.Mathematics.RectangleF = 0, 0, 0, 0 | optional
-factory Qml | node Snapshot (Variant) | pin Size | in Stride.Core.Mathematics.Vector2 = 1, 1 | visible
+factory Qml | node Snapshot (Variant) | pin Size | in Stride.Core.Mathematics.Vector2 = 1, 1 | optional
 factory Qml | node Snapshot (Variant) | pin Transform | in Stride.Core.Mathematics.Matrix = 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 | visible
 factory Shader | default category Qt.Elements.Shaders
 factory Shader | node Plain | category Qt.Elements.Shaders

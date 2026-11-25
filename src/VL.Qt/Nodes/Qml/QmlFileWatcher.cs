@@ -30,9 +30,6 @@ namespace VL.Qt.Nodes
         /// <param name="watchDir">Change events of a folder (tests: a subject).</param>
         public QmlFileWatcher(Func<string, IObservable<FileSystemEventArgs>> watchDir) => _watchDir = watchDir;
 
-        /// <summary>Path of the watched file, empty = none.</summary>
-        public string Path => _path;
-
         /// <summary>True while a folder is being watched.</summary>
         public bool IsWatching => _subscription is not null;
 

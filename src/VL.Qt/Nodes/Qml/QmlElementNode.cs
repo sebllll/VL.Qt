@@ -20,7 +20,7 @@ namespace VL.Qt.Nodes
     /// (<c>property …</c>, <c>signal …</c>) comes back, not what Item inherits. Value types both ways: float, int, bool, string,
     /// Color4, Vector2/3/4, RectangleF. The file is reloaded when it, another *.qml next to it or qmldir changes.
     /// QML animations follow the frame clock of the renderer, a QML Timer runs on wall time. Only the LGPL Qt modules are shipped:
-    /// an import of any other module (e.g. QtQuick3D, Charts) fails and shows at Error.
+    /// an import of any other module (e.g. QtQuick3D, Charts) fails and shows at the node and in the log.
     /// Lengths of Size in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP); property values are passed on unchanged (QML units).
     /// </summary>
     // The reconciler sends the properties (SET_QML_PROPERTIES, only what changed) and the reload counter; this node owns the
@@ -32,12 +32,11 @@ namespace VL.Qt.Nodes
 
         private readonly ElementNodeCore<QmlElement, Props> _node;
         private readonly QmlFileWatcher _watcher;
-        private readonly NodeErrors? _errors;
         private string? _file, _fileResolved;
         private string _source = string.Empty;
         private int _reload;
         private QmlProperties _properties = QmlProperties.Empty;
-        private string _shownProblems = string.Empty, _elementError = string.Empty, _error = string.Empty;
+        private string _shownProblems = string.Empty;
         private Dictionary<string, object> _changedProperties = new();
         private int _seenPropertyUpdates;
 
@@ -45,7 +44,6 @@ namespace VL.Qt.Nodes
         {
             _node = new ElementNodeCore<QmlElement, Props>(nodeContext, s_create);
             _watcher = new QmlFileWatcher();
-            _errors = new NodeErrors(nodeContext);
         }
 
         /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
@@ -72,7 +70,7 @@ namespace VL.Qt.Nodes
         internal ElementNodeCore<QmlElement, Props> Core => _node;
 
         /// <param name="file">The .qml file, its root must be an Item. A relative path is taken from the working directory of the app (vvvv resolves a Path IOBox against the document). Empty = nothing loaded. The file and the *.qml and qmldir next to it are watched: saving one reloads the element and sends all properties again; the outputs start empty again.</param>
-        /// <param name="properties">Values for properties of the QML root by name (float, double, int, bool, string, Color4, Vector2/3/4, RectangleF). Only entries that changed are sent. A key that is removed is not reset in QML. Unknown names and values QML cannot convert show at Error and are ignored; a float for an int property is converted by Qt.</param>
+        /// <param name="properties">Values for properties of the QML root by name (float, double, int, bool, string, Color4, Vector2/3/4, RectangleF). Only entries that changed are sent. A key that is removed is not reset in QML. Unknown names and values QML cannot convert show at the node and in the log and are ignored; a float for an int property is converted by Qt.</param>
         /// <param name="size">Size of the element (width, height), only with Auto Size off: it sets width and height of the QML root. The position comes from Transform and Anchor.</param>
         /// <param name="autoSize">On: the element takes the implicit size (implicitWidth, implicitHeight) of the QML root. Off: Size counts.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
@@ -87,7 +85,6 @@ namespace VL.Qt.Nodes
         /// <param name="signals">Signals of the QML root emitted since the last frame, in order. Each has its name and its arguments.</param>
         /// <param name="measuredSize">Size the QML root takes with Auto Size on, in units.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
-        /// <param name="error">Compile, load and type errors of the QML file (with file and line), properties that could not be set; empty = OK.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         [return: Pin(Name = "Output")]
         public IElement Update(
@@ -106,8 +103,7 @@ namespace VL.Qt.Nodes
             [Pin(Name = "Properties")] out Dictionary<string, object> changedProperties,
             out Spread<QmlSignal> signals,
             [Pin(Visibility = PinVisibility.Optional)] out Vector2 measuredSize,
-            [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds,
-            out string error)
+            [Pin(Visibility = PinVisibility.Optional)] out RectangleF sceneBounds)
         {
             var feedback = _node.Feedback;
             var source = ResolveSource(file?.Value);
@@ -134,7 +130,7 @@ namespace VL.Qt.Nodes
             }
             changedProperties = _changedProperties;
             signals = feedback.TakeQmlSignals();
-            error = UpdateError();
+            UpdateProblems();
             return element;
         }
 
@@ -157,25 +153,20 @@ namespace VL.Qt.Nodes
             return _fileResolved;
         }
 
-        /// <summary>Joins the property problems and the error Qt reported for the element, one line each; recomputed only when a part changes.</summary>
-        private string UpdateError()
+        /// <summary>Shows the problems of the property values (unsupported type) as a warning at the node; an error Qt reported for the element is shown by the element node.</summary>
+        private void UpdateProblems()
         {
-            string problems = _properties.Problems, element = _node.Error ?? string.Empty;
-            if (problems != _shownProblems || element != _elementError)
+            var problems = _properties.Problems;
+            if (problems != _shownProblems)
             {
                 _shownProblems = problems;
-                _elementError = element;
-                _error = problems.Length == 0 ? element : element.Length == 0 ? problems : problems + "\n" + element;
-                // Qt's element error is already logged and shown as warning by the element node.
-                _errors?.LogOnly(problems);
+                _node.Messages.Warn(problems, "Properties");
             }
-            return _error;
         }
 
         public void Dispose()
         {
             _watcher.Dispose();
-            _errors?.Dispose();
             _node.Dispose();
         }
     }

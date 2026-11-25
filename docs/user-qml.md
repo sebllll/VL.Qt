@@ -10,13 +10,12 @@ Experimental (`SymbolSmell.Experimental`): pins and behavior can still change, s
 |---|---|---|
 | `File` | `Path` | The `.qml` file. Its root must be an `Item` (Rectangle, Item, ... but not a `Window`), else the node shows an error. Empty = nothing loaded. |
 | `Properties` | `Dictionary<string, object>` | Values for properties of the QML root, by name. Only entries that changed are sent. |
-| `Size` | `Vector2` | Width and height of the element, in units (1 unit = 100 DIP), only with `Auto Size` off. |
 | `Auto Size` | `bool` | On (default): the element takes the size of the QML root. Off: `Size` sets `width` and `height` of the root. |
+| `Size` | `Vector2` | Optional. Width and height of the element, in units (1 unit = 100 DIP), only with `Auto Size` off. |
 | common element pins | | `Transform`, `Anchor`, `Opacity`, `Clip`, `Debug`, `Interaction`, `Effect`, like every element ([element catalog](design/element-catalog-v1.md)). |
 | out `Output` | `Element` | The element, connect it to a `Group` or `Renderer`. |
 | out `Properties` | `Dictionary<string, object>` | Last value of each root property that QML changed. |
 | out `Signals` | `Spread<QmlSignal>` | Signals of the root emitted since the last frame, in order. `QmlSignal` has `Name` and `Arguments` (`Spread<object>`). |
-| out `Error` | `string` | Compile, load and type errors, one line each (file and line); empty = OK. |
 | out `Measured Size`, `Scene Bounds` | | Optional, like on the other elements. |
 
 Property values are passed on unchanged in QML units (device-independent pixels), only `Size` is in units of the renderer's space.
@@ -38,14 +37,14 @@ The same types go both ways:
 
 - A value of another type, or `null`, is not sent: the node shows an error line and ignores the value.
 - Qt converts to the type of the QML property. A `float` set on an `int` property works, a string that is no number for a `real` property does not: error line, value ignored.
-- Back to the patch the same types arrive (integers outside the `int` range are clamped, a `url` arrives as a `string`, a `rect` as `RectangleF`, a `point` as `Vector2(x, y)`, a `size` as `Vector2(width, height)`). A signal argument of any other QML type (a list, an object) arrives as its string form. A property of such a type is not reported: `Error` shows one line for it.
+- Back to the patch the same types arrive (integers outside the `int` range are clamped, a `url` arrives as a `string`, a `rect` as `RectangleF`, a `point` as `Vector2(x, y)`, a `size` as `Vector2(width, height)`). A signal argument of any other QML type (a list, an object) arrives as its string form. A property of such a type is not reported: the node shows one line for it.
 
 ## What comes back
 
 Only what the **root of the file declares** comes back, not what `Item` already has (`width`, `x`, `opacity`, ...):
 
 - every `property ...` and `readonly property ...` of the root: its change arrives on the `Properties` output (one entry per property, the last value of the frame);
-- every `signal ...` of the root: each emission arrives on `Signals` with its arguments, in order. More than 256 signals in one frame are dropped and `Error` says so for that frame.
+- every `signal ...` of the root: each emission arrives on `Signals` with its arguments, in order. More than 256 signals in one frame are dropped and the node says so for that frame.
 
 ```qml
 Item {
@@ -70,13 +69,13 @@ The patch's own `Properties` entry is not reported back: setting `value` from th
 
 ## Hot reload
 
-The node watches the **folder of the file** for changes of the file itself, of any `*.qml` next to it and of `qmldir` (components the file imports by relative path). On a change QtNative clears the component cache for the file, builds a new instance and sends all property values again. A new element of a file that changed on disk since QtNative last compiled it also reads the file again, not the cached component, so a node rebuilt after a declaration change never shows the old version. The outputs start empty again (`Properties`, `Signals`), `Error` is empty when the new version compiles. Saving the file while vvvv runs is all it takes.
+The node watches the **folder of the file** for changes of the file itself, of any `*.qml` next to it and of `qmldir` (components the file imports by relative path). On a change QtNative clears the component cache for the file, builds a new instance and sends all property values again. A new element of a file that changed on disk since QtNative last compiled it also reads the file again, not the cached component, so a node rebuilt after a declaration change never shows the old version. The outputs start empty again (`Properties`, `Signals`), the message at the node goes when the new version compiles. Saving the file while vvvv runs is all it takes.
 
 Limits:
 
 - Only that one folder: subfolders are not watched, nor are `.js` files or images the QML uses. After editing those, save a `.qml` in the folder (or set `File` again).
 - If the folder does not exist when `File` is set, nothing is watched until `File` is set again.
-- A property error stays on `Error` until the name is set again or the file is reloaded, even when the entry was removed from the dictionary in the meantime.
+- A property error stays at the node until the name is set again or the file is reloaded, even when the entry was removed from the dictionary in the meantime.
 
 ## Dictionary behavior
 
@@ -135,8 +134,8 @@ Not given a pin: `property alias`, `var`, `list<…>`, object types (`Item`, `Re
 ### Pin names and help
 
 - The name comes from the QML name like at the shader pins: `accentColor` → **Accent Color**, `max_value` → **Max Value**.
-- A name taken by a common pin (`Size`, `Opacity`, `Transform`, `Output`, `Error`, `Properties`, …) or by an earlier declaration becomes "Size 2", with a warning at the node.
-- The common pins are exactly those of `QmlElement`: `Size`, `Auto Size`, `Transform`, `Anchor`, `Opacity`, `Clip`, `Debug`, `Interaction`, `Effect`, and the outputs `Output`, `Measured Size`, `Scene Bounds`, `Error`. The property and signal pins come before them.
+- A name taken by a common pin (`Size`, `Opacity`, `Transform`, `Output`, `Properties`, …) or by an earlier declaration becomes "Size 2", with a warning at the node.
+- The common pins are those of `QmlElement`, in its order: the inputs `Auto Size`, `Size`, `Transform`, `Anchor`, then the pins of the properties (where `QmlElement` has `File`), `Properties` (optional) and `Opacity`, `Clip`, `Debug`, `Interaction`, `Effect`, `Enabled`; the outputs `Output`, the property and signal outputs, `Measured Size`, `Scene Bounds`. They are defined once in `QmlCommonPins.cs`, and a test compares that table with `QmlElement`.
 - The `//` **comment lines directly above a declaration** are the help of its pins (several lines are joined with spaces; no blank line or code in between, and an empty `//` line ends the block). Without a comment the help only says the QML type and name.
 
 ```qml
@@ -188,7 +187,7 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 - A file that does **not parse** (no root object, unbalanced braces, unterminated string or comment) still gets a node with the common pins, its head tags and the parser messages, so a typo does not drop the node and its links. It gets no property or signal pins until it parses again.
 - A sibling root type that does not parse or cannot be read is **not** an error of the file: the message is a warning (with the sibling's file name) and its declarations are missing.
 - Parser messages show as messages at the node: errors, then warnings, then one info for the declarations without a pin. The same lines go to the vvvv log.
-- Compile, load and type errors of the QML itself, and values that could not be set, show on the `Error` output as at `QmlElement`.
+- Compile, load and type errors of the QML itself, and values that could not be set, show at the node (warning, the message as tooltip) and in the vvvv log, as at `QmlElement`.
 
 ### Limitations of the generated nodes
 
@@ -200,7 +199,7 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 
 ## Licensing of imports
 
-VL.Qt ships only the LGPL modules of Qt (see [QtNative deployment](decisions/qtnative-deployment.md)). There is no import filter: an `import` of anything that is not shipped, such as `QtQuick3D`, `QtCharts` or `QtDataVisualization`, fails to load and the message shows on the `Error` output. Qt Quick (`import QtQuick`) and its basic modules are available.
+VL.Qt ships only the LGPL modules of Qt (see [QtNative deployment](decisions/qtnative-deployment.md)). There is no import filter: an `import` of anything that is not shipped, such as `QtQuick3D`, `QtCharts` or `QtDataVisualization`, fails to load and the message shows at the node and in the vvvv log. Qt Quick (`import QtQuick`) and its basic modules are available.
 
 ## Out of scope
 

@@ -51,7 +51,7 @@ namespace VL.Qt.Qml
         /// <summary>
         /// Nodes of &lt;path&gt;/qml/ (recursive). invalidated: qml/ created/deleted, .qml files added/deleted/renamed, a change
         /// of @category or @tags (name and category of a description are fixed). Content changes go to the node description
-        /// (<see cref="WatchSignature(QmlFile, string)"/>) and the running instance (QmlElementNode's watcher). Without the
+        /// (<see cref="WatchSignature"/>) and the running instance (QmlElementNode's watcher). Without the
         /// folder: empty factory that still watches path for it.
         /// </summary>
         public static NodeBuilding.FactoryImpl ForPath(string path, IVLNodeDescriptionFactory factory, ILogger logger) =>
@@ -150,15 +150,9 @@ namespace VL.Qt.Qml
 
         /// <summary>
         /// Fires when the parsed declaration signature (<see cref="QmlDeclarations.Signature"/>) of <paramref name="file"/> differs
-        /// from <paramref name="signature"/>: a save of the file or of a sibling .qml it inherits from (folder of the file,
-        /// NodeBuilding.WatchDir). The invalidated stream of the node description.
-        /// </summary>
-        public static IObservable<object> WatchSignature(QmlFile file, string signature)
-            => WatchSignature(file, () => signature);
-
-        /// <summary>
-        /// <see cref="WatchSignature(QmlFile, string)"/> with the signature taken when an event arrives: a description knows it
-        /// only once its init has run (null until then: nothing to compare, nothing fires).
+        /// from the one <paramref name="signature"/> returns when an event arrives: a save of the file or of a sibling .qml it inherits
+        /// from (folder of the file, NodeBuilding.WatchDir). The invalidated stream of the node description. A description knows its
+        /// signature only once its init has run (null until then: nothing to compare, nothing fires).
         /// </summary>
         internal static IObservable<object> WatchSignature(QmlFile file, Func<string?> signature)
             => NodeBuilding.WatchDir(Path.GetDirectoryName(file.FilePath)!)
@@ -198,7 +192,7 @@ namespace VL.Qt.Qml
 
         /// <summary>
         /// Only component files count (a lowercase helper does not make a node; a sibling's content change goes through
-        /// <see cref="WatchSignature(QmlFile, string)"/>), and folders; a rename counts if either name counts (see
+        /// <see cref="WatchSignature"/>), and folders; a rename counts if either name counts (see
         /// <see cref="FolderNodeFactory.IsNewOrDeleted"/>), so "New Text Document.txt" → "Gauge.qml" (Explorer) adds the node.
         /// </summary>
         internal static bool IsNewOrDeletedQmlFile(FileSystemEventArgs e) => FolderNodeFactory.IsNewOrDeleted(e, IsComponentOrFolder);

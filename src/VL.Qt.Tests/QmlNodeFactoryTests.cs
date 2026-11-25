@@ -288,13 +288,15 @@ namespace VL.Qt.Tests
                 new[] { new QmlSignalDecl("clicked", ImmutableArray<QmlSignalArg>.Empty, null, 5) }));
 
             var inputs = layout.InputDescriptions();
-            Assert.That(inputs.Select(i => i.Name).Take(2), Is.EqualTo(new[] { "Accent Color", "Size 2" }));
-            Assert.That(inputs.Select(i => i.Name).Skip(2).First(), Is.EqualTo("Properties"));
-            Assert.That(inputs.Select(i => i.Name).Skip(3), Is.EqualTo(QmlNodeLayout.CommonInputNames));
-            Assert.That(inputs[0].Type, Is.EqualTo(QmlTypes.ClrType(QmlValueKind.Color)));
+            Assert.That(inputs.Select(i => i.Name), Is.EqualTo(new[]
+            {
+                "Auto Size", "Size", "Transform", "Anchor", "Accent Color", "Size 2", "Properties",
+                "Opacity", "Clip", "Debug", "Interaction", "Effect", "Enabled",
+            }));
+            Assert.That(inputs[4].Type, Is.EqualTo(QmlTypes.ClrType(QmlValueKind.Color)));
 
             var outputs = layout.OutputDescriptions();
-            Assert.That(outputs.Select(o => o.Name), Is.EqualTo(new[] { "Output", "Accent Color", "Level", "Size 2", "Clicked", "Measured Size", "Scene Bounds", "Error" }));
+            Assert.That(outputs.Select(o => o.Name), Is.EqualTo(new[] { "Output", "Accent Color", "Level", "Size 2", "Clicked", "Measured Size", "Scene Bounds" }));
             Assert.That(outputs.Single(o => o.Name == "Clicked").Type, Is.EqualTo(typeof(bool)));
 
             var warning = layout.Messages.Single();

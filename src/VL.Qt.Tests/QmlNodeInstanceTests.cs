@@ -74,8 +74,15 @@ namespace VL.Qt.Tests
 
         private static IVLPin Out(QmlNodeInstance instance, int index) => instance.Outputs.ElementAt(index);
 
-        // Property-input order of the tests below: first the declared ones, then Properties, then the common pins.
-        private static void Set(QmlNodeInstance instance, int index, object? value) => In(instance, index).Value = value;
+        // Input order: the leading common pins, the declared properties, Properties, the trailing common pins. Set counts from the first property.
+        private static void Set(QmlNodeInstance instance, int index, object? value) => In(instance, QmlCommonPins.LeadingInputs.Length + index).Value = value;
+
+        private static void SetCommon(QmlNodeInstance instance, string name, object? value)
+        {
+            var leading = QmlCommonPins.LeadingInputs.Select(p => p.Name).ToList().IndexOf(name);
+            var trailing = QmlCommonPins.TrailingInputs.Select(p => p.Name).ToList().IndexOf(name);
+            In(instance, leading >= 0 ? leading : instance.Inputs.Count() - QmlCommonPins.TrailingInputs.Length + trailing).Value = value;
+        }
 
         private QmlElement Frame(QmlNodeInstance instance)
         {
@@ -129,7 +136,7 @@ namespace VL.Qt.Tests
             }
             Assert.That(outputs.Select(o => o.Name), Is.EqualTo(new[]
             {
-                "Output", "Progress", "Title", "Accent Color", "Fired", "Picked", "Moved", "Measured Size", "Scene Bounds", "Error",
+                "Output", "Progress", "Title", "Accent Color", "Fired", "Picked", "Moved", "Measured Size", "Scene Bounds",
             }));
         }
 
@@ -189,8 +196,8 @@ namespace VL.Qt.Tests
         {
             var instance = Create(new[] { Prop("value", QmlValueKind.Real, flags: QmlPropertyFlags.ReadOnly), Prop("steps", QmlValueKind.Int) });
             // readonly: no input, so Properties is at index 1 (after "steps").
-            Assert.That(In(instance, 1).GetType().GetGenericArguments()[0], Is.EqualTo(typeof(Dictionary<string, object>)));
-            Assert.That(instance.Outputs.Count(), Is.EqualTo(1 + 2 + 3));
+            Assert.That(In(instance, QmlCommonPins.LeadingInputs.Length + 1).GetType().GetGenericArguments()[0], Is.EqualTo(typeof(Dictionary<string, object>)));
+            Assert.That(instance.Outputs.Count(), Is.EqualTo(1 + 2 + 2));
         }
 
         // --- Properties (plan B) ---
@@ -400,33 +407,27 @@ namespace VL.Qt.Tests
         // --- passthrough ---
 
         [Test]
-        public void Passthrough_ErrorMeasuredSizeAndOutput()
+        public void Passthrough_MeasuredSizeAndOutput()
         {
             var instance = Create();
             var e = Frame(instance);
             Assert.That(e.Type, Is.EqualTo(ElementType.Qml));
             Assert.That(e.Source, Is.EqualTo(_file));
             var last = instance.Outputs.Count();
-            Assert.That(Out(instance, last - 1).Value, Is.EqualTo(string.Empty));
+            Assert.That(Out(instance, last - 2).Value, Is.EqualTo(Vector2.Zero));
 
-            Dispatch(NewPoll().Error(_handle, "Gauge.qml:3:5: Unexpected token").Measured(_handle, 100, 50));
+            Dispatch(NewPoll().Measured(_handle, 100, 50));
             Frame(instance);
-            Assert.That(Out(instance, last - 1).Value, Is.EqualTo("Gauge.qml:3:5: Unexpected token"));
-            Assert.That((Vector2)Out(instance, last - 3).Value!, Is.Not.EqualTo(Vector2.Zero));
-
-            Dispatch(NewPoll().Error(_handle, ""));
-            Frame(instance);
-            Assert.That(Out(instance, last - 1).Value, Is.EqualTo(string.Empty));
+            Assert.That((Vector2)Out(instance, last - 2).Value!, Is.Not.EqualTo(Vector2.Zero));
         }
 
         [Test]
         public void CommonPins_GoToTheElement()
         {
             var instance = Create(new[] { Prop("progress", QmlValueKind.Real) });
-            // 0 Progress, 1 Properties, 2 Size, 3 Auto Size, 4 Transform, 5 Anchor, 6 Opacity
-            Set(instance, 3, false);
-            Set(instance, 2, new Vector2(3, 4));
-            Set(instance, 6, 0.5f);
+            SetCommon(instance, "Auto Size", false);
+            SetCommon(instance, "Size", new Vector2(3, 4));
+            SetCommon(instance, "Opacity", 0.5f);
             var e = Frame(instance);
             Assert.That(e.AutoSize, Is.False);
             Assert.That(e.Size, Is.EqualTo(new Vector2(3, 4)));
