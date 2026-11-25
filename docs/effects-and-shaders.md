@@ -26,11 +26,12 @@ The chain runs in data flow order, like TextureFX in Stride: the top node acts f
 ### Mask and padding
 
 - **Mask:** any element works as mask, e.g. a Text. It lives in the coordinates of the parent, like a sibling: the mask covers exactly the place where it would be drawn on its own.
+- **Lengths:** Blur `Max` and the `Padding` pins are in DIP too; a `Padding` of 6 is 6 DIP in every space (see [Shader effects](#shader-effects)).
 - **Optional pins:** Blur `Max`, `Multiplier`, `Auto Padding`, `Padding`; DropShadow `Scale`, `Auto Padding`, `Padding`. With Auto Padding on (default) the layer grows automatically by what blur and shadow need. Qt knows one effect area per layer: if Auto Padding is off on any Blur or DropShadow of a run, it is off for the whole layer of that run, and the area is the largest Padding per side of those nodes, so it suffices for all of them.
 
 ### Shader effects
 
-`Glow`, `InnerShadow`, `DirectionalBlur`, `ZoomBlur`, `RadialBlur`, `Displace` and `Blend` are shader effects with their own passes; the pictures show the first six applied to the text `VL.Qt`. Lengths are in units of the renderer's space, angles in degrees. They end a run of merged effects and cost a layer of their own; Glow and InnerShadow use a blur pyramid, so their cost hardly depends on the radius.
+`Glow`, `InnerShadow`, `DirectionalBlur`, `ZoomBlur`, `RadialBlur`, `Displace` and `Blend` are shader effects with their own passes; the pictures show the first six applied to the text `VL.Qt`. Every length of an effect is in DIP, whatever the space of the renderer (Blur `Max`, `Padding`, DropShadow `Offset`, Glow `Radius`, the lengths of the blurs and Displace); angles are in cycles. They end a run of merged effects and cost a layer of their own; Glow and InnerShadow use a blur pyramid, so their cost hardly depends on the radius.
 
 <table>
 <tr><td align="center"><img src="images/effect-glow.png" width="260" alt="The text VL.Qt with Glow"><br>Glow</td><td align="center"><img src="images/effect-directional-blur.png" width="260" alt="The text VL.Qt with Directional Blur"><br>Directional Blur</td><td align="center"><img src="images/effect-zoom-blur.png" width="260" alt="The text VL.Qt with Zoom Blur"><br>Zoom Blur</td></tr>
@@ -122,12 +123,14 @@ Annotations are `//` comments. Unknown tags show at the node.
 |---|---|
 | `@category <path>` | node category of the element node; with `@chainonly` the category of the effect chain node (default `Qt.Effects`) |
 | `@summary <text>` | node help; goes on in the following comment lines until the next blank line |
-| `@padding <left, top, right, bottom>` | room around the element in DIP that the shader may draw into as an effect chain node; one number for all four sides, or four numbers. Without it the shader stays inside the element |
+| `@padding <left, top, right, bottom>` | room around the element in DIP (like the shader's pixel uniforms: no conversion by the renderer's space) that the shader may draw into as an effect chain node; one number for all four sides, or four numbers. Without it the shader stays inside the element |
 | `@padding <uniform> [factor]` | all four sides = `abs(value of that float uniform pin) * factor` (factor default 1), recomputed when the pin value changes. A uniform that does not exist or is not a `float` is an error at the node |
 | `@passes 1\|2` | `2`: the effect chain node runs the shader twice, the second pass on the result of the first (default 1, other numbers are an error at the node) |
 | `@chainonly` | the file makes only the effect chain node, no element node |
 
 **Uniform** (directly above it or at the end of its line): `@default`, `@min`, `@max` (limits of the pad only), `@color` (a `vec4` becomes a color), `@summary`.
+
+**Units:** a uniform of a file shader reaches the shader as it is, so a length uniform is in DIP (the renderer's space does not scale it), like `@padding`. Document it as DIP in its `@summary`; `dpr` turns DIP into device pixels.
 
 **Names set by VL.Qt** (no pin, an own entry of that name is an error): `qt_Matrix`, `qt_Opacity`, and in the effect chain `source`, `texelSize` (1 / pixel size of the sampled texture), `dpr`, `weight`, `elementRect` and `passIndex`. `base`, `glow` and `shadow` are reserved there too: a shader file with a uniform of that name gets no pin and an error at its effect chain node. The same goes for an entry of such a name in the Uniforms of a ShaderEffect (`qt_Matrix`, `qt_Opacity`, `source`): an error at the node, the entry is ignored. The list lives once, in `effects/shader_item.h` (`kItemReservedUniforms`, `kChainAutomaticUniforms`, `kChainReservedUniforms`), and `ReservedUniforms` in C# mirrors it (a unit test compares them). `passIndex` is a `float` that VL.Qt writes into the uniform block if the shader declares it: 0 in a single pass and in pass 1, 1 in pass 2.
 

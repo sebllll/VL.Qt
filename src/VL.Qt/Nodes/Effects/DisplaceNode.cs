@@ -33,7 +33,7 @@ namespace VL.Qt.Nodes
             return new BuiltinShaderEffect(previous, Protocol.EffectTemplate.Single, ids,
                 new[]
                 {
-                    Uniform.Length("displacement", shift),
+                    Uniform.Float("displacement", shift),
                     Uniform.FromTexture("map", p.Map, p.MapSampler),
                 }.ToSpread(),
                 new RectangleF(pad, pad, pad, pad));
@@ -59,13 +59,13 @@ namespace VL.Qt.Nodes
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
         /// <param name="map">Element used as displacement map (e.g. a ShaderEffect with noise). Unconnected: no effect.</param>
         /// <param name="mapSampler">How the map is read (filter, wrap, mipmaps), from the Sampler node. Outside the element the map continues as its Address says (Clamp: its edge). Unconnected: as the map is.</param>
-        /// <param name="displacement">Largest shift in units of the renderer's space (a map value of 0 or 1 moves the pixels by this).</param>
+        /// <param name="displacement">Largest shift in DIP (a map value of 0 or 1 moves the pixels by this).</param>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             IElement? map,
             [Pin(Visibility = PinVisibility.Optional)] Sampler? mapSampler,
-            [DefaultValue(0.1f)] float displacement)
+            [DefaultValue(10f)] float displacement)
         {
             var element = _map.Update(map);
             return element is null ? input : _link.Describe(input, new Props(element, mapSampler, displacement));

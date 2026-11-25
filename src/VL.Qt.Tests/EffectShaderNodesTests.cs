@@ -24,34 +24,31 @@ namespace VL.Qt.Tests
 
         private static ShaderEffect Link(Effect? e) => (ShaderEffect)e!;
 
-        // The nodes describe the effect in units; the reconciler converts (EffectChainWriter). The expectations are written in DIP.
-        private static float Unit(float dip) => SpaceMapping.Default.FromQt(dip);
-
         private static void AssertPadding(RectangleF actual, float left, float top, float right, float bottom)
         {
-            Assert.That(actual.X, Is.EqualTo(Unit(left)).Within(1e-4), "left");
-            Assert.That(actual.Y, Is.EqualTo(Unit(top)).Within(1e-4), "top");
-            Assert.That(actual.Width, Is.EqualTo(Unit(right)).Within(1e-4), "right");
-            Assert.That(actual.Height, Is.EqualTo(Unit(bottom)).Within(1e-4), "bottom");
+            Assert.That(actual.X, Is.EqualTo(left).Within(1e-4), "left");
+            Assert.That(actual.Y, Is.EqualTo(top).Within(1e-4), "top");
+            Assert.That(actual.Width, Is.EqualTo(right).Within(1e-4), "right");
+            Assert.That(actual.Height, Is.EqualTo(bottom).Within(1e-4), "bottom");
         }
 
         [Test]
-        public void Glow_IsPyramidWithRadiusAndPaddingInUnits()
+        public void Glow_IsPyramidWithRadiusAndPaddingInDip()
         {
             using var node = new GlowNode(_client);
-            var first = node.Update(null, new Color4(1, 0, 0, 1), Unit(40), 0.2f, 1.5f, true);
+            var first = node.Update(null, new Color4(1, 0, 0, 1), 40, 0.2f, 1.5f, true);
             var link = Link(first);
             Assert.That(link.Template, Is.EqualTo(Protocol.EffectTemplate.Pyramid));
             Assert.That(link.ShaderIds, Has.Length.EqualTo(2));
             Assert.That(link.ShaderIds.All(id => id != 0), Is.True);
-            Assert.That(link.Strength, Is.EqualTo(Unit(40f)).Within(1e-4));
+            Assert.That(link.Strength, Is.EqualTo(40f).Within(1e-4));
             AssertPadding(link.Padding, 60, 60, 60, 60);
             Assert.That(link.Uniforms.Select(u => u.Name), Is.EquivalentTo(new[] { "color", "spread", "intensity", "additive" }));
             Assert.That(_api.Calls.Count(c => c.StartsWith("create")), Is.EqualTo(2), "two shaders, baked once");
 
-            Assert.That(node.Update(null, new Color4(1, 0, 0, 1), Unit(40), 0.2f, 1.5f, true), Is.SameAs(first), "unchanged inputs: same link");
+            Assert.That(node.Update(null, new Color4(1, 0, 0, 1), 40, 0.2f, 1.5f, true), Is.SameAs(first), "unchanged inputs: same link");
             Assert.That(node.Core.Created, Is.EqualTo(1));
-            Assert.That(node.Update(null, new Color4(1, 0, 0, 1), Unit(41), 0.2f, 1.5f, true), Is.Not.SameAs(first));
+            Assert.That(node.Update(null, new Color4(1, 0, 0, 1), 41, 0.2f, 1.5f, true), Is.Not.SameAs(first));
             Assert.That(_api.Calls.Count(c => c.StartsWith("create")), Is.EqualTo(2), "a pin change does not rebake");
         }
 
@@ -71,42 +68,42 @@ namespace VL.Qt.Tests
         public void InnerShadow_OffsetIsALengthUniform()
         {
             using var node = new InnerShadowNode(_client);
-            var link = Link(node.Update(null, Color4.Black, Unit(10), new Vector2(Unit(8), Unit(4)), 0, 1));
+            var link = Link(node.Update(null, Color4.Black, 10, new Vector2(8, 4), 0, 1));
             Assert.That(link.Template, Is.EqualTo(Protocol.EffectTemplate.Pyramid));
-            Assert.That(link.Strength, Is.EqualTo(Unit(10f)).Within(1e-4));
+            Assert.That(link.Strength, Is.EqualTo(10f).Within(1e-4));
             AssertPadding(link.Padding, 15, 15, 15, 15);
             var offset = link.Uniforms.Single(u => u.Name == "offsetDip");
-            Assert.That(offset.Numbers.M11, Is.EqualTo(Unit(8f)).Within(1e-4));
-            Assert.That(offset.Numbers.M12, Is.EqualTo(Unit(4f)).Within(1e-4));
+            Assert.That(offset.Numbers.M11, Is.EqualTo(8f).Within(1e-4));
+            Assert.That(offset.Numbers.M12, Is.EqualTo(4f).Within(1e-4));
         }
 
         [Test]
         public void DirectionalBlur_TwoPassWithLengthAndPaddingAlongTheAngle()
         {
             using var node = new DirectionalBlurNode(_client);
-            var link = Link(node.Update(null, 0f, Unit(64)));
+            var link = Link(node.Update(null, 0f, 64));
             Assert.That(link.Template, Is.EqualTo(Protocol.EffectTemplate.TwoPass));
             Assert.That(link.ShaderIds, Has.Length.EqualTo(1));
             Assert.That(link.Uniforms.Select(u => u.Name), Is.EqualTo(new[] { "angle", "blurLength" }));
-            Assert.That(link.Uniforms.Single(u => u.Name == "blurLength").Numbers.M11, Is.EqualTo(Unit(64f)).Within(1e-4));
+            Assert.That(link.Uniforms.Single(u => u.Name == "blurLength").Numbers.M11, Is.EqualTo(64f).Within(1e-4));
             AssertPadding(link.Padding, 33, 0, 33, 0); // L / 2 + L / 64, horizontal
 
-            var vertical = Link(node.Update(null, 0.25f, Unit(64)));
-            Assert.That(vertical.Padding.X, Is.LessThan(Unit(1f)));
-            Assert.That(vertical.Padding.Y, Is.EqualTo(Unit(33f)).Within(1e-4));
+            var vertical = Link(node.Update(null, 0.25f, 64));
+            Assert.That(vertical.Padding.X, Is.LessThan(1f));
+            Assert.That(vertical.Padding.Y, Is.EqualTo(33f).Within(1e-4));
         }
 
         [Test]
         public void ZoomAndRadialBlur_UniformsAndPadding()
         {
             using var zoom = new ZoomBlurNode(_client);
-            var z = Link(zoom.Update(null, new Vector2(0.5f, 0.5f), Unit(100)));
+            var z = Link(zoom.Update(null, new Vector2(0.5f, 0.5f), 100));
             Assert.That(z.Uniforms.Select(u => u.Name), Is.EqualTo(new[] { "center", "blurLength" }));
-            Assert.That(z.Uniforms.Single(u => u.Name == "blurLength").Numbers.M11, Is.EqualTo(Unit(100f)).Within(1e-4));
+            Assert.That(z.Uniforms.Single(u => u.Name == "blurLength").Numbers.M11, Is.EqualTo(100f).Within(1e-4));
             AssertPadding(z.Padding, 60, 60, 60, 60);
 
             using var radial = new RadialBlurNode(_client);
-            var r = Link(radial.Update(null, new Vector2(0.5f, 0.5f), 0.03f, Unit(30)));
+            var r = Link(radial.Update(null, new Vector2(0.5f, 0.5f), 0.03f, 30));
             Assert.That(r.Uniforms.Single(u => u.Name == "angle").Numbers.M11, Is.EqualTo(0.03f), "cycles are passed on as they are");
             AssertPadding(r.Padding, 30, 30, 30, 30);
         }
@@ -119,10 +116,10 @@ namespace VL.Qt.Tests
             Assert.That(node.Update(input, null, null, 0.1f), Is.SameAs(input), "no map: chain unchanged");
 
             var map = new Rectangle();
-            var link = Link(node.Update(input, map, null, Unit(7)));
+            var link = Link(node.Update(input, map, null, 7));
             Assert.That(link.Template, Is.EqualTo(Protocol.EffectTemplate.Single));
             AssertPadding(link.Padding, 7, 7, 7, 7);
-            Assert.That(link.Uniforms.Single(u => u.Name == "displacement").Numbers.M11, Is.EqualTo(Unit(7f)).Within(1e-4));
+            Assert.That(link.Uniforms.Single(u => u.Name == "displacement").Numbers.M11, Is.EqualTo(7f).Within(1e-4));
             Assert.That(link.Uniforms.Single(u => u.Name == "map").Texture, Is.SameAs(map));
         }
 

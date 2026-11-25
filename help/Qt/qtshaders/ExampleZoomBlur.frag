@@ -34,7 +34,7 @@ layout(std140, binding = 0) uniform buf {
 
     // Not named "length": the GLSL translation renames a member that is called like a GLSL builtin, and the GL backend
     // would then not set it (#77). Avoid builtin names (length, distance, dot, step, mix, ...) for uniforms.
-    // @summary Streak length in DIP at the farthest corner of the area (1 unit in a patch = 100 DIP); grows linearly from 0 at Center. 0 = no blur.
+    // @summary Streak length in DIP at the farthest corner of the area; grows linearly from 0 at Center. 0 = no blur.
     // @default 40
     // @min 0
     float blurLength;

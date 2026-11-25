@@ -698,7 +698,7 @@ VL.Qt | VL.Qt.Nodes.DirectionalBlurNode | method Update | VL.Qt.Elements.Effect
 VL.Qt | VL.Qt.Nodes.DirectionalBlurNode | method Update | order Input, Angle, Length, Output
 VL.Qt | VL.Qt.Nodes.DirectionalBlurNode | method Update | pin Angle | in float | (angle)
 VL.Qt | VL.Qt.Nodes.DirectionalBlurNode | method Update | pin Input | in VL.Qt.Elements.Effect | (input)
-VL.Qt | VL.Qt.Nodes.DirectionalBlurNode | method Update | pin Length | in float = 0.1 | (length)
+VL.Qt | VL.Qt.Nodes.DirectionalBlurNode | method Update | pin Length | in float = 10 | (length)
 VL.Qt | VL.Qt.Nodes.DirectionalBlurNode | method Update | pin Output | out VL.Qt.Elements.Effect | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.DirectionalBlurNode | type sealed class
 VL.Qt | VL.Qt.Nodes.DisplaceNode | attr ProcessNode(Name = "Displace", Category = "Qt.Effects")
@@ -709,7 +709,7 @@ VL.Qt | VL.Qt.Nodes.DisplaceNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.DisplaceNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.DisplaceNode | method Update | VL.Qt.Elements.Effect
 VL.Qt | VL.Qt.Nodes.DisplaceNode | method Update | order Input, Map, Map Sampler, Displacement, Output
-VL.Qt | VL.Qt.Nodes.DisplaceNode | method Update | pin Displacement | in float = 0.1 | (displacement)
+VL.Qt | VL.Qt.Nodes.DisplaceNode | method Update | pin Displacement | in float = 10 | (displacement)
 VL.Qt | VL.Qt.Nodes.DisplaceNode | method Update | pin Input | in VL.Qt.Elements.Effect | (input)
 VL.Qt | VL.Qt.Nodes.DisplaceNode | method Update | pin Map Sampler | in VL.Qt.Elements.Sampler | Pin(Visibility = PinVisibility.Optional) | (mapSampler)
 VL.Qt | VL.Qt.Nodes.DisplaceNode | method Update | pin Map | in VL.Qt.Elements.IElement | (map)
@@ -742,7 +742,7 @@ VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Auto Padding | in bool 
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Blur | in float = 1 | (blur)
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Color | in Stride.Core.Mathematics.Color4 = 0, 0, 0, 1 | (color)
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Input | in VL.Qt.Elements.Effect | (input)
-VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Offset | in Stride.Core.Mathematics.Vector2 = 0.05, 0.05 | (offset)
+VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Offset | in Stride.Core.Mathematics.Vector2 = 5, 5 | (offset)
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Output | out VL.Qt.Elements.Effect | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Padding | in Stride.Core.Mathematics.RectangleF | Pin(Visibility = PinVisibility.Optional) | (padding)
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Scale | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (scale)
@@ -804,7 +804,7 @@ VL.Qt | VL.Qt.Nodes.GlowNode | method Update | pin Color | in Stride.Core.Mathem
 VL.Qt | VL.Qt.Nodes.GlowNode | method Update | pin Input | in VL.Qt.Elements.Effect | (input)
 VL.Qt | VL.Qt.Nodes.GlowNode | method Update | pin Intensity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (intensity)
 VL.Qt | VL.Qt.Nodes.GlowNode | method Update | pin Output | out VL.Qt.Elements.Effect | Pin(Name = "Output") | (return)
-VL.Qt | VL.Qt.Nodes.GlowNode | method Update | pin Radius | in float = 0.2 | (radius)
+VL.Qt | VL.Qt.Nodes.GlowNode | method Update | pin Radius | in float = 20 | (radius)
 VL.Qt | VL.Qt.Nodes.GlowNode | method Update | pin Spread | in float | Pin(Visibility = PinVisibility.Optional) | (spread)
 VL.Qt | VL.Qt.Nodes.GlowNode | type sealed class
 VL.Qt | VL.Qt.Nodes.GroupNode | attr ProcessNode(Name = "Group", Category = "Qt.Elements")
@@ -902,9 +902,9 @@ VL.Qt | VL.Qt.Nodes.InnerShadowNode | method Update | order Input, Color, Radius
 VL.Qt | VL.Qt.Nodes.InnerShadowNode | method Update | pin Color | in Stride.Core.Mathematics.Color4 = 0, 0, 0, 0.6 | (color)
 VL.Qt | VL.Qt.Nodes.InnerShadowNode | method Update | pin Input | in VL.Qt.Elements.Effect | (input)
 VL.Qt | VL.Qt.Nodes.InnerShadowNode | method Update | pin Intensity | in float = 1 | Pin(Visibility = PinVisibility.Optional) | (intensity)
-VL.Qt | VL.Qt.Nodes.InnerShadowNode | method Update | pin Offset | in Stride.Core.Mathematics.Vector2 = 0.05, 0.05 | (offset)
+VL.Qt | VL.Qt.Nodes.InnerShadowNode | method Update | pin Offset | in Stride.Core.Mathematics.Vector2 = 5, 5 | (offset)
 VL.Qt | VL.Qt.Nodes.InnerShadowNode | method Update | pin Output | out VL.Qt.Elements.Effect | Pin(Name = "Output") | (return)
-VL.Qt | VL.Qt.Nodes.InnerShadowNode | method Update | pin Radius | in float = 0.1 | (radius)
+VL.Qt | VL.Qt.Nodes.InnerShadowNode | method Update | pin Radius | in float = 10 | (radius)
 VL.Qt | VL.Qt.Nodes.InnerShadowNode | method Update | pin Spread | in float | Pin(Visibility = PinVisibility.Optional) | (spread)
 VL.Qt | VL.Qt.Nodes.InnerShadowNode | type sealed class
 VL.Qt | VL.Qt.Nodes.InputIntNode | attr ProcessNode(Name = "Input (Int)", Category = "Qt.Widgets")
@@ -1311,7 +1311,7 @@ VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | pin Angle | in float = 0.05
 VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | pin Center | in Stride.Core.Mathematics.Vector2 = 0.5, 0.5 | (center)
 VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | pin Input | in VL.Qt.Elements.Effect | (input)
 VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | pin Output | out VL.Qt.Elements.Effect | Pin(Name = "Output") | (return)
-VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | pin Padding | in float = 0.3 | Pin(Visibility = PinVisibility.Optional) | (padding)
+VL.Qt | VL.Qt.Nodes.RadialBlurNode | method Update | pin Padding | in float = 30 | Pin(Visibility = PinVisibility.Optional) | (padding)
 VL.Qt | VL.Qt.Nodes.RadialBlurNode | type sealed class
 VL.Qt | VL.Qt.Nodes.RectangleNode | attr ProcessNode(Name = "Rectangle", Category = "Qt.Elements")
 VL.Qt | VL.Qt.Nodes.RectangleNode | ctor | new
@@ -1817,7 +1817,7 @@ VL.Qt | VL.Qt.Nodes.ZoomBlurNode | method Update | VL.Qt.Elements.Effect
 VL.Qt | VL.Qt.Nodes.ZoomBlurNode | method Update | order Input, Center, Length, Output
 VL.Qt | VL.Qt.Nodes.ZoomBlurNode | method Update | pin Center | in Stride.Core.Mathematics.Vector2 = 0.5, 0.5 | (center)
 VL.Qt | VL.Qt.Nodes.ZoomBlurNode | method Update | pin Input | in VL.Qt.Elements.Effect | (input)
-VL.Qt | VL.Qt.Nodes.ZoomBlurNode | method Update | pin Length | in float = 0.4 | (length)
+VL.Qt | VL.Qt.Nodes.ZoomBlurNode | method Update | pin Length | in float = 40 | (length)
 VL.Qt | VL.Qt.Nodes.ZoomBlurNode | method Update | pin Output | out VL.Qt.Elements.Effect | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.ZoomBlurNode | type sealed class
 VL.Qt | VL.Qt.Paths.HandleMode | member Aligned = 2

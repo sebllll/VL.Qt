@@ -29,7 +29,7 @@ namespace VL.Qt.Nodes
             var length = Math.Max(p.Length, 0f);
             var pad = 0.6f * length;
             return new BuiltinShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
-                new[] { Uniform.Vector2("center", p.Center), Uniform.Length("blurLength", length) }.ToSpread(),
+                new[] { Uniform.Vector2("center", p.Center), Uniform.Float("blurLength", length) }.ToSpread(),
                 new RectangleF(pad, pad, pad, pad));
         };
 
@@ -48,12 +48,12 @@ namespace VL.Qt.Nodes
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
         /// <param name="center">Center of the zoom, 0..1 of the element area (0.5, 0.5 = middle).</param>
-        /// <param name="length">Streak length at the farthest corner, in units of the renderer's space (0 = no blur).</param>
+        /// <param name="length">Streak length at the farthest corner, in DIP (0 = no blur).</param>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             [DefaultValue("0.5, 0.5")] Vector2 center,
-            [DefaultValue(0.4f)] float length)
+            [DefaultValue(40f)] float length)
             => _link.Describe(input, new Props(center, length));
 
         public void Dispose() => _link.Dispose();

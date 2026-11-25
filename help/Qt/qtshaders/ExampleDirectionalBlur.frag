@@ -35,7 +35,7 @@ layout(std140, binding = 0) uniform buf {
 
     // Not named "length": the GLSL translation renames a member that is called like a GLSL builtin, and the GL backend
     // would then not set it (#77). Avoid builtin names (length, distance, dot, step, mix, ...) for uniforms.
-    // @summary Length of the blur line in DIP (1 unit in a patch = 100 DIP), total and centred on the pixel. 0 = no blur.
+    // @summary Length of the blur line in DIP, total and centred on the pixel. 0 = no blur.
     // @default 10
     // @min 0
     float blurLength;

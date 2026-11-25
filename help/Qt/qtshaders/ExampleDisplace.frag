@@ -28,7 +28,7 @@ layout(std140, binding = 0) uniform buf {
     // turns a distance in pixels into UV.
     vec2 texelSize;
 
-    // @summary Largest shift in DIP (1 unit in a patch = 100 DIP), negative allowed. A map value of 0 or 1 moves the pixels by this.
+    // @summary Largest shift in DIP, negative allowed. A map value of 0 or 1 moves the pixels by this.
     // @default 10
     float displacement;
 

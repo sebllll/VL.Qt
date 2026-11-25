@@ -20,7 +20,7 @@ namespace VL.Qt.Elements
         public RectangleF Padding { get; }
 
         public Color4 Color { get; }
-        /// <summary>In units.</summary>
+        /// <summary>In DIP.</summary>
         public Vector2 Offset { get; }
         public float Blur { get; }
         public float Scale { get; }

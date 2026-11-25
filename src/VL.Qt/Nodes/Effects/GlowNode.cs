@@ -54,7 +54,7 @@ namespace VL.Qt.Nodes
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
         /// <param name="color">Color of the glow (its alpha scales the glow).</param>
-        /// <param name="radius">How far the glow reaches, in units of the renderer's space (0 = no glow).</param>
+        /// <param name="radius">How far the glow reaches, in DIP (0 = no glow).</param>
         /// <param name="spread">0..1: denser glow, 0 = soft fall-off, towards 1 a nearly hard edge.</param>
         /// <param name="intensity">Strength of the glow; values above 1 glow brighter.</param>
         /// <param name="additive">Off: the glow lies behind the element. On: it is added on top of the element.</param>
@@ -62,7 +62,7 @@ namespace VL.Qt.Nodes
         public Effect? Update(
             Effect? input,
             [DefaultValue("0.2, 0.7, 1, 1")] Color4 color,
-            [DefaultValue(0.2f)] float radius,
+            [DefaultValue(20f)] float radius,
             [Pin(Visibility = PinVisibility.Optional)] float spread,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float intensity,
             [Pin(Visibility = PinVisibility.Optional)] bool additive)

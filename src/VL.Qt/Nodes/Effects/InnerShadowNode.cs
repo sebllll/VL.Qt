@@ -33,7 +33,7 @@ namespace VL.Qt.Nodes
                 new[]
                 {
                     Uniform.Color("color", p.Color),
-                    Uniform.LengthVector2("offsetDip", p.Offset),
+                    Uniform.Vector2("offsetDip", p.Offset),
                     Uniform.Float("spread", p.Spread),
                     Uniform.Float("intensity", p.Intensity),
                 }.ToSpread(),
@@ -55,16 +55,16 @@ namespace VL.Qt.Nodes
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
         /// <param name="color">Color of the shadow (its alpha scales the shadow).</param>
-        /// <param name="radius">Blur radius of the shadow in units of the renderer's space (0 = hard edge).</param>
-        /// <param name="offset">Shift of the shadow in units: a positive (x, y) lets the shadow fall from the left and top edge.</param>
+        /// <param name="radius">Blur radius of the shadow in DIP (0 = hard edge).</param>
+        /// <param name="offset">Shift of the shadow in DIP: a positive (x, y) lets the shadow fall from the left and top edge.</param>
         /// <param name="spread">0..1: denser shadow, 0 = soft fall-off, towards 1 a nearly hard edge.</param>
         /// <param name="intensity">Strength of the shadow; values above 1 make it denser.</param>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             [DefaultValue("0, 0, 0, 0.6")] Color4 color,
-            [DefaultValue(0.1f)] float radius,
-            [DefaultValue("0.05, 0.05")] Vector2 offset,
+            [DefaultValue(10f)] float radius,
+            [DefaultValue("5, 5")] Vector2 offset,
             [Pin(Visibility = PinVisibility.Optional)] float spread,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float intensity)
             => _link.Describe(input, new Props(color, radius, offset, spread, intensity));

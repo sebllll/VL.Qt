@@ -67,8 +67,17 @@ namespace VL.Qt.Tests
             rec.Update(new Rectangle { Effect = Blur(null, false, new RectangleF(1, 2, 3, 4)) }, Space.DIPTopLeft);
             var chain = sink.OfOp("CHAIN").Single();
             Assert.That(chain, Does.Contain($" {nameof(K.AutoPadding)}=bool(0)"));
-            Assert.That(chain, Does.Contain($" {nameof(K.PaddingRect)}=rect(100,200,300,400)"), "units to DIP");
+            Assert.That(chain, Does.Contain($" {nameof(K.PaddingRect)}=rect(1,2,3,4)"), "DIP as given");
             Assert.That(sink.OfOp("SET").Count(), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void Reconciler_PaddingIsDipInEverySpace()
+        {
+            var sink = new RecordingSink();
+            var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
+            rec.Update(new Rectangle { Effect = Blur(null, false, new RectangleF(1, 2, 3, 4)) }, Space.Normalized);
+            Assert.That(sink.OfOp("CHAIN").Single(), Does.Contain($" {nameof(K.PaddingRect)}=rect(1,2,3,4)"), "the renderer's space does not scale effect lengths");
         }
     }
 }

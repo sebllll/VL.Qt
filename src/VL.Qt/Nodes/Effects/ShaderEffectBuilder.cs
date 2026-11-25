@@ -9,8 +9,8 @@ namespace VL.Qt.Nodes
 {
     /// <summary>
     /// A link of the Effect chain driven by shaders shipped with VL.Qt (<c>builtin:</c>): template, shader ids,
-    /// padding, radius and uniforms as <see cref="ShaderEffect"/> describes them; padding and radius in units of the renderer's space
-    /// (the reconciler converts them, rounds the padding up to whole DIP and scales the uniforms of <see cref="Uniform.IsLength"/>). TwoPass shaders tell
+    /// padding, radius and uniforms as <see cref="ShaderEffect"/> describes them; padding, radius and length uniforms in DIP
+    /// (the reconciler rounds the padding up to whole DIP). TwoPass shaders tell
     /// their passes apart by the float uniform passIndex that QtNative sets (0, then 1).
     /// </summary>
     internal sealed class BuiltinShaderEffect : ShaderEffect
@@ -19,8 +19,8 @@ namespace VL.Qt.Nodes
         /// <param name="template">The pass template (Single, TwoPass, Pyramid).</param>
         /// <param name="shaderIds">Ids of the built-in shaders the template uses.</param>
         /// <param name="uniforms">Uniform values sent to the shaders.</param>
-        /// <param name="padding">Space around the element the effect may draw into, in units.</param>
-        /// <param name="radius">Pyramid: radius in units; Single and TwoPass: unused.</param>
+        /// <param name="padding">Space around the element the effect may draw into, in DIP.</param>
+        /// <param name="radius">Pyramid: radius in DIP; Single and TwoPass: unused.</param>
         public BuiltinShaderEffect(Effect? previous, ushort template, ImmutableArray<ulong> shaderIds, Spread<Uniform> uniforms,
             RectangleF padding, float radius = 0f)
             : base(previous, template, shaderIds, uniforms, padding, radius)

@@ -32,12 +32,6 @@ namespace VL.Qt.Elements
         /// <summary>Int and Bool (0/1).</summary>
         internal int Integer { get; private init; }
 
-        /// <summary>
-        /// The value is a length in units of the renderer's space (Float, Vector2): the reconciler converts it to logical
-        /// pixels. Only the shader effect nodes of VL.Qt set it; uniforms of user shaders are sent as they are.
-        /// </summary>
-        internal bool IsLength { get; private init; }
-
         /// <summary>Texture: the element rendered as texture (becomes a hidden child of the Shader).</summary>
         internal Element? Texture { get; private init; }
 
@@ -45,12 +39,6 @@ namespace VL.Qt.Elements
         internal QtImage? Image { get; private init; }
 
         internal static Uniform Float(string name, float value) => new(name, Protocol.ValueType.F32) { Numbers = new Matrix { M11 = value } };
-
-        /// <summary>A float that is a length in units (<see cref="IsLength"/>).</summary>
-        internal static Uniform Length(string name, float value) => Float(name, value) with { IsLength = true };
-
-        /// <summary>A vec2 that is a length in units (<see cref="IsLength"/>).</summary>
-        internal static Uniform LengthVector2(string name, Vector2 v) => Vector2(name, v) with { IsLength = true };
 
         internal static Uniform Int(string name, int value) => new(name, Protocol.ValueType.I32) { Integer = value };
 

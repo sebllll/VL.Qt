@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="CdXl2JvMta5xOQlunYx5Z7" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Displace [Qt.Effects]&#xD;&#xA;- Map: any element (here a ShaderEffect) as displacement map&#xD;&#xA;- Map: red moves the pixels in x, green in y, 0.5 = no shift&#xD;&#xA;- Displacement: largest shift in units">
+          <Pad Id="CdXl2JvMta5xOQlunYx5Z7" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Displace [Qt.Effects]&#xD;&#xA;- Map: any element (here a ShaderEffect) as displacement map&#xD;&#xA;- Map: red moves the pixels in x, green in y, 0.5 = no shift&#xD;&#xA;- Displacement: largest shift in DIP">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -90,7 +90,7 @@
             <Pin Id="ocOPjdb5LEhlLQpGcDhGhS" Name="Input" Kind="InputPin" />
             <Pin Id="6v9Ph8WzcpsRTWtxconmav" Name="Map" Kind="InputPin" />
             <Pin Id="TfHv1p459lMMBeZ8H8SJIb" Name="Map Sampler" Kind="InputPin" IsHidden="true" />
-            <Pin Id="M3SYwVBMbLHjgb1VkSCGNo" Name="Displacement" Kind="InputPin" DefaultValue="0.2" />
+            <Pin Id="M3SYwVBMbLHjgb1VkSCGNo" Name="Displacement" Kind="InputPin" DefaultValue="20" />
             <Pin Id="hrLSPfmhcskyt9ShezHqZ6" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="120,839,185,19" Id="xj7SmnI3CkK9KncGX79Yqe">
@@ -137,7 +137,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="RCzxX3IIbPJx0B5WCOTm3S" Comment="Displacement" Bounds="292,660,35,15" ShowValueBox="true" isIOBox="true" Value="0.12">
+          <Pad Id="RCzxX3IIbPJx0B5WCOTm3S" Comment="Displacement" Bounds="292,660,35,15" ShowValueBox="true" isIOBox="true" Value="12">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>

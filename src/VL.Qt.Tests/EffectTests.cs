@@ -81,10 +81,10 @@ namespace VL.Qt.Tests
         {
             var chain = Shadow(Blur());
             Frame(new Rectangle { Effect = chain });
-            // One MULTI run with the folded values (offset y 0.2 units = 20 logical pixels), no EFFECT_* SET.
+            // One MULTI run with the folded values (offset y 0.2 DIP, not converted), no EFFECT_* SET.
             Assert.That(Chains, Has.Length.EqualTo(1));
             Assert.That(Chains[0], Does.StartWith("CHAIN 1 | multi BlurEnabled=bool(1) Blur=f32(0.5) "));
-            Assert.That(Chains[0], Does.Contain(" ShadowVerticalOffset=f32(20)"));
+            Assert.That(Chains[0], Does.Contain(" ShadowVerticalOffset=f32(0.2)"));
             Assert.That(Sets(K.BlurEnabled), Is.EqualTo(0));
 
             // New description with the same chain instance: nothing.

@@ -48,13 +48,13 @@ namespace VL.Qt.Nodes
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
         /// <param name="center">Center of the rotation, 0..1 of the element area (0.5, 0.5 = middle).</param>
         /// <param name="angle">Total rotation of the blur in cycles (1 = full turn, 0 = no blur).</param>
-        /// <param name="padding">Extra area around the element in units so the arcs have room: about half the angle in radians (Angle times 2π) times the distance of the farthest point from Center.</param>
+        /// <param name="padding">Extra area around the element in DIP so the arcs have room: about half the angle in radians (Angle times 2π) times the distance of the farthest point from Center.</param>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             [DefaultValue("0.5, 0.5")] Vector2 center,
             [DefaultValue(0.05f)] float angle,
-            [Pin(Visibility = PinVisibility.Optional), DefaultValue(0.3f)] float padding)
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(30f)] float padding)
             => _link.Describe(input, new Props(center, angle, padding));
 
         public void Dispose() => _link.Dispose();
