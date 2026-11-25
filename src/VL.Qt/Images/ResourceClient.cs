@@ -110,7 +110,7 @@ namespace VL.Qt
         public static ResourceClient ForApp(AppHost appHost)
         {
             QtPump.ForApp(appHost);
-            var client = QtApp.Get(null).Resources;
+            var client = QtApp.Get().Resources;
             client.Previews = !appHost.IsExported;
             return client;
         }

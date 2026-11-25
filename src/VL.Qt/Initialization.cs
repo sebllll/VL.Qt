@@ -19,6 +19,9 @@ namespace VL.Qt
         {
             base.Configure(appHost);
 
+            // Qt messages and process-wide VL.Qt messages go to the newest live app host's logger (before any node).
+            QtLog.Attach(appHost);
+
             // Shader nodes from qtshaders/**/*.frag next to documents and in packages.
             Shaders.ShaderNodeFactory.Register(appHost);
 

@@ -27,7 +27,7 @@ namespace VL.Qt.Nodes
             _errors = new NodeErrors(nodeContext);
             _report = new ResourceNodeReport(_errors, lasting: true);
             // Creates the QGuiApplication on first use: QFontDatabase needs it, so a LoadFont before any renderer works.
-            _app = QtApp.Get(nodeContext.AppHost.LoggerFactory);
+            _app = QtApp.Get();
         }
 
         /// <summary>Registers the font file when Path changes.</summary>

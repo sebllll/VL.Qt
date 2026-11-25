@@ -53,7 +53,7 @@ namespace VL.Qt
         public static QtPump ForApp(AppHost appHost)
             => appHost.Services.GetOrAddService(s =>
             {
-                var app = QtApp.Get(appHost.LoggerFactory);
+                var app = QtApp.Get();
                 var clock = s.GetService(typeof(IFrameClock)) as IFrameClock
                     ?? throw new InvalidOperationException("VL.Qt: the app host has no IFrameClock");
                 return new QtPump(app, clock);
@@ -154,10 +154,10 @@ namespace VL.Qt
         void IObserver<FrameTimeMessage>.OnCompleted() { }
 
         void IObserver<FrameFinishedMessage>.OnError(Exception error) =>
-            QtApp.Logger?.LogError(error, "VL.Qt: frame clock reported an error, Qt is no longer pumped");
+            QtLog.Logger?.LogError(error, "VL.Qt: frame clock reported an error, Qt is no longer pumped");
 
         void IObserver<FrameFinishedMessage>.OnCompleted() =>
-            QtApp.Logger?.LogWarning("VL.Qt: frame clock completed, Qt is no longer pumped");
+            QtLog.Logger?.LogWarning("VL.Qt: frame clock completed, Qt is no longer pumped");
 
         /// <summary>App stopped: unsubscribe from its clock and drop leftover participants (renderers not disposed cleanly).</summary>
         public void Dispose()

@@ -72,7 +72,7 @@ namespace VL.Qt
                 _lastWarningTicks = now;
                 // Phase breakdown: which part of the pump, and did a .NET GC run meanwhile? Plus the Qt phases of each
                 // window's last pump (is a spike in sync, render, present, gpu or events?).
-                QtApp.Logger?.LogWarning("Qt work took {Ms:F1} ms of {Budget:F1} ms (host pump {Pump:F1} ms incl. vsync wait and present), vvvv before it {Vvvv:F1} ms (apply {Apply:F1}, advance {Advance:F1}, processEvents {Process:F1}, after {After:F1}; GC gen0 +{Gc0}, gen1 +{Gc1}, gen2 +{Gc2}, pause {GcPause:F1} ms; alloc {AllocKb:F0} KB/frame){Phases}",
+                QtLog.Logger?.LogWarning("Qt work took {Ms:F1} ms of {Budget:F1} ms (host pump {Pump:F1} ms incl. vsync wait and present), vvvv before it {Vvvv:F1} ms (apply {Apply:F1}, advance {Advance:F1}, processEvents {Process:F1}, after {After:F1}; GC gen0 +{Gc0}, gen1 +{Gc1}, gen2 +{Gc2}, pause {GcPause:F1} ms; alloc {AllocKb:F0} KB/frame){Phases}",
                     workMs, budgetMs, ms, host.vvvv,
                     Stopwatch.GetElapsedTime(start, tApplied).TotalMilliseconds,
                     Stopwatch.GetElapsedTime(tApplied, tAdvanced).TotalMilliseconds,
@@ -154,7 +154,7 @@ namespace VL.Qt
         private void LogStats(long now)
         {
             var seconds = (now - _statsStartTicks) / 1000.0;
-            QtApp.Logger?.LogInformation(
+            QtLog.Logger?.LogInformation(
                 "[vlqt.stats] {Pumps} pumps in {Seconds:F1} s (pump avg {Avg:F2} ms, max {Max:F2} ms) · total: pumps {TotalPumps}, advances {Advances}, processEvents {ProcessEvents} · participants {Participants} (registered {Registered}, unregistered {Unregistered}, errors {Errors}) · pumps (apps) {ActivePumps}",
                 _statsPumps, seconds, _statsPumps > 0 ? _statsPumpMsSum / _statsPumps : 0, _statsPumpMsMax,
                 _pumps, _advances, _processEvents, _participantCount, _registered, _unregistered, _participantErrors, _activePumps);
@@ -172,7 +172,7 @@ namespace VL.Qt
             if (now - _lastErrorTicks <= WarningIntervalMs)
                 return;
             _lastErrorTicks = now;
-            QtApp.Logger?.LogError(e, "VL.Qt: participant failed in {Phase} (further errors within 5 s are counted, not logged)", phase);
+            QtLog.Logger?.LogError(e, "VL.Qt: participant failed in {Phase} (further errors within 5 s are counted, not logged)", phase);
         }
     }
 }
