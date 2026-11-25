@@ -499,19 +499,15 @@ namespace VL.Qt.Reconciliation
 
         /// <summary>
         /// BIND when the feedback slot changed (QtNative cancels the press of a Tap handler with a new feedback itself).
-        /// The feedback id is primary or not after <see cref="ItemMirror.IsPrimary"/>; a mirror that became primary with an
-        /// unchanged slot is re-bound too (<see cref="PrimaryOccurrences.SyncPrimary"/>).
+        /// The new feedback id is primary or not after <see cref="ItemMirror.IsPrimary"/>; a mirror that becomes primary with
+        /// an unchanged slot is re-bound by <see cref="PrimaryOccurrences"/> when it is promoted.
         /// </summary>
         private void BindFeedback(ItemMirror item, Element next)
         {
             FeedbackSlot slot = next.Feedback;
             FeedbackSlot old = item.BoundSlot;
             if (slot == old)
-            {
-                if (!slot.IsNone && item.IsPrimary != item.BoundPrimary)
-                    _primaries.SyncPrimary(item);
                 return;
-            }
 
             if (slot.IsNone)
             {
@@ -519,14 +515,12 @@ namespace VL.Qt.Reconciliation
                 _bindings.Remove(item.Id);
                 _feedbackRouter.Release(item.BoundFeedbackId);
                 item.BoundFeedbackId = 0;
-                item.BoundPrimary = false;
             }
             else
             {
                 // New feedback id: late events of the old binding are dropped, the old slot loses hover/press.
                 _feedbackRouter.Release(item.BoundFeedbackId);
                 item.BoundFeedbackId = _feedbackRouter.Acquire(slot, item.IsPrimary);
-                item.BoundPrimary = item.IsPrimary;
                 _sink.Bind(item.Id, item.BoundFeedbackId);
                 _bindings[item.Id] = slot;
             }

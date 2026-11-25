@@ -49,12 +49,10 @@ namespace VL.Qt.Reconciliation
 
         /// <summary>
         /// This mirror is the primary occurrence of its element (first in traversal order of the owner renderer,
-        /// see <see cref="OccurrenceRegistry"/>): only its feedback id reports state values.
+        /// see <see cref="OccurrenceRegistry"/>): only its feedback id reports state values. Written only by
+        /// <see cref="PrimaryOccurrences"/>, which keeps the flag of the feedback id (<see cref="FeedbackRouter.IsPrimary"/>) in step.
         /// </summary>
         public bool IsPrimary { get; set; }
-
-        /// <summary>Whether <see cref="BoundFeedbackId"/> is registered as primary (<see cref="FeedbackRouter"/>); follows <see cref="IsPrimary"/>.</summary>
-        public bool BoundPrimary { get; set; }
 
         // Traversal
 
