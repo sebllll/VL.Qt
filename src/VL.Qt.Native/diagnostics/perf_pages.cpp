@@ -8,6 +8,7 @@
 #include <QtGui/QTextDocumentFragment>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
+#include <private/qquickshadereffectsource_p.h>
 #include <rhi/qrhi.h>
 
 #include <algorithm>
@@ -143,6 +144,23 @@ int countMultiEffects(const QQuickItem* item, const QQuickItem* skip, const QQui
         if (c != skip && c != skip2)
             n += (c->inherits("QQuickMultiEffect") ? 1 : 0) + countMultiEffects(c, skip, skip2);
     return n;
+}
+
+// Largest layer texture below item (DIP; every layer and ShaderEffectSource, MultiEffect internals included), overlays
+// skipped: the size Qt asks for, before its clamp to the maximum texture size.
+void largestLayer(const QQuickItem* item, const QQuickItem* skip, const QQuickItem* skip2, QSizeF& largest)
+{
+    for (const QQuickItem* c : item->childItems()) {
+        if (c == skip || c == skip2)
+            continue;
+        if (const auto* es = qobject_cast<const QQuickShaderEffectSource*>(c); es && es->sourceItem()) {
+            const QRectF r = es->sourceRect();
+            const QSizeF s = r.isNull() ? es->sourceItem()->size() : QSizeF(std::abs(r.width()), std::abs(r.height()));
+            if (s.width() * s.height() > largest.width() * largest.height())
+                largest = s;
+        }
+        largestLayer(c, skip, skip2, largest);
+    }
 }
 
 } // namespace
@@ -368,8 +386,13 @@ QString PerfMonitor::scenePage() const
         for (const auto& kv : m_scene->nodes)
             layers += vlqt::Elements::effectLayerItem(kv.second) ? 1 : 0;
     const int effects = countMultiEffects(m_window->contentItem(), m_overlay, m_scene ? m_scene->debugOverlay() : nullptr);
+    // -1: not finite or beyond any texture
+    const auto dip = [](qreal v) { return v >= 0 && v < 1e9 ? int(std::ceil(v)) : -1; };
+    QSizeF largest;
+    largestLayer(m_window->contentItem(), m_overlay, m_scene ? m_scene->debugOverlay() : nullptr, largest);
     h.br().t(lab("effects", L)).t(QString::number(layers).rightJustified(8))
-        .c(kGrey, QStringLiteral("  effect layers, %1 MultiEffect items").arg(effects));
+        .c(kGrey, QStringLiteral("  effect layers, %1 MultiEffect items, largest layer %2 x %3 DIP").arg(effects)
+            .arg(dip(largest.width())).arg(dip(largest.height())));
     // Ops per apply: commands the host applied to this window per pump (host pumps, ~1 s).
     vlqt_host_pump_stats hs;
     hostStats(&hs);

@@ -113,9 +113,10 @@
  *   parked.
  *     Shader id 0 or not Ready yet: the link passes its input through unchanged; a Failed id keeps the last Ready
  *     shader of that link (like ShaderEffect). Padding grows from link to link (each link's effect area = its
- *     input's plus its padding).
+ *     input's plus its padding). The margins of all links together (padding, PADDING_RECT, MULTI auto padding
+ *     BLUR_MAX x (1 + BLUR_MULTIPLIER)) are cut to the window's larger side per side, at least 1024 DIP.
  *   Content problems never fail the apply (unknown uniform name, wrong type, shader not ready, reserved names,
- *   negative padding/strength): EVENT_ERROR text of the element, one line per problem prefixed with the link index
+ *   negative padding/strength, padding cut by that limit): EVENT_ERROR text of the element, one line per problem prefixed with the link index
  *   ("link 2: ..."), empty = cleared; the shader errors themselves come by RESOURCE_EVENT_ERROR.
  *   Block 832 (the MultiEffect keys as element properties via SET) is no longer a way in: SET with any of them is -6
  *   (reserved; the ids stay as keys of MULTI entries, vlqt_multi_effect_key).
