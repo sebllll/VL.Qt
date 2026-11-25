@@ -192,14 +192,12 @@
             <Pin Id="JnerQWvzNUqNUIi6RiRadb" Name="Input" Kind="InputPin" />
             <Pin Id="Q4n3HdH52lyLb9WvVQY2Md" Name="Size" Kind="InputPin" />
             <Pin Id="OvbLQka5qsgMVjBKFVYJdA" Name="Output" Kind="OutputPin" />
-            <Pin Id="HyXGyuMRTMYP0PDC08Jwh2" Name="Error" Kind="OutputPin" />
             <Pin Id="Jf4M3UWAwYSMRbOqRl1TIa" Name="Space" Kind="InputPin" />
             <Pin Id="NsJtREBCDxhNtjXodkH5qH" Name="Clear Color" Kind="InputPin" DefaultValue="0.16, 0.18, 0.26, 1" />
             <Pin Id="LX1ZIOeDlRHODSNcoLFSH9" Name="Format" Kind="InputPin" />
             <Pin Id="VlidnToxkkiL5lvhqpU2Az" Name="Enabled" Kind="InputPin" />
             <Pin Id="NEX4ChnfV2LLaQjcqcYlUk" Name="Input Notifications" Kind="InputPin" />
             <Pin Id="UmEmRh9FMR4O8dpbIKJIkp" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="B35J139J69yQSRLu5ZV9pD" Name="Perf" Kind="OutputPin" IsHidden="true" />
           </Node>
           <Node Bounds="466,810,79,19" Id="DNUQDE0mU8lQNdjBpHJ9qP">
             <p:NodeReference LastCategoryFullName="Stride.Input" LastDependency="VL.Stride.Input.vl">

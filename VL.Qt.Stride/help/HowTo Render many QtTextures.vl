@@ -145,8 +145,6 @@
                 <Pin Id="QdbqQyeu6yULnAZ040hDi5" Name="Enabled" Kind="InputPin" />
                 <Pin Id="UOW1ZQK10TmQApQNcZjXBn" Name="Input Notifications" Kind="InputPin" IsHidden="true" />
                 <Pin Id="Fatts76IimINF1rZdLaKnO" Name="Debug" Kind="InputPin" IsHidden="true" />
-                <Pin Id="OeFCkYns5R2NhApPo0lgl6" Name="Error" Kind="OutputPin" />
-                <Pin Id="JBiX8HuiyIlNFhVyYHVqtb" Name="Perf" Kind="OutputPin" IsHidden="true" />
               </Node>
               <Node Bounds="180,620,127,19" Id="oE4GYtAEu65ktniszXwXbe">
                 <p:NodeReference LastCategoryFullName="Stride.API.Graphics.BlendStateDescription" LastDependency="VL.Stride.vl">

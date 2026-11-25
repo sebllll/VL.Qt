@@ -27,7 +27,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="OJjcIYfBk02QBBkIFR9ZGX" Bounds="85,85,640,122" ShowValueBox="true" isIOBox="true" Value="QtTexture [Qt]&#xD;&#xA;- Input: any Qt element tree (here Rectangles, Text, Group)&#xD;&#xA;- Size in pixels (1 DIP = 1 pixel), Clear Color transparent by default&#xD;&#xA;- Output: a Stride Texture, rendered on the GPU in the same frame&#xD;&#xA;- Error: problems with the texture or the Qt scene&#xD;&#xA;- Here: FullscreenQuadRenderer with AlphaBlend draws it over a 3D scene">
+          <Pad Id="OJjcIYfBk02QBBkIFR9ZGX" Bounds="85,85,640,122" ShowValueBox="true" isIOBox="true" Value="QtTexture [Qt]&#xD;&#xA;- Input: any Qt element tree (here Rectangles, Text, Group)&#xD;&#xA;- Size in pixels (1 DIP = 1 pixel), Clear Color transparent by default&#xD;&#xA;- Output: a Stride Texture, rendered on the GPU in the same frame&#xD;&#xA;- Here: FullscreenQuadRenderer with AlphaBlend draws it over a 3D scene">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -218,19 +218,12 @@
             <Pin Id="Mrxce3qu9vcNUFU44ykYFe" Name="Input" Kind="InputPin" />
             <Pin Id="JVdKP2E3beVNASIzQt7U57" Name="Size" Kind="InputPin" />
             <Pin Id="JYEVVSBBfVtOhUubrvL1Hd" Name="Output" Kind="OutputPin" />
-            <Pin Id="NqzezlSDy7RQM61M43HkBV" Name="Error" Kind="OutputPin" />
             <Pin Id="IVbjIAjK3lTN0up7xnyIb5" Name="Space" Kind="InputPin" />
             <Pin Id="K6dSifg3psRPkUQV335xYg" Name="Clear Color" Kind="InputPin" />
             <Pin Id="Tg3lJX39wdVNrRvCcloNbQ" Name="Format" Kind="InputPin" />
             <Pin Id="RJeuUd2uF1JQMT8dhmDoIo" Name="Enabled" Kind="InputPin" />
             <Pin Id="Sdc9UBsZgrEM0AELfn5HHM" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="B713pgIUmIdMOv9QCU8FVY" Name="Perf" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="ErqdHAjY6jvMZdSHeLoP8S" Comment="Error" Bounds="222,550,300,19" ShowValueBox="true" isIOBox="true">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="TypeFlag" Name="String" />
-            </p:TypeAnnotation>
-          </Pad>
           <Node Bounds="180,600,127,19" Id="PUbVpXexkzkLF1x7c9u6Ff">
             <p:NodeReference LastCategoryFullName="Stride.API.Graphics.BlendStateDescription" LastDependency="VL.Stride.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
@@ -424,7 +417,6 @@
         <Link Id="C2ES1ErZBO1PNs7FSTevZo" Ids="UPhiS9dGOOnPAEx0Aga1Gc,CTDAK7SrOZaMbLGYChcwy9" />
         <Link Id="PiLj35u1kSBPW0R07HjCbe" Ids="NDhYk7retySNMhzW7WjI6w,QFkfEq7n5bdNkuU3gfGYqa" />
         <Link Id="MFuIkfEFV8yOlHXvqsSkY8" Ids="TFUiVZFBLPUQByVakpyK3U,JVdKP2E3beVNASIzQt7U57" />
-        <Link Id="F71Go5bUtK9OheNieb5tph" Ids="NqzezlSDy7RQM61M43HkBV,ErqdHAjY6jvMZdSHeLoP8S" />
         <Link Id="Rbu4VssiwVGP2UeIWCsaYB" Ids="JYEVVSBBfVtOhUubrvL1Hd,DikhSM3RZORLB2nSr6xqtZ" />
         <Link Id="RGMxGRrlwhpOfR9Wwe2EhU" Ids="MA29QEYN96rMTHrPEkFbPg,Lm8TI93O0vxNK1L9gssw29" />
         <Link Id="Q9sLUJjbNJ1NiGyGR773UT" Ids="MR1lAkqDJGsLyq1RRqGcST,QjS6xmQYXqCL5vXUV1tM0S" />

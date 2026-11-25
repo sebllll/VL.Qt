@@ -22,6 +22,7 @@ namespace VL.Qt.Stride
     internal sealed class SharedTextureScene : IDisposable
     {
         private readonly NodeErrors _errors;
+        private readonly NodeMessage _sceneError;
         private readonly QtTextureRenderer _renderer;
         private readonly OffscreenScene _scene;
         private readonly NotificationQueue _input;
@@ -39,6 +40,7 @@ namespace VL.Qt.Stride
         private int _rebindWait;
         private const string SamplesPhase = "Multisample Count";
         private const string BuildPhase = "Build";
+        private const string SceneErrorPhase = "Scene";
         private readonly ElementInput _element;
 
         /// <param name="nodeContext">Context of the node that owns the scene.</param>
@@ -47,6 +49,7 @@ namespace VL.Qt.Stride
         public SharedTextureScene(NodeContext nodeContext, int renderThreads)
         {
             _errors = new NodeErrors(nodeContext);
+            _sceneError = new NodeMessage(_errors, SceneErrorPhase, MessageSeverity.Error);
             _element = new ElementInput(_errors);
             // Starts the Qt app, which the render-thread setting and the scene need.
             _renderer = QtTextureRenderer.ForApp(nodeContext.AppHost);
@@ -61,6 +64,9 @@ namespace VL.Qt.Stride
         /// handed to the scene in <see cref="Update"/> (dropped while it is disabled).
         /// </summary>
         public NotificationQueue Input => _input;
+
+        /// <summary>The messages at the node of this scene: the node adds its own phases.</summary>
+        public NodeErrors Messages => _errors;
 
         /// <summary>
         /// The texture Qt renders into, null while it cannot be used: not created or bound (see <see cref="Error"/>), or, when
@@ -84,7 +90,7 @@ namespace VL.Qt.Stride
 
         /// <summary>
         /// Updates the scene and schedules its render for the next draw; enabled = false freezes it (nothing is created, recreated,
-        /// rendered or fed with input; the texture keeps its content). Logs <see cref="Error"/> once per distinct text.
+        /// rendered or fed with input; the texture keeps its content). Shows <see cref="Error"/> at the node and logs it once per distinct text.
         /// A new <paramref name="samples"/> rebinds the scene to the same texture (QtNative renders with the new MSAA count and
         /// resolves into the texture); a count the device does not support gives a warning at the node.
         /// </summary>
@@ -126,7 +132,7 @@ namespace VL.Qt.Stride
                 _scheduled = true;
             }
 
-            _errors.LogOnly(Error);
+            _sceneError.Set(Error);
         }
 
         // Creates the shared texture and binds the scene when size, format or Stride's device change (a Stride reset releases
@@ -301,6 +307,7 @@ namespace VL.Qt.Stride
             _scene.Dispose();
             _texture?.Dispose();
             _texture = null;
+            _sceneError.Dispose();
             _errors.Dispose();
             _element.Dispose();
             _renderThreads.Dispose();
