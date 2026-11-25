@@ -613,6 +613,41 @@ namespace VL.Qt.Tests
         }
 
         [Test]
+        public void LoadImageAsync_CreateFails_WithoutKeepPrevious_TheOldImageIsGone()
+        {
+            var messages = new RecordingMessages();
+            using var node = new LoadImageAsyncNode(_client, messages.Errors);
+            var a = node.Update(P("C:/a.png"), false, false, ImageUpload.Auto, out _, out _)!;
+            _api.Ready(a.Id);
+            Pump();
+
+            _api.CreateRc = Native.Result.Internal; // QtNative refuses the new image
+            var b = node.Update(P("C:/b.png"), false, false, ImageUpload.Auto, out var isLoaded, out _);
+            Assert.That(b, Is.Null, "Keep Previous off: the output switches at once, to nothing when the new one cannot be created");
+            Assert.That(isLoaded, Is.False);
+            Assert.That(messages.Shown, Is.Not.Null.And.Not.Empty, "the node says why");
+            Pump();
+            Assert.That(_api.Released, Is.EqualTo(new[] { a.Id }), "the old image is released");
+        }
+
+        [Test]
+        public void LoadImageAsync_CreateFails_WithKeepPrevious_TheOldImageStays()
+        {
+            var messages = new RecordingMessages();
+            using var node = new LoadImageAsyncNode(_client, messages.Errors);
+            var a = node.Update(P("C:/a.png"), false, true, ImageUpload.Auto, out _, out _)!;
+            _api.Ready(a.Id);
+            Pump();
+
+            _api.CreateRc = Native.Result.Internal;
+            var b = node.Update(P("C:/b.png"), false, true, ImageUpload.Auto, out _, out _);
+            Assert.That(b, Is.SameAs(a));
+            Assert.That(messages.Shown, Is.Not.Null.And.Not.Empty);
+            Pump();
+            Assert.That(_api.Released, Is.Empty);
+        }
+
+        [Test]
         public void LoadImageAsync_PathChangeWhileLoading_CancelsThePending()
         {
             using var node = new LoadImageAsyncNode(_client);
@@ -655,8 +690,8 @@ namespace VL.Qt.Tests
             Assert.That(_api.Calls.Count(c => c.StartsWith("pixels")), Is.EqualTo(1), "same instance: no upload");
 
             var b = node.Update(new TestImage(8, 8, PixelFormat.R8G8B8A8), ImageUpload.Auto)!;
-            Assert.That(b, Is.Not.SameAs(a), "new instance = new QtImage");
-            Assert.That(b.Id, Is.EqualTo(a.Id), "one resource per node, content replaced");
+            Assert.That(b, Is.SameAs(a), "a new input instance replaces the content, the QtImage stays (NODW-06)");
+            Assert.That(_api.Calls.Count(c => c.StartsWith("pixels")), Is.EqualTo(2));
             Assert.That(_api.Calls.Count(c => c.StartsWith("create")), Is.EqualTo(1));
             Assert.That(node.Update(null, ImageUpload.Auto), Is.Null);
             Pump();
@@ -664,6 +699,20 @@ namespace VL.Qt.Tests
             node.Dispose();
             Pump();
             Assert.That(_api.Released, Is.EqualTo(new[] { a.Id }));
+        }
+
+        [Test]
+        public void ToQtImage_ANewInputEveryFrame_NoNewQtImage_NothingWithoutInput()
+        {
+            using var node = new ToQtImageNode(_client);
+            var first = node.Update(new TestImage(4, 4, PixelFormat.R8G8B8A8), ImageUpload.Auto)!;
+            for (int i = 0; i < 20; i++)
+                Assert.That(node.Update(new TestImage(4, 4, PixelFormat.R8G8B8A8), ImageUpload.Auto), Is.SameAs(first));
+            Assert.That(_api.Calls.Count(c => c.StartsWith("create")), Is.EqualTo(1), "one resource");
+
+            Assert.That(node.Update(null, ImageUpload.Auto), Is.Null);
+            var again = node.Update(new TestImage(4, 4, PixelFormat.R8G8B8A8), ImageUpload.Auto)!;
+            Assert.That(again.Id, Is.EqualTo(first.Id), "the resource is kept for the next input");
         }
 
         [Test]

@@ -81,6 +81,9 @@ namespace VL.Qt.Nodes
                 ReleaseCurrent();
                 return;
             }
+            // The switch is decided before the create: with Keep Previous off the old image goes even if QtNative refuses the new one.
+            if (!keepPrevious)
+                ReleaseCurrent();
             ImageResource resource;
             try
             {
@@ -100,7 +103,6 @@ namespace VL.Qt.Nodes
             }
             else
             {
-                ReleaseCurrent();
                 _current = resource;
                 _currentImage = image;
             }
