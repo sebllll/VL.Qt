@@ -12,11 +12,10 @@ using VL.Qt.Styles;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// Slider (QtQuick.Controls Slider, style Basic). Connect to Renderer [Qt] or a Group.
-    /// Dragging, the arrow keys and the mouse wheel change the value at once. The value goes into Channel (author "Qt") and to Value;
-    /// Bang reports a change by the user.
-    /// Lengths in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP).
+    /// Slider for a number. Dragging, the arrow keys and the mouse wheel change the value at once. The value goes into
+    /// Channel (author "Qt") and to Value; Bang reports a change by the user. Connect to Renderer [Qt] or a Group.
     /// </summary>
+    /// <remarks>QtQuick.Controls Slider, style Basic.</remarks>
     [ProcessNode(Name = "Slider", Category = Categories.Widgets)]
     public sealed class SliderNode : IDisposable
     {
@@ -46,27 +45,27 @@ namespace VL.Qt.Nodes
 
         internal ElementNodeCore<Slider, Props> Core => _node;
 
-        /// <summary>Describes the slider. A new description is only created when an input or the value changes.</summary>
-        /// <param name="size">Size of the element (width, height), only with Auto Size off. The position comes from Transform and Anchor.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='autosize']/param[@name='size']"/>
         /// <param name="autoSize">On: Size is ignored and the implicit size of the style applies. Off: Size counts.</param>
-        /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
-        /// <param name="anchor">Point of the element that lies at the origin of its parent space (default TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size; Transform rotates/scales around it. Inside Row/Column only the pivot of Transform.</param>
-        /// <param name="channel">Channel of the value. Changes from the patch are shown; changes by the user are written into it (author "Qt"). A plain value or an IOBox on the pin acts as start value and sets the value whenever it changes. If the patch and the user change the value in the same frame, the user wins.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='widget']/param[@name='channel']"/>
         /// <param name="min">Lower bound. Without a value: the Min attribute of the channel, if any, else 0.</param>
         /// <param name="max">Upper bound. Without a value: the Max attribute of the channel, if any, else 1.</param>
         /// <param name="step">Step size; 0 = continuous. With a step the value snaps to the grid, also while dragging.</param>
         /// <param name="orientation">Horizontal or vertical (vertical: Min at the bottom).</param>
         /// <param name="enabled">False greys the slider out; it then takes no input.</param>
-        /// <param name="opacity">Opacity of the element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
-        /// <param name="clip">Clip children to the element's size.</param>
-        /// <param name="debug">Debug overlay for this element only. Does not affect layout or hit-testing. Cyan frame = actual size (solid: Size, dashed: Auto Size on), orange = implicit size, i.e. what Auto Size would give (only where it differs), magenta cross = origin, yellow diamond = anchor.</param>
-        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). The slider takes its input itself in any case; the chain adds hover, press and pointer handling.</param>
-        /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Size, transform, layout and hit-testing stay the same. Without effect the element has no layer.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='widget']/param[@name='opacity']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='widget']/param[@name='interaction']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
         /// <param name="style">Look of the widget. Unset fields come from the enclosing Group's style, else from the base style.</param>
         /// <param name="value">The value shown, clamped to Min…Max (the channel keeps the patch's value). Works without a channel too.</param>
         /// <param name="bang">True for one frame when the user changed the value since the last frame.</param>
-        /// <param name="measuredSize">Implicit size reported by Qt, in units.</param>
-        /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='measuredSize']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='element']/returns"/>
         [return: Pin(Name = "Output")]
         public IElement Update(
             [DefaultValue("2, 0.28")] Vector2 size,

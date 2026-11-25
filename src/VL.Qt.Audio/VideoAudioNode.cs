@@ -42,10 +42,10 @@ namespace VL.Qt.Audio
             _signal = new VideoAudioSignal(NativeAudioTapReader.Instance);
         }
 
-        /// <summary>Describes the video and returns its sound. A new description is only created when an input changes.</summary>
+        /// <summary>Describes the video and returns its sound.</summary>
         /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor. Size 0 = not drawn.</param>
-        /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
-        /// <param name="anchor">Point of the element that lies at the origin of its parent space (default TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size; Transform rotates/scales around it. Inside Row/Column only the pivot of Transform.</param>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <param name="path">Video file (H.264 MP4 and what FFmpeg decodes). Empty = nothing; errors are logged, nothing is shown.</param>
         /// <param name="play">Plays while true, pauses at the current frame while false.</param>
         /// <param name="loop">Restarts at the end; otherwise playback stops at the end. The sound continues across the restart without a gap.</param>
@@ -54,18 +54,19 @@ namespace VL.Qt.Audio
         /// <param name="volume">Volume of the sound at Audio, 0..1 (linear, clamped).</param>
         /// <param name="audioOffset">Delay of the sound against the picture in ms (positive: the sound comes later). Calibrates the latency of display and audio device that VL.Qt cannot know. The sound cannot come earlier than VL.Audio's output latency (buffer + driver) allows; smaller values play as early as possible.</param>
         /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill). Tile is not supported by a video: it is drawn as Stretch and the node shows a warning.</param>
-        /// <param name="opacity">Opacity of the element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
-        /// <param name="clip">Clip children to the element's size.</param>
-        /// <param name="debug">Debug overlay for this element only (not its children; the Renderer's Debug shows all). Does not affect layout or hit-testing.</param>
-        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
-        /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Without effect the element has no layer.</param>
-        /// <param name="enabled">False takes the element out of the scene: not drawn, no input and no space in Row/Column (the siblings move up), while it keeps its state. Opacity 0 keeps the gap instead.</param>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='interaction']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
         /// <param name="audio">The sound of the video, one signal per channel (stereo), at the sample rate of the VL.Audio engine. Silent without a file, without an audio track and while paused.</param>
         /// <param name="position">Playback position in seconds (0 until loaded; last frame).</param>
         /// <param name="duration">Duration of the media in seconds (0 until loaded or without a file; last frame).</param>
         /// <param name="syncError">Measured offset of the sound against the frame at Qt's video sink in ms (Audio Offset and VL.Audio's output latency included, display latency not; positive: the sound is late). NaN while the sound is not locked yet (start, after a jump, pause or underrun). Diagnostics.</param>
         /// <param name="measuredSize">Natural size of the video, in units (0, 0 until the first frame; last frame).</param>
-        /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/returns"/>
         /// <returns>The video element.</returns>
         // Pin defaults: see RectangleNode (text form, typeof(T) defaults are ignored by vvvvc).
         [return: Pin(Name = "Output")]

@@ -51,7 +51,7 @@ namespace VL.Qt.Nodes
         /// <param name="success">True if the last write that ended wrote the file; set in the frame of Is Done and held until the next one. A failure is logged.</param>
         /// <param name="scale">Pixels per DIP: pixel size = element size in DIP * Scale, independent of the screen's DPI scaling.</param>
         /// <param name="quality">0..100 for lossy formats (JPG, WebP); ignored for PNG and BMP.</param>
-        /// <param name="write">Grabs the element and writes it (a write while one runs waits, only the newest one).</param>
+        /// <param name="write">Grabs the element and starts writing it. A Write while another write runs waits; of several waiting Writes only the newest is written.</param>
         public void Update(
             IElement? element,
             Path filePath,

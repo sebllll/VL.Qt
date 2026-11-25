@@ -99,6 +99,7 @@ The reference is the code written by the vvvv team in [VL.StandardLibs](https://
 
 **Documentation**
 - `/// <summary>` (English, one sentence in the style "Returns true if …") on every node and every non-trivial pin: it becomes the node help in vvvv. Document `Update` pins with `<param name>` (also the `out` pins; the name must match the C# parameter) and the return pin with `<returns>`. `Summary` in `[ProcessNode]` does not replace the pin documentation.
+- Pin texts that several nodes share (Size, Transform, Anchor, Opacity, Clip, Debug, Interaction, Effect, Enabled, Measured Size, Scene Bounds, the widget channel, `<returns>` of an element) live once in `src/VL.Qt/Nodes/CommonPins.xml`, in a set per family of nodes. A node takes one with `/// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>` in place of the `<param>` (the include replaces the whole `<param>`; the path is relative to the source file). Change the text there, not at the nodes; a text only one node needs stays at the node. The pins of generated nodes (`QmlNodeLayout`, `ShaderNodeDescription`) repeat the shared texts as strings; tests compare them with the XML. Write for the patcher: no Qt type names, no implementation facts.
 - Inline comments in English, short, above the line, explaining why. `// TODO: sentence.` for open points.
 
 ## Line endings and encoding
