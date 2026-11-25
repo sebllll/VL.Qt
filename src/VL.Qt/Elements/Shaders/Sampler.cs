@@ -23,14 +23,5 @@
 
         /// <summary>Behaviour outside 0..1 in y (v).</summary>
         public SamplerAddress AddressV { get; init; } = SamplerAddress.Clamp;
-
-        /// <summary>The state as the wire carries it (protocol.h "Sampler"): bytes filter, mip filter, address U, address V.</summary>
-        internal ulong Pack()
-        {
-            return (ulong)Filter
-                | (ulong)MipFilter << 8
-                | (ulong)AddressU << 16
-                | (ulong)AddressV << 24;
-        }
     }
 }

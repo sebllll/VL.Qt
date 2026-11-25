@@ -1,4 +1,5 @@
-﻿using VL.Qt.Interop;
+﻿using System.Text;
+using VL.Qt.Interop;
 
 namespace VL.Qt.Wire
 {
@@ -19,6 +20,10 @@ namespace VL.Qt.Wire
         public const uint RootId = 0;
         /// <summary>Max UTF-8 bytes of a uniform name in <see cref="Op.SetUniforms"/>.</summary>
         public const int UniformNameMax = 255;
+
+        /// <summary>Whether <paramref name="name"/> can be sent as a uniform or QML property name (1..<see cref="UniformNameMax"/> UTF-8 bytes).</summary>
+        public static bool IsValidName(string? name)
+            => !string.IsNullOrEmpty(name) && Encoding.UTF8.GetByteCount(name) <= UniformNameMax;
         /// <summary>CREATE: u32 id, u16 type (the whole payload).</summary>
         public const int CreatePayload = 6;
         /// <summary>REPARENT: u32 id, u32 parent, u32 index (the whole payload).</summary>

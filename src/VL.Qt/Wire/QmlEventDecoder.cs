@@ -3,16 +3,16 @@ using System.Buffers.Binary;
 using System.Text;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
-using VL.Qt.Wire;
+using VL.Qt.Elements;
 
-namespace VL.Qt.Elements
+namespace VL.Qt.Wire
 {
     /// <summary>
     /// Decoding of the two QML events of QtNative (protocol.h "QmlElement"). Values come boxed as float, int, bool, string,
     /// Color4 (straight alpha), Vector2/3/4 or RectangleF, in the units of QML (no unit conversion). The events are sent on
     /// change only, so allocating the name and the box is fine.
     /// </summary>
-    internal static class QmlEvents
+    internal static class QmlEventDecoder
     {
         private const int maxArguments = 64;
 

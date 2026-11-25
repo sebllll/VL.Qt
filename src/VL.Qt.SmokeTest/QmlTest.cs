@@ -136,7 +136,7 @@ public static class QmlTest
         {
             var l = new List<object>();
             foreach (var r in recs)
-                if (r.Event == Protocol.EventId.QmlProperty && r.Handle == h && QmlEvents.TryDecodeProperty(r.Payload, out var n, out var v) && n == name)
+                if (r.Event == Protocol.EventId.QmlProperty && r.Handle == h && QmlEventDecoder.TryDecodeProperty(r.Payload, out var n, out var v) && n == name)
                     l.Add(v);
             return l;
         }
@@ -144,7 +144,7 @@ public static class QmlTest
         {
             var l = new List<string>();
             foreach (var r in recs)
-                if (r.Event == Protocol.EventId.QmlProperty && r.Handle == h && QmlEvents.TryDecodeProperty(r.Payload, out var n, out _))
+                if (r.Event == Protocol.EventId.QmlProperty && r.Handle == h && QmlEventDecoder.TryDecodeProperty(r.Payload, out var n, out _))
                     l.Add(n);
             return l;
         }
@@ -152,12 +152,12 @@ public static class QmlTest
         {
             var l = new List<QmlSignal>();
             foreach (var r in recs)
-                if (r.Event == Protocol.EventId.QmlSignal && r.Handle == h && QmlEvents.TryDecodeSignal(r.Payload, out var s))
+                if (r.Event == Protocol.EventId.QmlSignal && r.Handle == h && QmlEventDecoder.TryDecodeSignal(r.Payload, out var s))
                     l.Add(s);
             return l;
         }
-        static string S(List<Rec> recs) => string.Join("; ", recs.Select(r => r.Event == Protocol.EventId.QmlProperty && QmlEvents.TryDecodeProperty(r.Payload, out var n, out var v) ? $"prop h{r.Handle} {n}={v}"
-            : r.Event == Protocol.EventId.QmlSignal && QmlEvents.TryDecodeSignal(r.Payload, out var sg) ? $"signal h{r.Handle} {sg.Name}({string.Join(",", sg.Arguments)})"
+        static string S(List<Rec> recs) => string.Join("; ", recs.Select(r => r.Event == Protocol.EventId.QmlProperty && QmlEventDecoder.TryDecodeProperty(r.Payload, out var n, out var v) ? $"prop h{r.Handle} {n}={v}"
+            : r.Event == Protocol.EventId.QmlSignal && QmlEventDecoder.TryDecodeSignal(r.Payload, out var sg) ? $"signal h{r.Handle} {sg.Name}({string.Join(",", sg.Arguments)})"
             : r.Event == Protocol.EventId.Error ? $"error h{r.Handle} '{Encoding.UTF8.GetString(r.Payload)}'"
             : $"ev{r.Event} h{r.Handle}"));
         string Err(uint h) => errors.TryGetValue(h, out var e) ? e : "";
@@ -304,7 +304,7 @@ public static class QmlTest
         });
         CheckApply("SET_QML_PROPERTIES all value types");
         recs = Poll();
-        var back = recs.Where(r => r.Event == Protocol.EventId.QmlProperty && r.Handle == HT).Select(r => { QmlEvents.TryDecodeProperty(r.Payload, out var n, out var v); return (n, v); }).ToDictionary(x => x.n, x => x.v);
+        var back = recs.Where(r => r.Event == Protocol.EventId.QmlProperty && r.Handle == HT).Select(r => { QmlEventDecoder.TryDecodeProperty(r.Payload, out var n, out var v); return (n, v); }).ToDictionary(x => x.n, x => x.v);
         s.Check(back.Count == 11 && back.Keys.All(k => k.EndsWith("Out")), $"the eleven bound copies come back and nothing else ({string.Join(",", back.Keys)})");
         s.Check(back.TryGetValue("rOut", out var rOut) && Close(rOut, 0.25f), $"real round trip ({(back.TryGetValue("rOut", out var rv) ? rv : "none")})");
         s.Check(back.TryGetValue("iOut", out var iOut) && iOut is 7, $"int round trip ({(back.TryGetValue("iOut", out var iv) ? iv : "none")})");
