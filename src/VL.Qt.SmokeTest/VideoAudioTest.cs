@@ -9,7 +9,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// the sound of a Video through an audio tap (QtNative audio_tap.cpp, protocol.h "Audio tap"). A reader thread
+// the sound of a Video through an audio tap (QtNative resources/audio_tap.cpp, protocol.h "Audio tap"). A reader thread
 // plays the part of VL.Audio's audio thread and reads the tap the whole time. Checks: samples not silent, about 1 s of
 // samples per s of wall time, loop wrap without discontinuity and gap, source change and pause -> play raise the
 // discontinuity, audio due times match the video frames at the sink, an MSAA window swap keeps the tap running,
@@ -295,15 +295,20 @@ public static class VideoAudioTest
         s.Check(rate2 > 0.97 && rate2 < 1.03 && s2.Peak > 0.01f && s2.Flags == (Protocol.AudioTap.Attached | Protocol.AudioTap.Playing),
             $"videoaudio: tap switch live: {rate2:F3} s/s at 44.1 kHz, peak {s2.Peak:F3}, flags {s2.Flags}");
 
-        // 6. A second Video with the same tap is ignored (one player per tap): still 1 s per s, not 2.
+        // 6. A second Video with the same tap is refused (one player per tap, COMP-03): still 1 s per s, not 2. The apply
+        // stops at the refused command, so the tap goes last.
         cmd.Create(Video2Id, Protocol.ElementType.Video);
         cmd.SetPlace(Video2Id, 0, 0, 160, 90);
         cmd.SetString(Video2Id, Protocol.PropertyId.Source, a);
         cmd.SetBool(Video2Id, Protocol.PropertyId.Loop, true);
-        cmd.SetU64(Video2Id, Protocol.PropertyId.AudioTap, tap2);
         cmd.SetBool(Video2Id, Protocol.PropertyId.Playing, true);
         cmd.Reparent(Video2Id, 0, 1);
-        Apply("second video on the same tap (warning, ignored)");
+        cmd.SetU64(Video2Id, Protocol.PropertyId.AudioTap, tap2);
+        var rcShared = Native.Apply(w, cmd.EndFrame());
+        cmd.Reset();
+        var errShared = rcShared != 0 ? Native.LastError() : "";
+        s.Check(rcShared == Native.Result.BadArgument && errShared.Contains("already used by another Video"),
+            $"videoaudio: the tap is refused on a second Video ({rcShared}) {errShared}");
         Frames(500);
         var rateShared = RateOver(reader, tap2, 44100, 1500);
         s.Check(rateShared > 0.95 && rateShared < 1.05, $"videoaudio: second Video on the same tap ignored ({rateShared:F3} s/s)");

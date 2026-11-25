@@ -149,22 +149,28 @@ target_sources(vlqt PRIVATE
     resources/resource_workers.h
     resources/resources.cpp
     resources/resources.h
-    image_resource.cpp
-    image_resource.h
-    qtimageitem.cpp
-    qtimageitem.h
+    resources/image_texture_cache.cpp
+    resources/image_texture_cache.h
+    resources/qt_image_item.cpp
+    resources/qt_image_item.h
+    resources/audio_tap.cpp
+    resources/audio_tap.h
+    resources/gpu_texture.cpp
+    resources/gpu_texture.h
+    resources/image_kind.cpp
+    resources/image_kind.h
+    resources/image_resource.h
+    resources/image_upload_rhi.cpp
     snapshot_resource.cpp
     snapshot_resource.h
     image_writer.cpp
     image_writer.h
     shader_resource.cpp
     shader_resource.h
-    audio_tap.cpp
-    audio_tap.h
 
     # device/
-    device.cpp
-    device.h
+    device/device.cpp
+    device/device.h
     device/renderer_info.cpp
     device/renderer_info.h
     render_thread.cpp
@@ -289,6 +295,9 @@ if(WIN32)
         offscreen/offscreen_render.cpp
         offscreen/linear_pass.cpp
         offscreen/linear_pass.h
+        # resources/: the worker upload path of images (D3D11)
+        resources/image_upload_d3d11.cpp
+        resources/image_upload_d3d11.h
         # test/: D3D11On12 test device of vlqt_test_device_lost; d3d12.dll is loaded at run time, not linked
         test/test_device.cpp
         test/test_device.h)

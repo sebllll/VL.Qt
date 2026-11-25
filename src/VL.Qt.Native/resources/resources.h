@@ -14,7 +14,7 @@
 
 namespace vlqt::res {
 
-// --- C API backends (vlqt.h vlqt_res_*), main thread ---
+// --- C API backends (vlqt.h vlqt_res_*), main thread: another thread gets VLQT_ERR_WRONG_THREAD (logged once) ---
 int create(int kind, uint64_t* outId);
 int release(uint64_t id);
 int setBudget(int bytes);
@@ -74,7 +74,7 @@ struct OverviewTotals
     int64_t uploadBytes = 0;               // still to upload (Kind::pendingBytes of the queued uploads)
     int uploadJobs = 0, decodeJobs = 0;    // queued uploads / decodes waiting for a worker
 };
-// Live resources into rows (cleared, capacity kept) and the upload totals, under one lock.
+// Live resources into rows (cleared, capacity kept) and the upload totals.
 void overview(std::vector<OverviewRow>& rows, OverviewTotals& out);
 
 // --- Test hooks (test/test_resource_kind.cpp) ---

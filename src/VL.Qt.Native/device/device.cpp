@@ -1,5 +1,5 @@
 // Private Qt API: QQuickWindowPrivate::renderControl (which windows are on the shared device); check on Qt updates (list: elements/elements.h).
-#include "device.h"
+#include "device/device.h"
 
 #include <QtCore/QElapsedTimer>
 #include <QtCore/QLoggingCategory>
@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <unordered_map>
 #include <vector>
 
 #ifdef Q_OS_WIN
@@ -49,6 +50,8 @@ std::vector<Retired> s_retired;
 unsigned long long s_requestedLuid = 0; // adapter of moveTo, kept for later rebuilds (chooseAdapter)
 unsigned s_generation = 0;           // generation()
 std::vector<Listener> s_listeners;   // addListener, main thread
+// markOnSharedDevice: windows by whether they are on the shared device; an entry goes with its window. Main thread.
+std::unordered_map<const QQuickWindow*, bool> s_onShared;
 
 // lockFrames: holds the shared context from beforeRendering to afterFrameEnd of an on-screen window's frame (basic
 // loop, main thread); releaseFrameLocks ends every one still held. Child of its window.
@@ -249,10 +252,26 @@ void attach(QQuickWindow* window)
     if (QQuickWindow::graphicsApi() != QSGRendererInterface::Direct3D11 || !ensureDevice())
         return;
     window->setGraphicsDevice(QQuickGraphicsDevice::fromDeviceAndContext(s_dev, s_ctx));
-    window->setProperty("_vlqt_shared_device", true); // rebuild: also windows without a QRhi yet
+    markOnSharedDevice(window, true); // rebuild: also windows without a QRhi yet
 #else
     Q_UNUSED(window);
 #endif
+}
+
+bool isOnSharedDevice(const QQuickWindow* window)
+{
+    const auto it = s_onShared.find(window);
+    return it != s_onShared.end() && it->second;
+}
+
+void markOnSharedDevice(QQuickWindow* window, bool on)
+{
+    const auto [it, added] = s_onShared.try_emplace(window, on);
+    if (!added) {
+        it->second = on;
+        return;
+    }
+    QObject::connect(window, &QObject::destroyed, [window] { s_onShared.erase(window); });
 }
 
 void lockFrames(QQuickWindow* window)
@@ -445,11 +464,11 @@ void rebuild()
         auto* q = qobject_cast<QQuickWindow*>(w);
         if (!q)
             continue;
-        const bool onOld = q->rhi() ? nativeDevice(q->rhi()) == old : q->property("_vlqt_shared_device").toBool();
+        const bool onOld = q->rhi() ? nativeDevice(q->rhi()) == old : isOnSharedDevice(q);
         if (!onOld)
             continue;
         q->setGraphicsDevice(ok ? QQuickGraphicsDevice::fromDeviceAndContext(s_dev, s_ctx) : QQuickGraphicsDevice());
-        q->setProperty("_vlqt_shared_device", ok);
+        markOnSharedDevice(q, ok);
         q->update();
         moved++;
     }

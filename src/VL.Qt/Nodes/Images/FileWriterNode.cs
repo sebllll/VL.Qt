@@ -37,7 +37,7 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>Writes Image to File Path on Write.</summary>
-        /// <param name="image">Image to write, e.g. from Snapshot; premultiplied alpha is handled.</param>
+        /// <param name="image">Image to write, e.g. from Snapshot; premultiplied alpha is handled. 16 bit (R16) and half/full float RGBA are written as 16-bit PNG (float values clamped to 0..1); other file formats get 8 bit and a warning in the log.</param>
         /// <param name="filePath">Target file; the extension picks the format (png, jpg, bmp, ...). Missing folders are created, an existing file is overwritten.</param>
         /// <param name="isDone">True in the frame the write ended, also when it failed (see Success).</param>
         /// <param name="success">True if the last write that ended wrote the file; set in the frame of Is Done and held until the next one. A failure is logged.</param>

@@ -18,7 +18,7 @@
  *
  * Samplers (combinedImageSamplers of both stages, bindings 1..15): "source" = Input (SOURCE, layer of the item, the
  * texture provider of QQuickItem::layer), others from the table: REF = element (a hidden child; its layer gets
- * enabled), U64 = image resource (shared texture cache of qtimageitem.h). A sampler without texture samples a 1x1
+ * enabled), U64 = image resource (resources/image_texture_cache.h). A sampler without texture samples a 1x1
  * transparent texture. Dynamic textures (layers) are updated in the node's preprocess like Qt's ShaderEffect does.
  *
  * Chain pass (setChainPass, effect chain, effects/effect_chain.cpp): the item is a pass of a SHADER link. QtNative sets
@@ -75,7 +75,7 @@ bool isItemReservedUniform(std::string_view name);
 bool isChainReservedUniform(std::string_view name);
 
 namespace res::image {
-class ImageResource;
+class ImageContent;
 }
 namespace res::shader {
 class ShaderResource;
@@ -164,7 +164,7 @@ private:
         QPointer<QQuickItem> ref;       // REF
         uint64_t image = 0;             // U64 image resource id (element reference held)
         bool badImage = false;          // U64 id that is no live image resource (error line)
-        std::shared_ptr<res::image::ImageResource> imageContent; // Ready content of image
+        std::shared_ptr<res::image::ImageContent> imageContent; // Ready content of image
         std::shared_ptr<ImageTexture> imageTexture;              // its texture in window()
     };
     struct Write

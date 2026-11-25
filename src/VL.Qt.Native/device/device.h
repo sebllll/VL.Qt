@@ -38,6 +38,13 @@ namespace vlqt::device {
 // Gives the window the shared device; call before the window is shown. No-op without a shared device.
 void attach(QQuickWindow* window);
 
+// Returns true if attach or the last rebuild gave the window the shared device, also before the window has a QRhi.
+// Main thread, or a render thread while the main thread waits for it.
+bool isOnSharedDevice(const QQuickWindow* window);
+// Records whether the window is on the shared device (attach, rebuild); forgotten when the window is destroyed.
+// Main thread.
+void markOnSharedDevice(QQuickWindow* window, bool on);
+
 // Holds the shared device's immediate context (ContextLock) from beforeRendering to afterFrameEnd of every frame of
 // this on-screen window, so the render threads of offscreen scenes (phase 5) cannot change the context state while
 // QRhi D3D11 submits the frame (in endFrame). The vsync wait in beginFrame stays outside. Main thread, basic loop; not
@@ -108,8 +115,9 @@ void* testDevice12();
 // (every rebuild too), so single calls need no lock; a sequence whose context state must not interleave with another
 // thread's does (a QRhi frame, Wait + beginFrame, endFrame + Signal + Flush, Map + Unmap). No-op for a null context and
 // on other platforms. Main-thread holders: window frames (lockFrames), upload QRhi frames and staging copies
-// (image_resource.cpp). Lock order: never wait for another thread while holding it, above all never for a blocking
-// render-thread job (RenderThread::call, drain): that job may take the lock too and both threads would wait forever.
+// (resources/image_upload_rhi.cpp, image_upload_d3d11.cpp). Lock order: never wait for another thread while holding it,
+// above all never for a blocking render-thread job (RenderThread::call, drain): that job may take the lock too and both
+// threads would wait forever.
 class ContextLock
 {
 public:

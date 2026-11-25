@@ -19,10 +19,12 @@ namespace VL.Qt
         Native.Result Poll(Span<byte> buffer, out int written, out int required);
         /// <summary>The state of the resource (<see cref="Protocol.ResourceState"/>) or a negative <see cref="Native.Result"/>.</summary>
         int Wait(ulong id, int timeoutMs);
-        Native.Result LoadImage(ulong id, string utf8Path, uint flags);
+        /// <summary>upload: <see cref="Protocol.ImageUpload"/>.</summary>
+        Native.Result LoadImage(ulong id, string utf8Path, uint flags, int upload);
         Native.Result LoadShader(ulong id, string utf8Path, int stage);
         Native.Result LoadShaderSource(ulong id, string source, int stage);
-        Native.Result SetPixels(ulong id, in Native.vlqt_pixel_desc desc, ReadOnlySpan<byte> data);
+        /// <summary>upload: <see cref="Protocol.ImageUpload"/>.</summary>
+        Native.Result SetPixels(ulong id, in Native.vlqt_pixel_desc desc, ReadOnlySpan<byte> data, int upload);
         int List(Span<Native.vlqt_res_info> buffer);
         void Shutdown();
         Native.Result Snapshot(ulong id, SceneHandle window, uint elementId, float scale);
@@ -38,10 +40,10 @@ namespace VL.Qt
         public Native.Result Release(ulong id) => Native.vlqt_res_release(id);
         public Native.Result Poll(Span<byte> buffer, out int written, out int required) => Native.ResPoll(buffer, out written, out required);
         public int Wait(ulong id, int timeoutMs) => Native.vlqt_res_wait(id, timeoutMs);
-        public Native.Result LoadImage(ulong id, string utf8Path, uint flags) => Native.vlqt_image_load(id, utf8Path, flags);
+        public Native.Result LoadImage(ulong id, string utf8Path, uint flags, int upload) => Native.vlqt_image_load(id, utf8Path, flags, upload);
         public Native.Result LoadShader(ulong id, string utf8Path, int stage) => Native.vlqt_shader_load(id, utf8Path, stage);
         public Native.Result LoadShaderSource(ulong id, string source, int stage) => Native.vlqt_shader_load_source(id, source, stage);
-        public Native.Result SetPixels(ulong id, in Native.vlqt_pixel_desc desc, ReadOnlySpan<byte> data) => Native.ImageSetPixels(id, in desc, data);
+        public Native.Result SetPixels(ulong id, in Native.vlqt_pixel_desc desc, ReadOnlySpan<byte> data, int upload) => Native.ImageSetPixels(id, in desc, data, upload);
         public int List(Span<Native.vlqt_res_info> buffer) => Native.ResList(buffer);
         public void Shutdown() => Native.vlqt_res_shutdown();
         public Native.Result Snapshot(ulong id, SceneHandle window, uint elementId, float scale) => Native.vlqt_snapshot_start(id, window, elementId, scale);
@@ -382,10 +384,10 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Starts loading <paramref name="path"/> (made absolute here) into <paramref name="resource"/>. Returns false and
-        /// fails the resource if QtNative refuses.
+        /// Starts loading <paramref name="path"/> (made absolute here) into <paramref name="resource"/>, uploaded the way
+        /// <paramref name="upload"/> says. Returns false and fails the resource if QtNative refuses.
         /// </summary>
-        public bool Load(ImageResource resource, string path, bool mipmaps)
+        public bool Load(ImageResource resource, string path, bool mipmaps, ImageUpload upload = ImageUpload.Auto)
         {
             if (resource.IsReleased)
                 return false;
@@ -401,7 +403,7 @@ namespace VL.Qt
             }
             resource.OnLoadStarted();
             var flags = (mipmaps ? Protocol.ImageLoadFlags.Mipmaps : 0) | (Previews ? Protocol.ImageLoadFlags.Preview : 0);
-            var rc = _api.LoadImage(resource.Id, fullPath, flags);
+            var rc = _api.LoadImage(resource.Id, fullPath, flags, (int)upload);
             if (rc != Native.Result.Ok)
             {
                 resource.Fail($"Loading '{fullPath}' was refused by QtNative ({rc})");
@@ -426,10 +428,12 @@ namespace VL.Qt
         }
 
         /// <summary>
-        /// Replaces the content of <paramref name="resource"/> with pixels (copied synchronously by QtNative). Returns
-        /// false and fails the resource if the format is not supported or QtNative refuses.
+        /// Replaces the content of <paramref name="resource"/> with pixels (copied synchronously by QtNative), uploaded the
+        /// way <paramref name="upload"/> says. Returns false and fails the resource if the format is not supported or
+        /// QtNative refuses.
         /// </summary>
-        public bool SetPixels(ImageResource resource, int width, int height, int rowBytes, PixelFormat format, bool premultiplied, ReadOnlySpan<byte> data)
+        public bool SetPixels(ImageResource resource, int width, int height, int rowBytes, PixelFormat format, bool premultiplied, ReadOnlySpan<byte> data,
+            ImageUpload upload = ImageUpload.Auto)
         {
             if (resource.IsReleased)
                 return false;
@@ -450,7 +454,7 @@ namespace VL.Qt
                 premultiplied = premultiplied ? 1 : 0,
                 flags = Previews ? (int)Protocol.ImageLoadFlags.Preview : 0,
             };
-            var rc = _api.SetPixels(resource.Id, in desc, data);
+            var rc = _api.SetPixels(resource.Id, in desc, data, (int)upload);
             if (rc != Native.Result.Ok)
             {
                 resource.Fail($"{width} x {height} {format} pixels ({data.Length} bytes, {rowBytes} per row) were refused by QtNative ({rc})");

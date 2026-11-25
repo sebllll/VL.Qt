@@ -3,7 +3,7 @@
 #include "test_device.h"
 
 #include "../app/last_error.h"
-#include "../device.h"
+#include "../device/device.h"
 #include "../vlqt.h"
 
 #include <QtCore/QLoggingCategory>

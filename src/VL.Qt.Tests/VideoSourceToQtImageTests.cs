@@ -11,6 +11,7 @@ using VL.Lib.Basics.Resources;
 using VL.Lib.Basics.Video;
 using VL.Qt.Images;
 using VL.Qt.Nodes;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Tests
 {
@@ -103,6 +104,16 @@ namespace VL.Qt.Tests
                 Thread.Sleep(5);
             }
             return null;
+        }
+
+        [Test]
+        public void Upload_PassedToQtNative()
+        {
+            var source = new FakeSource();
+            using var node = new VideoSourceToQtImageNode(_client, _ctx);
+            node.Update(source, null, preferPush: false);
+            node.Update(source, null, preferPush: false, upload: ImageUpload.Worker);
+            Assert.That(_api.Uploads, Is.EqualTo(new[] { Protocol.ImageUpload.Auto, Protocol.ImageUpload.Worker }));
         }
 
         [Test]

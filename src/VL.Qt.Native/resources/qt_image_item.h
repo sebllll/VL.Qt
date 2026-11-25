@@ -1,20 +1,18 @@
-/* qtimageitem.h - the Image element (images package 04): draws an image resource (image_resource.h).
+/* qt_image_item.h - the Image element (images package 04): draws an image resource (image_resource.h).
  *
  * PROP_IMAGE sets the resource id (0 = no image). The item takes an element reference (res::acquire) for the id it
  * shows and for the id it waits for, and drops it on a change or in the destructor. Until the new resource is Ready
  * the old image stays (no empty frame); a replacement of the same id shows up the same way (res::changedThisFrame).
  *
- * Textures: one per window and content, shared by every item of that window (cache in qtimageitem.cpp):
- *   - shared device (Windows/D3D11): a QRhiTexture of the window's QRhi created from the resource's native texture
- *     (createFrom, same format and mip flags), no copy. The native texture gets an own reference (AddRef) for as long
- *     as the wrapper lives, so a resource freed or replaced meanwhile never leaves a dangling texture.
- *   - no shared device (Linux, VLQT_SHARED_DEVICE=0) or no QRhi (software backend): createTextureFromImage of the
- *     resource's CPU copy, once per window.
- * Everything runs on the main thread (render loop basic). Textures go in releaseResources/invalidateSceneGraph,
- * before the window's QRhi.
+ * Textures: from the cache of resources/image_texture_cache.h, one per window, QRhi and content.
+ * Threads: the item lives on the main thread. updatePaintNode and invalidateSceneGraph run on the window's render thread
+ * (the main thread for on-screen windows and offscreen scenes without one), updatePaintNode while the main thread waits
+ * (sync), so it may read the device and the window as the main thread would. A texture belongs to the thread that made
+ * it: the item lets it go in updatePaintNode and invalidateSceneGraph directly, from the main thread (releaseResources,
+ * destructor) through render_thread::retire, always before the window's QRhi. A texture freed on another thread logs
+ * a warning.
  *
- * Device lost: content of an older device generation (ImageResource::generation) is skipped silently until its
- * replacement is Ready; so is a window that still renders with its old QRhi right after device::rebuild.
+ * Device lost: the old image is not drawn until its replacement is Ready (image_texture_cache.h).
  *
  * Fill modes as QML Image (values of Image.fillMode, centered): Stretch, PreserveAspectFit, PreserveAspectCrop and
  * Tile (one image node per tile, at most kMaxTiles). smooth (QQuickItem) picks linear or nearest filtering, linear
@@ -28,20 +26,14 @@
 #include <memory>
 #include <string>
 
-class QSGTexture;
 class QQuickWindow;
 
 namespace vlqt {
 
 namespace res::image {
-class ImageResource;
+class ImageContent;
 }
 struct ImageTexture;
-
-// Texture of an image resource in a window from the shared cache (also used for ShaderEffect samplers);
-// nullptr if it cannot be drawn there (device generation, no shared device). Main thread.
-std::shared_ptr<ImageTexture> imageTextureFor(QQuickWindow* window, const std::shared_ptr<res::image::ImageResource>& content);
-QSGTexture* textureOf(const ImageTexture& t);
 
 class QtImageItem final : public QQuickItem
 {
@@ -80,7 +72,7 @@ private:
 
     uint64_t m_wantId = 0;  // last PROP_IMAGE (element reference held)
     uint64_t m_shownId = 0; // id of m_content (element reference held; == m_wantId once that is Ready)
-    std::shared_ptr<res::image::ImageResource> m_content;
+    std::shared_ptr<res::image::ImageContent> m_content;
     std::shared_ptr<ImageTexture> m_texture; // texture of m_content in window()
     int m_fillMode = 0;
 };

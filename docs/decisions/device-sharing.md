@@ -1,6 +1,6 @@
 # Device Sharing: One QtNative Device per Process
 
-How Qt gets onto the GPU next to Stride: QtNative owns one D3D11 device, Stride keeps its own, and a Qt scene reaches Stride as a shared texture. Implementation: `src/VL.Qt.Native/device.h` / `device.cpp`.
+How Qt gets onto the GPU next to Stride: QtNative owns one D3D11 device, Stride keeps its own, and a Qt scene reaches Stride as a shared texture. Implementation: `src/VL.Qt.Native/device/device.h` / `device.cpp`.
 
 ## Goals
 - Qt windows, uploaded images and effects share one device, so a texture uploaded once can be drawn in every window.

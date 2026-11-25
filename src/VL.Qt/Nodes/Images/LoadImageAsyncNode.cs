@@ -21,6 +21,7 @@ namespace VL.Qt.Nodes
         private readonly Action<ImageResource> _onSettled;
         private string? _path;
         private bool _mipmaps;
+        private ImageUpload _upload;
         // Current = at the output; pending = loading while the current one stays (Keep Previous).
         private ImageResource? _current, _pending;
         private QtImage? _currentImage, _pendingImage;
@@ -39,12 +40,13 @@ namespace VL.Qt.Nodes
             _onSettled = OnSettled;
         }
 
-        /// <summary>Starts loading when Path or Mipmaps change; the output switches when the new image is ready.</summary>
+        /// <summary>Starts loading when Path, Mipmaps or Upload change; the output switches when the new image is ready.</summary>
         /// <param name="path">Image file (PNG, JPG, BMP, ... everything Qt reads; EXIF rotation is applied). Empty = no image.</param>
         /// <param name="mipmaps">Generate mipmaps (+33 % GPU memory): smoother when the image is drawn much smaller than its size.</param>
         /// <param name="keepPrevious">Keep the previous image at the output while the new one loads (and when it fails). Off: the output switches at once to the loading image, which draws nothing until it is ready.</param>
         /// <param name="isLoaded">True when the image of the current Path is ready. False also when it failed: the node then shows why and logs it.</param>
         /// <param name="onLoaded">Fires the image when a load is complete (on the main thread, during the frame's Qt pump).</param>
+        /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
         /// <returns>The image; nothing until the first load is complete (Keep Previous) or for an empty path.</returns>
         [return: Pin(Name = "Image")]
         public QtImage? Update(
@@ -52,11 +54,12 @@ namespace VL.Qt.Nodes
             bool mipmaps,
             [DefaultValue(true)] bool keepPrevious,
             out bool isLoaded,
-            [Pin(Visibility = Model.PinVisibility.Optional)] out IObservable<QtImage> onLoaded)
+            [Pin(Visibility = Model.PinVisibility.Optional)] out IObservable<QtImage> onLoaded,
+            [Pin(Visibility = Model.PinVisibility.Optional)] ImageUpload upload = ImageUpload.Auto)
         {
             var p = path?.Value ?? string.Empty;
-            if (p != _path || mipmaps != _mipmaps)
-                Load(p, mipmaps, keepPrevious);
+            if (p != _path || mipmaps != _mipmaps || upload != _upload)
+                Load(p, mipmaps, upload, keepPrevious);
             Promote();
             // _error: the load of the current Path failed (a kept previous image does not count).
             isLoaded = _error.Length == 0 && _pending is null && _current is { State: QtImageState.Ready };
@@ -65,10 +68,11 @@ namespace VL.Qt.Nodes
             return _currentImage;
         }
 
-        private void Load(string path, bool mipmaps, bool keepPrevious)
+        private void Load(string path, bool mipmaps, ImageUpload upload, bool keepPrevious)
         {
             _path = path;
             _mipmaps = mipmaps;
+            _upload = upload;
             _error = string.Empty;
             ReleasePending();
             if (path.Length == 0)
@@ -99,7 +103,7 @@ namespace VL.Qt.Nodes
                 _current = resource;
                 _currentImage = image;
             }
-            _client.Load(resource, path, mipmaps);
+            _client.Load(resource, path, mipmaps, upload);
         }
 
         /// <summary>The pending image replaces the current one once ready; a failed one is dropped (the current one stays).</summary>

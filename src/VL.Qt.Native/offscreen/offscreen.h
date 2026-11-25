@@ -25,6 +25,10 @@ struct OffscreenScene;
 
 } // namespace vlqt
 
+namespace vlqt::render_thread {
+class RenderThread;
+}
+
 namespace vlqt::offscreen {
 
 // --- window/: window.cpp (createHandle, stateOf), focus_release.cpp, touch_input.cpp ---
@@ -65,6 +69,11 @@ bool isScene(const QQuickWindow* window);
 // A grab of an element of window's scene finishes in the scene's next render: marks a bound scene dirty, so the next
 // render_batch renders it also when nothing changed. Returns false if the scene is unbound (it does not render).
 bool requestFrame(const QQuickWindow* window);
+
+// --- offscreen_scene.cpp, for render_thread::retire ---
+
+// The render thread of window's scene; nullptr for a scene on the main thread and for any other window. Main thread.
+render_thread::RenderThread* renderThreadOf(const QQuickWindow* window);
 
 // test hook: backend of vlqt_test_offscreen_state (test/test_probes.cpp): fence values and render count of a bound scene.
 // Out pointers may be null. Returns VLQT_OK, VLQT_ERR_NULL_HANDLE or VLQT_ERR_UNBOUND (vlqt_last_error set).

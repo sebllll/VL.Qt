@@ -8,8 +8,10 @@ using VL.Qt;
 /// <summary>
 /// (FileWriter, native layer): vlqt_image_write_file. A small BGRA8 premultiplied image with opaque and half-transparent
 /// pixels as PNG into a not-yet-existing subfolder, read back through the image resource path (size, alpha and
-/// un-premultiplied colors within +-2), straight RGBA8 with row padding, JPG and BMP (alpha over black), overwrite, and
-/// the error codes: unknown extension -2, bad arguments -1, folder that cannot be created -3. Needs no window.
+/// un-premultiplied colors within +-2), straight RGBA8 with row padding (the last row without its padding), JPG and BMP
+/// (alpha over black), overwrite, R16 and half/full float RGBA as 16-bit PNG (bit depth read from the file header) and as
+/// 8-bit JPG, and the error codes: unknown extension Unsupported, bad arguments BadArgument, folder that cannot be
+/// created Io. Needs no window.
 /// </summary>
 [TestFixture, NonParallelizable]
 public static class ImageWriteTest
@@ -75,14 +77,55 @@ public static class ImageWriteTest
         s.Check(Colour(px, 0, 0, R, G, B, 255, 2) && Colour(px, W / 2 - 1, H - 1, R, G, B, 255, 2), "PNG opaque pixels (BGRA premultiplied input)");
         s.Check(Colour(px, W / 2, 0, R, G, B, A, 2) && Colour(px, W - 1, H - 1, R, G, B, A, 2), "PNG half-transparent pixels keep alpha and straight colour");
 
-        // Straight RGBA8 with row padding overwrites the existing file.
-        var padded = new byte[(W * 4 + 8) * H];
+        // Straight RGBA8 with row padding overwrites the existing file; len holds the pixels of the last row only.
+        var padded = new byte[(W * 4 + 8) * H - 8];
         for (int y = 0; y < H; y++)
             Array.Copy(rgbaStraight, y * W * 4, padded, y * (W * 4 + 8), W * 4);
         var rgbaDesc = desc with { row_bytes = W * 4 + 8, format = 7, premultiplied = 0 };
         rc = Native.ImageWriteFile(rgbaDesc, padded, png, -1, out error);
         px = Load(png, out rw, out rh);
         s.Check(rc == Native.Result.Ok && rw == W && Colour(px, 1, 1, R, G, B, 255, 2) && Colour(px, W - 2, 1, R, G, B, A, 2), $"straight RGBA8 with padding overwrites the file ({rc} {error})");
+
+        // More than 8 bit: a 16-bit PNG (bit depth and colour type from the IHDR chunk), 8 bit for other file formats.
+        static (int depth, int colorType) PngHeader(string path)
+        {
+            var head = File.ReadAllBytes(path);
+            return head.Length > 25 ? (head[24], head[25]) : (0, -1);
+        }
+        var gray16 = new byte[W * H * 2];
+        for (int i = 0; i < W * H; i++)
+            BitConverter.TryWriteBytes(gray16.AsSpan(i * 2), (ushort)(i * 2000));
+        var half = new byte[W * H * 8];
+        var single = new byte[W * H * 16];
+        for (int i = 0; i < W * H; i++)
+        {
+            float[] rgba = [R / 255f, G / 255f, B / 255f, 1f];
+            for (int c = 0; c < 4; c++)
+            {
+                BitConverter.TryWriteBytes(half.AsSpan(i * 8 + c * 2), (Half)rgba[c]);
+                BitConverter.TryWriteBytes(single.AsSpan(i * 16 + c * 4), rgba[c]);
+            }
+        }
+        var deep = new (string Name, int Format, int Bpp, byte[] Data, int ColorType)[]
+        {
+            ("R16", 2, 2, gray16, 0), ("half RGBA", 12, 8, half, 6), ("float RGBA", 10, 16, single, 6),
+        };
+        foreach (var (name, format, bpp, data, colorType) in deep)
+        {
+            var deepDesc = desc with { row_bytes = W * bpp, format = format, premultiplied = 0 };
+            var deepPng = Path.Combine(dir, $"deep_{format}.png");
+            rc = Native.ImageWriteFile(deepDesc, data, deepPng, -1, out error);
+            var header = rc == Native.Result.Ok ? PngHeader(deepPng) : (0, -1);
+            s.Check(header == (16, colorType), $"{name} PNG has 16 bit and colour type {colorType} ({rc} {error}; {header})");
+            if (format != 2)
+            {
+                px = Load(deepPng, out rw, out rh);
+                s.Check(rw == W && Colour(px, 1, 1, R, G, B, 255, 2), $"{name} PNG reads back with the colour");
+            }
+            var deepJpg = Path.Combine(dir, $"deep_{format}.jpg");
+            rc = Native.ImageWriteFile(deepDesc, data, deepJpg, -1, out error);
+            s.Check(rc == Native.Result.Ok && File.Exists(deepJpg), $"{name} as JPG is written in 8 bit ({rc} {error})");
+        }
 
         // JPG: no alpha, the half-transparent pixels come out over black. Default quality and explicit quality.
         foreach (var q in new[] { -1, 90 })

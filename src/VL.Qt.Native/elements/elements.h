@@ -20,7 +20,7 @@
  *       change count (app/scene_change.cpp); explicitVisible (elements/group_item.cpp); childItems and explicitVisible
  *       (elements/positioner_align.cpp). Public way: no.
  *   QtQuick/private/qquickwindow_p.h        QQuickWindowPrivate: dirtyItemList (app/scene_change.cpp),
- *       deliveryAgentPrivate() (app/input_delivery.cpp), itemsToPolish (scene/scene.cpp), renderControl (device.cpp),
+ *       deliveryAgentPrivate() (app/input_delivery.cpp), itemsToPolish (scene/scene.cpp), renderControl (device/device.cpp),
  *       rhi, graphicsConfig, ensureCustomRenderTarget (offscreen/offscreen_scene.cpp, offscreen_binding.cpp). Public way: no.
  *   QtQuick/private/qquickdeliveryagent_p_p.h   QQuickDeliveryAgentPrivate::delayedTouch and
  *       deliverDelayedTouchEvent(): input at the frame start (app/input_delivery.cpp). Public way: no; the most fragile
@@ -44,7 +44,7 @@
  *   QtQuick/private/qquickpointerdevicehandler_p.h   QQuickPointerDeviceHandler, base of TouchPointsHandler
  *       (scene/touch_handler.h). Public way: no.
  *   QtQuick/private/qsgplaintexture_p.h     QSGPlainTexture around the wrapped QRhiTexture, which it owns
- *       (qtimageitem.cpp). Public way: possibly QQuickWindow::createTextureFromRhiTexture (RHI API), which does not
+ *       (resources/image_texture_cache.cpp). Public way: possibly QQuickWindow::createTextureFromRhiTexture (RHI API), which does not
  *       take ownership; not tried.
  *   QtQuick/private/qsgrenderloop_p.h       QSGRenderLoop::instance, to drop the window RHIs of a lost test device
  *       (test/test_device.cpp). Test code only.
@@ -63,8 +63,9 @@
  *       handleFocusWindowChanged for the tests (test/test_input.cpp). Public way: none to flush the queue without
  *       rendering.
  *   rhi/qrhi.h, qshader.h, qshaderdescription.h, qshaderbaker.h   RHI API (QRhi, QShader, QShaderBaker): in public
- *       and versioned include directories with limited compatibility guarantees (device.cpp, image_resource.cpp,
- *       qtimageitem.cpp, diagnostics/perf_*.cpp, effects/shader_*, shader_resource.cpp).
+ *       and versioned include directories with limited compatibility guarantees (device/device.cpp,
+ *       resources/gpu_texture.h, resources/image_kind.cpp, resources/image_texture_cache.cpp,
+ *       resources/image_upload_rhi.cpp, diagnostics/perf_*.cpp, effects/shader_*, shader_resource.cpp).
  *
  * Not an include but a behaviour of Qt core that user_qml/qml_watcher.h relies on: QMetaObjectPrivate, raw method ids
  * through QMetaObject::connect. Check it on a Qt update as well.

@@ -466,7 +466,8 @@ VLQT_API int   vlqt_offscreen_set_focus(vlqt_scene* scene, int focused);
  * resources.h, protocol.h vlqt_resource_*: independent of scenes, ids u64 = index | generation << 32.
  * Main thread (the thread of vlqt_app_process_events_for) only. Return codes: 0 = ok, VLQT_ERR_INTERNAL (log),
  * VLQT_ERR_BAD_ARGUMENT bad argument / not allowed in this state, VLQT_ERR_UNKNOWN_ID unknown, stale or already
- * released id (warning in the log). */
+ * released id (warning in the log), VLQT_ERR_WRONG_THREAD called on another thread (logged once; vlqt_res_shutdown
+ * then does nothing). */
 
 /* One resource of vlqt_res_list: introspection for the F5 overlay (images package 07). */
 typedef struct vlqt_res_info {
@@ -517,7 +518,7 @@ typedef struct vlqt_pixel_desc {
  * a Ready id keeps the old texture visible until the new one is complete; while a decode/upload runs only the newest
  * content is kept. upload: vlqt_image_upload (protocol.h), the path the texture takes; another value is
  * VLQT_ERR_BAD_ARGUMENT. 0, VLQT_ERR_BAD_ARGUMENT (wrong kind, bad argument), VLQT_ERR_UNKNOWN_ID. A missing or broken
- * file / an unknown format ends in Failed with RESOURCE_EVENT_ERROR. Main thread. */
+ * file / an unknown format ends in Failed with RESOURCE_EVENT_ERROR. Main thread, else VLQT_ERR_WRONG_THREAD. */
 /* File (UTF-8 path; PNG, JPG, ... via QImageReader, EXIF rotation applied). flags: VLQT_IMAGE_LOAD_*. */
 VLQT_API int vlqt_image_load(unsigned long long id, const char* utf8Path, unsigned flags, int upload);
 /* Pixels of C#: copied synchronously (data may be reused after the call), len = bytes readable at data; flags in
@@ -529,7 +530,7 @@ VLQT_API int vlqt_image_set_pixels(unsigned long long id, const vlqt_pixel_desc*
  * Fills desc (width, height, row_bytes = width * 4, format = 9 B8G8R8A8, premultiplied = 1; also on
  * VLQT_ERR_BUFFER_TOO_SMALL) and copies the rows top-down into dst (a buffer export, top of this file).
  * VLQT_ERR_BAD_ARGUMENT wrong kind, VLQT_ERR_NO_DATA no preview (no flag, not Ready yet), VLQT_ERR_UNKNOWN_ID. Main
- * thread. */
+ * thread, else VLQT_ERR_WRONG_THREAD. */
 VLQT_API int vlqt_image_read_preview(unsigned long long id, unsigned char* dst, int cap, vlqt_pixel_desc* desc,
                                      int* written, int* required);
 /* Image file writer (FileWriter nodes): any thread, synchronous (encodes and writes before it returns), no
@@ -537,10 +538,13 @@ VLQT_API int vlqt_image_read_preview(unsigned long long id, unsigned char* dst, 
  * desc.format a VL PixelFormat number as in vlqt_image_set_pixels: 1, 2, 4-10 and 12, e.g. 9 B8G8R8A8, 7 R8G8B8A8; not
  * 3 R32F and 11 R32G32F; premultiplied 0/1, flags ignored) to utf8Path. The file format comes from the extension (png,
  * jpg/jpeg, bmp, ... what QImageWriter can write); premultiplied pixels are un-premultiplied for formats with alpha,
- * formats without alpha get the pixels over black. quality 0..100 applies to lossy formats (jpg, webp) only, -1 = Qt's
- * default. Missing folders are created, an existing file is overwritten. Returns 0; VLQT_ERR_BAD_ARGUMENT (null, size
- * <= 0, row_bytes or len too small, unsupported pixel format), VLQT_ERR_UNSUPPORTED unknown or unsupported file format
- * (extension), VLQT_ERR_IO folder could not be created or the write failed; vlqt_last_error says why. */
+ * formats without alpha get the pixels over black. More than 8 bits per channel (2 R16, 10 and 12 float RGBA) are
+ * written as a 16-bit PNG (float values clamped to 0..1); every other file format gets 8 bit and a warning in the log.
+ * quality 0..100 applies to lossy formats (jpg, webp) only, -1 = Qt's default. Missing folders are created, an
+ * existing file is overwritten. len needs only the pixels of the last row, as in vlqt_image_set_pixels. Returns 0;
+ * VLQT_ERR_BAD_ARGUMENT (null, size <= 0, row_bytes or len too small, unsupported pixel format), VLQT_ERR_UNSUPPORTED
+ * unknown or unsupported file format (extension), VLQT_ERR_IO folder could not be created or the write failed;
+ * vlqt_last_error says why. */
 VLQT_API int vlqt_image_write_file(const vlqt_pixel_desc* desc, const void* data, int len, const char* utf8Path,
                                    int quality);
 
@@ -551,18 +555,23 @@ VLQT_API int vlqt_image_write_file(const vlqt_pixel_desc* desc, const void* data
  * QtNative); stage: VLQT_SHADER_STAGE_*. The file is read and checked in a worker. New content on a Ready id keeps
  * the old shader until the new one is Ready. 0, VLQT_ERR_BAD_ARGUMENT (wrong kind, empty path, bad stage),
  * VLQT_ERR_UNKNOWN_ID. Missing file, not a .qsb, wrong stage, no variant for the backend: Failed with
- * RESOURCE_EVENT_ERROR. Main thread. */
+ * RESOURCE_EVENT_ERROR. Main thread, else VLQT_ERR_WRONG_THREAD. */
 VLQT_API int vlqt_shader_load(unsigned long long id, const char* utf8Path, int stage);
 /* Shader from source (protocol.h "ShaderEffect"): utf8Source = full Qt GLSL (#version 440, NUL-terminated,
  * copied at the call), baked by QShaderBaker in a worker for the backend of the process, cached per hash of the source.
  * Same resource rules as vlqt_shader_load. 0, VLQT_ERR_BAD_ARGUMENT (wrong kind, empty source, bad stage),
  * VLQT_ERR_UNKNOWN_ID. Bake errors (compiler message with line numbers) and failed checks: Failed with
- * RESOURCE_EVENT_ERROR. Main thread. */
+ * RESOURCE_EVENT_ERROR. Main thread, else VLQT_ERR_WRONG_THREAD. */
 VLQT_API int vlqt_shader_load_source(unsigned long long id, const char* utf8Source, int stage);
-/* Shader reflection (shader node factory): bakes utf8Source (full Qt GLSL, NUL-terminated) synchronously to
- * SPIR-V 100 only (under the same mutex as the runtime bakes, never in parallel) and writes the result as UTF-8 text
- * to buf (a buffer export, top of this file; a bake error is VLQT_OK with the text "error ..."). VLQT_ERR_BAD_ARGUMENT:
- * empty source, stage not VLQT_SHADER_STAGE_*. No QGuiApplication needed, any thread.
+/* Shader reflection (shader node factory): bakes utf8Source (full Qt GLSL, NUL-terminated) to SPIR-V 100 only (under
+ * the same mutex as the runtime bakes, never in parallel) and writes the result as UTF-8 text to buf (a buffer export,
+ * top of this file; a bake error is VLQT_OK with the text "error ..."). VLQT_ERR_BAD_ARGUMENT: empty source, stage not
+ * VLQT_SHADER_STAGE_*. No QGuiApplication needed.
+ * Thread: any, and it is synchronous on the calling thread (there is no async variant). The node factory calls it
+ * from the description of a shader node (ShaderNodeLayout.Load, a thread of vvvv's choosing): a source not seen
+ * before blocks the caller for one
+ * bake (and for a runtime bake that holds the mutex), the same source again is answered from the bake cache of
+ * QtNative (64 entries, a bake error too) without a bake.
  * Text: one entry per line, '\n'-separated, fields separated by one space:
  *   line 1: "ok" or "error"
  *   error:  the error lines as in a RESOURCE_EVENT_ERROR of a bake ("<stage> code, line <n>: <text>")
@@ -575,7 +584,7 @@ VLQT_API int vlqt_shader_reflect(const char* utf8Source, int stage, char* buf, i
 
 /* ===== snapshot: main thread ===== */
 
-/* Snapshot resources (protocol.h): main thread. Starts grabbing element elementId of scene (scale > 0:
+/* Snapshot resources (protocol.h): main thread, else VLQT_ERR_WRONG_THREAD. Starts grabbing element elementId of scene (scale > 0:
  * pixel size = item size in DIP * scale, ignoring the screen's device pixel ratio) into a VLQT_RESOURCE_KIND_SNAPSHOT
  * resource. Asynchronous: the result arrives with RESOURCE_EVENT_INFO / STATE Ready in a later pump (at least one
  * render of the scene), errors as Failed with RESOURCE_EVENT_ERROR. A snapshot while one is in flight replaces it (only
@@ -598,7 +607,7 @@ VLQT_API int vlqt_snapshot_start_fit(unsigned long long id, vlqt_scene* scene, u
 /* Pixels of the last finished snapshot (Ready, also while a replacing one is in flight): fills out (width, height,
  * row_bytes = width * 4, format = 9 B8G8R8A8, premultiplied = 1; also on VLQT_ERR_BUFFER_TOO_SMALL) and copies the
  * rows top-down into dst (a buffer export, top of this file). VLQT_ERR_BAD_ARGUMENT wrong kind, VLQT_ERR_NO_DATA no
- * snapshot yet, VLQT_ERR_UNKNOWN_ID. Main thread. */
+ * snapshot yet, VLQT_ERR_UNKNOWN_ID. Main thread, else VLQT_ERR_WRONG_THREAD. */
 VLQT_API int vlqt_snapshot_read(unsigned long long id, void* dst, int cap, vlqt_pixel_desc* out, int* written,
                                 int* required);
 
@@ -626,14 +635,14 @@ typedef struct vlqt_audio_tap_state {
     int reserved[2];                     /* 0 */
 } vlqt_audio_tap_state;
 
-/* Audio taps (audio_tap.h, protocol.h "Audio tap"). Main thread: fixes the format of a Pending
+/* Audio taps (resources/audio_tap.h, protocol.h "Audio tap"). Main thread (else VLQT_ERR_WRONG_THREAD): fixes the format of a Pending
  * VLQT_RESOURCE_KIND_AUDIO_TAP resource (interleaved float, channels 1..VLQT_AUDIO_TAP_MAX_CHANNELS, sampleRate
  * VLQT_AUDIO_TAP_MIN_SAMPLE_RATE..MAX) and makes it Ready at once (RESOURCE_EVENT_INFO w = channels, h = sampleRate,
  * bytes = ring). Once per tap: a new sample rate needs a new tap. 0, VLQT_ERR_BAD_ARGUMENT (wrong kind, bad format,
- * already initialised), VLQT_ERR_UNKNOWN_ID. */
+ * already initialised, 64 taps already initialised and not freed), VLQT_ERR_UNKNOWN_ID. */
 VLQT_API int vlqt_audio_tap_init(unsigned long long id, int channels, int sampleRate);
-/* Reads the tap: any thread (VL.Audio's audio thread), no allocation, never waits for the main thread; one reader per
- * tap. dst != NULL: copies up to maxFrames frames (maxFrames * channels floats, interleaved) of one segment into dst
+/* Reads the tap: any thread (VL.Audio's audio thread), one reader per tap at a time; no lock, no allocation, never
+ * waits for the main thread. dst != NULL: copies up to maxFrames frames (maxFrames * channels floats, interleaved) of one segment into dst
  * and consumes them; dst == NULL: drops up to maxFrames frames of one segment (catching up); maxFrames == 0: state
  * only. channels must equal the tap's (guards dst). state (may be NULL) is filled on every return >= 0 and on
  * VLQT_ERR_BAD_ARGUMENT for a tap not yet initialised. Returns the frames copied/dropped (0 = none available),

@@ -10,16 +10,22 @@
  * drains a thread before it unbinds or destroys a scene.
  *
  * The threads live until process end, like the shared device (device.h): stopping them at exit would run after Qt.
+ *
+ * Scene graph objects of a scene (a QSGTexture and the QRhiTexture under it) belong to its render thread: an item that
+ * holds one from the main thread lets it go through retire, never by dropping the last reference itself.
  */
 #pragma once
 
-#include "device.h"
+#include "device/device.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QThread>
 
 #include <exception>
+#include <memory>
 #include <utility>
+
+class QQuickWindow;
 
 namespace vlqt::render_thread {
 
@@ -89,5 +95,10 @@ RenderThread* assign();
 
 // Waits until every render thread of the pool ran the jobs queued before (none without a pool). Main thread.
 void drainAll();
+
+// Drops resource where window renders: for the window of an offscreen scene with a render thread in a job posted there,
+// so it goes after the render still running with it (the next blocking job of the thread, sync, unbind or destroy,
+// waits for it); for any other window (on-screen, a scene on the main thread, nullptr) at once. Main thread.
+void retire(QQuickWindow* window, std::shared_ptr<void> resource);
 
 } // namespace vlqt::render_thread

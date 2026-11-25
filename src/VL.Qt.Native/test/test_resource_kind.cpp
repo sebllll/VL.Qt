@@ -42,7 +42,7 @@ public:
         return w.failDecode ? "test: decode failed (requested)" : std::string();
     }
 
-    int64_t upload(Content& work, int64_t budget, bool& done, std::string& error) override
+    int64_t upload(Content& work, int64_t budget, UploadStatus& status, std::string& error) override
     {
         auto& w = static_cast<TestContent&>(work);
         if (w.failUpload) {
@@ -51,7 +51,7 @@ public:
         }
         const int64_t used = budget < 0 ? w.remaining : std::min(w.remaining, budget);
         w.remaining -= used;
-        done = w.remaining == 0;
+        status = w.remaining == 0 ? UploadStatus::Done : UploadStatus::Progress;
         return used;
     }
 

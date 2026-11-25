@@ -2,8 +2,8 @@
 // fonts and offscreen scenes (SmokeTest, unit tests). Qt GUI thread, except where an export says "any thread".
 #include "../vlqt_test.h"
 #include "scene/scene.h"
-#include "../device.h"
-#include "../image_resource.h"
+#include "../device/device.h"
+#include "../resources/image_resource.h"
 #include "../app/exports.h"
 #include "offscreen/offscreen.h"
 #include "diagnostics/perf.h"

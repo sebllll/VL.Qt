@@ -1,5 +1,5 @@
 #include "elements/element_types.h"
-#include "audio_tap.h"
+#include "resources/audio_tap.h"
 
 #include <QtCore/QFileInfo>
 #include <QtCore/QMetaObject>
@@ -49,7 +49,7 @@ bool setVolume(Elements&, ElementEntry& n, const ResolvedProp& rp, const Value& 
 }
 
 // Before the item goes: stop the player and drop its source first, so the decoder and audio threads end; then the
-// audio tap, while the player still exists (audio_tap.h releaseVideo).
+// audio tap, while the player still exists (resources/audio_tap.h releaseVideo).
 void releaseVideo(QQuickItem* item)
 {
     QMetaObject::invokeMethod(item, "vlqtRelease");
@@ -73,7 +73,7 @@ std::vector<PropDef> videoProps()
         {VLQT_PROPERTY_KEEP_LAST_FRAME, VLQT_VALUE_TYPE_BOOL, setQmlBool, "keepLastFrame"},
         {VLQT_PROPERTY_PLAYBACK_RATE, VLQT_VALUE_TYPE_F32, setQmlPositiveReal, "playbackRate"},
         {VLQT_PROPERTY_VOLUME, VLQT_VALUE_TYPE_F32, setVolume, "volume"},
-        // Sound to VL.Audio instead of Qt's output (audio_tap.h)
+        // Sound to VL.Audio instead of Qt's output (resources/audio_tap.h)
         {VLQT_PROPERTY_AUDIO_TAP, VLQT_VALUE_TYPE_U64, res::audio::setVideoTap, nullptr},
     };
 }
