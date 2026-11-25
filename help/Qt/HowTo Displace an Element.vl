@@ -201,8 +201,8 @@
             <Pin Id="SD4BnQmuIYhLxwnOVioBjB" Name="Input" Kind="InputPin" />
             <Pin Id="HTPjdfUj9NrMRABbsnbisS" Name="Amount" Kind="InputPin" DefaultValue="0.17" />
             <Pin Id="K8llOLguGxlNd8qzHr40n1" Name="Output" Kind="OutputPin" />
-            <Pin Id="NXR8mcEnHZcOGRor4bG1Zs" Name="Max" Kind="InputPin" IsHidden="true" />
-            <Pin Id="VmYK2pMHNyJPSkT6lUqeNq" Name="Multiplier" Kind="InputPin" IsHidden="true" />
+            <Pin Id="NXR8mcEnHZcOGRor4bG1Zs" Name="Max Radius" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VmYK2pMHNyJPSkT6lUqeNq" Name="Radius Multiplier" Kind="InputPin" IsHidden="true" />
             <Pin Id="KRWrwwSdhEVNOZdKCfVP8q" Name="Auto Padding" Kind="InputPin" IsHidden="true" />
             <Pin Id="PKCpspAa9wlLic7kJsXFWP" Name="Padding" Kind="InputPin" IsHidden="true" />
           </Node>

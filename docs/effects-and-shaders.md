@@ -26,12 +26,12 @@ The chain runs in data flow order, like TextureFX in Stride: the top node acts f
 ### Mask and padding
 
 - **Mask:** any element works as mask, e.g. a Text. It lives in the coordinates of the parent, like a sibling: the mask covers exactly the place where it would be drawn on its own.
-- **Lengths:** Blur `Max` and the `Padding` pins are in DIP too; a `Padding` of 6 is 6 DIP in every space (see [Shader effects](#shader-effects)).
-- **Optional pins:** Blur `Max`, `Multiplier`, `Auto Padding`, `Padding`; DropShadow `Scale`, `Auto Padding`, `Padding`. With Auto Padding on (default) the layer grows automatically by what blur and shadow need. Qt knows one effect area per layer: if Auto Padding is off on any Blur or DropShadow of a run, it is off for the whole layer of that run, and the area is the largest Padding per side of those nodes, so it suffices for all of them.
+- **Lengths:** Blur `Max Radius` and the `Padding` pins are in DIP too; a `Padding` of 6 is 6 DIP in every space (see [Shader effects](#shader-effects)).
+- **Optional pins:** Blur `Max Radius`, `Radius Multiplier`, `Auto Padding`, `Padding`; DropShadow `Scale`, `Auto Padding`, `Padding`. With Auto Padding on (default) the layer grows automatically by what blur and shadow need. Qt knows one effect area per layer: if Auto Padding is off on any Blur or DropShadow of a run, it is off for the whole layer of that run, and the area is the largest Padding per side of those nodes, so it suffices for all of them.
 
 ### Shader effects
 
-`Glow`, `InnerShadow`, `DirectionalBlur`, `ZoomBlur`, `RadialBlur`, `Displace` and `Blend` are shader effects with their own passes; the pictures show the first six applied to the text `VL.Qt`. Every length of an effect is in DIP, whatever the space of the renderer (Blur `Max`, `Padding`, DropShadow `Offset`, Glow `Radius`, the lengths of the blurs and Displace); angles are in cycles. They end a run of merged effects and cost a layer of their own; Glow and InnerShadow use a blur pyramid, so their cost hardly depends on the radius.
+`Glow`, `InnerShadow`, `DirectionalBlur`, `ZoomBlur`, `RadialBlur`, `Displace` and `Blend` are shader effects with their own passes; the pictures show the first six applied to the text `VL.Qt`. Every length of an effect is in DIP, whatever the space of the renderer (Blur `Max Radius`, `Padding`, DropShadow `Offset`, Glow `Radius`, the lengths of the blurs and Displace); angles are in cycles. They end a run of merged effects and cost a layer of their own; Glow and InnerShadow use a blur pyramid, so their cost hardly depends on the radius.
 
 <table>
 <tr><td align="center"><img src="images/effect-glow.png" width="260" alt="The text VL.Qt with Glow"><br>Glow</td><td align="center"><img src="images/effect-directional-blur.png" width="260" alt="The text VL.Qt with Directional Blur"><br>Directional Blur</td><td align="center"><img src="images/effect-zoom-blur.png" width="260" alt="The text VL.Qt with Zoom Blur"><br>Zoom Blur</td></tr>

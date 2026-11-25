@@ -162,3 +162,10 @@ W4-122b | node | Qt.Style.Track | GetColor | Color
 W4-122b | node | Qt.Style.Track | GetFillColor | FillColor
 W4-122b | node | Qt.Style.Track | GetThickness | Thickness
 W4-122b | node | Qt.Style.Track | GetRadius | Radius
+
+# W4-103: effect pins after VL.Skia (A4): the blur radius says what it is, DropShadow's softness is not a second "Blur",
+# and the blend pin is Skia's "Blend Mode".
+W4-103 | pin | Qt.Effects/Blur       | Max        | Max Radius
+W4-103 | pin | Qt.Effects/Blur       | Multiplier | Radius Multiplier
+W4-103 | pin | Qt.Effects/DropShadow | Blur       | Blur Amount
+W4-103 | pin | Qt.Effects/Blend      | Mode       | Blend Mode

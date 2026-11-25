@@ -500,25 +500,25 @@ VL.Qt | VL.Qt.Nodes.BlendNode | ctor | pin Node Context | in VL.Core.NodeContext
 VL.Qt | VL.Qt.Nodes.BlendNode | implements System.IDisposable
 VL.Qt | VL.Qt.Nodes.BlendNode | method Dispose | void
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | VL.Qt.Elements.Effect
-VL.Qt | VL.Qt.Nodes.BlendNode | method Update | order Input, Layer, Layer Sampler, Mode, Opacity, Output
+VL.Qt | VL.Qt.Nodes.BlendNode | method Update | order Input, Layer, Layer Sampler, Blend Mode, Opacity, Output
+VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Blend Mode | in VL.Qt.Elements.BlendMode | (blendMode)
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Input | in VL.Qt.Elements.Effect | (input)
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Layer Sampler | in VL.Qt.Elements.Sampler | Pin(Visibility = PinVisibility.Optional) | (layerSampler)
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Layer | in VL.Qt.Elements.IElement | (layer)
-VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Mode | in VL.Qt.Elements.BlendMode | (mode)
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Opacity | in float = 1 | (opacity)
 VL.Qt | VL.Qt.Nodes.BlendNode | method Update | pin Output | out VL.Qt.Elements.Effect | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.BlendNode | type sealed class
 VL.Qt | VL.Qt.Nodes.BlurNode | attr ProcessNode(Name = "Blur", Category = "Qt.Effects")
 VL.Qt | VL.Qt.Nodes.BlurNode | ctor | new
 VL.Qt | VL.Qt.Nodes.BlurNode | method Update | VL.Qt.Elements.Effect
-VL.Qt | VL.Qt.Nodes.BlurNode | method Update | order Input, Amount, Max, Multiplier, Auto Padding, Padding, Output
+VL.Qt | VL.Qt.Nodes.BlurNode | method Update | order Input, Amount, Max Radius, Radius Multiplier, Auto Padding, Padding, Output
 VL.Qt | VL.Qt.Nodes.BlurNode | method Update | pin Amount | in float = 0.5 | (amount)
 VL.Qt | VL.Qt.Nodes.BlurNode | method Update | pin Auto Padding | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoPadding)
 VL.Qt | VL.Qt.Nodes.BlurNode | method Update | pin Input | in VL.Qt.Elements.Effect | (input)
-VL.Qt | VL.Qt.Nodes.BlurNode | method Update | pin Max | in int = 32 | Pin(Visibility = PinVisibility.Optional) | (max)
-VL.Qt | VL.Qt.Nodes.BlurNode | method Update | pin Multiplier | in float | Pin(Visibility = PinVisibility.Optional) | (multiplier)
+VL.Qt | VL.Qt.Nodes.BlurNode | method Update | pin Max Radius | in int = 32 | Pin(Visibility = PinVisibility.Optional) | (maxRadius)
 VL.Qt | VL.Qt.Nodes.BlurNode | method Update | pin Output | out VL.Qt.Elements.Effect | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.BlurNode | method Update | pin Padding | in Stride.Core.Mathematics.RectangleF | Pin(Visibility = PinVisibility.Optional) | (padding)
+VL.Qt | VL.Qt.Nodes.BlurNode | method Update | pin Radius Multiplier | in float | Pin(Visibility = PinVisibility.Optional) | (radiusMultiplier)
 VL.Qt | VL.Qt.Nodes.BlurNode | type sealed class
 VL.Qt | VL.Qt.Nodes.ButtonNode | attr ProcessNode(Name = "Button", Category = "Qt.Widgets")
 VL.Qt | VL.Qt.Nodes.ButtonNode | ctor | new
@@ -737,9 +737,9 @@ VL.Qt | VL.Qt.Nodes.DragNode | type sealed class
 VL.Qt | VL.Qt.Nodes.DropShadowNode | attr ProcessNode(Name = "DropShadow", Category = "Qt.Effects")
 VL.Qt | VL.Qt.Nodes.DropShadowNode | ctor | new
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | VL.Qt.Elements.Effect
-VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | order Input, Color, Offset, Blur, Scale, Auto Padding, Padding, Output
+VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | order Input, Color, Offset, Blur Amount, Scale, Auto Padding, Padding, Output
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Auto Padding | in bool = true | Pin(Visibility = PinVisibility.Optional) | (autoPadding)
-VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Blur | in float = 1 | (blur)
+VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Blur Amount | in float = 1 | (blurAmount)
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Color | in Stride.Core.Mathematics.Color4 = 0, 0, 0, 1 | (color)
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Input | in VL.Qt.Elements.Effect | (input)
 VL.Qt | VL.Qt.Nodes.DropShadowNode | method Update | pin Offset | in Stride.Core.Mathematics.Vector2 = 5, 5 | (offset)

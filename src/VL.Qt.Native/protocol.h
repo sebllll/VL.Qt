@@ -463,7 +463,7 @@ enum vlqt_multi_effect_key {
     /* 832 unused (was ENABLED: layer on/off of the single Effect layer, plan effects/01) */
     VLQT_MULTI_EFFECT_KEY_BLUR_ENABLED = 833,       /* bool (default false) */
     VLQT_MULTI_EFFECT_KEY_BLUR = 834,               /* f32 0..1 */
-    VLQT_MULTI_EFFECT_KEY_BLUR_MAX = 835,           /* i32 pixels (default 32), switches shaders */
+    VLQT_MULTI_EFFECT_KEY_BLUR_MAX = 835,           /* i32 DIP (default 32), switches shaders */
     VLQT_MULTI_EFFECT_KEY_BLUR_MULTIPLIER = 836,    /* f32 (default 0) */
     VLQT_MULTI_EFFECT_KEY_SHADOW_ENABLED = 837,     /* bool (default false) */
     VLQT_MULTI_EFFECT_KEY_SHADOW_COLOR = 838,       /* color (default black) */
