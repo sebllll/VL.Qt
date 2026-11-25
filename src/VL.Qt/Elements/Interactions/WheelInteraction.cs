@@ -10,9 +10,5 @@ namespace VL.Qt.Elements
             => Devices = devices;
 
         public PointerDevices Devices { get; }
-
-        internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping)
-            => PointerProps.Write(sink, id, PointerMasks.DefaultButtons, Devices, PointerMasks.DefaultButtons,
-                previous is WheelInteraction p ? p.Devices : PointerMasks.DefaultDevices, writeButtons: false);
     }
 }

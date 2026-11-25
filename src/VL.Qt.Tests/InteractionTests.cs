@@ -314,10 +314,7 @@ namespace VL.Qt.Tests
             }
         }
 
-        private sealed class FakeInteraction(Interaction? previous, FeedbackSlot feedback) : Interaction(99, previous, feedback)
-        {
-            internal override void WriteProperties(ICommandSink sink, uint id, Interaction? previous, in SpaceMapping mapping) { }
-        }
+        private sealed class FakeInteraction(Interaction? previous, FeedbackSlot feedback) : Interaction(99, previous, feedback);
 
         [Test]
         public void SteadyState_NoAllocation()
@@ -677,7 +674,7 @@ namespace VL.Qt.Tests
         public void TouchPointsProperties_DefaultsNotSent_OnlyChangesSet()
         {
             var a = new ElementFeedback();
-            Frame(R(new TouchPointsInteraction(null, new FeedbackSlot(a, 0), true, PointerMasks.DefaultDevices)));
+            Frame(R(new TouchPointsInteraction(null, new FeedbackSlot(a, 0), true, PointerDevices.All)));
             Assert.That(Commands.Where(c => c.StartsWith("CREATE")), Is.EqualTo(new[] { "CREATE 1 Rectangle", $"CREATE 2 TouchPointsHandler" }));
             Assert.That(_sink.OfOp("SET"), Is.Empty, "occlusion on / All = QtNative defaults");
 
@@ -713,9 +710,9 @@ namespace VL.Qt.Tests
         public void TouchPointsNode_DefaultsAndChangeDetection()
         {
             using var node = new TouchPointsNode(_ => new Removal());
-            var a = (TouchPointsInteraction)node.Update(null, null, PointerMasks.DefaultDevices, true);
-            Assert.That(node.Update(null, null, PointerMasks.DefaultDevices, true), Is.SameAs(a));
-            Assert.That(node.Update(null, null, PointerMasks.DefaultDevices, false), Is.Not.SameAs(a));
+            var a = (TouchPointsInteraction)node.Update(null, null, PointerDevices.All, true);
+            Assert.That(node.Update(null, null, PointerDevices.All, true), Is.SameAs(a));
+            Assert.That(node.Update(null, null, PointerDevices.All, false), Is.Not.SameAs(a));
         }
 
         [Test]
