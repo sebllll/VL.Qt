@@ -6,8 +6,8 @@
 
 namespace vlqt::linear_pass {
 
-// A QtTexture whose consumer samples linear values (an SRGB view or R16G16B16A16_FLOAT; render-texture.md "Format,
-// colour space, alpha"). Qt renders premultiplied gamma-space values; sRGB decoding does not commute with
+// A QtTexture whose consumer samples linear values (an SRGB view or R16G16B16A16_FLOAT; docs/design/stride-output.md "Formats,
+// colour space and alpha"). Qt renders premultiplied gamma-space values; sRGB decoding does not commute with
 // premultiplication, so the texture cannot hold Qt's values as they are. Qt renders into source instead, a texture of
 // QtNative, and run writes each pixel into the consumer's texture as a * linear(c): unpremultiply, sRGB decode,
 // premultiply again. Through an SRGB view the GPU encodes on write, so the consumer's SRGB view reads a * linear(c).

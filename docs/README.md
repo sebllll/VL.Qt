@@ -30,7 +30,8 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 
 | Note | Content |
 |---|---|
-| [design/resources.md](design/resources.md) | The resource manager of QtNative: ids, states, threads, reference counts, replacement, external content and device loss. |
+| [design/resources.md](design/resources.md) | The resource manager of QtNative: ids, states (diagram), threads, content ownership, reference counts, status records, replacement, images (upload paths, texture handles), snapshots, and device loss with what is restored. |
+| [design/effects.md](design/effects.md) | The Effect chain in QtNative: item tree and stages, shader passes, the blur pyramid, the Shader item (uniforms, samplers, threads), alpha rules and the runtime bake of shader code. |
 | [design/render-loop.md](design/render-loop.md) | Which Qt Quick render loop QtNative runs, the rules for item code that follow from it and the places that rely on the basic loop. |
 | [design/render-thread.md](design/render-thread.md) | Lifetime of an offscreen scene, the pool of render threads (pin `Render Threads`), the frame of a batch, back pressure, which thread runs what and the lock on the shared device's context. |
 | [design/timing.md](design/timing.md) | One shared clock for vvvv and Qt animations through a custom animation driver on `IFrameClock`, the pump per app host, render threads, VSync, and how the perf monitor measures a pump. |
@@ -41,6 +42,7 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [research/render-texture-measurements.md](research/render-texture-measurements.md) | Measurements of the render threads, the MSAA counts and the cost of `Clear` off (one arm64 notebook, x64 not measured). |
 | [design/element-model.md](design/element-model.md) | What an element is: immutable descriptions and their exceptions, the pins every element node shares, geometry and the coordinate space. |
 | [design/events-and-interaction.md](design/events-and-interaction.md) | How input and values that only Qt knows come back to the patch: feedback, the Interaction nodes and their channels, latency and threads. |
+| [design/input.md](design/input.md) | The input handlers of QtNative: events per handler and when they are sent, grabs and occlusion, drag offset, Touch Points and Pinch, what a change of the feedback does, and the Qt behaviour behind the rules. |
 | [design/reconciler.md](design/reconciler.md) | How the reconciler turns the element tree into commands: one frame, the skip test, the order of the commands, occurrences and placeholders, input handlers, effect chains, styles, self-made widgets, and the resync after an exception. |
 | [design/reconciler-identity.md](design/reconciler-identity.md) | How the reconciler decides every frame between updating a Qt object and creating a new one, and what counts as one element (its feedback slot) when it is shown at several places. |
 | [design/paths.md](design/paths.md) | Lines, paths and splines on Qt Quick Shapes: the shape elements, `QtPath`, the `Qt.Paths` nodes and their Skia-like defaults, geometry space, wire format and costs. |

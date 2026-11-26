@@ -1,45 +1,17 @@
-/* shader_item.h - the ShaderEffect element (protocol.h "ShaderEffect").
+/* effects/shader_item.h - ShaderItem, the item of the Shader element (protocol.h "ShaderEffect") and of every pass of a
+ * SHADER link of the Effect chain (effects/effect_chain.h).
  *
- * Own QQuickItem with a QSGGeometryNode + QSGMaterial/QSGMaterialShader instead of QML's ShaderEffect: the uniforms
- * of SET_UNIFORMS are mapped by name through the reflection of the shaders (QShaderDescription of the .qsb).
+ * A QQuickItem with a QSGGeometryNode and an own QSGMaterial instead of Qt's ShaderEffect: the uniforms of SET_UNIFORMS
+ * are mapped by name through the reflection of the shaders. Shaders are shader resource ids (shader_resource.h); the
+ * item holds an element reference on the shown id and on the one it waits for, and the last Ready shader keeps drawing
+ * while a new one fails or loads. Content problems are joined into vlqtError (one line each), which Elements::readError
+ * sends as EVENT_ERROR of the element.
  *
- * Shaders: FRAGMENT_SHADER / VERTEX_SHADER are shader resource ids (shader_resource.h). The item holds an element
- * reference on the shown id and on the one it waits for; the old shader stays until the new one is Ready. If the
- * wanted id (or a replacement on the shown id) fails, the slot keeps drawing its last Ready content (live
- * editing never goes black; the content pointer stays, the reference on shown too); a Failed shader without an
- * earlier Ready one in that slot draws nothing (its error goes by RESOURCE_EVENT_ERROR). Without a vertex shader Qt's default
- * ShaderEffect vertex shader (embedded in Qt Quick) is used. Pipelines: one QSGMaterialType per shader pair (content
- * compared), so the renderer's shader cache never mixes programs.
- *
- * Uniform block: std140, the members of both stages merged by name (same offset and type required, else an error
- * line). qt_Matrix and qt_Opacity are written by the material shader from the render state, everything else from
- * the uniform table (values by name, kept across shader changes; members without a value are 0). Color is
- * premultiplied, a mat4 goes as sent (row-major Stride matrix = transposed Qt matrix in column-major memory).
- *
- * Samplers (combinedImageSamplers of both stages, bindings 1..15): "source" = Input (SOURCE, layer of the item, the
- * texture provider of QQuickItem::layer), others from the table: REF = element (a hidden child; its layer gets
- * enabled), U64 = image resource (resources/image_texture_cache.h). A sampler without texture samples a 1x1
- * transparent texture. Dynamic textures (layers) are updated in the node's preprocess like Qt's ShaderEffect does.
- *
- * Automatic uniforms (every item, written when a shader declares them): texelSize (vec2, 1 / pixel size of the source
- * texture, read from the texture itself, also after the layer resized it in preprocess), dpr (float,
- * effectiveDevicePixelRatio) and viewSize (vec2, size of the item in DIP). With the DIP lengths of a shader these three
- * give the pixel size of a length: length * dpr * texelSize is a length in texture coordinates.
- *
- * Chain pass (setChainPass, effect chain, effects/effect_chain.cpp): the item is a pass of a SHADER link. While the fragment slot has
- * no Ready content (id 0, loading, Failed without an earlier Ready one) Qt's default ShaderEffect fragment shader passes
- * source through unchanged (no table checks then). Reserved names of the chain are filtered by the chain, not here. A
- * PYRAMID link also uses setTexelSamplers (texelSize of the composite = the glow / shadow texture, not source),
- * setOptionalUniforms (prefilter and composite get the same table, each takes what it declares; the chain reports names
- * neither declares) and devicePixelRatioChanged (the pass sizes follow dpr).
- *
- * Errors: content problems (unknown name, wrong type, arrays, reserved names, blocks of both stages differing) are
- * joined into vlqtError (one line each), which Elements::readError sends as EVENT_ERROR of the element.
- *
- * Threads: everything is collected on the GUI thread; updatePaintNode (GUI blocked) copies it into the material; the
- * material shader reads only the material. Values only: no allocation per frame (buffers are sized on a layout change).
- * Which render loop runs and the one place here that relies on it: docs/design/render-loop.md, "Places that rely on
- * the basic loop".
+ * Threads: everything is collected on the GUI thread; updatePaintNode (GUI thread blocked) copies it into the material,
+ * the material shader reads only the material. No allocation per frame.
+ * Uniform block, samplers, automatic uniforms, chain pass, pipelines and the render loop it relies on:
+ * docs/design/effects.md, "Shader item" and "Shader link stages"; docs/design/render-loop.md, "Places that rely on the
+ * basic loop".
  */
 #pragma once
 
@@ -71,7 +43,7 @@ namespace vlqt {
 //   of that name (an error at the node); a raw table entry of that name wins over the automatic value (the SmokeTest
 //   passes of the glow and inner shadow pyramids set texelSize themselves);
 // - chain automatic: written by the effect chain into the passes of a SHADER link if the shader declares them;
-// - chain reserved: names of the Blur-Pyramide textures, no uniform of a shader link may have them.
+// - chain reserved: names of the blur pyramid textures (base, glow, shadow), no uniform of a shader link may have them.
 inline constexpr std::string_view kItemReservedUniforms[] = {"qt_Matrix", "qt_Opacity", "source"};
 inline constexpr std::string_view kItemAutomaticUniforms[] = {"texelSize", "dpr", "viewSize"};
 inline constexpr std::string_view kChainAutomaticUniforms[] = {"weight", "elementRect", "passIndex"};

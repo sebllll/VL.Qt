@@ -32,7 +32,7 @@ constexpr const char* kMultiStageUrl = "qrc:/vlqt/qml/effects/MultiStage.qml";
 constexpr const char* kPassStageUrl = "qrc:/vlqt/qml/effects/PassStage.qml";
 constexpr const char* kRootUrl = "qrc:/vlqt/qml/effects/ChainRoot.qml";
 
-// PYRAMID (doc 21): at most this many steps down (n); 16 halvings take any texture below 4 px.
+// PYRAMID: at most this many steps down (n); 16 halvings take any texture below 4 px.
 constexpr int kMaxLevels = 16;
 
 // MultiEffect property per MULTI key (index = prop - 833); nullptr: on the stage (PADDING_RECT pad, MASK_SOURCE maskFrame).
@@ -188,7 +188,7 @@ quint64 builtinShader(quint64& slot, const char* path)
     return slot = id;
 }
 
-// Pyramid step of a radius (doc 21): sigma = radius x dpr / 2 pixels, L = 1/2 log2(1 + 6/7 sigma^2).
+// Blur level of a radius: sigma = radius x dpr / 2 pixels, L = 1/2 log2(1 + 6/7 sigma^2) (docs/design/effects.md, "Blur pyramid").
 double pyramidLevel(float radius, qreal dpr)
 {
     const double s = double(radius) * dpr / 2;
@@ -707,7 +707,7 @@ void EffectChain::layoutPyramid(Link& l)
     writePyramidWeights(l); // dpr is part of the step of a radius
 }
 
-// Weights of the radius (doc 21): weight_k = clamp(L - k, 0, 1), k = 0 the composite.
+// Weights of the radius: weight_k = clamp(L - k, 0, 1), k = 0 the composite (docs/design/effects.md, "Blur pyramid").
 bool EffectChain::writePyramidWeights(Link& l)
 {
     if (l.pyramid.levels <= 0)

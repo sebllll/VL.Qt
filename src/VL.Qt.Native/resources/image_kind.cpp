@@ -88,7 +88,7 @@ bool validUpload(int upload)
 }
 
 /* Raw buffers of set_pixels, kept for the next set_pixels of the same size: a 1080p frame is 8 MB that the main thread
- * would otherwise allocate and fault in per frame (W1-17: 1.7 ms of set_pixels at 1080p). Taken on the main thread
+ * would otherwise allocate and fault in per frame (1.7 ms of set_pixels at 1080p). Taken on the main thread
  * (setPixels), given back by the worker (convertPixels, when the converted copy replaces the raw one) or by the last
  * holder of a content (~ImageContent, any thread): hence the mutex. Only buffers no other QByteArray shares are kept
  * (a restored content shares the raw copy of the old one). The buffers themselves are freed outside the lock. */

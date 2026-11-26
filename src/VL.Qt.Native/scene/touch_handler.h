@@ -69,15 +69,10 @@ private:
     bool occlusion_ = true;
 };
 
-/* Pinch: follows the QML PinchHandler (target null) and composes its active values into one gesture.
- * Qt ends the pinch (active false, values back to 1/0/0) as soon as the number of points differs from the one it
- * started with (a third finger down or up) and starts a new one later. PinchState keeps the gesture running while at
- * least minimumPointCount points lie on the item (counted by an internal TouchPointsHandler without occlusion): values
- * freeze while Qt is inactive and go on from there when Qt activates again (the transform of the new activation is
- * composed with the frozen one), so a changing finger count does not jump. The values describe
- * p' = pivot + translation + scale * R(rotation) * (p - pivot) in the parent's space, with the centroid of the first
- * activation as the pivot: applied like that, the content follows the fingers. QObject child of the QML PinchHandler
- * (deleted with it, before the point counter: HandlerObjects::release, scene/handlers.h). */
+/* Pinch: follows the QML PinchHandler (target null) and composes its active values into one gesture that does not jump
+ * when the finger count changes (Qt ends a pinch then). The points are counted by an internal TouchPointsHandler without
+ * occlusion. QObject child of the QML PinchHandler (deleted with it, before the point counter: HandlerObjects::release,
+ * scene/handlers.h). The maths of the values and the pause rule: docs/design/input.md, "Pinch". */
 class PinchState : public QObject
 {
     Q_OBJECT
