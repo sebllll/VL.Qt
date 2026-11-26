@@ -1,8 +1,8 @@
-# Style Node Set
+# Styles
 
-Design of the nodes that build, merge and read styles for interactive elements (widgets such as Button, Slider, Checkbox, TextField).
+The nodes that build, merge and read styles for interactive elements (widgets such as Button, Slider, Checkbox, TextField). The code is `src/VL.Qt/Styles/` (the style record and the static nodes) and `src/VL.Qt/Nodes/Style/` (the setter nodes); the user page is [../styles.md](../styles.md).
 
-## Background
+## Context
 - A style is an immutable C# record. Every field is `Optional<T>`; "not set" means inherit from the parent. It holds a shared set (colours per state, font, radius, padding, border) plus sub-objects per control type.
 - Widgets and Group have a `Style` pin. A Group passes its style on, and a style on a child overrides only the fields it sets. Primitives (Rectangle, Text) have no style pin.
 - Resolution (base style → groups → element) happens entirely in C# in the reconciler. QtNative only receives fully resolved values.
@@ -33,5 +33,20 @@ Design of the nodes that build, merge and read styles for interactive elements (
 - Single colour setters sit with their component (`Qt.Style.Frame.SetColor`, `Qt.Style.Frame.SetBorderColor`, `Qt.Style.Indicator.SetColor`, …). The collective `SetColors` and `Colors` sit directly in `Qt.Style`, as do `Merge`, `ResolveState`, `Dark` and `Light`.
 - Rationale: everything about one component is found in one place in the node browser, and the category name disambiguates identically named fields (`Radius` on Frame and on Indicator). A component name never occurs twice.
 
+## Consequences
+
+- Every new component setter needs a `States` pin and a getter with a `State` input, and sits in the category of its component.
+- A hand-patched widget gets the same state rules as the built-in ones through `IStylable` and `ResolveState`.
+
+## Alternatives considered
+
+- **Precedence by graph order (CSS-like "later wins"):** see "States" above.
+- **A node per control** (`ButtonStyle`, `SliderStyle`, …): the generic components cover several controls with one node.
+
 ## Open questions
+
 - A `ForControl` node (a partial style for one control type only), if the generic component split proves insufficient.
+
+## Evidence
+
+The behaviour is protected by the style unit tests (`src/VL.Qt.Tests/Styles/`) and the SmokeTest scenario `style` (`src/VL.Qt.SmokeTest/StyleTest.cs`).
