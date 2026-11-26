@@ -2,9 +2,13 @@
 
 Thank you for your interest in VL.Qt. Bug reports, ideas and pull requests are welcome.
 
-## Build and test
+## The short path
 
-Prerequisites, first build, scripts and tests are described in [docs/contributing/development.md](docs/contributing/development.md). The conventions for code, help patches, encoding and tests, written for people and coding agents alike, are in [AGENTS.md](AGENTS.md). A change is done when the affected help patch, the unit tests and the SmokeTest pass.
+1. Fork the repository and clone your fork. Open an issue first for anything larger than a small fix.
+2. Build once: [development.md](docs/contributing/development.md) has the prerequisites, the first build and the scripts. [architecture.md](docs/contributing/architecture.md) and the walkthrough [add-an-element.md](docs/contributing/add-an-element.md) show how the pieces fit.
+3. Branch from `develop`, make the change. The conventions for code, help patches and encoding, for people and coding agents alike, are in [AGENTS.md](AGENTS.md), the rules for help patches in [help-patches.md](docs/contributing/help-patches.md), hangs and crashes in [debugging.md](docs/contributing/debugging.md).
+4. Test: a change is done when the affected help patch, the unit tests and the SmokeTest pass (`tools/build.ps1 -Test`).
+5. Open a draft pull request against `develop` (details below).
 
 ## Branches and pull requests
 
@@ -16,11 +20,11 @@ Prerequisites, first build, scripts and tests are described in [docs/contributin
 - Name the branch by kind, issue number and topic: `fix/…`, `feat/…`, `docs/…`.
 - Open the pull request as a draft (`gh pr create --base develop --draft`) and mark it ready when the work is complete and `tools/build.ps1 -Test` passes locally. Every push to a pull request that is not a draft starts the CI. If the CI is red afterwards: `gh pr ready --undo`, fix and check locally, `gh pr ready` again. Do not use `workflow_dispatch` as a substitute; it builds every RID and is more expensive.
 - Keep pull requests focused and describe what changed and how you verified it.
-- Do not rename or remove a node or pin in one step: mark it `Obsolete` first, as described in [docs/versioning.md](docs/versioning.md).
+- Renaming or removing a node or pin follows [docs/versioning.md](docs/versioning.md).
 
 ## Issues and versions
 
-Pick the form that fits when you open an issue: bug report, feature request or task. Maintainers triage it with labels and a milestone (see below). Milestones are version numbers; `1.0` blocks the release. Until 1.0 the package stays at 0.9.x with fixes only. After 1.0, versions follow [Semantic Versioning](https://semver.org): renamed or removed nodes, pins and categories break users' patches and therefore come only with a major version.
+Pick the form that fits when you open an issue: bug report, feature request or task. Maintainers triage it with labels and a milestone (see below). Milestones are version numbers; `1.0` blocks the release. Versions follow [Semantic Versioning](https://semver.org), the details are in [docs/versioning.md](docs/versioning.md).
 
 ### Issue labels (for maintainers)
 

@@ -38,6 +38,7 @@ For contributors and coding agents. The working conventions (build, tests, code 
 | [contributing/add-an-element.md](contributing/add-an-element.md) | Walkthrough: one element through protocol, element record, diff, node, QtNative item, feedback, tests and help patch. |
 | [contributing/help-patches.md](contributing/help-patches.md) | Writing help patches: the Help Browser manifest, the text scheme, renames through the mapping file. |
 | [contributing/linux.md](contributing/linux.md) | Building the Linux runtime from source, testing under WSLg, timing checks on slower machines, known problems of the tests. |
+| [contributing/debugging.md](contributing/debugging.md) | Thread stacks, dumps and Qt log rules for a hang, crash or exception in a running vvvv. |
 | [contributing/profiling.md](contributing/profiling.md) | Repeatable CPU profiling of test scenarios with Ultra. |
 
 ## Maintaining
