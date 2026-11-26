@@ -21,7 +21,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 // overlay stay correct, a resize clears once, MSAA edges match Clear on. The alpha of Clear Color while Clear is off
 // is the fade strength: 0.25 fades older positions away, 1 equals Clear on, a change at runtime keeps the layer. Clear on
 // again: trail gone, and cost and idle behaviour as in the baseline measured before the first switch. Prints the numbers
-// the decision in docs/decisions/render-texture.md ("Clear pin") is based on. Grabs: <OutDir>/clear_pin_*.png (window)
+// the decision in docs/design/clear-and-msaa.md is based on. Grabs: <OutDir>/clear_pin_*.png (window)
 // and clear_pin_offscreen_*.png.
 public static class ClearPinTest
 {

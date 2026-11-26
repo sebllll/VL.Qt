@@ -108,7 +108,7 @@ namespace VL.Qt.Stride
                 EnsureTexture(size, format, samples);
 
             _scene.Debug = debug;
-            // Qt does not premultiply the clear colour itself (render-texture.md, task 1.8).
+            // Qt does not premultiply the clear colour itself (docs/design/stride-output.md, "Formats, colour space and alpha").
             var premultiplied = new Color4(clearColor.R * clearColor.A, clearColor.G * clearColor.A, clearColor.B * clearColor.A, clearColor.A);
             _scene.Update(_element.Update(input), space, premultiplied, clear, enabled);
             // A stylable linked to Input failed to build (exception, cycle, foreign result): warning until a Build succeeds.

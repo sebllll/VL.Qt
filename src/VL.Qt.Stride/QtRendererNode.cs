@@ -88,7 +88,7 @@ namespace VL.Qt.Stride
                 _scene = new SharedTextureScene(_nodeContext, renderThreads);
             else
                 _scene.SetRenderThreads(renderThreads);
-            // Size and format come from the last draw: before it nothing renders (render-texture.md, "Timing"). A layer that
+            // Size and format come from the last draw: before it nothing renders (docs/design/stride-output.md, "Frame timing"). A layer that
             // was not drawn since the last Update (disconnected) freezes: nothing renders for nobody.
             var drawnLastFrame = _lastDrawFrame != _lastDrawFrameSeen;
             _lastDrawFrameSeen = _lastDrawFrame;

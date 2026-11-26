@@ -5,7 +5,7 @@ using Stride.Graphics;
 namespace VL.Qt.Stride
 {
     /// <summary>
-    /// How QtRenderer composes its scene into a render target (render-texture.md, "Stride layer"): Direct draws a UNorm
+    /// How QtRenderer composes its scene into a render target (docs/design/stride-output.md, "QtRenderer: the layer"): Direct draws a UNorm
     /// texture (gamma-space values, as a Qt window) through a UNorm view of the target's resource, Fallback draws a texture in
     /// the target's view format (linear values, as QtTexture). Both blend premultiplied (One, InvSrcAlpha).
     /// </summary>

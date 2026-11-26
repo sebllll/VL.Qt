@@ -408,7 +408,7 @@ public static partial class QtTextureTest
         s.Check(rig.Wheels.Count >= 1 && Near(rig.Wheels[0], 1, 0), $"wheel: SendWheel dx +120 -> Delta (1, 0) ({Dump()})");
 
         // The horizontal wheel notification: no vvvv input source creates one, so there is no window to match; the convention
-        // is positive WheelDelta = left, as Qt's angleDelta.x and VL.ImGui (render-texture.md "Input"), passed through unchanged.
+        // is positive WheelDelta = left, as Qt's angleDelta.x and VL.ImGui (docs/design/offscreen-input.md, "Translation"), passed through unchanged.
         rig.Wheels.Clear();
         rig.HWheel(50, 50, 120);
         rig.Frames();
@@ -440,7 +440,7 @@ public static partial class QtTextureTest
         Counts("touch tap", 1, 1, 0);
 
         // vvvv has no pen notification: SendPointer with the pen device. QtNative delivers a pen as a window on Windows gets
-        // one (render-texture.md "Input"): tablet events from a stylus, so only the Click node with Devices = Pen takes it.
+        // one (docs/design/offscreen-input.md, "Translation"): tablet events from a stylus, so only the Click node with Devices = Pen takes it.
         Thread.Sleep(700);
         var p = new Vector2(190, 60);
         s.Check(rig.R.SendPointer(Protocol.PointerDevice.Pen, Protocol.Pointer.Press, 3, p, 0, 0) == Native.Result.Ok

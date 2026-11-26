@@ -126,7 +126,7 @@ bool setShapeJoin(Elements&, ElementEntry& n, const ResolvedProp&, const Value& 
     return true;
 }
 
-// ShapePath.miterLimit is an int: the f32 is rounded (docs/decisions/paths.md).
+// ShapePath.miterLimit is an int: the f32 is rounded (docs/design/paths.md).
 bool setShapeMiterLimit(Elements&, ElementEntry& n, const ResolvedProp&, const Value& v, std::string&)
 {
     shapePath(n)->setMiterLimit(int(std::lround(std::clamp(v.f[0], 0.f, 1.0e6f))));

@@ -3,7 +3,7 @@
  * The immediate context is multithread-protected and shared by the main thread (window frames, the upload QRhi, staging
  * copies) and the render threads of offscreen scenes (render_thread.h). Single calls need no lock; a sequence whose context
  * state must not interleave with another thread's takes a ContextLock. Windows only in effect: on other platforms every
- * lock is a no-op. Design: docs/decisions/render-texture.md.
+ * lock is a no-op. Design: docs/design/gpu-device.md, "One QtNative device per process".
  */
 #pragma once
 

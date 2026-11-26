@@ -37,7 +37,7 @@ namespace VL.Qt.Tests.Qml
             {
                 var p = parameters.Single(x => PinName(x) == pin.Name);
                 Assert.That(p.ParameterType, Is.EqualTo(pin.Type), $"type of {pin.Name}");
-                // The one documented difference: Properties is the main input of QmlElement, the plan B of a generated node (user-qml.md).
+                // The one documented difference: Properties is the main input of QmlElement, the plan B of a generated node (docs/design/user-qml.md).
                 if (pin != QmlCommonPins.Properties)
                     Assert.That(IsVisible(p), Is.EqualTo(pin.IsVisible), $"visibility of {pin.Name}");
                 Assert.That(pin.Default, Is.EqualTo(DefaultOf(p)), $"default of {pin.Name}");

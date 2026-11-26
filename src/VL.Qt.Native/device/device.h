@@ -1,7 +1,7 @@
 /* device.h - the one graphics device of the process: on Windows a D3D11 device and its immediate context that every
  * QQuickWindow, image upload and offscreen scene shares. Threads: main, except where a function says otherwise (the device
  * is free-threaded; its context is shared with render threads, see context_lock.h). Owner: QtNative creates it lazily and
- * never releases it at exit; only rebuild replaces it. Linux and other backends: no-op. Design: docs/decisions/device-sharing.md.
+ * never releases it at exit; only rebuild replaces it. Linux and other backends: no-op. Design: docs/design/gpu-device.md.
  */
 #pragma once
 

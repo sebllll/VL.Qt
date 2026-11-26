@@ -1,5 +1,5 @@
 // Input of an offscreen scene: the render control that gives a scene the keyboard focus, the scene's own pointing
-// devices, and the events of the vlqt_offscreen_send_* exports (vlqt.h, render-texture.md "Input").
+// devices, and the events of the vlqt_offscreen_send_* exports (vlqt.h, docs/design/offscreen-input.md, "Native injection").
 // Private Qt API: QQuickRenderControlPrivate (scene focus), QWindowSystemInterface (qpa); check on Qt updates (list: elements/elements.h).
 #include "offscreen/offscreen_scene.h"
 #include "app/exports.h"
@@ -54,7 +54,7 @@ public:
     explicit SceneRenderControl(const OffscreenScene* state) : QQuickRenderControl(*new SceneRenderControlPrivate(this, state)) {}
 };
 
-// --- Input (vlqt.h, render-texture.md "Input") ---
+// --- Input (vlqt.h, docs/design/offscreen-input.md, "Native injection") ---
 // Events go with QCoreApplication::sendEvent to the scene's QQuickWindow, like vlqt_test_send_*: synchronous, so the
 // FocusRelease filter, handlers and vlqt_scene_poll see them as window input.
 

@@ -220,7 +220,7 @@ QQuickItem* frameTarget(Scene& scene, QQuickItem* item, const QRectF& frame, QSi
 }
 
 // grabToImage of source. QQuickItemGrabResult refuses an item whose window is not visible, which the window of an
-// offscreen scene never is (QQuickRenderControl, no native window; render-texture.md). The check is only in Qt's
+// offscreen scene never is (QQuickRenderControl, no native window; docs/design/render-thread.md). The check is only in Qt's
 // create: the grab itself runs in the scene's next render (render_batch). So the offscreen window counts as visible for
 // this one call, set in QWindowPrivate without show() (show would create a native window). Private API: check on Qt
 // updates; removed when Qt grabs items of a render control window without a visible render window.
