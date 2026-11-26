@@ -102,6 +102,12 @@ namespace VL.Qt
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern ulong vlqt_test_device_luid();
         /// <summary>
+        /// Generation of the shared device: changes with every new shared device, 0 = none created yet (and on Linux). Tells a
+        /// new device apart from the old one where its address cannot: the new device may get the address of the released old one.
+        /// </summary>
+        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
+        public static extern uint vlqt_test_device_generation();
+        /// <summary>
         /// Makes the shared graphics device lost (<see cref="Wire.TestProtocol.DeviceLost"/>); QtNative rebuilds device,
         /// windows and resources in the next pumps. <see cref="Native.Result.Unsupported"/> = not possible (no shared device, REMOVE
         /// without VLQT_TEST_D3D11ON12=1, HANG, not D3D11), <see cref="Native.Result.BadArgument"/> = unknown mode.
