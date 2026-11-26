@@ -1,21 +1,15 @@
 # VL.Qt
 
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![NuGet](https://img.shields.io/nuget/v/VL.Qt)](https://www.nuget.org/packages/VL.Qt/)
-[![Build](https://img.shields.io/github/actions/workflow/status/sebllll/VL.Qt/build.yml?branch=main)](https://github.com/sebllll/VL.Qt/actions/workflows/build.yml)
+[![NuGet](https://badgen.net/nuget/v/VL.Qt?label=NuGet&color=blue)](https://www.nuget.org/packages/VL.Qt/)
+[![Build](https://github.com/sebllll/VL.Qt/actions/workflows/build.yml/badge.svg?branch=develop)](https://github.com/sebllll/VL.Qt/actions/workflows/build.yml)
 ![Windows](https://img.shields.io/badge/Windows-x64%20%7C%20ARM64-blue)
 ![Linux x64](https://img.shields.io/badge/Linux-x64-blue)
 ![Linux ARM64](https://img.shields.io/badge/Linux-ARM64-blue)
 
 Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-programming environment for .NET. You patch a tree of elements (shapes, text, images, video, widgets), VL.Qt hands it to Qt Quick and shows it in a Qt window. Made for 2D motion graphics, typography, layout and interactive UI.
 
-<a href="docs/effects-and-shaders.md"><img src="docs/images/effects-collage.png" width="820" alt="The text VL.Qt with chained effects, Glow, Directional Blur, Zoom Blur, Radial Blur, InnerShadow and Displace"></a>
-
-> [!NOTE]
-> **Early release (`0.x`).** The API may still change. Requires **vvvv gamma 8.x (preview)** on .NET 10; vvvv 7.x (.NET 8) is not supported.
-> The output is a Qt window, or, with the companion package `VL.Qt.Stride` (Windows only, experimental), a Stride texture (`QtTexture`) or a Stride layer (`QtRenderer`); there is no Skia layer. Linux (x64 and ARM64) works as a console export with its own Qt window, tested under WSL2/WSLg so far (see [Platforms](#platforms)).
-
-**Contents:** [Features](#features) · [Install](#install) · [First patch](#first-patch) · [A short tour](#a-short-tour) · [Platforms](#platforms) · [How it works](#how-it-works) · [Compared to Qt Bridge](#compared-to-qt-bridge-for-c) · [Contributing](#contributing) · [License](#license)
+**Contents:** [Features](#features) · [Install](#install) · [A short tour](#a-short-tour) · [Platforms](#platforms) · [How it works](#how-it-works) · [Compared to Qt Bridge](#compared-to-qt-bridge-for-c) · [Contributing](#contributing) · [License](#license)
 
 ## Features
 
@@ -41,7 +35,7 @@ Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-progra
 
 ## Install
 
-VL.Qt is on [nuget.org](https://www.nuget.org/packages/VL.Qt/). In vvvv, open the **References** of your document, switch to **Browse Packs**, search for `VL.Qt` and click **Add**.
+VL.Qt needs vvvv gamma 8.x (preview) on .NET 10 and is on [nuget.org](https://www.nuget.org/packages/VL.Qt/). In vvvv, open the **References** of your document, switch to **Browse Packs**, search for `VL.Qt` and click **Add**. Then open the help patches from the Help Browser (F1); each shows one topic, the list is in [Help patches](docs/help-patches.md).
 
 <img src="docs/images/install-browse-packs.png" width="820" alt="vvvv References window, Browse Packs: the package VL.Qt with the Add button">
 
@@ -49,27 +43,10 @@ VL.Qt is on [nuget.org](https://www.nuget.org/packages/VL.Qt/). In vvvv, open th
 - `VL.Qt.Audio` (Windows only, depends on `VL.Qt` of the same version and on `VL.Audio`): the node `Video (VL.Audio)`, see [Video sound through VL.Audio](docs/video-audio.md). `Video` of VL.Qt is unchanged and plays through Qt's own audio output.
 - The packages are also attached to the [GitHub releases](https://github.com/sebllll/VL.Qt/releases). To build them yourself, see [Development](docs/contributing/development.md).
 
-## First patch
-
-Put a `Renderer [Qt]` into a patch and feed it an element tree:
-
-```
-Rectangle [Qt]   Text [Qt]
-          \       /
-          Group [Qt]
-              |
-        Renderer [Qt]
-```
-
-Row and Column lay out their children with spacing, padding and alignment:
-
-<img src="docs/images/layout.png" width="820" alt="Column with centered children, Row with bottom aligned children, nested Row and Column">
-
-The `Space` pin of the renderer sets origin and unit of all lengths (default: origin top left, 1 unit = 100 DIP); see [Coordinates and layout](docs/coordinates.md). The help patches in `help/Qt/` show one topic each; open them from the Help Browser (F1). The full list is in [Help patches](docs/help-patches.md). To ship the result as an app, see [Exporting an app](docs/export.md).
-
 ## A short tour
 
-### Shapes and paths
+<details>
+<summary><b>Shapes and paths</b></summary>
 
 `Line`, `Polyline` and `Polygon` draw point lists; `Path` draws anything you build with the `Qt.Paths` chain, with fill, stroke, trim and a fill rule. Bezier and spline nodes turn a few points into a smooth curve.
 
@@ -77,7 +54,10 @@ The `Space` pin of the renderer sets origin and unit of all lengths (default: or
 
 Start with `HowTo Draw a Path` and `HowTo Draw Splines`. More: [Shapes and paths](docs/shapes.md).
 
-### Widgets and styles
+</details>
+
+<details>
+<summary><b>Widgets and styles</b></summary>
 
 All widgets are drawn in VL.Qt's own base style VLQt, the same on Windows and Linux. A `Style` pin on every widget and every Group changes it; a Group passes its style to everything inside.
 
@@ -85,7 +65,10 @@ All widgets are drawn in VL.Qt's own base style VLQt, the same on Windows and Li
 
 Start with `HowTo Style a Widget`. More: [Styles](docs/styles.md).
 
-### Images and video
+</details>
+
+<details>
+<summary><b>Images and video</b></summary>
 
 A loaded image is uploaded to the GPU once and can be shown by any number of `Image` elements. `ToQtImage` takes an `IImage` from other libraries, `Snapshot` and `FileWriter (Element)` go the other way.
 
@@ -93,7 +76,10 @@ A loaded image is uploaded to the GPU once and can be shown by any number of `Im
 
 Start with `HowTo Draw an Image` and `HowTo Play a Video`. More: [Images](docs/images.md).
 
-### Effects
+</details>
+
+<details>
+<summary><b>Effects</b></summary>
 
 Every element has an `Effect` pin. Chain the nodes of `Qt.Effects` to it; they run in data flow order, like TextureFX in Stride.
 
@@ -101,7 +87,10 @@ Every element has an `Effect` pin. Chain the nodes of `Qt.Effects` to it; they r
 
 Start with `HowTo Chain Effects`. More: [Effects](docs/effects-and-shaders.md#effects).
 
-### Own shaders and QML
+</details>
+
+<details>
+<summary><b>Own shaders and QML</b></summary>
 
 Every `.frag` file in a `qtshaders/` folder next to the patch becomes a node with one pin per uniform, and every `.qml` file in a `qml/` folder becomes a node with one pin per property. Save the file and the node updates while vvvv runs.
 
@@ -114,7 +103,10 @@ Every `.frag` file in a `qtshaders/` folder next to the patch becomes a node wit
 
 More: [Shaders](docs/effects-and-shaders.md#shaders), [QML files as elements](docs/user-qml.md).
 
-### Qt in Stride
+</details>
+
+<details>
+<summary><b>Qt in Stride</b></summary>
 
 `QtRenderer` draws an element tree as a layer into a Stride scene, with mouse, touch and keyboard input; `QtTexture` renders it into a Stride texture for TextureFX or a mesh. Windows only, experimental.
 
@@ -122,7 +114,10 @@ More: [Shaders](docs/effects-and-shaders.md#shaders), [QML files as elements](do
 
 Start with `HowTo Draw Qt in a Stride Scene`. More: [Qt in Stride](docs/stride.md).
 
-### Diagnostics
+</details>
+
+<details>
+<summary><b>Diagnostics</b></summary>
 
 Press `F2` or `F5` in a Qt window for the perfmeter and the stats panel; the `Debug` pin of every element draws a layout overlay.
 
@@ -135,6 +130,8 @@ Press `F2` or `F5` in a Qt window for the perfmeter and the stats panel; the `De
 </table>
 
 More: [Diagnostics](docs/diagnostics.md).
+
+</details>
 
 ## Platforms
 
