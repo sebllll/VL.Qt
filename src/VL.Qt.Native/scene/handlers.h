@@ -1,75 +1,11 @@
-/* scene/handlers.h - input handlers of a scene (Hover, Tap, Point, Wheel, Drag, Touch Points, Pinch): the protocol objects
- * and their events. Measured values of bound items and the window geometry: scene/measure.h.
- *
- * Elements have no pointer handlers of their own: without an attached input handler an item is transparent for input.
- *
- * Input handlers (protocol.h head comment) are protocol objects of their own (HandlerEntry): CREATE reserves
- * the id, REPARENT creates the QML handler at the element item (appended to its data, like `Item { HoverHandler {} }`)
- * and applies the properties set before, BIND routes its events to a sink handle, DESTROY of the handler or
- * of its element removes it. Several handlers per item are fine (each reports to its own sink). Events, only while
- * bound:
- *   Hover handler   EVENT_HOVER (u8) on change. Not blocking: hover reaches every handler under the cursor. No position
- *                   (positions come from the Point handler only).
- *   Tap handler     (TapHandler, gesturePolicy ReleaseWithinBounds: exclusive grab on press, the topmost tap handler
- *                   wins, tap when released inside) EVENT_PRESS (u8) on change, EVENT_CLICK (u32) taps since the last poll,
- *                   EVENT_TAP_COUNT (u32) tapCount of the last tap on change (2 = double click; never 0: the value of
- *                   the last tap stays until the next one), EVENT_LONG_PRESS (u32) long
- *                   presses since the last poll. ACCEPTED_BUTTONS / ACCEPTED_DEVICES filter.
- *   Point handler   (PointHandler, passive grab: presses pass through to the handlers below) EVENT_ACTIVE (u8) on change,
- *                   EVENT_POINTER (f32 x, f32 y) item-local while active (mouse button down, finger, pen), on change.
- *                   ACCEPTED_BUTTONS / ACCEPTED_DEVICES filter. ACCEPTED_BUTTONS 0: the PointHandler takes
- *                   touch and pen only, an internal HoverHandler (mouse + touchpad of ACCEPTED_DEVICES) makes the mouse
- *                   active while it is over the item and reports its position; created/removed when the property
- *                   changes (no ACTIVE 1 left hanging).
- *   Wheel handler   (WheelHandler, target null: moves nothing) EVENT_WHEEL (f32 x, f32 y) = sum of angleDelta / 120 since
- *                   the last poll (notches; trackpads fractional), only when != 0; after a poll with motion once (0, 0).
- *                   ACCEPTED_DEVICES filter.
- *   Drag handler    (DragHandler, target null) EVENT_ACTIVE (u8) on change, EVENT_DRAG (f32 x, f32 y) = translation of
- *                   the running drag since the press in the parent's space, after DRAG_AXIS and DRAG_LIMITS, on change
- *                   and once per new drag. It keeps the last value after the release until the next drag; a new sink
- *                   gets nothing until the next drag. MOVES_ELEMENT on (default): the item's drag offset = offset at
- *                   the drag start + translation, clamped to DRAG_LIMITS (minX, minY, maxX, maxY of the offset); off:
- *                   events only. The offset is part of the item's Matrix4x4 (Elements::setDragOffset: T(offset) *
- *                   TRANSFORM around the anchor, one object instead of a Matrix4x4 + Translate pair, so the order is
- *                   always right), so it moves the item in its parent's space whatever its own rotation/scale. Every
- *                   SET TRANSFORM of the item sets it to 0 (a running drag goes on from there); layouts (Row/Column) and
- *                   TRANSFORM leave it alone, a Row/Column keeps the child's place. Several drag handlers at one item
- *                   share its offset. A Group drags as a whole (hit area = its size, i.e. the children's extent with
- *                   Auto Size); nested drags follow Qt: the innermost item wins.
- *                   Qt behaviour found in the spike (Qt 6.12, SmokeTest drag*): activeTranslation is the centroid's
- *                   movement in scene (window) coordinates, also with target null; QtNative maps it into the parent's
- *                   space (equal to the window direction unless a parent is rotated/scaled; that case is not covered by
- *                   a test). It starts with the move after the activation (past the drag threshold), so the first
- *                   values arrive one move late. xAxis/yAxis.minimum/maximum only clamp persistentTranslation and a
- *                   target's position (qquickdragaxis_p.h: activeValue unclamped), not used here: QtNative clamps the
- *                   offset itself. DRAG_AXIS sets xAxis/yAxis.enabled; a drag running more than 45 degrees off the
- *                   enabled axis is then not taken and reaches a parent's drag handler (child x only + vertical drag
- *                   moves the parent, tested).
- *   Touch Points    (TouchPointsHandler, touch_handler.h) EVENT_TOUCH_POINTS = u32 count, then per point u32 id, f32 x, f32 y
- *                   (item-local, logical pixels), f32 pressure, f32 w, f32 h (ellipse diameters; pressure and size are
- *                   device-dependent, often constant / 0x0), sorted by id, on change (press, move, release of one of its
- *                   points); count 0 once when the last point goes. At most 64 points are sent (the record length is
- *                   u16). A point belongs to the handler from its press inside the item until its release, also outside
- *                   the item. Passive grab: Tap, Point, Drag and Pinch at the same item keep working. OCCLUSION on
- *                   (default): a press that an element on top already grabs (Tap/Drag handler, Button) is not taken.
- *                   ACCEPTED_DEVICES filter (Qt default: all, i.e. the mouse appears as point id 0).
- *   Pinch handler   (PinchHandler, target null) EVENT_ACTIVE (u8) on change, EVENT_PINCH (f32 scale, f32 rotation in
- *                   degrees clockwise, f32 x, f32 y translation, f32 x, f32 y pivot, in the parent's space) while
- *                   active, on change and once per new gesture. Values count from Qt's activation (SmokeTest: when the
- *                   second finger touches); the pivot is the centroid then, the translation the movement of the pivot
- *                   point (the centroid's movement without a change of the finger count; not Qt's activeTranslation,
- *                   which is wrong after a change of the finger count, touch_handler.cpp). The
- *                   last EVENT_PINCH comes before EVENT_ACTIVE 0; the 1/0/0 Qt resets to at the end is never sent, a new sink
- *                   gets nothing until the next gesture. MINIMUM_POINT_COUNT / MAXIMUM_POINT_COUNT (default 2/2),
- *                   ACCEPTED_DEVICES. The gesture runs while Qt's pinch is active or at least MINIMUM_POINT_COUNT points
- *                   lie on the item (PinchState, touch_handler.h): a third finger (more than MAXIMUM_POINT_COUNT) pauses it,
- *                   lifting it goes on from the paused value, no jump.
- * A new handle or the DESTROY of a handler send EVENT_HOVER 0 / EVENT_PRESS 0 / EVENT_ACTIVE 0 to the old handle if 1 was sent
- * (EVENT_WHEEL (0, 0) after motion) and forget the sent state: the new handle gets the current state with the next poll.
- * A new handle during a press cancels it for the Tap handler: no EVENT_PRESS 1 and no tap until the next press; taps and
- * long presses not yet polled are dropped, as is wheel motion, and the new handle gets EVENT_TAP_COUNT only from its first tap.
- * A Text item with at least one handler hit-tests against the painted text rect (TextMask as containmentMask), not the item
- * rectangle; line-/glyph-exact testing is not done. */
+/* scene/handlers.h - input handlers of a scene (Hover, Tap, Point, Wheel, Drag, Touch Points, Pinch): the protocol
+ * objects (HandlerEntry: CREATE reserves the id, REPARENT creates the QML handler at the element item, BIND routes its
+ * events to a feedback id, DESTROY removes it) and the collectors that turn their state into events at each poll.
+ * Without an input handler an item is transparent for input. GUI thread. Measured values of bound items and the window
+ * geometry: scene/measure.h.
+ * Events, grabs, drag and pinch rules, Qt behaviour found in spikes and what a change of the feedback does:
+ * docs/design/input.md, "Events per handler", "Drag", "Pinch" and "Change of the feedback". Payloads: protocol.h.
+ */
 #pragma once
 
 #include <QtCore/QByteArray>
