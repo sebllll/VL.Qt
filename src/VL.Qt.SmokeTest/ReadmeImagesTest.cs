@@ -237,7 +237,7 @@ public static class ReadmeImagesTest
         {
             cmd.Clear();
             next = 1;
-            var w = NativeCalls.CreateWindow((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme images");
+            var w = NativeCalls.CreateCompareWindow((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme images");
             s.Check(w != SceneHandle.Null, $"readme-images {name}: window_create");
             Native.vlqt_window_show(w);
             s.Pump(4);

@@ -67,7 +67,7 @@ public static class TraceReplay
             return;
         frames = Prepare(s, traces, name, frames, "trace-" + name, checkMapped: true, out _);
 
-        var w = NativeCalls.CreateWindow(Width, Height, "VL.Qt trace " + name);
+        var w = NativeCalls.CreateCompareWindow(Width, Height, "VL.Qt trace " + name);
         s.Check(w != SceneHandle.Null, $"trace-{name}: window_create");
         if (w == SceneHandle.Null)
             return;

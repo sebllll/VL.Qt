@@ -1,6 +1,7 @@
 ﻿using System;
 using VL.Qt;
 using VL.Qt.Interop;
+using VL.Qt.Wire;
 
 /// <summary>
 /// The buffer exports of QtNative in the shape most checks want: the bytes written (>= 0) on <see cref="Native.Result.Ok"/>, else the
@@ -14,6 +15,18 @@ internal static class NativeCalls
     /// <summary>A hidden window of the client size, centered on the primary screen, Present never waits.</summary>
     public static SceneHandle CreateWindow(int width, int height, string title)
         => Native.vlqt_window_create(float.NaN, float.NaN, width, height, title, 0);
+
+    /// <summary>
+    /// <see cref="CreateWindow"/> without a frame, for grabs compared with references: Windows limits a framed window to the
+    /// size of the screen (the 1024 x 768 screen of the CI runner cut 1230 px wide scenes to 1028 px), a borderless one not.
+    /// </summary>
+    public static SceneHandle CreateCompareWindow(int width, int height, string title)
+    {
+        var w = CreateWindow(width, height, title);
+        if (w != SceneHandle.Null)
+            Native.vlqt_window_set_mode(w, Protocol.WindowMode.Borderless, Protocol.WindowMode.Borderless);
+        return w;
+    }
 
     public static int Poll(SceneHandle w, Span<byte> buffer) => Poll(w, buffer, out _);
 

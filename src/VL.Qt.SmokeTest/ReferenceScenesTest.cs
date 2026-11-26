@@ -88,7 +88,7 @@ public static class ReferenceScenesTest
             cmd.Clear();
             next = 1;
             order = 0;
-            var w = NativeCalls.CreateWindow(Width, Height, "VL.Qt reference scene");
+            var w = NativeCalls.CreateCompareWindow(Width, Height, "VL.Qt reference scene");
             s.Check(w != SceneHandle.Null, $"reference-{name}: window_create");
             Native.vlqt_window_show(w);
             s.Pump(4);

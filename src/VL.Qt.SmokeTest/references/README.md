@@ -3,7 +3,8 @@
 Grabbed windows are compared with these PNGs (`ImageCompare`): mean absolute difference per channel and share of
 differing pixels, limits as constants in `ImageCompare.cs`. The compare always runs on WARP (the software D3D11 adapter,
 `QSG_RHI_PREFER_SOFTWARE_RENDERER=1`) at device pixel ratio 1 (`QT_ENABLE_HIGHDPI_SCALING=0`, whatever the monitor scale) in a
-helper process of its own, so a local run and the CI see the same pixels. The
+helper process of its own, in a borderless window (`NativeCalls.CreateCompareWindow`: Windows limits a framed window to the
+screen size, 1024 x 768 on the CI runner), so a local run and the CI see the same pixels. The
 references are made on the win-x64 workstation. The README pictures in `docs/images/` are not references: only the explicit `readme-docs` test writes them (normal renderer, default font, never the references).
 
 ```powershell
