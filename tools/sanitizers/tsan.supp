@@ -12,6 +12,14 @@ deadlock:libcoreclr.so
 # .NET runtime: new/delete between runtime threads (".NET Tiered Com" vs main), synchronised by the runtime's own
 # atomics/managed locks that TSan does not see. No libvlqt frame in either stack.
 race:libcoreclr.so
+# .NET 11 SDK (GitHub runner image, /usr/share/dotnet/sdk/11.0.100), whose CLI and test host run under the preloaded TSan
+# too: one '.NET TP Worker' mallocs a pthread mutex, another locks it; the handoff goes through the runtime's own
+# uninstrumented atomics. Seen in the dotnet CLI (both sides libdotnet-aot.so, the SDK's NativeAOT CLI) and in a
+# managed host (lock from System.Private.CoreLib.dll ReadyToRun code, malloc from libSystem.Native.so). No libvlqt or
+# Qt frame in either stack; the thread stacks only name libcoreclr.so, which race: does not look at.
+race:libdotnet-aot.so
+race:System.Private.CoreLib.dll
+race:libSystem.Native.so
 # Mesa llvmpipe (libgallium, WSLg/CI without GPU): main thread destroys a mutex/condvar its llvmpipe-N worker threads
 # use; Mesa joins them through its own futex-based primitives, which TSan cannot see. Both accesses inside Mesa.
 race:libgallium-*.so
