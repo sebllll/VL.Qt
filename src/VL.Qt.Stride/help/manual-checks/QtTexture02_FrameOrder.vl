@@ -22,7 +22,7 @@
     <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
   </p:ValueBoxSettings>
 </Pad>
-<Pad Id="37KeCeu9WHuFd9JZHg1zCk" Bounds="100,70,840,80" ShowValueBox="true" isIOBox="true" Value="What to check: the number in the Qt texture (top half, yellow-red) and the number drawn directly by Stride (bottom half, black) come from the same FrameCounter.&#xD;&#xA;- Take a screenshot while it runs (Win+Shift+S) or film the window: in every frame both numbers must be identical.&#xD;&#xA;- Expected: same frame, equal numbers. A texture that lags one frame shows the previous number (differs by 1).&#xD;&#xA;- The Error pad stays empty. Hide or move the window: the numbers keep matching.">
+<Pad Id="37KeCeu9WHuFd9JZHg1zCk" Bounds="100,70,840,80" ShowValueBox="true" isIOBox="true" Value="What to check: the number in the Qt texture (top half, yellow-red) and the number drawn directly by Stride (bottom half, black) come from the same FrameCounter.&#xD;&#xA;- Take a screenshot while it runs (Win+Shift+S) or film the window: in every frame both numbers must be identical.&#xD;&#xA;- Expected: same frame, equal numbers. A texture that lags one frame shows the previous number (differs by 1).&#xD;&#xA;- The QtTexture node shows no error. Hide or move the window: the numbers keep matching.">
   <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
     <Choice Kind="TypeFlag" Name="String" />
   </p:TypeAnnotation>
@@ -73,13 +73,7 @@
   <Pin Id="EYeb8Xg0EddPLlZY6Rr6Op" Name="Input" Kind="InputPin" />
   <Pin Id="jvvCeacDYw5vqks004ymwj" Name="Size" Kind="InputPin" DefaultValue="1000, 600" />
   <Pin Id="rFZPtgOi4dyeb8vgEbHQug" Name="Output" Kind="OutputPin" />
-  <Pin Id="qInLlKs5PATfqEuWksn1yP" Name="Error" Kind="OutputPin" />
 </Node>
-<Pad Id="NOaReujmWo0TxGV2chS0gr" Comment="Error" Bounds="230,420,300,19" ShowValueBox="true" isIOBox="true">
-  <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
-    <Choice Kind="TypeFlag" Name="String" />
-  </p:TypeAnnotation>
-</Pad>
 <Node Bounds="100,470,145,19" Id="bxjTTd7AfXUteOiHri4VOQ">
 <p:NodeReference LastCategoryFullName="Stride.Rendering" LastDependency="VL.Stride.Rendering.ShaderFX.vl">
   <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
@@ -150,7 +144,6 @@
 <Link Id="GJaPQ53jwEQsH3xSEvIOU2" Ids="AUJ94CQyGsvyNcW4VgnOtw,hSC2Lhg01xENSGBBDbzZyn" />
 <Link Id="bbOG8DubI5uQefYU6BWdpT" Ids="AUJ94CQyGsvyNcW4VgnOtw,44UV1s1Kb8OtoiA0HAzl65" />
 <Link Id="DwAfGOMLlsQiYHRLfLgPDi" Ids="OTPDerYfjjWt3Msr5nhGJd,EYeb8Xg0EddPLlZY6Rr6Op" />
-<Link Id="6albt0OPIuXwrEH924B6R7" Ids="qInLlKs5PATfqEuWksn1yP,NOaReujmWo0TxGV2chS0gr" />
 <Link Id="7nT31Ez6DiEovjckiPYuJo" Ids="rFZPtgOi4dyeb8vgEbHQug,G04xYBsxdT5MZNDmEGC0AI" />
 <Link Id="XyejhOES1pMNBjEy5Up1hK" Ids="dHtzCmWIWO2vAeF73b1qKN,gLjPpAYbng7Cw4rxRorOFP" />
 <Link Id="Rt45R8p772YgoOn8LuZyfz" Ids="O41cq5XS9LqE0AC8DHee8J,VnQ73k8G7aouCG5jDPL2L6" />

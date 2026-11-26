@@ -41,7 +41,7 @@ Notes:                                                   (notes, size 9, bottom)
 
 ## Renames
 
-A change that renames a node or a pin or moves a category does not edit the patches by hand. It adds rows to [`tools/vl-patch-mapping.txt`](../tools/vl-patch-mapping.txt) and runs `python tools/vl-patch-migrate.py`, which rewrites every patch of the repository (`help/`, `VL.Qt.vl`, `VL.Qt.HDE.vl`, `VL.Qt.Stride/`, `VL.Qt.Audio/`, `tests/`, `src/`). A change that adds a pin or rebuilds a patch still edits the `.vl` file directly.
+A change that renames a node or a pin or moves a category does not edit the patches by hand. It adds rows to [`tools/vl-patch-mapping.txt`](../tools/vl-patch-mapping.txt) and runs `python tools/vl-patch-migrate.py`, which rewrites every patch of the repository (`help/`, `VL.Qt.vl`, `VL.Qt.HDE.vl`, `VL.Qt.Stride/`, `VL.Qt.Audio/`, `src/`). A change that adds a pin or rebuilds a patch still edits the `.vl` file directly.
 
 - One row per rename: `step | kind | scope | old | new`, kinds `node`, `pin` and `category`. The header of the file explains the columns. Pin names are written as vvvv shows them (`Fill Color`) or as the C# parameter (`fillColor`), which the rule of `tools/vl_pin_catalog.py` turns into the same name.
 - The rows of one step apply together: `Radius → Set Radius` and `Get Radius → Radius` in one step never turn a setter into a getter. Steps apply in the order of the file.

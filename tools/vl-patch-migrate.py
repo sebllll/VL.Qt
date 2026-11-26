@@ -10,7 +10,7 @@ Exit codes: 0 nothing to do, or applied; 1 with --check: patches would change; 2
 row, a node whose state cannot be told, a patch that cannot be read). On an error nothing is written.
 
 Default patches: help/**/*.vl, the .vl files in the repository root (VL.Qt.vl, VL.Qt.HDE.vl), VL.Qt.Stride/**/*.vl,
-VL.Qt.Audio/**/*.vl, tests/**/*.vl and src/**/*.vl (without bin/ and obj/): every patch that can use a VL.Qt node.
+VL.Qt.Audio/**/*.vl and src/**/*.vl (without bin/ and obj/): every patch that can use a VL.Qt node.
 
 The mapping file (format in its header) holds rows `step | kind | scope | old | new`. The rows of one step are applied
 together, so a swap like Radius -> Set Radius plus Get Radius -> Radius works; steps are applied in the order of the
@@ -39,7 +39,7 @@ import vl_pin_catalog as pc  # noqa: E402
 
 DEFAULT_MAPPING = os.path.join(TOOLS, 'vl-patch-mapping.txt')
 DEFAULT_API = os.path.join(ROOT, 'src', 'VL.Qt.Tests', 'Api', 'node-api.txt')
-DEFAULT_PATCHES = ('help/**/*.vl', '*.vl', 'VL.Qt.Stride/**/*.vl', 'VL.Qt.Audio/**/*.vl', 'tests/**/*.vl', 'src/**/*.vl')
+DEFAULT_PATCHES = ('help/**/*.vl', '*.vl', 'VL.Qt.Stride/**/*.vl', 'VL.Qt.Audio/**/*.vl', 'src/**/*.vl')
 SKIP_DIRS = {'bin', 'obj'}
 QT_DEPENDENCY = re.compile(r'VL\.Qt(\.|$)')
 KINDS = ('node', 'pin', 'category')

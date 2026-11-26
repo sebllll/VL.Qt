@@ -4,7 +4,7 @@
     <VLIgnoreCompileErrors>False</VLIgnoreCompileErrors>
     <VLIgnoreUnhandledExceptions>False</VLIgnoreUnhandledExceptions>
   </PropertyGroup>
-  <!-- vvvvc does not copy Path assets: ship tests/profiling/assets next to the exe (paths in the patch are assets/...) -->
+  <!-- vvvvc does not copy Path assets: ship tools/profiling/assets next to the exe (paths in the patch are assets/...) -->
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)assets\**\*" Link="assets\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

@@ -1,7 +1,8 @@
-# Generates the photo-like JPEGs for Profile04_Images (issue #557) into tests/profiling/assets/gen/ (not in git).
+# Prepares tools/profiling/assets/ (not in git): copies the help assets the patches use from help/Qt/assets/ and generates
+# the photo-like JPEGs for Profile04_Images (issue #557) into assets/gen/.
 # 6 files, 1920x1080: gradients + soft blobs + noise, so JPEG compression is not trivial (~0.5-1 MB each).
 # Deterministic (fixed seed per file); existing files are skipped.
-# Usage: tests/profiling/make-assets.ps1 [-Force]
+# Usage: tools/profiling/make-assets.ps1 [-Force]
 [CmdletBinding()]
 param([switch]$Force)
 $ErrorActionPreference = 'Stop'
@@ -29,7 +30,14 @@ public static class VlNoise
 }
 '@
 
-$out = Join-Path $PSScriptRoot 'assets\gen'
+$assets = Join-Path $PSScriptRoot 'assets'
+$helpAssets = Join-Path $PSScriptRoot '..\..\help\Qt\assets'
+New-Item -ItemType Directory -Force $assets | Out-Null
+foreach ($name in 'qt-help-blur-mask.png', 'qt-help-blur-source.png', 'qt-help-image.png', 'qt-help-preload-2.png', 'qt-help-preload-3.png', 'qt-help-preload-4.png', 'qt-help-video.mp4') {
+    Copy-Item (Join-Path $helpAssets $name) $assets -Force
+}
+
+$out = Join-Path $assets 'gen'
 New-Item -ItemType Directory -Force $out | Out-Null
 $w = 1920; $h = 1080
 $jpeg = [Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object MimeType -eq 'image/jpeg'

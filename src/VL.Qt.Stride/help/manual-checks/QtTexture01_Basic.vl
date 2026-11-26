@@ -75,7 +75,6 @@
             <Pin Id="CWwIGQwJqFjfum1WlfNWvU" Name="Input" Kind="InputPin" />
             <Pin Id="TZizYuciU3dqZG2k8xoUyQ" Name="Size" Kind="InputPin" DefaultValue="512, 512" />
             <Pin Id="hhTNfkmv4MlOIOZf6xrXlk" Name="Output" Kind="OutputPin" />
-            <Pin Id="wd3bCx0RB5PJuNWOryAmt5" Name="Error" Kind="OutputPin" />
             <Pin Id="P21qf7kNDlQMgnfnu9lMC8" Name="Space" Kind="InputPin" />
             <Pin Id="TUBLbL4MR5uOX7NPi71CtG" Name="Clear Color" Kind="InputPin" />
             <Pin Id="Ta5K1aSTLroOGgeorhtRYa" Name="Format" Kind="InputPin" />
@@ -83,11 +82,6 @@
             <Pin Id="AcmfMIi7PBCLlpNDwyJwj9" Name="Debug" Kind="InputPin" DefaultValue="False" />
             <Pin Id="EEgwD57F7qOQIjpEAVGKMt" Name="Perf" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="elyEOuOIot5P8o00BVfzSq" Comment="Error" Bounds="222,750,200,15" ShowValueBox="true" isIOBox="true">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="TypeFlag" Name="String" />
-            </p:TypeAnnotation>
-          </Pad>
           <Node Bounds="94,900,185,19" Id="P0YNi4i53ZdhdzCD89cKE4">
             <p:NodeReference LastCategoryFullName="Stride.Textures" LastDependency="VL.Stride.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
@@ -279,7 +273,6 @@
         </ProcessDefinition>
         <Link Id="Ru5kN2wJc8VdF3gT0mXq7z" Ids="tvQtq5yx3HGQzflUq7FYJ3,VaYSjhIUKbpAFgfVgbzs6f" />
         <Link Id="Gt7mD3kXr0ZbV5qN8hSw2f" Ids="hhTNfkmv4MlOIOZf6xrXlk,qCZCqhzDelTrLquoatRhuG" />
-        <Link Id="Ky2aE9vPj6LcT4uR1nOd5g" Ids="wd3bCx0RB5PJuNWOryAmt5,elyEOuOIot5P8o00BVfzSq" />
         <Link Id="DyzaFs3INRDNAharTSlH7Y" Ids="EssEDfxeaxFP4OktXUPSZq,TZizYuciU3dqZG2k8xoUyQ" />
         <Link Id="G0NJdZiR32ZPl9911NMOr1" Ids="DQzcCre9XsyLusDA6mPZCN,TUBLbL4MR5uOX7NPi71CtG" />
         <Link Id="IDtURSJtr7xL5vy2sntQET" Ids="LWvVEyOFunsOQBI0Aee9dn,P21qf7kNDlQMgnfnu9lMC8" />

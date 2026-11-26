@@ -7,7 +7,7 @@ using VL.Qt.Interop;
 namespace VL.Qt
 {
     /// <summary>
-    /// The test exports of QtNative for the SmokeTest, the Probe and the unit tests: <c>vlqt_test_*</c> of vlqt.dll
+    /// The test exports of QtNative for the SmokeTest and the unit tests: <c>vlqt_test_*</c> of vlqt.dll
     /// (vlqt_test.h) and of vlqt_testkit.dll (testkit/testkit.h, Windows only). Linked into the test projects, never part of
     /// the library. The unit test ApiDriftTests compares the imports with the headers.
     /// </summary>
