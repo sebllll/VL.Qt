@@ -27,9 +27,8 @@ namespace VL.Qt.Nodes
         public SliderNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<Slider, Props>(nodeContext, s_create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal SliderNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<Slider, Props>(addWarning, s_create);
+        internal SliderNode(NodeErrors messages)
+            => _node = new ElementNodeCore<Slider, Props>(messages, s_create);
 
         private static readonly Func<CommonInputs, Props, FeedbackSlot, Slider> s_create = static (c, p, slot) => new Slider(c, slot)
             {

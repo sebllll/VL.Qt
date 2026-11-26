@@ -27,9 +27,8 @@ namespace VL.Qt.Nodes
         public TextNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<Text, Props>(nodeContext, s_create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal TextNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<Text, Props>(addWarning, s_create);
+        internal TextNode(NodeErrors messages)
+            => _node = new ElementNodeCore<Text, Props>(messages, s_create);
 
         private static readonly Func<CommonInputs, Props, FeedbackSlot, Text> s_create = static (c, p, slot) => new Text(c, slot)
             {

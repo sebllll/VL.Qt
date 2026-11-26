@@ -94,7 +94,7 @@ public static class QtImageTest
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-        var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(_ => throw new InvalidOperationException("unexpected warning"))).ToArray();
+        var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(UnexpectedMessages.Store())).ToArray();
         var toQtLog = new NodeLog();
         var toQt = new ToQtImageNode(client, toQtLog.Errors);
 
@@ -107,7 +107,7 @@ public static class QtImageTest
             children.Add(new VL.Qt.Elements.Image { Size = new Vector2(1, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 3.2f, 0), Source = extra, Smooth = false });
             cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            rec.Update(new Group { Anchor = RectangleAnchor.TopLeft, Children = children.MoveToImmutable() }, Space.DIPTopLeft);
+            rec.Update(new Group { Anchor = RectangleAnchor.TopLeft, Children = children.MoveToImmutable() }, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());

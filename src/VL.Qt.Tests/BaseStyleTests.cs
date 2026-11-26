@@ -22,7 +22,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ButtonCreate_SendsOneSetStyle_RightAfterCreate_OnlyOnce()
         {
-            _rec.Update(new Button(), Space.DIPTopLeft);
+            _rec.Update(new Button(), SpaceMapping.Default);
 
             var styles = _sink.OfOp("STYLE").ToArray();
             Assert.That(styles, Has.Length.EqualTo(1));
@@ -30,28 +30,28 @@ namespace VL.Qt.Tests
             Assert.That(_sink.Commands.IndexOf(styles[0]), Is.EqualTo(_sink.Commands.IndexOf("CREATE 1 Button") + 1));
 
             _sink.Clear();
-            _rec.Update(new Button(), Space.DIPTopLeft);
+            _rec.Update(new Button(), SpaceMapping.Default);
             Assert.That(_sink.OfOp("STYLE"), Is.Empty);
 
             _sink.Clear();
-            _rec.Update(new Button { Text = "other" }, Space.DIPTopLeft);
+            _rec.Update(new Button { Text = "other" }, SpaceMapping.Default);
             Assert.That(_sink.OfOp("STYLE"), Is.Empty);
         }
 
         [Test]
         public void NonControls_GetNoStyle()
         {
-            _rec.Update(new Rectangle(), Space.DIPTopLeft);
+            _rec.Update(new Rectangle(), SpaceMapping.Default);
             Assert.That(_sink.OfOp("STYLE"), Is.Empty);
         }
 
         [Test]
         public void AfterDiscard_StyleIsSentAgain()
         {
-            _rec.Update(new Slider(), Space.DIPTopLeft);
+            _rec.Update(new Slider(), SpaceMapping.Default);
             _rec.Discard();
             _sink.Clear();
-            _rec.Update(new Slider(), Space.DIPTopLeft);
+            _rec.Update(new Slider(), SpaceMapping.Default);
             Assert.That(_sink.OfOp("STYLE").Count(), Is.EqualTo(1));
         }
     }

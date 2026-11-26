@@ -46,16 +46,15 @@ namespace VL.Qt.Nodes
             _watcher = new QmlFileWatcher();
         }
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal QmlElementNode(Func<string, IDisposable> addWarning)
-            : this(addWarning, null)
+        internal QmlElementNode(NodeErrors messages)
+            : this(messages, null)
         {
         }
 
-        /// <summary>For tests: the folder watch comes from <paramref name="watchDir"/> (null = the real one).</summary>
-        internal QmlElementNode(Func<string, IDisposable> addWarning, Func<string, IObservable<FileSystemEventArgs>>? watchDir)
+        /// <summary>Takes the node's messages and the source of folder changes (null = the file system) instead of making them.</summary>
+        internal QmlElementNode(NodeErrors messages, Func<string, IObservable<FileSystemEventArgs>>? watchDir)
         {
-            _node = new ElementNodeCore<QmlElement, Props>(addWarning, s_create);
+            _node = new ElementNodeCore<QmlElement, Props>(messages, s_create);
             _watcher = watchDir is null ? new QmlFileWatcher() : new QmlFileWatcher(watchDir);
         }
 

@@ -86,12 +86,6 @@ namespace VL.Qt.Reconciliation
         public SpaceMapping Mapping => _pass.Mapping;
 
         /// <summary>
-        /// <see cref="Update(Element?, in SpaceMapping)"/> without scene metrics (size 0, dpr 1): for tests and callers in
-        /// DIPTopLeft or DIP, whose scale does not depend on the scene.
-        /// </summary>
-        public void Update(Element? root, Space space) => Update(root, new SpaceMapping(space, default, 1f));
-
-        /// <summary>
         /// Reconciles the element tree against <paramref name="root"/> (null = empty) and writes the commands, lengths
         /// converted with <paramref name="mapping"/>. A change of its <see cref="SpaceMapping.UnitScale"/> disables the
         /// reference-equality shortcut for this frame, so the property diff writes every length again; a change of the

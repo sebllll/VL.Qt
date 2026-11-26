@@ -28,9 +28,8 @@ namespace VL.Qt.Nodes
         public InputStringNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<TextField, Props>(nodeContext, s_create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal InputStringNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<TextField, Props>(addWarning, s_create);
+        internal InputStringNode(NodeErrors messages)
+            => _node = new ElementNodeCore<TextField, Props>(messages, s_create);
 
         private static readonly Func<CommonInputs, Props, FeedbackSlot, TextField> s_create = static (c, p, slot) => new TextField(c, slot)
             {

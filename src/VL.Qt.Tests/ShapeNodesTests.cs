@@ -14,17 +14,10 @@ namespace VL.Qt.Tests
     {
         private static readonly Color4 White = Color4.White;
 
-        private string? _warning;
-        private int _warnings; // currently shown warnings
+        private RecordingMessages _m = new();
 
-        private sealed class Removal(ShapeNodesTests t) : IDisposable { public void Dispose() => t._warnings--; }
-
-        private IDisposable AddWarning(string text)
-        {
-            _warnings++;
-            _warning = text;
-            return new Removal(this);
-        }
+        [SetUp]
+        public void ResetMessages() => _m = new();
 
         // Pin defaults as declared on Update (what vvvv passes for unconnected pins).
         private static Element Line(LineNode n, Vector2? from = null, Vector2? to = null, float strokeWidth = 0.05f)
@@ -46,7 +39,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Line_Defaults()
         {
-            using var node = new LineNode(AddWarning);
+            using var node = new LineNode(_m.Errors);
             var s = (Shape)Line(node);
             Assert.That(s.Points.ToArray(), Is.EqualTo(new[] { new Vector2(0.5f, 0.5f), new Vector2(2.5f, 1.5f) }));
             Assert.That(s.Closed, Is.False);
@@ -64,13 +57,13 @@ namespace VL.Qt.Tests
             Assert.That(s.Anchor, Is.EqualTo(RectangleAnchor.TopLeft));
             Assert.That(s.Transform, Is.EqualTo(Matrix.Identity));
             Assert.That(s.Size, Is.EqualTo(new Vector2(2.5f, 1.5f)));
-            Assert.That(_warnings, Is.EqualTo(0));
+            Assert.That(_m.Shown, Is.Null);
         }
 
         [Test]
         public void Line_UnchangedInputs_SameElement_ChangedEnd_NewElement()
         {
-            using var node = new LineNode(AddWarning);
+            using var node = new LineNode(_m.Errors);
             var a = Line(node);
             Assert.That(Line(node), Is.SameAs(a));
             Assert.That(Line(node, to: new Vector2(3, 3)), Is.Not.SameAs(a));
@@ -79,7 +72,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Polyline_SameContentInNewSpread_SameElement()
         {
-            using var node = new PolylineNode(AddWarning);
+            using var node = new PolylineNode(_m.Errors);
             var a = Polyline(node, Points((0, 0), (1, 1), (2, 0)));
             var b = Polyline(node, Points((0, 0), (1, 1), (2, 0)));
             Assert.That(b, Is.SameAs(a));
@@ -89,7 +82,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Polyline_Defaults_ClosedIsPassedOn()
         {
-            using var node = new PolylineNode(AddWarning);
+            using var node = new PolylineNode(_m.Errors);
             var open = (Shape)Polyline(node, Points((0, 0), (1, 1)));
             Assert.That(open.Closed, Is.False);
             Assert.That(open.StrokeWidth, Is.EqualTo(0.05f));
@@ -100,7 +93,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Polygon_IsClosed_FilledWhite_NoStroke()
         {
-            using var node = new PolygonNode(AddWarning);
+            using var node = new PolygonNode(_m.Errors);
             var s = (Shape)Polygon(node, Points((0, 0), (2, 0), (1, 2)));
             Assert.That(s.Closed, Is.True);
             Assert.That(s.Fill, Is.EqualTo(White));
@@ -113,7 +106,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Polygon_SameContentInNewSpread_SameElement()
         {
-            using var node = new PolygonNode(AddWarning);
+            using var node = new PolygonNode(_m.Errors);
             var a = Polygon(node, Points((0, 0), (2, 0), (1, 2)));
             Assert.That(Polygon(node, Points((0, 0), (2, 0), (1, 2))), Is.SameAs(a));
         }
@@ -121,7 +114,7 @@ namespace VL.Qt.Tests
         [Test]
         public void NullPoints_AreEmpty()
         {
-            using var node = new PolylineNode(AddWarning);
+            using var node = new PolylineNode(_m.Errors);
             var s = (Shape)Polyline(node, null!);
             Assert.That(s.Points.Count, Is.EqualTo(0));
             Assert.That(s.Size, Is.EqualTo(Vector2.Zero));
@@ -130,14 +123,14 @@ namespace VL.Qt.Tests
         [Test]
         public void ManyPoints_NoWarning_SizeCoversAllPoints()
         {
-            using var polyline = new PolylineNode(AddWarning);
+            using var polyline = new PolylineNode(_m.Errors);
             var s = (Shape)Polyline(polyline, Many(100_000));
             Assert.That(s.Points.Count, Is.EqualTo(100_000));
             Assert.That(s.Size, Is.EqualTo(new Vector2(99_999, 6)));
 
-            using var polygon = new PolygonNode(AddWarning);
+            using var polygon = new PolygonNode(_m.Errors);
             Polygon(polygon, Many(100_000));
-            Assert.That(_warnings, Is.EqualTo(0));
+            Assert.That(_m.Shown, Is.Null);
         }
     }
 }

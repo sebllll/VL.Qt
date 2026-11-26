@@ -47,8 +47,8 @@ public static class ClipVideoPerfTest
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-        var rect = new RectangleNode(_ => Disposable());
-        var circle = new CircleNode(_ => Disposable());
+        var rect = new RectangleNode(new NodeLog().Errors);
+        var circle = new CircleNode(new NodeLog().Errors);
         var shadow = new DropShadowNode();
 
         // Units are 1/100 DIP (DIPTopLeft): a 200 x 150 DIP rectangle and a circle of radius 100 DIP at (300, 200) and (300, 200).
@@ -70,7 +70,7 @@ public static class ClipVideoPerfTest
         {
             cmd.Clear();
             cmd.ClearColor(0.9f, 0.9f, 0.9f, 1);
-            rec.Update(root, Space.DIPTopLeft);
+            rec.Update(root, SpaceMapping.Default);
             if (cmd.Length > 0)
                 s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"clip-grab: apply {name} {Native.LastError()}");
             s.Pump(6);
@@ -134,13 +134,6 @@ public static class ClipVideoPerfTest
         }
         Native.vlqt_scene_destroy(w);
         s.Pump(2);
-    }
-
-    private static IDisposable Disposable() => new Nop();
-
-    private sealed class Nop : IDisposable
-    {
-        public void Dispose() { }
     }
 
     // ---- E8 ----

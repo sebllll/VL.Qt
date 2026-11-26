@@ -35,9 +35,6 @@ namespace VL.Qt.Nodes
         /// <summary>Current children (never default).</summary>
         public ImmutableArray<Element> Current => _current;
 
-        /// <summary>Number of arrays built so far (for tests).</summary>
-        public int Built { get; private set; }
-
         public ImmutableArray<Element> Update(IEnumerable<IElement?>? input)
         {
             // Spreads are immutable: the same instance means the same children.
@@ -95,7 +92,6 @@ namespace VL.Qt.Nodes
             if (same)
                 return;
             _current = Build(input);
-            Built++;
         }
 
         /// <summary>

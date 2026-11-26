@@ -47,16 +47,10 @@ namespace VL.Qt.Nodes
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");
         }
 
-        /// <summary>For tests without shader resources (no client, a path is reported as error): warnings go to <paramref name="addWarning"/>.</summary>
-        internal ShaderNode(Func<string, IDisposable> addWarning)
-            : this(null, addWarning)
+        /// <summary>Takes the client (null: no shader resources, a path is reported as an error) and the node's messages instead of making them.</summary>
+        internal ShaderNode(ResourceClient? client, NodeErrors messages)
         {
-        }
-
-        /// <summary>For tests: a client on a fake resource API; warnings go to <paramref name="addWarning"/>, nothing is logged.</summary>
-        internal ShaderNode(ResourceClient? client, Func<string, IDisposable> addWarning)
-        {
-            _node = new ElementNodeCore<Shader, Props>(addWarning, s_create);
+            _node = new ElementNodeCore<Shader, Props>(messages, s_create);
             _input = new ElementInput(_node.Messages);
             _fragment = new ShaderSlot(client, Protocol.ShaderStage.Fragment, "Fragment shader");
             _vertex = new ShaderSlot(client, Protocol.ShaderStage.Vertex, "Vertex shader");

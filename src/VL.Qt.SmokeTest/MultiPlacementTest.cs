@@ -2,6 +2,8 @@
 using System;
 using System.Drawing;
 using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Lib.Mathematics;
@@ -37,14 +39,16 @@ public static class MultiPlacementTest
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var buf = new byte[1 << 16];
-        int warnings = 0;
-        IDisposable Warn(string _) { warnings++; return new NoopDisposable(); }
+        // One store per node (the phases of two nodes must not meet); what the nodes show, as one count.
+        var logs = new List<NodeLog>();
+        NodeErrors Store() { var log = new NodeLog(); logs.Add(log); return log.Errors; }
+        int Warnings() => logs.Count(l => l.Shown is not null);
 
-        var rectNode = new RectangleNode(Warn);
-        var buttonNode = new ButtonNode(Warn);
-        var groupA = new GroupNode(Warn);
-        var groupB = new GroupNode(Warn);
-        var root = new GroupNode(Warn);
+        var rectNode = new RectangleNode(Store());
+        var buttonNode = new ButtonNode(Store());
+        var groupA = new GroupNode(Store());
+        var groupB = new GroupNode(Store());
+        var root = new GroupNode(Store());
 
         bool both = true;
         int clicks = 0;
@@ -70,7 +74,7 @@ public static class MultiPlacementTest
                 RectangleAnchor.TopLeft, 1, false, false, null, null, null, true, out _, out _);
             cmd.Clear();
             cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            rec.Update((Element)e, Space.DIPTopLeft);
+            rec.Update((Element)e, SpaceMapping.Default);
             var rc = Native.Apply(w, cmd.EndFrame());
             s.Check(rc == 0, $"apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             s.Pump(1);
@@ -124,15 +128,11 @@ public static class MultiPlacementTest
         Click(420, 460);
         s.Check(clicks == 3, $"the remaining occurrence still sends clicks ({clicks})");
 
-        s.Check(warnings == 0, $"no duplicate warning ({warnings})");
+        s.Check(Warnings() == 0, $"no duplicate warning ({Warnings()})");
 
         rec.Clear();
         Native.vlqt_scene_destroy(w);
         s.Pump(1);
     }
 
-    private sealed class NoopDisposable : IDisposable
-    {
-        public void Dispose() { }
-    }
 }

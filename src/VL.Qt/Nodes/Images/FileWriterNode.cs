@@ -25,7 +25,6 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <summary>For tests: a writer on a fake write function; null <paramref name="messages"/> reports nothing.</summary>
         internal FileWriterNode(ImageFileWriter writer, NodeErrors? messages = null)
         {
             _writer = writer;

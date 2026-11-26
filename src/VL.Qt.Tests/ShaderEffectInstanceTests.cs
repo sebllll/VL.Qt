@@ -331,13 +331,11 @@ void main() { fragColor = vec4(phase); }
             instance.Update();
             instance.Update();
             Assert.That(Output(instance), Is.SameAs(first));
-            Assert.That(instance.Created, Is.EqualTo(1));
             Assert.That(_api.Calls.Count(c => c.StartsWith("create")), Is.EqualTo(1), "the shader is baked once");
 
             ((IVLPin<float>)instance.Uniforms.Pins[2]).Value = 0.25f;
             instance.Update();
             Assert.That(Output(instance), Is.Not.SameAs(first));
-            Assert.That(instance.Created, Is.EqualTo(2));
 
             var second = Output(instance);
             ((IVLPin)instance.Inputs.First()).Value = null;
@@ -365,7 +363,6 @@ void main() { fragColor = vec4(phase); }
             apply.Value = false;
             instance.Update();
             Assert.That(Output(instance), Is.SameAs(input));
-            Assert.That(instance.Created, Is.Zero);
             apply.Value = true;
             instance.Update();
             Assert.That(Output(instance), Is.InstanceOf<ShaderEffect>());
@@ -404,7 +401,7 @@ void main() { fragColor = vec4(phase); }
 
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-            rec.Update(new Rectangle { Effect = Output(instance) }, Space.DIPTopLeft);
+            rec.Update(new Rectangle { Effect = Output(instance) }, SpaceMapping.Default);
 
             var chain = sink.OfOp("CHAIN").Single().Split(" | ").Skip(1).ToArray();
             Assert.That(chain, Has.Length.EqualTo(2));
@@ -582,7 +579,6 @@ void main() { fragColor = texture(source, qt_TexCoord0) * blurLength; }
             instance.Update();
             instance.Update();
             Assert.That(Output(instance), Is.SameAs(second));
-            Assert.That(instance.Created, Is.EqualTo(2));
 
             pin.Value = 40f;
             instance.Update();

@@ -30,8 +30,6 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class SpaceTest
 {
-    private sealed class NoMessage : IDisposable { public void Dispose() { } }
-
     private static readonly Color4 Bg = new(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
     private const float Eps = 2e-3f;
 
@@ -58,7 +56,7 @@ public static class SpaceTest
         if (r.Window == SceneHandle.Null)
             return;
 
-        using var point = new PointNode(_ => new NoMessage());
+        using var point = new PointNode(new NodeLog().Errors);
         var active = Channel.Create(false);
         var position = Channel.Create(Vector2.Zero);
         var redFeedback = new ElementFeedback();

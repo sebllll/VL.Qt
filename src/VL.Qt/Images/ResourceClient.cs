@@ -24,6 +24,11 @@ namespace VL.Qt
     /// load starts them again.</item>
     /// </list>
     /// No finalizers and no native callbacks. Main (Qt) thread only, except <see cref="Release"/>.
+    /// <para>
+    /// This is the one seam of the native resource API: a node that uses a client has an internal constructor that takes the client
+    /// (and its other collaborators, e.g. the <see cref="NodeErrors"/> of the node) in place of the lookup through its
+    /// <c>NodeContext</c>, so that a unit test passes a client on a fake <see cref="IResourceApi"/>, which needs no Qt.
+    /// </para>
     /// </summary>
     internal sealed class ResourceClient
     {

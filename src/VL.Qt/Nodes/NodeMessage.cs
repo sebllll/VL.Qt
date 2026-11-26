@@ -6,7 +6,7 @@ namespace VL.Qt.Nodes
     /// <summary>
     /// The handle one message source of a node holds on its <see cref="NodeErrors"/>: one phase of the store, set to a text
     /// or cleared. Compares the text first, so a source can pass its state every frame without allocating or logging again.
-    /// Without a store (tests) it only keeps <see cref="Text"/>. Main thread only.
+    /// Without a store it only keeps <see cref="Text"/>. Main thread only.
     /// </summary>
     internal sealed class NodeMessage : IDisposable
     {

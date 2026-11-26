@@ -72,7 +72,7 @@ namespace VL.Qt.Tests
 
         private static StylableElement Wrap(IStylable s) => new(s);
 
-        private void Update(Element root) => _rec.Update(root, Space.DIPTopLeft);
+        private void Update(Element root) => _rec.Update(root, SpaceMapping.Default);
 
         // 1 ---------------------------------------------------------------
 
@@ -386,7 +386,6 @@ namespace VL.Qt.Tests
             var second = input.Update(Input(rect, s)); // new spread, same content
             Assert.That(second, Is.EqualTo(first));
             Assert.That(second == first, Is.True, "same backing array");
-            Assert.That(input.Built, Is.EqualTo(1));
         }
 
         [Test]
@@ -439,7 +438,6 @@ namespace VL.Qt.Tests
             Assert.That(first, Is.EqualTo(new Element[] { a, b }));
             Assert.That(input.Update(spread) == first, Is.True, "same spread");
             Assert.That(input.Update(Spread.Create<Element>(a, b)) == first, Is.True, "new spread, same children");
-            Assert.That(input.Built, Is.EqualTo(1));
         }
 
         [Test]
@@ -496,7 +494,7 @@ namespace VL.Qt.Tests
             for (int i = 0; i < 50; i++)
             {
                 writer.Clear();
-                rec.Update(root, Space.DIPTopLeft);
+                rec.Update(root, SpaceMapping.Default);
                 writer.EndFrame();
             }
 
@@ -504,7 +502,7 @@ namespace VL.Qt.Tests
             for (int i = 0; i < 1000; i++)
             {
                 writer.Clear();
-                rec.Update(root, Space.DIPTopLeft);
+                rec.Update(root, SpaceMapping.Default);
                 writer.EndFrame();
             }
             long allocated = GC.GetAllocatedBytesForCurrentThread() - before;

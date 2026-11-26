@@ -29,9 +29,8 @@ namespace VL.Qt.Nodes
         public VideoNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<Video, Props>(nodeContext, Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal VideoNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<Video, Props>(addWarning, Create);
+        internal VideoNode(NodeErrors messages)
+            => _node = new ElementNodeCore<Video, Props>(messages, Create);
 
         /// <summary>Builds the element from the inputs; also used by Video (VL.Audio) in VL.Qt.Audio.</summary>
         internal static readonly Func<CommonInputs, Props, FeedbackSlot, Video> Create = static (c, p, slot) => new Video(c, slot)

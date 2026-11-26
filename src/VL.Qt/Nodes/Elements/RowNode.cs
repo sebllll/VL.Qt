@@ -33,10 +33,9 @@ namespace VL.Qt.Nodes
             _children = new ChildrenInput(_node.Messages);
         }
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal RowNode(Func<string, IDisposable> addWarning)
+        internal RowNode(NodeErrors messages)
         {
-            _node = new ElementNodeCore<Row, Props>(addWarning, Create);
+            _node = new ElementNodeCore<Row, Props>(messages, Create);
             _children = new ChildrenInput(_node.Messages);
         }
 

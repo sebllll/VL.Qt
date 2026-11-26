@@ -314,12 +314,12 @@ namespace VL.Qt.Tests
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             var r = _client.CreateImage();
             var image = new QtImage(r);
-            rec.Update(new Image { Source = image }, Space.DIPTopLeft);
+            rec.Update(new Image { Source = image }, SpaceMapping.Default);
             Assert.That(sink.OfOp("SET"), Has.One.EqualTo($"SET 1 Image u64({r.Id})"));
             sink.Clear();
-            rec.Update(new Image { Source = new QtImage(r) }, Space.DIPTopLeft);
+            rec.Update(new Image { Source = new QtImage(r) }, SpaceMapping.Default);
             Assert.That(sink.OfOp("SET"), Is.Empty, "same resource: nothing to send");
-            rec.Update(new Image(), Space.DIPTopLeft);
+            rec.Update(new Image(), SpaceMapping.Default);
             Assert.That(sink.OfOp("SET"), Has.One.EqualTo($"SET 1 Image u64(0)"));
         }
 
@@ -328,12 +328,12 @@ namespace VL.Qt.Tests
         {
             var r = _client.CreateImage();
             var image = new QtImage(r);
-            var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(_ => NoWarning.Instance)).ToArray();
+            var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(new RecordingMessages().Errors)).ToArray();
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             var children = nodes.Select((n, i) => (Element)n.Update(new Vector2(1, 1), default, RectangleAnchor.Center, image,
                 FillMode.Stretch, true, 1, false, false, null, null, true, out _, out _)).ToArray();
-            rec.Update(new Group { Children = System.Collections.Immutable.ImmutableArray.Create(children) }, Space.DIPTopLeft);
+            rec.Update(new Group { Children = System.Collections.Immutable.ImmutableArray.Create(children) }, SpaceMapping.Default);
             Assert.That(sink.OfOp("SET").Count(c => c.EndsWith($"u64({r.Id})")), Is.EqualTo(100));
             Assert.That(_api.Calls.Count(c => c.StartsWith("create")), Is.EqualTo(1));
             foreach (var n in nodes)

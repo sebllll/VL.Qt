@@ -34,13 +34,13 @@ namespace VL.Qt.Tests
         {
             var writer = new CommandWriter();
             var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-            rec.Update(a, Space.DIPTopLeft);
+            rec.Update(a, SpaceMapping.Default);
             Assert.That(writer.Count, Is.GreaterThan(minFirstFrame), "first frame creates the whole tree");
             int frame = 0;
             Action step = () =>
             {
                 writer.Clear();
-                rec.Update((frame++ & 1) == 0 ? b : a, Space.DIPTopLeft);
+                rec.Update((frame++ & 1) == 0 ? b : a, SpaceMapping.Default);
                 writer.EndFrame();
             };
             return Warm(new Scenario(label, step, () => writer.Count, expectedSets));
@@ -152,14 +152,14 @@ namespace VL.Qt.Tests
             var writer = new CommandWriter();
             var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             var builder = ImmutableArray.Create(children).ToBuilder();
-            rec.Update(new Group { Children = builder.ToImmutable() }, Space.DIPTopLeft);
+            rec.Update(new Group { Children = builder.ToImmutable() }, SpaceMapping.Default);
             int f = 0;
             Action step = () =>
             {
                 int i = f++ % N;
                 builder[i] = ReferenceEquals(builder[i], children[i]) ? alt[i] : children[i];
                 writer.Clear();
-                rec.Update(new Group { Children = builder.ToImmutable() }, Space.DIPTopLeft);
+                rec.Update(new Group { Children = builder.ToImmutable() }, SpaceMapping.Default);
                 writer.EndFrame();
             };
             for (int i = 0; i < 2 * N; i++)
@@ -229,8 +229,8 @@ namespace VL.Qt.Tests
             var rb = new Reconciler(wb, new IdAllocator(), scene, interactions);
             var a = SharedRoot(feedback, 1);
             var b = SharedRoot(feedback, 2);
-            ra.Update(a, Space.DIPTopLeft);
-            rb.Update(a, Space.DIPTopLeft);
+            ra.Update(a, SpaceMapping.Default);
+            rb.Update(a, SpaceMapping.Default);
             int frame = 0;
             Action step = () =>
             {
@@ -239,13 +239,13 @@ namespace VL.Qt.Tests
                 wb.Clear();
                 if (aFirst)
                 {
-                    ra.Update(root, Space.DIPTopLeft);
-                    rb.Update(root, Space.DIPTopLeft);
+                    ra.Update(root, SpaceMapping.Default);
+                    rb.Update(root, SpaceMapping.Default);
                 }
                 else
                 {
-                    rb.Update(root, Space.DIPTopLeft);
-                    ra.Update(root, Space.DIPTopLeft);
+                    rb.Update(root, SpaceMapping.Default);
+                    ra.Update(root, SpaceMapping.Default);
                 }
                 wa.EndFrame();
                 wb.EndFrame();
@@ -326,14 +326,14 @@ namespace VL.Qt.Tests
             var ra = new Reconciler(new CommandWriter(), new IdAllocator(), scene, interactions);
             var rb = new Reconciler(new CommandWriter(), new IdAllocator(), scene, interactions);
             var first = SharedRoot(feedback, 1);
-            ra.Update(first, Space.DIPTopLeft);
-            rb.Update(first, Space.DIPTopLeft);
+            ra.Update(first, SpaceMapping.Default);
+            rb.Update(first, SpaceMapping.Default);
             var ownerNode = ra.Root!.Children[0];
             for (var i = 0; i < 6; i++)
             {
                 var root = SharedRoot(feedback, 2 + i);
-                if (aFirst) { ra.Update(root, Space.DIPTopLeft); rb.Update(root, Space.DIPTopLeft); }
-                else { rb.Update(root, Space.DIPTopLeft); ra.Update(root, Space.DIPTopLeft); }
+                if (aFirst) { ra.Update(root, SpaceMapping.Default); rb.Update(root, SpaceMapping.Default); }
+                else { rb.Update(root, SpaceMapping.Default); ra.Update(root, SpaceMapping.Default); }
                 var element = root.Children[0];
                 Assert.That(scene.PrimaryOf(element, out var owner), Is.SameAs(ownerNode), $"frame {i}");
                 Assert.That(owner, Is.SameAs(ra), $"frame {i}");

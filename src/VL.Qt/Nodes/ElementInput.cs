@@ -14,7 +14,7 @@ namespace VL.Qt.Nodes
         private readonly NodeMessage _message;
         private Type? _foreignType;
 
-        /// <param name="messages">Store of the node; null shows nothing (tests read <see cref="Warning"/>).</param>
+        /// <param name="messages">Store of the node; null shows nothing (<see cref="Warning"/> still holds the text).</param>
         /// <param name="phase">Phase of this input in the store, e.g. the pin name.</param>
         public ElementInput(NodeErrors? messages, string phase = "Input") => _message = new NodeMessage(messages, phase);
 

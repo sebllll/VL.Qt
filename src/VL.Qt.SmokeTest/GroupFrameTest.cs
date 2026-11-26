@@ -58,7 +58,7 @@ public static class GroupFrameTest
         {
             cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            rec.Update(tree, Space.DIPTopLeft);
+            rec.Update(tree, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());

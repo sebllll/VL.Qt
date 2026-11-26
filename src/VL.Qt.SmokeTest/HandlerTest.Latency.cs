@@ -96,7 +96,7 @@ public static partial class HandlerTest
     private static void RunInputLatency(Scenario s)
     {
         var log = new LatencyLogger();
-        var app = QtApp.CreateForTest(log);
+        var app = QtApp.Create(log);
         var before = MeasureLatency(app, s, atFrameStart: false, out var recsBefore);
         var after = MeasureLatency(app, s, atFrameStart: true, out var recsAfter);
         s.Info($"input-latency: frames from the frame start after the input to the node update that sees it (mouse press, release, touch press, move, release): before {string.Join(",", before)}, now {string.Join(",", after)}");

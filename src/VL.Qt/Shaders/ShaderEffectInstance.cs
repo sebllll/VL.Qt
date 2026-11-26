@@ -41,7 +41,6 @@ namespace VL.Qt.Shaders
         {
         }
 
-        /// <summary>For tests: a client on a fake resource API, no node errors.</summary>
         internal ShaderEffectInstance(ResourceClient? client, ShaderEffectLayout layout, NodeErrors? errors = null)
         {
             _builder = new ShaderEffectBuilder<Props>(client, new[] { ShaderEffectSource.Fragment(layout.FragmentSource) },
@@ -67,10 +66,7 @@ namespace VL.Qt.Shaders
             }
         }
 
-        /// <summary>Links created so far (tests).</summary>
-        internal int Created => _builder.Created;
-
-        /// <summary>Uniform pins in pin order (tests).</summary>
+        /// <summary>Uniform pins in pin order.</summary>
         internal ShaderUniforms Uniforms => _uniforms;
 
         /// <summary>Input pins in the order of the description's inputs.</summary>

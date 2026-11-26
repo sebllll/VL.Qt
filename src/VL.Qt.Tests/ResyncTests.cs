@@ -116,7 +116,7 @@ namespace VL.Qt.Tests
         private void Frame(Element? input)
         {
             if (_resync.ShouldReconcile(input))
-                _rec.Update(input, Space.DIPTopLeft);
+                _rec.Update(input, SpaceMapping.Default);
             _lastRc = _sink.Count == 0 ? 0 : _qtNative.Apply(_sink.Commands);
             _sink.Clear();
             _resync.OnApplyResult(_lastRc);
@@ -258,7 +258,7 @@ namespace VL.Qt.Tests
 
             // Back in normal operation: a small change is a single SET again.
             _sink.Clear();
-            _rec.Update(G(R(5), R(2), R(3), R(7)), Space.DIPTopLeft);
+            _rec.Update(G(R(5), R(2), R(3), R(7)), SpaceMapping.Default);
             Assert.That(_sink.Commands, Has.Count.EqualTo(1));
         }
 
@@ -301,7 +301,7 @@ namespace VL.Qt.Tests
             var resync = new ResyncController(rec, () => qtNative.Apply(new[] { "RESET" }));
             var a = R(1);
             var tree = G(a, R(-1));
-            if (resync.ShouldReconcile(tree)) rec.Update(tree, Space.DIPTopLeft);
+            if (resync.ShouldReconcile(tree)) rec.Update(tree, SpaceMapping.Default);
             Assert.That(scene.PrimaryOf(a), Is.Not.Null);
             int rc = qtNative.Apply(_sink.Commands);
             _sink.Clear();

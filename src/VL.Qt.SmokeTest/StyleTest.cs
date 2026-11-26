@@ -212,7 +212,7 @@ public static class StyleTest
             cmd.Clear();
             if (clear)
                 cmd.ClearColor(BgGray, BgGray, BgGray, 1);
-            rec.Update(root, Space.DIPTopLeft);
+            rec.Update(root, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
@@ -285,7 +285,7 @@ public static class StyleTest
 
         cmd.Clear();
         cmd.ClearColor(BgGray, BgGray, BgGray, 1);
-        rec.Update(root, Space.DIPTopLeft);
+        rec.Update(root, SpaceMapping.Default);
         var rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"nodeset apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         s.Pump(10);

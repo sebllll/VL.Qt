@@ -16,13 +16,10 @@ namespace VL.Qt.Tests
     /// <summary>Video element + node: defaults, property diff, clamping, EVENT_MEDIA back channel.</summary>
     public class VideoNodeTests
     {
-        private static readonly IDisposable NoWarning = new Nop();
-        private sealed class Nop : IDisposable { public void Dispose() { } }
-
         private VideoNode _node = null!;
 
         [SetUp]
-        public void SetUp() => _node = new VideoNode(_ => NoWarning);
+        public void SetUp() => _node = new VideoNode(new RecordingMessages().Errors);
 
         [TearDown]
         public void TearDown() => _node.Dispose();
@@ -105,17 +102,18 @@ namespace VL.Qt.Tests
         [Test]
         public void Node_TileFillMode_SendsStretchAndWarnsUntilChanged()
         {
-            var warnings = new System.Collections.Generic.List<string>();
-            using var node = new VideoNode(text => { warnings.Add(text); return NoWarning; });
+            var m = new RecordingMessages();
+            using var node = new VideoNode(m.Errors);
             var path = new Path("c:/a.mp4");
             Element Describe(FillMode fill) => (Element)node.Update(new Vector2(1.6f, 0.9f), default, RectangleAnchor.Center, path, true, true, true, 1, 1, fill,
                 1, false, false, null, null, true, out _, out _, out _, out _);
 
             var tiled = (Video)Describe(FillMode.Tile);
             Assert.That(tiled.FillMode, Is.EqualTo(FillMode.Stretch));
-            Assert.That(warnings, Has.Count.EqualTo(1).And.One.Contains("Tile"));
+            Assert.That(m.Shows, Is.EqualTo(1));
+            Assert.That(m.Shown, Does.Contain("Tile"));
             Assert.That(Describe(FillMode.Tile), Is.SameAs(tiled));
-            Assert.That(warnings, Has.Count.EqualTo(1), "one warning, not one per frame");
+            Assert.That(m.Shows, Is.EqualTo(1), "one warning, not one per frame");
 
             Assert.That(((Video)Describe(FillMode.Crop)).FillMode, Is.EqualTo(FillMode.Crop));
         }
@@ -125,7 +123,7 @@ namespace VL.Qt.Tests
         {
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-            rec.Update(new Video { Path = new Path("c:/a.mp4"), Playing = true, Loop = true, KeepLastFrame = true, Rate = 0.5f, Volume = 0.25f, FillMode = FillMode.Stretch }, Space.DIPTopLeft);
+            rec.Update(new Video { Path = new Path("c:/a.mp4"), Playing = true, Loop = true, KeepLastFrame = true, Rate = 0.5f, Volume = 0.25f, FillMode = FillMode.Stretch }, SpaceMapping.Default);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[]
             {
                 $"SET 1 Source string(c:/a.mp4)",
@@ -139,7 +137,7 @@ namespace VL.Qt.Tests
             Assert.That(sink.Commands[0], Is.EqualTo($"CREATE 1 Video"));
 
             sink.Clear();
-            rec.Update(new Video(), Space.DIPTopLeft);
+            rec.Update(new Video(), SpaceMapping.Default);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[]
             {
                 $"SET 1 Source string()",
@@ -158,13 +156,13 @@ namespace VL.Qt.Tests
             // Video [VL.Qt] (AudioTap 0) never sends it; Video (VL.Audio) sends it before Playing and switches ids directly.
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-            rec.Update(new Video { Playing = true, AudioTap = 5 }, Space.DIPTopLeft);
+            rec.Update(new Video { Playing = true, AudioTap = 5 }, SpaceMapping.Default);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 AudioTap u64(5)", $"SET 1 Playing bool(1)" }));
             sink.Clear();
-            rec.Update(new Video { Playing = true, AudioTap = 6 }, Space.DIPTopLeft);
+            rec.Update(new Video { Playing = true, AudioTap = 6 }, SpaceMapping.Default);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 AudioTap u64(6)" }));
             sink.Clear();
-            rec.Update(new Video { Playing = true }, Space.DIPTopLeft);
+            rec.Update(new Video { Playing = true }, SpaceMapping.Default);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 AudioTap u64(0)" }));
         }
 
@@ -173,13 +171,13 @@ namespace VL.Qt.Tests
         {
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-            rec.Update(new Video { Rate = -1, Volume = 3 }, Space.DIPTopLeft);
+            rec.Update(new Video { Rate = -1, Volume = 3 }, SpaceMapping.Default);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 PlaybackRate f32(0.01)" }), "volume 3 clamps to the default 1");
             sink.Clear();
-            rec.Update(new Video { Rate = 0, Volume = float.NaN }, Space.DIPTopLeft);
+            rec.Update(new Video { Rate = 0, Volume = float.NaN }, SpaceMapping.Default);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 Volume f32(0)" }), "rate 0 = still MinRate");
             sink.Clear();
-            rec.Update(new Video { Rate = float.PositiveInfinity, Volume = -1 }, Space.DIPTopLeft);
+            rec.Update(new Video { Rate = float.PositiveInfinity, Volume = -1 }, SpaceMapping.Default);
             Assert.That(sink.OfOp("SET").ToArray(), Is.EqualTo(new[] { $"SET 1 PlaybackRate f32(1)" }));
         }
 
@@ -188,7 +186,7 @@ namespace VL.Qt.Tests
         {
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-            rec.Update(Update(out var pos, out var dur, "c:/a.mp4"), Space.DIPTopLeft);
+            rec.Update(Update(out var pos, out var dur, "c:/a.mp4"), SpaceMapping.Default);
             Assert.That(pos, Is.EqualTo(0f));
             Assert.That(dur, Is.EqualTo(0f), "defined default until loaded");
 
@@ -211,7 +209,7 @@ namespace VL.Qt.Tests
         {
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-            rec.Update(Update("c:/missing.mp4"), Space.DIPTopLeft);
+            rec.Update(Update("c:/missing.mp4"), SpaceMapping.Default);
             Assert.That(_node.Core.Error, Is.Null);
 
             uint handle = uint.Parse(sink.OfOp("BIND").Single().Split(' ')[2]);

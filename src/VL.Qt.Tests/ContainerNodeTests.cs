@@ -16,8 +16,6 @@ namespace VL.Qt.Tests
     /// <summary>Group, Row and Column nodes (07d): children pin group, change detection, layout pins.</summary>
     public class ContainerNodeTests
     {
-        private static IDisposable NoWarning(string _) => throw new AssertionException("unexpected warning");
-
         private static readonly Rectangle A = new() { Size = new Vector2(1, 0.5f) };
         private static readonly Rectangle B = new() { Size = new Vector2(0.5f, 0.25f) };
         private static readonly Rectangle C = new() { Size = new Vector2(2, 1) };
@@ -28,8 +26,8 @@ namespace VL.Qt.Tests
         public void RowAndColumn_TakeAStyle_AndNewStyleIsNewDescription()
         {
             var style = new Styles.Style();
-            using var row = new RowNode(NoWarning);
-            using var column = new ColumnNode(NoWarning);
+            using var row = new RowNode(UnexpectedMessages.Store());
+            using var column = new ColumnNode(UnexpectedMessages.Store());
             var children = S(A);
             var r = (Row)row.Update(children, true, default, default, RectangleAnchor.Center, 0, 0, VerticalAlignment.Top, 1, false, false,
                 null, null, style, true, out _, out _);
@@ -62,7 +60,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Group_UnconnectedInputsSkipped_DefaultsAndFeedback()
         {
-            using var n = new GroupNode(NoWarning);
+            using var n = new GroupNode(UnexpectedMessages.Store());
             var g = (Group)Group(n, S(null, A, null, B));
             Assert.That(g.Children, Is.EqualTo(new Element[] { A, B }));
             Assert.That(g.Size, Is.EqualTo(default(Vector2)), "no own extent");
@@ -77,12 +75,10 @@ namespace VL.Qt.Tests
         [Test]
         public void SameChildren_NewSpreadEachFrame_SameInstance_NoAllocation()
         {
-            using var n = new ColumnNode(NoWarning);
+            using var n = new ColumnNode(UnexpectedMessages.Store());
             var first = Column(n, S(A, null, B, C), spacing: 0.1f);
             // VL may rebuild the pin group spread every frame: equal elements → same description.
             Assert.That(Column(n, S(A, B, null, C), spacing: 0.1f), Is.SameAs(first));
-            Assert.That(n.Core.Created, Is.EqualTo(1));
-            Assert.That(n.Children.Built, Is.EqualTo(1));
 
             var spreads = Enumerable.Range(0, 2).Select(_ => S(A, B, C)).ToArray();
             for (int i = 0; i < 100; i++) Column(n, spreads[i & 1], spacing: 0.1f); // warm-up
@@ -95,7 +91,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ChangedChild_Order_Count_NewDescription()
         {
-            using var n = new GroupNode(NoWarning);
+            using var n = new GroupNode(UnexpectedMessages.Store());
             var last = Group(n, S(A, B));
             void Changed(Element e, Element[] expected, string what)
             {
@@ -116,7 +112,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Column_LayoutPins_Defaults_EachChange()
         {
-            using var n = new ColumnNode(NoWarning);
+            using var n = new ColumnNode(UnexpectedMessages.Store());
             var c = (Column)Column(n, S(A));
             Assert.That(c.Spacing, Is.EqualTo(0f));
             Assert.That(c.Padding, Is.EqualTo(0f));
@@ -138,7 +134,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Row_LayoutPins_Defaults_EachChange()
         {
-            using var n = new RowNode(NoWarning);
+            using var n = new RowNode(UnexpectedMessages.Store());
             var r = (Row)Row(n, S(A, B));
             Assert.That(r.ChildAlignment, Is.EqualTo(VerticalAlignment.Top));
             Assert.That(r.Children, Is.EqualTo(new Element[] { A, B }));
@@ -154,8 +150,8 @@ namespace VL.Qt.Tests
         {
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-            var rects = Enumerable.Range(0, 3).Select(_ => new RectangleNode(NoWarning)).ToArray();
-            using var column = new ColumnNode(NoWarning);
+            var rects = Enumerable.Range(0, 3).Select(_ => new RectangleNode(UnexpectedMessages.Store())).ToArray();
+            using var column = new ColumnNode(UnexpectedMessages.Store());
 
             Element Frame(float spacing, float y0)
             {
@@ -164,7 +160,7 @@ namespace VL.Qt.Tests
                     null, null, true, out _, out _)).ToArray();
                 var e = Column(column, S(children), spacing: spacing, align: HorizontalAlignment.Center);
                 sink.Clear();
-                rec.Update(e, Space.DIPTopLeft);
+                rec.Update(e, SpaceMapping.Default);
                 return e;
             }
 
@@ -190,9 +186,9 @@ namespace VL.Qt.Tests
         [Test]
         public void AutoSize_DefaultOn_AllContainers_ChangeDetection()
         {
-            using var g = new GroupNode(NoWarning);
-            using var c = new ColumnNode(NoWarning);
-            using var r = new RowNode(NoWarning);
+            using var g = new GroupNode(UnexpectedMessages.Store());
+            using var c = new ColumnNode(UnexpectedMessages.Store());
+            using var r = new RowNode(UnexpectedMessages.Store());
             Assert.That(((Group)Group(g, S(A))).AutoSize, Is.True);
             Assert.That(((Column)Column(c, S(A))).AutoSize, Is.True);
             Assert.That(((Row)Row(r, S(A))).AutoSize, Is.True);
@@ -212,27 +208,27 @@ namespace VL.Qt.Tests
         {
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-            using var row = new RowNode(NoWarning);
-            using var group = new GroupNode(NoWarning);
+            using var row = new RowNode(UnexpectedMessages.Store());
+            using var group = new GroupNode(UnexpectedMessages.Store());
 
             // Default (on): nothing is sent for it, also not for Size 0, 0.
-            rec.Update(Row(row, S(A)), Space.DIPTopLeft);
+            rec.Update(Row(row, S(A)), SpaceMapping.Default);
             Assert.That(sink.Commands.Any(x => x.Contains($" {nameof(P.AutoSize)} ")), Is.False, "default on → no SET");
             sink.Clear();
-            rec.Update(Row(row, S(A)), Space.DIPTopLeft);
+            rec.Update(Row(row, S(A)), SpaceMapping.Default);
             Assert.That(sink.Count, Is.EqualTo(0), "unchanged → 0 commands");
 
-            rec.Update(Row(row, S(A), autoSize: false), Space.DIPTopLeft);
+            rec.Update(Row(row, S(A), autoSize: false), SpaceMapping.Default);
             Assert.That(sink.Commands, Is.EqualTo(new[] { $"SET 1 AutoSize bool(0)" }), "flip off: only the flag, Size is not resent");
             sink.Clear();
-            rec.Update(Row(row, S(A), autoSize: false), Space.DIPTopLeft);
+            rec.Update(Row(row, S(A), autoSize: false), SpaceMapping.Default);
             Assert.That(sink.Count, Is.EqualTo(0));
-            rec.Update(Row(row, S(A)), Space.DIPTopLeft);
+            rec.Update(Row(row, S(A)), SpaceMapping.Default);
             Assert.That(sink.Commands, Is.EqualTo(new[] { $"SET 1 AutoSize bool(1)" }));
 
             // Created with Auto Size off: flag goes out with the other initial values.
             sink.Clear();
-            rec.Update(Group(group, S(A), autoSize: false), Space.DIPTopLeft);
+            rec.Update(Group(group, S(A), autoSize: false), SpaceMapping.Default);
             Assert.That(sink.Commands, Does.Contain($"SET 1 AutoSize bool(0)"));
         }
     }

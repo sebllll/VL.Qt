@@ -25,8 +25,6 @@ public static class OpacityZeroTest
     [Test, Category("opacity-zero")]
     public static void OpacityZero() => Scenario.Run(Run);
 
-    private sealed class NoMessage : IDisposable { public void Dispose() { } }
-
     private static bool Near(Color c, int r, int g, int b, int tol = 12) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
     private static void Run(Scenario s)
@@ -37,11 +35,11 @@ public static class OpacityZeroTest
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var buf = new byte[1 << 16];
-        using var rectA = new RectangleNode(_ => new NoMessage());
-        using var rectB = new RectangleNode(_ => new NoMessage());
-        using var rectC = new RectangleNode(_ => new NoMessage());
-        using var row = new RowNode(_ => new NoMessage());
-        using var hover = new HoverNode(_ => new NoMessage());
+        using var rectA = new RectangleNode(new NodeLog().Errors);
+        using var rectB = new RectangleNode(new NodeLog().Errors);
+        using var rectC = new RectangleNode(new NodeLog().Errors);
+        using var row = new RowNode(new NodeLog().Errors);
+        using var hover = new HoverNode(new NodeLog().Errors);
         var blur = new BlurNode();
         var hovered = Channel.Create(false);
         float opacityB = 0;
@@ -68,7 +66,7 @@ public static class OpacityZeroTest
                 cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
                 clear = false;
             }
-            rec.Update((Element)e, Space.DIPTopLeft);
+            rec.Update((Element)e, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
@@ -136,7 +134,7 @@ public static class OpacityZeroTest
                 $"opacity-zero: B enabled again, C back after it ({Px(img, 650, 200)}, {Px(img, 400, 200)})");
 
         cmd.Clear();
-        rec.Update(null, Space.DIPTopLeft);
+        rec.Update(null, SpaceMapping.Default);
         if (cmd.Length > 0)
             s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "opacity-zero: clear");
         Native.vlqt_scene_destroy(w);

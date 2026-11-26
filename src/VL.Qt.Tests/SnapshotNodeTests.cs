@@ -50,7 +50,7 @@ namespace VL.Qt.Tests
         private void Show()
         {
             _reconciler.Window = new SceneHandle(1);
-            _reconciler.Update(_element, Space.DIPTopLeft);
+            _reconciler.Update(_element, SpaceMapping.Default);
         }
 
         private IImage? Update(out bool isReady, bool grab = false, float scale = 1)
@@ -83,13 +83,13 @@ namespace VL.Qt.Tests
             // slot, and Snapshot runs before the renderer of that frame.
             var slot = new FeedbackSlot(new ElementFeedback(), 0);
             _reconciler.Window = new SceneHandle(1);
-            _reconciler.Update(new Group { Feedback = slot }, Space.DIPTopLeft);
+            _reconciler.Update(new Group { Feedback = slot }, SpaceMapping.Default);
             for (var frame = 0; frame < 3; frame++)
             {
                 var next = new Group { Feedback = slot, Opacity = 0.5f + frame * 0.1f };
                 _node.Update(next, 1, true, out _);
                 Assert.That(_messages.Logged, Is.Empty, $"frame {frame}");
-                _reconciler.Update(next, Space.DIPTopLeft);
+                _reconciler.Update(next, SpaceMapping.Default);
             }
             Assert.That(_api.Calls.Where(c => c.StartsWith("snapshot")).All(c => c.EndsWith($" {_reconciler.Root!.Id} 1")), Is.True);
         }

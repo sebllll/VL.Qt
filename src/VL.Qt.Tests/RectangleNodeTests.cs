@@ -18,12 +18,14 @@ namespace VL.Qt.Tests
         private static readonly Vector2 DefaultSize = new(1, 1);
 
         private RectangleNode _node = null!;
-        private int _warnings; // currently shown warnings
-
-        private sealed class Removal(RectangleNodeTests t) : IDisposable { public void Dispose() => t._warnings--; }
+        private RecordingMessages _m = null!;
 
         [SetUp]
-        public void SetUp() => _node = new RectangleNode(w => { _warnings++; return new Removal(this); });
+        public void SetUp()
+        {
+            _m = new RecordingMessages();
+            _node = new RectangleNode(_m.Errors);
+        }
 
         [TearDown]
         public void TearDown() => _node.Dispose();
@@ -39,7 +41,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Circle_SizeIsTwiceRadius_NoCenterPin_RadiusIsRadius()
         {
-            using var circle = new CircleNode(w => { _warnings++; return new Removal(this); });
+            using var circle = new CircleNode(_m.Errors);
             Rectangle Circle(float radius, RectangleAnchor anchor = RectangleAnchor.Center)
                 => (Rectangle)circle.Update(radius, default, anchor, Color4.White, Color4.Black, 0, 1, false, false, null, null, true, out _, out _);
 
@@ -85,7 +87,6 @@ namespace VL.Qt.Tests
             var a = Update(transform: t, fill: new Color4(1, 0, 0, 1));
             var b = Update(transform: t, fill: new Color4(1, 0, 0, 1));
             Assert.That(b, Is.SameAs(a));
-            Assert.That(_node.Core.Created, Is.EqualTo(1));
 
             for (int i = 0; i < 100; i++) Update(transform: t, fill: new Color4(1, 0, 0, 1)); // warm-up
             long allocated = Allocations.Fewest(() => Update(transform: t, fill: new Color4(1, 0, 0, 1)));
@@ -112,7 +113,7 @@ namespace VL.Qt.Tests
             Changed(Update(strokeWidth: 0.02f), r => r.StrokeWidth == 0.02f, "strokeWidth");
             Changed(Update(opacity: 0.5f), r => r.Opacity == 0.5f, "opacity");
             Changed(Update(clip: true), r => r.Clip, "clip");
-            var chain = new HoverNode(_ => new Removal(this)).Update(null, null);
+            var chain = new HoverNode(new RecordingMessages().Errors).Update(null, null);
             Changed(Update(interaction: chain), r => ReferenceEquals(r.Interaction, chain), "interaction");
             Changed(Update(debug: true), r => r.Debug, "debug");
             Changed(Update(enabled: false), r => !r.Visible, "enabled");
@@ -144,28 +145,28 @@ namespace VL.Qt.Tests
             var rec = new Reconciler(new RecordingSink(), new IdAllocator(), scene, interactions);
             var rec2 = new Reconciler(new RecordingSink(), new IdAllocator(), scene, interactions);
             var e = Update();
-            rec.Update(new Group { Children = ImmutableArray.Create(e, e) }, Space.DIPTopLeft);
-            rec2.Update(new Group { Children = ImmutableArray.Create(e) }, Space.DIPTopLeft);
+            rec.Update(new Group { Children = ImmutableArray.Create(e, e) }, SpaceMapping.Default);
+            rec2.Update(new Group { Children = ImmutableArray.Create(e) }, SpaceMapping.Default);
             Assert.That(Update(), Is.SameAs(e));
             Assert.That(_node.Core.Warning, Is.Null);
-            Assert.That(_warnings, Is.EqualTo(0));
+            Assert.That(_m.Shown, Is.Null);
 
             // A warning in the feedback slot (e.g. a video duplicate) is shown at the node once and removed with it.
             _node.Core.Feedback[0].SetMessage(OccurrenceRegistry.VideoPlaceholderSource, MessageKind.Warning, OccurrenceRegistry.VideoPlaceholderWarning);
             Update();
-            Assert.That(_warnings, Is.EqualTo(1));
+            Assert.That(_m.Shown, Is.Not.Null);
             Update();
-            Assert.That(_warnings, Is.EqualTo(1), "added once");
+            Assert.That(_m.Shows, Is.EqualTo(1), "added once");
 
             _node.Core.Feedback[0].SetMessage(OccurrenceRegistry.VideoPlaceholderSource, MessageKind.Warning, null);
             Update();
-            Assert.That(_warnings, Is.EqualTo(0), "removed");
+            Assert.That(_m.Shown, Is.Null, "removed");
 
             _node.Core.Feedback[0].SetMessage(OccurrenceRegistry.VideoPlaceholderSource, MessageKind.Warning, OccurrenceRegistry.VideoPlaceholderWarning);
             Update();
-            Assert.That(_warnings, Is.EqualTo(1));
+            Assert.That(_m.Shown, Is.Not.Null);
             _node.Dispose();
-            Assert.That(_warnings, Is.EqualTo(0), "Dispose removes the warning");
+            Assert.That(_m.Shown, Is.Null, "Dispose removes the warning");
         }
 
         [Test]

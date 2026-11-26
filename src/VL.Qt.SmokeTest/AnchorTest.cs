@@ -27,8 +27,6 @@ public static class AnchorTest
     private static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
     private static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
 
-    private static IDisposable NoWarning(string _) => throw new InvalidOperationException("unexpected node warning");
-
     private static readonly Color4 Red = new(1, 0, 0, 1), Green = new(0, 1, 0, 1);
     private static readonly Matrix Rot90 = Matrix.RotationZ(MathUtil.PiOverTwo);
 
@@ -43,10 +41,10 @@ public static class AnchorTest
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-        var red = new RectangleNode(NoWarning);
-        var green = new RectangleNode(NoWarning);
-        var row = new RowNode(NoWarning);
-        var group = new GroupNode(NoWarning);
+        var red = new RectangleNode(UnexpectedMessages.Store());
+        var green = new RectangleNode(UnexpectedMessages.Store());
+        var row = new RowNode(UnexpectedMessages.Store());
+        var group = new GroupNode(UnexpectedMessages.Store());
 
         // Child rectangle (Row/Group child: Anchor TopLeft, position via Transform; inside a Row only the size counts).
         Element Rect(RectangleNode n, Color4 fill, float x = 0, float y = 0, float w = 1, float h = 1)
@@ -70,7 +68,7 @@ public static class AnchorTest
         {
             cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            rec.Update(root, Space.DIPTopLeft);
+            rec.Update(root, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());

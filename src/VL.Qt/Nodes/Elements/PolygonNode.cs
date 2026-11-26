@@ -21,8 +21,7 @@ namespace VL.Qt.Nodes
 
         public PolygonNode(NodeContext nodeContext) => _core = new ShapeNodeCore(nodeContext);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal PolygonNode(Func<string, IDisposable> addWarning) => _core = new ShapeNodeCore(addWarning);
+        internal PolygonNode(NodeErrors messages) => _core = new ShapeNodeCore(messages);
 
         internal ShapeNodeCore Core => _core;
 

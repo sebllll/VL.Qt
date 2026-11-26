@@ -23,8 +23,8 @@ namespace VL.Qt.Tests
         [SetUp]
         public void SetUp()
         {
-            _text = new TextNode(_ => NoWarning);
-            _image = new ImageNode(_ => NoWarning);
+            _text = new TextNode(new RecordingMessages().Errors);
+            _image = new ImageNode(new RecordingMessages().Errors);
         }
 
         [TearDown]
@@ -73,7 +73,6 @@ namespace VL.Qt.Tests
         {
             var a = UpdateText("Hello", "Arial");
             Assert.That(UpdateText("Hello", "Arial"), Is.SameAs(a));
-            Assert.That(_text.Core.Created, Is.EqualTo(1));
             // equal but not reference-identical strings are unchanged too
             Assert.That(UpdateText(new string("Hello".AsSpan()), new string("Arial".AsSpan())), Is.SameAs(a));
 
@@ -106,7 +105,7 @@ namespace VL.Qt.Tests
             Changed(UpdateText(letterSpacing: 0.01f), t => t.LetterSpacing == 0.01f, "letterSpacing");
             Changed(UpdateText(autofit: TextAutofit.Fit), t => t.Autofit == TextAutofit.Fit, "autofit");
             Changed(UpdateText(size: new Vector2(3, 4)), t => t.Size == new Vector2(3, 4), "size");
-            var chain = new HoverNode(_ => NoWarning).Update(null, null);
+            var chain = new HoverNode(new RecordingMessages().Errors).Update(null, null);
             Changed(UpdateText(interaction: chain), t => ReferenceEquals(t.Interaction, chain), "interaction");
         }
 
@@ -138,7 +137,6 @@ namespace VL.Qt.Tests
             var image = NewImage(1);
             var a = UpdateImage(image);
             Assert.That(UpdateImage(image), Is.SameAs(a), "same QtImage = unchanged");
-            Assert.That(_image.Core.Created, Is.EqualTo(1));
             Assert.That(UpdateImage(NewImage(1)), Is.Not.SameAs(a), "another QtImage (same resource) = new image");
 
             void Call() => _image.Update(DefaultSize, default, RectangleAnchor.Center, image, FillMode.Stretch, true, 1,

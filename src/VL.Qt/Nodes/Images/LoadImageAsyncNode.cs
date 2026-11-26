@@ -33,7 +33,6 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <summary>For tests: a client on a fake API; null <paramref name="messages"/> reports nothing.</summary>
         internal LoadImageAsyncNode(ResourceClient client, NodeErrors? messages = null)
         {
             _client = client;

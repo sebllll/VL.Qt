@@ -61,7 +61,7 @@ namespace VL.Qt
 
         public Reconciler Reconciler => _reconciler;
 
-        /// <summary>Command buffer of the next apply (test seam: SmokeTest injects an invalid command).</summary>
+        /// <summary>Command buffer of the next apply: what the reconciler wrote this frame, sent to QtNative by the apply.</summary>
         public CommandWriter Commands => _commands;
 
         /// <summary>Number of resyncs after failed applies.</summary>

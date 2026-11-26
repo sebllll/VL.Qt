@@ -69,10 +69,9 @@ namespace VL.Qt.Nodes
             _node = new ElementNodeCore<Shape, Props>(nodeContext, Create);
         }
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal ShapeNodeCore(Func<string, IDisposable> addWarning)
+        internal ShapeNodeCore(NodeErrors messages)
         {
-            _node = new ElementNodeCore<Shape, Props>(addWarning, Create);
+            _node = new ElementNodeCore<Shape, Props>(messages, Create);
         }
 
         internal ElementNodeCore<Shape, Props> Core => _node;

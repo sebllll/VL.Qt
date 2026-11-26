@@ -40,11 +40,11 @@ namespace VL.Qt.Tests
         public void TearDown()
         {
             _gate.Set();
-            _writer.WaitIdle(timeout);
+            _writer.WaitUntilIdle(timeout);
             _writer.Dispose();
         }
 
-        private void Finish() => Assert.That(_writer.WaitIdle(timeout), Is.True, "the writes did not finish");
+        private void Finish() => Assert.That(_writer.WaitUntilIdle(timeout), Is.True, "the writes did not finish");
 
         [Test]
         public void Poll_Idle_NothingToReport()
@@ -153,7 +153,7 @@ namespace VL.Qt.Tests
             // Refused before QtNative is called.
             using var native = ImageFileWriter.CreateNative();
             native.Start(new TestImage(2, 2, 1, format: PixelFormat.Unknown), "a.png", 90);
-            Assert.That(native.WaitIdle(timeout), Is.True);
+            Assert.That(native.WaitUntilIdle(timeout), Is.True);
             Assert.That(native.Poll(out var error), Is.True);
             Assert.That(error, Does.Contain("not supported"));
         }

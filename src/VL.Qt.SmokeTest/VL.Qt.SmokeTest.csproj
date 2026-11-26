@@ -38,6 +38,11 @@
     <Compile Include="..\VL.Qt.TestSupport\TestProtocol.cs" Link="TestProtocol.cs" />
   </ItemGroup>
 
+  <!-- A node message store that throws when the node shows a message. -->
+  <ItemGroup>
+    <Compile Include="..\VL.Qt.TestSupport\UnexpectedMessages.cs" Link="UnexpectedMessages.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
     <PackageReference Include="NUnit" Version="4.*" />

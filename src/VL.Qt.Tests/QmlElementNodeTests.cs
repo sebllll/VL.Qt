@@ -29,17 +29,16 @@ namespace VL.Qt.Tests
         private uint _handle;
         private RecordingSink _sink = null!;
         private Reconciler _reconciler = null!;
-        private readonly List<string> _warnings = new();
+        private RecordingMessages _m = new();
 
-        private sealed class Nop : IDisposable { public void Dispose() { } }
 
         [SetUp]
         public void SetUp()
         {
             _dir = Directory.CreateTempSubdirectory("vlqt-qmlnode").FullName;
             _file = System.IO.Path.Combine(_dir, "a.qml");
-            _warnings.Clear();
-            _node = new QmlElementNode(w => { _warnings.Add(w); return new Nop(); }, _ => _events);
+            _m = new RecordingMessages();
+            _node = new QmlElementNode(_m.Errors, _ => _events);
             _registry = new FeedbackRouter();
             _handle = _registry.Acquire(new FeedbackSlot(_node.Core.Feedback, 0));
             _sink = new RecordingSink();
@@ -66,7 +65,7 @@ namespace VL.Qt.Tests
         private string[] Frame(Dictionary<string, object>? properties = null, string? file = "")
         {
             _sink.Clear();
-            _reconciler.Update(Update(properties, file), Space.DIPTopLeft);
+            _reconciler.Update(Update(properties, file), SpaceMapping.Default);
             return _sink.Commands.ToArray();
         }
 
@@ -154,7 +153,7 @@ namespace VL.Qt.Tests
         {
             Update();
             _sink.Clear();
-            _reconciler.Update(Update(autoSize: false), Space.DIPTopLeft);
+            _reconciler.Update(Update(autoSize: false), SpaceMapping.Default);
             Assert.That(_sink.Commands, Does.Contain($"SET 1 AutoSize bool(0)"));
         }
 
@@ -244,9 +243,9 @@ namespace VL.Qt.Tests
             var d = new Dictionary<string, object> { ["good"] = 1f, ["bad"] = 5L };
             var e = Update(out _, out _, d);
             Assert.That(e.Properties.Count, Is.EqualTo(1));
-            Assert.That(_warnings.Single(), Does.Contain("Property 'bad': type Int64 is not supported"));
+            Assert.That(_m.Shown!, Does.Contain("Property 'bad': type Int64 is not supported"));
             Update(out _, out _, d);
-            Assert.That(_warnings, Has.Count.EqualTo(1), "the same problem is shown once");
+            Assert.That(_m.Shows, Is.EqualTo(1), "the same problem is shown once");
         }
 
         [Test]

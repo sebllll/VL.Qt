@@ -64,7 +64,7 @@ namespace VL.Qt.Tests
         {
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-            rec.Update(new Rectangle { Effect = Blur(null, false, new RectangleF(1, 2, 3, 4)) }, Space.DIPTopLeft);
+            rec.Update(new Rectangle { Effect = Blur(null, false, new RectangleF(1, 2, 3, 4)) }, SpaceMapping.Default);
             var chain = sink.OfOp("CHAIN").Single();
             Assert.That(chain, Does.Contain($" {nameof(K.AutoPadding)}=bool(0)"));
             Assert.That(chain, Does.Contain($" {nameof(K.PaddingRect)}=rect(1,2,3,4)"), "DIP as given");
@@ -76,7 +76,7 @@ namespace VL.Qt.Tests
         {
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-            rec.Update(new Rectangle { Effect = Blur(null, false, new RectangleF(1, 2, 3, 4)) }, Space.Normalized);
+            rec.Update(new Rectangle { Effect = Blur(null, false, new RectangleF(1, 2, 3, 4)) }, new SpaceMapping(Space.Normalized, default, 1f));
             Assert.That(sink.OfOp("CHAIN").Single(), Does.Contain($" {nameof(K.PaddingRect)}=rect(1,2,3,4)"), "the renderer's space does not scale effect lengths");
         }
     }

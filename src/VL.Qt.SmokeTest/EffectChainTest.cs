@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Stride.Core.Mathematics;
@@ -75,15 +76,17 @@ public static class EffectChainTest
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
 
-        var warnings = new List<string>();
-        IDisposable Warn(string m) { warnings.Add(m); return new Remove(warnings, m); }
+        // One store per node (the phases of two nodes must not meet); what the nodes show, as one list.
+        var logs = new List<NodeLog>();
+        NodeErrors Store() { var log = new NodeLog(); logs.Add(log); return log.Errors; }
+        List<string> Shown() => logs.Where(l => l.Shown is not null).Select(l => l.Shown!).ToList();
 
-        var text = new TextNode(Warn);
-        var rectA = new RectangleNode(Warn);
-        var rectB = new RectangleNode(Warn);
-        var rectM = new RectangleNode(Warn);
-        var maskText = new TextNode(Warn);
-        var row = new RowNode(Warn);
+        var text = new TextNode(Store());
+        var rectA = new RectangleNode(Store());
+        var rectB = new RectangleNode(Store());
+        var rectM = new RectangleNode(Store());
+        var maskText = new TextNode(Store());
+        var row = new RowNode(Store());
         var shadow = new DropShadowNode();
         var blur = new BlurNode();
         var adjust = new ColorAdjustNode();
@@ -95,7 +98,7 @@ public static class EffectChainTest
         {
             cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            rec.Update(root, Space.DIPTopLeft);
+            rec.Update(root, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
@@ -150,7 +153,7 @@ public static class EffectChainTest
         for (int i = 0; i < 5; i++)
         {
             cmd.Clear();
-            rec.Update(Text(text, "Fx", textBounds, 1.5f, Chain(true)), Space.DIPTopLeft);
+            rec.Update(Text(text, "Fx", textBounds, 1.5f, Chain(true)), SpaceMapping.Default);
             sent += cmd.Length;
             s.Pump(1);
         }
@@ -246,15 +249,15 @@ public static class EffectChainTest
         s.Check(cMask.layers == 0, $"effect-chain: Mask removed -> no layer ({cMask})");
 
         // 8) Duplicate kind in the chain: warning at the element node (read at the next Update, from the last frame's feedback).
-        warnings.Clear();
         var dup = blur2.Update(blur2.Update(null, 0.3f, 32, 0, true, default, true), 0.6f, 32, 0, true, default, true);
         Frame(Text(text, "Fx", textBounds, 1.5f, dup), "duplicate");
         Text(text, "Fx", textBounds, 1.5f, dup);
-        s.Check(warnings.Count == 1 && warnings[0].Contains("Blur"), $"effect-chain: duplicate Blur -> warning at the Text node ({string.Join("|", warnings)})");
+        var shown = Shown();
+        s.Check(shown.Count == 1 && shown[0].Contains("Blur"), $"effect-chain: duplicate Blur -> warning at the Text node ({string.Join("|", shown)})");
         var single = blur2.Update(null, 0.6f, 32, 0, true, default, true);
         Frame(Text(text, "Fx", textBounds, 1.5f, single), "duplicate gone");
         Text(text, "Fx", textBounds, 1.5f, single);
-        s.Check(warnings.Count == 0, $"effect-chain: warning gone with the duplicate ({warnings.Count})");
+        s.Check(Shown().Count == 0, $"effect-chain: warning gone with the duplicate ({Shown().Count})");
 
         text.Dispose(); rectA.Dispose(); rectB.Dispose(); rectM.Dispose(); maskText.Dispose(); row.Dispose();
         cmd.Clear();
@@ -264,8 +267,4 @@ public static class EffectChainTest
         s.Pump(2);
     }
 
-    private sealed class Remove(List<string> list, string message) : IDisposable
-    {
-        public void Dispose() => list.Remove(message);
-    }
 }

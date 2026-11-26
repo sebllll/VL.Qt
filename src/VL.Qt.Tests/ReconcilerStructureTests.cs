@@ -36,7 +36,7 @@ namespace VL.Qt.Tests
         private void Frame(Element? root)
         {
             _sink.Clear();
-            _rec.Update(root, Space.DIPTopLeft);
+            _rec.Update(root, SpaceMapping.Default);
         }
 
         [Test]

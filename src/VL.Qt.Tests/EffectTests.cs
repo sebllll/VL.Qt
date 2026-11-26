@@ -27,7 +27,7 @@ namespace VL.Qt.Tests
         private void Frame(Element? root)
         {
             _sink.Clear();
-            _rec.Update(root, Space.DIPTopLeft);
+            _rec.Update(root, SpaceMapping.Default);
         }
 
         private int Sets(ushort prop) => _sink.OfOp("SET").Count(c => c.Split(' ')[2] == RecordingSink.PropName(prop));
@@ -71,7 +71,6 @@ namespace VL.Qt.Tests
             var first = node.Update(null, 0.5f, 32, 0, true, default, true);
             Assert.That(node.Update(null, 0.5f, 32, 0, true, default, true), Is.SameAs(first));
             Assert.That(node.Update(null, 0.6f, 32, 0, true, default, true), Is.Not.SameAs(first));
-            Assert.That(node.Core.Created, Is.EqualTo(2));
         }
 
         private string[] Chains => _sink.OfOp("CHAIN").ToArray();

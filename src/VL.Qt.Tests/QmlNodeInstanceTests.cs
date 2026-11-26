@@ -27,14 +27,12 @@ namespace VL.Qt.Tests
         private uint _handle;
         private QmlNodeInstance? _instance;
 
-        private sealed class Nop : IDisposable { public void Dispose() { } }
-
         [SetUp]
         public void SetUp()
         {
             _dir = Directory.CreateTempSubdirectory("vlqt-qmlinst").FullName;
             _file = System.IO.Path.Combine(_dir, "Gauge.qml");
-            _element = new QmlElementNode(_ => new Nop(), _ => _events);
+            _element = new QmlElementNode(new RecordingMessages().Errors, _ => _events);
             _registry = new FeedbackRouter();
             _handle = _registry.Acquire(new FeedbackSlot(_element.Core.Feedback, 0));
         }

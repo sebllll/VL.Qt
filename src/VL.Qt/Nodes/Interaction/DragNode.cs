@@ -38,10 +38,9 @@ namespace VL.Qt.Nodes
             _node = new InteractionNodeCore<Props>(nodeContext, Create);
         }
 
-        /// <summary>For tests: warnings and input errors go to <paramref name="addMessage"/> instead of a NodeContext.</summary>
-        internal DragNode(Func<string, IDisposable> addMessage)
+        internal DragNode(NodeErrors messages)
         {
-            _node = new InteractionNodeCore<Props>(addMessage, Create);
+            _node = new InteractionNodeCore<Props>(messages, Create);
         }
 
         private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create

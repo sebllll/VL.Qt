@@ -15,8 +15,8 @@ namespace VL.Qt.Nodes
     /// receiver of its events;</item>
     /// <item>change detection (<see cref="ChainMemo{TEffect, TProps}"/>): a new link only if the chain at Input (by reference) or the node
     /// specific <typeparamref name="TProps"/> changed, otherwise the last instance (reference equal → no QtNative ops);</item>
-    /// <item>the messages at the node, all through <see cref="NodeErrors"/> except the first: the feedback warning
-    /// (interaction used more than once, persistent node warning), the handler error (e.g. a property Qt rejected, a
+    /// <item>the messages at the node, all through <see cref="NodeErrors"/>: the feedback warning
+    /// (interaction used more than once, a warning in phase "Warning"), the handler error (e.g. a property Qt rejected, a
     /// warning in phase "Qt") and the input error (inputs the node cannot use, an error in phase "Input", see
     /// <see cref="SetInputError"/>).</item>
     /// </list>
@@ -29,34 +29,26 @@ namespace VL.Qt.Nodes
     {
         private const string handlerPhase = "Qt";
         private const string inputPhase = "Input";
+        private const string warningPhase = "Warning";
 
-        private readonly Func<string, IDisposable> _addWarning;
         private readonly NodeErrors _errors;
         private readonly Func<Interaction?, TProps, FeedbackSlot, Interaction> _create;
         private ChainMemo<Interaction, TProps> _memo;
         private string? _warning;
-        private IDisposable? _warningMessage;
         private string? _handlerError;
         private string? _inputError;
 
         /// <param name="nodeContext">Context of the public node (all messages are shown there).</param>
         /// <param name="create">Builds a link; use a static lambda (no capture → no allocation).</param>
         public InteractionNodeCore(NodeContext nodeContext, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
-            : this(w => nodeContext.AddPersistentMessage(MessageSeverity.Warning, w), new NodeErrors(nodeContext), create)
+            : this(new NodeErrors(nodeContext), create)
         {
         }
 
-        /// <param name="addMessage">Shows a message, the result removes it (tests: no NodeContext/AppHost needed; every
-        /// message goes here whatever its severity).</param>
+        /// <param name="errors">Store of the node, owned by the core (disposed with it).</param>
         /// <param name="create">Builds a link; use a static lambda (no capture → no allocation).</param>
-        public InteractionNodeCore(Func<string, IDisposable> addMessage, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
-            : this(addMessage, NodeErrors.ShownBy(addMessage), create)
+        public InteractionNodeCore(NodeErrors errors, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
         {
-        }
-
-        private InteractionNodeCore(Func<string, IDisposable> addWarning, NodeErrors errors, Func<Interaction?, TProps, FeedbackSlot, Interaction> create)
-        {
-            _addWarning = addWarning;
             _errors = errors;
             _create = create;
         }
@@ -75,9 +67,6 @@ namespace VL.Qt.Nodes
 
         /// <summary>Error about the inputs currently shown at the node (e.g. Minimum greater than Maximum), null if none.</summary>
         public string? InputError => _inputError;
-
-        /// <summary>Number of links created so far (for tests).</summary>
-        public int Created => _memo.Created;
 
         /// <summary>
         /// Returns the link for the inputs: the last instance if nothing changed, else a new one. Also updates the node
@@ -111,9 +100,11 @@ namespace VL.Qt.Nodes
             var warning = Feedback.Warning;
             if (ReferenceEquals(warning, _warning) || warning == _warning)
                 return;
-            _warningMessage?.Dispose();
-            _warningMessage = warning is null ? null : _addWarning(warning);
             _warning = warning;
+            if (warning is null)
+                _errors.Clear(warningPhase);
+            else
+                _errors.Warn(warning, warningPhase);
         }
 
         private void UpdateError()
@@ -133,8 +124,6 @@ namespace VL.Qt.Nodes
             _errors.Dispose();
             _handlerError = null;
             _inputError = null;
-            _warningMessage?.Dispose();
-            _warningMessage = null;
             _warning = null;
             _memo.Reset();
         }

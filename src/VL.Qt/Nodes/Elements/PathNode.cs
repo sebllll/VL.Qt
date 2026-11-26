@@ -22,8 +22,7 @@ namespace VL.Qt.Nodes
 
         public PathNode(NodeContext nodeContext) => _core = new ShapeNodeCore(nodeContext);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal PathNode(Func<string, IDisposable> addWarning) => _core = new ShapeNodeCore(addWarning);
+        internal PathNode(NodeErrors messages) => _core = new ShapeNodeCore(messages);
 
         internal ShapeNodeCore Core => _core;
 

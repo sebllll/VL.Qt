@@ -191,7 +191,7 @@ public static class PumpTest
     {
         var clock = new SimClock();
         var log = new CollectingLogger();
-        var app = QtApp.CreateForTest(log);
+        var app = QtApp.Create(log);
         var pump = new QtPump(app, clock);
         s.Check(app.ParticipantCount == 0, "pump: no participants at start");
 

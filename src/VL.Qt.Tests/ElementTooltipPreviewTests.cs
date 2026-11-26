@@ -51,7 +51,7 @@ namespace VL.Qt.Tests
         private void Show(Element? element = null)
         {
             _reconciler.Window = new SceneHandle(1);
-            _reconciler.Update(element ?? _element, Space.DIPTopLeft);
+            _reconciler.Update(element ?? _element, SpaceMapping.Default);
         }
 
         private IImage? Update(out string text, Element? element = null) => _node.Update(element ?? _element, out text);
@@ -185,7 +185,7 @@ namespace VL.Qt.Tests
             var first = Update(out _);
             Assert.That(first, Is.Not.Null);
 
-            _reconciler.Update(other, Space.DIPTopLeft);
+            _reconciler.Update(other, SpaceMapping.Default);
             _clock += 0.05;
             var image = Update(out var text, other);
             Assert.That(Grabs, Is.EqualTo(1), "too early");

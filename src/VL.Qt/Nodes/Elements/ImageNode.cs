@@ -27,9 +27,8 @@ namespace VL.Qt.Nodes
         public ImageNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<Image, Props>(nodeContext, s_create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal ImageNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<Image, Props>(addWarning, s_create);
+        internal ImageNode(NodeErrors messages)
+            => _node = new ElementNodeCore<Image, Props>(messages, s_create);
 
         private static readonly Func<CommonInputs, Props, FeedbackSlot, Image> s_create = static (c, p, slot) => new Image(c, slot)
             {

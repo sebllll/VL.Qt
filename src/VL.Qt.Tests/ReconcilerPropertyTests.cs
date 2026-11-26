@@ -32,7 +32,7 @@ namespace VL.Qt.Tests
         private void Frame(Element? root)
         {
             _sink.Clear();
-            _rec.Update(root, Space.DIPTopLeft);
+            _rec.Update(root, SpaceMapping.Default);
         }
 
         private static Group G(params Element[] children) => new() { Children = ImmutableArray.Create(children) };
@@ -417,7 +417,7 @@ namespace VL.Qt.Tests
                 Frame(tree);
             long before = GC.GetAllocatedBytesForCurrentThread();
             for (int i = 0; i < 100; i++)
-                _rec.Update(tree, Space.DIPTopLeft);
+                _rec.Update(tree, SpaceMapping.Default);
             Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
         }
 
