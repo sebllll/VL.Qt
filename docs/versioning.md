@@ -41,4 +41,4 @@ using VL.Core.Import;
 public sealed class MyNode : IDisposable { /* ... */ }
 ```
 
-- Use `SymbolSmell.Experimental` for experimental nodes and `SymbolSmell.Obsolete` for nodes on their way out. Mention it in the `/// <summary>` of the node, so it appears in the node help.
+- Use `SymbolSmell.Experimental` for experimental nodes and `SymbolSmell.Obsolete` (from 1.0.0 on) for nodes on their way out. Mention it in the `/// <summary>` of the node, so it appears in the node help.

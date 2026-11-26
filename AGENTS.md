@@ -48,7 +48,7 @@ The reference is [VL.StandardLibs](https://github.com/vvvv/VL.StandardLibs). Cor
 - One folder per area under `src/VL.Qt.Native/`, `snake_case` file names.
 - Qt private classes are allowed; every use is listed in the head comment of `elements/elements.h` (the checklist for a Qt update) and in the head comment of the file that has it.
 - QtNative runs Qt's `basic` render loop on purpose (`app/app.cpp`).
-- No JavaScript for logic in the QML of built-in elements: the logic is computed in QtNative or C#.
+- No JavaScript for layout in the QML of built-in elements: the alignment of `Row` and `Column` is computed in QtNative. QML functions stay only as glue to Qt types.
 - Environment variables only for what must be set before vvvv starts and for test switches; everything else is a pin.
 - Exceptions never cross the C API; ownership of strings, buffers and handles across it is fixed in the head comment of [vlqt.h](src/VL.Qt.Native/vlqt.h).
 
