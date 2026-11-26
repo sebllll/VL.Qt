@@ -9,20 +9,13 @@
 
 Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-programming environment for .NET. You patch a tree of elements (shapes, text, images, video, widgets), VL.Qt hands it to Qt Quick and shows it in a Qt window. Made for 2D motion graphics, typography, layout and interactive UI.
 
+<a href="docs/effects-and-shaders.md"><img src="docs/images/effects-collage.png" width="820" alt="The text VL.Qt with chained effects, Glow, Directional Blur, Zoom Blur, Radial Blur, InnerShadow and Displace"></a>
+
 > [!NOTE]
 > **Early release (`0.x`).** The API may still change. Requires **vvvv gamma 8.x (preview)** on .NET 10; vvvv 7.x (.NET 8) is not supported.
 > The output is a Qt window, or, with the companion package `VL.Qt.Stride` (Windows only, experimental), a Stride texture (`QtTexture`) or a Stride layer (`QtRenderer`); there is no Skia layer. Linux (x64 and ARM64) works as a console export with its own Qt window, tested under WSL2/WSLg so far (see [Platforms](#platforms)).
 
-**Contents:** [Features](#features) · [Install](#install) · [First patch](#first-patch) · [Platforms](#platforms) · [Compared to Qt Bridge](#compared-to-qt-bridge-for-c) · [Contributing](#contributing) · [License](#license)
-
-<table>
-<tr>
-<td align="center"><a href="docs/shapes.md"><img src="docs/images/paths-path.png" width="230" alt="Path elements with fill, stroke and a fill rule"></a><br>Shapes and paths</td>
-<td align="center"><a href="docs/styles.md"><img src="docs/images/styles.png" width="230" alt="The same widgets in the VLQt base style and in a light style"></a><br>Widgets and styles</td>
-<td align="center"><a href="docs/effects-and-shaders.md"><img src="docs/images/effects-basic.png" width="230" alt="Blur, DropShadow, ColorAdjust, Colorize and Mask on the same element"></a><br>Effects and shaders</td>
-<td align="center"><a href="docs/stride.md"><img src="docs/images/qtrenderer-vs-qt-window.png" width="230" alt="QtRenderer in a Stride window and the same elements in a Qt window"></a><br>Qt in Stride</td>
-</tr>
-</table>
+**Contents:** [Features](#features) · [Install](#install) · [First patch](#first-patch) · [A short tour](#a-short-tour) · [Platforms](#platforms) · [How it works](#how-it-works) · [Compared to Qt Bridge](#compared-to-qt-bridge-for-c) · [Contributing](#contributing) · [License](#license)
 
 ## Features
 
@@ -68,7 +61,80 @@ Rectangle [Qt]   Text [Qt]
         Renderer [Qt]
 ```
 
+Row and Column lay out their children with spacing, padding and alignment:
+
+<img src="docs/images/layout.png" width="820" alt="Column with centered children, Row with bottom aligned children, nested Row and Column">
+
 The `Space` pin of the renderer sets origin and unit of all lengths (default: origin top left, 1 unit = 100 DIP); see [Coordinates and layout](docs/coordinates.md). The help patches in `help/Qt/` show one topic each; open them from the Help Browser (F1). The full list is in [Help patches](docs/help-patches.md). To ship the result as an app, see [Exporting an app](docs/export.md).
+
+## A short tour
+
+### Shapes and paths
+
+`Line`, `Polyline` and `Polygon` draw point lists; `Path` draws anything you build with the `Qt.Paths` chain, with fill, stroke, trim and a fill rule. Bezier and spline nodes turn a few points into a smooth curve.
+
+<img src="docs/images/paths-path.png" width="820" alt="Path elements: a filled and stroked triangle, an open curve, and two rounded squares with a circular hole, one filled with the even-odd rule">
+
+Start with `HowTo Draw a Path` and `HowTo Draw Splines`. More: [Shapes and paths](docs/shapes.md).
+
+### Widgets and styles
+
+All widgets are drawn in VL.Qt's own base style VLQt, the same on Windows and Linux. A `Style` pin on every widget and every Group changes it; a Group passes its style to everything inside.
+
+<img src="docs/images/styles.png" width="820" alt="The same widgets in the VLQt base style and in a light style">
+
+Start with `HowTo Style a Widget`. More: [Styles](docs/styles.md).
+
+### Images and video
+
+A loaded image is uploaded to the GPU once and can be shown by any number of `Image` elements. `ToQtImage` takes an `IImage` from other libraries, `Snapshot` and `FileWriter (Element)` go the other way.
+
+<img src="docs/images/images.png" width="820" alt="One image drawn in the four fill modes Stretch, Fit, Crop and Tile">
+
+Start with `HowTo Draw an Image` and `HowTo Play a Video`. More: [Images](docs/images.md).
+
+### Effects
+
+Every element has an `Effect` pin. Chain the nodes of `Qt.Effects` to it; they run in data flow order, like TextureFX in Stride.
+
+<img src="docs/images/effects-basic.png" width="820" alt="Blur, DropShadow, ColorAdjust, Colorize and Mask on the same element">
+
+Start with `HowTo Chain Effects`. More: [Effects](docs/effects-and-shaders.md#effects).
+
+### Own shaders and QML
+
+Every `.frag` file in a `qtshaders/` folder next to the patch becomes a node with one pin per uniform, and every `.qml` file in a `qml/` folder becomes a node with one pin per property. Save the file and the node updates while vvvv runs.
+
+<table>
+<tr>
+<td align="center"><img src="docs/images/shader-nodes-from-files.png" width="400" alt="Help patch 'HowTo Create Shader Nodes from Files': two shader nodes generated from .frag files, the Qt window and the shader source"><br>Shader nodes from <code>.frag</code> files</td>
+<td align="center"><img src="docs/images/qml-node-factory.png" width="400" alt="Help patch 'HowTo Create QML Nodes from Files': the node Gauge generated from Gauge.qml, the Qt window and the QML source"><br>QML nodes from <code>.qml</code> files</td>
+</tr>
+</table>
+
+More: [Shaders](docs/effects-and-shaders.md#shaders), [QML files as elements](docs/user-qml.md).
+
+### Qt in Stride
+
+`QtRenderer` draws an element tree as a layer into a Stride scene, with mouse, touch and keyboard input; `QtTexture` renders it into a Stride texture for TextureFX or a mesh. Windows only, experimental.
+
+<img src="docs/images/qtrenderer-vs-qt-window.png" width="820" alt="QtRenderer in a Stride window (top) and the same elements in a Qt window (bottom right)">
+
+Start with `HowTo Draw Qt in a Stride Scene`. More: [Qt in Stride](docs/stride.md).
+
+### Diagnostics
+
+Press `F2` or `F5` in a Qt window for the perfmeter and the stats panel; the `Debug` pin of every element draws a layout overlay.
+
+<table>
+<tr>
+<td valign="top"><b>F2</b> perfmeter<br><img src="docs/images/perf-f2-meter.png" width="300" alt="F2 meter"></td>
+<td valign="top"><b>F5</b> stats panel<br><img src="docs/images/perf-f5-summary.png" width="300" alt="F5 Summary page"></td>
+<td valign="top"><b>Debug</b> pin<br><img src="docs/images/debug-overlay.png" width="300" alt="Debug overlay: frames, padding, spacing, text baseline"></td>
+</tr>
+</table>
+
+More: [Diagnostics](docs/diagnostics.md).
 
 ## Platforms
 
@@ -80,6 +146,18 @@ The `Space` pin of the renderer sets origin and unit of all lengths (default: or
 | Linux ARM64 | ✅ | same as x64; tested under WSL2 with WSLg |
 
 vvvv exports only console apps on Linux, without Stride/Skia, so VL.Qt opens its own Qt window there. A native X11 or Wayland desktop and a Raspberry Pi are not tested yet. Export, WSL setup, fonts and known problems: [Linux](docs/linux.md).
+
+## How it works
+
+Your patch builds an element tree each frame; a reconciler compares it with what Qt already has and sends only the changes to QtNative, the C++ layer that owns Qt Quick. Input comes back to the patch as channels.
+
+```mermaid
+flowchart LR
+    patch[Patch] --> tree[Element tree] --> rec[Reconciler<br>diff] --> native[QtNative<br>C++] --> qt[Qt Quick<br>window or texture]
+    qt -. events .-> patch
+```
+
+vvvv's `IFrameClock` is the single time source, so scrubbing and pausing are deterministic. More: [Architecture](docs/contributing/architecture.md).
 
 ## Compared to Qt Bridge for C#
 
