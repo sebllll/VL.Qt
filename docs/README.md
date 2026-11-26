@@ -31,10 +31,13 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 |---|---|
 | [design/resources.md](design/resources.md) | The resource manager of QtNative: ids, states, threads, reference counts, replacement, external content and device loss. |
 | [design/render-loop.md](design/render-loop.md) | Which Qt Quick render loop QtNative runs, the rules for item code that follow from it and the places that rely on the basic loop. |
-| [design/render-thread.md](design/render-thread.md) | Lifetime of an offscreen scene, the pool of render threads, which thread runs what and the lock on the shared device's context. |
+| [design/render-thread.md](design/render-thread.md) | Lifetime of an offscreen scene, the pool of render threads (pin `Render Threads`), the frame of a batch, back pressure, which thread runs what and the lock on the shared device's context. |
 | [design/timing.md](design/timing.md) | How the perf monitor measures a pump: the signals that bound each phase, the vsync wait, the hand-off from render threads and the timeline geometry. |
-| [decisions/device-sharing.md](decisions/device-sharing.md) | One QtNative D3D11 device per process shared by all windows and images, device loss, and why Qt does not render on Stride's device. |
-| [decisions/render-texture.md](decisions/render-texture.md) | `QtTexture` and the layer `QtRenderer` in the companion package `VL.Qt.Stride`: a Qt scene rendered offscreen into a Stride texture or drawn into a render target, with shared fences, ownership, format and alpha, frame timing and package layout. |
+| [design/gpu-device.md](design/gpu-device.md) | One QtNative D3D11 device per process shared by all windows, images and offscreen scenes: attach, adapter match and move, device loss, no device available, and why Qt does not render on Stride's device. |
+| [design/stride-output.md](design/stride-output.md) | `QtTexture` and the layer `QtRenderer` in the companion package `VL.Qt.Stride`: shared texture and fences, ownership, formats, colour space and alpha, frame timing, composition of the layer and package layout. |
+| [design/offscreen-input.md](design/offscreen-input.md) | Input and keyboard focus of offscreen scenes: the pin `Input Notifications`, `ToTexturePixels`, translation, native injection and focus. |
+| [design/clear-and-msaa.md](design/clear-and-msaa.md) | `Clear` off through the `PreviousFrameLayer`, and MSAA: the window swap, the clamp and the offscreen resolve. |
+| [research/render-texture-measurements.md](research/render-texture-measurements.md) | Measurements of the render threads, the MSAA counts and the cost of `Clear` off (one arm64 notebook, x64 not measured). |
 | [design/element-model.md](design/element-model.md) | What an element is: immutable descriptions and their exceptions, the pins every element node shares, geometry and the coordinate space. |
 | [design/events-and-interaction.md](design/events-and-interaction.md) | How input and values that only Qt knows come back to the patch: feedback, the Interaction nodes and their channels, latency and threads. |
 | [design/reconciler.md](design/reconciler.md) | How the reconciler turns the element tree into commands: one frame, the skip test, the order of the commands, occurrences and placeholders, input handlers, effect chains, styles, self-made widgets, and the resync after an exception. |
