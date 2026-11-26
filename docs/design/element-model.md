@@ -18,7 +18,7 @@ vvvv patches run in dataflow on the main thread; Qt objects, the render thread a
 Some state exists only in Qt and changes without a new description arriving:
 
 - Video position.
-- Interaction state: hover, pressed, focus, text field input. It flows back through feedback or channels ([events.md](events.md)).
+- Interaction state: hover, pressed, focus, text field input. It flows back through feedback or channels ([events-and-interaction.md](events-and-interaction.md)).
 - `QtImage` as a handle: its loading state changes. It belongs to the node that created it and needs no dispose.
 
 The same instance therefore means "the same description", not "the same picture". Code that must detect visual change, for example a tooltip that follows an interaction state, cannot rely on reference equality alone. New features are measured against the principle: an exception needs a reason and must not impose lifetime duties on the patcher.
@@ -71,7 +71,7 @@ The same instance therefore means "the same description", not "the same picture"
 - A description holds no lifetime, so patches can share and re-use it freely. Code that wants to detect "looks different" must not compare references alone (video, interaction state, image loading).
 - A new element node takes the common pins from `CommonInputs` in the order above and appears in the node API snapshot; `tools/vl-patch-check.py` guards `Interaction` against IOBoxes.
 - Changing `Space` rewrites the whole tree once, because every length is converted in C#.
-- Qt state that must reach the patch goes through feedback or channels, one frame late ([events.md](events.md)).
+- Qt state that must reach the patch goes through feedback or channels, one frame late ([events-and-interaction.md](events-and-interaction.md)).
 
 ## Alternatives considered
 

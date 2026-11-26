@@ -1,6 +1,6 @@
 # Reconciler
 
-How the reconciler turns the element tree of one renderer into commands for QtNative, frame after frame: the walk, the skip test, the order of the commands, occurrences, input handlers, effect chains, styles, self-made widgets and what happens when a reconcile throws. The code is in `src/VL.Qt/Reconciliation/`: `Reconciler` (the walk), `ItemMirror`, `HandlerMirror` and `EffectChainMirror` (what was sent), `PropertyDiff` and `HandlerPropertyDiff` (the SETs), `PrimaryOccurrences`, `OccurrenceRegistry` and `InteractionRegistry` (where things are shown), `FeedbackRouter` (the way back). The identity rules (position plus type, the key of an element, several renderers) are in [reconciler-identity.md](reconciler-identity.md); how events arrive in the nodes is in [events.md](events.md). Words as in the [glossary](../glossary.md): the element tree, an occurrence (one place where an element appears), a mirror (what was sent for one occurrence).
+How the reconciler turns the element tree of one renderer into commands for QtNative, frame after frame: the walk, the skip test, the order of the commands, occurrences, input handlers, effect chains, styles, self-made widgets and what happens when a reconcile throws. The code is in `src/VL.Qt/Reconciliation/`: `Reconciler` (the walk), `ItemMirror`, `HandlerMirror` and `EffectChainMirror` (what was sent), `PropertyDiff` and `HandlerPropertyDiff` (the SETs), `PrimaryOccurrences`, `OccurrenceRegistry` and `InteractionRegistry` (where things are shown), `FeedbackRouter` (the way back). The identity rules (position plus type, the key of an element, several renderers) are in [reconciler-identity.md](reconciler-identity.md); how events arrive in the nodes is in [events-and-interaction.md](events-and-interaction.md). Words as in the [glossary](../glossary.md): the element tree, an occurrence (one place where an element appears), a mirror (what was sent for one occurrence).
 
 ## Context
 
@@ -80,7 +80,7 @@ An interaction is active at one handler only, app-wide (`InteractionRegistry`, k
 
 ### Feedback binding
 
-Every visited item is bound to the feedback slot of its description (BIND with a feedback id from the `FeedbackRouter`); an element without a slot sends an unbind (id 0). A slot change takes a new feedback id, so late events of the old binding are dropped; ids count up and are not reused. Several ids may point to one slot (one per occurrence): hover and press are counted per id, events are taken from every id, state values from the primary id only; the ids of input handlers are always primary ([events.md](events.md#feedback-binding)).
+Every visited item is bound to the feedback slot of its description (BIND with a feedback id from the `FeedbackRouter`); an element without a slot sends an unbind (id 0). A slot change takes a new feedback id, so late events of the old binding are dropped; ids count up and are not reused. Several ids may point to one slot (one per occurrence): hover and press are counted per id, events are taken from every id, state values from the primary id only; the ids of input handlers are always primary ([events-and-interaction.md](events-and-interaction.md#feedback-binding)).
 
 ### Effect chains
 

@@ -1,12 +1,12 @@
 # Reconciler identity
 
-How the reconciler decides, every frame, whether to update an existing Qt object or create a new one, and what counts as one element when it is shown at several places. The rest of the reconciler (one frame, the skip test, the order of the commands, resync) is in [reconciler.md](reconciler.md). The code is in `src/VL.Qt/Reconciliation/`: `Reconciler` (positions), `OccurrenceKey` and `OccurrenceRegistry` (elements and their occurrences), `PrimaryOccurrences` (the primary occurrence inside one tree), `InteractionRegistry` (input handlers). How the feedback carries events back to the nodes is in [events.md](events.md).
+How the reconciler decides, every frame, whether to update an existing Qt object or create a new one, and what counts as one element when it is shown at several places. The rest of the reconciler (one frame, the skip test, the order of the commands, resync) is in [reconciler.md](reconciler.md). The code is in `src/VL.Qt/Reconciliation/`: `Reconciler` (positions), `OccurrenceKey` and `OccurrenceRegistry` (elements and their occurrences), `PrimaryOccurrences` (the primary occurrence inside one tree), `InteractionRegistry` (input handlers). How the feedback carries events back to the nodes is in [events-and-interaction.md](events-and-interaction.md).
 
 ## Context
 
 The input is an element tree of immutable C# descriptions (primitives, text, Group, layouts, …). Qt Quick is retained: real objects live on, like Stride entities. For each frame the reconciler has to decide between updating the same Qt object and creating a new one.
 
-An element node outputs a new description instance whenever one of its inputs changes, always with the same feedback slot (the reference from the description to the state of its node, [events.md](events.md)). What the user sees as one Rectangle node is one feedback slot and a new instance after every change.
+An element node outputs a new description instance whenever one of its inputs changes, always with the same feedback slot (the reference from the description to the state of its node, [events-and-interaction.md](events-and-interaction.md)). What the user sees as one Rectangle node is one feedback slot and a new instance after every change.
 
 How comparable systems handle identity:
 - **VL.Skia:** layer objects, fully re-rendered every frame, no native objects to match, so no identity problem.
@@ -35,13 +35,7 @@ How comparable systems handle identity:
 
 ### Occurrences
 
-- **Multiple occurrences are allowed.** The same element may hang in the tree several times (for example the same rectangle in two groups). Each occurrence gets its own Qt object (identity stays position plus type), and all occurrences bind the same feedback slot. Return-channel rules:
-  - State values (measured size, error) come from the first occurrence in traversal order (the primary one).
-  - Events are merged: a click on any occurrence counts, hover/pressed combine with OR.
-  - Channels are unchanged; two views of one value are intended.
-  - To tell which occurrence was clicked, put an interaction on the surrounding group per placement.
-  - Class instances with their own element node are unaffected; every instance has its own feedback.
-  - Rationale: a rule that forbids multiple occurrences is surprising for users (a warning instead of drawing), and Skia layers behave the same way.
+- **Multiple occurrences are allowed.** The same element may hang in the tree several times (for example the same rectangle in two groups). Each occurrence gets its own Qt object (identity stays position plus type), and all occurrences bind the same feedback slot. How the return channel merges them (events add up, hover and press are the OR, state values come from the primary occurrence) is in [events-and-interaction.md](events-and-interaction.md#an-element-shown-at-several-places). Class instances with their own element node are unaffected; every instance has its own feedback. Rationale: a rule that forbids multiple occurrences is surprising for users (a warning instead of drawing), and Skia layers behave the same way.
 - **The same rules hold across renderers.** An element may hang in several renderers at once (a `Renderer [Qt]` window and a `QtTexture`, two textures at different sizes); every renderer builds its own Qt objects, no placeholder, no warning.
   - The owner renderer is the first renderer that showed the element (registration order). The primary occurrence is the first occurrence in traversal order of the owner renderer. It alone reports state values; Snapshot and TooltipPreview locate it. Because the key is the slot, the owner stays the same while the node outputs new instances, whichever renderer updates first.
   - Events of all occurrences in all renderers are merged into the feedback, as inside one renderer.
@@ -74,7 +68,6 @@ An interaction node is active at one handler only, app-wide, keyed by its own fe
 ## Open questions
 
 - **Optional `Key` pin** (among siblings only). It would also remove the state jump (hover/pressed) when inserting or reordering. It becomes necessary with Qt-native animations/transitions or enter/exit effects.
-- **Interaction handlers with multiple occurrences:** merge simultaneous drags/touches on two occurrences of the same interaction, or only honour the first.
 - **A `Mirror` element** (`ShaderEffectSource` with a `sourceItem`): a purely visual live copy without interaction, for reflections and repeats. A complement, not a replacement.
 - Whether elements backing Qt objects that are expensive to build (large texts, images) should be reused despite moving (performance rather than correctness).
 
