@@ -475,6 +475,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Bezier (Handles)" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="Zp9jTCuZvJGeqZ7nDfa0BM" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="EG64KunN1uFnH419aSt3qM" Name="Anchors" Kind="InputPin" />
             <Pin Id="3dmzs4vjp7FUciYMhBc1vL" Name="In Handles" Kind="InputPin" />

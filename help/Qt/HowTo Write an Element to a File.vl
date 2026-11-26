@@ -202,6 +202,7 @@
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="FileWriter" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="FqvU7zl2JRMPbLSIzkyMdw" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="QgrdMiq5ymsNKKL5Qm6ep2" Name="Image" Kind="InputPin" />
             <Pin Id="L16Tl3ZbXeQMUSeptFLNrD" Name="File Path" Kind="InputPin" />

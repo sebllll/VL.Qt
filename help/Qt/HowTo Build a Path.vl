@@ -69,6 +69,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="MoveTo" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="yLJ1U5lCI7vuwLEfzWUeZ3" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="SohO5WCgEFINpYVEFqydhD" Name="Point" Kind="InputPin" />
             <Pin Id="h3XDe0i9R5lHOgP8Gw92HH" Name="Output" Kind="OutputPin" />
@@ -86,6 +87,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="LineTo" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="hw9UIMaCCyU5XwWGvIxawC" Name="Input" Kind="InputPin" />
             <Pin Id="lKlWVokMGvjhl0yzWbNP2P" Name="Point" Kind="InputPin" />
             <Pin Id="e3vwMyfP2uGBT2E3gz5Fkb" Name="Output" Kind="OutputPin" />
@@ -103,6 +105,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="LineTo (Relative)" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="pJA8uchzpnrxbMJQjIZ1Wv" Name="Input" Kind="InputPin" />
             <Pin Id="0FYpc1gBK53EH9Tk7Ic129" Name="Point" Kind="InputPin" />
             <Pin Id="glh2RwJXMHi9jSyxehPVJy" Name="Output" Kind="OutputPin" />
@@ -120,6 +123,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="CubicTo" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="djmOEGGuHdOa9HpvuNr8Bu" Name="Input" Kind="InputPin" />
             <Pin Id="4pthezHLPEOmTzTrHR4hW0" Name="Control Point 1" Kind="InputPin" />
             <Pin Id="C8rdIQTaf7dzVCrwkA3gLM" Name="Control Point 2" Kind="InputPin" />
@@ -149,6 +153,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Close" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="KZtuqOLH04OOzNJIXhDz9r" Name="Input" Kind="InputPin" />
             <Pin Id="UQ6JAL4xnouq6TZEhwgXGQ" Name="Output" Kind="OutputPin" />
           </Node>
@@ -242,6 +247,7 @@
               <Choice Kind="ProcessAppFlag" Name="ArcTo" />
               <PinReference Kind="InputPin" Name="Corner" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="ixaJuRzoKwAvort1qBRfqD" Name="Input" Kind="InputPin" />
             <Pin Id="Q4lfNSV0UO1F6VJswf9oyQ" Name="Corner" Kind="InputPin" />
             <Pin Id="FfAxBBtMQvXKcHoKbUhDp0" Name="Destination Point" Kind="InputPin" />
@@ -350,6 +356,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="AddRoundRect" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="w7kKdzYoPcC1zxnGk1W3gj" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="uiYBdwYApaGetIoBSrG7tz" Name="Rectangle" Kind="InputPin" DefaultValue="5.2, 0.8, 2, 1.5" />
             <Pin Id="MuNicQIFsCwu4MGh27JEjy" Name="Radius" Kind="InputPin" />

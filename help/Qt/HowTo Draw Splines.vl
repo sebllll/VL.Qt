@@ -270,6 +270,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Spline (CatmullRom)" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="cTpImgh9aMGaPzYdz8BltN" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="nU10uZEtShF5lCpEiTatBM" Name="Points" Kind="InputPin" />
             <Pin Id="IdJXmg1iTsFqixC19RDRTK" Name="Closed" Kind="InputPin" IsHidden="true" />
@@ -411,6 +412,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Spline (BSpline)" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="rEsZeKLo9iFiT4bKewwfyL" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="KkDeaFMm07F4SkIYSIpO9N" Name="Points" Kind="InputPin" />
             <Pin Id="UUn9M9fjqpG6C7sGblKcHP" Name="Closed" Kind="InputPin" IsHidden="true" />

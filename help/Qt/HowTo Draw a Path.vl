@@ -133,6 +133,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Path" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="tziN7P5ndDeozYOcKKUjOs" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="nDO2Ps1UYKfS83DzOE1qZA" Name="Path" Kind="InputPin" />
             <Pin Id="YN4kEReO60aowxG79Hf9ri" Name="Transform" Kind="InputPin" IsHidden="true" />
@@ -276,6 +277,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="AddRect" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="QX5OwYJFKSeA8JGVyifKLO" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="H84lRYIfazXXPRF2HXRFm2" Name="Rectangle" Kind="InputPin" DefaultValue="0, 0, 1.6, 1.6" />
             <Pin Id="JHSrxRTFlMiohCLUkMBz56" Name="Direction" Kind="InputPin" IsHidden="true" />
@@ -289,6 +291,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="AddCircle" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="1FCyjto9rez7HlWT9kdCPb" Name="Input" Kind="InputPin" />
             <Pin Id="DmUkrzxrjSeCOBCgVcGCrq" Name="Center" Kind="InputPin" DefaultValue="0.8, 0.8" />
             <Pin Id="3GcA5nByVzzVBGwrnUHCqO" Name="Direction" Kind="InputPin" IsHidden="true" />
