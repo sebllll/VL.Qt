@@ -8,8 +8,9 @@ using VL.Qt;
 
 // The texture element of a SHADER link (here the layer of a Blend) is parked hidden under the root like a mask.
 // A REPARENT of it while a chain samples it is refused (-8, like an attached mask), so the element is never in the tree
-// and the chain's texture at once; once no chain samples it, a REPARENT shows it again. Orange R at (250, 150)
-// 300 x 150 DIP with Blend, blue layer L at (0, 0) 300 x 150. Grabs: <OutDir>/chain-texture-reparent_*.png.
+// and the chain's texture at once; once no chain samples it, a REPARENT shows it again as a plain element (layer off one
+// frame later). Orange R at (250, 150) 300 x 150 DIP with Blend, blue layer L at (0, 0) 300 x 150.
+// Grabs: <OutDir>/chain-texture-reparent_*.png.
 [TestFixture, NonParallelizable]
 public static class ChainTextureReparentTest
 {
@@ -102,7 +103,8 @@ public static class ChainTextureReparentTest
             gpu(Blueish(Px(a, RX + RW / 2, RY + RH / 2)), $"the chain still samples the texture ({Px(a, RX + RW / 2, RY + RH / 2)})");
         }
 
-        // Chain off: no chain samples L any more, so a REPARENT shows it in the tree.
+        // Chain off: no chain samples L any more, so a REPARENT shows it in the tree. Its layer goes off at the poll after
+        // the next frame (a host polls every frame); the software backend draws L only then.
         cmd.Clear();
         cmd.BeginEffectChain(R);
         cmd.EndEffectChain();
@@ -110,6 +112,8 @@ public static class ChainTextureReparentTest
         rc = Native.Apply(w, cmd.EndFrame());
         s.Check(rc == 0, $"chain off, then REPARENT of the former texture ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         s.Pump(4);
+        Poll();
+        s.Pump(2);
         using (var a = s.Grab(w, "chain-texture-reparent_released.png"))
         {
             var c = Px(a, 100, 75);

@@ -328,6 +328,12 @@ int Scene::reparent(quint32 id, quint32 parentId, quint32 index, std::string& er
     // Children of a ShaderEffect (Input, texture elements) are drawn only through their layers; every other element is
     // shown unless its Enabled pin (VISIBLE) is off (Opacity 0 = not drawn, input stays).
     item->setVisible(!underShaderEffect && it->second.enabled); // no-op when the explicit value is unchanged
+    // A former chain texture outside a ShaderEffect is drawn as itself: the layer the chain switched on while it was hidden
+    // would only cost a render pass, and the software backend draws it empty (a layer made while its item was hidden
+    // stays empty when the item is shown). Off one frame late: a retired pass may still hold the layer's texture.
+    if (it->second.chainTexture && !underShaderEffect)
+        elements.releaseTextureLayer(item);
+    it->second.chainTexture = false;
 
     // Stacking order: index = position among the element siblings (clamped). Untracked items do not count: the
     // root of an effect chain (a sibling, kept right after its item by Qt), retired items, QML internals.

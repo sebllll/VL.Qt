@@ -54,6 +54,11 @@ bool Elements::setEffectSource(ElementEntry& effect, const ResolvedProp& rp, QQu
     return true;
 }
 
+void Elements::releaseTextureLayer(QQuickItem* item)
+{
+    layerOff.emplace_back(item);
+}
+
 void Elements::flushLayerOff()
 {
     for (const QPointer<QQuickItem>& item : layerOff)

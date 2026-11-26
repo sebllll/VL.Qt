@@ -397,8 +397,9 @@ bool ShaderItem::setUniform(const char* name, int nameLen, quint16 vt, const uns
     case VLQT_VALUE_TYPE_REF:
         if (u.ref != ref) {
             u.ref = ref;
-            // A texture child is drawn through its layer (hidden on REPARENT); the layer stays while it lives. A Group
-            // goes through its frame proxy instead (Elements::syncTextureGroups after endUniforms).
+            // A texture child is drawn through its layer (hidden on REPARENT); the layer stays while it lives, except for a
+            // chain texture that a REPARENT brings back into the tree (Scene::reparent). A Group goes through its frame
+            // proxy instead (Elements::syncTextureGroups after endUniforms).
             if (ref && !isGroup(ref))
                 QQmlProperty(ref, QStringLiteral("layer.enabled")).write(true);
             m_structureChanged = changed = true;
