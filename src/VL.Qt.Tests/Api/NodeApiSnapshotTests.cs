@@ -136,7 +136,7 @@ namespace VL.Qt.Tests.Api
             return result;
         }
 
-        /// <summary>C# name to vvvv pin name, the rule of tools/vl_pin_catalog.py (title_case): `fillColor` → `Fill Color`.</summary>
+        /// <summary>C# name to vvvv pin name, the rule of tools/vl_node_api.py (title_case): `fillColor` → `Fill Color`.</summary>
         internal static string TitleCase(string name)
         {
             if (name.Length == 0)
