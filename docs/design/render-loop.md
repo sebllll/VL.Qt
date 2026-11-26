@@ -1,6 +1,6 @@
 # Render loop
 
-Which Qt Quick render loop QtNative runs, why, and which code relies on it. Code: `src/VL.Qt.Native/app/app.cpp` (where the loop is chosen), `app/render_gate.*`, `offscreen/offscreen_scene.h`, `effects/shader_item.*` and `effects/shader_material.*`. The behaviour as a user sees it is under Rendering in [architecture.md](../architecture.md#rendering).
+Which Qt Quick render loop QtNative runs, why, and which code relies on it. Code: `src/VL.Qt.Native/app/app.cpp` (where the loop is chosen), `app/render_gate.*`, `offscreen/offscreen_scene.h`, `effects/shader_item.*` and `effects/shader_material.*`. The behaviour as a user sees it is under Rendering in [architecture.md](../contributing/architecture.md#rendering).
 
 ## Context
 

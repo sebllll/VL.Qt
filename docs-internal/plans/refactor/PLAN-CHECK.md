@@ -68,7 +68,7 @@ The index says the architecture as a whole "is put together from sections 4 and 
 
 "Feedback" clashes too, and with a decision: A1 names the way back from Qt so in C# (`ElementFeedback`, `FeedbackSlot`, `FeedbackRouter`), while QtNative already has the `FeedbackLayer` (`src/VL.Qt.Native/feedback.h`), the layer that keeps the previous frame while `Clear` is off. The elements report wrote "no clash" without knowing the native layer, and to a vvvv user "feedback" means frame feedback first.
 
-- (a) One page `docs/plans/refactor/TARGET.md` before wave 3, in three parts: a glossary with one word per concept across C, C++, C#, the docs and the node names, clashes as open rows; the folder and namespace tree of the four projects merged from the sections 4, with a namespace rule; which findings cut the same file, as the base for what may run in parallel in wave 4.
+- (a) One page `docs-internal/plans/refactor/TARGET.md` before wave 3, in three parts: a glossary with one word per concept across C, C++, C#, the docs and the node names, clashes as open rows; the folder and namespace tree of the four projects merged from the sections 4, with a namespace rule; which findings cut the same file, as the base for what may run in parallel in wave 4.
 - (b) Only the glossary now, the tree per area in wave 4.
 - (c) Nothing central.
 - Decision: (a), before the pass of P1 (Sebastian, 2026-11-19). The glossary part becomes the page of DOC-09; DOC-09 and DOC-10 move from wave 6 to here. Order: draft `TARGET.md` → decide its open words (among them "feedback") → pass of P1 with the catalog rows of P2 → decide the open rows → cut the issues.

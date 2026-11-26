@@ -1,6 +1,6 @@
 # Architecture
 
-The contributor's map of VL.Qt: the layers, one frame, the threads, the protocol and where each subsystem lives. VL.Qt is a declarative element tree: your patch builds `Element` objects each frame, a reconciler diffs them against what Qt already has, and **QtNative** (the native C++ layer, project `src/VL.Qt.Native`, built as `vlqt.dll` and `libvlqt.so`) applies the changes to real Qt Quick items. The terms are in the [glossary](glossary.md); the reasons behind each subsystem are in the [design notes](design/README.md).
+The contributor's map of VL.Qt: the layers, one frame, the threads, the protocol and where each subsystem lives. VL.Qt is a declarative element tree: your patch builds `Element` objects each frame, a reconciler diffs them against what Qt already has, and **QtNative** (the native C++ layer, project `src/VL.Qt.Native`, built as `vlqt.dll` and `libvlqt.so`) applies the changes to real Qt Quick items. The terms are in the [glossary](../glossary.md); the reasons behind each subsystem are in the [design notes](../design/README.md).
 
 ```mermaid
 flowchart LR
@@ -35,7 +35,7 @@ The folders of QtNative: `app/` (process, pump, animation clock, log, exports he
 ## Data flow
 
 - The patch creates immutable `Element` objects (Rectangle, Text, Group, ...) each frame; the elements linked to one renderer are its **element tree**
-- The **Reconciler** compares the tree to the previous frame and emits minimal changes ([design/reconciler.md](design/reconciler.md), [design/reconciler-identity.md](design/reconciler-identity.md))
+- The **Reconciler** compares the tree to the previous frame and emits minimal changes ([design/reconciler.md](../design/reconciler.md), [design/reconciler-identity.md](../design/reconciler-identity.md))
 - The **CommandWriter** encodes them into a compact binary buffer (no managed allocations after warmup)
 - **QtNative** applies the commands to Qt objects
 - Qt Quick renders the **scene** of the renderer: into a window of its own (native swap chain; on Windows on a D3D11 device shared across windows) or into a texture of Stride
@@ -70,7 +70,7 @@ per vvvv frame:
 - **Input:** `vlqt_app_advance_animations` refuses a time that is NaN, infinite or out of range (`VLQT_ERR_BAD_ARGUMENT`)
 - **Exception:** a QML `Timer` in a user file (`QmlElement`) runs on wall time. QML animations follow the clock.
 
-The pump and the perf segments are in [design/timing.md](design/timing.md).
+The pump and the perf segments are in [design/timing.md](../design/timing.md).
 
 ## Threads
 
@@ -78,13 +78,13 @@ QtNative runs on the thread that calls `vlqt_app_init`: the Qt GUI thread, in vv
 
 | Thread | Name | Runs | Owner |
 |---|---|---|---|
-| Qt GUI thread = vvvv main thread | `vlqt-gui` | the pump, items, polish, input, `vlqt_scene_apply`, the reconciler, all windows (sync and render too) | [design/render-loop.md](design/render-loop.md) |
-| Render threads | `vlqt-render-0` … | the scene graph and `QRhi` of the offscreen scenes (`QtTexture`, `QtRenderer`): sync, render, end of frame | [design/render-thread.md](design/render-thread.md) |
-| Resource workers | `vlqt-res-0` … | decoding of images and shader work for the resource manager; their number is `VLQT_RES_WORKERS` (at most 16) | [design/resources.md](design/resources.md#threads) |
-| The audio thread of VL.Audio | (VL.Audio's) | `vlqt_audio_tap_read` and `vlqt_audio_tap_now_ns` | [video-audio.md](video-audio.md) |
+| Qt GUI thread = vvvv main thread | `vlqt-gui` | the pump, items, polish, input, `vlqt_scene_apply`, the reconciler, all windows (sync and render too) | [design/render-loop.md](../design/render-loop.md) |
+| Render threads | `vlqt-render-0` … | the scene graph and `QRhi` of the offscreen scenes (`QtTexture`, `QtRenderer`): sync, render, end of frame | [design/render-thread.md](../design/render-thread.md) |
+| Resource workers | `vlqt-res-0` … | decoding of images and shader work for the resource manager; their number is `VLQT_RES_WORKERS` (at most 16) | [design/resources.md](../design/resources.md#threads) |
+| The audio thread of VL.Audio | (VL.Audio's) | `vlqt_audio_tap_read` and `vlqt_audio_tap_now_ns` | [video-audio.md](../video-audio.md) |
 
-- **Windows render on the GUI thread, on purpose.** QtNative sets Qt's `basic` render loop: a window renders inside the pump, at most once per pump, in step with vvvv. A threaded loop for windows is rejected in [design/render-loop.md](design/render-loop.md), which also lists the code that relies on `basic`.
-- **Offscreen scenes render on Qt render threads.** A `QtTexture` or `QtRenderer` is rendered by a thread of a pool that is shared by all offscreen scenes of the process. Per changed scene the main thread polishes the items and hands over; the render thread syncs while that call waits and renders after it returned; Stride's GPU waits for the write fence, its CPU does not wait. The size of the pool is the pin `Render Threads` of `QtTexture` and `QtRenderer` (default 1, 0 = main-thread mode, which runs the same code inline; the largest value of all nodes counts). Users: [diagnostics.md](diagnostics.md#qttexture-render-thread).
+- **Windows render on the GUI thread, on purpose.** QtNative sets Qt's `basic` render loop: a window renders inside the pump, at most once per pump, in step with vvvv. A threaded loop for windows is rejected in [design/render-loop.md](../design/render-loop.md), which also lists the code that relies on `basic`.
+- **Offscreen scenes render on Qt render threads.** A `QtTexture` or `QtRenderer` is rendered by a thread of a pool that is shared by all offscreen scenes of the process. Per changed scene the main thread polishes the items and hands over; the render thread syncs while that call waits and renders after it returned; Stride's GPU waits for the write fence, its CPU does not wait. The size of the pool is the pin `Render Threads` of `QtTexture` and `QtRenderer` (default 1, 0 = main-thread mode, which runs the same code inline; the largest value of all nodes counts). Users: [diagnostics.md](../diagnostics.md#qttexture-render-thread).
 - **Elements, reconciler, input and `apply` never leave the main thread.** A render thread touches items only while the main thread waits in the sync.
 - **Engines.** Windows and offscreen scenes each have their own `QQmlEngine`; user QML is compiled on the engine of its scene.
 
@@ -98,11 +98,11 @@ Every export of `vlqt.h` belongs to the GUI thread, except six that run on any t
 | Change counter of a scene (`app/scene_change.cpp`) | its sync hook runs on the scene's render thread in the threaded mode | the GUI thread waits in the blocking sync job of the batch; a counter shares no state with another |
 | Resources, offscreen render threads | own workers and render threads | their own locks and queues (`resources/`, `device/render_thread.cpp`) |
 
-The shared device and its context lock are in [design/gpu-device.md](design/gpu-device.md).
+The shared device and its context lock are in [design/gpu-device.md](../design/gpu-device.md).
 
 ## Protocol and interop
 
-- **CommandWriter (C#):** per frame `Clear()`, `Set…()`, `EndFrame()`, then a `ReadOnlySpan<byte>` goes to QtNative with one call. The way back is one event buffer per scene ([design/native-boundary.md](design/native-boundary.md); the meaning of every command and event is in [protocol.md](protocol.md))
+- **CommandWriter (C#):** per frame `Clear()`, `Set…()`, `EndFrame()`, then a `ReadOnlySpan<byte>` goes to QtNative with one call. The way back is one event buffer per scene ([design/native-boundary.md](../design/native-boundary.md); the meaning of every command and event is in [protocol.md](protocol.md))
 - **Protocol:** shared type, property and event IDs in `protocol.h` / `Protocol.cs`; `ProtocolDriftTests`, `NativeLayoutTests` and `ApiDriftTests` in `VL.Qt.Tests` detect mismatches (constants, fixed wire sizes, struct layouts, exports against `[DllImport]`s). `VLQT_ABI_VERSION` / `Protocol.AbiVersion` number the protocol and the C ABI together: `QtApp` reads `vlqt_app_get_abi_version()` before the first window and refuses a `vlqt.dll` with another number or without the export (no window, one log error naming both versions and the path, every Renderer node fails with that message)
 - **QtNative:** owns the `QGuiApplication` (one per process); per scene a `QQuickWindow` and a `QQmlEngine`; exposed via P/Invoke (`vlqt_window_create`, `vlqt_offscreen_create`, `vlqt_scene_apply`, `vlqt_scene_poll`, ...), declared in `src/VL.Qt/Interop/` (`Native.*.cs` one file per group of `vlqt.h`, `QtNativeLibrary.cs` finds and loads `vlqt.dll`)
 - **Reconciler (C#):** tracks live Qt objects by ID and calls the command sink (`Create`, `Destroy`, `Reparent`, `Set*`) for each difference
@@ -124,27 +124,27 @@ Each has a design note; this is where its code lives.
 
 | Subsystem | C# | QtNative | Note |
 |---|---|---|---|
-| Elements and items | `Elements/`, `Nodes/Elements/`, `Nodes/Widgets/` | `elements/` (`element_types.cpp`, `type_*.cpp`), `qml/elements/` | [element-model](design/element-model.md) |
-| Reconciler | `Reconciliation/` | `scene/commands.cpp` | [reconciler](design/reconciler.md), [reconciler-identity](design/reconciler-identity.md) |
-| Events and interaction | `Elements/Feedback/`, `Nodes/Interaction/`, `Reconciliation/FeedbackRouter.cs` | `scene/handlers.*`, `scene/touch_handler.*`, `scene/event_queue.*`, `qml/handlers/` | [events-and-interaction](design/events-and-interaction.md), [input](design/input.md) |
-| Resources: images, snapshots, shaders, audio tap | `Images/`, `Nodes/Images/` | `resources/`, `shader_resource.*`, `snapshot_resource.*`, `image_writer.*` | [resources](design/resources.md) |
-| Effects and the Shader element | `Elements/Effects/`, `Elements/Shaders/`, `Shaders/`, `Nodes/Effects/`, `Nodes/Shaders/` | `effects/`, `qml/effects/`, `shaders/` | [effects](design/effects.md) |
-| Styles | `Styles/`, `Nodes/Style/` | `style/` (`vl_style.*`, the QML style `VLQt`) | [styles](design/styles.md) |
-| Paths | `Paths/`, `Nodes/Paths/` | `elements/shape_path_element.cpp`, `type_shape.cpp` | [paths](design/paths.md) |
-| User QML | `Qml/`, `Nodes/Qml/`, `NodeFactories/` | `user_qml/` | [user-qml](design/user-qml.md) |
-| Previous frame, MSAA | `Scene/Multisample.cs` | `scene/previous_frame_layer.*`, `scene/clear_state.*` | [clear-and-msaa](design/clear-and-msaa.md) |
-| GPU device, offscreen scenes, Stride output | `Scene/OffscreenScene.cs`, `src/VL.Qt.Stride/` | `device/`, `offscreen/` | [gpu-device](design/gpu-device.md), [render-thread](design/render-thread.md), [stride-output](design/stride-output.md), [offscreen-input](design/offscreen-input.md) |
-| Audio tap | `src/VL.Qt.Audio/` | `resources/audio_tap.*` | [video-audio.md](video-audio.md), [resources](design/resources.md) |
-| Diagnostics, perf | `Window/`, `Runtime/PumpDiagnostics.cs` | `diagnostics/` | [timing](design/timing.md), [diagnostics.md](diagnostics.md) |
-| Packaging and loading | `Interop/QtNativeLibrary.cs`, `buildTransitive/` | `platform/` | [deployment](design/deployment.md) |
+| Elements and items | `Elements/`, `Nodes/Elements/`, `Nodes/Widgets/` | `elements/` (`element_types.cpp`, `type_*.cpp`), `qml/elements/` | [element-model](../design/element-model.md) |
+| Reconciler | `Reconciliation/` | `scene/commands.cpp` | [reconciler](../design/reconciler.md), [reconciler-identity](../design/reconciler-identity.md) |
+| Events and interaction | `Elements/Feedback/`, `Nodes/Interaction/`, `Reconciliation/FeedbackRouter.cs` | `scene/handlers.*`, `scene/touch_handler.*`, `scene/event_queue.*`, `qml/handlers/` | [events-and-interaction](../design/events-and-interaction.md), [input](../design/input.md) |
+| Resources: images, snapshots, shaders, audio tap | `Images/`, `Nodes/Images/` | `resources/`, `shader_resource.*`, `snapshot_resource.*`, `image_writer.*` | [resources](../design/resources.md) |
+| Effects and the Shader element | `Elements/Effects/`, `Elements/Shaders/`, `Shaders/`, `Nodes/Effects/`, `Nodes/Shaders/` | `effects/`, `qml/effects/`, `shaders/` | [effects](../design/effects.md) |
+| Styles | `Styles/`, `Nodes/Style/` | `style/` (`vl_style.*`, the QML style `VLQt`) | [styles](../design/styles.md) |
+| Paths | `Paths/`, `Nodes/Paths/` | `elements/shape_path_element.cpp`, `type_shape.cpp` | [paths](../design/paths.md) |
+| User QML | `Qml/`, `Nodes/Qml/`, `NodeFactories/` | `user_qml/` | [user-qml](../design/user-qml.md) |
+| Previous frame, MSAA | `Scene/Multisample.cs` | `scene/previous_frame_layer.*`, `scene/clear_state.*` | [clear-and-msaa](../design/clear-and-msaa.md) |
+| GPU device, offscreen scenes, Stride output | `Scene/OffscreenScene.cs`, `src/VL.Qt.Stride/` | `device/`, `offscreen/` | [gpu-device](../design/gpu-device.md), [render-thread](../design/render-thread.md), [stride-output](../design/stride-output.md), [offscreen-input](../design/offscreen-input.md) |
+| Audio tap | `src/VL.Qt.Audio/` | `resources/audio_tap.*` | [video-audio.md](../video-audio.md), [resources](../design/resources.md) |
+| Diagnostics, perf | `Window/`, `Runtime/PumpDiagnostics.cs` | `diagnostics/` | [timing](../design/timing.md), [diagnostics.md](../diagnostics.md) |
+| Packaging and loading | `Interop/QtNativeLibrary.cs`, `buildTransitive/` | `platform/` | [deployment](../design/deployment.md) |
 
 ## Rendering
 
 1. Each `QQuickWindow` renders directly into its own swap chain: Direct3D 11 on Windows (one device shared by all windows and images), OpenGL on Linux
 2. Windows: no `exec()` and no render thread. Qt's `basic` render loop, pumped once per vvvv frame (`vlqt_app_process_events_for`) on the GUI thread; each window renders at most once per pump. Offscreen scenes render on render threads, see [Threads](#threads)
-3. VSync on by default to avoid tearing, but vvvv's frame clock still controls timing: a frame may wait up to one refresh interval inside the pump (at the start of the frame, F5 segment "vsync wait"). The Renderer's `VSync` pin off gives swap interval 0 (never blocks, tearing allowed). See [Timing](design/timing.md)
-4. Clear off (the `Clear` pin of `Renderer` and `QtTexture`) keeps the previous frame: a swap chain discards its back buffer after `Present`, so `vlqt::Scene` keeps a `PreviousFrameLayer` (through its `ClearState`) under the content while `Clear` is off. Same code for windows and offscreen scenes; details in [Clear and MSAA](design/clear-and-msaa.md)
-5. `QtTexture` and `QtRenderer` render a scene without a window into a shared Stride texture, see [Stride output](design/stride-output.md)
+3. VSync on by default to avoid tearing, but vvvv's frame clock still controls timing: a frame may wait up to one refresh interval inside the pump (at the start of the frame, F5 segment "vsync wait"). The Renderer's `VSync` pin off gives swap interval 0 (never blocks, tearing allowed). See [Timing](../design/timing.md)
+4. Clear off (the `Clear` pin of `Renderer` and `QtTexture`) keeps the previous frame: a swap chain discards its back buffer after `Present`, so `vlqt::Scene` keeps a `PreviousFrameLayer` (through its `ClearState`) under the content while `Clear` is off. Same code for windows and offscreen scenes; details in [Clear and MSAA](../design/clear-and-msaa.md)
+5. `QtTexture` and `QtRenderer` render a scene without a window into a shared Stride texture, see [Stride output](../design/stride-output.md)
 
 The offscreen textures inside a scene (Effect layers, ShaderEffect sources, Snapshot) are a different mechanism and stay inside Qt.
 
@@ -221,7 +221,7 @@ Public types that the pins of the companion nodes carry (`IElement`, `Space`, `M
 
 ## Where to read on
 
-- [design/](design/README.md): one note per subsystem with the reasons and the rejected alternatives; the table under [Subsystems](#subsystems) names each.
+- [design/](../design/README.md): one note per subsystem with the reasons and the rejected alternatives; the table under [Subsystems](#subsystems) names each.
 - [protocol.md](protocol.md): what every command and event means.
 - [development.md](development.md): build, test, scripts.
-- [profiling.md](profiling.md) and [research/](research/render-texture-measurements.md): measurements. Limits that the SmokeTest enforces are in `src/VL.Qt.SmokeTest/PerfLimits.cs`.
+- [profiling.md](profiling.md) and [research/](../research/render-texture-measurements.md): measurements. Limits that the SmokeTest enforces are in `src/VL.Qt.SmokeTest/PerfLimits.cs`.

@@ -4,7 +4,7 @@
 
 `Video (VL.Audio)` is **experimental** (`SymbolSmell.Experimental`, like the other companion nodes) until its end-to-end latency has been checked in vvvv on Windows x64 (see [Output latency](#output-latency)).
 
-Help patch: `HowTo Play a Video with VL.Audio` (in the Help Browser under `Audio`, package `VL.Qt.Audio`; the one place where VL.Audio is sure to be installed). Run it with `tools/start-vvvv.ps1 -Patch "VL.Qt.Audio/help/HowTo Play a Video with VL.Audio.vl"`.
+Help patch: `HowTo Play a Video with VL.Audio` (in the Help Browser under `Audio`, package `VL.Qt.Audio`; the one place where VL.Audio is sure to be installed).
 
 ## Two nodes
 
@@ -79,8 +79,4 @@ The buffer is an upper bound for what the sound waits before the mixer (12 ms fo
 - No reverse playback (like `Video`: `Rate` below 0.01 is clamped).
 - Not frame-exact, see [Accuracy](#sync).
 
-## Tests
-
-- `src/VL.Qt.Audio.Tests`: the control loop with simulated clocks (drift, jitter), underrun, discontinuities, rate change and allocations per buffer, without VL.Audio or Qt.
-- SmokeTest scenario `videoaudio` (`dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=videoaudio`): QtNative with `help/Qt/assets/qt-help-video-audio.mp4`, samples, rate, loop wrap, pause and source change, audio/frame consistency.
-- Help patch: `tools/vl-patch-check.py` and `tools/vvvvc.ps1 -File "VL.Qt.Audio/help/HowTo Play a Video with VL.Audio.vl"` (the script packs `VL.Qt` and `VL.Qt.Audio` into a local feed; VL.Audio is restored from NuGet).
+For contributors: how to run the help patch from the repository and the tests are in [Development](contributing/development.md#video-vlaudio-tests).

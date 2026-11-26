@@ -1,6 +1,6 @@
 # Sanitizer stress run (img08, #365): resource-stress scenario of the SmokeTest against a libvlqt.so built with
 # AddressSanitizer / ThreadSanitizer (presets linux-x64-asan / linux-x64-tsan). Finds races, use-after-free and leaks in
-# QtNative's resource manager that the normal tests do not reach. Build: tools/build-native.sh --sanitize (docs/development.md).
+# QtNative's resource manager that the normal tests do not reach. Build: tools/build-native.sh --sanitize (docs/contributing/development.md).
 #
 # When: NOT part of every PR. Trigger it by hand (Actions > sanitizers > Run workflow, inputs seconds/seed) before a
 # release or after changes to src/VL.Qt.Native/resources*, threading or lifecycle code. The pull_request trigger only

@@ -1,6 +1,6 @@
 # Clear and MSAA
 
-How `Clear` off (keep the previous frame) and the `Multisample Count` pin (anti-aliasing) work for windows and offscreen scenes. Code: `src/VL.Qt.Native/scene/previous_frame_layer.h/.cpp` (`PreviousFrameLayer`), `scene/clear_state.h/.cpp` (`ClearState`), `scene/scene.cpp` (`Scene::moveToWindow`), `window/window.cpp` (`replaceWindow`, `vlqt_window_set_samples`), `offscreen/offscreen_binding.cpp` and `device/device.cpp` (`clampSamples`). User-facing behaviour is under Rendering in [../architecture.md](../architecture.md#rendering). Both features change how a scene reaches its target, so they sit together: switching MSAA on a window while `Clear` is off moves the layer.
+How `Clear` off (keep the previous frame) and the `Multisample Count` pin (anti-aliasing) work for windows and offscreen scenes. Code: `src/VL.Qt.Native/scene/previous_frame_layer.h/.cpp` (`PreviousFrameLayer`), `scene/clear_state.h/.cpp` (`ClearState`), `scene/scene.cpp` (`Scene::moveToWindow`), `window/window.cpp` (`replaceWindow`, `vlqt_window_set_samples`), `offscreen/offscreen_binding.cpp` and `device/device.cpp` (`clampSamples`). User-facing behaviour is under Rendering in [../architecture.md](../contributing/architecture.md#rendering). Both features change how a scene reaches its target, so they sit together: switching MSAA on a window while `Clear` is off moves the layer.
 
 ## Context
 

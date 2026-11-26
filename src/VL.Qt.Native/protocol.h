@@ -1,6 +1,6 @@
 /*
  * protocol.h - single source of truth for the VL.Qt command buffer protocol: the wire format only.
- * What the commands, events and values mean (ordering, defaults, error behaviour): docs/protocol.md.
+ * What the commands, events and values mean (ordering, defaults, error behaviour): docs/contributing/protocol.md.
  *
  * Mirrored 1:1 in src/VL.Qt/Wire/Protocol.cs. The unit test ProtocolDriftTests parses this file
  * and compares every constant (name + value) with Protocol.cs, so keep the format simple:
@@ -149,7 +149,7 @@ enum vlqt_element_type {
  * may serve several types. Blocks: 256.. Rectangle, 512.. Text, 544.. Image, 576.. Row/Column, 608.. reserved, 640.. size mode
  * of containers, 672.. Video, 704.. Controls (706.. value inputs), 768.. input handlers, 800.. reserved, 832.. MULTI keys (not
  * via SET), 896.. ShaderEffect, 928.. QmlElement, 960.. Shape. Geometry (size, anchor, transform) and the property blocks:
- * docs/protocol.md. */
+ * docs/contributing/protocol.md. */
 enum vlqt_property {
     VLQT_PROPERTY_SIZE = 1,       /* vec2 (w, h), logical pixels */
     VLQT_PROPERTY_TRANSFORM = 2,
@@ -283,7 +283,7 @@ enum vlqt_effect_chain_link {
     VLQT_EFFECT_CHAIN_LINK_SHADER = 2 /* filter shader link: template, shader ids, padding, strength (PYRAMID radius), uniforms */
 };
 
-/* Pass templates of a SHADER link (u16); the passes: docs/protocol.md, docs/effects-and-shaders.md */
+/* Pass templates of a SHADER link (u16); the passes: docs/contributing/protocol.md, docs/effects-and-shaders.md */
 enum vlqt_effect_template {
     VLQT_EFFECT_TEMPLATE_SINGLE = 1,   /* one pass of the shader over the input */
     VLQT_EFFECT_TEMPLATE_TWO_PASS = 2, /* the shader twice: passIndex 0, then 1 (motion blurs) */
@@ -295,7 +295,7 @@ enum vlqt_style_set {
     VLQT_STYLE_SET_CLEAR = 1 /* empty the element's style table before applying the entries (full send) */
 };
 
-/* Style states (u8 of a SET_STYLE entry). Every field exists per state; rank and fallback: docs/protocol.md. */
+/* Style states (u8 of a SET_STYLE entry). Every field exists per state; rank and fallback: docs/contributing/protocol.md. */
 enum vlqt_style_state {
     VLQT_STYLE_STATE_NORMAL = 0,
     VLQT_STYLE_STATE_HOVERED = 1,
@@ -305,7 +305,7 @@ enum vlqt_style_state {
 };
 
 /* Style fields (u16 of a SET_STYLE entry), grouped by part: colors 1.., Frame 32.., Text 64.., Indicator 96.., Track 128..
- * The value type per field is fixed (comment). Lengths in logical pixels. What the parts are: docs/protocol.md. */
+ * The value type per field is fixed (comment). Lengths in logical pixels. What the parts are: docs/contributing/protocol.md. */
 enum vlqt_style_field {
     VLQT_STYLE_FIELD_FRAME_COLOR = 1,        /* color */
     VLQT_STYLE_FIELD_BORDER_COLOR = 2,       /* color, border of Frame and Indicator */
@@ -329,7 +329,7 @@ enum vlqt_style_field {
     VLQT_STYLE_FIELD_TRACK_RADIUS = 129      /* f32 */
 };
 
-/* Event ids of the poll buffer (u16), with the payload after the feedbackId. Meaning: docs/protocol.md. */
+/* Event ids of the poll buffer (u16), with the payload after the feedbackId. Meaning: docs/contributing/protocol.md. */
 enum vlqt_event {
     VLQT_EVENT_MEASURED = 1, /* 2 x f32 (w, h) */
     VLQT_EVENT_SCENE_BOUNDS = 2, /* 4 x f32 (x, y, w, h) */
@@ -450,7 +450,7 @@ enum vlqt_image_upload {
 };
 
 /* Pixel formats of vlqt_image_set_pixels are the VL PixelFormat numbers (VL.Core PixelFormat.cs, append-only). Which are taken
- * and how they are converted, and the snapshot and audio tap resources: docs/protocol.md. */
+ * and how they are converted, and the snapshot and audio tap resources: docs/contributing/protocol.md. */
 
 /* Flags of vlqt_audio_tap_state.flags (vlqt.h). */
 enum vlqt_audio_tap_flag {

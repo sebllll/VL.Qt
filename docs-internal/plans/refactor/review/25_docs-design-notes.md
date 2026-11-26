@@ -1,6 +1,6 @@
 # Review 25 – Documentation: decisions, plans, research, topics
 
-Claude Opus 5.5, 2026-11-19. Files read in full: `docs/decisions/` (device-sharing, element-catalog-v1, events, paths, qt-bridges, qtnative-deployment, reconciler-identity, render-texture, timing, user-qml), `docs/plans/paths/00_overview.md` … `10_gradients-brainstorm.md`, `docs/research/01_qt-bridge-csharp.md`, `02_shapes-spike.md`, `03_vl-node-versions.md`, `docs/topics/element-immutability.md`, `gradients.md`, `style-nodeset.md`, `user-qml.md` (28 pages, about 180 KB). From review 24 only section 4. Checked against the code with targeted searches (device, offscreen, protocol, element nodes, interaction nodes, style nodes, Stride package, QML item, CMake, packaging). Not read: `docs/plans/refactor/` (except the brief), the other reviews.
+Claude Opus 5.5, 2026-11-19. Files read in full: `docs/decisions/` (device-sharing, element-catalog-v1, events, paths, qt-bridges, qtnative-deployment, reconciler-identity, render-texture, timing, user-qml), `docs/plans/paths/00_overview.md` … `10_gradients-brainstorm.md`, `docs/research/01_qt-bridge-csharp.md`, `02_shapes-spike.md`, `03_vl-node-versions.md`, `docs/topics/element-immutability.md`, `gradients.md`, `style-nodeset.md`, `user-qml.md` (28 pages, about 180 KB). From review 24 only section 4. Checked against the code with targeted searches (device, offscreen, protocol, element nodes, interaction nodes, style nodes, Stride package, QML item, CMake, packaging). Not read: `docs-internal/plans/refactor/` (except the brief), the other reviews.
 
 ## 1 Summary
 
@@ -321,4 +321,4 @@ Folders `docs/decisions/`, `docs/topics/` and `docs/plans/paths/` disappear. The
 - Docs pages (24): `docs/user-qml.md` links five decision pages, `docs/shapes.md` two, `README.md` and `docs/diagnostics.md`, `docs/development.md`, `docs/architecture.md` link `render-texture.md`; all change with DOCD-15.
 - Docs pages (24): `docs/versioning.md` states that unstable nodes get `[Smell(SymbolSmell.Experimental)]`; generated QML nodes cannot (`decisions/user-qml.md:46`): the rule should name the exception.
 - Deployment/CI: open question "trimming windeployqt output" (`qtnative-deployment.md:47`: `Qt6OpenGL`, `Qt6Svg`, `qmltooling/`, `tls/`, `networkinformation/`) is not tracked anywhere visible.
-- Repository: `docs/plans/refactor/` itself is internal planning; decide before the repository goes public whether it stays.
+- Repository: `docs-internal/plans/refactor/` itself is internal planning; decide before the repository goes public whether it stays.

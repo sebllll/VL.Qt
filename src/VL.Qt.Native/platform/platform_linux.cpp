@@ -206,7 +206,7 @@ QString pathKey(const QFileInfo& file)
 // Unload hook. At process exit the CLR is already gone when Qt's static destructors log. libvlqt.so's destructors run
 // before those of libQt6Core.so (reverse dependency order), so cut the managed callback here. A destructor cannot tell
 // dlclose from exit, so Qt's default message handler replaces ours in both cases. Exported apps end with _exit
-// (ExportedApp.cs), which runs no destructors. Unloading QtNative is not supported otherwise (docs/architecture.md,
+// (ExportedApp.cs), which runs no destructors. Unloading QtNative is not supported otherwise (docs/contributing/architecture.md,
 // Lifetime).
 __attribute__((destructor)) static void vlqtUnload()
 {

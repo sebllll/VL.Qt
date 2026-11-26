@@ -10,11 +10,11 @@ VL.Qt brings Qt 6 (Qt Quick) to vvvv gamma as a library, focused on 2D graphics 
 - `src/VL.Qt.Native/` – **QtNative**, the C++ layer that owns Qt and the render thread (`vlqt.dll`, `libvlqt.so`).
 - `help/Qt/` – help patches (`HowTo …`), the test base for nodes and the user-facing examples.
 
-Tests live in `src/VL.Qt.Tests` (unit) and `src/VL.Qt.SmokeTest` (QtNative without vvvv). How the pieces fit: [docs/architecture.md](docs/architecture.md). Adding an element through all layers: [docs/contributing/add-an-element.md](docs/contributing/add-an-element.md). Index of all docs: [docs/README.md](docs/README.md).
+Tests live in `src/VL.Qt.Tests` (unit) and `src/VL.Qt.SmokeTest` (QtNative without vvvv). How the pieces fit: [docs/contributing/architecture.md](docs/contributing/architecture.md). Adding an element through all layers: [docs/contributing/add-an-element.md](docs/contributing/add-an-element.md). Index of all docs: [docs/README.md](docs/README.md).
 
 ## Setup and build
 
-Prerequisites, first build, the Visual Studio solution and every script are described in [docs/development.md](docs/development.md). In short, on Windows (PowerShell 7):
+Prerequisites, first build, the Visual Studio solution and every script are described in [docs/contributing/development.md](docs/contributing/development.md). In short, on Windows (PowerShell 7):
 
 ```powershell
 tools/setup-qt.ps1          # once: Qt for your machine's architecture into C:\Qt
@@ -25,7 +25,7 @@ tools/start-vvvv.ps1 -Help "Draw a Rectangle"
 - Check the architecture with PowerShell (`$env:PROCESSOR_ARCHITECTURE`: ARM64 → `win-arm64`, otherwise `win-x64`). Git Bash can report the wrong one on ARM64.
 - Only the Qt of your own architecture is needed locally; the other one is built by the CI.
 - vvvv comes from `-VvvvDir`, else `%VVVV_DIR%`, else the newest `C:\vvvv\vvvv_gamma_*-win-<arch>`.
-- Linux (build, run, tests under WSL or natively): [docs/linux.md](docs/linux.md), scripts `tools/*.sh`.
+- Linux (build, run, tests under WSL or natively): [docs/contributing/linux.md](docs/contributing/linux.md) (user side: [docs/linux.md](docs/linux.md)), scripts `tools/*.sh`.
 - After changes in QtNative, restart vvvv (it does not hot-reload native code).
 
 ## Tests
@@ -56,7 +56,7 @@ tools/vvvvc.ps1 -File "help/Qt/HowTo Draw Text.vl"
 
 `tools/vl-patch-check.py` is read-only: it compares the VL.Qt nodes in a patch with their pins in the node-API snapshot `src/VL.Qt.Tests/Api/node-api.txt` (read by `tools/vl_node_api.py`, create pins included; regenerate the snapshot after a C# change, see the node API test) and never moves or deletes anything. Errors (exit code 1): a hidden pin that holds a non-default value or a link (`hidden-non-default`; `--fix` makes such pins visible, its only change), an IOBox on `Interaction` (`forbidden-iobox`), a link to a pin the node no longer has (`missing-pin`). Hint (exit code 0): an input IOBox that holds the pin's default (`default-iobox`). Intended exceptions go into the baseline `help/.padlint.json` (patch, element Id, rule, reason) with `--accept <patch>`; add a short reason to each new entry. `tools/test-vl-patch-check.py` is its regression test.
 
-Renamed nodes and pins and moved categories reach the patches through one mapping file, never by hand: add rows `step | kind | scope | old | new` to `tools/vl-patch-mapping.txt` (format in its header) and run `python tools/vl-patch-migrate.py` (`--check` lists what would change and writes nothing). It rewrites every patch of the repository at once and changes only the names a row gives, in the format vvvv saves. The rows of one step apply together, so a swap works, and a second run changes nothing; on a merge conflict in a `.vl` file, merge the mapping file, take either side of the patch and run the script again. Exit code 2 means a bad, conflicting or unknown row (new names are looked up in `src/VL.Qt.Tests/Api/node-api.txt`) or a node whose state cannot be told; nothing is written then. Details: [docs/help-patches.md](docs/help-patches.md#renames). `tools/test-vl-patch-migrate.py` is its regression test.
+Renamed nodes and pins and moved categories reach the patches through one mapping file, never by hand: add rows `step | kind | scope | old | new` to `tools/vl-patch-mapping.txt` (format in its header) and run `python tools/vl-patch-migrate.py` (`--check` lists what would change and writes nothing). It rewrites every patch of the repository at once and changes only the names a row gives, in the format vvvv saves. The rows of one step apply together, so a swap works, and a second run changes nothing; on a merge conflict in a `.vl` file, merge the mapping file, take either side of the patch and run the script again. Exit code 2 means a bad, conflicting or unknown row (new names are looked up in `src/VL.Qt.Tests/Api/node-api.txt`) or a node whose state cannot be told; nothing is written then. Details: [docs/contributing/help-patches.md](docs/contributing/help-patches.md#renames). `tools/test-vl-patch-migrate.py` is its regression test.
 
 Rules for help patches:
 
@@ -64,7 +64,7 @@ Rules for help patches:
 - Put an IOBox on a pin only if its value differs from the default and says something in the help patch. An IOBox at a pin is the same to the node as an attached value or channel. Example: an IOBox at `Interaction` makes the element opaque to input, so never put one there.
 - Animate (LFO) only where it serves the element (motion demos); otherwise use fixed values.
 - Layout: compact regions, content stacked top to bottom in data-flow order, IOBoxes as a staircase above (inputs) and below (outputs) their node. Choose defaults so the effect is visible.
-- Text scheme: title (size 25), directly below ONE terse feature field (headline plus 3 to 5 short bullets), then the content, the longer notes in one `Notes:` comment at the very bottom. Details and example: [docs/help-patches.md](docs/help-patches.md).
+- Text scheme: title (size 25), directly below ONE terse feature field (headline plus 3 to 5 short bullets), then the content, the longer notes in one `Notes:` comment at the very bottom. Details and example: [docs/contributing/help-patches.md](docs/contributing/help-patches.md).
 - Every patch under `help/` is listed in `help/Help.xml` (Help Browser topics); add, rename or delete the line together with the patch.
 - Background: [vvvv gray book](https://thegraybook.vvvv.org) for the patching conventions.
 
@@ -124,7 +124,7 @@ python tools/fix-encoding.py --all             # repair all tracked files
 python tools/fix-encoding.py --check --all     # only report (exit 1 on a wrong BOM)
 ```
 
-Details: [docs/development.md](docs/development.md#encoding-and-git-hook).
+Details: [docs/contributing/development.md](docs/contributing/development.md#encoding-and-git-hook).
 
 ## Debugging
 
@@ -135,7 +135,7 @@ Hang, crash or exception in a running vvvv: take thread stacks and dumps instead
 - `QT_LOGGING_RULES` takes precedence and must be set before vvvv starts, e.g. `qt.scenegraph.*=true;qt.rhi.*=true;qt.qml.*=true`.
 - `QT_FATAL_WARNINGS=1` together with `procdump -e` finds the trigger of a warning.
 
-In-app overlays, logging and device loss: [docs/diagnostics.md](docs/diagnostics.md). CPU profiling: [docs/profiling.md](docs/profiling.md).
+In-app overlays, logging and device loss: [docs/diagnostics.md](docs/diagnostics.md). CPU profiling: [docs/contributing/profiling.md](docs/contributing/profiling.md).
 
 ## Branches and pull requests
 

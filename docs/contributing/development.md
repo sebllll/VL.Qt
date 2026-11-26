@@ -28,7 +28,7 @@ Open `src/VL.Qt.slnx` in Visual Studio 2026 (or 2022 from 17.14) or Rider. It co
 | `VL.Qt.Native` | QtNative (C++); building it calls `tools/build-native.ps1` (CMake + Ninja, Qt deploy) |
 | `VL.Qt` | the C# library (nodes, reconciler, interop); depends on `VL.Qt.Native` |
 | `VL.Qt.Stride` | companion package for Stride (Windows only, references VL.Stride and VL.Qt); builds into the package folder `VL.Qt.Stride/lib/net10.0-windows7.0/`. VL.Qt never references it. |
-| `VL.Qt.Audio` | companion package for VL.Audio (Windows only, references VL.Audio and VL.Qt); builds into the package folder `VL.Qt.Audio/lib/net10.0-windows7.0/`. VL.Qt never references it. See [video-audio.md](video-audio.md). |
+| `VL.Qt.Audio` | companion package for VL.Audio (Windows only, references VL.Audio and VL.Qt); builds into the package folder `VL.Qt.Audio/lib/net10.0-windows7.0/`. VL.Qt never references it. See [video-audio.md](../video-audio.md). |
 | `VL.Qt.Tests` | unit tests (NUnit), run them from the Test Explorer; they include the drift checks of `protocol.h` and `vlqt.h` against their C# mirrors and the node-API snapshot |
 | `VL.Qt.Audio.Tests` | unit tests of the sync loop of `Video (VL.Audio)` with simulated clocks (Windows only) |
 | `VL.Qt.SmokeTest` | NUnit project that drives QtNative without vvvv: windows, rendering, grabs, input, platform checks, performance limits; it covers the native side. Its assembly is also the helper executable of the scenarios that need a process of their own |
@@ -72,6 +72,15 @@ tools/vvvvc.ps1 -File help/HelloWorld.vl
 The SmokeTest also has scenarios that measure (poll cost, `QtTexture` render threads, pump spikes, tearing); how to run and read them is in [Profiling](profiling.md#smoketest-measurement-scenarios). Options of a run (stress duration, update of the reference images, perf limits) are NUnit run settings or environment variables `VLQT_SMOKE_<NAME>`, listed in `src/VL.Qt.SmokeTest/Framework/SmokeParameters.cs`. The drift checks are unit tests (`ProtocolDriftTests`, `NativeLayoutTests`, `ApiDriftTests`), see [Change the protocol](#typical-workflows).
 
 For the Linux runtime see [Linux](linux.md#building-the-linux-runtime-from-source).
+
+### Video (VL.Audio) tests
+
+The sound of `Video (VL.Audio)` is described in [Video sound through VL.Audio](../video-audio.md).
+
+- `src/VL.Qt.Audio.Tests`: the control loop with simulated clocks (drift, jitter), underrun, discontinuities, rate change and allocations per buffer, without VL.Audio or Qt.
+- SmokeTest scenario `videoaudio` (`dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=videoaudio`): QtNative with `help/Qt/assets/qt-help-video-audio.mp4`, samples, rate, loop wrap, pause and source change, audio/frame consistency.
+- Run the help patch from the repository with `tools/start-vvvv.ps1 -Patch "VL.Qt.Audio/help/HowTo Play a Video with VL.Audio.vl"`.
+- Help patch check: `tools/vl-patch-check.py` and `tools/vvvvc.ps1 -File "VL.Qt.Audio/help/HowTo Play a Video with VL.Audio.vl"` (the script packs `VL.Qt` and `VL.Qt.Audio` into a local feed; VL.Audio is restored from NuGet).
 
 ## Scripts
 
@@ -132,9 +141,9 @@ The repository builds three NuGet packages:
 |---|---|---|
 | `VL.Qt` | repo root (`VL.Qt.vl`, `help/`, `src/VL.Qt/`) | the Qt layer and the Qt runtime for Windows and Linux; platform-neutral, no Stride |
 | `VL.Qt.Stride` | `VL.Qt.Stride/` (package folder: `VL.Qt.Stride.vl`, `help/`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Stride/` | Qt scenes rendered into Stride textures, Windows only; depends on `VL.Qt` |
-| `VL.Qt.Audio` | `VL.Qt.Audio/` (package folder: `VL.Qt.Audio.vl`, `help/`, `README.md`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Audio/` | `Video (VL.Audio)`: the sound of a video as VL.Audio signals, Windows only; depends on `VL.Qt` (same version) and `VL.Audio`, see [video-audio.md](video-audio.md) |
+| `VL.Qt.Audio` | `VL.Qt.Audio/` (package folder: `VL.Qt.Audio.vl`, `help/`, `README.md`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Audio/` | `Video (VL.Audio)`: the sound of a video as VL.Audio signals, Windows only; depends on `VL.Qt` (same version) and `VL.Audio`, see [video-audio.md](../video-audio.md) |
 
-`VL.Qt` never references `VL.Qt.Stride` or `VL.Qt.Audio`. `VL.Qt.Stride.vl` (like `VL.Qt.Audio.vl`) is a minimal package document (dependencies and the assembly, no nodes); its help patches may be written in vvvv or directly (see `AGENTS.md`, "Checking patches"); `lib/` is not tracked by git. Why this layout: [design/stride-output.md](design/stride-output.md#package-layout).
+`VL.Qt` never references `VL.Qt.Stride` or `VL.Qt.Audio`. `VL.Qt.Stride.vl` (like `VL.Qt.Audio.vl`) is a minimal package document (dependencies and the assembly, no nodes); its help patches may be written in vvvv or directly (see `AGENTS.md`, "Checking patches"); `lib/` is not tracked by git. Why this layout: [design/stride-output.md](../design/stride-output.md#package-layout).
 
 ```powershell
 dotnet build src/VL.Qt.Stride -c Release                  # DLL into VL.Qt.Stride/lib/net10.0-windows7.0/
@@ -143,43 +152,9 @@ dotnet pack src/VL.Qt.Stride -c Release -p:Version=1.2.3  # VL.Qt.Stride.1.2.3.n
 
 **All three packages have the same version**: `VersionPrefix` in `Directory.Build.props` for local builds, one `-p:Version` for all in the CI. `VL.Qt.Stride` and `VL.Qt.Audio` declare their dependency on `VL.Qt` with the version of the project reference, so packing one of them with another `-p:Version` than `VL.Qt` points it at a `VL.Qt` that was not released with it. Packing `VL.Qt` needs the native Qt trees first, see the comment in `src/VL.Qt/VL.Qt.csproj`.
 
-The CI (`build.yml`) builds `VL.Qt.Stride` and `VL.Qt.Audio` on the Windows runners and packs them in the job `pack` on every run, so a broken pack shows up on a pull request. The steps "Verify package (VL.Qt.Stride)" and "Verify package (VL.Qt.Audio)" check the layout and the nuspec (id, version, dependencies: `VL.Qt` at the same version, for Audio also `VL.Audio`). A tag or a plain `workflow_dispatch` uploads all three `.nupkg` files; the release attaches them to the GitHub release and pushes them to nuget.org (see [Release](#release)).
+The CI (`build.yml`) builds `VL.Qt.Stride` and `VL.Qt.Audio` on the Windows runners and packs them in the job `pack` on every run, so a broken pack shows up on a pull request. The steps "Verify package (VL.Qt.Stride)" and "Verify package (VL.Qt.Audio)" check the layout and the nuspec (id, version, dependencies: `VL.Qt` at the same version, for Audio also `VL.Audio`). A tag or a plain `workflow_dispatch` uploads all three `.nupkg` files; the release attaches them to the GitHub release and pushes them to nuget.org (see [Release](../maintaining/release.md#release)).
 
 For vvvv, `tools/start-vvvv.ps1` puts the package folders into its package repository as junctions (`VL.Qt`, `VL.Qt.Stride`, `VL.Qt.Audio`), so all are source packages in the dev workflow.
-
-## CI
-
-The workflows are in `.github/workflows/` (`build.yml`, `public-check.yml`; `sanitizers.yml` runs by hand). Every action is pinned to a full commit SHA with the version as a comment, Dependabot keeps the pins current.
-
-The repository `sebllll/VL.Qt` differs from forks and private copies in a few places. What costs minutes is keyed on the repository being public (`github.event.repository.private == false`), so it stays off while the repository is private; the nuget.org push, the CLA and the contributor workflows check the name `sebllll/VL.Qt` (GitHub compares it case-insensitively):
-
-- The hosted runners are free for public repositories, so the `win-arm64` and `linux-arm64` entries also run on pull requests. Elsewhere they run only on tags and on a plain `workflow_dispatch`.
-- The workflow `public-check.yml` (keyed on the name only, so it runs while the repository is private too) fails on every pull request and push to `develop` and `main` if a file of a maintainer-only working directory (plans, internal notes, local agent settings) is tracked. Its job is a required status check.
-- The `release` job runs only for a `v*` tag whose commit is on `main` (job `release-gate`), in the GitHub environment `release`. In `sebllll/VL.Qt` with the environment variable `NUGET_USER` set, it also pushes all `.nupkg` files (`VL.Qt`, `VL.Qt.Stride`, `VL.Qt.Audio`) to nuget.org through Trusted Publishing (no stored API key); elsewhere or without the variable that step is skipped with a notice. See [Release](#release).
-- Pull requests use `pull_request` (not `pull_request_target`); their jobs get no secrets and only `contents: read`.
-
-## Release
-
-One-time setup by a maintainer (repository settings):
-
-- [ ] Environment `release` (Settings > Environments): deployment branches and tags limited to `v*`. A required reviewer is optional: the tag ruleset below already decides who can release.
-- [ ] nuget.org Trusted Publishing policy (nuget.org > account > Trusted Publishing): one single policy for all packages, repository owner `sebllll`, repository `VL.Qt`, workflow file `build.yml`, environment `release`, package patterns `VL.Qt`, `VL.Qt.Audio`, `VL.Qt.Stride`, scope "Push new packages and package versions" (needed for package IDs that do not exist yet). Do not create one policy per package: with three policies of the same origin the push of `VL.Qt.Audio` got a 403 (v0.9.9). A package ID that is added later must be added to the patterns by hand on nuget.org before the first release that contains it; nothing in the repository or the CI does that, and without it the push of that package fails. A policy for a private repository is only active for a few days until its first successful push binds it to the repository; if it expired, create it again.
-- [ ] Environment variable `NUGET_USER` in `release` (not a secret): the nuget.org profile name that owns the policy.
-- [ ] Rulesets (Settings > Rules > Rulesets):
-  - `develop` and `main`: pull request required, no deletion or force push, required check `public check (no private files or content)`.
-  - `main` only: restrict updates, bypass for the role Repository admin in pull requests only. Others with write access can open pull requests to `main` but not merge them.
-  - Tags `refs/tags/v*`: restrict creation, update and deletion, bypass for the role Repository admin. Only admins can start a release. This is the actual protection: a tag runs `build.yml` as it is in the tagged commit, so the job `release-gate` alone does not stop a tag on a branch with a changed workflow.
-
-Per release:
-
-- [ ] Everything for the release is merged into `develop`; `tools/build.ps1 -Test` and the CI on `develop` are green.
-- [ ] Open the PR `develop` -> `main` and merge it with a merge commit (no squash).
-- [ ] Tag the merge commit on `main`: `git tag v<version>` (for example `v1.0.0`, `v1.1.0-rc.1`) and `git push origin v<version>`. The tag name is the package version.
-- [ ] The tag starts `build.yml` with all four RIDs. Check the job `pack`: the step "Verify package" prints the package size (limit 250 MB), the `qt/<rid>/` layout and the nuspec metadata (id, version, license, repository); the steps "Verify package (VL.Qt.Stride)" and "Verify package (VL.Qt.Audio)" do the same for the companion packages.
-- [ ] The job `release` creates the GitHub release with all `.nupkg` files and pushes them to nuget.org (approve the deployment first if the environment has a required reviewer).
-- [ ] Without `NUGET_USER` (or in a fork) the push is skipped with a notice instead of an error. A failed login means the policy does not match (repository, workflow file, environment) or has expired. Fallback: push by hand with `dotnet nuget push <file> -s https://api.nuget.org/v3/index.json -k <key>` and a short-lived API key.
-- [ ] A tag on a commit that is not on `main` builds and tests but does not release (warning in the job `release-gate`). Delete the tag and tag the right commit.
-- [ ] After publishing: check the package on nuget.org and install it with `tools/start-vvvv-with-nupkg.ps1`.
 
 ## Encoding and git hook
 
@@ -266,6 +241,6 @@ tools/                      # build, test, patch-check, profiling and release sc
 4. Run `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"` to check that header and C# agree: constants and fixed wire sizes of `protocol.h` and the constants of `vlqt_test.h` (`ProtocolDriftTests`, against `Protocol.cs` and `TestProtocol.cs`), struct layouts of `vlqt.h` (`NativeLayoutTests`, numbers also in the `static_assert`s of `app/app.cpp`) and the `VLQT_API` exports of `vlqt.h`, `vlqt_test.h` and `testkit/testkit.h` against the `[DllImport]`s of `Native` and `NativeTest` (`ApiDriftTests`)
 5. Implement both sides (`elements/`, `Elements/`, `Reconciliation/`)
 
-**Add a new element type:** follow the walkthrough [Add an element](contributing/add-an-element.md): protocol entry, element record, diff, node, QtNative item, feedback, tests and help patch. The conventions of the node are in [Adding an element node](architecture.md#adding-an-element-node).
+**Add a new element type:** follow the walkthrough [Add an element](add-an-element.md): protocol entry, element record, diff, node, QtNative item, feedback, tests and help patch. The conventions of the node are in [Adding an element node](architecture.md#adding-an-element-node).
 
 See [Architecture](architecture.md) for how the pieces fit together.

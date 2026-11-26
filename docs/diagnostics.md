@@ -96,4 +96,4 @@ On Windows, Qt Quick shares one Direct3D 11 device with all windows and images. 
 
 ## CPU profiling
 
-For repeatable CPU measurements see [Profiling](profiling.md).
+For repeatable CPU measurements see [Profiling](contributing/profiling.md).

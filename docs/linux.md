@@ -42,7 +42,7 @@ tools/vvvvc.ps1 -File "help/Qt/HowTo Draw a Rectangle.vl" -Out build/export-linu
 The export contains an executable without file extension (`HelloWorldLinux`), its `.dll` files and the Qt runtime in `runtimes/linux-x64/native/` (only for this RID, about 120 MB on x64). vvvvc exports **self-contained** by default: the .NET runtime is inside the folder (on x64 about 550 MB in total for `HelloWorldLinux`), so the target needs no .NET. With `--self-contained false` the export is framework-dependent (about 130 MB on x64) and needs the .NET 10 runtime on the target.
 
 > [!IMPORTANT]
-> The Qt runtime for Linux has to be inside the VL.Qt package you export with. The release package contains all four RIDs. When you work with VL.Qt from the repo sources, build the Linux runtime first in WSL (see [Building the Linux runtime from source](#building-the-linux-runtime-from-source)), otherwise `runtimes/linux-*` is missing from the export. The export still succeeds in that case; the check is a `runtimes/<rid>/native/` folder in the export (about 45 files).
+> The Qt runtime for Linux has to be inside the VL.Qt package you export with. The release package contains all four RIDs. When you work with VL.Qt from the repo sources, build the Linux runtime first in WSL (see [Building the Linux runtime from source](contributing/linux.md#building-the-linux-runtime-from-source)), otherwise `runtimes/linux-*` is missing from the export. The export still succeeds in that case; the check is a `runtimes/<rid>/native/` folder in the export (about 45 files).
 
 > [!WARNING]
 > The `.props` next to a patch wins over `--rid`. `help/HelloWorldLinux.props` says `linux-x64`: exported on an arm64 machine with only the `linux-arm64` runtime built, it silently gets **no Qt runtime** at all. For arm64 use a patch without a `.props` and the arguments above, or set the runtime identifier to `linux-arm64` in the exporter dialog.
@@ -76,7 +76,7 @@ sudo apt install -y libgl1 libegl1 libgbm1 libgl1-mesa-dri libxkbcommon0 libxkbc
 curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 10.0 --runtime dotnet
 ```
 
-The last line installs the .NET runtime into `~/.dotnet` without sudo. `tools/setup-wsl.sh` without arguments does the same plus the build tools and the .NET SDK for [building from source](#building-the-linux-runtime-from-source).
+The last line installs the .NET runtime into `~/.dotnet` without sudo. `tools/setup-wsl.sh` without arguments does the same plus the build tools and the .NET SDK for [building from source](contributing/linux.md#building-the-linux-runtime-from-source).
 
 ## 4. Run it in WSL
 
@@ -104,38 +104,6 @@ On a real Linux machine it is the same: copy the folder, install the packages (`
 
 VL.Qt sets no font family, so Qt takes the system default via fontconfig (DejaVu Sans on Ubuntu/WSL). Install a font package on the target, e.g. `sudo apt install fontconfig fonts-dejavu-core`. A minimal or kiosk system without any font would render all text as empty boxes (tofu): in that case VL.Qt logs a warning (category `vlqt.font`) and falls back to the DejaVu Sans Regular in the bundle (`fonts/DejaVuSans.ttf`, only used when no system font exists). Other fonts used by your content have to be installed on the target, or shipped with the export: put the files in a `fonts/` folder next to the patch and load them with `LoadFont`, see [Exporting an app](export.md#fonts). `fonts/` is copied next to the executable and works the same on Linux. Without the font, Qt substitutes another one and VL.Qt logs the missing family once (category `vlqt.font`). Check the license of a font before shipping it.
 
-## Building the Linux runtime from source
-
-Needed when you export for Linux from the repo sources (the release package already contains it). In the WSL shell, inside the repo (clone it in WSL, or copy the checkout; the repo is also visible under `/mnt/c/...`, but building in the Linux file system is faster):
-
-```bash
-tools/setup-wsl.sh          # once: packages + .NET 10 SDK, about 1.5 minutes (x64 on a fast line: 40 s)
-tools/setup-qt.sh           # once: Qt 6.12 for Linux into ~/Qt, about 1.5 minutes, 2 GB (x64 on a fast line: 25 s)
-tools/build-native.sh       # libvlqt.so
-tools/deploy-linux.sh       # Qt bundle next to it in runtimes/linux-<arch>/native
-tools/test-linux.sh --skip-native   # optional: SmokeTest + unit tests (--software: without an X server, effect pixel checks skipped)
-```
-
-`tools/test-linux.sh` without `--skip-native` runs the build and the bundle step itself (about 1 minute). The RID follows the WSL architecture (`linux-x64` or `linux-arm64`). After that, an export from Windows with this RID includes the Linux runtime. When the repo lives in the WSL file system, copy `runtimes/linux-<arch>` into the `runtimes/` folder of the Windows checkout first. On x64 building directly in `/mnt/c/<path-to-repo>` also works (QtNative 20 s, bundle 20 s) and needs no copy. The Linux scripts are listed in [Development](development.md#scripts).
-
-### Testing the window pins under WSLg
-
-The default platform of `tools/test-linux.sh` is `offscreen` (no window). The window scenarios (`Bounds`, `Borderless`, `Fullscreen`, `Is Visible`) run in a real window with:
-
-```bash
-tools/test-linux.sh --skip-native --platform xcb --no-unit --only geometry,renderer,visibility,borderless,fullscreen
-```
-
-Log and grabbed PNGs are in `build/test-linux-<rid>/xcb/` (`smoke.out`, `smoke/`). On WSL2 Ubuntu 24.04 arm64 (WSLg) `geometry`, `renderer`, `visibility` and the checks of `borderless` and `fullscreen` that do not depend on the window position pass; four checks are about where the compositor puts the window and print `SKIP` there when it misses the requested position (see [Known problems](#known-problems)).
-
-On x64 the keys were checked in an exported `HelloWorldLinux` under WSLg: `F11` and `Alt+Enter` each switch to fullscreen over the whole screen (3440x1440 on that screen) and back to the original position and size; the app ends with exit code 0 on SIGTERM. The pins and the screen choice with two monitors are not checked yet.
-
-For the window pins that need a person (live `Borderless` toggle, `Fullscreen` screen choice, F11 and Alt+Enter) start an export (see above) and press the keys in its window: F11 or Alt+Enter toggles fullscreen like the `Fullscreen` pin. The live toggles of `Borderless` and `Fullscreen` can be watched in the SmokeTest scenarios (`--filter TestCategory=borderless`, `--filter TestCategory=fullscreen`, the test windows open on the desktop for a moment); no help patch drives these pins live in an exported Linux app yet, and the editor runs on Windows only.
-
-### Timing checks on slower machines
-
-The time limits of the SmokeTest (e.g. 10 000 SETs in one apply < 2 ms) were set on a current Windows x64 desktop CPU. On Linux the SmokeTest first runs a short calibration loop and prints `INFO perf calibration: ... CPU-bound limits x<f>`: the three purely CPU-bound limits (10 000 SET in one apply, in `apply` and in the core checks, and the idle change check of `measure`) are multiplied by that factor (1 on a fast core, at most 3). A measurement above the limit is repeated up to three times before it counts, so a late clock-up or a woken process does not fail the run; a real regression stays above the limit in every round and still fails. `VLQT_PERF_FACTOR` / `--perf-factor` set the factor by hand and switch the calibration off (`VLQT_PERF_FACTOR=0.5` shows that the checks bite). Details of the other limits: `--perf-warn-only`, `src/VL.Qt.SmokeTest/PerfLimits.cs`.
-
 ## Other Linux systems (not tested)
 
 Only WSL2 with WSLg was tested. What to expect elsewhere, from how the platforms work:
@@ -146,7 +114,7 @@ Only WSL2 with WSLg was tested. What to expect elsewhere, from how the platforms
 | Ubuntu desktop with Wayland | not tested | the compositor decides: a Wayland client cannot place its window, so the position part of `Bounds` is ignored (under WSLg's Wayland the window reports a position of its own); the compositor decides about decorations and the screen of a fullscreen window |
 | Raspberry Pi / eglfs | not tested | eglfs shows one fullscreen surface: `Borderless`, `Fullscreen` and `Bounds` have no effect |
 
-Run `tools/test-linux.sh` as above on such a system and compare with the failures listed under [Known problems](#known-problems) before reporting a problem.
+Run `tools/test-linux.sh` (see [Linux for contributors](contributing/linux.md)) on such a system and compare with the failures listed under [Known problems](#known-problems) and [Known problems of the tests](contributing/linux.md#known-problems-of-the-tests) before reporting a problem.
 
 ## Known problems
 
@@ -155,13 +123,8 @@ Run `tools/test-linux.sh` as above on such a system and compare with the failure
 | `tools/test-linux.sh` fails at the bundle step, `libSM.so.6 => not found` / `libICE.so.6 => not found` in `libqxcb.so` | the fresh Ubuntu 24.04 WSL image lacks two X11 libraries that Qt's xcb plugin loads | `tools/setup-wsl.sh` or `sudo apt install libsm6 libice6` (not needed on x64: the fresh x64 image runs without them, `libqxcb.so` of the linux-x64 bundle does not depend on them; installing them does no harm) |
 | `This application failed to start because no Qt platform plugin could be initialized` although `xcb` is in the list of available plugins | the plugin is there but cannot start: most often the system libraries of the xcb plugin are not installed (a fresh WSL distribution has none, [step 3](#3-set-up-wsl-once) was skipped); or there is no display server (`echo $DISPLAY $WAYLAND_DISPLAY` is empty, WSLg not running: WSL 1, old WSL, Windows 10 before 22H2) | run the `apt install` of [step 3](#3-set-up-wsl-once) (or `setup-wsl.sh --runtime-only`); without a display: `wsl --update`, then `wsl --shutdown` in PowerShell and open the shell again. Diagnosis: `QT_DEBUG_PLUGINS=1 ./<name>` shows the missing `.so`; `VLQT_LOG_STDERR=1` mirrors the VL.Qt log (it names the missing display) |
 | Warning `Mesa D3D12 cannot create an OpenGL context on this system: falling back to GALLIUM_DRIVER=llvmpipe`; the window is slow (CPU rendering). Before VL.Qt checked this, the app aborted with `glx: failed to create drisw screen`, `QRhiGles2: Failed to create context`, `Failed to initialize graphics backend for OpenGL` (seen on an Intel NUC, WSL2 Ubuntu 24.04 and 26.04) | Mesa's d3d12 driver, which VL.Qt selects under WSLg (`GALLIUM_DRIVER=d3d12`), cannot create an OpenGL context on that system. At startup VL.Qt tries it in the helper `vlqt-glprobe` next to `libvlqt.so` (open X display, create a GLX context) and uses llvmpipe when that fails (and Qt Quick's own software backend, a second warning, when llvmpipe fails too). The perf overlays show it: the badge at the top right of the F2 meter says `CPU` instead of `GPU`, F5 says `rendering CPU` | works without action, with CPU rendering. For the GPU: update the graphics driver of Windows and run `wsl --update`, then `wsl --shutdown`. `VLQT_GPU=software` skips the check and uses llvmpipe at once, `VLQT_GPU_PROBE=off` skips the check and keeps d3d12 |
-| The export has no `runtimes/<rid>/native/`, the app cannot find Qt | the Linux runtime was not built, or a `.props` next to the patch names another RID (`help/HelloWorldLinux.props`: `linux-x64`) | [Build the runtime](#building-the-linux-runtime-from-source), then check the RID, see [Export from vvvv](#2-export-from-vvvv) |
+| The export has no `runtimes/<rid>/native/`, the app cannot find Qt | the Linux runtime was not built, or a `.props` next to the patch names another RID (`help/HelloWorldLinux.props`: `linux-x64`) | [Build the runtime](contributing/linux.md#building-the-linux-runtime-from-source), then check the RID, see [Export from vvvv](#2-export-from-vvvv) |
 | A `HowTo …` patch exported for Linux ends at once without a window | no `KeepAppAlive` in the patch | add `KeepAppAlive [System]` with `Is Alive` = true |
-| The SmokeTest hangs at the end (WSLg, Mesa d3d12, Qualcomm arm64), exit code 124 after 10 minutes | the driver hangs when the process ends; exported apps are not affected (SIGTERM ends them in under a second) | `tools/test-linux.sh` stops the SmokeTest 30 s after its last line and takes the result from the log; `VLQT_GPU=software` avoids the hang (llvmpipe instead of the host GPU) |
-| `--platform wayland` with d3d12 hangs the whole WSL VM | Mesa d3d12 with Wayland under WSLg | use `--platform xcb` (the default of an export), or `GALLIUM_DRIVER=llvmpipe`; `tools/test-linux.sh` refuses the combination |
-| Under WSLg (x64 and arm64, xcb) the position part of four SmokeTest checks prints `SKIP ... position chosen by the WSLg window manager`: `233: created borderless at Bounds`, `143/234 live: Bounds not written while fullscreen`, `234 on create: off restores position + size`, `143/234 on create: Bounds after the round trip unchanged` | WSLg's window manager places the window itself: the position of a new window and the position after leaving fullscreen differ from the requested one (e.g. `X:0 Y:0` instead of `X:180 Y:140`); size and fullscreen itself are right and stay checked | none needed for patches that do not rely on the window position; the SmokeTest skips only these position checks, only under WSLg with xcb (`Program.PositionByWindowManager`) |
-| Under WSLg's Wayland the SmokeTest reports ten failed checks (`Bounds` position, `Fullscreen` restore, `Borderless` position) | a Wayland client cannot choose its position, the compositor reports its own; after leaving fullscreen the size differs from the requested one (e.g. 494x267 instead of 500x300) | use xcb under WSLg; document, no fix possible in the client |
-| Full `tools/test-linux.sh` runs (offscreen, llvmpipe, WSLg) failed about every second run in one random scenario: its grab showed only the background, a 100 x 100 corner of the frame with the rest transparent or torn, or the picture of an earlier grab (W1-21) | Qt's offscreen platform renders each window into one hidden X window per GL context (created 100 x 100), resizes it in `makeCurrent` and does nothing in `swapBuffers`. Mesa's software winsys (drisw, llvmpipe without a DRM device) reads the X window's size when the drawable is first validated and again only after a buffer swap, not at a bind. So the default framebuffer could keep 100 x 100 while the window was 800 x 600, and the grab read memory that was never written | fixed in QtNative: before a window grab on the offscreen platform with OpenGL, the window's context is made current and its drawable swapped once (`offscreen/offscreen_glx.cpp`), so the grab's frame has the window's size. Only grabs read pixels there. If it comes back: a `vlqt.grab: offscreen GLX framebuffer smaller than the window` warning in `smoke.log` names the grab |
 | `libEGL warning`, `MESA: error: ZINK: failed to choose pdev` on stderr | Mesa probes drivers without a DRM device (WSL has `/dev/dxg` only) | harmless |
 | All text shows as boxes | no font installed | see [Fonts](#fonts) |
 | Copying the export from Windows: `Permission denied` | the executable bit is lost | `chmod +x <name>` |
