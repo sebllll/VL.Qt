@@ -81,7 +81,7 @@ namespace VL.Qt.Qml
         public static ImmutableArray<QmlFile> Scan(string qmlPath)
             => Scan(qmlPath, static source => QmlDeclarations.ParseHead(source));
 
-        /// <summary>Scan with the head parser of the caller (tests).</summary>
+        /// <summary>Scan with <paramref name="parseHead"/> in place of <see cref="QmlDeclarations.ParseHead"/>.</summary>
         internal static ImmutableArray<QmlFile> Scan(string qmlPath, Func<string, QmlFileHead> parseHead)
         {
             var paths = Directory.EnumerateFiles(qmlPath, "*" + extension, SearchOption.AllDirectories)

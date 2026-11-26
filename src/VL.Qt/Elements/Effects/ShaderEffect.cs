@@ -23,7 +23,7 @@ namespace VL.Qt.Elements
             Strength = strength;
         }
 
-        /// <summary><see cref="Protocol.EffectTemplate"/>: Single, TwoPass or Pyramid.</summary>
+        /// <summary><see cref="Wire.Protocol.EffectTemplate"/>: Single, TwoPass or Pyramid.</summary>
         public ushort Template { get; }
 
         /// <summary>

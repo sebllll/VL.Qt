@@ -38,7 +38,7 @@ namespace VL.Qt.Reconciliation
 
         private readonly Dictionary<FeedbackSlot, Entry> _entries = new();
 
-        /// <summary>Number of interaction feedback slots currently active or waiting as placeholders (tests).</summary>
+        /// <summary>Number of interaction feedback slots currently active or waiting as placeholders.</summary>
         public int Count => _entries.Count;
 
         /// <summary>Handler that currently serves the interaction with feedback <paramref name="key"/>, or null.</summary>
