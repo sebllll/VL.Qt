@@ -205,11 +205,11 @@ public static class GroupFrameTest
         s.Pump(2);
     }
 
-    /// <summary>NELM-14: the layer effect item of a child does not count in the frame of its Group.</summary>
+    /// <summary>The layer effect item of a child does not count in the frame of its Group.</summary>
     [Test, Category("group-frame-effect")]
     public static void GroupFrameEffect() => Scenario.Run(RunEffect);
 
-    // NELM-14: Qt's item layer creates the layer.effect item as a child of the layered item's parent, so the effect item of
+    // Qt's item layer creates the layer.effect item as a child of the layered item's parent, so the effect item of
     // a child with an effect chain is a child of the Group, and the Group frame (polish) adds its rect, padding included.
     // Decided (C10): the Group counts only tracked children. Group at (200, 150) DIP, top left anchor, auto size; child: a
     // 100 x 100 orange rectangle at (0, 0). Frame without effect: 100 x 100; with a Blur chain on the child it must stay.
@@ -276,11 +276,11 @@ public static class GroupFrameTest
         Native.vlqt_scene_destroy(w);
     }
 
-    /// <summary>NELM-01: a child Group counts with its own group bounds in the bounds of its parent Group.</summary>
+    /// <summary>A child Group counts with its own group bounds in the bounds of its parent Group.</summary>
     [Test, Category("group-frame-nested")]
     public static void GroupFrameNested() => Scenario.Run(RunNested);
 
-    // NELM-01: outer Group > inner Group > orange 100 x 100 rectangle at (-50, 0). Outer Group at (200, 150) DIP, anchor
+    // Outer Group > inner Group > orange 100 x 100 rectangle at (-50, 0). Outer Group at (200, 150) DIP, anchor
     // top left, Auto Size; the inner one at its origin. 1) Inner auto-sized: its bounds are (-50, 0, 100, 100), so the
     // outer ones start at x = -50, SCENE_BOUNDS (150, 150, 100, 100). The rectangle to x = -60 moves only the origin of
     // the inner bounds (the inner Group keeps its x/y and size): the outer follows to (140, 150, 100, 100).

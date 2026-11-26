@@ -12,7 +12,7 @@ using Image = VL.Qt.Elements.Image;
 namespace VL.Qt.Tests.Nodes.Images
 {
     using Interaction = VL.Qt.Elements.Interaction;
-    /// <summary>Text and Image nodes (07c): defaults, change detection, outputs. The shared core is covered by RectangleNodeTests.</summary>
+    /// <summary>Text and Image nodes: defaults, change detection, outputs. The shared core is covered by RectangleNodeTests.</summary>
     public class TextImageNodeTests
     {
         private static readonly Vector2 DefaultSize = new(1, 1);

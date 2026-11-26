@@ -6,7 +6,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// Traces recorded from help patches (TEST-04, tools/record-traces.ps1): each trace in src/VL.Qt.SmokeTest/traces/<name>.bin
+// Traces recorded from help patches (tools/record-traces.ps1): each trace in src/VL.Qt.SmokeTest/traces/<name>.bin
 // is replayed against QtNative and its last frame compared with references/trace-<name>.png (ImageCompare: WARP, own process,
 // like the other compare scenes). A trace is bound to the wire format: after a protocol change run tools/record-traces.ps1
 // and the explicit test `update-refs`.
@@ -40,7 +40,7 @@ public static class TraceReplay
     public static void ReplayTraces(string name) => Scenario.RunLocal(s => ImageCompare.Run(s, new[] { "trace-" + name }));
 
     /// <summary>
-    /// The effects trace replayed after readme-images in one process (W1-20): readme-images creates shader resources whose
+    /// The effects trace replayed after readme-images in one process: readme-images creates shader resources whose
     /// ids the trace used to refer to, so its effect chains ran the glow shaders instead of RGBSplit.
     /// </summary>
     [Test, Category("replay-traces"), Category("image-compare"), Category("own-process")]
@@ -107,7 +107,7 @@ public static class TraceReplay
     /// <c>&lt;name&gt;.images</c> and the shader files listed in <c>&lt;name&gt;.shaders</c> (one path relative to the
     /// repository per line, in order of first appearance of the ids in the trace), then rewrites the trace to their ids.
     /// Without this a trace refers to ids that do not exist in the replaying process, or, after another scene in the same
-    /// process created resources, to that scene's resources (W1-20: readme-images before trace-effects).
+    /// process created resources, to that scene's resources (readme-images before trace-effects).
     /// </summary>
     /// <param name="resources">The created image and shader resources, for the caller to release.</param>
     internal static List<byte[]> Prepare(Scenario s, string traces, string name, List<byte[]> frames, string label, bool checkMapped,

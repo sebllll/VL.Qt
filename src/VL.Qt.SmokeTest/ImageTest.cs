@@ -7,7 +7,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 
-// Image in QtNative (plan 05d): image resource (PROP_IMAGE), fillMode, smooth. Grabs go to <OutDir>/05_image*.png.
+// Image in QtNative: image resource (PROP_IMAGE), fillMode, smooth. Grabs go to <OutDir>/05_image*.png.
 // Test asset: assets/stripes_rgb_30x10.png (30x10 px, 10 px stripes red | green | blue). Values are DIP.
 [TestFixture, NonParallelizable]
 public static class ImageTest

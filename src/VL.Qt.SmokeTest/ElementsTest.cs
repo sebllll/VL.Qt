@@ -9,7 +9,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 
-// Element registry of QtNative (plan 05a): Group (= ELEMENT_TYPE_GROUP, QML Item), common properties, Matrix4x4 transform,
+// Element registry of QtNative: Group (= ELEMENT_TYPE_GROUP, QML Item), common properties, Matrix4x4 transform,
 // unknown property -> error + log. Grabs go to <OutDir>/05_*.png.
 [TestFixture, NonParallelizable]
 public static class ElementsTest

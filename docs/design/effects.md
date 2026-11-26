@@ -1,10 +1,10 @@
 # Effects
 
-How QtNative renders the Effect chain of an element and how the Shader item draws a fragment shader: the item tree of a chain, the passes of a shader link, the blur pyramid, the texture and alpha rules, and the runtime bake of shader code. Code: `src/VL.Qt.Native/effects/` (`effect_chain.*`, `shader_item.*`, `shader_material.*`, `layer_requests.*`), `shader_resource.*`, the stage QML in `src/VL.Qt.Native/qml/effects/` and the wire format in `protocol.h` ("Effect chain"). The user page, with the nodes, annotations and templates, is [effects-and-shaders.md](../effects-and-shaders.md).
+How QtNative renders the Effect chain of an element and how the Shader item draws a fragment shader: the item tree of a chain, the passes of a shader link, the blur pyramid, the texture and alpha rules, and the runtime bake of shader code. Code: `src/VL.Qt.Native/effects/` (`effect_chain.*`, `shader_item.*`, `shader_material.*`, `layer_requests.*`), `shader_resource.*`, the stage QML in `src/VL.Qt.Native/qml/effects/` and the protocol in `protocol.h` ("Effect chain"). The user page, with the nodes, annotations and templates, is [effects-and-shaders.md](../effects-and-shaders.md).
 
 ## Context
 
-The Effect pin of an element is a chain of links. A link is either a run of built-in effects (one Qt `MultiEffect`: blur, shadow, colour, mask) or one filter shader (`SHADER`) that reads the result of the link before it. C# sends the whole chain at once; QtNative keeps the desired state and builds the items.
+The Effect pin of an element is a chain of links. A link is either neighbouring merged effects (one Qt `MultiEffect`: blur, shadow, colour, mask) or one shader effect (`SHADER`) that reads the result of the link before it. C# sends the whole chain at once; QtNative keeps the desired state and builds the items.
 
 Qt Quick has two things to draw an effect with: `MultiEffect` and `ShaderEffect`. `ShaderEffect` binds uniforms by QML property name, which cannot express the uniform table of a shader file that C# fills by name and type at runtime. So the shader link is drawn by an item of QtNative, the `ShaderItem`, which maps uniforms through the reflection of the shader. Terms (layer, DIP, premultiplied) are in [glossary.md](../glossary.md).
 
@@ -27,7 +27,7 @@ flowchart TB
 - All stages but the last are hidden and have a layer of their own, which is the texture provider for the next link. The last stage draws. Size, transform, implicit size, layout and hit test stay those of the element's item.
 - The effect area grows from link to link by the padding of the link, because a blur or a shadow draws beyond its input. A shader link has no automatic padding; the shader file declares it (`@padding`), otherwise the shader stays inside its input.
 - The links are the desired state; the stages exist while the root exists. A send with the same structure (link count, kinds, templates) writes only changed values: no new item, no shader switch, no allocation and no repaint when nothing changed, because an animated pin sends every frame. Another structure retires the old stages (hidden, deleted by the caller after the next frame) and builds new ones.
-- A mask of a `MULTI` run is an element of its own. The Elements layer holds it in a hidden frame item under the window root and binds `layer.sourceRect` of that frame to the effect area of the run, so the mask never counts for layout, auto size or hit test.
+- A mask of a `MULTI` link is an element of its own. The Elements layer holds it in a hidden frame item under the window root and binds `layer.sourceRect` of that frame to the effect area of the link, so the mask never counts for layout, auto size or hit test.
 
 ### Shader link stages
 

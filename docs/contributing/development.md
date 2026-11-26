@@ -195,7 +195,7 @@ src/VL.Qt/                  # the C# library (package VL.Qt)
   Window/                   # window placement and settings, PerfStats and the other performance records
   Interop/                  # P/Invoke declarations of vlqt.h (Native.*.cs), the ABI check, the font and resource APIs
   Wire/                     # the protocol to QtNative: Protocol.cs (mirror of protocol.h), CommandWriter, EventReader
-  Reconciliation/           # scene diffing: the Reconciler walks the tree, PropertyDiff writes the SETs, ItemMirror is what QtNative holds
+  Reconciliation/           # element tree diffing: the Reconciler walks the tree, PropertyDiff writes the SETs, ItemMirror is what QtNative holds
   Elements/                 # the element descriptions (Rectangle, Text, ...); Effects/, Feedback/, Shaders/, Qml/ and Enums/ share the namespace
   Styles/                   # style values, merging and the stylable elements
   Images/                   # images, resources, the resource client and the image file writer
@@ -206,7 +206,7 @@ src/VL.Qt/                  # the C# library (package VL.Qt)
   Nodes/                    # the vvvv nodes, one subfolder per category (Elements/, Widgets/, Effects/, ...)
   buildTransitive/          # MSBuild targets that reach consumers of the package
 src/VL.Qt.Native/           # QtNative (C++), builds vlqt.dll / libvlqt.so
-  vlqt.h, vlqt_test.h       # the C API, and the test exports that are in every build
+  vlqt.h, vlqt_test.h       # the C ABI, and the test exports that are in every build
   protocol.h                # shared type, property and event IDs
   app/                      # app lifecycle, pump, logging, last error, fonts, animation clock, render gate
   platform/                 # platform code for Windows and Linux

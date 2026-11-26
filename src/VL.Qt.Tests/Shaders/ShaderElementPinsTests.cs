@@ -12,8 +12,8 @@ using VL.Qt.Tests.Support;
 
 namespace VL.Qt.Tests.Shaders
 {
-    /// <summary>The fixed pins of the generated shader nodes (<see cref="ShaderElementPins"/>) are those of Shader (SHD-08), and each node
-    /// makes its uniform pins unique against its own pins (SHD-03).</summary>
+    /// <summary>The fixed pins of the generated shader nodes (<see cref="ShaderElementPins"/>) are those of Shader, and each node
+    /// makes its uniform pins unique against its own pins.</summary>
     [TestFixture]
     public sealed class ShaderElementPinsTests
     {

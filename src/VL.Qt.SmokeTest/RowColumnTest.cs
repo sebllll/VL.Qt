@@ -10,7 +10,7 @@ using Color = System.Drawing.Color;
 using RectangleF = System.Drawing.RectangleF;
 using static Pixels;
 
-// Row/Column in QtNative (plan 05e): Qt positioners + childAlignment, spacing, padding; a hidden child (Visible off)
+// Row/Column in QtNative: Qt positioners + childAlignment, spacing, padding; a hidden child (Visible off)
 // takes no space and no alignment.
 // Grabs go to <OutDir>/05_rowcolumn*.png. Values are DIP. Children get Bounds (0, 0, w, h) like the
 // reconciler sends them (04c: Bounds.Position of layout children is ignored).

@@ -1,6 +1,6 @@
 # Command protocol: semantics
 
-What the commands, events and values of the command buffer mean. The wire format (header, field order, sizes, alignment, constants) is in [`protocol.h`](../../src/VL.Qt.Native/protocol.h), mirrored by hand in [`Protocol.cs`](../../src/VL.Qt/Wire/Protocol.cs); the drift tests compare constants and layouts, never prose. This page is for contributors who change QtNative or the reconciler. For why the layers are cut this way see [architecture.md](architecture.md) and [design/reconciler.md](../design/reconciler.md); for the elements see [design/element-model.md](../design/element-model.md).
+What the commands, events and values of the command buffer mean. The protocol itself (header, field order, sizes, alignment, constants) is in [`protocol.h`](../../src/VL.Qt.Native/protocol.h), mirrored by hand in [`Protocol.cs`](../../src/VL.Qt/Wire/Protocol.cs); the drift tests compare constants and layouts, never prose. This page is for contributors who change QtNative or the reconciler. For why the layers are cut this way see [architecture.md](architecture.md) and [design/reconciler.md](../design/reconciler.md); for the elements see [design/element-model.md](../design/element-model.md).
 
 Error codes (`-2` bad length, `-4` unknown object, `-6` unknown property, `-7` bad value, `-8` invalid) are `VLQT_ERR_*` of `vlqt.h`. A command that fails stops the apply; commands before it stay applied, and the C# side resyncs with `RESET`.
 
@@ -192,7 +192,7 @@ The `Effect` pin of an element is a chain of links. `SET_EFFECT_CHAIN` sends the
 
 - `linkCount 0` = no chain: the layer is removed. Otherwise QtNative sets `layer.enabled` and one `layer.effect` on the element's own item; the links are an item tree inside that effect item (intermediate stages hidden, each its own layer = texture provider, the last draws). Size, `TRANSFORM`, implicit size, Row and Column layout and hit test stay those of the item.
 - Root `0` and input handlers are `-6`, an unknown id `-4`, an unknown link kind `-7`, lengths that do not add up `-2`. `SET` of an `EFFECT_*` key (block 832) is `-6`: the ids are only keys of `MULTI` entries.
-- A rejected `SET_EFFECT_CHAIN` changes nothing: wire format, ids and masks are checked before a mask or texture is parked.
+- A rejected `SET_EFFECT_CHAIN` changes nothing: layout, ids and masks are checked before a mask or texture is parked.
 - Content problems never fail the apply (unknown uniform name, wrong type, shader not ready, reserved names, negative padding or strength). They are `EVENT_ERROR` text of the element, one line per problem prefixed with the link index (`link 2: ...`), empty = cleared.
 - The Qt Quick software backend (`QT_QUICK_BACKEND=software`) does not draw ShaderEffects, so an element with a chain is not drawn there at all (layout and hit test unchanged).
 
@@ -205,7 +205,7 @@ One MultiEffect run: consecutive built-in links, folded in C# per run. Entries a
 
 ### SHADER link
 
-One filter shader link driven by QtNative's pass driver. Body: `u16 template`, `u16 shaderCount`, `u64 shaderIds[shaderCount]`, padding (4 x f32: left, top, right, bottom in DIP, >= 0), `f32 strength`, then the uniform entries like `SET_UNIFORMS` (`STRING` is `-7`).
+One shader effect link driven by QtNative's pass driver. Body: `u16 template`, `u16 shaderCount`, `u64 shaderIds[shaderCount]`, padding (4 x f32: left, top, right, bottom in DIP, >= 0), `f32 strength`, then the uniform entries like `SET_UNIFORMS` (`STRING` is `-7`).
 
 - Shader ids are FRAGMENT resources. Roles per template: `SINGLE` and `TWO_PASS` take one (the fragment shader), `PYRAMID` two (prefilter, composite); another count is `-7`. `pyramid_down` and `pyramid_up` are loaded by QtNative as `builtin:`.
 - `strength`: unused (0) for `SINGLE` and `TWO_PASS`; the radius in DIP for `PYRAMID` (weights from radius and dpr). The step count follows the pixel size of the effect area only, so a radius change writes weights and a size or dpr change rebuilds the steps.
@@ -217,7 +217,7 @@ One filter shader link driven by QtNative's pass driver. Body: `u16 template`, `
 
 ### Mask
 
-A mask applies per `MULTI` run. The mask element is an element object of its own (`CREATE`, its `SET`s and its children) that the host does not reparent. A `MULTI` entry `MASK_SOURCE` with `ref <maskId>` attaches it to that run (effect area = the run's); `ref 0` detaches it.
+A mask applies to the neighbouring merged effects of one `MULTI` link. The mask element is an element object of its own (`CREATE`, its `SET`s and its children) that the host does not reparent. A `MULTI` entry `MASK_SOURCE` with `ref <maskId>` attaches it to those merged effects (effect area = theirs); `ref 0` detaches it.
 
 - QtNative puts the mask item into a hidden frame item under the window root that serves as texture source (`visible` false, `layer.enabled` true), so it never counts for the element's layout, auto size, `childrenRect`, hit test or `REPARENT` indices.
 - Position: the mask lies in the coordinates of the element's parent, like a sibling (its `SIZE`, `ANCHOR` and `TRANSFORM` as for an element in that parent, unstretched): a mask covers exactly the pixels it would cover as a sibling. Moving the element (`TRANSFORM`, `ANCHOR`, a size change with an anchor other than top left, a drag offset, a Row or Column layout position) leaves the mask window in place.

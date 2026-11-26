@@ -7,7 +7,7 @@ using VL.Qt;
 using static Pixels;
 
 // Automatic uniforms of a ShaderEffect element (not of an effect chain): texelSize (1 / pixel size of source), dpr and
-// viewSize (size in DIP), written when the fragment shader declares them (W4-120). The shader shows them as colors:
+// viewSize (size in DIP), written when the fragment shader declares them. The shader shows them as colors:
 //   red   = viewSize.x / 400                       (200 DIP -> 0.5, 120 DIP -> 0.3)
 //   green = viewSize.y / 400                       (100 DIP -> 0.25, 60 DIP -> 0.15)
 //   blue  = texelSize.x * dpr * viewSize.x         (1 at every device pixel ratio and size: DIP * dpr * texelSize is a UV length)

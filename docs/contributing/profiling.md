@@ -36,7 +36,7 @@ python tools/profile-summary.py --json <profile.json.gz> > X.summary.json
 python tools/profile-summary.py --compare <A> <B>                 # A/B: .json.gz or .summary.json; Δ per layer
 ```
 
-The layers are VL.Qt managed, vvvv/VL, .NET runtime/GC, `vlqt.dll` (native layer), Qt, GPU driver/D3D, kernel. The exclusive (leaf) values are the meaningful ones. Keep the `.summary.json` of a run as your baseline and compare later runs against it with `--compare`.
+The layers are VL.Qt managed, vvvv/VL, .NET runtime/GC, `vlqt.dll` (QtNative), Qt, GPU driver/D3D, kernel. The exclusive (leaf) values are the meaningful ones. Keep the `.summary.json` of a run as your baseline and compare later runs against it with `--compare`.
 
 To compare with another renderer, build the same scenario as a patch with the other library (same window size, same animation, same count) and record it with `tools/profile.ps1 -Scenario <name> -PatchOverride <patch.vl>`.
 

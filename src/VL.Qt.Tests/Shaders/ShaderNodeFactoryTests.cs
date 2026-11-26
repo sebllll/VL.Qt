@@ -191,7 +191,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
             Assert.That(second[0], Is.SameAs(first[0]), "unchanged uniforms are reused");
         }
 
-        // The pin texts that generated shader nodes share with the element nodes come from CommonPins.xml (written once, NODE-03).
+        // The pin texts that generated shader nodes share with the element nodes come from CommonPins.xml (written once).
         [Test]
         public void Description_CommonPinHelp_IsTheSharedText()
         {

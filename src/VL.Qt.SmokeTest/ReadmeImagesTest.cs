@@ -10,7 +10,7 @@ using VL.Qt;
 using static Pixels;
 
 // Effect chain pictures (plan effects/08 Task 8a): renders reproducible grabs of effect chains (raw SET_EFFECT_CHAIN)
-// and compares them with src/VL.Qt.SmokeTest/references/ (ImageCompare, on WARP in a helper process; TEST-03); the
+// and compares them with src/VL.Qt.SmokeTest/references/ (ImageCompare, on WARP in a helper process); the
 // explicit test `update-refs` writes the references. docs/images is not touched. Dark ground, the text "VL.Qt", one cell of
 // 410 x 230 DIP per picture (scaled by s, the label at the bottom), same values in the collage and in the single pictures.
 //   effect-chain.png            Blur -> RGBSplit -> DropShadow (left) against the reverse order (right); RGBSplit baked from

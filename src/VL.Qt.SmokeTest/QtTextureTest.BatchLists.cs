@@ -5,7 +5,7 @@ using VL.Qt.Interop;
 using VL.Qt;
 
 /// <summary>
-/// NDEV-01 (W4-61): the batch lists of the render threads have a fixed address. With a pool of 2 render threads scene A
+/// The batch lists of the render threads have a fixed address. With a pool of 2 render threads scene A
 /// (first thread) renders for a few frames; then scene B (second thread, created before but not bound yet) is bound and
 /// renders for the first time, right after a batch that posted A's render. Checks: every frame of both scenes shows its
 /// colour (both threads render in every batch, no stale or missing frame after the late first batch of the second

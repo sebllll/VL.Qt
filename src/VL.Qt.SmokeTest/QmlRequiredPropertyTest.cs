@@ -8,14 +8,14 @@ using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 
-// QML-08: a root with `required property` is created with its initial properties. The element is created with Source and
+// A root with `required property` is created with its initial properties. The element is created with Source and
 // SET_QML_PROPERTIES in one frame (as the generated nodes do); Qt refuses a required property without a value at creation,
 // so the value must reach QQmlComponent::createWithInitialProperties. The value is drawn (width of a bar), a later change
 // of it is applied as usual, and a reload creates the root again with the values set so far. Grabs: <OutDir>/qml-required_*.png.
 [TestFixture, NonParallelizable]
 public static class QmlRequiredPropertyTest
 {
-    /// <summary>QML-08: required properties are set at creation: no error, the value is drawn.</summary>
+    /// <summary>Required properties are set at creation: no error, the value is drawn.</summary>
     [Test, Category("qml-required-property")]
     public static void QmlRequiredProperty() => Scenario.Run(Run);
 

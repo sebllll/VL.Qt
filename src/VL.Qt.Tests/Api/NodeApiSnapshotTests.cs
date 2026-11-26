@@ -21,7 +21,7 @@ using VL.Qt.Shaders;
 namespace VL.Qt.Tests.Api
 {
     /// <summary>
-    /// Node-API snapshot (TEST-01): every public type and member of VL.Qt, VL.Qt.Stride and VL.Qt.Audio with the attributes
+    /// Node-API snapshot: every public type and member of VL.Qt, VL.Qt.Stride and VL.Qt.Audio with the attributes
     /// vvvv reads, plus the pins of the nodes the shader and QML node factories generate, compared with Api/node-api.txt.
     /// The assemblies are read as metadata (System.Reflection.Metadata), so nothing is loaded or resolved. One fact per
     /// line, sorted ordinally: a git diff of the file reads as a rename list. VLQT_UPDATE_SNAPSHOT=1 rewrites the file.

@@ -27,7 +27,7 @@ namespace VL.Qt.Paths
         // so that relative nodes read them in O(1).
         private readonly float _lastX, _lastY, _startX, _startY;
         // Whether the chain contains a Move, and whether its last segment is a Close. A path without Move has no start of
-        // its own: appended to another path, it continues that path's contour (SIP-12).
+        // its own: appended to another path, it continues that path's contour.
         private readonly bool _hasMove, _endsWithClose;
 
         // Written by the first reader. Two threads may both compute it and the results are identical, so no lock is

@@ -251,7 +251,7 @@ namespace VL.Qt.Tests.Qml
         private static QmlDeclarations Declare(QmlPropertyDecl[] properties, QmlSignalDecl[]? signals = null) =>
             new("Item", QmlFileHead.Empty, properties.ToImmutableArray(), (signals ?? Array.Empty<QmlSignalDecl>()).ToImmutableArray(), ImmutableArray<QmlParseMessage>.Empty);
 
-        // The pin texts that QML nodes share with the element nodes come from CommonPins.xml (written once, NODE-03).
+        // The pin texts that QML nodes share with the element nodes come from CommonPins.xml (written once).
         [Test]
         public void Layout_CommonPinHelp_IsTheSharedText()
         {

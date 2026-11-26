@@ -12,7 +12,7 @@ vvvv patches run in dataflow on the main thread; Qt objects, the render thread a
 **vvvv describes, Qt works.** Element nodes output `IElement`; the concrete element classes (`Rectangle`, `Group`, …) are internal immutable records (`init` properties). Qt objects, GPU resources and runtime state belong to the reconciler or to the node that created them. So nothing needs disposing, and a description can be passed around freely and hung into the tree several times.
 
 - Change detection happens in the node: `ElementNodeCore` keeps the last description and builds a new one only if `CommonInputs` or the element-specific inputs changed (value equality; the `Interaction` and `Effect` chains by reference).
-- The reconciler uses reference equality as a shortcut: a reference-equal description means the subtree is unchanged ([reconciler-identity.md](reconciler-identity.md)). The diff and the knowledge of the wire protocol live in `Reconciliation/`, not in the element records.
+- The reconciler uses reference equality as a shortcut: a reference-equal description means the subtree is unchanged ([reconciler-identity.md](reconciler-identity.md)). The diff and the knowledge of the protocol live in `Reconciliation/`, not in the element records.
 
 ### Deliberate exceptions
 Some state exists only in Qt and changes without a new description arriving:

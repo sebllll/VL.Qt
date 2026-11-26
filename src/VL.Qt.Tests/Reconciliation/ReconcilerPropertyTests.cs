@@ -17,7 +17,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests.Reconciliation
 {
-    /// <summary>Property diff of the reconciler (04c): only changed values are sent, converted via Geometry.</summary>
+    /// <summary>Property diff of the reconciler: only changed values are sent, converted via Geometry.</summary>
     public class ReconcilerPropertyTests
     {
         private RecordingSink _sink = null!;

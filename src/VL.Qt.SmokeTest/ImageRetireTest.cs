@@ -8,7 +8,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 
 /// <summary>
-/// NRES-01 (W4-52): an Image element and a Shader element with an image sampler (ShaderItem) of an offscreen scene free
+/// An Image element and a Shader element with an image sampler (ShaderItem) of an offscreen scene free
 /// their window textures on the scene's render thread, never on the main thread while that thread may still render a
 /// posted frame with them. Two scenes bound to shared textures show one image resource, the Image in the left half and
 /// the Shader (fixture dual.frag: its overlay is the image) in the right; many times in a row an apply creates the

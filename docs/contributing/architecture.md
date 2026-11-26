@@ -1,6 +1,6 @@
 # Architecture
 
-The contributor's map of VL.Qt: the layers, one frame, the threads, the protocol and where each subsystem lives. VL.Qt is a declarative element tree: your patch builds `Element` objects each frame, a reconciler diffs them against what Qt already has, and **QtNative** (the native C++ layer, project `src/VL.Qt.Native`, built as `vlqt.dll` and `libvlqt.so`) applies the changes to real Qt Quick items. The terms are in the [glossary](../glossary.md); the reasons behind each subsystem are in the [design notes](../design/README.md).
+The contributor's map of VL.Qt: the layers, one frame, the threads, the protocol and where each subsystem lives. VL.Qt is a declarative element tree: your patch builds `Element` objects each frame, a reconciler diffs them against what Qt already has, and **QtNative** (the C++ layer, project `src/VL.Qt.Native`, built as `vlqt.dll` and `libvlqt.so`) applies the changes to real Qt Quick items. The terms are in the [glossary](../glossary.md); the reasons behind each subsystem are in the [design notes](../design/README.md).
 
 ```mermaid
 flowchart LR

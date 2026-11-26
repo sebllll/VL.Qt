@@ -29,7 +29,7 @@ Every setter has the pin `States`: the states the values apply to, combinable. `
 
 Sizes in a style are DIP (device-independent pixels). Rectangles and Text have no Style pin: they are primitives, their look comes from their own pins.
 
-## Self-made widgets
+## Stylable widgets
 
 A patched class that implements `IStylable` behaves like a built-in widget: connect it wherever an element goes (Group, Row, Column, Renderer, Labeled, an effect input), and its `Build` operation is called with the style resolved at that position; the returned element is shown. Build may return another stylable, which is built in turn; one that returns itself or a cycle shows nothing and warns. Inside Build, use the getters to read colors, radius and font for the current state and draw the widget from primitives. Build runs once per frame; element nodes return the same instance while nothing changes, so the scene stays untouched. In a patched class the output pin of Build must be named `Result` (see `IStylable`).
 

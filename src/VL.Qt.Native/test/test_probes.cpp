@@ -48,7 +48,7 @@ namespace {
 Q_LOGGING_CATEGORY(lcGrab, "vlqt.grab")
 
 #ifndef Q_OS_WIN
-// W1-21: on Qt's offscreen platform with OpenGL, Mesa's software winsys can keep an old size of the window's default
+// On Qt's offscreen platform with OpenGL, Mesa's software winsys can keep an old size of the window's default
 // framebuffer (offscreen_glx.h), so a grab would read only part of the frame. Before a grab, make the window's context
 // current (Qt sizes its X window to the window) and invalidate the drawable, so the grab's frame takes the window's size.
 // Returns the GL context, or null on other platforms and backends.

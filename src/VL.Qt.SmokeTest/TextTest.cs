@@ -6,7 +6,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// Text in QtNative (plan 05c): text, font.*, color, alignment, wrap, elide, lineHeight, letterSpacing, fontSizeMode.
+// Text in QtNative: text, font.*, color, alignment, wrap, elide, lineHeight, letterSpacing, fontSizeMode.
 // Grabs go to <OutDir>/05_text*.png. Values are DIP (the C# side converts units). Checks count non-background
 // pixels in regions (text rendering differs per platform/font, so no exact pixel values).
 [TestFixture, NonParallelizable]

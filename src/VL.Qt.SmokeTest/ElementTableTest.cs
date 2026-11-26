@@ -8,7 +8,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// NELM-12: every property of the element table (elements.cpp) resolves to a QML property or a setter and takes a valid
+// Every property of the element table (elements.cpp) resolves to a QML property or a setter and takes a valid
 // value. A typo in a qmlName only logs a warning at the first CREATE and then makes every SET of that property fail with -6.
 // The types and properties come from Protocol.cs by reflection, so a new constant cannot be skipped silently: a Type
 // without a row in s_typeProps or a Prop that is in no row and not exempt fails the test.
@@ -165,7 +165,7 @@ public static class ElementTableTest
             .Select(f => (f.Name, (ushort)f.GetRawConstantValue()!))
             .ToList();
 
-    /// <summary>Element table: every property of every element type resolves and takes a valid value (NELM-12).</summary>
+    /// <summary>Element table: every property of every element type resolves and takes a valid value.</summary>
     [Test, Category("element-table")]
     public static void ElementTable() => Scenario.Run(Run);
 

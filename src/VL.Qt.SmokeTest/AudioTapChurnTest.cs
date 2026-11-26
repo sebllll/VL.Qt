@@ -6,7 +6,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// COMP-02: vlqt_audio_tap_read takes no lock and never frees a tap (slot table of resources/audio_tap.cpp). A reader
+// vlqt_audio_tap_read takes no lock and never frees a tap (slot table of resources/audio_tap.cpp). A reader
 // thread reads a stable tap and the tap the main thread is creating and destroying, while the main thread creates,
 // initialises and frees 100 taps: the stable reads stay fast and valid, the churned ones return frames or UnknownId,
 // never anything else and never a crash. Then the table fills (init refuses tap 65 with BadArgument) and frees again.

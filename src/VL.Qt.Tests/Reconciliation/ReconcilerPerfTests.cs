@@ -17,7 +17,7 @@ namespace VL.Qt.Tests.Reconciliation
     /// <summary>
     /// 04e: steady-state performance of Reconciler → real <see cref="CommandWriter"/> (the path a renderer takes
     /// per frame: Reset, Update, EndFrame). The allocation tests are deterministic and hard; the timing tests (category
-    /// <c>Perf</c>) go through <see cref="PerfLimit"/>: scaled by VLQT_PERF_FACTOR, warn-only with VLQT_PERF_WARN_ONLY (TEST-09).
+    /// <c>Perf</c>) go through <see cref="PerfLimit"/>: scaled by VLQT_PERF_FACTOR, warn-only with VLQT_PERF_WARN_ONLY.
     /// </summary>
     public class ReconcilerPerfTests
     {
@@ -112,7 +112,7 @@ namespace VL.Qt.Tests.Reconciliation
 
         private static Scenario ColumnOneSizeChange()
         {
-            // Layout children: only the size goes to Qt (04c), the changed child sends one Size SET.
+            // Layout children: only the size goes to Qt, the changed child sends one Size SET.
             var children = Rects(_ => Color4.White);
             var changed = new Rectangle { Size = new Vector2(0.02f, 0.01f), Fill = Color4.White };
             var a = new Column { Spacing = 0.01f, Children = ImmutableArray.Create(children) };
@@ -168,13 +168,13 @@ namespace VL.Qt.Tests.Reconciliation
             return new Scenario("Group, 1000 bound children, 1 change/frame:", step, () => writer.Count, 1);
         }
 
-        // --- REC-16: paths the cases above do not reach (the changed element is a new instance every frame) ---
+        // --- paths the cases above do not reach (the changed element is a new instance every frame) ---
 
         private static Style RadiusStyle(float r) => new() { Frame = new FrameStyle { Radius = default(StateValues<float>).With(StyleStates.Normal, r) } };
 
         private static Scenario ShaderAnimatedUniform()
         {
-            // REC-08: three uniforms, one animated float; the effect is a new instance every frame, one UNIFORMS command.
+            // Three uniforms, one animated float; the effect is a new instance every frame, one UNIFORMS command.
             var input = new Rectangle { Size = new Vector2(1, 1) };
             Shader Make(float time) => new()
             {
@@ -186,7 +186,7 @@ namespace VL.Qt.Tests.Reconciliation
 
         private static Scenario AnimatedEffectChain()
         {
-            // REC-09: the chain is a new instance every frame (an animated blur), one CHAIN command.
+            // The chain is a new instance every frame (an animated blur), one CHAIN command.
             Element Make(float amount) => new Group { Children = [new Rectangle { Size = new Vector2(1, 1), Effect = new BlurEffect(null, amount, 32, 0) }] };
             return Alternating("Rectangle with animated blur chain:", Make(0.5f), Make(0.7f), expectedSets: 1, minFirstFrame: 5);
         }
@@ -286,7 +286,7 @@ namespace VL.Qt.Tests.Reconciliation
         [Test, Category("Perf")]
         public void Group_1000BoundChildren_OneChangePerFrame_Fast() => AssertFast(BoundChildrenOneChange());
 
-        // --- REC-16 ---
+        // --- paths the cases above do not reach ---
 
         [Test]
         public void Shader_ThreeUniforms_OneAnimated_NoAllocations() => AssertNoAllocation(ShaderAnimatedUniform());
@@ -300,7 +300,7 @@ namespace VL.Qt.Tests.Reconciliation
         [Test, Category("Perf")]
         public void EffectChain_Animated_Fast() => AssertFast(AnimatedEffectChain());
 
-        [Test, Ignore("no finding covers it (W1-14): a Group Style change with 10 Button children allocates 504 B/frame, cause not analysed")]
+        [Test, Ignore("a Group Style change with 10 Button children allocates 504 B/frame, cause not analysed")]
         public void Group_StyleChangingEveryFrame_NoAllocations() => AssertNoAllocation(GroupWithAnimatedStyle());
 
         [Test, Category("Perf")]

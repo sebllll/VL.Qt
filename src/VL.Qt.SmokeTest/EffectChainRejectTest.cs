@@ -5,7 +5,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// NCMD-03: a rejected SET_EFFECT_CHAIN changes nothing, also when its first links would park a new mask and a new
+// A rejected SET_EFFECT_CHAIN changes nothing, also when its first links would park a new mask and a new
 // texture element: the whole command (wire format, ids, masks) is checked before anything is parked. Orange R at
 // (250, 150) 300 x 150 DIP gets a chain of a MULTI run with mask M, a Blend with layer T and a MULTI run with mask P;
 // P (green, 200 x 100 at the origin) is in the tree, so the third link is -8. M and T are created without REPARENT
@@ -14,7 +14,7 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class EffectChainRejectTest
 {
-    /// <summary>NCMD-03: a SET_EFFECT_CHAIN rejected at its last link parks none of the masks and textures of the links before.</summary>
+    /// <summary>A SET_EFFECT_CHAIN rejected at its last link parks none of the masks and textures of the links before.</summary>
     [Test, Category("effect-chain-reject")]
     public static void EffectChainReject() => Scenario.Run(Run);
 

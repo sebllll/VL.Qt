@@ -30,7 +30,7 @@ internal static class OwnProcess
     /// <summary>Body of a scenario the helper executable can run, or null.</summary>
     public static Action<Scenario>? Find(string name) =>
         s_bodies.TryGetValue(name, out var body) ? body
-        : name.StartsWith("trace-", StringComparison.Ordinal) ? (s => TraceReplay.Run(s, name["trace-".Length..])) // recorded traces (TEST-04)
+        : name.StartsWith("trace-", StringComparison.Ordinal) ? (s => TraceReplay.Run(s, name["trace-".Length..])) // recorded traces
         : null;
 
     /// <summary>

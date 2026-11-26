@@ -200,7 +200,7 @@ namespace VL.Qt.Tests.Scene
             var registry = new OccurrenceRegistry();
             var interactions = new InteractionRegistry();
             var scene = new Scene(registry, interactions, SceneHandle.Null);
-            // Above the size limit of one command (PROTO-02, B7): a failed reconcile, not a truncation.
+            // Above the size limit of one command: a failed reconcile, not a truncation.
             var tooLong = new Text { Content = new string('€', Protocol.MaxCommandPayload / 3 + 1) };
 
             Assert.DoesNotThrow(() => scene.Update(G(R(1), tooLong), Space.DIPTopLeft, default, true));

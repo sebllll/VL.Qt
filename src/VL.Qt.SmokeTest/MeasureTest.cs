@@ -8,7 +8,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// Back channel EVENT_MEASURED / EVENT_SCENE_BOUNDS (plan 06b). Values are DIP (logical pixels), the C# FeedbackRouter
+// Back channel EVENT_MEASURED / EVENT_SCENE_BOUNDS. Values are DIP (logical pixels), the C# FeedbackRouter
 // converts them to units. Bound items report on the first poll after BIND, afterwards only on change.
 [TestFixture, NonParallelizable]
 public static class MeasureTest
