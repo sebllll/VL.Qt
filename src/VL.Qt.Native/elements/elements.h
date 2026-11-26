@@ -146,7 +146,10 @@ public:
     void syncTextureGroups(ElementEntry& effect);
     void releaseTextureGroups(ElementEntry& effect);
     bool isEffectSource(const QQuickItem* item) const { return sourceRefs.count(item) != 0; }
-    /* Disables the layer of former sources, deferred by one frame. Called by the Scene before apply/poll. */
+    /* A former texture of a chain link back in the tree (Scene::reparent): drawn as a plain element again, so its layer
+     * (ShaderItem::setUniform) goes off after the next frame, like that of a former source. */
+    void releaseTextureLayer(QQuickItem* item);
+    /* Disables the layer of former sources and textures, deferred by one frame. Called by the Scene before apply/poll. */
     void flushLayerOff();
 
     /* QML SOURCE / RELOAD: a QmlItem is compiled and created when the apply is done (Scene::apply), not when the command
@@ -227,7 +230,7 @@ private:
     QQmlEngine* engine;
     std::unordered_map<quint16, TypeCache> types;
     std::unordered_map<const QQuickItem*, int> sourceRefs; // item -> number of effects using it as source
-    std::vector<QPointer<QQuickItem>> layerOff; // former effect sources, layer disabled after the next frame
+    std::vector<QPointer<QQuickItem>> layerOff; // former effect sources and chain textures, layer disabled after the next frame
     std::vector<QPointer<QQuickItem>> qmlBuilds; // QmlItems whose Source or Reload changed in this apply
     /* Mask frame of mask for node (protocol.h mask rule, setEffectChain). */
     QQuickItem* createMaskFrame(ElementEntry& node, QQuickItem* mask, QQuickMatrix4x4*& xf);

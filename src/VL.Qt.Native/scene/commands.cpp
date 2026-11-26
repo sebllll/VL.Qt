@@ -808,6 +808,7 @@ int Scene::opSetEffectChain(WireReader& r, std::string& err)
             if (u.refError)
                 continue;
             park(tex); // until the chain lets it go and a REPARENT or DESTROY comes (deleted one frame late, like a former source)
+            tex.chainTexture = true;
             u.refItem = tex.item;
         }
     rc = elements.setEffectChain(host, chain, masks, err);

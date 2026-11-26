@@ -47,9 +47,10 @@ public static class ClearPinTest
         return Native.Apply(w, cmd.EndFrame());
     }
 
-    // The OpenGL window (Linux) has no alpha buffer (alphaBufferSize 0), so a grab with Clear off and alpha 0 keeps the RGB of the
-    // clear colour; only D3D11 clears to transparent black there.
-    private static int ExpectedBg(float alpha) => alpha > 0 || !OperatingSystem.IsWindows() ? 0x20 : 0;
+    // Background of a grab with Clear Color alpha 0. The QRhi OpenGL window (Linux) has no alpha buffer (alphaBufferSize 0), so
+    // its grab keeps the RGB of the clear colour. D3D11 clears to transparent black, and the software backend renders the grab
+    // into an opaque pixmap whose transparent areas come out black (vlqt.h); the backend is known after the first frame.
+    private static int ExpectedBg(float alpha) => alpha > 0 || (!OperatingSystem.IsWindows() && !QtHost.QuickSoftware) ? 0x20 : 0;
 
     private const float WindowGrey = 0x20 / 255f;
     private const float OffscreenGrey = 0.125f;
