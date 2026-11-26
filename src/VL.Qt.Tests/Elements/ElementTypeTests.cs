@@ -13,8 +13,12 @@ namespace VL.Qt.Tests.Elements
 {
     public class ElementTypeTests
     {
-        private static readonly Type[] AllTypes =
-            { typeof(Group), typeof(VL.Qt.Elements.Rectangle), typeof(Text), typeof(Image), typeof(Row), typeof(Column), typeof(Video), typeof(Button), typeof(SpinBox), typeof(CheckBox), typeof(VL.Qt.Elements.Switch), typeof(VL.Qt.Elements.Slider), typeof(TextField), typeof(Shader), typeof(Shape) };
+        // Every concrete element type of the library, so a new one is covered without a list to keep.
+        private static readonly Type[] AllTypes = typeof(Element).Assembly.GetTypes()
+            // StylableElement is a placeholder: it has no parameterless constructor and Built is mutable by design.
+            .Where(t => t.IsSubclassOf(typeof(Element)) && !t.IsAbstract && t != typeof(StylableElement))
+            .OrderBy(t => t.Name, StringComparer.Ordinal)
+            .ToArray();
 
         [TestCaseSource(nameof(AllTypes))]
         public void SealedAndInitOnly(Type t)
@@ -33,7 +37,7 @@ namespace VL.Qt.Tests.Elements
         [TestCaseSource(nameof(AllTypes))]
         public void CommonDefaults(Type t)
         {
-            var e = (Element)Activator.CreateInstance(t)!;
+            var e = (Element)Activator.CreateInstance(t, nonPublic: true)!;
             // All elements: TopLeft, like QtNative default.
             Assert.That(e.Anchor, Is.EqualTo(RectangleAnchor.TopLeft));
             Assert.That(e.Opacity, Is.EqualTo(1f));

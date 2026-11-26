@@ -257,7 +257,7 @@ src/VL.Qt.Native/           # QtNative (C++)
   device/                   # shared D3D11 device and device loss, its context lock (context_lock), Qt render threads of the QtTexture scenes (render_thread)
   *_resource.h/cpp          # shaders, snapshots
   image_writer.h/cpp        # writes pixels to an image file (vlqt_image_write_file)
-src/VL.Qt.Tests/            # C# unit tests
+src/VL.Qt.Tests/            # C# unit tests; folders mirror src/VL.Qt/ (Elements, Nodes, Qml, Reconciliation, Scene, Wire ...), namespace VL.Qt.Tests.<Folder>, shared fakes and recorders in Support/
 src/VL.Qt.SmokeTest/        # native smoke + perf tests
 src/VL.Qt.Stride/           # C# source of the VL.Qt.Stride package (see Packages)
 VL.Qt.Stride/               # its package folder: VL.Qt.Stride.vl, help/, README.md, lib/ (build output)
