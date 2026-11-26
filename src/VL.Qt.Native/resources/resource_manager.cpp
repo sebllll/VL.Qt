@@ -21,8 +21,6 @@ namespace {
 
 constexpr uint32_t maxSlots = 1u << 20;      // ~1M live resources; more is a leak in the host
 
-bool validState(int s) { return s >= int(State::Pending) && s <= int(State::Released); }
-
 // Kinds whose content is made on the main thread without worker and upload (beginExternal / finishExternal).
 bool externalKind(int kind) { return kind == VLQT_RESOURCE_KIND_SNAPSHOT || kind == VLQT_RESOURCE_KIND_AUDIO_TAP; }
 
@@ -530,24 +528,6 @@ void Manager::deviceRestored()
     }
     if (restarted > 0)
         qCInfo(lcRes, "device lost: %d resource(s) upload again", restarted);
-}
-
-int Manager::testTransition(uint64_t id, int from, int to)
-{
-    if (!onMainThread("test transition"))
-        return wrongThreadRc;
-    Slot* s = find(id, "test transition");
-    if (!s)
-        return staleIdRc;
-    if (!validState(from) || !validState(to)) {
-        qCWarning(lcRes, "test transition: %s: unknown state %d -> %d", idText(id).constData(), from, to);
-        return badValueRc;
-    }
-    if (State(to) == State::Released) { // only the frame end frees
-        qCWarning(lcRes, "test transition: %s: Released is reached only by release + frame end", idText(id).constData());
-        return badValueRc;
-    }
-    return transition(id, *s, State(from), State(to)) ? okRc : badValueRc;
 }
 
 Slot* Manager::find(uint64_t id, const char* what)

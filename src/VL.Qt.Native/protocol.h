@@ -256,7 +256,7 @@
 /* One number for the command protocol (this file) and the C ABI (vlqt.h, vlqt_test.h): vlqt_app_get_abi_version() returns it, VL.Qt.dll
  * compares it with Protocol.AbiVersion before the first window or resource and refuses a vlqt.dll with another one.
  * Bump it on EVERY change to a constant, a struct layout or an exported signature (also additions); mirror it in Protocol.cs. */
-#define VLQT_ABI_VERSION 25
+#define VLQT_ABI_VERSION 26
 #define VLQT_COMMAND_ALIGN 4
 #define VLQT_HEADER_SIZE 8 /* command, poll record and resource record: u16 op/event, u16 flags (0), u32 len */
 #define VLQT_MAX_COMMAND_PAYLOAD 67108864 /* sanity cap of payloadLen (64 MB); above it the apply fails with VLQT_ERR_BAD_LENGTH */

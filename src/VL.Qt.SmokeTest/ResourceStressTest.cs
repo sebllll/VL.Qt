@@ -63,7 +63,7 @@ public static class ResourceStressTest
         foreach (var (name, w, h, weight) in new[] { ("s64.png", 64, 48, 4), ("m256.jpg", 256, 256, 4), ("m640.png", 640, 480, 3), ("l1080.png", 1920, 1080, 2), ("xl4k.jpg", 3840, 2160, 1) })
         {
             var path = Path.Combine(dir, name);
-            s.Check(NativeTest.vlqt_test_write_image(path, w, h, 90) == 0, $"test image {name} written");
+            s.Check(NativeCalls.WriteStripedImage(path, w, h, 90) == 0, $"test image {name} written");
             files.Add((path, weight));
         }
         var broken = Path.Combine(dir, "broken.png");

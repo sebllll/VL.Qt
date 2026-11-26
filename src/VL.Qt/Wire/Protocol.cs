@@ -12,7 +12,7 @@ namespace VL.Qt.Wire
     {
         /// <summary>Version of the command protocol and the C ABI of vlqt.h; QtApp refuses a vlqt.dll with another one. Bump with every
         /// change (see protocol.h).</summary>
-        public const int AbiVersion = 25;
+        public const int AbiVersion = 26;
         public const int CommandAlign = 4;
         /// <summary>Header of a command, a poll record and a resource record: u16 op/event, u16 flags (0, reserved), u32 length.</summary>
         public const int HeaderSize = 8;

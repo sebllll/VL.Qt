@@ -80,7 +80,5 @@ void overview(std::vector<OverviewRow>& rows, OverviewTotals& out);
 // --- Test hooks (test/test_resource_kind.cpp) ---
 // The kind VLQT_RESOURCE_KIND_TEST (vlqt_test.h), defined in test/test_resource_kind.cpp.
 Kind* testKind();
-// vlqt_test_res_transition: the state machine's transition (VLQT_RESOURCE_STATE_*). 0 / -7 (rejected, logged) / -9.
-int testTransition(uint64_t id, int from, int to);
 
 } // namespace vlqt::res

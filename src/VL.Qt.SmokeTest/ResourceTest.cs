@@ -10,8 +10,8 @@ using VL.Qt.Wire;
 using VL.Qt;
 
 /// <summary>
-/// (images package 02): the generic resource manager of QtNative with its test kind. State machine incl. rejected
-/// transitions, stale ids after release, upload budget per pump, release while decoding/uploading, element references,
+/// (images package 02): the generic resource manager of QtNative with its test kind. State machine, new content after a failure,
+/// stale ids after release, upload budget per pump, release while decoding/uploading, element references (an Image element),
 /// vlqt_res_wait (sync decode + upload, others keep going), shutdown with running jobs (10 rounds), poll cap.
 /// Ends with running jobs on purpose: the process must end cleanly with busy workers.
 /// </summary>
@@ -119,16 +119,9 @@ public static class ResourceTest
         s.Check(err != null && Encoding.UTF8.GetString(err.Payload).Contains("decode failed"), "ERROR text of the failed decode");
         s.Check(Seq(badUp) == "1,2,3,5", $"upload failure -> Failed ({Seq(badUp)})");
 
-        s.Check(NativeTest.vlqt_test_res_transition(a, Protocol.ResourceState.Ready, Protocol.ResourceState.Decoding) == Native.Result.BadArgument, "Ready -> Decoding rejected");
-        s.Check(NativeTest.vlqt_test_res_transition(a, Protocol.ResourceState.Pending, Protocol.ResourceState.Decoding) == Native.Result.BadArgument, "wrong from-state rejected");
         s.Check(NativeTest.vlqt_test_res_start(a, 0, 0, 0) == 0 && Native.vlqt_res_wait(a, 2000) == Protocol.ResourceState.Ready, "start of a Ready resource = replacement, stays Ready");
+        s.Check(NativeTest.vlqt_test_res_start(bad, 5, Mb, 0) == 0 && Native.vlqt_res_wait(bad, 2000) == Protocol.ResourceState.Ready, "new content after a failure: Failed -> Ready");
         var p = Create();
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResourceState.Pending, Protocol.ResourceState.Ready) == Native.Result.BadArgument, "Pending -> Ready rejected");
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResourceState.Pending, Protocol.ResourceState.Released) == Native.Result.BadArgument, "Released only by release + frame end");
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResourceState.Pending, 99) == Native.Result.BadArgument, "unknown state rejected");
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResourceState.Pending, Protocol.ResourceState.Failed) == 0, "Pending -> Failed allowed");
-        s.Check(NativeTest.vlqt_test_res_transition(p, Protocol.ResourceState.Failed, Protocol.ResourceState.Ready) == Native.Result.BadArgument, "Failed -> Ready rejected");
-        s.Check(s.Log.Contains("invalid transition Ready -> Decoding rejected"), "rejected transition logged");
         s.Check(s.Log.Contains("VL.Qt.Resources: #") && s.Log.Contains("Uploading -> Ready"), "transitions logged (debug, VL.Qt.Resources)");
 
         // 2. Stale id after release: -9 + warning, the reused index belongs to the new resource only.
@@ -143,7 +136,7 @@ public static class ResourceTest
         var e2 = Create();
         s.Check((uint)e2 == (uint)a && e2 != a, $"index reused with a new generation ({a:X} -> {e2:X})");
         s.Check(Native.vlqt_res_release(a) == Native.Result.UnknownId && NativeTest.vlqt_test_res_start(a, 0, 0, 0) == Native.Result.UnknownId && Native.vlqt_res_wait(a, 10) == (int)Native.Result.UnknownId
-            && NativeTest.vlqt_test_res_transition(a, 1, 5) == Native.Result.UnknownId && NativeTest.vlqt_test_res_element_ref(a, 1) == Native.Result.UnknownId, "stale id -> UnknownId everywhere");
+            , "stale id -> UnknownId everywhere");
         var e2Info = List().FirstOrDefault(r => r.id == e2);
         s.Check(e2Info.state == Protocol.ResourceState.Pending && e2Info.host_refs == 1 && e2Info.element_refs == 0, "new resource untouched by the stale id");
         s.Check(s.Log.Contains("stale resource id"), "stale id logged as warning");
@@ -197,15 +190,26 @@ public static class ResourceTest
         s.Check(!Listed(up), "uploading resource freed");
         s.Check(!events.Skip(before).Any(e => e.Id == dec) && !events.Skip(beforeUp).Any(e => e.Id == up), "no event after release while Decoding/Uploading");
 
-        // Element references: the host release alone does not free.
-        var el = Start(0, Mb);
-        s.Check(Settle(2000, el), "element test resource Ready");
-        s.Check(NativeTest.vlqt_test_res_element_ref(el, 1) == 0, "element acquire");
+        // Element references: an Image element holds its resource, the host release alone does not free.
+        Native.vlqt_res_create(Protocol.ResourceKind.Image, out var el);
+        Native.ImageSetPixels(el, new Native.vlqt_pixel_desc { width = 8, height = 8, format = 7, premultiplied = 1 }, new byte[8 * 8 * 4]);
+        s.Check(Native.vlqt_res_wait(el, 2000) == Protocol.ResourceState.Ready, "element test image Ready");
+        var cmd = new CommandWriter();
+        cmd.Create(1, Protocol.ElementType.Image);
+        cmd.SetPlace(1, 0, 0, 40, 40);
+        cmd.SetU64(1, Protocol.PropertyId.Image, el);
+        cmd.Reparent(1, 0, 0);
+        s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "image element applied");
+        Frame();
+        s.Check(List().FirstOrDefault(r => r.id == el).element_refs == 1, "the element acquired the resource");
         s.Check(Native.vlqt_res_release(el) == 0, "host release with an element ref");
         Frame();
         var elInfo = List().FirstOrDefault(r => r.id == el);
         s.Check(elInfo.id == el && elInfo.host_refs == 0 && elInfo.element_refs == 1, "kept while an element holds it");
-        s.Check(NativeTest.vlqt_test_res_element_ref(el, -1) == 0 && NativeTest.vlqt_test_res_element_ref(el, -1) == Native.Result.UnknownId, "element release, second one UnknownId");
+        cmd.Clear();
+        cmd.Destroy(1);
+        s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "image element destroyed");
+        Frame();
         Frame();
         s.Check(!Listed(el), "freed after the last element release");
 

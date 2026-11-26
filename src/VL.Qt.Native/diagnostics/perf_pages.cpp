@@ -23,10 +23,10 @@ constexpr double kOnDemandIdleShare = 0.25; // Summary shows "on demand" above t
 // Colors: phases (timeline bars + summary rows) and thresholds against the budget.
 constexpr Rgb kPhaseColor[PerfMonitor::PhaseCount] = {
     {90, 156, 255},  // events
+    {176, 196, 222}, // vsync wait
     {192, 128, 255}, // sync
     kWorkColor,      // render
     {64, 208, 208},  // present
-    {176, 196, 222}, // vsync wait
 };
 constexpr Rgb kRedColor{255, 80, 80};
 constexpr Rgb kGreyColor{144, 144, 144};
@@ -34,11 +34,7 @@ constexpr const char* kGreen = kGpuColor.html;
 constexpr const char* kYellow = kBudgetColor.html;
 constexpr const char* kRed = kRedColor.html;
 constexpr const char* kGrey = kGreyColor.html;
-const char* const kPhaseName[PerfMonitor::PhaseCount] = {"events", "sync", "render", "present", "vsync wait"};
-// Frame order of the phases (timeline bottom -> top, summary rows): the vsync wait sits between the events and the
-// sync. The enum keeps vsync last, so the phase numbers of vlqt_test_perf_spike stay.
-constexpr int kPhaseOrder[PerfMonitor::PhaseCount] = {PerfMonitor::PhaseEvents, PerfMonitor::PhaseVsync,
-    PerfMonitor::PhaseSync, PerfMonitor::PhaseRender, PerfMonitor::PhasePresent};
+const char* const kPhaseName[PerfMonitor::PhaseCount] = {"events", "vsync wait", "sync", "render", "present"};
 const char* const kPageName[PerfMonitor::PageCount] = {"SUMMARY", "TIMELINE", "SCENE", "SYSTEM", "RESOURCES"};
 
 float phaseMs(const PerfSample& s, int phase)
@@ -64,14 +60,14 @@ const char* const kHostName[SegQt] = {"vvvv", "GC", "apply"};
 
 bool s_hostSegments = true;
 
-const Rgb& segColor(int seg) { return seg < SegQt ? kHostColor[seg] : kPhaseColor[kPhaseOrder[seg - SegQt]]; }
+const Rgb& segColor(int seg) { return seg < SegQt ? kHostColor[seg] : kPhaseColor[seg - SegQt]; }
 float segMs(const PerfSample& s, int seg)
 {
     switch (seg) {
     case SegVvvv: return s.hostReported ? std::max(0.f, s.host.vvvv - s.host.gc_pause) : 0;
     case SegGc: return s.hostReported ? s.host.gc_pause : 0;
     case SegApply: return s.hostReported ? s.host.apply : 0;
-    default: return phaseMs(s, kPhaseOrder[seg - SegQt]);
+    default: return phaseMs(s, seg - SegQt);
     }
 }
 int firstSeg() { return s_hostSegments ? 0 : SegQt; }
@@ -85,7 +81,7 @@ float stackMs(const PerfSample& s)
 
 namespace {
 
-const char* segName(int seg) { return seg < SegQt ? kHostName[seg] : kPhaseName[kPhaseOrder[seg - SegQt]]; }
+const char* segName(int seg) { return seg < SegQt ? kHostName[seg] : kPhaseName[seg - SegQt]; }
 
 // A duration in the vvvv frame (Qt work, a phase, vvvv, apply): green < half the budget, yellow < budget, red above.
 const char* budgetColor(double ms, double budget) { return ms < 0.5 * budget ? kGreen : ms < budget ? kYellow : kRed; }
@@ -221,7 +217,7 @@ QString PerfMonitor::summaryPage(QString* body) const
             h.t(", ").c(kHostColor[SegVvvv].html, QStringLiteral("vvvv %1%").arg(qRound(100.0 * hs.vvvv_ms / frameAvg)));
     }
     h.br().c(kGrey, QStringLiteral("work avg vs. budget, tick = p95"));
-    if (m_overlay) { // null for pageText without overlay
+    if (m_overlay) { // null for perfPageText without overlay
         m_overlay->setProperty("barUse", budget > 0 ? workAvg / budget : 0.0);
         m_overlay->setProperty("barP95", budget > 0 ? workP95 / budget : 0.0);
         m_overlay->setProperty("barColor", QColor(QLatin1String(budgetColor(workAvg, budget))));
@@ -243,7 +239,7 @@ QString PerfMonitor::summaryPage(QString* body) const
         .t(num(st.pump_max, W)).br();
     b.t(lab("work", L)).c(budgetColor(workAvg, budget), num(workAvg, W)).t(QString(3 * W, u' '))
         .c(budgetColor(workMax, budget), num(workMax, W)).br();
-    for (int ph : kPhaseOrder) {
+    for (int ph = 0; ph < PhaseCount; ph++) {
         b.t("  ").c(kPhaseColor[ph].html, lab(kPhaseName[ph], L - 2));
         b.c(budgetColor(phAvg(ph), budget), num(phAvg(ph), W));
         b.t(QString(3 * W, u' ')).c(budgetColor(phMax[ph], budget), num(phMax[ph], W)).br();
@@ -336,7 +332,7 @@ const QString kNa = QStringLiteral("n/a");
 
 } // namespace
 
-// Built only while the page is visible (4 Hz text interval) or on demand (pageText); nothing here runs per frame.
+// Built only while the page is visible (4 Hz text interval) or on demand (perfPageText); nothing here runs per frame.
 QString PerfMonitor::scenePage() const
 {
     Html h;
@@ -523,7 +519,7 @@ const char* resColor(const vlqt::res::OverviewRow& r)
 } // namespace
 
 // live resources of the process-wide manager (resources.h), the same on every window. Built only while the
-// page is visible (4 Hz text interval) or on demand (pageText); the row buffer is reused.
+// page is visible (4 Hz text interval) or on demand (perfPageText); the row buffer is reused.
 QString PerfMonitor::resourcesPage() const
 {
     using vlqt::res::State;
@@ -589,15 +585,15 @@ QString PerfMonitor::resourcesPage() const
     return h.str();
 }
 
-QString PerfMonitor::pageText(int page) const
+QString perfPageText(const PerfMonitor& m, int page)
 {
     QString html, part;
     switch (page) {
-    case Summary: html = summaryPage(&part); break; // also Summary/Timeline (head + body/foot)
-    case Timeline: html = timelinePage(&part); break;
-    case Scene: html = scenePage(); break;
-    case System: html = systemPage(); break;
-    case Resources: html = resourcesPage(); break;
+    case PerfMonitor::Summary: html = m.summaryPage(&part); break; // also Summary/Timeline (head + body/foot)
+    case PerfMonitor::Timeline: html = m.timelinePage(&part); break;
+    case PerfMonitor::Scene: html = m.scenePage(); break;
+    case PerfMonitor::System: html = m.systemPage(); break;
+    case PerfMonitor::Resources: html = m.resourcesPage(); break;
     default: break;
     }
     if (!part.isEmpty())
