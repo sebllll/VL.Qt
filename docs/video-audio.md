@@ -82,5 +82,5 @@ The buffer is an upper bound for what the sound waits before the mixer (12 ms fo
 ## Tests
 
 - `src/VL.Qt.Audio.Tests`: the control loop with simulated clocks (drift, jitter), underrun, discontinuities, rate change and allocations per buffer, without VL.Audio or Qt.
-- SmokeTest scenario `videoaudio` (`dotnet run --project src/VL.Qt.SmokeTest -c Release -- --only videoaudio`): QtNative with `help/Qt/assets/qt-help-video-audio.mp4`, samples, rate, loop wrap, pause and source change, audio/frame consistency.
+- SmokeTest scenario `videoaudio` (`dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=videoaudio`): QtNative with `help/Qt/assets/qt-help-video-audio.mp4`, samples, rate, loop wrap, pause and source change, audio/frame consistency.
 - Help patch: `tools/vl-patch-check.py` and `tools/vvvvc.ps1 -File "VL.Qt.Audio/help/HowTo Play a Video with VL.Audio.vl"` (the script packs `VL.Qt` and `VL.Qt.Audio` into a local feed; VL.Audio is restored from NuGet).

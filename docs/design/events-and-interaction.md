@@ -108,4 +108,4 @@ An element may hang in the tree several times and in several renderers. Each occ
 ## Evidence
 
 - Unit tests, no GPU: `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~FeedbackRouter|FullyQualifiedName~InteractionTests|FullyQualifiedName~NotificationQueue"`.
-- SmokeTest: `dotnet run --project src/VL.Qt.SmokeTest -c Release -- --all` (handlers and `QtTextureInput`).
+- SmokeTest: `dotnet test src/VL.Qt.SmokeTest -c Release` (handlers and `QtTextureInput`).

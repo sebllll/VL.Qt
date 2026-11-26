@@ -32,7 +32,7 @@ Rectangle [Qt]                                           (features, size 9)
 … the Rectangle nodes, IOBoxes, Renderer …               (content)
 
 Notes:                                                   (notes, size 9, bottom)
-- Size is width and height in units (1 unit = 100 DIP). A Rectangle with width or height 0 is not drawn.
+- Size is width and height in units (in the default space `DIPTopLeft`, 1 unit = 100 DIP). A Rectangle with width or height 0 is not drawn.
 - Position, rotation and scale come only from Transform. The Anchor is the point of the rectangle that sits at the
   origin and the pivot of Transform: TopLeft (orange) puts the top left corner on the Translation, Center (default, blue)
   centers the rectangle on it.
@@ -65,6 +65,7 @@ A change that renames a node or a pin or moves a category does not edit the patc
 - `HowTo Group Elements` — grouping, nesting, transforms
 - `HowTo Reuse an Element` — one element at several places of the tree, Interaction per place
 - `HowTo Choose a Space` — the `Space` pin: origin and unit of Normalized, DIP, DIPTopLeft and PixelTopLeft
+- `HowTo Antialias Edges` — `Multisample Count` of the Renderer: None, X2, X4, X8 and what each costs
 
 ## Text
 
@@ -133,6 +134,7 @@ See [Effects and shaders](effects-and-shaders.md).
 ## QML
 
 - `HowTo Use a QML file` — `QmlElement` with the sample `QmlElement Example.qml`: properties in by name, changed properties and signals out, hot reload on save
+- `HowTo Create QML Nodes from Files` — `qml/` folder next to the patch: one node per `.qml` file, properties as pins, signals as outputs
 
 See [QML files as elements](user-qml.md).
 
@@ -142,6 +144,7 @@ See [QML files as elements](user-qml.md).
 - `HowTo Read the Window Bounds` — window and client bounds as outputs
 - `HowTo Debug Overlay` — layout overlay via the `Debug` pin
 - `HowTo Read Performance` — perf numbers as node outputs
+- `HowTo Avoid Tearing` — the `VSync` pin of the Renderer: Present waits for the display refresh, a change recreates the window
 
 See [Diagnostics](diagnostics.md).
 
@@ -149,6 +152,7 @@ See [Diagnostics](diagnostics.md).
 
 In `VL.Qt.Stride/help/` (package `VL.Qt.Stride`, Windows only), see [Stride texture](../README.md#stride-texture):
 
+- `HowTo Draw Qt in a Stride Scene` — `QtRenderer`: Qt elements as a layer over a 3D scene (`RenderEntity`, `AfterScene`), input reaches Button and Slider
 - `HowTo Render Qt into a Stride Texture` — `QtTexture`: a Qt scene (text, shapes) rendered offscreen into a Stride `Texture` with a transparent `Clear Color`, composed over a 3D background with `AlphaBlendPremultiplied`
 - `HowTo Interact with a QtTexture` — `ToTexturePixels` feeds the window input into the scene of a `QtTexture`
 - `HowTo Draw a QtTexture with Transparency` — half-transparent elements over a 3D scene, premultiplied alpha, `Format`, the same scene in a Qt window to compare
