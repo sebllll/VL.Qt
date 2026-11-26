@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>VL.Qt.Stride</RootNamespace>
-    <!-- Package folder VL.Qt.Stride/ at the repo root (see docs/decisions/render-texture.md, Package layout). -->
+    <!-- Package folder VL.Qt.Stride/ at the repo root (see docs/design/stride-output.md, "Package layout"). -->
     <OutputPath>..\..\VL.Qt.Stride\lib\net10.0-windows7.0\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>

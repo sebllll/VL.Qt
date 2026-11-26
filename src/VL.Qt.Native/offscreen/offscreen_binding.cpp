@@ -1,5 +1,5 @@
 // The D3D11 binding of an offscreen scene: the texture of the foreign device opened on QtNative's device, two shared
-// fences, the adapter match and the linear pass (render-texture.md). Windows only (CMakeLists.txt).
+// fences, the adapter match and the linear pass (docs/design/stride-output.md). Windows only (CMakeLists.txt).
 // Private Qt API: QQuickWindowPrivate::ensureCustomRenderTarget; check on Qt updates (list: elements/elements.h).
 #include "offscreen/offscreen_scene.h"
 #include "app/exports.h"
@@ -219,7 +219,7 @@ int bind(OffscreenScene* s, void* device, void* ntHandle, int width, int height,
     // MSAA: Qt renders into a multisample colour and depth-stencil texture of its own and resolves into the
     // target at the end of the pass (MultisampleResolve; without the flag the count would mean "the target itself is
     // multisample"). With the linear pass Qt resolves into the pass's float source, the pass reads resolved pixels.
-    // Layers in the scene stay single-sample (the render control's count, render-texture.md "MSAA").
+    // Layers in the scene stay single-sample (the render control's count, docs/design/clear-and-msaa.md, "MSAA").
     const DXGI_FORMAT targetFormat = linearPass.source ? DXGI_FORMAT_R16G16B16A16_FLOAT : DXGI_FORMAT(format);
     const int used = vlqt::device::clampSamples(samples, int(targetFormat), s->window->rhi());
     const QQuickRenderTarget::Flags msaa = used > 1 ? QQuickRenderTarget::Flag::MultisampleResolve : QQuickRenderTarget::Flags();

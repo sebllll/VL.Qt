@@ -160,7 +160,7 @@ namespace VL.Qt
                 _scene.Dispatch(events, frameStart: false);
         }
 
-        // Input (render-texture.md "Input"): positions in texture pixels (top-left origin, 1 DIP = 1 pixel), call
+        // Input (docs/design/offscreen-input.md, "The pin and its coordinates"): positions in texture pixels (top-left origin, 1 DIP = 1 pixel), call
         // between two RenderBatch calls; the scene shows the result in the next batch, its events arrive in PollEvents.
         // Each returns a Native.Result code.
 

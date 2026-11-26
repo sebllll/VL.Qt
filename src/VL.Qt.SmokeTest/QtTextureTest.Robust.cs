@@ -37,7 +37,7 @@ public static partial class QtTextureTest
     // QtNative's last error text for the message of a failed check; nothing when the call went well (the text is not cleared).
     private static string ErrIf(bool failed) => failed ? Native.LastError() : "";
 
-    // The thread count QtNative uses: the run's RenderThreads (QtHost sets it), else 1 (render-texture.md, "Qt render thread").
+    // The thread count QtNative uses: the run's RenderThreads (QtHost sets it), else 1 (docs/design/render-thread.md, "Render threads").
     private static int ExpectedThreads => SmokeParameters.RenderThreads ?? 1;
 
     // The pool size may change at any time and applies to the scenes created afterwards (E7); the mode the suite runs in

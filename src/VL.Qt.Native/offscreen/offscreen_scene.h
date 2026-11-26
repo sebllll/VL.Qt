@@ -105,7 +105,7 @@ vlqt_scene* create(int width, int height);
 // The render control of scene: Qt's, plus the keyboard focus of a scene (SceneRenderControlPrivate).
 QQuickRenderControl* newRenderControl(const OffscreenScene* scene);
 
-// The input exports (vlqt.h, render-texture.md "Input"): events go with QCoreApplication::sendEvent to the scene's
+// The input exports (vlqt.h, docs/design/offscreen-input.md, "Native injection"): events go with QCoreApplication::sendEvent to the scene's
 // QQuickWindow. VLQT_OK, or an error code with vlqt_last_error set.
 int sendPointer(OffscreenScene* s, int device, int type, int id, QPointF pos, int buttons, int modifiers);
 int sendWheel(OffscreenScene* s, QPointF pos, int dx, int dy, int modifiers);

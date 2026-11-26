@@ -8,7 +8,7 @@ using Stride.Core.Mathematics;
 namespace VL.Qt.Qml
 {
     /// <summary>
-    /// The root declarations of a .qml file (docs/decisions/user-qml.md): found by a C# parser (<see cref="QmlDeclarationParser"/>)
+    /// The root declarations of a .qml file (docs/design/user-qml.md, "Node factory"): found by a C# parser (<see cref="QmlDeclarationParser"/>)
     /// that needs no Qt and runs no user code. If the root type is a sibling file of the same folder (<c>Gauge { }</c> + Gauge.qml),
     /// its declarations come first (recursive, a cycle gives a warning and stops); a redeclaration in the derived file replaces
     /// the inherited one in place.

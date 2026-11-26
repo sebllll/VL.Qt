@@ -58,7 +58,7 @@ namespace VL.Qt.Interop
             };
             var rid = os + "-" + arch;
             var asmDir = Path.GetDirectoryName(typeof(Native).Assembly.Location)!;
-            // Layouts (docs/decisions/qtnative-deployment.md): the assembly sits in lib/net10.0/ in the repo and the package.
+            // Layouts (docs/design/deployment.md, "Finding Qt at run time"): the assembly sits in lib/net10.0/ in the repo and the package.
             // The package keeps the Qt tree in qt/<rid>/, outside runtimes/<rid>/native, which NuGet would flatten.
             foreach (var candidate in new[] {
                 Path.Combine(asmDir, "runtimes", rid, "native"),               // app output (SmokeTest, export)

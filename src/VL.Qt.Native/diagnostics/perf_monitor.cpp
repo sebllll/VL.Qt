@@ -60,7 +60,7 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
     // on the scene's render thread (offscreen/offscreen_render.cpp); afterFrameEnd hands the frame to endPump
     // (perf_monitor.h, m_done).
     // vsync wait: beforeFrameBegin -> beforeSynchronizing. The wait for the refresh happens in QRhi::beginFrame, between
-    // those two signals, and Qt has no signal at its end (docs/design/timing.md, "Vsync wait"). Software backend: no
+    // those two signals, and Qt has no signal at its end (docs/design/timing.md, "VSync and the wait for the display"). Software backend: no
     // beforeFrameBegin, the segment is 0.
     connect(window, &QQuickWindow::beforeFrameBegin, this, [this] {
         m_tFrameBegin = nowMs();

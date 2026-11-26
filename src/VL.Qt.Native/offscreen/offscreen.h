@@ -1,7 +1,7 @@
 // offscreen.h - offscreen scenes (QtTexture): a scene handle whose QQuickWindow a QQuickRenderControl drives, rendering
 // into a texture of a foreign device. This part owns the render control and the binding; window/window.cpp creates what
 // every handle shares. Threads: main; a scene's scene graph and QRhi live on its render thread (device/render_thread.h).
-// C ABI: the vlqt_offscreen_* exports in vlqt.h. Design: docs/design/render-thread.md, docs/decisions/render-texture.md.
+// C ABI: the vlqt_offscreen_* exports in vlqt.h. Design: docs/design/render-thread.md, docs/design/stride-output.md.
 #pragma once
 
 #include <QtCore/QPointF>

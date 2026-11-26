@@ -20,7 +20,7 @@ using VL.Qt;
 /// lost, feedback layer rebuilt), offscreen
 /// (UNORM, SRGB and float through the linear pass; rebind 1, 4, 1) and the clamp of unsupported counts. The checks count
 /// edge pixels and read swap chain counts; nothing depends on time. The cost per count (spike) is in
-/// docs/decisions/render-texture.md.
+/// docs/design/clear-and-msaa.md, "MSAA".
 /// </summary>
 [TestFixture, NonParallelizable]
 public static class MsaaTest

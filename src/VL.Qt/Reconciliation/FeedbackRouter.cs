@@ -14,7 +14,7 @@ namespace VL.Qt.Reconciliation
     /// Feedback ids of one window: <c>uint feedbackId ↔ FeedbackSlot</c>. The reconciler acquires an id per binding and releases
     /// it on unbind, slot change or destroy; <see cref="Dispatch"/> writes the poll buffer into the bound slots. Ids count up and
     /// are not reused, so late events of a released id are dropped. Several ids may share a slot (one per occurrence). Main thread only.
-    /// Design: docs/design/reconciler.md, "Feedback binding"; docs/design/events.md, "Feedback binding".
+    /// Design: docs/design/reconciler.md, "Feedback binding"; docs/design/events-and-interaction.md, "Feedback binding".
     /// </summary>
     internal sealed class FeedbackRouter
     {

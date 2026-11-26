@@ -40,7 +40,7 @@ namespace VL.Qt.Nodes
         /// <summary>Chain of the Interaction pin; compared by reference (an unchanged chain is the same instance).</summary>
         public Interaction? Interaction { get; init; }
 
-        /// <summary>Chain of the Effect pin (plan effects/01); compared by reference like <see cref="Interaction"/>.</summary>
+        /// <summary>Chain of the Effect pin (docs/design/effects.md, "Item tree of a chain"); compared by reference like <see cref="Interaction"/>.</summary>
         public Effect? Effect { get; init; }
 
         /// <summary>The Enabled pin (last input of every element node): false takes the element out of the scene, see <see cref="Element.Visible"/>.</summary>

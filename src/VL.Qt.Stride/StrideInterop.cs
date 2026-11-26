@@ -10,7 +10,7 @@ namespace VL.Qt.Stride
 {
     /// <summary>
     /// The Stride side of a QtTexture: the shared texture and the native pointers and formats QtNative and QtRenderer need
-    /// (docs/decisions/render-texture.md; the format mapping is in <see cref="TextureFormats"/>). All D3D11 work on the texture
+    /// (docs/design/stride-output.md; the format mapping is in <see cref="TextureFormats"/>). All D3D11 work on the texture
     /// itself (open, fences, render) is in the native layer (QtNative).
     /// </summary>
     [SupportedOSPlatform("windows")]

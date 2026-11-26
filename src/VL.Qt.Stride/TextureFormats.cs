@@ -3,7 +3,7 @@
 namespace VL.Qt.Stride
 {
     /// <summary>
-    /// The texture formats of a QtTexture scene (docs/decisions/render-texture.md). No D3D11 here, so the unit tests compile
+    /// The texture formats of a QtTexture scene (docs/design/stride-output.md, "Formats, colour space and alpha"). No D3D11 here, so the unit tests compile
     /// it in; the native side is in <see cref="StrideInterop"/>.
     /// </summary>
     internal static class TextureFormats
