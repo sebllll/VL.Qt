@@ -68,6 +68,8 @@ int sampleCount(float len)
 // Bilinear sample of the premultiplied source, done by hand: the layers are sampled nearest (not smooth), and a nearest
 // sample every pixel or less would hit some texels twice and skip others, which shows as hatching. Outside the item it is
 // transparent.
+// textureLod, not texture: the source has no mipmaps, so both read the same, but with texture the shader compiler copies the
+// loop maxSamples times, and that large shader crashes the Windows ARM64 software renderer (WARP).
 vec4 fetch(vec2 uv)
 {
     if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0)
@@ -76,8 +78,8 @@ vec4 fetch(vec2 uv)
     vec2 i = floor(p);
     vec2 f = p - i;
     vec2 c = (i + 0.5) * texelSize;
-    return mix(mix(texture(source, c), texture(source, c + vec2(texelSize.x, 0.0)), f.x),
-               mix(texture(source, c + vec2(0.0, texelSize.y)), texture(source, c + texelSize), f.x), f.y);
+    return mix(mix(textureLod(source, c, 0.0), textureLod(source, c + vec2(texelSize.x, 0.0), 0.0), f.x),
+               mix(textureLod(source, c + vec2(0.0, texelSize.y), 0.0), textureLod(source, c + texelSize, 0.0), f.x), f.y);
 }
 
 void main()

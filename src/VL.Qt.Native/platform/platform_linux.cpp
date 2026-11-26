@@ -11,10 +11,13 @@
 #include <QtGui/QFont>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QGuiApplication>
+#include <QtGui/QOpenGLContext>
+#include <QtGui/QOpenGLFunctions>
 #include <QtGui/private/qhighdpiscaling_p.h>
 #include <QtGui/private/qwindow_p.h>
 #include <QtGui/qpa/qplatformwindow.h>
 #include <QtQuick/QQuickWindow>
+#include <rhi/qrhi.h>
 
 #include <cerrno>
 #include <cstdlib>
@@ -187,6 +190,25 @@ void setFrameless(QQuickWindow& window, bool on, bool keepClientRect)
         QWindowPrivate::get(&window)->positionPolicy = QWindowPrivate::WindowFrameExclusive;
         pw->setGeometry(QHighDpi::toNativeWindowGeometry(client, &window));
     }
+}
+
+// Qt's offscreen platform renders into a hidden X window whose swapBuffers does nothing (offscreen/offscreen_glx.h),
+// so nothing flushes a frame. Mesa's llvmpipe then keeps binning every frame into one scene, and that scene holds each
+// texture it sampled: a texture deleted by Qt (glDeleteTextures) keeps its storage until the window's context goes.
+// An image switched every frame grew the process by one 4K texture (32 MB) per frame. The flush hands the
+// frame to the driver as a present would; xcb and Wayland present themselves. In the basic loop afterFrameEnd comes
+// on the GUI thread with the window's context current; makeThreadLocalNativeContextCurrent makes sure of it.
+void endFramesLikePresent(QQuickWindow& window)
+{
+    if (QGuiApplication::platformName() != QLatin1String("offscreen"))
+        return;
+    QObject::connect(&window, &QQuickWindow::afterFrameEnd, &window, [w = &window] {
+        QRhi* rhi = w->rhi();
+        if (!rhi || rhi->backend() != QRhi::OpenGLES2 || !rhi->makeThreadLocalNativeContextCurrent())
+            return;
+        if (QOpenGLContext* ctx = QOpenGLContext::currentContext())
+            ctx->functions()->glFlush();
+    }, Qt::DirectConnection);
 }
 
 // libc environ (getenv): set before the process starts. .NET on Linux keeps variables set at run time to itself.

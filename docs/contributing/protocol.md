@@ -193,7 +193,7 @@ The `Effect` pin of an element is a chain of links. `SET_EFFECT_CHAIN` sends the
 - `linkCount 0` = no chain: the layer is removed. Otherwise QtNative sets `layer.enabled` and one `layer.effect` on the element's own item; the links are an item tree inside that effect item (intermediate stages hidden, each its own layer = texture provider, the last draws). Size, `TRANSFORM`, implicit size, Row and Column layout and hit test stay those of the item.
 - Root `0` and input handlers are `-6`, an unknown id `-4`, an unknown link kind `-7`, lengths that do not add up `-2`. `SET` of an `EFFECT_*` key (block 832) is `-6`: the ids are only keys of `MULTI` entries.
 - A rejected `SET_EFFECT_CHAIN` changes nothing: layout, ids and masks are checked before a mask or texture is parked.
-- Content problems never fail the apply (unknown uniform name, wrong type, shader not ready, reserved names, negative padding or strength). They are `EVENT_ERROR` text of the element, one line per problem prefixed with the link index (`link 2: ...`), empty = cleared.
+- Content problems never fail the apply (unknown uniform name, wrong type, shader not ready, reserved names, negative padding or strength, a margin cut by the limit below). They are `EVENT_ERROR` text of the element, one line per problem prefixed with the link index (`link 2: ...`), empty = cleared.
 - The Qt Quick software backend (`QT_QUICK_BACKEND=software`) does not draw ShaderEffects, so an element with a chain is not drawn there at all (layout and hit test unchanged).
 
 ### MULTI link
@@ -213,7 +213,7 @@ One shader effect link driven by QtNative's pass driver. Body: `u16 template`, `
 - `passIndex`: `SINGLE` and `TWO_PASS` write a `float passIndex` into the shader's uniform block if it declares one: 0 in `SINGLE` and pass 1, 1 in pass 2. A shader that needs a different value per pass derives it (the motion blurs divide their length by their sample cap 64 in pass 2).
 - Set by QtNative and reserved for C# (an entry of that name is an `EVENT_ERROR` line): `qt_Matrix`, `qt_Opacity`, `source`, `texelSize` (1 / pixel size of the sampled texture), `dpr`, `weight`, `elementRect`, `passIndex`, and for `PYRAMID` `base`, `glow`, `shadow`. `elementRect` (`SINGLE` and `TWO_PASS`) is a vec4 `(x, y, w, h)` of the element's own rectangle in UV of the pass area, 0 = not set; a texture element that must sit on the element and not on the area grown by earlier links (Blend layer, Displace map) maps itself with it.
 - Texture uniforms: `REF` is an element object of its own that the host never reparents (like a mask); QtNative parks it hidden and renders it as a layer. An unknown id is `-4`. `REPARENT` of it while a chain samples it is `-8`; once no chain samples it, it is shown again. `U64` is an image resource id.
-- Shader id 0 or not Ready yet: the link passes its input through unchanged. A Failed id keeps the last Ready shader of that link (like ShaderEffect). Padding grows from link to link: each link's effect area is its input's plus its padding.
+- Shader id 0 or not Ready yet: the link passes its input through unchanged. A Failed id keeps the last Ready shader of that link (like ShaderEffect). Padding grows from link to link: each link's effect area is its input's plus its padding. The margins of all links together (padding, `PADDING_RECT`, the MULTI auto padding `BLUR_MAX` x (1 + `BLUR_MULTIPLIER`)) are cut per side to the larger side of the window, at least 1024 DIP.
 
 ### Mask
 

@@ -125,6 +125,7 @@ void installWindowFilters(SceneHandle* w, QQuickWindow* win)
     win->installEventFilter(w->gate);
     w->changes = new SceneChangeCounter(win);
     vlqt::device::lockFrames(win); // windows only: a scene's render thread locks itself (offscreen/offscreen_render.cpp)
+    vlqt::platform::endFramesLikePresent(*win);
     win->installEventFilter(new FullscreenKeys(win, asHandle(w)));
     win->installEventFilter(new FocusRelease(win));
     vlqt::test::installInputFilter(win); // test hook: VLQT_TEST_SYNTHETIC_INPUT (test/test_input.cpp)

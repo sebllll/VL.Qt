@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <utility>
 
 Q_LOGGING_CATEGORY(lcEffectChain, "vlqt.effectchain")
 
@@ -188,6 +189,85 @@ quint64 builtinShader(quint64& slot, const char* path)
     return slot = id;
 }
 
+// Margin limit of a chain: every link grows the effect area by its margin (SHADER padding, MULTI paddingRect plus
+// Qt's auto padding blurMax x (1 + blurMultiplier)), and every layer texture of the chain has the size of an effect
+// area. Qt bounds none of these; a padding of 4000 (the recorded effects trace) asks for 8.5k x 8.3k layers, a fuzzed
+// exponent bit for 16k x 16k (1 GiB per texture on llvmpipe). All links together may add at most the larger side of the
+// window on each side of the element: an element anywhere in the window reaches every pixel of it with that margin, so
+// nothing visible is lost, and real paddings (tens of DIP) never get near it. The floor keeps small windows and a
+// window not known yet usable. Margins are DIP, so a layer stays below (element + 2 x limit) x dpr pixels; Qt clamps
+// that further to the maximum texture size.
+constexpr qreal kMinMarginLimit = 1024;
+
+qreal marginLimit(const QObject* element)
+{
+    const auto* item = qobject_cast<const QQuickItem*>(element);
+    const QQuickWindow* w = item ? item->window() : nullptr;
+    return w ? std::max(kMinMarginLimit, qreal(std::max(w->width(), w->height()))) : kMinMarginLimit;
+}
+
+// What the links of one chain have used of the limit, per side (left, top, right, bottom).
+struct MarginBudget
+{
+    qreal limit;
+    qreal used[4] = {};
+    bool limited = false; // a margin of the current apply was cut
+
+    qreal room() const { return std::max(0.0, limit - *std::max_element(used, used + 4)); }
+
+    // One side of a link's margin, cut to what is left (NaN: 0); a negative margin crops, at most by the limit.
+    float take(int side, float v)
+    {
+        const qreal left = std::max(0.0, limit - used[side]);
+        float r = v == v ? v : 0.f;
+        if (r > left || r < -limit) {
+            r = r > 0 ? float(left) : float(-limit);
+            limited = true;
+        }
+        used[side] += std::max(0.f, r);
+        return r;
+    }
+};
+
+// MULTI: paddingRect and the auto padding of Qt's MultiEffect (qquickmultieffect.cpp updateSourcePadding: blurMax x
+// (1 + blurMultiplier) on every side when auto padding is on, blur or shadow on and blurMax > 0) within the budget.
+// blurMax is cut first (Qt's useful range ends at 64), then the multiplier; both are written back to the values.
+void limitMultiMargin(EffectChain::Link& l, MarginBudget& b)
+{
+    float pad[4] = {float(l.padding.x()), float(l.padding.y()), float(l.padding.width()), float(l.padding.height())};
+    for (int k = 0; k < 4; ++k)
+        pad[k] = b.take(k, pad[k]);
+    l.padding = QRectF(pad[0], pad[1], pad[2], pad[3]);
+    QVariant* v = l.multi.values;
+    QVariant& maxV = v[multiIndex(VLQT_MULTI_EFFECT_KEY_BLUR_MAX)];
+    QVariant& multV = v[multiIndex(VLQT_MULTI_EFFECT_KEY_BLUR_MULTIPLIER)];
+    const qreal room = b.room();
+    double max = maxV.toDouble(), mult = multV.toDouble();
+    bool cut = false;
+    if (!(mult >= -1)) { // NaN too; below -1 the padding turns negative without bound
+        mult = mult == mult ? -1 : 0;
+        cut = true;
+    }
+    if (max > room) {
+        max = std::floor(room);
+        cut = true;
+    }
+    if (max > 0 && max * (1 + mult) > room) {
+        mult = room / max - 1;
+        cut = true;
+    }
+    if (cut) {
+        b.limited = true;
+        maxV = int(max);
+        multV = mult;
+    }
+    const bool on = v[multiIndex(VLQT_MULTI_EFFECT_KEY_AUTO_PADDING)].toBool()
+        && (v[multiIndex(VLQT_MULTI_EFFECT_KEY_BLUR_ENABLED)].toBool() || v[multiIndex(VLQT_MULTI_EFFECT_KEY_SHADOW_ENABLED)].toBool());
+    if (on && max > 0)
+        for (qreal& u : b.used)
+            u += std::max(0.0, max * (1 + mult));
+}
+
 // Blur level of a radius: sigma = radius x dpr / 2 pixels, L = 1/2 log2(1 + 6/7 sigma^2) (docs/design/effects.md, "Blur pyramid").
 double pyramidLevel(float radius, qreal dpr)
 {
@@ -235,6 +315,7 @@ bool EffectChain::apply(const EffectChainDesc& desc, const std::vector<QQuickIte
     // The same-structure send (an animated pin: every frame) allocates nothing once the scratch has its capacity.
     std::vector<Link>& next = m_next;
     next.resize(desc.links.size());
+    MarginBudget budget{marginLimit(parent())};
     for (size_t i = 0; i < next.size(); ++i) {
         const EffectLinkDesc& d = desc.links[i];
         Link& l = next[i];
@@ -248,6 +329,7 @@ bool EffectChain::apply(const EffectChainDesc& desc, const std::vector<QQuickIte
                 else if (e.prop != VLQT_MULTI_EFFECT_KEY_MASK_SOURCE)
                     l.multi.values[multiIndex(e.prop)] = toVariant(e.value);
             }
+            limitMultiMargin(l, budget);
             l.multi.mask = i < masks.size() ? masks[i] : nullptr;
         } else {
             l.shader.templ = d.templ;
@@ -262,6 +344,12 @@ bool EffectChain::apply(const EffectChainDesc& desc, const std::vector<QQuickIte
             }
             if (negative)
                 l.shader.problems << QStringLiteral("padding must not be negative (0 is used)");
+            const bool limitedBefore = std::exchange(budget.limited, false);
+            for (int k = 0; k < 4; ++k)
+                pad[k] = budget.take(k, pad[k]);
+            if (budget.limited)
+                l.shader.problems << QStringLiteral("padding cut: the links may add at most %1 per side together").arg(budget.limit);
+            budget.limited = budget.limited || limitedBefore;
             l.padding = QRectF(pad[0], pad[1], pad[2], pad[3]);
             l.shader.strength = d.strength >= 0.f ? d.strength : 0.f;
             if (!(d.strength >= 0.f))
@@ -276,6 +364,12 @@ bool EffectChain::apply(const EffectChainDesc& desc, const std::vector<QQuickIte
                     l.shader.uniforms.push_back(u);
             }
         }
+    }
+    if (budget.limited) {
+        static bool s_warned = false;
+        if (!std::exchange(s_warned, true))
+            qCWarning(lcEffectChain, "effect chain: padding or blur margin cut to %.0f per side (the window's larger side, at least "
+                                     "%.0f), else the effect layers grow without bound (warned once)", budget.limit, kMinMarginLimit);
     }
     // A mask that stays attached keeps its frame, also in another link.
     for (const Link& o : m_links) {

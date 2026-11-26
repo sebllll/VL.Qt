@@ -26,6 +26,11 @@ bool testSyntheticInputOnly();
 // window keeps its client rect, the frame grows or disappears around it; otherwise only the flag changes.
 void setFrameless(QQuickWindow& window, bool on, bool keepClientRect);
 
+// Ends every frame of an on-screen window like a present would, at creation and for the window swap. Linux: on Qt's
+// offscreen platform with OpenGL a glFlush after each frame, since that platform's swapBuffers does nothing (see
+// platform_linux.cpp). Windows: nothing, the swap chain presents.
+void endFramesLikePresent(QQuickWindow& window);
+
 // Identity of a file for a registry: the canonical path, case-folded where the file system ignores case (Windows).
 QString pathKey(const QFileInfo& file);
 
