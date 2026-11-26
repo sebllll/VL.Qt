@@ -49,7 +49,6 @@ For the maintainers of the repository.
 | Page | Content |
 |---|---|
 | [maintaining/release.md](maintaining/release.md) | CI, the repository settings for a release, the release steps and the contributors list. |
-| [../docs-internal/README.md](../docs-internal/README.md) | Working plans of the current release; removed after the release. |
 
 ## Design notes
 
