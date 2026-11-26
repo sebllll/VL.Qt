@@ -9,6 +9,6 @@
     <!-- VL.Audio from nuget.org (net8.0-windows7.0 build, usable from net10); used by VL.Qt.Audio and its tests. -->
     <VlAudioVersion>1.9.21</VlAudioVersion>
     <!-- Package version of VL.Qt and VL.Qt.Stride: they ship in lockstep (CI overrides it with -p:Version). -->
-    <VersionPrefix>0.1.0</VersionPrefix>
+    <VersionPrefix>0.10.0</VersionPrefix>
   </PropertyGroup>
 </Project>

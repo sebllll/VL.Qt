@@ -2,7 +2,7 @@
 
 Images are GPU resources (`QtImage`), separate from the `Image [Qt]` element that draws them. A loaded image is uploaded once and can be shown by any number of Image elements in any window; switching between loaded images costs nothing.
 
-<img src="images/images.png" width="820" alt="One image drawn in the four fill modes Stretch, PreserveAspectFit, PreserveAspectCrop and Tile">
+<img src="images/images.png" width="820" alt="One image drawn in the four fill modes Stretch, Fit, Crop and Tile">
 
 ## Nodes
 
