@@ -6,7 +6,7 @@ For the overlays and the in-app numbers see [Diagnostics](diagnostics.md).
 
 ## Scenarios
 
-The scenarios live in `tests/profiling/`, one patch each, window 1280×720 DIP, time-based deterministic animation. Details: [tests/profiling/README.md](../tests/profiling/README.md).
+The scenarios live in `tools/profiling/`, one patch each, window 1280×720 DIP, time-based deterministic animation. Details: [tools/profiling/README.md](../tools/profiling/README.md).
 
 | Scenario | Patch | Content |
 |---|---|---|

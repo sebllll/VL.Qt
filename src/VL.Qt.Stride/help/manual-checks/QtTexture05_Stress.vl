@@ -22,7 +22,7 @@
     <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
   </p:ValueBoxSettings>
 </Pad>
-<Pad Id="37KeCeu9WHuFd9JZHg1zCk" Bounds="100,70,840,100" ShowValueBox="true" isIOBox="true" Value="What to check: long run with a changing Size and a switchable Format, no growth and no exceptions.&#xD;&#xA;- Size follows an LFO (period 120 s, 1 x 1 up to 1600 x 900), the Qt scene is always redrawn. Let it run for several minutes.&#xD;&#xA;- Toggle switches the Format between B8G8R8A8_UNorm_SRgb and R16G16B16A16_Float: toggle it several times, also while Size changes.&#xD;&#xA;- Task Manager / GPU memory and handle count of vvvv stay flat (no staircase growth per resize or format change). Error stays empty.&#xD;&#xA;- Also try: delete the QtTexture node and undo, close the document while it runs: no exception, no hang.">
+<Pad Id="37KeCeu9WHuFd9JZHg1zCk" Bounds="100,70,840,100" ShowValueBox="true" isIOBox="true" Value="What to check: long run with a changing Size and a switchable Format, no growth and no exceptions.&#xD;&#xA;- Size follows an LFO (period 120 s, 1 x 1 up to 1600 x 900), the Qt scene is always redrawn. Let it run for several minutes.&#xD;&#xA;- Toggle switches the Format between B8G8R8A8_UNorm_SRgb and R16G16B16A16_Float: toggle it several times, also while Size changes.&#xD;&#xA;- Task Manager / GPU memory and handle count of vvvv stay flat (no staircase growth per resize or format change). The QtTexture node shows no error.&#xD;&#xA;- Also try: delete the QtTexture node and undo, close the document while it runs: no exception, no hang.">
   <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
     <Choice Kind="TypeFlag" Name="String" />
   </p:TypeAnnotation>
@@ -179,13 +179,7 @@
   <Pin Id="CH8Ykko7N0dn42Dw2SNSry" Name="Size" Kind="InputPin" />
   <Pin Id="5vUHNUoANRsAlImyiohvBB" Name="Format" Kind="InputPin" />
   <Pin Id="l1Z6OVHJ38YkIHJ10CBKqn" Name="Output" Kind="OutputPin" />
-  <Pin Id="lkLpJ1byG1khOO8uoj5Abt" Name="Error" Kind="OutputPin" />
 </Node>
-<Pad Id="sWqiGKEyWpgI8DAWdR4MjC" Comment="Error" Bounds="160,490,300,19" ShowValueBox="true" isIOBox="true">
-  <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
-    <Choice Kind="TypeFlag" Name="String" />
-  </p:TypeAnnotation>
-</Pad>
 <Node Bounds="100,560,145,19" Id="DutZl4t0XbXFHS01GnwDrI">
 <p:NodeReference LastCategoryFullName="Stride.Rendering" LastDependency="VL.Stride.Rendering.ShaderFX.vl">
   <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
@@ -257,7 +251,6 @@
 <Link Id="KcucrNTFQwri7mQbg64TIs" Ids="qICgAykngaQdILLGTDJ1rU,H4yvs6UfUfgBclrrotremf" />
 <Link Id="cDhNF5KFhxIlNtBduk9O8N" Ids="KKszOGRQM9Off2PIR3PWVi,CH8Ykko7N0dn42Dw2SNSry" />
 <Link Id="BEl9KPZNTpMW1CH54VGblc" Ids="VnQ73k8G7aouCG5jDPL2L6,5vUHNUoANRsAlImyiohvBB" />
-<Link Id="sGBSeJ3cVXSmSfBt5knSur" Ids="lkLpJ1byG1khOO8uoj5Abt,sWqiGKEyWpgI8DAWdR4MjC" />
 <Link Id="SoPqyzyTNdkJsmRoboruuy" Ids="l1Z6OVHJ38YkIHJ10CBKqn,VMWoixIh1ycA1hkJxgOCXS" />
 <Link Id="PTm53rcNZHC6nVJ81V1nyz" Ids="NnEZdK09DtId3X9Xj2Fer3,1lvvxE0ms9DhrFYG1o2Eub" />
 <Link Id="5nPrgO6D61W3x0hMtXj5f4" Ids="lzDPOZYrivsrfNcBp4K5ae,97PmVCuB7SwKzFoX8ISDTL" />

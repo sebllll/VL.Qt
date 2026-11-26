@@ -11,7 +11,7 @@ Je Szenario ein eigener Patch in diesem Ordner. Gemeinsam für alle:
 - Keine Perf-/Debug-Overlays, kein Tooltip-/HDE-Kram, keine IOBoxen, die im Export Arbeit machen.
 - Animation zeitbasiert (LFO/Time), damit jedes Frame Änderungen hat; die Animation ist deterministisch (kein Random ohne festen Seed).
 - Läuft endlos, bis der Prozess beendet wird.
-- Assets nur aus `help/Qt/assets/` bzw. hier unter `assets/`; das exportierte Programm muss sie finden.
+- Assets nur aus `help/Qt/assets/` (kopiert `make-assets.ps1` nach `assets/`, nicht eingecheckt) bzw. von `make-assets.ps1` erzeugt unter `assets/gen/`; das exportierte Programm muss sie finden.
 
 | Datei | Szenario | Inhalt |
 |---|---|---|
@@ -31,7 +31,7 @@ Szenario-Namen für `tools/profile.ps1`: `Idle`, `Elements500`, `Elements2000`, 
 tools/profile.ps1 [-Scenario <Name[]>|all] [-Out <dir>] [-WarmUp 10] [-Duration 30] [-NoBuild]
 ```
 
-1. Baut `dotnet build src/VL.Qt -c Release` (außer `-NoBuild`), erzeugt die Testbilder (`tests/profiling/make-assets.ps1`) und exportiert die benötigten Patches per `tools/vvvvc.ps1` als Fenster-Programm (`--output-type WinExe`, dort hält `Renderer [Qt]` die App am Leben) nach `build/profiling/<Patch>/`.
+1. Baut `dotnet build src/VL.Qt -c Release` (außer `-NoBuild`), erzeugt die Testbilder (`tools/profiling/make-assets.ps1`) und exportiert die benötigten Patches per `tools/vvvvc.ps1` als Fenster-Programm (`--output-type WinExe`, dort hält `Renderer [Qt]` die App am Leben) nach `build/profiling/<Patch>/`.
 2. Startet sich **einmal** erhöht (ein UAC-Prompt für alle Szenarien) und nimmt je Szenario nacheinander auf:
    startet die Exe selbst (normales Fenster), wartet `<WarmUp>` s, dann
    `dnx -- ultra profile --pid <pid> --duration <Duration> --output <Out>/<rid>_<Szenario> --result-file <Out>/<Szenario>.result.json`;

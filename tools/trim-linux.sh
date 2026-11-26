@@ -22,7 +22,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 [ -d "$NATIVE" ] || { echo "$NATIVE missing (run tools/deploy-linux.sh)" >&2; exit 1; }
 NATIVE="$(cd "$NATIVE" && pwd)"
 
-# Each entry: path relative to native/ (glob allowed) | reason. Verified against VL.Qt.Probe (offscreen, wayland, xcb).
+# Each entry: path relative to native/ (glob allowed) | reason. Verified on the Qt platforms offscreen, wayland and xcb.
 remove=(
     'plugins/wayland-graphics-integration-client/lib*-server.so|Server-buffer integrations (dmabuf/drm-egl/shm-emulation/vulkan): only used when the compositor itself is a Qt Wayland Compositor sharing buffers with its clients; regular rendering uses qt-plugin-wayland-egl.'
     'plugins/egldeviceintegrations/libqeglfs-emu-integration.so|eglfs backend for the Qt emulator, not a real device.'

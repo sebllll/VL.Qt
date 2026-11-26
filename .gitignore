@@ -19,4 +19,4 @@ help/Qt/output/
 
 # Python
 __pycache__/
-tests/profiling/assets/gen/
+tools/profiling/assets/

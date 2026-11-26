@@ -31,8 +31,7 @@ Open `src/VL.Qt.slnx` in Visual Studio 2026 (or 2022 from 17.14) or Rider. It co
 | `VL.Qt.Audio` | companion package for VL.Audio (Windows only, references VL.Audio and VL.Qt); builds into the package folder `VL.Qt.Audio/lib/net10.0-windows7.0/`. VL.Qt never references it. See [video-audio.md](video-audio.md). |
 | `VL.Qt.Tests` | unit tests (NUnit), run them from the Test Explorer |
 | `VL.Qt.Audio.Tests` | unit tests of the sync loop of `Video (VL.Audio)` with simulated clocks (Windows only) |
-| `VL.Qt.SmokeTest` | drives QtNative without vvvv: rendering, grabs, performance limits |
-| `VL.Qt.Probe` | opens one Qt window from C# without vvvv and grabs a PNG; for platform and loader checks |
+| `VL.Qt.SmokeTest` | drives QtNative without vvvv: windows, rendering, grabs, input, platform checks, performance limits; it covers the native side |
 | Solution Items | `README.md`, `Directory.Build.props`, `VL.Qt.vl.targets`, the build scripts |
 
 **Build** (`Ctrl+Shift+B`) builds QtNative first, then the C# projects. The QtNative build is incremental; the Qt deploy runs again only when QtNative or the deployed QML changed.
@@ -59,6 +58,8 @@ dotnet test src/VL.Qt.Tests
 
 # Smoke tests: QtNative without vvvv (rendering, performance)
 dotnet run --project src/VL.Qt.SmokeTest -c Release -- --all
+
+# The QtTexture patches in src/VL.Qt.Stride/help/manual-checks/ are manual checks (README there): no test runs them
 
 # Compile-check a patch with vvvvc (exit 0 = no build errors)
 tools/vvvvc.ps1 -File help/HelloWorld.vl
@@ -255,7 +256,6 @@ src/VL.Qt.Native/           # QtNative (C++)
   image_writer.h/cpp        # writes pixels to an image file (vlqt_image_write_file)
 src/VL.Qt.Tests/            # C# unit tests
 src/VL.Qt.SmokeTest/        # native smoke + perf tests
-src/VL.Qt.Probe/            # one Qt window from C# without vvvv
 src/VL.Qt.Stride/           # C# source of the VL.Qt.Stride package (see Packages)
 VL.Qt.Stride/               # its package folder: VL.Qt.Stride.vl, help/, README.md, lib/ (build output)
 help/Qt/                    # help patches + assets

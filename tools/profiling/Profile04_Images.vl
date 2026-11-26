@@ -11,7 +11,7 @@
 </p:NodeReference>
 <Patch Id="GqY8LMF8nOwEg71R6HRFRk">
 <Canvas Id="GBW9zPymKkgLbgqpjTBayQ" CanvasType="Group">
-<Pad Id="GIOriMyeS0hRIi5XxgH3Dz" Bounds="85,16,640,80" ShowValueBox="true" isIOBox="true" Value="Profile 04 - Images (issue #557): six LoadImage (Async) workers decode 1920x1080 JPEGs permanently (tests/profiling/make-assets.ps1).&#xD;&#xA;LFO (0.1 s) steps Cycles; each loader gets paths[Cycles + its offset], so every loader switches the file ~10x per second.&#xD;&#xA;1280x720 window, no overlays, runs until the process ends.">
+<Pad Id="GIOriMyeS0hRIi5XxgH3Dz" Bounds="85,16,640,80" ShowValueBox="true" isIOBox="true" Value="Profile 04 - Images (issue #557): six LoadImage (Async) workers decode 1920x1080 JPEGs permanently (tools/profiling/make-assets.ps1).&#xD;&#xA;LFO (0.1 s) steps Cycles; each loader gets paths[Cycles + its offset], so every loader switches the file ~10x per second.&#xD;&#xA;1280x720 window, no overlays, runs until the process ends.">
 <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
 <Choice Kind="TypeFlag" Name="String" />
 </p:TypeAnnotation>
