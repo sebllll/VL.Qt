@@ -32,7 +32,7 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [design/resources.md](design/resources.md) | The resource manager of QtNative: ids, states, threads, reference counts, replacement, external content and device loss. |
 | [design/render-loop.md](design/render-loop.md) | Which Qt Quick render loop QtNative runs, the rules for item code that follow from it and the places that rely on the basic loop. |
 | [design/render-thread.md](design/render-thread.md) | Lifetime of an offscreen scene, the pool of render threads (pin `Render Threads`), the frame of a batch, back pressure, which thread runs what and the lock on the shared device's context. |
-| [design/timing.md](design/timing.md) | How the perf monitor measures a pump: the signals that bound each phase, the vsync wait, the hand-off from render threads and the timeline geometry. |
+| [design/timing.md](design/timing.md) | One shared clock for vvvv and Qt animations through a custom animation driver on `IFrameClock`, the pump per app host, render threads, VSync, and how the perf monitor measures a pump. |
 | [design/gpu-device.md](design/gpu-device.md) | One QtNative D3D11 device per process shared by all windows, images and offscreen scenes: attach, adapter match and move, device loss, no device available, and why Qt does not render on Stride's device. |
 | [design/stride-output.md](design/stride-output.md) | `QtTexture` and the layer `QtRenderer` in the companion package `VL.Qt.Stride`: shared texture and fences, ownership, formats, colour space and alpha, frame timing, composition of the layer and package layout. |
 | [design/offscreen-input.md](design/offscreen-input.md) | Input and keyboard focus of offscreen scenes: the pin `Input Notifications`, `ToTexturePixels`, translation, native injection and focus. |
@@ -43,9 +43,8 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [design/reconciler.md](design/reconciler.md) | How the reconciler turns the element tree into commands: one frame, the skip test, the order of the commands, occurrences and placeholders, input handlers, effect chains, styles, self-made widgets, and the resync after an exception. |
 | [design/reconciler-identity.md](design/reconciler-identity.md) | How the reconciler decides every frame between updating a Qt object and creating a new one, and what counts as one element (its feedback slot) when it is shown at several places. |
 | [design/paths.md](design/paths.md) | Lines, paths and splines on Qt Quick Shapes: the shape elements, `QtPath`, the `Qt.Paths` nodes and their Skia-like defaults, geometry space, wire format and costs. |
+| [design/user-qml.md](design/user-qml.md) | Loading a user `.qml` file as an element (`QmlElement`) and the QML node factory: wire path, pins from a C# parser, hot reload, errors, time and licensing. |
+| [design/qt-bridge.md](design/qt-bridge.md) | Why VL.Qt does not use Qt Bridge for C#: the comparison, the redundancy check and the sources. |
 | [decisions/qtnative-deployment.md](decisions/qtnative-deployment.md) | How QtNative is built, licensed (LGPL), packaged and located at runtime. |
-| [decisions/qt-bridges.md](decisions/qt-bridges.md) | Qt Bridge for C# compared with VL.Qt: no switch, no redundant features (research in [research/01_qt-bridge-csharp.md](research/01_qt-bridge-csharp.md)). |
-| [decisions/user-qml.md](decisions/user-qml.md) | Loading a user `.qml` file as an element (`QmlElement`, issue #104) and the QML node factory (#107); background in [topics/user-qml.md](topics/user-qml.md). |
-| [decisions/timing.md](decisions/timing.md) | One shared clock for vvvv and Qt animations through a custom animation driver on `IFrameClock`. |
 | [research/02_shapes-spike.md](research/02_shapes-spike.md) | Spike for lines and paths (#154): Qt Quick Shapes with a custom path element, `CurveRenderer` quality and benchmark, recommended limits. |
 | [topics/style-nodeset.md](topics/style-nodeset.md) | Design of the nodes that build, merge and read styles for interactive widgets. |

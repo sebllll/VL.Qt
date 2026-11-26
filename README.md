@@ -295,7 +295,7 @@ More: [Architecture](docs/architecture.md) (data flow, timing, interop, renderin
 | Glue between C# and Qt | generated at build time, needs a C++ toolchain | prebuilt QtNative, no toolchain needed |
 | Made for | desktop apps with a QML front end | live-patched 2D motion graphics, typography and interactive UI |
 
-The two do not mix in one process: Qt allows one application object per process, and each of them runs it in its own loop. Details: [design note](docs/decisions/qt-bridges.md).
+The two do not mix in one process: Qt allows one application object per process, and each of them runs it in its own loop. Details: [design note](docs/design/qt-bridge.md).
 
 ## Development
 
