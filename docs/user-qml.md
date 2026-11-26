@@ -199,7 +199,7 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 
 ## Licensing of imports
 
-VL.Qt ships only the LGPL modules of Qt (see [QtNative deployment](decisions/qtnative-deployment.md)). There is no import filter: an `import` of anything that is not shipped, such as `QtQuick3D`, `QtCharts` or `QtDataVisualization`, fails to load and the message shows at the node and in the vvvv log. Qt Quick (`import QtQuick`) and its basic modules are available.
+VL.Qt ships only the LGPL modules of Qt (see [QtNative deployment](design/deployment.md)). There is no import filter: an `import` of anything that is not shipped, such as `QtQuick3D`, `QtCharts` or `QtDataVisualization`, fails to load and the message shows at the node and in the vvvv log. Qt Quick (`import QtQuick`) and its basic modules are available.
 
 ## Out of scope
 

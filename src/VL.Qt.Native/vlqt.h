@@ -29,6 +29,22 @@
  * Exceptions never cross the ABI: an exception inside QtNative returns VLQT_ERR_INTERNAL (NULL for a pointer) with its
  * text in vlqt_last_error.
  *
+ * Ownership. Strings and buffers the caller passes are read during the call and copied when QtNative keeps them (a
+ * source text, pixels, a path); the caller may free them after the call. Strings QtNative returns (vlqt_last_error,
+ * vlqt_apply_error.reason) belong to QtNative and are valid until the next failing call on the thread, or the next apply
+ * of the scene. A scene belongs to the caller until vlqt_scene_destroy. A resource belongs to the caller until
+ * vlqt_res_release (elements may hold it longer). A foreign device or context passed to vlqt_offscreen_* stays the
+ * caller's: QtNative holds no reference beyond what vlqt_offscreen_bind says.
+ *
+ * Version. VLQT_ABI_VERSION (protocol.h) numbers this header, vlqt_test.h and the command protocol together and changes
+ * with every change of a constant, a struct layout or a signature. The host reads vlqt_app_get_abi_version first and
+ * refuses a library with another number. vlqt_test.h is no part of this C ABI.
+ *
+ * Design notes (docs/design/): native-boundary.md (this ABI, the command buffer, the version rule), deployment.md
+ * (packaging, lookup of Qt), gpu-device.md (the shared D3D11 device), render-thread.md (offscreen scenes and render
+ * threads), offscreen-input.md, stride-output.md (the texture in Stride), clear-and-msaa.md, events-and-interaction.md
+ * (the events of vlqt_scene_poll). A function comment below keeps the contract; the mechanism is in the note.
+ *
  * Threads. Every export runs on the Qt GUI thread, the thread that called vlqt_app_init ("main thread" in this file; the
  * vvvv main thread), except the six marked "any thread": vlqt_app_get_abi_version, vlqt_last_error,
  * vlqt_image_write_file, vlqt_shader_reflect, vlqt_audio_tap_read and vlqt_audio_tap_now_ns. On another thread a
@@ -249,7 +265,8 @@ VLQT_API int       vlqt_scene_get_apply_error(vlqt_scene* scene, vlqt_apply_erro
  * VLQT_ERR_BUFFER_TOO_SMALL they stay queued and *required is exact: the call that follows only copies (it collects
  * nothing new, new changes come with the poll after it). VLQT_ERR_NULL_HANDLE. Call once per frame after
  * vlqt_app_process_events_for: the poll first queues EVENT_MEASURED / EVENT_SCENE_BOUNDS of bound items whose value
- * changed and EVENT_WINDOW_GEOMETRY of a window after a move/resize/state change (events.h). */
+ * changed and EVENT_WINDOW_GEOMETRY of a window after a move/resize/state change (events.h). Events:
+ * docs/design/events-and-interaction.md, "The way back: feedback". */
 VLQT_API int       vlqt_scene_poll(vlqt_scene* scene, unsigned char* out, int cap, int* written, int* required);
 /* Size and device pixel ratio (vlqt_scene_metrics). Live values, cheap enough for every frame. Main thread. 0,
  * VLQT_ERR_NULL_HANDLE, VLQT_ERR_BAD_ARGUMENT null out. */
@@ -321,20 +338,14 @@ VLQT_API int   vlqt_window_set_icon(vlqt_scene* window, const char* utf8Path);
  * modes (>= 0), VLQT_ERR_NULL_HANDLE. Both do nothing on an offscreen scene (get: 0). */
 VLQT_API int   vlqt_window_set_mode(vlqt_scene* window, unsigned int mask, unsigned int value);
 VLQT_API int   vlqt_window_get_mode(vlqt_scene* window);
-/* MSAA sample count of the window (docs/decisions/render-texture.md, "MSAA"). A window is created with 4 (the
- * look of every window before the sample count was settable, clamped like here). requested < 1 counts as 1 (none); QtNative clamps it to the
- * highest count not above it that QRhi and the device support for the swap chain (D3D11: CheckMultisampleQualityLevels
- * for R8G8B8A8_UNORM and D24_UNORM_S8_UINT; OpenGL: QRhi::supportedSampleCounts) and returns the count used (>= 1), so
- * the caller can warn when it is lower. Equal to the current count: nothing happens. A window not shown yet only
- * changes its format. A shown window cannot change the count of its swap chain (Qt fixes it per QQuickWindow), so
- * QtNative replaces the QQuickWindow inside the same handle: a new window with the new count, same screen, geometry,
- * window states, mode, title, icon, colour and overlay; the scene (items, their state, the QML engine) moves to it,
- * then the old one is deleted. Costs one new QRhi (tens of ms) and a new native window (HWND), which becomes active.
- * Lost on a change: a snapshot (vlqt_snapshot_start) still in flight fails ("the window was destroyed during the
- * grab", the next request works), pointer grabs and hover of the old window end, the perf history (F5) restarts, and
- * with Clear off the kept frame: the previous-frame layer is rebuilt for the new window and starts from the clear
- * colour. Effect layers and snapshots in the window follow its count. VLQT_ERR_NULL_HANDLE, VLQT_ERR_UNSUPPORTED on an
- * offscreen scene (its count comes from vlqt_offscreen_bind). Main thread. */
+/* MSAA sample count of the window (docs/design/clear-and-msaa.md, "MSAA"). A window is created with 4. requested < 1
+ * counts as 1 (none); QtNative clamps it to the highest count not above it that QRhi and the device support for the swap
+ * chain, and returns the count used (>= 1), so the caller can warn when it is lower. Equal to the current count:
+ * nothing happens. A shown window cannot change the count of its swap chain, so QtNative replaces the QQuickWindow
+ * inside the same handle (same screen, geometry, states, mode, title, icon, colour and overlay; one new QRhi and one new
+ * native window, tens of ms). Lost on a change: a snapshot in flight fails, pointer grabs and hover end, the perf
+ * history (F5) restarts, and with Clear off the kept frame starts from the clear colour. VLQT_ERR_NULL_HANDLE,
+ * VLQT_ERR_UNSUPPORTED on an offscreen scene (its count comes from vlqt_offscreen_bind). Main thread. */
 VLQT_API int   vlqt_window_set_samples(vlqt_scene* window, int requested);
 /* Sample count of the window: of its swap chain once it has one, else the count it will be created with. 0 on an
  * offscreen scene, VLQT_ERR_NULL_HANDLE. */
@@ -347,45 +358,35 @@ VLQT_API int   vlqt_window_get_samples(vlqt_scene* window);
 VLQT_API int   vlqt_window_set_keys(vlqt_scene* window, int on);
 
 /* ===== offscreen: only offscreen scenes (VLQT_ERR_NULL_HANDLE for a window) =====
- * QtTexture; design: docs/decisions/render-texture.md. A Qt scene without a native window (QQuickRenderControl) on
- * QtNative's shared D3D11 device that renders into a texture of a foreign D3D11 device (Stride's), shared by NT handle.
- * Two shared ID3D11Fences per binding order Qt's write and the foreign device's read on the GPU; no CPU wait, the
- * foreign context gets only Signal/Wait calls. Main thread (the thread of vlqt_app_process_events_for) only. Input
- * goes through vlqt_offscreen_send_*. An offscreen scene never renders in vlqt_app_process_events_for: only
+ * QtTexture: a Qt scene without a native window that renders into a texture of a foreign D3D11 device (Stride's), shared
+ * by NT handle; two shared fences order Qt's write and the foreign read on the GPU. Design: docs/design/gpu-device.md,
+ * docs/design/render-thread.md, docs/design/stride-output.md. Main thread only. Input goes through
+ * vlqt_offscreen_send_*. An offscreen scene never renders in vlqt_app_process_events_for: only
  * vlqt_offscreen_render_batch renders it. 1 DIP = 1 texture pixel. */
 
 /* Creates an unbound offscreen scene of width x height DIP (< 1 = 1). NULL = error (vlqt_last_error). Free it with
  * vlqt_scene_destroy. */
 VLQT_API vlqt_scene* vlqt_offscreen_create(int width, int height);
 /* Binds scene to a texture of a foreign device, replacing an earlier binding (as vlqt_offscreen_unbind first).
- *   device     ID3D11Device* of the foreign device (Stride's). Must be on the adapter of QtNative's shared device
- *              (LUIDs compared). If it is not and nothing renders on QtNative's device yet (no on-screen window has
- *              rendered, no other scene is bound), QtNative rebuilds its device on device's adapter, as after a device
- *              loss (images upload again, every scene is unbound); otherwise ADAPTER_MISMATCH. QtNative keeps no
- *              reference to device beyond the fences it opens on it: before the owner releases device, the caller
- *              unbinds (or destroys) every scene bound to it and stops calling vlqt_offscreen_render_batch with its
- *              context. A scene still bound keeps device alive through the fences until unbind or destroy.
- *   ntHandle   NT handle of an ID3D11Texture2D of device created with SHARED | SHARED_NTHANDLE and RENDER_TARGET;
- *              opened with ID3D11Device1::OpenSharedResource1. QtNative does not close it: the caller may close it
- *              right after the call.
+ * Fences and adapter rules: docs/design/gpu-device.md, "Same adapter and adapter move"; docs/design/stride-output.md,
+ * "Shared texture, fences and ownership".
+ *   device     ID3D11Device* of the foreign device (Stride's), on the adapter of QtNative's device (otherwise QtNative
+ *              moves its device when nothing renders on it yet, else ADAPTER_MISMATCH). Before the owner releases it, the
+ *              caller unbinds or destroys every scene bound to it and stops calling vlqt_offscreen_render_batch with its
+ *              context; a bound scene keeps it alive through the fences until then.
+ *   ntHandle   NT handle of an ID3D11Texture2D of device (SHARED | SHARED_NTHANDLE, RENDER_TARGET). QtNative does not
+ *              close it: the caller may close it right after the call.
  *   width, height  texture size in pixels (= the scene size from now on); must match the texture.
- *   format     DXGI_FORMAT the caller samples the texture with: DXGI_FORMAT_R8G8B8A8_UNORM (28), _R8G8B8A8_UNORM_SRGB
- *              (29), _B8G8R8A8_UNORM (87), _B8G8R8A8_UNORM_SRGB (91) or _R16G16B16A16_FLOAT (10). An 8-bit texture may
- *              be typeless (R8G8B8A8_TYPELESS 27 / B8G8R8A8_TYPELESS 90) or of the same format. The texture always
- *              holds premultiplied alpha. UNORM: Qt renders into the texture, gamma-space values as in a Qt window.
- *              SRGB and float: the caller reads linear values; Qt renders into a float texture of QtNative and after
- *              each frame a pass writes a * linear(c) into every pixel (unpremultiply, sRGB decode, premultiply).
- *   samples    MSAA sample count, < 2 = none. Qt renders into a multisample colour and depth-stencil texture of
- *              its own and resolves into the texture (or into the float texture of the linear pass) at the end of each
- *              frame; the texture itself stays single-sample. Clamped to the highest count not above it that QRhi and
- *              QtNative's device support for the render target format (D3D11 CheckMultisampleQualityLevels). Layers in
- *              the scene (effects, snapshots) stay single-sample. A change of the count is a new bind.
+ *   format     DXGI_FORMAT the caller samples the texture with: R8G8B8A8_UNORM (28), _UNORM_SRGB (29), B8G8R8A8_UNORM
+ *              (87), _UNORM_SRGB (91) or R16G16B16A16_FLOAT (10); an 8-bit texture may be typeless. The texture holds
+ *              premultiplied alpha; SRGB and float are linear for the reader (docs/design/stride-output.md, "Formats,
+ *              colour space and alpha").
+ *   samples    MSAA sample count, < 2 = none, clamped to what QRhi and the device support; the texture stays
+ *              single-sample (docs/design/clear-and-msaa.md, "MSAA"). A change of the count is a new bind.
  *   usedSamples  out, may be NULL: the count used after the clamp (>= 1 on success, 0 on an error).
- * Creates the write and read fences (ID3D11Device5::CreateFence, SHARED) on QtNative's device and opens them on
- * device. Errors (VLQT_ERR_*): NULL_HANDLE, BAD_ARGUMENT (null device/handle, size < 1 or above the device limit, size
- * not the texture's, device without a DXGI adapter), FORMAT_UNSUPPORTED, ADAPTER_MISMATCH (a warning is logged once),
- * OPEN_FAILED, FENCE_FAILED (no ID3D11Device5 / ID3D11DeviceContext4 on one side), DEVICE_LOST (QtNative's device is
- * lost or being rebuilt, or the move failed: try again next frame), UNSUPPORTED (not D3D11), INTERNAL. On an error the
+ * Errors (VLQT_ERR_*): NULL_HANDLE, BAD_ARGUMENT (null device/handle, size < 1 or above the device limit, size not the
+ * texture's, device without a DXGI adapter), FORMAT_UNSUPPORTED, ADAPTER_MISMATCH (a warning is logged once),
+ * OPEN_FAILED, FENCE_FAILED, DEVICE_LOST (try again next frame), UNSUPPORTED (not D3D11), INTERNAL. On an error the
  * scene is unbound. */
 VLQT_API int   vlqt_offscreen_bind(vlqt_scene* scene, void* device, void* ntHandle, int width, int height, int format,
                                   int samples, int* usedSamples);
@@ -396,46 +397,32 @@ VLQT_API int   vlqt_offscreen_unbind(vlqt_scene* scene);
  * device: the caller binds again), VLQT_ERR_NULL_HANDLE. */
 VLQT_API int   vlqt_offscreen_is_bound(vlqt_scene* scene);
 /* Renders the scheduled scenes of one host frame; call once per frame per foreign device (Stride: VLGame.DrawStarted,
- * after all updates, before the first draw). context: the immediate ID3D11DeviceContext* of the device the scenes
- * are bound to. Advances the animation clock to driverSeconds once (as vlqt_app_advance_animations, idempotent per
- * value), then for every bound scene that changed (dirty) or was just bound, in this order:
- *   Signal(readFence, n) on context (the commands of the previous frame that read the texture were submitted before)
- *   and polish, here; then one Flush of context;
- *   Wait(readFence, n) on QtNative's context, beginFrame and sync, on the scene's executor while this call waits;
- *   Wait(writeFence, n) on context, queued before Qt signals n (after it on a software device);
- *   render into the texture, endFrame, Signal(writeFence, n) and Flush on QtNative's context (without the flush the
- *   foreign GPU waits forever), on the scene's executor after this call returned (blocking on a software device).
- * The executor is the scene's render thread, or this thread with Render Threads 0 (vlqt_offscreen_set_render_threads):
- * the same order in both modes. context's GPU waits for Qt's frame, its CPU never does; this call blocks only while a
- * render thread is still busy with the previous batch. An unchanged scene costs no render and no fence signal. NULL
- * entries and unbound scenes are skipped. Returns the number of scenes rendered (>= 0), or VLQT_ERR_BAD_ARGUMENT (null
- * context, null scenes with count > 0, count < 0, or a scene to render that is bound to another device than context's:
- * nothing is rendered, bind it again), VLQT_ERR_DEVICE_LOST, VLQT_ERR_UNSUPPORTED. */
+ * after all updates, before the first draw). context: the immediate ID3D11DeviceContext* of the device the scenes are
+ * bound to. Advances the animation clock to driverSeconds once (as vlqt_app_advance_animations), then renders every
+ * bound scene that changed or was just bound, with the fence order of docs/design/render-thread.md, "The frame of a
+ * batch". context's GPU waits for Qt's frame, its CPU never does; the call blocks only while a render thread is still
+ * busy with the previous batch. An unchanged scene costs no render and no fence signal. NULL entries and unbound scenes
+ * are skipped. Returns the number of scenes rendered (>= 0), or VLQT_ERR_BAD_ARGUMENT (null context, null scenes with
+ * count > 0, count < 0, or a scene to render that is bound to another device than context's: nothing is rendered, bind
+ * it again), VLQT_ERR_DEVICE_LOST, VLQT_ERR_UNSUPPORTED. */
 VLQT_API int   vlqt_offscreen_render_batch(void* context, vlqt_scene* const* scenes, int count, double driverSeconds);
-/* Size of the render-thread pool (pin Render Threads; docs/decisions/render-texture.md, "Qt render thread"). count
- * 0 = offscreen scenes render on the main thread, inside vlqt_offscreen_render_batch; n = 1 ... 16 = on a pool of Qt
- * render threads shared by every scene of the process, a scene assigned round robin at vlqt_offscreen_create. May be
- * called at any time; it applies to scenes created afterwards, a scene keeps the thread (or the main thread) it got.
- * The pool only grows: a larger count adds threads at once, a smaller one (or 0) leaves the existing threads to the
- * scenes that have them. Without a call: 1 render thread. VLQT_OK, VLQT_ERR_BAD_ARGUMENT (count < 0 or > 16). */
+/* Size of the render-thread pool (pin Render Threads; docs/design/render-thread.md, "Render threads"). count 0 =
+ * offscreen scenes render on the main thread inside vlqt_offscreen_render_batch; n = 1 ... 16 = on a pool of render
+ * threads shared by every scene of the process, a scene assigned round robin at vlqt_offscreen_create. It applies to
+ * scenes created afterwards; the pool only grows. Without a call: 1 render thread. VLQT_OK, VLQT_ERR_BAD_ARGUMENT (count
+ * < 0 or > 16). */
 VLQT_API int   vlqt_offscreen_set_render_threads(int count);
 
-/* Input into an offscreen scene (design: docs/decisions/render-texture.md, "Input"). The host maps its input to
- * texture pixels (top-left origin, 1 DIP = 1 pixel; positions outside 0..size are valid: hover ends, a drag goes on) and
- * calls these between two vlqt_offscreen_render_batch calls, before the batch that should show the result. QtNative
- * sends the events with QCoreApplication::sendEvent to the scene's QQuickWindow (synchronous, not marked spontaneous),
- * so the event pipeline of windows (handlers, vlqt_scene_poll, channels) is unchanged. Each scene has its own mouse,
- * touchscreen and pen QPointingDevice (point ids and grabs live in the device, so a press sent to two scenes does not
- * cancel the other's grab). QtNative synthesizes MouseButtonDblClick from two presses as QGuiApplication does; Qt
- * shortcuts (QShortcut) do not see the keys. A scene that changes renders in the next batch. Bound or not does not
- * matter. Main thread. Return codes: VLQT_OK, VLQT_ERR_NULL_HANDLE, VLQT_ERR_BAD_ARGUMENT (unknown type or device, a
- * touch id in the wrong state, null text with length > 0); a key or text event while the scene has no focus is dropped
- * and returns VLQT_OK.
+/* Input into an offscreen scene (docs/design/offscreen-input.md, "Native injection" and "Keyboard focus"). The host maps
+ * its input to texture pixels (top-left origin, 1 DIP = 1 pixel; positions outside 0..size are valid) and calls these
+ * between two vlqt_offscreen_render_batch calls, before the batch that should show the result. QtNative sends the
+ * events to the scene's QQuickWindow, so the event pipeline of windows (handlers, vlqt_scene_poll) is unchanged. A scene
+ * that changes renders in the next batch. Bound or not does not matter. Main thread. Return codes: VLQT_OK,
+ * VLQT_ERR_NULL_HANDLE, VLQT_ERR_BAD_ARGUMENT (unknown type or device, a touch id in the wrong state, null text with
+ * length > 0); a key or text event while the scene has no focus is dropped and returns VLQT_OK.
  *
- * Focus: a scene window never becomes QGuiApplication's focus window. QtNative gives it focus with QFocusEvent
- * FocusIn when a PRESS lands inside 0..size and takes it with FocusOut when a PRESS lands outside or the host calls
- * vlqt_offscreen_set_focus(scene, 0) (e.g. its window lost the focus). The FocusRelease filter of windows (Esc,
- * press outside the focused element) runs on scenes too. */
+ * Focus: a scene window never becomes QGuiApplication's focus window. A PRESS inside 0..size gives the scene focus, a
+ * PRESS outside or vlqt_offscreen_set_focus(scene, 0) takes it away. */
 
 /* Pointer event (vlqt_pointer) of device (vlqt_pointer_device) at x/y in texture pixels.
  *   mouse  id ignored; buttons = Qt::MouseButtons held after the event (PRESS/RELEASE: the changed buttons are the

@@ -45,6 +45,7 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [design/paths.md](design/paths.md) | Lines, paths and splines on Qt Quick Shapes: the shape elements, `QtPath`, the `Qt.Paths` nodes and their Skia-like defaults, geometry space, wire format and costs. |
 | [design/user-qml.md](design/user-qml.md) | Loading a user `.qml` file as an element (`QmlElement`) and the QML node factory: wire path, pins from a C# parser, hot reload, errors, time and licensing. |
 | [design/qt-bridge.md](design/qt-bridge.md) | Why VL.Qt does not use Qt Bridge for C#: the comparison, the redundancy check and the sources. |
-| [decisions/qtnative-deployment.md](decisions/qtnative-deployment.md) | How QtNative is built, licensed (LGPL), packaged and located at runtime. |
+| [design/native-boundary.md](design/native-boundary.md) | The C ABI between C# and QtNative: one command buffer per frame, events by polling, return codes and last error, the version rule and logging. |
+| [design/deployment.md](design/deployment.md) | How QtNative is licensed (LGPL), packaged and located at runtime: Qt version, private classes, platforms, the `qt/<rid>/` tree and export. |
 | [research/02_shapes-spike.md](research/02_shapes-spike.md) | Spike for lines and paths (#154): Qt Quick Shapes with a custom path element, `CurveRenderer` quality and benchmark, recommended limits. |
 | [topics/style-nodeset.md](topics/style-nodeset.md) | Design of the nodes that build, merge and read styles for interactive widgets. |
