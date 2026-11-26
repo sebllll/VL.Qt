@@ -33,9 +33,7 @@ Status: Qt 6.12.0. Checked with every Qt update (`tools/check-licenses.ps1`, on 
 
 ## Not included (on purpose)
 
-GPL-only or commercial Qt modules (Qt Quick 3D, Qt Charts, Qt Data Visualization, Qt Graphs, Qt Quick Timeline,
-Qt Virtual Keyboard, Qt MQTT/CoAP/OPC UA, Qt Wayland Compositor). The CI check `tools/check-licenses.ps1` / `check-licenses.sh` fails if one of them
-or any other module that is not approved ends up in the package.
+GPL-only or commercial Qt modules (Qt Quick 3D, Qt Charts, Qt Data Visualization, Qt Graphs, Qt Quick Timeline, Qt Virtual Keyboard, Qt MQTT/CoAP/OPC UA, Qt Wayland Compositor). The CI check `tools/check-licenses.ps1` / `check-licenses.sh` fails if one of them or any other module that is not approved ends up in the package.
 
 ## Notes for users
 

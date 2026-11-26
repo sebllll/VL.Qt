@@ -34,7 +34,7 @@ tools/start-vvvv.ps1 -Help "Draw a Rectangle"
 tools/build.ps1 -Test                          # fresh native build, C# build, unit tests, SmokeTest, summary per step
 tools/build.ps1 -Test -Only <scenario> -Patch "help/Qt/HowTo Draw a Rectangle.vl"   # narrow SmokeTest + compile-check one patch
 dotnet test src/VL.Qt.Tests                    # unit tests only
-dotnet run --project src/VL.Qt.SmokeTest -c Release -- --all   # SmokeTest only
+dotnet test src/VL.Qt.SmokeTest -c Release   # SmokeTest only (one scenario: --filter TestCategory=<scenario>)
 dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"   # protocol.h, vlqt.h and their C# mirrors agree?
 ```
 

@@ -133,5 +133,5 @@ None of its own. The open points of the identity rules (a `Key` pin, a `Mirror` 
 ## Evidence
 
 - Unit tests, no GPU: `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~Reconciler|FullyQualifiedName~ResyncTests|FullyQualifiedName~OccurrenceRegistry|FullyQualifiedName~FeedbackRouter|FullyQualifiedName~EffectChainReconciler|FullyQualifiedName~InteractionTests"`.
-- SmokeTest scenarios `ReconcilerTest`, `ResyncTest`, `MultiPlacementTest`, `MultiRendererTest`, `StylableTest`, `EffectChainTest`, `VideoTest` (`dotnet run --project src/VL.Qt.SmokeTest -c Release -- --all`).
+- SmokeTest scenarios `ReconcilerTest`, `ResyncTest`, `MultiPlacementTest`, `MultiRendererTest`, `StylableTest`, `EffectChainTest`, `VideoTest` (`dotnet test src/VL.Qt.SmokeTest -c Release`).
 - Allocation: the `NoAllocations` tests of `ReconcilerPerfTests` count the bytes of a steady-state frame and need no GPU. Its `Fast` tests (category `Perf`) compare a median frame time with a budget; they are a guard, not a measurement.

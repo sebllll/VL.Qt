@@ -19,15 +19,15 @@ Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-progra
 
 | | |
 |---|---|
-| [**Elements**](docs/help-patches.md#drawing) | Rectangle, Circle, Text, Image, Video, Group, Row, Column, ShaderEffect, QmlElement, Labeled; the same element can be placed several times in the tree |
+| [**Elements**](docs/help-patches.md#basics) | Rectangle, Circle, Text, Image, Video, Group, Row, Column, ShaderEffect, QmlElement, Labeled; the same element can be placed several times in the tree |
 | [**Paths**](#lines-shapes-and-paths) | Line, Polyline, Polygon and Path elements with fill and stroke, Bezier and spline generators, a `Qt.Paths` builder chain; draggable points in the help patches |
-| [**Layout**](docs/help-patches.md#structure-and-layout) | automatic sizing and spacing with Row/Column, also fed with a spread of elements (Spectral) |
+| [**Layout**](docs/help-patches.md#layout) | automatic sizing and spacing with Row/Column, also fed with a spread of elements (Spectral) |
 | [**Widgets**](docs/help-patches.md#widgets-and-styles) | Button, Toggle, Slider (Float), Input (String), Input (Int), with value channels |
 | [**Styles**](docs/styles.md) | own base style VLQt, Style pin on widgets and Group (inherited down the tree), style nodes per part and state, Dark/Light presets, `IStylable` for self-patched widgets |
 | [**Interaction**](docs/help-patches.md#interaction) | hover, press, click and pointer position as channels on every element; drag, mouse wheel, multitouch (pinch, rotate, touch points) |
 | [**Images**](docs/images.md) | LoadImage (Async) in the background, ToQtImage from other libraries, VideoSourceToQtImage for VL.Video sources, Snapshot of any element as `IImage` |
 | [**Write to file**](#write-to-a-file) | `FileWriter (Element)` saves any element as PNG/JPG, `FileWriter` writes an `IImage`; asynchronous, with `Scale` for pixels per DIP |
-| [**Video**](docs/help-patches.md#drawing) | play/pause, loop, rate, volume |
+| [**Video**](docs/help-patches.md#images-and-video) | play/pause, loop, rate, volume |
 | [**Effects**](docs/effects-and-shaders.md#effects) | Effect pin on every element: Blur, DropShadow, ColorAdjust, Colorize and Mask (neighbours merged into one offscreen layer), plus your own filter shaders as chain nodes |
 | [**Shaders**](docs/effects-and-shaders.md#shaders) | ShaderEffect with GLSL in a string pin, baked at runtime; every `.frag` file in a `qtshaders/` folder becomes a node with one pin per uniform |
 | [**Stride texture**](#stride-texture) | `QtTexture` (package `VL.Qt.Stride`, Windows only, experimental) renders an element tree offscreen into a Stride `Texture`, on the GPU, in the same frame; `QtRenderer` draws it as a layer into a Stride render target |
@@ -316,6 +316,7 @@ The index with a one-line description per page is in [docs/README.md](docs/READM
 - [Exporting an app](docs/export.md): standalone apps with vvvvc
 - [Linux](docs/linux.md): export and run on Linux, WSL setup, fonts, building the Linux runtime
 - [Styles](docs/styles.md): base style, Style pin, style nodes, self-made widgets
+- [Shapes](docs/shapes.md): `Line`, `Polyline`, `Polygon`, Path and the generators
 - [Images](docs/images.md): `QtImage`, loaders, Snapshot
 - [Effects and shaders](docs/effects-and-shaders.md): effect chain, custom shaders, `qtshaders/` nodes
 - [Stride output](docs/design/stride-output.md): `QtTexture` and `QtRenderer` for Stride, design note

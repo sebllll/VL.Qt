@@ -5,7 +5,7 @@ VL.Qt runs on Linux x64 and ARM64. vvvv exports only console apps on Linux, with
 You export on Windows and run the result on Linux. WSL2 with WSLg (Windows 11) is enough to try it: the Qt window opens on the Windows desktop.
 
 > [!NOTE]
-> **What was tested for 1.0:** WSL2 Ubuntu 24.04 with WSLg (x64 and arm64) only. Native Ubuntu desktops with X11 or Wayland, Raspberry Pi and eglfs are **not tested** yet, see [Other Linux systems](#other-linux-systems-not-tested). Problems that are known today are listed in [Known problems](#known-problems).
+> **What was tested:** WSL2 Ubuntu 24.04 with WSLg (x64 and arm64) only. Native Ubuntu desktops with X11 or Wayland, Raspberry Pi and eglfs are **not tested** yet, see [Other Linux systems](#other-linux-systems-not-tested). Problems that are known today are listed in [Known problems](#known-problems).
 
 ## 1. Prepare the patch
 
@@ -123,14 +123,14 @@ tools/test-linux.sh --skip-native   # optional: SmokeTest + unit tests (--softwa
 The default platform of `tools/test-linux.sh` is `offscreen` (no window). The window scenarios (`Bounds`, `Borderless`, `Fullscreen`, `Is Visible`) run in a real window with:
 
 ```bash
-tools/test-linux.sh --skip-native --platform xcb --no-unit -- --only geometry,renderer,visibility,borderless,fullscreen
+tools/test-linux.sh --skip-native --platform xcb --no-unit --only geometry,renderer,visibility,borderless,fullscreen
 ```
 
 Log and grabbed PNGs are in `build/test-linux-<rid>/xcb/` (`smoke.out`, `smoke/`). On WSL2 Ubuntu 24.04 arm64 (WSLg) `geometry`, `renderer`, `visibility` and the checks of `borderless` and `fullscreen` that do not depend on the window position pass; four checks are about where the compositor puts the window and print `SKIP` there when it misses the requested position (see [Known problems](#known-problems)).
 
 On x64 the keys were checked in an exported `HelloWorldLinux` under WSLg: `F11` and `Alt+Enter` each switch to fullscreen over the whole screen (3440x1440 on that screen) and back to the original position and size; the app ends with exit code 0 on SIGTERM. The pins and the screen choice with two monitors are not checked yet.
 
-For the window pins that need a person (live `Borderless` toggle, `Fullscreen` screen choice, F11 and Alt+Enter) start an export (see above) and press the keys in its window: F11 or Alt+Enter toggles fullscreen like the `Fullscreen` pin. The live toggles of `Borderless` and `Fullscreen` can be watched in the SmokeTest scenarios (`--only borderless`, `--only fullscreen`, the test windows open on the desktop for a moment); no help patch drives these pins live in an exported Linux app yet, and the editor runs on Windows only.
+For the window pins that need a person (live `Borderless` toggle, `Fullscreen` screen choice, F11 and Alt+Enter) start an export (see above) and press the keys in its window: F11 or Alt+Enter toggles fullscreen like the `Fullscreen` pin. The live toggles of `Borderless` and `Fullscreen` can be watched in the SmokeTest scenarios (`--filter TestCategory=borderless`, `--filter TestCategory=fullscreen`, the test windows open on the desktop for a moment); no help patch drives these pins live in an exported Linux app yet, and the editor runs on Windows only.
 
 ### Timing checks on slower machines
 
@@ -138,7 +138,7 @@ The time limits of the SmokeTest (e.g. 10 000 SETs in one apply < 2 ms) were set
 
 ## Other Linux systems (not tested)
 
-For 1.0 only WSL2 with WSLg was tested. What to expect elsewhere, from how the platforms work:
+Only WSL2 with WSLg was tested. What to expect elsewhere, from how the platforms work:
 
 | System | State | Notes |
 |---|---|---|

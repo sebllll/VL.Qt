@@ -91,4 +91,4 @@ None.
 
 ## Evidence
 
-Qt 6.12: the drag threshold, `activeTranslation` and axis behaviour were found with the SmokeTest scenarios `drag*`; the pinch behaviour with the multitouch scenarios. Rerun: `dotnet run --project src/VL.Qt.SmokeTest -c Release -- --all` (files `HandlerTest*.cs`, `InteractionTest.Multitouch.cs`).
+Qt 6.12: the drag threshold, `activeTranslation` and axis behaviour were found with the SmokeTest scenarios `drag*`; the pinch behaviour with the multitouch scenarios. Rerun: `dotnet test src/VL.Qt.SmokeTest -c Release` (files `HandlerTest*.cs`, `InteractionTest.Multitouch.cs`).

@@ -119,4 +119,4 @@ The constant 6/7 in the blur level is taken as the code has it; its derivation i
 
 ## Evidence
 
-The scenarios listed under Consequences in `src/VL.Qt.SmokeTest` (`dotnet run --project src/VL.Qt.SmokeTest -c Release -- --all`). Pass sizes and step counts are logged under the category `vlqt.effectchain` on debug level.
+The scenarios listed under Consequences in `src/VL.Qt.SmokeTest` (`dotnet test src/VL.Qt.SmokeTest -c Release`). Pass sizes and step counts are logged under the category `vlqt.effectchain` on debug level.
