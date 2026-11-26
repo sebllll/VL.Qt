@@ -122,7 +122,7 @@ Help patches: `HowTo Draw a Bezier Curve with Handles` (handles and modes), `How
 - Prefer `Transform`, `Trim` and `Opacity` to changing points for animation; animated trim costs 2.5 ms at 8190 points, 0.3 ms at 100.
 - Many small shapes are fine: 100 polylines of 100 points, each rotated every frame, take 0.3 ms.
 
-Numbers and method: [research/02_shapes-spike.md](research/02_shapes-spike.md). Design: [decisions/paths.md](decisions/paths.md).
+Numbers and method: [research/02_shapes-spike.md](research/02_shapes-spike.md). Design: [design/paths.md](design/paths.md).
 
 ## Help patches
 

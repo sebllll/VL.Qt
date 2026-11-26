@@ -1,10 +1,10 @@
 # Qt Quick Shapes spike (research, 2026-11-18)
 
-Spike for issue #154, package 01 ([plan](../plans/paths/01_spike.md), decisions in [decisions/paths.md](../decisions/paths.md)). Question: does the planned native route (`QQuickShape` with the `CurveRenderer`, one `QQuickShapePath`, our path element `VlPathElement`) work, and where does it reach its limits?
+Spike for the shape elements (design in [design/paths.md](../design/paths.md)). Question: does the planned native route (`QQuickShape` with the `CurveRenderer`, one `QQuickShapePath`, our path element, today `ShapePathElement`) work, and where does it reach its limits?
 
 ## Sources
 
-- Spike branch: https://github.com/sebllll/VL.Qt/tree/spike/154-shapes (commits `78ee4db`, `7a2ffef`; not merged, package 02 reuses the code).
+- Spike branch: https://github.com/sebllll/VL.Qt/tree/spike/154-shapes (commits `78ee4db`, `7a2ffef`; not merged; the code went into the shape elements).
 - Prototype files on that branch:
   - [`src/VL.Qt.Native/pathelement.h`](https://github.com/sebllll/VL.Qt/blob/spike/154-shapes/src/VL.Qt.Native/pathelement.h) and [`pathelement.cpp`](https://github.com/sebllll/VL.Qt/blob/spike/154-shapes/src/VL.Qt.Native/pathelement.cpp): `VlPathElement`, a subclass of the private `QQuickCurve`.
   - [`src/VL.Qt.Native/test_shapes.cpp`](https://github.com/sebllll/VL.Qt/blob/spike/154-shapes/src/VL.Qt.Native/test_shapes.cpp): `vlqt_test_shape_*` entry points (create shape, set points or path, stroke, trim, renderer).
@@ -18,7 +18,7 @@ Spike for issue #154, package 01 ([plan](../plans/paths/01_spike.md), decisions 
 
 `tools/build-native.ps1` builds with `Qt6::QuickShapes` and `Qt6::QuickShapesPrivate` linked into `vlqt`; `runtimes/win-arm64/native/` then contains `Qt6QuickShapes.dll` and `qml/QtQuick/Shapes/` (`import QtQuick.Shapes` in `qml/deploy.qml` makes `windeployqt` take them).
 
-Consequence: package 02 takes the CMake lines and the import from the spike branch. Whether the module lists of the deployment and the LGPL check in CI need `QuickShapes` is checked in package 02.
+Consequence: the shape elements take the CMake lines and the import from the spike branch.
 
 ### Q2 Custom element: yes, curves are exact
 
@@ -28,7 +28,7 @@ Consequence: package 02 takes the CMake lines and the import from the spike bran
 
 Re-processing: a new path is only drawn after `QQuickPathElement::changed()` (`QQuickPath::processPath` runs `addToPath` again, then `QQuickShapePath` emits `shapePathChanged`). Without the signal the old line stays on screen (`shapes_q2_signal_1_nonotify.png` vs. `shapes_q2_signal_2_notify.png` on the branch).
 
-Consequence: every data change in QtNative ends with `emit changed()` (`VlPathElement::notifyChanged`), once per frame and element after all properties are set. The route in [decisions/paths.md](../decisions/paths.md) holds.
+Consequence: every data change in QtNative ends with `emit changed()` (`VlPathElement::notifyChanged`), once per frame and element after all properties are set. The route in [design/paths.md](../design/paths.md) holds.
 
 ### Q3 Closing join: no seam in either variant
 
@@ -63,7 +63,7 @@ Consequence: the plan holds: the reconciler divides the Skia-like absolute dash 
 - The `CurveRenderer` smooths edges without MSAA. MSAA 4 adds GPU time: from about 0.15 ms to 0.5–3 ms, fluctuating (`shapes_q6_msaa1.png`, `shapes_q6_msaa4.png`).
 - `QQuickShapePath::miterLimit` is an `int`: the default 4 is fine, fractional values are not representable.
 
-Consequence: the plan's "element size = extent of the geometry, no `Size` pin" works; no minimum size and no offset trick needed. Recommend MSAA off for shape-only scenes (the renderer pin of #118 stays the user's choice). The miter limit is rounded in QtNative, see [decisions/paths.md](../decisions/paths.md).
+Consequence: the plan's "element size = extent of the geometry, no `Size` pin" works; no minimum size and no offset trick needed. Recommend MSAA off for shape-only scenes (the renderer pin of #118 stays the user's choice). The miter limit is rounded in QtNative, see [design/paths.md](../design/paths.md).
 
 ### Q7 Benchmark
 
@@ -113,18 +113,18 @@ Consequence: see the limits below.
 
 For the tooltips of the 1.0 nodes (`Line`, `Polyline`, `Polygon`, `Path`):
 
-- **8190 points per element** was the hard limit then (size of one command, lifted since: see [decisions/paths.md](../decisions/paths.md)); the measurements below stay valid.
+- **8190 points per element** was the hard limit then (size of one command, lifted since: see [design/paths.md](../design/paths.md)); the measurements below stay valid.
 - **Polylines whose points change every frame: about 4000 points** (5.3 ms of the 16.7 ms frame on this loaded arm64 machine; 8190 points take 16 ms and miss the frame). Static or only transformed polylines and paths can use the full 8190 points.
 - **Paths with curves** (`Path`, splines) cost a third per point; 8190 points (2729 segments) changing every frame take 4.9 ms and need no extra warning.
 - Animated trim is cheap up to the limit (2.5 ms at 8190 points, 0.3 ms at 100); trim and `Transform` are the cheap ways to animate, prefer them to changing points.
 - Do not offer an `asynchronous` pin in the first version: with the `CurveRenderer` it lags at the size where it would help.
 - Many small shapes are fine (100 elements × 100 points: 0.3 ms); the cost is the per-element path processing, not the count.
 
-For the 2.0 issues (#155):
+For the follow-ups (the public issue is linked in [design/paths.md](../design/paths.md)):
 
-- **`GeometryRenderer` (package 06):** worth it for large changing polylines (1.0 ms against 16 ms at 8190 points). Its limits to document: facets on curves under magnification, double blending of semi-transparent strokes at joins, and the `asynchronous` pin (optional) brings little. The `Renderer` pin stays on the same nodes with default `Curve`.
-- **Mass data (package 07):** the `CurveRenderer` cannot handle more than the 8190-point limit in changing data (it already misses the frame at that size), and the `GeometryRenderer` took 1.0 ms at 8190 points. How it scales above 8190 points is not measured; package 07 measures it before choosing between several elements, a bigger payload and a custom `QSGGeometryNode`.
-- **Package 08 (Skia adapter):** `SKPath` is converted in C#; the point limit applies to the converted path, the adapter should report when it is exceeded.
+- **`GeometryRenderer`:** worth it for large changing polylines (1.0 ms against 16 ms at 8190 points). Its limits to document: facets on curves under magnification, double blending of semi-transparent strokes at joins, and the `asynchronous` pin (optional) brings little. The `Renderer` pin stays on the same nodes with default `Curve`.
+- **Mass data:** the `CurveRenderer` cannot handle more than the 8190-point limit in changing data (it already misses the frame at that size), and the `GeometryRenderer` took 1.0 ms at 8190 points. How it scales above 8190 points is not measured; it has to be measured before choosing between several elements, a bigger payload and a custom `QSGGeometryNode`.
+- **Skia adapter:** `SKPath` is converted in C#, so the protocol route stays intact.
 
 ## Open points
 
