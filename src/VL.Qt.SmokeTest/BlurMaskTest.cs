@@ -313,7 +313,7 @@ public static class BlurMaskTest
         var inv = CultureInfo.InvariantCulture;
         string F(double v) => v.ToString("F2", inv);
         var md = new StringBuilder();
-        md.AppendLine("# blur-mask performance (#487)");
+        md.AppendLine("# blur-mask performance");
         md.AppendLine();
         md.AppendLine($"Two chained ShaderEffects (blur_mask.frag, 2 x 25 taps), ramp mask, median of {Frames} frames, device pixel ratio {dpr:F2}. " +
                       "dirty = radius changes every frame (both passes render), cached = only the window frame (pass 2 draws, pass 1 and the image come from their cached layers). " +

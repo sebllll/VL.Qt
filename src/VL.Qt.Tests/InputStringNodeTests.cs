@@ -112,7 +112,7 @@ namespace VL.Qt.Tests
             UserChanges("typed");
             var cmds = Frame(out string value, out bool bang, ch);
             Assert.That((value, bang, ch.Value, ch.LatestAuthor), Is.EqualTo(("typed", true, "typed", "Qt")));
-            Assert.That(cmds, Is.EqualTo(new[] { SetValue("typed") }), "no-op in Qt, repairs a stale SET (PR #354)");
+            Assert.That(cmds, Is.EqualTo(new[] { SetValue("typed") }), "no-op in Qt, repairs a stale SET");
 
             cmds = Frame(out value, out bang, ch);
             Assert.That((value, bang), Is.EqualTo(("typed", false)), "Bang for one frame");

@@ -202,7 +202,7 @@ public static class RendererTest
     [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern uint GetDpiForSystem();
 
     /// <summary>
-    /// Geometry on create + EVENT_WINDOW_GEOMETRY (prep for #143): the reported geometry (outer top-left + client
+    /// Geometry on create + EVENT_WINDOW_GEOMETRY (prepares the window space mapping): the reported geometry (outer top-left + client
     /// size, DIP) equals the Bounds given on create, so it round-trips; a resize is reported; empty bounds (sentinel) and
     /// bounds on no screen are both centered on the primary working area with the fallback size.
     /// </summary>

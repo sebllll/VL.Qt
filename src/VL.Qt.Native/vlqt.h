@@ -322,7 +322,7 @@ VLQT_API int   vlqt_window_set_icon(vlqt_scene* window, const char* utf8Path);
 VLQT_API int   vlqt_window_set_mode(vlqt_scene* window, unsigned int mask, unsigned int value);
 VLQT_API int   vlqt_window_get_mode(vlqt_scene* window);
 /* MSAA sample count of the window (docs/decisions/render-texture.md, "MSAA"). A window is created with 4 (the
- * look of every window before #118, clamped like here). requested < 1 counts as 1 (none); QtNative clamps it to the
+ * look of every window before the sample count was settable, clamped like here). requested < 1 counts as 1 (none); QtNative clamps it to the
  * highest count not above it that QRhi and the device support for the swap chain (D3D11: CheckMultisampleQualityLevels
  * for R8G8B8A8_UNORM and D24_UNORM_S8_UINT; OpenGL: QRhi::supportedSampleCounts) and returns the count used (>= 1), so
  * the caller can warn when it is lower. Equal to the current count: nothing happens. A window not shown yet only
@@ -589,7 +589,7 @@ VLQT_API int vlqt_shader_reflect(const char* utf8Source, int stage, char* buf, i
  * render of the scene), errors as Failed with RESOURCE_EVENT_ERROR. A snapshot while one is in flight replaces it (only
  * the newest result is kept); vlqt_res_release during a grab drops the result. A snapshot on a Failed id starts over
  * (Failed -> Decoding -> INFO + Ready | Failed), on a Ready id it stays Ready until the new pixels replace the old ones
- * (INFO). A grab never stays in Decoding: element/scene destroyed, window no longer exposed (offscreen scene, #128:
+ * (INFO). A grab never stays in Decoding: element/scene destroyed, window no longer exposed (offscreen scene:
  * unbound) or no result within 10 s -> Failed. An offscreen scene must be bound: the grab marks it dirty, so the next
  * vlqt_offscreen_render_batch that contains it renders it also when nothing changed. 0, VLQT_ERR_NULL_HANDLE (scene
  * NULL), VLQT_ERR_BAD_ARGUMENT (wrong kind, scale <= 0), VLQT_ERR_UNKNOWN_ID; element errors (unknown, not in the

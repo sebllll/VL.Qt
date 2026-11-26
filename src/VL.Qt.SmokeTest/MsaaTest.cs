@@ -123,7 +123,7 @@ public static class MsaaTest
             s.Skip("msaa: Qt Quick software backend has no multisampling");
             return;
         }
-        s.Info("msaa: #118 window and offscreen sample counts");
+        s.Info("msaa: window and offscreen sample counts");
         ClampPart(s);
         WindowPart(s);
         InputPart(s);
@@ -241,7 +241,7 @@ public static class MsaaTest
         var w = NativeCalls.CreateWindow(W, H, title);
         var cmd = new CommandWriter();
         cmd.Clear();
-        cmd.ClearColor(0, 0, 0, 0); // alpha 0: pure accumulation (an opaque colour with Clear off is Clear on since #138)
+        cmd.ClearColor(0, 0, 0, 0); // alpha 0: pure accumulation (an opaque colour with Clear off is Clear on)
         cmd.SetClear(false);
         cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetPlace(1, 20, 130, 30, 30);

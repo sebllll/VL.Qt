@@ -16,7 +16,7 @@
  *           texture is created with its mip chain, the main thread copies level 0 and records GenerateMips (no
  *           offscreen frame, no wait); on the stripes path generateMips follows the last stripe.
  *           The upload argument of vlqt_image_load / vlqt_image_set_pixels (vlqt_image_upload) chooses the path;
- *           AUTO: files the worker path, pixels the stripes (measurements in #360). C# sets it with the pin Upload of
+ *           AUTO: files the worker path, pixels the stripes (measured). C# sets it with the pin Upload of
  *           LoadImage, LoadImage (Async), ToQtImage and VideoSourceToQtImage.
  *
  * Source kept for the re-upload after a device loss (package 10): the path for files (no CPU copy after the

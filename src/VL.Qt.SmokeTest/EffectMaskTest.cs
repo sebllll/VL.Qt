@@ -9,7 +9,7 @@ using VL.Qt;
 using Color = System.Drawing.Color;
 using static Pixels;
 
-// Effect layer mask in QtNative (plan effects/01 Task 3, since #489 a MULTI entry of SET_EFFECT_CHAIN):
+// Effect layer mask in QtNative (plan effects/01 Task 3, a MULTI entry of SET_EFFECT_CHAIN):
 // EFFECT_MASK_SOURCE attaches an element object (no REPARENT) as hidden texture source. Text as mask over a red rectangle in a Row (layout unchanged, mask not drawn itself),
 // Inverted, detach (ref 0), position rule (Task 3c: the mask lies in the parent's coordinates like a sibling, with its
 // own Bounds and Transform: same pixels as the sibling; moving/transforming the element, blur/auto padding and explicit

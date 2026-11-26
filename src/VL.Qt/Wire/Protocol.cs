@@ -145,7 +145,7 @@ namespace VL.Qt.Wire
             public const ushort Image = 5;
             public const ushort Row = 6;
             public const ushort Column = 7;
-            // 8 was MultiEffect, 16 RectangularShadow (removed in #459, replaced by the Effect layer); keep unused.
+            // 8 was MultiEffect, 16 RectangularShadow (removed, replaced by the Effect layer); keep unused.
             public const ushort Video = 9;
             public const ushort Button = 10;
             /// <summary>QtQuick.Controls SpinBox (Input (Int)): EVENT_VALUE i32 on user changes.</summary>
@@ -185,8 +185,8 @@ namespace VL.Qt.Wire
         /// <summary>
         /// Property ids of SET (u16). 1..255 common to all items; type-specific ids start at 256, looked up per type
         /// (Color: Rectangle fill + Text; Source: Video string, Shader ref). Blocks: 256 Rectangle, 512 Text,
-        /// 544 Image, 576 Row/Column, 608 reserved (MultiEffect, removed in #459), 640 AutoSize, 672 Video (shares Source/FillMode with Image), 704 Button,
-        /// 768 input handlers (only on handler objects), 800 reserved (RectangularShadow, removed in #459),
+        /// 544 Image, 576 Row/Column, 608 reserved (MultiEffect, removed with the Effect layer), 640 AutoSize, 672 Video (shares Source/FillMode with Image), 704 Button,
+        /// 768 input handlers (only on handler objects), 800 reserved (RectangularShadow, removed with the Effect layer),
         /// 832 <see cref="MultiEffectKey"/> (833..855, 832 unused; the MULTI entries of the Effect chain, not via SET, see protocol.h "Effect chain"), 896 Shader (also takes Source ref and AutoSize), 928 QmlElement, 960 Shape.
         /// </summary>
         internal static class PropertyId
@@ -221,7 +221,7 @@ namespace VL.Qt.Wire
             public const ushort Source = 544;
             public const ushort FillMode = 545;
             public const ushort Smooth = 546;
-            /// <summary>u64 image resource id, 0 = no image; Image has no Source since #361 (Video keeps it).</summary>
+            /// <summary>u64 image resource id, 0 = no image; Image has no Source (Video keeps it).</summary>
             public const ushort Image = 547;
             public const ushort Spacing = 576;
             public const ushort Padding = 577;

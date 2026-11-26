@@ -411,7 +411,7 @@ public static class PerfOverlayTest
     }
 
     /// <summary>
-    /// (images package 07): F5 Resources page with the test kind of #359. One resource per state (Pending,
+    /// (images package 07): F5 Resources page with the test kind. One resource per state (Pending,
     /// Decoding stuck > 2 s, Uploading against a 1 MB budget, Ready, Failed): counts, upload queue, budget use, the
     /// Failed/stuck ones first in the list. Then 1000 resources: build cost of the page. Grabs perf_f5_resources*.png.
     /// </summary>

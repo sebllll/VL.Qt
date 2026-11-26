@@ -27,7 +27,7 @@ public static class TearingTest
     private const float SweepSeconds = 0.6f; // one way across the window, ~3000 px/s on 1920 px: a clear tear line
 
     /// <summary>Manual swap/tearing measurement; the TEARING lines are in the test output.</summary>
-    [Test, Explicit("manual measurement (#90)"), Category("tearing")]
+    [Test, Explicit("manual measurement"), Category("tearing")]
     public static void Tearing() => Scenario.Run(s => s.Check(Run(SmokeParameters.TearingArgs) == 0, "tearing run"));
 
     private static int Run(string[] args)

@@ -218,7 +218,7 @@ public static class PumpTest
             ms[f] = Stopwatch.GetElapsedTime(t).TotalMilliseconds;
             present[f] = a.Last.present + b.Last.present;
             // Per pump (last perf sample): exactly 1 swap, also in the first pump: the gate counts expose renders too
-            // (XWayland sends two Expose on show; before that #253 allowed 2). Linux (X11, Wayland): the window is
+            // (XWayland sends two Expose on show; before that 2 were allowed). Linux (X11, Wayland): the window is
             // mapped/configured asynchronously, pumps before its first swap may have none (platform, L4e). Windows: strict.
             // The 60-sample summary ring must hold one sample per pump.
             foreach (var w in new[] { a, b })

@@ -13,7 +13,7 @@ using VL.Qt.Wire;
 namespace VL.Qt.Tests
 {
     /// <summary>
-    /// The annotated template shaders help/Qt/qtshaders/Example*.frag (#8): the same code as the built-in effect shaders of
+    /// The annotated template shaders help/Qt/qtshaders/Example*.frag: the same code as the built-in effect shaders of
     /// QtNative, and the effect chain node the shader node factory makes of each.
     /// </summary>
     public class EffectTemplateShadersTests

@@ -8,7 +8,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// Value inputs of #301 (package 2a): QtQuick.Controls CheckBox and Switch (Toggle, bool), Slider (f32) and TextField
+// Value inputs: QtQuick.Controls CheckBox and Switch (Toggle, bool), Slider (f32) and TextField
 // (string), style Basic, raw protocol against QtNative. Same guarantees as SpinBox: EVENT_VALUE only after user
 // changes (click/Space, press/drag/wheel/arrow keys, Enter/focus loss with changed text), never for SET, the user value
 // captured at the signal survives a stale SET before the poll, several changes in one frame = one event, a rebind drops

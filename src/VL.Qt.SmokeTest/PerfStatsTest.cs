@@ -43,7 +43,7 @@ public static class PerfStatsTest
         s.Check(st.recent_pumps == 50 && st.recent_over_budget == 50 && st.recent_long_frames == 40 && st.recent_idle == 5 && st.recent_multi_swap == 5,
             $"perfstats: counters last 10 s 50/50/40/5/5 ({st.recent_pumps}/{st.recent_over_budget}/{st.recent_long_frames}/{st.recent_idle}/{st.recent_multi_swap})");
 
-        // #261 on-demand: a frame every 8th pump (16 ms pumps, frame = 128 ms after 7 idle pumps) -> no long frames,
+        // On-demand: a frame every 8th pump (16 ms pumps, frame = 128 ms after 7 idle pumps) -> no long frames,
         // no frame intervals; a following animated burst (frame 16 ms each pump) counts normally.
         samples = new Native.vlqt_perf_sample[80];
         t = new double[80];

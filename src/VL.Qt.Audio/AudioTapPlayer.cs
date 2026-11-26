@@ -371,7 +371,7 @@ namespace VL.Qt.Audio
         }
 
         // Follows the frames at the video sink and the loop offset between Qt's video axis (restarts at a wrap) and the
-        // audio axis (keeps counting). The offset comes from the data (spike in #22, never from QMediaPlayer::duration()):
+        // audio axis (keeps counting). The offset comes from the data (measured in a spike, never from QMediaPlayer::duration()):
         // at a wrap, or at a first frame that lies in another pass, it is the audio media time due when the frame came
         // minus the frame's media time; it is held until the next wrap, so the error measures what changes within a pass.
         private void TrackVideo(long videoMediaUs, long videoNs)

@@ -69,7 +69,7 @@ uchar unitToByte(float v)
     return uchar(std::clamp(v, 0.0f, 1.0f) * 255.0f + 0.5f);
 }
 
-// Upload path (measured in #360 and #390, numbers in the PRs): files -> worker path (empty textures in the worker,
+// Upload path (measured, numbers in the PRs): files -> worker path (empty textures in the worker,
 // the pixels through a mapped staging texture filled by a copy task, then a GPU copy: < 1 ms per 4K on the main
 // thread; stripes instead: the first write into a new 4K texture costs ~9 ms on the main thread, ~1 ms per 8 MB after
 // it, 20 x 4K: 22 % hitches), pixels -> stripes in the frame budget (set_pixels per frame). Mipmaps take the worker

@@ -9,7 +9,7 @@ namespace VL.Qt
     /// <see cref="Space"/> pin and the scene metrics (vlqt_scene_get_metrics: size in DIP, device pixel ratio).
     /// </summary>
     /// <remarks>
-    /// Plan B of #143: C# scales, QtNative only moves the origin of the window root (SET_SPACE: top left, or the centre
+    /// Plan B: C# scales, QtNative only moves the origin of the window root (SET_SPACE: top left, or the centre
     /// of the scene for Normalized and DIP). A scaled root would render effect layers and text blurry. y points down in
     /// every space. <see cref="UnitScale"/> (logical pixels per unit): Normalized = H / 2 (height -1 … 1, H = scene height
     /// in DIP), DIP and DIPTopLeft = 100, PixelTopLeft = 100 / dpr (100 device pixels). Offscreen scenes have dpr 1.
