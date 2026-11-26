@@ -14,6 +14,8 @@
 # <name>.images next to it (one path relative to the repository per line, in the order of the resource ids 1, 2, ...); one that
 # uses shader files (Qt.Effects shader nodes, ShaderEffect) gets <name>.shaders (same form, in the order the trace first uses
 # the shader ids). TraceReplay creates these resources and rewrites the ids of the trace to them.
+# The repository path in a trace (a QmlElement sends the absolute path of its file) is replaced by a placeholder of the same
+# length (X:\___...), so the committed traces carry no local path; TraceReplay points a rooted path into help/Qt at the help/Qt of the checkout.
 param(
     [string[]]$Only,
     [int]$Frames = 90,
@@ -64,6 +66,16 @@ function Read-Frames([string]$path) {
     , $list
 }
 
+# Same byte length, so the u32 lengths of the frame and of its strings stay right. Latin1 maps every byte to one char.
+$latin1 = [Text.Encoding]::Latin1
+$repoBytes = [Text.Encoding]::UTF8.GetBytes($RepoDir)
+$placeholder = ('X:\' + ('_' * $repoBytes.Length)).Substring(0, $repoBytes.Length)
+function Hide-RepoDir([byte[]]$frame) {
+    $text = $latin1.GetString($frame)
+    foreach ($form in @($RepoDir, $RepoDir.Replace('\', '/'))) { $text = $text.Replace($latin1.GetString([Text.Encoding]::UTF8.GetBytes($form)), $placeholder) }
+    , $latin1.GetBytes($text)
+}
+
 foreach ($name in $traces.Keys) {
     if ($Only -and $name -notin $Only) { continue }
     $info = $traces[$name]
@@ -103,8 +115,9 @@ foreach ($name in $traces.Keys) {
     $fs = [IO.File]::Create($target)
     try {
         for ($i = 0; $i -lt $count; $i++) {
-            $fs.Write([BitConverter]::GetBytes([uint32]$got[$i].Length), 0, 4)
-            $fs.Write($got[$i], 0, $got[$i].Length)
+            $frame = Hide-RepoDir $got[$i]
+            $fs.Write([BitConverter]::GetBytes([uint32]$frame.Length), 0, 4)
+            $fs.Write($frame, 0, $frame.Length)
         }
     }
     finally { $fs.Dispose() }
