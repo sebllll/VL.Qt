@@ -50,4 +50,4 @@ None.
 
 ## Evidence
 
-The choice is made in `app.cpp` (`QSG_RENDER_LOOP`). The measurements behind the window sample count are in [render-texture.md](../decisions/render-texture.md), "MSAA".
+The choice is made in `app.cpp` (`QSG_RENDER_LOOP`). The measurements behind the window sample count are in [../research/render-texture-measurements.md](../research/render-texture-measurements.md), "MSAA cost"; the window swap is in [clear-and-msaa.md](clear-and-msaa.md).

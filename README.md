@@ -226,7 +226,7 @@ More: [Shaders](docs/effects-and-shaders.md#shaders) (annotations, the [Sampler 
 
 Help patches: `HowTo Draw Qt in a Stride Scene`, `HowTo Render Qt into a Stride Texture`, `HowTo Interact with a QtTexture`, `HowTo Draw a QtTexture with Transparency`, `HowTo Render many QtTextures` (in the Help Browser under `Qt`, package `VL.Qt.Stride`).
 
-More: [Render texture](docs/decisions/render-texture.md) (decisions: device, fences, lifetime, frame timing), [Architecture](docs/architecture.md#rendering).
+More: [Stride output](docs/design/stride-output.md) (shared texture, fences, lifetime, frame timing), [GPU device](docs/design/gpu-device.md), [Architecture](docs/architecture.md#rendering).
 
 ## QML
 
@@ -318,7 +318,7 @@ The index with a one-line description per page is in [docs/README.md](docs/READM
 - [Styles](docs/styles.md): base style, Style pin, style nodes, self-made widgets
 - [Images](docs/images.md): `QtImage`, loaders, Snapshot
 - [Effects and shaders](docs/effects-and-shaders.md): effect chain, custom shaders, `qtshaders/` nodes
-- [Render texture](docs/decisions/render-texture.md): `QtTexture` for Stride, design notes
+- [Stride output](docs/design/stride-output.md): `QtTexture` and `QtRenderer` for Stride, design note
 - [Video sound through VL.Audio](docs/video-audio.md): `Video (VL.Audio)`, sync model, `Audio Offset`, limits
 - [QML files](docs/user-qml.md): QmlElement and nodes from `.qml` files
 - [Tooltips](docs/tooltips.md): previews in the vvvv editor

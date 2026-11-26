@@ -79,7 +79,7 @@ An element may hang in the tree several times and in several renderers. Each occ
 
 - **Everything that touches feedback runs on the vvvv main thread**, which is Qt's GUI thread: `Dispatch`, the reconciler and the `Update` of the nodes. The feedback has no lock; it only buffers between a poll and the next `Update`.
 - **The one lock is the input queue of a scene.** Notifications of the `Input Notifications` pin of `QtTexture` and `QtRenderer` may arrive on any thread. `NotificationQueue` appends them under a short lock to a reused list; the main thread swaps the lists and drains them at the start of `Update`, outside the lock because the sink calls into QtNative.
-- **The render thread never touches items or feedback** except in `sync`, while the main thread waits. Input is therefore sent on the main thread without a lock ([render-thread.md](render-thread.md), "Input" in [render-texture.md](../decisions/render-texture.md)).
+- **The render thread never touches items or feedback** except in `sync`, while the main thread waits. Input is therefore sent on the main thread without a lock ([render-thread.md](render-thread.md), [offscreen-input.md](offscreen-input.md), "Timing and threads").
 
 ## Consequences
 

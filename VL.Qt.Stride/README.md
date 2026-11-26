@@ -14,7 +14,7 @@ Add `VL.Qt.Stride` to the dependencies of your vvvv patch. It pulls in `VL.Qt` w
 
 - [VL.Qt README and getting started](https://github.com/sebllll/VL.Qt#readme)
 - [Documentation index](https://github.com/sebllll/VL.Qt/blob/main/docs/README.md)
-- [Design notes for this package](https://github.com/sebllll/VL.Qt/blob/main/docs/decisions/render-texture.md)
+- [Design notes for this package](https://github.com/sebllll/VL.Qt/blob/main/docs/design/stride-output.md)
 
 ## License
 
