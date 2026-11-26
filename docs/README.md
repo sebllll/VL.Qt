@@ -35,7 +35,7 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [design/timing.md](design/timing.md) | How the perf monitor measures a pump: the signals that bound each phase, the vsync wait, the hand-off from render threads and the timeline geometry. |
 | [decisions/device-sharing.md](decisions/device-sharing.md) | One QtNative D3D11 device per process shared by all windows and images, device loss, and why Qt does not render on Stride's device. |
 | [decisions/render-texture.md](decisions/render-texture.md) | `QtTexture` and the layer `QtRenderer` in the companion package `VL.Qt.Stride`: a Qt scene rendered offscreen into a Stride texture or drawn into a render target, with shared fences, ownership, format and alpha, frame timing and package layout. |
-| [design/element-catalog-v1.md](design/element-catalog-v1.md) | Conventions shared by all elements: geometry pins, coordinate space, colours, image sources and pin design. |
+| [design/element-model.md](design/element-model.md) | What an element is: immutable descriptions and their exceptions, the pins every element node shares, geometry and the coordinate space. |
 | [design/events.md](design/events.md) | How events and measured values travel from Qt back to the element nodes through feedback objects. |
 | [design/reconciler.md](design/reconciler.md) | How the reconciler turns the element tree into commands: one frame, the skip test, the order of the commands, occurrences and placeholders, input handlers, effect chains, styles, self-made widgets, and the resync after an exception. |
 | [design/reconciler-identity.md](design/reconciler-identity.md) | How the reconciler decides every frame between updating a Qt object and creating a new one, and what counts as one element (its feedback slot) when it is shown at several places. |
@@ -45,6 +45,5 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [decisions/timing.md](decisions/timing.md) | One shared clock for vvvv and Qt animations through a custom animation driver on `IFrameClock`. |
 | [decisions/paths.md](decisions/paths.md) | Lines, paths and splines on Qt Quick Shapes: element and node set, `QtPath`, Skia parity, limits; plan in [plans/paths/00_overview.md](plans/paths/00_overview.md) (issues #154, #155). |
 | [research/02_shapes-spike.md](research/02_shapes-spike.md) | Spike for lines and paths (#154): Qt Quick Shapes with a custom path element, `CurveRenderer` quality and benchmark, recommended limits. |
-| [topics/element-immutability.md](topics/element-immutability.md) | Why elements are immutable descriptions and where Qt-side state deliberately lives outside them. |
 | [topics/style-nodeset.md](topics/style-nodeset.md) | Design of the nodes that build, merge and read styles for interactive widgets. |
 | [topics/gradients.md](topics/gradients.md) | Open topic: gradient fills for elements (handover for a brainstorm). |
