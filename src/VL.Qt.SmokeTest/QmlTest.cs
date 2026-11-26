@@ -23,7 +23,8 @@ using static Pixels;
 // value type in a property and in a bound copy). Files that are edited at run time live in <outDir>/qml/.
 // What it covers: the picture, a property set by the patch is seen and is not echoed, what QML changes itself comes back once
 // per poll (steps, clicks, the Behavior animation of shown), signals with their arguments, animations follow vlqt_app_advance_animations
-// (not the wall clock), a Behavior retargeted by a value set every frame follows it (help example, LFO), every value type both ways, property errors, compile / load errors (syntax, missing module, root is not
+// (not the wall clock), a Behavior retargeted by a value set every frame follows it (help example, LFO), every value type both ways,
+// property errors, compile / load errors (syntax, missing module, root is not
 // an Item, missing file) and recovery, reload after a file change (also a component next to the file), Auto Size.
 // Grabs go to <outDir>/qml_*.png.
 [TestFixture, NonParallelizable]

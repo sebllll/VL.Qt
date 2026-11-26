@@ -50,20 +50,27 @@ namespace VL.Qt.Audio
         /// <param name="play">Plays while true, pauses at the current frame while false.</param>
         /// <param name="loop">Restarts at the end; otherwise playback stops at the end. The sound continues across the restart without a gap.</param>
         /// <param name="keepLastFrame">When playback ends (Loop off), the last frame stays visible; otherwise the element is cleared.</param>
-        /// <param name="rate">Playback speed (1 = normal). Values below 0.01 are clamped (no reverse playback). The sound follows like tape: its pitch changes with the rate; a change of the rate may glitch once.</param>
+        /// <param name="rate">Playback speed (1 = normal). Values below 0.01 are clamped (no reverse playback). The sound follows like
+        /// tape: its pitch changes with the rate; a change of the rate may glitch once.</param>
         /// <param name="volume">Volume of the sound at Audio, 0..1 (linear, clamped).</param>
-        /// <param name="audioOffset">Delay of the sound against the picture in ms (positive: the sound comes later). Calibrates the latency of display and audio device that VL.Qt cannot know. The sound cannot come earlier than VL.Audio's output latency (buffer + driver) allows; smaller values play as early as possible.</param>
-        /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill). Tile is not supported by a video: it is drawn as Stretch and the node shows a warning.</param>
+        /// <param name="audioOffset">Delay of the sound against the picture in ms (positive: the sound comes later). Calibrates the latency
+        /// of display and audio device that VL.Qt cannot know. The sound cannot come earlier than VL.Audio's output latency (buffer +
+        /// driver) allows; smaller values play as early as possible.</param>
+        /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill). Tile is not supported by
+        /// a video: it is drawn as Stretch and the node shows a warning.</param>
         /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
         /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
         /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
         /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='interaction']"/>
         /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
         /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
-        /// <param name="audio">The sound of the video, one signal per channel (stereo), at the sample rate of the VL.Audio engine. Silent without a file, without an audio track and while paused.</param>
+        /// <param name="audio">The sound of the video, one signal per channel (stereo), at the sample rate of the VL.Audio engine. Silent
+        /// without a file, without an audio track and while paused.</param>
         /// <param name="position">Playback position in seconds (0 until loaded; last frame).</param>
         /// <param name="duration">Duration of the media in seconds (0 until loaded or without a file; last frame).</param>
-        /// <param name="syncError">Measured offset of the sound against the frame at Qt's video sink in ms (Audio Offset and VL.Audio's output latency included, display latency not; positive: the sound is late). NaN while the sound is not locked yet (start, after a jump, pause or underrun). Diagnostics.</param>
+        /// <param name="syncError">Measured offset of the sound against the frame at Qt's video sink in ms (Audio Offset and VL.Audio's
+        /// output latency included, display latency not; positive: the sound is late). NaN while the sound is not locked yet (start, after
+        /// a jump, pause or underrun). Diagnostics.</param>
         /// <param name="measuredSize">Natural size of the video, in units (0, 0 until the first frame; last frame).</param>
         /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
         /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/returns"/>

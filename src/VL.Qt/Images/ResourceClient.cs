@@ -158,7 +158,8 @@ namespace VL.Qt
         /// <summary>
         /// Starts loading the .qsb <paramref name="path"/> of <paramref name="stage"/> (<see cref="Protocol.ShaderStage"/>) into
         /// <paramref name="resource"/> (asynchronous, errors arrive as status records). <c>builtin:&lt;name&gt;</c> (a shader shipped
-        /// with VL.Qt, see <see cref="ShaderSlot.TryGetBuiltinShader"/>) is passed as <c>builtin:&lt;name&gt;</c>, any other path is made absolute here. Returns false and fails the resource if
+        /// with VL.Qt, see <see cref="ShaderSlot.TryGetBuiltinShader"/>) is passed as <c>builtin:&lt;name&gt;</c>, any other path is made
+        /// absolute here. Returns false and fails the resource if
         /// the path is invalid or QtNative refuses.
         /// </summary>
         public bool LoadShader(QtResource resource, string path, int stage)

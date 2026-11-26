@@ -32,7 +32,8 @@ namespace VL.Qt.Nodes
 
         /// <summary>Registers the font file when Path changes.</summary>
         /// <param name="path">Font file (TTF, OTF, TTC). Empty = no font.</param>
-        /// <returns>The family name of the font (the first one of a font collection), empty when nothing is registered. A file that cannot be registered is shown at the node and logged.</returns>
+        /// <returns>The family name of the font (the first one of a font collection), empty when nothing is registered. A file that cannot
+        /// be registered is shown at the node and logged.</returns>
         [return: Pin(Name = "Family")]
         public string Update(Path path)
         {

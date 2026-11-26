@@ -11,9 +11,11 @@ namespace VL.Qt.Shaders
     /// <summary>
     /// Comment annotations of a Qt GLSL file (docs/effects-and-shaders.md): only // comments. File head (comments at
     /// the start before/after #version up to the first code line): @category, @summary, @remarks, @tags, @padding, @passes, @chainonly. At a uniform:
-    /// @default, @min, @max, @color, @optional, @summary. @summary/@remarks/@category/@tags take the rest of the line, following comment lines without @ are appended.
+    /// @default, @min, @max, @color, @optional, @summary. @summary/@remarks/@category/@tags take the rest of the line, following comment
+    /// lines without @ are appended.
     /// </summary>
-    /// <param name="Category">@category of the file head (absolute with "Qt.", else relative to the default category of each node kind), null = default category (Qt.Elements.Shaders).</param>
+    /// <param name="Category">@category of the file head (absolute with "Qt.", else relative to the default category of each node kind),
+    /// null = default category (Qt.Elements.Shaders).</param>
     /// <param name="Summary">@summary of the file head (node help), null if not given.</param>
     /// <param name="Remarks">@remarks of the file head (longer node help, below the summary), null if not given.</param>
     /// <param name="Tags">@tags of the file head split at commas, trimmed, empty entries dropped (node browser search words).</param>
@@ -21,7 +23,8 @@ namespace VL.Qt.Shaders
     /// <param name="Passes">@passes of the file head: 1 (default, template Single) or 2 (template TwoPass); only the effect chain node uses it.</param>
     /// <param name="Padding">@padding of the file head (only the effect chain node uses it): none, fixed DIP or from a uniform.</param>
     /// <param name="Uniforms">Annotations per uniform name (ordinal), only uniforms that have at least one tag.</param>
-    /// <param name="DeclaredTypes">Declared GLSL type per uniform name, from the declaration in the source (QtNative reflects an unknown type as "other" and bool as uint).</param>
+    /// <param name="DeclaredTypes">Declared GLSL type per uniform name, from the declaration in the source (QtNative reflects an unknown
+    /// type as "other" and bool as uint).</param>
     /// <param name="Warnings">Unknown tags, tags in the wrong place, values that do not parse syntactically.</param>
     /// <param name="Errors">
     /// Head tags of the effect chain node that are wrong (@passes not 1 or 2, a broken @padding with a uniform), shown red at

@@ -175,7 +175,8 @@ namespace VL.Qt.Reconciliation
         private const int touchPointSize = 24;
         private const int maxTouchPoints = 64;
 
-        /// <summary>EVENT_TOUCH_POINTS: u32 count, then per point id, x, y, pressure, w, h. Sent on change, i.e. every frame of a moving touch: the points are structs, one spread is allocated per event.</summary>
+        /// <summary>EVENT_TOUCH_POINTS: u32 count, then per point id, x, y, pressure, w, h. Sent on change, i.e. every frame of a moving
+        /// touch: the points are structs, one spread is allocated per event.</summary>
         private static bool ApplyTouchPoints(ReadOnlySpan<byte> payload, FeedbackState state, in SpaceMapping mapping)
         {
             if (payload.Length < 4)

@@ -28,7 +28,8 @@ namespace VL.Qt.Nodes
 
         internal ShapeNodeCore Core => _core;
 
-        /// <param name="from">Start of the line in units, in the parent space. Transform acts around the origin of the parent space, not around the line.</param>
+        /// <param name="from">Start of the line in units, in the parent space. Transform acts around the origin of the parent space, not
+        /// around the line.</param>
         /// <param name="to">End of the line in units, in the parent space.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='shape']/param[@name='transform']"/>
         /// <param name="strokeColor">Color of the stroke.</param>

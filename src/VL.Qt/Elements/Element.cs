@@ -14,7 +14,8 @@ namespace VL.Qt.Elements
     {
         private protected Element(ElementType type) => Type = type;
 
-        /// <summary>Takes the common inputs of an element node and the feedback slot of the node (the element node constructor of every concrete element).</summary>
+        /// <summary>Takes the common inputs of an element node and the feedback slot of the node (the element node constructor of every
+        /// concrete element).</summary>
         private protected Element(ElementType type, in CommonInputs common, FeedbackSlot feedback)
         {
             Type = type;

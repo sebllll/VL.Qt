@@ -20,11 +20,13 @@ namespace VL.Qt
     /// <param name="FrameMsMax">Longest interval between consecutive frames (ms).</param>
     /// <param name="PumpMs">Time Qt takes inside the vvvv frame, including the vsync wait and Present (ms per pump, average).</param>
     /// <param name="PumpMsMax">Longest pump (ms).</param>
-    /// <param name="WorkMs">Qt work in ms per pump, average: events, sync and render, i.e. the pump without the vsync wait and Present. The over budget counter counts the pumps where it exceeds the budget.</param>
+    /// <param name="WorkMs">Qt work in ms per pump, average: events, sync and render, i.e. the pump without the vsync wait and Present. The
+    /// over budget counter counts the pumps where it exceeds the budget.</param>
     /// <param name="SyncMs">Synchronizing the scene with the render thread (ms per pump that rendered, average).</param>
     /// <param name="RenderMs">Recording the frame (ms per pump that rendered, average).</param>
     /// <param name="PresentMs">Present of the swap chain (ms per pump that rendered, average).</param>
-    /// <param name="VsyncMs">Start of the frame (QRhi::beginFrame) in ms per frame, average. With VSync this is where Direct3D 11 waits for the display refresh; without VSync it waits there when the GPU is behind. Not Qt work.</param>
+    /// <param name="VsyncMs">Start of the frame (QRhi::beginFrame) in ms per frame, average. With VSync this is where Direct3D 11 waits for
+    /// the display refresh; without VSync it waits there when the GPU is behind. Not Qt work.</param>
     /// <param name="GpuMs">GPU time of the frame (ms, average), 0 when the backend delivers no timestamps.</param>
     /// <param name="GpuMsMax">Longest GPU time of a frame (ms).</param>
     /// <param name="SwapsPerPump">Swaps (presented frames) per pump, average.</param>

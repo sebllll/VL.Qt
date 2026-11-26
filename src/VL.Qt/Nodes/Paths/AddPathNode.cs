@@ -25,7 +25,8 @@ namespace VL.Qt.Nodes
         /// <summary>Returns the path with the segments of the other path added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
         /// <param name="other">The path to add. Nothing = the empty path, which adds nothing.</param>
-        /// <param name="mode">Append adds the contours of the other path as new contours; Extend turns its first move into a line, so that the first contour continues the last contour of the input.</param>
+        /// <param name="mode">Append adds the contours of the other path as new contours; Extend turns its first move into a line, so that
+        /// the first contour continues the last contour of the input.</param>
         /// <returns>The path with the segments added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
         public QtPath Update(QtPath? input, QtPath? other, PathAddMode mode)

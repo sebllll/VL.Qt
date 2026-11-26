@@ -9,7 +9,8 @@ namespace VL.Qt.Shaders
     /// <summary>
     /// Everything the init of a generated shader node needs, built once per node description: the file sources, the pin model
     /// (with pin names made unique against the fixed pins) and the messages shown at the node. Errors (red): file not readable,
-    /// compile error (then the pins of the last version that compiled, or only the fixed pins if there was none), duplicate file name. Warnings (orange): the pin model's warnings.
+    /// compile error (then the pins of the last version that compiled, or only the fixed pins if there was none), duplicate file name.
+    /// Warnings (orange): the pin model's warnings.
     /// </summary>
     /// <param name="HasInput">Node has an Input pin (sampler2D source).</param>
     /// <param name="Pins">Image and uniform pins in pin order, names unique.</param>

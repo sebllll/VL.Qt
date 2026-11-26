@@ -20,7 +20,8 @@ public static class ApplyFuzzTest
     // Flipped buffers per frame: one per 2 bytes, at least 64.
     private const int FlipsPerBytes = 2, MinFlips = 64;
 
-    /// <summary>One recorded trace, damaged: truncated at every 4th byte and byte flips; apply returns 0 or an ApplyResult and agrees with apply_error.</summary>
+    /// <summary>One recorded trace, damaged: truncated at every 4th byte and byte flips; apply returns 0 or an ApplyResult and agrees with
+    /// apply_error.</summary>
     [Test, TestCaseSource(typeof(TraceReplay), "TraceNames"), Category("apply-fuzz")]
     public static void Fuzz(string name) => Scenario.Run(s => Run(s, name));
 

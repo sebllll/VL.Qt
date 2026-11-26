@@ -29,7 +29,8 @@ namespace VL.Qt.Tests
         public readonly List<string> Calls = new();
         public readonly List<ulong> Released = new();
         public Native.Result CreateRc, LoadRc, SnapshotRc;
-        /// <summary>Size of the last finished snapshot as ReadSnapshot reports it (null = none yet: NoData); its bytes are <see cref="SnapshotByte"/>.</summary>
+        /// <summary>Size of the last finished snapshot as ReadSnapshot reports it (null = none yet: NoData); its bytes are
+        /// <see cref="SnapshotByte"/>.</summary>
         public (int Width, int Height)? SnapshotSize;
         public byte SnapshotByte = 0x7F;
         public int Shutdowns;

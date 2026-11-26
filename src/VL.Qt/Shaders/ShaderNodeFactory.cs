@@ -68,7 +68,8 @@ namespace VL.Qt.Shaders
                 headChanged: HeadChanged);
         }
 
-        /// <summary>One element node per file (none for @chainonly), plus the link node of the effect chain for every filter and every @chainonly file.</summary>
+        /// <summary>One element node per file (none for @chainonly), plus the link node of the effect chain for every filter and every
+        /// @chainonly file.</summary>
         internal static ImmutableArray<IVLNodeDescription> CreateDescriptions(IEnumerable<ShaderFile> files, IVLNodeDescriptionFactory factory, ILogger logger, ShaderSourceCache? cache = null)
         {
             cache ??= new ShaderSourceCache(logger);

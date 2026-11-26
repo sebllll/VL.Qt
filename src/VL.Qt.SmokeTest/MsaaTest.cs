@@ -16,7 +16,8 @@ using VL.Qt;
 /// <summary>
 /// (MSAA): sample count of a window and of an offscreen scene. A rotated rectangle and a thin diagonal bar: without
 /// MSAA no pixel has an intermediate value, with it the edges do. Live change of a window (X4, None, X8, X4: swap chain
-/// count, rect, scene, apply), no replacement at the same count, real key input and fullscreen after a swap, Clear off across a swap (trail lost, feedback layer rebuilt), offscreen
+/// count, rect, scene, apply), no replacement at the same count, real key input and fullscreen after a swap, Clear off across a swap (trail
+/// lost, feedback layer rebuilt), offscreen
 /// (UNORM, SRGB and float through the linear pass; rebind 1, 4, 1) and the clamp of unsupported counts. The checks count
 /// edge pixels and read swap chain counts; nothing depends on time. The cost per count (spike) is in
 /// docs/decisions/render-texture.md.

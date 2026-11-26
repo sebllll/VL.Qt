@@ -50,13 +50,15 @@ namespace VL.Qt.Nodes
 
         internal ElementNodeCore<Text, Props> Core => _node;
 
-        /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor. The size is the box for alignment, wrapping and eliding.</param>
+        /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor. The size is the box for
+        /// alignment, wrapping and eliding.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <param name="text">The text (plain, no markup).</param>
         /// <param name="fontFamily">Font family, empty = system default.</param>
         /// <param name="fontSize">Font size (pixel height) in units, rounded to whole DIP (0.12 = 12 DIP).</param>
-        /// <param name="weight">Font weight, 1..1000 (variable fonts take every value, other fonts the nearest face). Named steps: 100 Thin, 200 ExtraLight, 300 Light, 400 Normal, 500 Medium, 600 DemiBold, 700 Bold, 800 ExtraBold, 900 Black.</param>
+        /// <param name="weight">Font weight, 1..1000 (variable fonts take every value, other fonts the nearest face). Named steps: 100
+        /// Thin, 200 ExtraLight, 300 Light, 400 Normal, 500 Medium, 600 DemiBold, 700 Bold, 800 ExtraBold, 900 Black.</param>
         /// <param name="italic">Italic style.</param>
         /// <param name="color">Text color.</param>
         /// <param name="horizontalAlignment">Horizontal alignment within Size.</param>

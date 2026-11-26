@@ -324,7 +324,8 @@ public static class BlurMaskTest
         foreach (var r in rows)
             md.AppendLine($"| {r.Size} | {r.Mode} | {r.Case} | {F(r.Wall)} | {F(r.Cpu)} | {(gpuAvailable ? F(r.Gpu) : "n/a")} | {(gpuAvailable ? F(r.GpuMax) : "n/a")} |");
         foreach (var n in notes) { md.AppendLine(); md.AppendLine("Note: " + n); s.Info("blur-mask: " + n); }
-        var mdDir = Path.GetFileName(s.OutDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)) == "grabs" ? Path.GetDirectoryName(s.OutDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))! : s.OutDir; // build/smoke next to the log
+        // build/smoke next to the log
+        var mdDir = Path.GetFileName(s.OutDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)) == "grabs" ? Path.GetDirectoryName(s.OutDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))! : s.OutDir;
         File.WriteAllText(Path.Combine(mdDir, "blur-mask-perf.md"), md.ToString());
         foreach (var r in rows)
         {

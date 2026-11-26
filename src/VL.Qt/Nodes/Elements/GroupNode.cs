@@ -50,7 +50,8 @@ namespace VL.Qt.Nodes
 
         /// <param name="children">Child elements; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='autosize']/param[@name='size']"/>
-        /// <param name="autoSize">On: Size is ignored and the frame is the extent of the children (incl. their Transform) and of the group origin; it is the size, hit area and clip rect of the group. Off: Size counts, also 0.</param>
+        /// <param name="autoSize">On: Size is ignored and the frame is the extent of the children (incl. their Transform) and of the group
+        /// origin; it is the size, hit area and clip rect of the group. Off: Size counts, also 0.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>

@@ -52,11 +52,17 @@ namespace VL.Qt.Nodes
         /// <summary>Adds a drag handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
         /// <param name="isDragging">Optional channel: true while the element is dragged (written by Qt, author "Qt").</param>
-        /// <param name="translation">Optional channel: movement of the running drag since the press in units, in the parent's space, after Axis and the limits (author "Qt"). Written on change and once at the start of each drag; keeps the last drag's value after the release until the next drag.</param>
-        /// <param name="movesElement">On: the element follows the drag. Off: the drag is only reported (Is Dragging, Translation), e.g. to move something else.</param>
-        /// <param name="axis">Directions the element can be dragged in. With one axis, a drag mostly along the other one is left to the elements below (e.g. a parent with its own Drag).</param>
-        /// <param name="min">Optional smallest offset of the element in units, relative to its position from the Transform pin or layout (e.g. -1, 0 allows dragging 1 unit to the left only). Not set: no limit.</param>
-        /// <param name="max">Optional largest offset of the element in units, relative to its position from the Transform pin or layout. Not set: no limit. Must not be smaller than Min.</param>
+        /// <param name="translation">Optional channel: movement of the running drag since the press in units, in the parent's space, after
+        /// Axis and the limits (author "Qt"). Written on change and once at the start of each drag; keeps the last drag's value after the
+        /// release until the next drag.</param>
+        /// <param name="movesElement">On: the element follows the drag. Off: the drag is only reported (Is Dragging, Translation), e.g. to
+        /// move something else.</param>
+        /// <param name="axis">Directions the element can be dragged in. With one axis, a drag mostly along the other one is left to the
+        /// elements below (e.g. a parent with its own Drag).</param>
+        /// <param name="min">Optional smallest offset of the element in units, relative to its position from the Transform pin or layout
+        /// (e.g. -1, 0 allows dragging 1 unit to the left only). Not set: no limit.</param>
+        /// <param name="max">Optional largest offset of the element in units, relative to its position from the Transform pin or layout.
+        /// Not set: no limit. Must not be smaller than Min.</param>
         /// <param name="buttons">Mouse buttons that drag. None reacts to touch and pen only.</param>
         /// <param name="devices">Input devices that drag.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
@@ -86,7 +92,8 @@ namespace VL.Qt.Nodes
             return output;
         }
 
-        /// <summary>Limits of the offset in units (the reconciler converts them); invalid (min &gt; max on an axis) → none, with an error at the node.</summary>
+        /// <summary>Limits of the offset in units (the reconciler converts them); invalid (min &gt; max on an axis) → none, with an error
+        /// at the node.</summary>
         private DragLimits Limits(Optional<Vector2> minPin, Optional<Vector2> maxPin)
         {
             var min = minPin.HasValue ? minPin.Value : new Vector2(float.NegativeInfinity);

@@ -4,7 +4,8 @@ using System.Text.RegularExpressions;
 
 namespace VL.Qt.NodeFactories
 {
-    /// <summary>The pin naming rule of the generated nodes: one rule for shader uniforms and QML declarations, except that shader files also split before a digit.</summary>
+    /// <summary>The pin naming rule of the generated nodes: one rule for shader uniforms and QML declarations, except that shader files
+    /// also split before a digit.</summary>
     internal static class PinNames
     {
         private const string split = @"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])";

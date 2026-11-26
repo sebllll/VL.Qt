@@ -13,7 +13,8 @@ namespace VL.Qt.Reconciliation
     /// </summary>
     internal static class UniformWriter
     {
-        /// <summary>The state of <paramref name="sampler"/> as the wire carries it (protocol.h "Sampler"): bytes filter, mip filter, address U, address V.</summary>
+        /// <summary>The state of <paramref name="sampler"/> as the wire carries it (protocol.h "Sampler"): bytes filter, mip filter,
+        /// address U, address V.</summary>
         public static ulong PackSampler(Sampler sampler)
             => (ulong)sampler.Filter
                 | (ulong)sampler.MipFilter << 8

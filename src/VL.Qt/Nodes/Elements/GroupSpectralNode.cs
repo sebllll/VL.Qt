@@ -15,7 +15,8 @@ namespace VL.Qt.Nodes
 {
     /// <summary>
     /// Plain container (Qt Item): shows its inputs in order (later ones on top), draws nothing itself.
-    /// Takes all children as one Spread input (for ForEach regions) instead of a pin group. Lengths in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP).
+    /// Takes all children as one Spread input (for ForEach regions) instead of a pin group. Lengths in units of the renderer's space
+    /// (DIPTopLeft: 1 unit = 100 DIP).
     /// </summary>
     [ProcessNode(Name = "Group (Spectral)", Category = Categories.Elements)]
     public sealed class GroupSpectralNode : IDisposable
@@ -36,9 +37,11 @@ namespace VL.Qt.Nodes
             _children = new ChildrenInput(_node.Messages);
         }
 
-        /// <param name="input">Spread (or any sequence) of child elements, e.g. a Spread of Element or of a self-made widget; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
+        /// <param name="input">Spread (or any sequence) of child elements, e.g. a Spread of Element or of a self-made widget; self-made
+        /// widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='autosize']/param[@name='size']"/>
-        /// <param name="autoSize">On: Size is ignored and the frame is the extent of the children (incl. their Transform) and of the group origin; it is the size, hit area and clip rect of the group. Off: Size counts, also 0.</param>
+        /// <param name="autoSize">On: Size is ignored and the frame is the extent of the children (incl. their Transform) and of the group
+        /// origin; it is the size, hit area and clip rect of the group. Off: Size counts, also 0.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>

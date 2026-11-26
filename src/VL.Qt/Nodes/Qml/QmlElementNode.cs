@@ -69,9 +69,14 @@ namespace VL.Qt.Nodes
 
         internal ElementNodeCore<QmlElement, Props> Core => _node;
 
-        /// <param name="file">The .qml file, its root must be an Item. A relative path is taken from the working directory of the app (vvvv resolves a Path IOBox against the document). Empty = nothing loaded. The file and the *.qml and qmldir next to it are watched: saving one reloads the element and sends all properties again; the outputs start empty again.</param>
-        /// <param name="properties">Values for properties of the QML root by name (float, double, int, bool, string, Color4, Vector2/3/4, RectangleF). Only entries that changed are sent. A key that is removed is not reset in QML. Unknown names and values QML cannot convert show at the node and in the log and are ignored; a float for an int property is converted by Qt.</param>
-        /// <param name="size">Size of the element (width, height), only with Auto Size off: it sets width and height of the QML root. The position comes from Transform and Anchor.</param>
+        /// <param name="file">The .qml file, its root must be an Item. A relative path is taken from the working directory of the app (vvvv
+        /// resolves a Path IOBox against the document). Empty = nothing loaded. The file and the *.qml and qmldir next to it are watched:
+        /// saving one reloads the element and sends all properties again; the outputs start empty again.</param>
+        /// <param name="properties">Values for properties of the QML root by name (float, double, int, bool, string, Color4, Vector2/3/4,
+        /// RectangleF). Only entries that changed are sent. A key that is removed is not reset in QML. Unknown names and values QML cannot
+        /// convert show at the node and in the log and are ignored; a float for an int property is converted by Qt.</param>
+        /// <param name="size">Size of the element (width, height), only with Auto Size off: it sets width and height of the QML root. The
+        /// position comes from Transform and Anchor.</param>
         /// <param name="autoSize">On: the element takes the implicit size (implicitWidth, implicitHeight) of the QML root. Off: Size counts.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
@@ -81,7 +86,8 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='interaction']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
-        /// <param name="changedProperties">Last value of each root property that QML changed (a change the patch caused with Properties is not reported back). A new dictionary instance whenever something changed; reset when the file is reloaded.</param>
+        /// <param name="changedProperties">Last value of each root property that QML changed (a change the patch caused with Properties is
+        /// not reported back). A new dictionary instance whenever something changed; reset when the file is reloaded.</param>
         /// <param name="signals">Signals of the QML root emitted since the last frame, in order. Each has its name and its arguments.</param>
         /// <param name="measuredSize">Size the QML root takes with Auto Size on, in units.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
@@ -153,7 +159,8 @@ namespace VL.Qt.Nodes
             return _fileResolved;
         }
 
-        /// <summary>Shows the problems of the property values (unsupported type) as a warning at the node; an error Qt reported for the element is shown by the element node.</summary>
+        /// <summary>Shows the problems of the property values (unsupported type) as a warning at the node; an error Qt reported for the
+        /// element is shown by the element node.</summary>
         private void UpdateProblems()
         {
             var problems = _properties.Problems;

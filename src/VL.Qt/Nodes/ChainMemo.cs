@@ -8,7 +8,8 @@ namespace VL.Qt.Nodes
     /// frames and the reconciler can skip unchanged parts. A <c>static</c> create delegate keeps <c>Get</c> free of allocations.
     /// A mutable struct: keep it in a non-readonly field of the node. Main thread only.
     /// </summary>
-    /// <typeparam name="TEffect">The link type of the chain (<see cref="Elements.Effect"/>, <see cref="Elements.Interaction"/>, <see cref="Paths.QtPath"/>).</typeparam>
+    /// <typeparam name="TEffect">The link type of the chain (<see cref="Elements.Effect"/>, <see cref="Elements.Interaction"/>,
+    /// <see cref="Paths.QtPath"/>).</typeparam>
     /// <typeparam name="TProps">Node specific inputs; a readonly record struct (value equality, no allocation).</typeparam>
     internal struct ChainMemo<TEffect, TProps>
         where TEffect : class
@@ -29,7 +30,8 @@ namespace VL.Qt.Nodes
             _output = null;
         }
 
-        /// <summary>Returns the link for the inputs: the last instance if nothing changed, else a new one from <paramref name="create"/>. Call once per Update.</summary>
+        /// <summary>Returns the link for the inputs: the last instance if nothing changed, else a new one from <paramref name="create"/>.
+        /// Call once per Update.</summary>
         public TEffect Get(TEffect? input, in TProps props, Func<TEffect?, TProps, TEffect> create)
         {
             if (_output is null || !ReferenceEquals(_input, input) || !_props.Equals(props))

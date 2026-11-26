@@ -836,7 +836,8 @@ Item {
                 _ => PrimitiveTypeCode.Int32,
             };
 
-            /// <summary>Enum facts of a type by full name: local from this metadata, external by loading the referenced assembly; null if not an enum or not found.</summary>
+            /// <summary>Enum facts of a type by full name: local from this metadata, external by loading the referenced assembly; null if
+            /// not an enum or not found.</summary>
             private EnumInfo? Enum(string type)
             {
                 if (_localEnums.TryGetValue(type, out var local))

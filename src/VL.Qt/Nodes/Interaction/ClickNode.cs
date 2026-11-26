@@ -43,7 +43,10 @@ namespace VL.Qt.Nodes
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
         /// <param name="isPressed">Optional channel: true while the element is pressed (written by Qt, author "Qt").</param>
         /// <param name="onClick">Optional channel: receives one value per click, i.e. a release inside the element (author "Qt").</param>
-        /// <param name="tapCount">Optional channel: number of quick successive clicks of the last click (1 = single click, 2 = double click, 3 = triple click, ...). A click after a pause (longer than the double click interval) starts again at 1. Written on change; keeps its value until the next click (never written as 0). For a total number of clicks, count the values of On Click. Only reported while connected.</param>
+        /// <param name="tapCount">Optional channel: number of quick successive clicks of the last click (1 = single click, 2 = double
+        /// click, 3 = triple click, ...). A click after a pause (longer than the double click interval) starts again at 1. Written on
+        /// change; keeps its value until the next click (never written as 0). For a total number of clicks, count the values of On Click.
+        /// Only reported while connected.</param>
         /// <param name="onLongPress">Optional channel: receives one value when the press is held long enough (Qt's long press time).</param>
         /// <param name="buttons">Mouse buttons that count. None reacts to touch and pen only.</param>
         /// <param name="devices">Input devices that count.</param>

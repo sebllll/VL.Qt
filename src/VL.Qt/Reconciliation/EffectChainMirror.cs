@@ -34,7 +34,8 @@ namespace VL.Qt.Reconciliation
         /// <summary>Fold warning currently written into the element's feedback slot, null if none.</summary>
         public string? Warning { get; set; }
 
-        /// <summary>Makes <paramref name="next"/> (from <see cref="SpareObjects"/>) the <see cref="Objects"/>; the caller clears the old list, now the spare, when it is done with it.</summary>
+        /// <summary>Makes <paramref name="next"/> (from <see cref="SpareObjects"/>) the <see cref="Objects"/>; the caller clears the old
+        /// list, now the spare, when it is done with it.</summary>
         public void ReplaceObjects(List<ItemMirror> next)
         {
             SpareObjects = Objects;

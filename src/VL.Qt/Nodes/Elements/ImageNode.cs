@@ -43,7 +43,8 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='size']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
-        /// <param name="image">The image to draw (LoadImage, LoadImage (Async), ToQtImage). Nothing = empty element. While a new image loads, the previous one stays visible.</param>
+        /// <param name="image">The image to draw (LoadImage, LoadImage (Async), ToQtImage). Nothing = empty element. While a new image
+        /// loads, the previous one stays visible.</param>
         /// <param name="fillMode">How the image fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill), Tile.</param>
         /// <param name="smooth">Smooth (bilinear) scaling.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>

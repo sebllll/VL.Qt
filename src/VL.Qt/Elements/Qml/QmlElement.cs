@@ -24,7 +24,8 @@ namespace VL.Qt.Elements
         /// </summary>
         internal int Reload { get; init; }
 
-        /// <summary>Values for properties of the QML root by name; the reconciler sends the entries that changed (<see cref="Reconciliation.QmlPropertyWriter"/>).</summary>
+        /// <summary>Values for properties of the QML root by name; the reconciler sends the entries that changed
+        /// (<see cref="Reconciliation.QmlPropertyWriter"/>).</summary>
         internal QmlProperties Properties { get; init; } = QmlProperties.Empty;
     }
 }

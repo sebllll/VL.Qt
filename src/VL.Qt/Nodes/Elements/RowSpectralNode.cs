@@ -15,7 +15,8 @@ namespace VL.Qt.Nodes
 {
     /// <summary>
     /// Stacks its inputs horizontally (Qt Row positioner). Only the size of a child is used, its Transform
-    /// position is ignored (Transform stays visual, around the child's Anchor); children of size 0 take no space (children with Opacity 0 keep theirs). Takes all children as one Spread input (for ForEach regions) instead of a pin group.
+    /// position is ignored (Transform stays visual, around the child's Anchor); children of size 0 take no space (children with Opacity 0
+    /// keep theirs). Takes all children as one Spread input (for ForEach regions) instead of a pin group.
     /// Lengths in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP).
     /// </summary>
     [ProcessNode(Name = "Row (Spectral)", Category = Categories.Elements)]
@@ -37,7 +38,8 @@ namespace VL.Qt.Nodes
             _children = new ChildrenInput(_node.Messages);
         }
 
-        /// <param name="input">Spread (or any sequence) of child elements, e.g. a Spread of Element or of a self-made widget, left to right; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
+        /// <param name="input">Spread (or any sequence) of child elements, e.g. a Spread of Element or of a self-made widget, left to
+        /// right; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='autosize']/param[@name='size']"/>
         /// <param name="autoSize">On: Size is ignored and the implicit size applies (content + padding). Off: Size counts, also 0.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>

@@ -21,7 +21,8 @@ namespace VL.Qt.Nodes
     /// wins over the text. Fragment shader, optionally a vertex shader. Uniforms are matched by
     /// name with the shader's uniform block (which starts with mat4 qt_Matrix and float qt_Opacity, like in Qt's
     /// ShaderEffect). Lengths in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP).
-    /// The normal way to write an effect is a shader file in a qtshaders/ folder (it becomes a node of its own); use ShaderEffect for shader code that is built or loaded at runtime.
+    /// The normal way to write an effect is a shader file in a qtshaders/ folder (it becomes a node of its own); use ShaderEffect for
+    /// shader code that is built or loaded at runtime.
     /// </summary>
     // The node owns the shader resources (path -> vlqt_shader_load, ids in Shader.FragmentShaderId/
     // VertexShaderId); the reconciler sends the properties and the uniform diff (SET_UNIFORMS), only on change.
@@ -76,19 +77,27 @@ namespace VL.Qt.Nodes
         internal ElementNodeCore<Shader, Props> Core => _node;
 
         /// <param name="input">Element sampled as sampler2D "source" (hidden itself, only the effect output is drawn). Unconnected = generative shader.</param>
-        /// <param name="inputSampler">How the shader reads the Input (filter, wrap, mipmaps), from the Sampler node. Unconnected = as the input's layer is (Nearest, Clamp).</param>
-        /// <param name="fragmentCode">Fragment shader as full Qt GLSL (#version 440), baked at runtime in the background. The default is a commented template. Ignored while Fragment Shader is set. While a new text bakes or if it has errors, the last working version keeps drawing; errors (with line numbers) show at the node and in the log.</param>
-        /// <param name="fragmentShader">Baked fragment shader (.qsb or builtin:&lt;name&gt;). Set: used instead of Fragment Code. A broken file shows as error at the node.</param>
-        /// <param name="vertexCode">Vertex shader as full Qt GLSL (#version 440), optional. Empty = Qt's default vertex shader. Ignored while Vertex Shader is set.</param>
+        /// <param name="inputSampler">How the shader reads the Input (filter, wrap, mipmaps), from the Sampler node. Unconnected = as the
+        /// input's layer is (Nearest, Clamp).</param>
+        /// <param name="fragmentCode">Fragment shader as full Qt GLSL (#version 440), baked at runtime in the background. The default is a
+        /// commented template. Ignored while Fragment Shader is set. While a new text bakes or if it has errors, the last working version
+        /// keeps drawing; errors (with line numbers) show at the node and in the log.</param>
+        /// <param name="fragmentShader">Baked fragment shader (.qsb or builtin:&lt;name&gt;). Set: used instead of Fragment Code. A broken
+        /// file shows as error at the node.</param>
+        /// <param name="vertexCode">Vertex shader as full Qt GLSL (#version 440), optional. Empty = Qt's default vertex shader. Ignored
+        /// while Vertex Shader is set.</param>
         /// <param name="vertexShader">Baked vertex shader (.qsb), optional. Set: used instead of Vertex Code.</param>
-        /// <param name="uniforms">Uniform values by name (nodes of Qt.Elements.Shaders.Uniform). Unknown names or wrong types show as warning at the node; a reserved name (qt_Matrix, qt_Opacity, source) is an error.</param>
+        /// <param name="uniforms">Uniform values by name (nodes of Qt.Elements.Shaders.Uniform). Unknown names or wrong types show as
+        /// warning at the node; a reserved name (qt_Matrix, qt_Opacity, source) is an error.</param>
         /// <param name="blending">Premultiplied alpha blending with what is behind. Off: the shader output replaces it.</param>
         /// <param name="meshResolution">Grid subdivisions (x, y &gt;= 1) for vertex shaders that deform the element. Unconnected = 1, 1 (one quad).</param>
-        /// <param name="size">Size of the element (width, height), only with Auto Size off or without Input. The position comes from Transform and Anchor.</param>
+        /// <param name="size">Size of the element (width, height), only with Auto Size off or without Input. The position comes from
+        /// Transform and Anchor.</param>
         /// <param name="autoSize">On: with an Input the implicit size (size of the input) applies. Without Input or off: Size counts.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
-        /// <param name="opacity">Opacity of the effect output (qt_Opacity in the shader). 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
+        /// <param name="opacity">Opacity of the effect output (qt_Opacity in the shader). 0 = not drawn (costs no render time), but still
+        /// takes its space in Row/Column and still receives input (invisible hit areas).</param>
         /// <param name="clip">Clip to the element's size.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='interaction']"/>
@@ -163,7 +172,8 @@ namespace VL.Qt.Nodes
             return string.Join('\n', lines);
         }
 
-        /// <summary>One line per uniform of a reserved name (<see cref="ReservedUniforms.IsItemReserved"/>): shown as an error, the entry is not sent.</summary>
+        /// <summary>One line per uniform of a reserved name (<see cref="ReservedUniforms.IsItemReserved"/>): shown as an error, the entry
+        /// is not sent.</summary>
         internal static string CheckReserved(Spread<Uniform>? uniforms)
         {
             if (uniforms is null || uniforms.Count == 0)

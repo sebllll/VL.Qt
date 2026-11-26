@@ -44,16 +44,19 @@ namespace VL.Qt.Interop
 
         /// <summary>
         /// Sets the MSAA sample count of the window (&lt; 1 = none), clamped to what the device supports; returns the
-        /// count used (&gt;= 1) or a negative <see cref="Result"/> (<see cref="Result.Unsupported"/> on an offscreen scene). A shown window is replaced inside the same handle (vlqt.h).
+        /// count used (&gt;= 1) or a negative <see cref="Result"/> (<see cref="Result.Unsupported"/> on an offscreen scene). A shown window
+        /// is replaced inside the same handle (vlqt.h).
         /// </summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_set_samples(SceneHandle w, int requested);
 
-        /// <summary>Sample count of the window's swap chain, or the count it will be created with; 0 = offscreen scene, <see cref="Result.NullHandle"/> = null window.</summary>
+        /// <summary>Sample count of the window's swap chain, or the count it will be created with; 0 = offscreen scene,
+        /// <see cref="Result.NullHandle"/> = null window.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_window_get_samples(SceneHandle w);
 
-        /// <summary>Takes the diagnostic keys (F2, F5, Shift+F5, F6, F7) of the window (on != 0, default) or lets them reach the scene (0); kept when the window is replaced.</summary>
+        /// <summary>Takes the diagnostic keys (F2, F5, Shift+F5, F6, F7) of the window (on != 0, default) or lets them reach the scene (0);
+        /// kept when the window is replaced.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Result vlqt_window_set_keys(SceneHandle w, int on);
     }

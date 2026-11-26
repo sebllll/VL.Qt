@@ -304,7 +304,8 @@ public static class ValueInputsTest
         cmd.SetPlace(Sl, 600, 100, 40, 400);
         CheckApply("slider vertical bounds");
         Frame();
-        Click(620, 100 + SliderInset + (400 - 2 * SliderInset) * 0.1f); // 10 % from the top = 90 % of -10..10 = 8 -> 7.5 (the value is 5 from the dropped change)
+        // 10 % from the top = 90 % of -10..10 = 8 -> 7.5 (the value is 5 from the dropped change)
+        Click(620, 100 + SliderInset + (400 - 2 * SliderInset) * 0.1f);
         ExpectF32(Frame(), HL2, 7.5f, 0.001f, "slider vertical click (top = maximum)");
         cmd.SetI32(Sl, Protocol.PropertyId.Orientation, 3);
         var badRc = Native.Apply(w, cmd.EndFrame());

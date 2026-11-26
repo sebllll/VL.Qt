@@ -17,7 +17,9 @@ namespace VL.Qt.Nodes
         /// image pins of shader nodes). The defaults are Qt's: Linear, Clamp, no mipmaps. Without a Sampler an element's layer is read Nearest and Clamp.
         /// </summary>
         /// <param name="filter">Minification and magnification: Linear (smooth) or Point (nearest texel, hard pixels).</param>
-        /// <param name="mipFilter">Mipmap level selection. Linear or Point also renders the sampled element's layer with mipmaps (an image needs mipmaps from LoadImage). Avoids aliasing when minified and lets a shader sample a blurred version with a texture bias.</param>
+        /// <param name="mipFilter">Mipmap level selection. Linear or Point also renders the sampled element's layer with mipmaps (an image
+        /// needs mipmaps from LoadImage). Avoids aliasing when minified and lets a shader sample a blurred version with a texture
+        /// bias.</param>
         /// <param name="addressU">What lies outside 0..1 in x: Clamp (edge texel), Wrap (tiles) or Mirror (tiles, every second mirrored).</param>
         /// <param name="addressV">What lies outside 0..1 in y.</param>
         public static Sampler Sampler(

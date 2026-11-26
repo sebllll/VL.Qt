@@ -1,7 +1,8 @@
 import QtQuick
 
 // Test file of the SmokeTest scenario "qml": every value type of the protocol (and the QML types point and size, which are
-// sent as VEC2) in a property and in a second property bound to it (the binding result comes back as an event, so the value has made the whole trip patch -> QML -> patch).
+// sent as VEC2) in a property and in a second property bound to it (the binding result comes back as an event, so the value has made the
+// whole trip patch -> QML -> patch).
 Item {
     implicitWidth: 100
     implicitHeight: 50

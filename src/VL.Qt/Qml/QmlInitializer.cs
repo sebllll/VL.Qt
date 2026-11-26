@@ -7,7 +7,8 @@
         None,
         /// <summary>
         /// A literal: number (int for real too), true/false, "…" or '…', a colour "#rgb"/"#rrggbb"/"#aarrggbb" or an SVG colour name,
-        /// <c>Qt.rgba(r, g, b, a)</c>, <c>Qt.rgb(r, g, b)</c>, <c>Qt.vector2d/3d/4d(…)</c>, <c>Qt.point(x, y)</c>, <c>Qt.size(w, h)</c>, <c>Qt.rect(x, y, w, h)</c> with
+        /// <c>Qt.rgba(r, g, b, a)</c>, <c>Qt.rgb(r, g, b)</c>, <c>Qt.vector2d/3d/4d(…)</c>, <c>Qt.point(x, y)</c>, <c>Qt.size(w, h)</c>,
+        /// <c>Qt.rect(x, y, w, h)</c> with
         /// numeric literal arguments (unary minus allowed). Pin default = that value.
         /// </summary>
         Literal,

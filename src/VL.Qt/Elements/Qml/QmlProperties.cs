@@ -96,7 +96,8 @@ namespace VL.Qt.Elements
             return valid == _values.Count && rejected == _rejected.Length;
         }
 
-        /// <summary>The part of a refused value its problem text depends on: null for an invalid name (its text names the name only) and for a null value.</summary>
+        /// <summary>The part of a refused value its problem text depends on: null for an invalid name (its text names the name only) and
+        /// for a null value.</summary>
         private static Type? RejectedType(string name, object? value) => Protocol.IsValidName(name) ? value?.GetType() : null;
 
         // A linear search: the list is almost always empty, and nothing is allocated.

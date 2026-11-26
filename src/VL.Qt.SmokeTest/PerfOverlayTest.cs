@@ -193,7 +193,8 @@ public static class PerfOverlayTest
         });
 
         // host-side spikes (simulated host frames, overwriting the report of that pump): vvvv update, GC
-        // pause (inside the vvvv update) and apply. Far larger than the Qt spikes above and stray present stalls (~35 ms seen), so they are the timeline's 3 peaks,
+        // pause (inside the vvvv update) and apply. Far larger than the Qt spikes above and stray present stalls (~35 ms seen), so they are
+        // the timeline's 3 peaks,
         // each attributed to its own segment, not to a Qt phase.
         // On a loaded machine a stalled loop step reports a vvvv time of ~90 ms itself (time between pumps, see Run):
         // spikes of ~190 ms stay above it, and a stall that still takes a peak leaves the ring before the retry.
@@ -549,7 +550,8 @@ public static class PerfOverlayTest
                         cmd.SetPlace(1 + k, 300 + 250 * MathF.Sin(frame * 0.05f + k), 30 * k, 80, 25);
                     Native.Apply(w, cmd.EndFrame());
                     s.Pump(1);
-                    if (round > 0 && i >= 10 && Native.vlqt_scene_get_perf_sample(w, out var ps) == 0) { data[m].Add(ps.pump); phases[m, 0] += ps.sync; phases[m, 1] += ps.render; phases[m, 2] += ps.present; } // skip the switch
+                    // skip the switch
+                    if (round > 0 && i >= 10 && Native.vlqt_scene_get_perf_sample(w, out var ps) == 0) { data[m].Add(ps.pump); phases[m, 0] += ps.sync; phases[m, 1] += ps.render; phases[m, 2] += ps.present; }
                 }
             }
         Native.vlqt_scene_destroy(w);

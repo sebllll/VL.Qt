@@ -38,7 +38,8 @@ namespace VL.Qt.Shaders
             new(false, ImmutableArray<ReflectedUniform>.Empty, ImmutableArray<ReflectedSampler>.Empty, error);
 
         /// <summary>
-        /// Bakes source (full Qt GLSL, <paramref name="stage"/> a <see cref="Protocol.ShaderStage"/>) to SPIR-V in QtNative and reflects it. Synchronous, any thread, serialized with the
+        /// Bakes source (full Qt GLSL, <paramref name="stage"/> a <see cref="Protocol.ShaderStage"/>) to SPIR-V in QtNative and reflects
+        /// it. Synchronous, any thread, serialized with the
         /// runtime bakes in QtNative. A failure of QtNative becomes a failed reflection.
         /// </summary>
         public static ShaderReflection Reflect(string source, int stage)

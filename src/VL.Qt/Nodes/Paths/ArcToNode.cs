@@ -10,7 +10,8 @@ namespace VL.Qt.Nodes
     // Skia has three ArcTo nodes with the same name (Tangent, Oval, SVG: they differ in their pins) and
     // ArcTo (Relative) for the SVG form. The names are the same here. Angles are in cycles (1 = full turn), as in Skia.
 
-    /// <summary>Adds an arc that touches the lines from the last point to a corner and from the corner to a destination point (Skia ArcTo, tangent form).</summary>
+    /// <summary>Adds an arc that touches the lines from the last point to a corner and from the corner to a destination point (Skia ArcTo,
+    /// tangent form).</summary>
     [ProcessNode(Name = "ArcTo", Category = Categories.Paths)]
     public sealed class ArcToTangentNode
     {
@@ -20,7 +21,8 @@ namespace VL.Qt.Nodes
 
         private ChainMemo<QtPath, Props> _memo;
 
-        /// <summary>Returns the path with a rounded corner added: a line from the last point towards the corner, rounded by a circle that touches the line to the destination point.</summary>
+        /// <summary>Returns the path with a rounded corner added: a line from the last point towards the corner, rounded by a circle that
+        /// touches the line to the destination point.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path, whose last point is the origin.</param>
         /// <param name="corner">The corner where the two lines meet, in units.</param>
         /// <param name="destinationPoint">End of the second line, in units. The path ends where the circle touches that line.</param>
@@ -45,7 +47,8 @@ namespace VL.Qt.Nodes
 
         private ChainMemo<QtPath, Props> _memo;
 
-        /// <summary>Returns the path with an arc of the oval added. A line connects the last point to the start of the arc, unless a new contour is forced.</summary>
+        /// <summary>Returns the path with an arc of the oval added. A line connects the last point to the start of the arc, unless a new
+        /// contour is forced.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
         /// <param name="bounds">The rectangle that bounds the oval, in units.</param>
         /// <param name="startAngle">Start of the arc in cycles (1 = full turn); 0 is the right end of the oval, positive angles go clockwise.</param>

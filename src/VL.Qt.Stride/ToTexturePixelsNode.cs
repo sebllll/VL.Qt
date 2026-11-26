@@ -35,7 +35,8 @@ namespace VL.Qt.Stride
         /// <param name="view">View of the camera (a zero matrix counts as identity).</param>
         /// <param name="projection">Projection of the camera (a zero matrix counts as identity).</param>
         /// <param name="textureSize">Size of the texture in pixels (Size of the QtTexture).</param>
-        /// <returns>The notifications with positions in texture pixels; positions off the quad lie outside 0 ... Texture Size, keyboard notifications pass unchanged. The same observable while Input stays the same.</returns>
+        /// <returns>The notifications with positions in texture pixels; positions off the quad lie outside 0 ... Texture Size, keyboard
+        /// notifications pass unchanged. The same observable while Input stays the same.</returns>
         [return: Pin(Name = "Output")]
         public IObservable<INotification>? Update(
             IObservable<INotification>? input,

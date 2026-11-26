@@ -51,7 +51,8 @@ namespace VL.Qt.Nodes
         internal ElementNodeCore<Element, Props> Core => _node;
 
         /// <include file="../CommonPins.xml" path="docs/set[@name='autosize']/param[@name='size']"/>
-        /// <param name="autoSize">On: Size is ignored and the implicit size of the style applies (check box about 0.4 x 0.4, switch about 0.68 x 0.4). Off: Size counts and the toggle is centered in it.</param>
+        /// <param name="autoSize">On: Size is ignored and the implicit size of the style applies (check box about 0.4 x 0.4, switch about
+        /// 0.68 x 0.4). Off: Size counts and the toggle is centered in it.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='widget']/param[@name='channel']"/>

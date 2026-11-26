@@ -74,7 +74,8 @@ namespace VL.Qt.Nodes
         /// <param name="keepLastFrame">When playback ends (Loop off), the last frame stays visible; otherwise the element is cleared.</param>
         /// <param name="rate">Playback speed (1 = normal). Values below 0.01 are clamped (no reverse playback).</param>
         /// <param name="volume">Audio volume 0..1 (linear, clamped).</param>
-        /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill). Tile is not supported by a video: it is drawn as Stretch and the node shows a warning.</param>
+        /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill). Tile is not supported by
+        /// a video: it is drawn as Stretch and the node shows a warning.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>

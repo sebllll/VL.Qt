@@ -446,7 +446,8 @@ namespace VL.Qt.Styles
         [Smell(SymbolSmell.Advanced)]
         public static Style SetBorderWidth(Style? input, Optional<float> borderWidth = default, StyleStates states = StyleStates.All)
             => Apply(input, states, borderWidth: borderWidth);
-        /// <summary>Returns the color of the indicator (slider handle, check mark, switch knob, SpinBox -/+) in one state; unset fields come from the base style.</summary>
+        /// <summary>Returns the color of the indicator (slider handle, check mark, switch knob, SpinBox -/+) in one state; unset fields
+        /// come from the base style.</summary>
         /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
         /// <param name="state">State to read.</param>
         /// <returns>The color of the indicator (slider handle, check mark, switch knob, SpinBox -/+).</returns>
@@ -555,7 +556,8 @@ namespace VL.Qt.Styles
         [Smell(SymbolSmell.Advanced)]
         public static Color4 Color(Style? input, StyleState state = StyleState.Normal)
             => StyleNodes.Resolve(BaseStyle.Default.Track!.Color, input?.Track?.Color ?? default, state, default);
-        /// <summary>Returns the fill color of the track (slider value, switch on, text selection) in one state; unset fields come from the base style.</summary>
+        /// <summary>Returns the fill color of the track (slider value, switch on, text selection) in one state; unset fields come from the
+        /// base style.</summary>
         /// <param name="input">Style to read from. Empty or not connected reads the base style.</param>
         /// <param name="state">State to read.</param>
         /// <returns>The fill color of the track (slider value, switch on, text selection).</returns>

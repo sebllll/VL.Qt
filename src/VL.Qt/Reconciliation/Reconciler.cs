@@ -614,7 +614,8 @@ namespace VL.Qt.Reconciliation
             return null;
         }
 
-        /// <summary>Fills <paramref name="elements"/> with the elements the links refer to (mask sources and uniform textures), each once by reference, in chain order.</summary>
+        /// <summary>Fills <paramref name="elements"/> with the elements the links refer to (mask sources and uniform textures), each once
+        /// by reference, in chain order.</summary>
         private static void CollectEffectElements(List<EffectChainLink> links, List<Element> elements)
         {
             elements.Clear();

@@ -4,12 +4,14 @@
  *  - compiles the file from a file: URL on the engine of the scene (relative imports resolve) at the end of the frame that
  *    changed QML_SOURCE or QML_RELOAD (build()), creates the root with the properties set so far as initial properties
  *    (a `required property` has its value at creation; the watcher below is connected before the file's bindings run),
- *    rebuilds the instance on QML_RELOAD (component cache of the engine cleared first) and when the file on disk changed since the last compile of the engine, and applies every property
+ *    rebuilds the instance on QML_RELOAD (component cache of the engine cleared first) and when the file on disk changed since the last
+ *    compile of the engine, and applies every property
  *    set so far again,
  *  - sets properties of the root by name (SET_QML_PROPERTIES, QVariant conversion, errors stay with the name until the
  *    entry is set again or the file is reloaded),
  *  - watches the properties and signals declared in the root (QmlWatcher, user_qml/qml_watcher.h; the wire form is
- *    user_qml/qml_wire.h) and keeps their changes as wire records for the poll (scene/measure.cpp collectQml): the last value of each changed property, every emitted signal
+ *    user_qml/qml_wire.h) and keeps their changes as wire records for the poll (scene/measure.cpp collectQml): the last value of each
+ *    changed property, every emitted signal
  *    (cap kQmlMaxSignalsPerPoll). A change caused by the patch's own set is not recorded (no echo, like EVENT_VALUE).
  *  - reports problems as the QML property vlqtError (load/compile/type errors with file:line, rejected properties), which
  *    the poll sends as EVENT_ERROR like for Image and Video (Elements::readError).

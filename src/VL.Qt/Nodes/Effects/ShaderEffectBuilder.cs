@@ -58,7 +58,8 @@ namespace VL.Qt.Nodes
         /// <summary>Number of links created so far (tests).</summary>
         public int Created => _memo.Created;
 
-        /// <summary>The link for the inputs: the last instance if nothing changed, else a new one; <paramref name="input"/> while a shader is missing. Call once per Update.</summary>
+        /// <summary>The link for the inputs: the last instance if nothing changed, else a new one; <paramref name="input"/> while a shader
+        /// is missing. Call once per Update.</summary>
         public Effect? Describe(Effect? input, in TProps props)
         {
             var id0 = _slots[0].Update(_sources[0].Path, _sources[0].Code);

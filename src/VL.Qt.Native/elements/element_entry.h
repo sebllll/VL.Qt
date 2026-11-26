@@ -28,7 +28,9 @@ struct ElementEntry {
     const TypeDef* def = nullptr;      // the entry of the type table for `type`; never null for an entry in Scene::nodes (Scene::makeEntry)
     quint32 feedbackId = 0;            // BIND feedbackId (0 = unbound), see scene/measure.h
     QQuickMatrix4x4* transform = nullptr; // Matrix4x4, appended to item.transform on the first TRANSFORM or drag offset
-    std::shared_ptr<TransformState> xf; // TRANSFORM + ANCHOR as sent; never null for an entry in Scene::nodes (set by Scene::makeEntry via Elements::initGeometry), so no check
+    // TRANSFORM + ANCHOR as sent; never null for an entry in Scene::nodes (set by Scene::makeEntry via
+    // Elements::initGeometry), so no check
+    std::shared_ptr<TransformState> xf;
     SentState sent;              // last EVENT_MEASURED / EVENT_SCENE_BOUNDS sent for sink
     QQuickItem* effectSource = nullptr; // SHADER: current source item (see Elements::clearEffectSource)
     std::vector<QPointer<QQuickItem>> textureGroups; // SHADER: Groups of texture uniforms, one proxy reference each

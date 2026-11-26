@@ -79,15 +79,18 @@ namespace VL.Qt.Nodes
         /// <param name="input">The element to label (Button, Slider, Input, …). Unconnected: only the label is shown.</param>
         /// <param name="text">The label text (plain, no markup).</param>
         /// <param name="labelPosition">Label left of the element or above it.</param>
-        /// <param name="labelWidth">Width of the label box. Use the same value on all Labeled nodes of a panel so the elements line up. With the label above the element it only limits the box, not the layout.</param>
-        /// <param name="labelHeight">Height of the label box; the text is vertically centered in it. Must be at least the text height (12 DIP font: about 0.2).</param>
+        /// <param name="labelWidth">Width of the label box. Use the same value on all Labeled nodes of a panel so the elements line up.
+        /// With the label above the element it only limits the box, not the layout.</param>
+        /// <param name="labelHeight">Height of the label box; the text is vertically centered in it. Must be at least the text height (12
+        /// DIP font: about 0.2).</param>
         /// <param name="spacing">Gap between label and element.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
-        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …) for label and element together. Without interaction the label row is transparent for input; the element keeps its own Interaction.</param>
+        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …) for label and element together. Without interaction the
+        /// label row is transparent for input; the element keeps its own Interaction.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
         /// <param name="measuredSize">Size the node takes (label + spacing + element), in units (last frame).</param>
