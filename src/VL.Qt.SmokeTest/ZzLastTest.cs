@@ -16,7 +16,8 @@ public static class ZzLastTest
     [Test, Order(1), Category("resources-leave-jobs"), Category("resources")]
     public static void ResourcesLeaveJobs() => Scenario.Run(s => ResourceTest.LeaveRunningJobs(s));
 
-    /// <summary>Clear pin on window and offscreen scene; leaves two VSync windows open on purpose (end of the process with open windows on the shared device).</summary>
+    /// <summary>Clear pin on window and offscreen scene; leaves two VSync windows open on purpose (end of the process with open windows on
+    /// the shared device).</summary>
     [Test, Order(2), Category("clear-pin"), Category("ClearPin")]
     public static void ClearPin() => Scenario.Run(ClearPinTest.Run);
 }

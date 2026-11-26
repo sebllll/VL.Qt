@@ -46,7 +46,8 @@ namespace vlqt {
 class Scene;
 
 // Per-window measurement, overlay (F2 perfmeter, F5 stats pages) and key handling.
-// Keys (window focused, no other modifiers; setKeysEnabled(false) turns all of them off): F2 meter on/off; F5 Summary -> Timeline -> Scene -> System -> Resources -> off;
+// Keys (window focused, no other modifiers; setKeysEnabled(false) turns all of them off): F2 meter on/off; F5 Summary -> Timeline -> Scene
+// -> System -> Resources -> off;
 // Shift+F5 hides/shows the stats keeping the page; F6 (only while the stats are visible) freezes the overlay; F7 (same)
 // hides/shows the host segments (vvvv, GC, apply) of the timeline, process-wide.
 // The last page is remembered process-wide (new windows open on it).

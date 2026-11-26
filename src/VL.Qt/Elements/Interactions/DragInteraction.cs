@@ -23,7 +23,8 @@ namespace VL.Qt.Elements
         public bool MovesElement { get; }
         public DragAxis Axis { get; }
 
-        /// <summary>Limits of the drag offset in units of the renderer's space (converted to logical pixels in <see cref="Reconciliation.HandlerPropertyDiff"/>).</summary>
+        /// <summary>Limits of the drag offset in units of the renderer's space (converted to logical pixels in
+        /// <see cref="Reconciliation.HandlerPropertyDiff"/>).</summary>
         public DragLimits Limits { get; }
 
         public PointerButtons Buttons { get; }

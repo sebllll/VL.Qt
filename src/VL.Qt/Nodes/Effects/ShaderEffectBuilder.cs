@@ -7,19 +7,6 @@ using VL.Qt.Wire;
 namespace VL.Qt.Nodes
 {
     /// <summary>
-    /// One shader of a <see cref="ShaderEffect"/>: either a path (<c>builtin:&lt;name&gt;</c>, shipped with VL.Qt) or GLSL
-    /// source (a shader file), with the label that starts its error text.
-    /// </summary>
-    internal readonly record struct ShaderEffectSource(string Label, string? Path, string? Code)
-    {
-        /// <summary>A shader shipped with VL.Qt.</summary>
-        public static ShaderEffectSource Builtin(string name) => new(name, ShaderSlot.builtinShaderPrefix + name, null);
-
-        /// <summary>A fragment shader given as source text.</summary>
-        public static ShaderEffectSource Fragment(string code) => new("Fragment shader", null, code);
-    }
-
-    /// <summary>
     /// Shared core of the shader effect nodes, built-in (Glow, InnerShadow, DirectionalBlur, ZoomBlur, RadialBlur, Displace, Blend)
     /// and generated from shader files: owns the shader resources of one node, builds a new link only if the chain at Input, a shader id or the node specific
     /// <typeparamref name="TProps"/> changed (the reconciler compares by reference). Without shader ids (still creating, failed,
@@ -58,7 +45,8 @@ namespace VL.Qt.Nodes
         /// <summary>Number of links created so far (tests).</summary>
         public int Created => _memo.Created;
 
-        /// <summary>The link for the inputs: the last instance if nothing changed, else a new one; <paramref name="input"/> while a shader is missing. Call once per Update.</summary>
+        /// <summary>The link for the inputs: the last instance if nothing changed, else a new one; <paramref name="input"/> while a shader
+        /// is missing. Call once per Update.</summary>
         public Effect? Describe(Effect? input, in TProps props)
         {
             var id0 = _slots[0].Update(_sources[0].Path, _sources[0].Code);

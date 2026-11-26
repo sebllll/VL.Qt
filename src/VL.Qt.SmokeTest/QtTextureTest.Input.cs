@@ -212,7 +212,7 @@ public static partial class QtTextureTest
             s.Skip("QtTextureInput: D3D11 only");
             return;
         }
-        s.Info("QtTextureInput: #119 input into an offscreen scene");
+        s.Info("QtTextureInput: input into an offscreen scene");
         using var rig = new InputRig(s);
         if (!rig.Ok)
             return;

@@ -71,7 +71,8 @@ namespace VL.Qt.Stride
         /// <summary>Stride's graphics device, null before the game has one (or after it was disposed).</summary>
         public GraphicsDevice? GraphicsDevice => _game.GraphicsDevice;
 
-        /// <summary>Renders <paramref name="scene"/> at the start of the next draw. The scene calls it once until the draw has taken it out (its flag).</summary>
+        /// <summary>Renders <paramref name="scene"/> at the start of the next draw. The scene calls it once until the draw has taken it out
+        /// (its flag).</summary>
         public void Schedule(SharedTextureScene scene)
         {
             if (!_disposed)

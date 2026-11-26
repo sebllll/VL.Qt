@@ -10,7 +10,7 @@ using VL.Qt;
 
 // Input latency: input queued like platform input between two frames (vlqt_test_queue_mouse / _touch) reaches the
 // feedback at the frame start (QtPump tick: vlqt_app_deliver_input, then PollInput), i.e. before the node updates of that
-// frame. Before #24 it reached them at the frame end, so the patch saw it one frame later. Measured in both modes on a
+// frame. Before the input latency fix it reached them at the frame end, so the patch saw it one frame later. Measured in both modes on a
 // simulated clock (QtPump.DeliverInputAtFrameStart), plus: no event twice or lost (press/release pairs, multitouch), no
 // render in the delivery, a window destroyed or created between two frames.
 public static partial class HandlerTest
@@ -100,16 +100,16 @@ public static partial class HandlerTest
         var before = MeasureLatency(app, s, atFrameStart: false, out var recsBefore);
         var after = MeasureLatency(app, s, atFrameStart: true, out var recsAfter);
         s.Info($"input-latency: frames from the frame start after the input to the node update that sees it (mouse press, release, touch press, move, release): before {string.Join(",", before)}, now {string.Join(",", after)}");
-        // Before #24 the touch move (index 3) waits for the render: Qt Quick holds it back and requests an update. Windows
+        // Before the input latency fix the touch move (index 3) waits for the render: Qt Quick holds it back and requests an update. Windows
         // delivers that update request within the same pump; Linux (QPlatformWindow::requestUpdate: a timer of one refresh
         // interval, ~16 ms) delivers it after this test's next pump (2 ms apart), so the move may take two frames there.
         var beforeOk = true;
         for (int i = 0; i < before.Length; i++)
             beforeOk &= before[i] == 1 || (i == 3 && before[i] == 2 && !OperatingSystem.IsWindows());
-        s.Check(beforeOk, $"input-latency: before #24 the patch sees queued input one frame later, the touch move up to two on Linux ({string.Join(",", before)})");
+        s.Check(beforeOk, $"input-latency: before the fix the patch sees queued input one frame later, the touch move up to two on Linux ({string.Join(",", before)})");
         s.Check(Array.TrueForAll(after, l => l == 0), $"input-latency: input reaches the patch in the frame it arrived before ({string.Join(",", after)})");
         // Nothing twice, nothing lost: the feedback gets the same records in the same order as with the poll at the frame end only.
-        s.Check(Dump(recsBefore) == Dump(recsAfter), $"input-latency: same records as before #24 (before: {Dump(recsBefore)} | now: {Dump(recsAfter)})");
+        s.Check(Dump(recsBefore) == Dump(recsAfter), $"input-latency: same records as before the fix (before: {Dump(recsBefore)} | now: {Dump(recsAfter)})");
         LatencyLifecycle(app, s);
         s.Check(log.Errors.Count == 0, $"input-latency: no errors logged ({string.Join(" | ", log.Errors)})");
     }

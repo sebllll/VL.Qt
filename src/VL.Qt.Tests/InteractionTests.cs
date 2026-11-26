@@ -76,7 +76,7 @@ namespace VL.Qt.Tests
         public void DefaultProperties_NotSent()
         {
             Frame(R(H(new ElementFeedback())));
-            Assert.That(_sink.OfOp("SET"), Is.Empty, "Hover has no properties (no position since #320)");
+            Assert.That(_sink.OfOp("SET"), Is.Empty, "Hover has no properties (no position)");
         }
 
         [Test]

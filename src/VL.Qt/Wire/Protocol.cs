@@ -10,7 +10,8 @@ namespace VL.Qt.Wire
     /// </summary>
     internal static class Protocol
     {
-        /// <summary>Version of the command protocol and the C ABI of vlqt.h; QtApp refuses a vlqt.dll with another one. Bump with every change (see protocol.h).</summary>
+        /// <summary>Version of the command protocol and the C ABI of vlqt.h; QtApp refuses a vlqt.dll with another one. Bump with every
+        /// change (see protocol.h).</summary>
         public const int AbiVersion = 25;
         public const int CommandAlign = 4;
         /// <summary>Header of a command, a poll record and a resource record: u16 op/event, u16 flags (0, reserved), u32 length.</summary>
@@ -145,7 +146,7 @@ namespace VL.Qt.Wire
             public const ushort Image = 5;
             public const ushort Row = 6;
             public const ushort Column = 7;
-            // 8 was MultiEffect, 16 RectangularShadow (removed in #459, replaced by the Effect layer); keep unused.
+            // 8 was MultiEffect, 16 RectangularShadow (removed, replaced by the Effect layer); keep unused.
             public const ushort Video = 9;
             public const ushort Button = 10;
             /// <summary>QtQuick.Controls SpinBox (Input (Int)): EVENT_VALUE i32 on user changes.</summary>
@@ -160,7 +161,8 @@ namespace VL.Qt.Wire
             public const ushort TextField = 15;
             /// <summary>Own item with .qsb shaders, uniforms by name through <see cref="Op.SetUniforms"/>.</summary>
             public const ushort Shader = 24;
-            /// <summary>Loads a user .qml file; properties by name through <see cref="Op.SetQmlProperties"/>, events <see cref="EventId.QmlProperty"/> and <see cref="EventId.QmlSignal"/>.</summary>
+            /// <summary>Loads a user .qml file; properties by name through <see cref="Op.SetQmlProperties"/>, events
+            /// <see cref="EventId.QmlProperty"/> and <see cref="EventId.QmlSignal"/>.</summary>
             public const ushort Qml = 25;
             /// <summary>QtQuick.Shapes Shape with one ShapePath: polyline, polygon or path, fill and stroke.</summary>
             public const ushort Shape = 26;
@@ -168,7 +170,8 @@ namespace VL.Qt.Wire
             /// Input handlers from 32: protocol objects attached to an element by REPARENT (index ignored).
             /// </summary>
             public const ushort HoverHandler = 32;
-            /// <summary>Qt TapHandler (ReleaseWithinBounds): <see cref="EventId.Press"/>, <see cref="EventId.Click"/>, <see cref="EventId.TapCount"/>, <see cref="EventId.LongPress"/>.</summary>
+            /// <summary>Qt TapHandler (ReleaseWithinBounds): <see cref="EventId.Press"/>, <see cref="EventId.Click"/>,
+            /// <see cref="EventId.TapCount"/>, <see cref="EventId.LongPress"/>.</summary>
             public const ushort TapHandler = 33;
             /// <summary>Qt PointHandler: <see cref="EventId.Active"/>, <see cref="EventId.Pointer"/> while active.</summary>
             public const ushort PointHandler = 34;
@@ -185,9 +188,11 @@ namespace VL.Qt.Wire
         /// <summary>
         /// Property ids of SET (u16). 1..255 common to all items; type-specific ids start at 256, looked up per type
         /// (Color: Rectangle fill + Text; Source: Video string, Shader ref). Blocks: 256 Rectangle, 512 Text,
-        /// 544 Image, 576 Row/Column, 608 reserved (MultiEffect, removed in #459), 640 AutoSize, 672 Video (shares Source/FillMode with Image), 704 Button,
-        /// 768 input handlers (only on handler objects), 800 reserved (RectangularShadow, removed in #459),
-        /// 832 <see cref="MultiEffectKey"/> (833..855, 832 unused; the MULTI entries of the Effect chain, not via SET, see protocol.h "Effect chain"), 896 Shader (also takes Source ref and AutoSize), 928 QmlElement, 960 Shape.
+        /// 544 Image, 576 Row/Column, 608 reserved (MultiEffect, removed with the Effect layer), 640 AutoSize, 672 Video (shares
+        /// Source/FillMode with Image), 704 Button,
+        /// 768 input handlers (only on handler objects), 800 reserved (RectangularShadow, removed with the Effect layer),
+        /// 832 <see cref="MultiEffectKey"/> (833..855, 832 unused; the MULTI entries of the Effect chain, not via SET, see protocol.h
+        /// "Effect chain"), 896 Shader (also takes Source ref and AutoSize), 928 QmlElement, 960 Shape.
         /// </summary>
         internal static class PropertyId
         {
@@ -221,7 +226,7 @@ namespace VL.Qt.Wire
             public const ushort Source = 544;
             public const ushort FillMode = 545;
             public const ushort Smooth = 546;
-            /// <summary>u64 image resource id, 0 = no image; Image has no Source since #361 (Video keeps it).</summary>
+            /// <summary>u64 image resource id, 0 = no image; Image has no Source (Video keeps it).</summary>
             public const ushort Image = 547;
             public const ushort Spacing = 576;
             public const ushort Padding = 577;
@@ -236,7 +241,8 @@ namespace VL.Qt.Wire
             public const ushort AudioTap = 677;
             public const ushort Enabled = 704;
             public const ushort AutoRepeat = 705;
-            /// <summary>Value of a value input in the element's value type (SpinBox i32, CheckBox/Switch bool, Slider f32, TextField string); never echoed as <see cref="EventId.Value"/>.</summary>
+            /// <summary>Value of a value input in the element's value type (SpinBox i32, CheckBox/Switch bool, Slider f32, TextField
+            /// string); never echoed as <see cref="EventId.Value"/>.</summary>
             public const ushort Value = 706;
             /// <summary>SpinBox i32 lower bound (QtNative default int.MinValue), Slider f32 (default 0).</summary>
             public const ushort Minimum = 707;
@@ -369,7 +375,8 @@ namespace VL.Qt.Wire
         /// <summary>Link kinds of <see cref="Op.SetEffectChain"/> (u16).</summary>
         internal static class EffectChainLink
         {
-            /// <summary>One MultiEffect run: entries u16 key (<see cref="MultiEffectKey.BlurEnabled"/>..<see cref="MultiEffectKey.MaskInverted"/>), u16 value type, value.</summary>
+            /// <summary>One MultiEffect run: entries u16 key
+            /// (<see cref="MultiEffectKey.BlurEnabled"/>..<see cref="MultiEffectKey.MaskInverted"/>), u16 value type, value.</summary>
             public const ushort Multi = 1;
             /// <summary>Filter shader link: template, shader ids, padding, strength (Pyramid radius), uniform entries like SET_UNIFORMS.</summary>
             public const ushort Shader = 2;
@@ -475,7 +482,8 @@ namespace VL.Qt.Wire
             public const ushort Pinch = 16;
             /// <summary>User change of a value input: u16 value type (<see cref="ValueType"/>), u16 0, value encoded like SET.</summary>
             public const ushort Value = 17;
-            /// <summary>A root property that QML changed (no echo of SET_QML_PROPERTIES): u16 name length, u16 value type, name, padding to 4, value like <see cref="Value"/>.</summary>
+            /// <summary>A root property that QML changed (no echo of SET_QML_PROPERTIES): u16 name length, u16 value type, name, padding to
+            /// 4, value like <see cref="Value"/>.</summary>
             public const ushort QmlProperty = 18;
             /// <summary>A root signal: u16 name length, u16 argument count, name, padding to 4, count x (u16 value type, u16 0, value, padding).</summary>
             public const ushort QmlSignal = 19;
@@ -506,7 +514,8 @@ namespace VL.Qt.Wire
             public const uint PixelTopLeft = 3;
         }
 
-        /// <summary>Values of <see cref="PropertyId.FillMode"/> (i32), the order of <see cref="VL.Qt.Elements.FillMode"/>. Video does not take <see cref="Tile"/>.</summary>
+        /// <summary>Values of <see cref="PropertyId.FillMode"/> (i32), the order of <see cref="VL.Qt.Elements.FillMode"/>. Video does not
+        /// take <see cref="Tile"/>.</summary>
         internal static class FillMode
         {
             public const int Stretch = 0;
@@ -555,7 +564,8 @@ namespace VL.Qt.Wire
             public const int AudioTap = 5;
         }
 
-        /// <summary>Audio tap (protocol.h "Audio tap"): flags of <see cref="Native.vlqt_audio_tap_state.flags"/> and the limits of vlqt_audio_tap_init.</summary>
+        /// <summary>Audio tap (protocol.h "Audio tap"): flags of <see cref="Native.vlqt_audio_tap_state.flags"/> and the limits of
+        /// vlqt_audio_tap_init.</summary>
         internal static class AudioTap
         {
             /// <summary>A Video element (player) writes into the tap.</summary>

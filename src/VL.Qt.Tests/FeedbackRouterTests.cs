@@ -354,7 +354,7 @@ namespace VL.Qt.Tests
             uint h = reg.Acquire(new FeedbackSlot(feedback, 0));
             reg.Dispatch(new Poll().Error(h, "Cannot open x.png").Bytes);
             feedback[0].ApplyError = "Qt rejected Color: bad";
-            Assert.That(feedback.Error, Is.EqualTo("Qt rejected Color: bad"), "#275: apply error first");
+            Assert.That(feedback.Error, Is.EqualTo("Qt rejected Color: bad"), "apply error first");
 
             reg.Release(h); // resync: the mirror drops its bindings, the apply error stays until the renderer clears it
             Assert.That(feedback.Error, Is.EqualTo("Qt rejected Color: bad"));

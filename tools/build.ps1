@@ -77,6 +77,13 @@ if ($Test)
     # Timing limits (Perf category of the unit tests, SmokeTest PerfLimits) only warn in the gate (TEST-09); a measurement that
     # runs alone on a quiet machine sets VLQT_PERF_WARN_ONLY=0 to make them hard. VLQT_PERF_FACTOR scales every limit.
     if (-not $env:VLQT_PERF_WARN_ONLY) { $env:VLQT_PERF_WARN_ONLY = '1' }
+    # Closing check (P14): no issue references, no long comment lines, no file with two types in src (tools/check-source-rules.py).
+    Invoke-Step 'source rules' {
+        $py = Get-Command python, python3, py -ErrorAction SilentlyContinue | Select-Object -First 1
+        if (-not $py) { throw 'Python not found (needed for tools/check-source-rules.py)' }
+        & $py.Source -I "$repo\tools\check-source-rules.py" --root $repo
+        Assert-Exit 'check-source-rules.py'
+    }
     Invoke-Step 'unit tests' {
         dotnet test "$repo\src\VL.Qt.Tests" -c $Configuration -nologo --logger "console;verbosity=normal" --logger "trx;LogFileName=unit.trx" --results-directory "$repo\build\test-results"
         Assert-Exit 'dotnet test'

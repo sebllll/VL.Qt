@@ -313,7 +313,7 @@ public static class BlurMaskTest
         var inv = CultureInfo.InvariantCulture;
         string F(double v) => v.ToString("F2", inv);
         var md = new StringBuilder();
-        md.AppendLine("# blur-mask performance (#487)");
+        md.AppendLine("# blur-mask performance");
         md.AppendLine();
         md.AppendLine($"Two chained ShaderEffects (blur_mask.frag, 2 x 25 taps), ramp mask, median of {Frames} frames, device pixel ratio {dpr:F2}. " +
                       "dirty = radius changes every frame (both passes render), cached = only the window frame (pass 2 draws, pass 1 and the image come from their cached layers). " +
@@ -324,7 +324,8 @@ public static class BlurMaskTest
         foreach (var r in rows)
             md.AppendLine($"| {r.Size} | {r.Mode} | {r.Case} | {F(r.Wall)} | {F(r.Cpu)} | {(gpuAvailable ? F(r.Gpu) : "n/a")} | {(gpuAvailable ? F(r.GpuMax) : "n/a")} |");
         foreach (var n in notes) { md.AppendLine(); md.AppendLine("Note: " + n); s.Info("blur-mask: " + n); }
-        var mdDir = Path.GetFileName(s.OutDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)) == "grabs" ? Path.GetDirectoryName(s.OutDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))! : s.OutDir; // build/smoke next to the log
+        // build/smoke next to the log
+        var mdDir = Path.GetFileName(s.OutDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)) == "grabs" ? Path.GetDirectoryName(s.OutDir.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))! : s.OutDir;
         File.WriteAllText(Path.Combine(mdDir, "blur-mask-perf.md"), md.ToString());
         foreach (var r in rows)
         {

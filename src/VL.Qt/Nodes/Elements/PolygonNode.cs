@@ -26,7 +26,8 @@ namespace VL.Qt.Nodes
 
         internal ShapeNodeCore Core => _core;
 
-        /// <param name="points">Vertices in units, in the parent space. Transform acts around the origin of the parent space, not around the shape; the shape reports (max X, max Y) of the points as its size.</param>
+        /// <param name="points">Vertices in units, in the parent space. Transform acts around the origin of the parent space, not around
+        /// the shape; the shape reports (max X, max Y) of the points as its size.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='shape']/param[@name='transform']"/>
         /// <param name="fillColor">Fill color of the enclosed area.</param>
         /// <param name="strokeColor">Color of the stroke.</param>

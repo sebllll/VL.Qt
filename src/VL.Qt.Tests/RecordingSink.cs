@@ -11,7 +11,8 @@ namespace VL.Qt.Tests
     /// <summary>
     /// Fake <see cref="ICommandSink"/> for reconciler tests: records every command as a readable line, e.g.
     /// <c>CREATE 1 Rectangle</c>, <c>REPARENT 1 0 0</c>, <c>SET 1 Color color(1,0,0,1)</c>, <c>BIND 1 5</c>, <c>DESTROY 1</c>.
-    /// Element types and properties print by their <see cref="Protocol.ElementType"/> / <see cref="Protocol.PropertyId"/> (<see cref="Protocol.MultiEffectKey"/>) name (the first
+    /// Element types and properties print by their <see cref="Protocol.ElementType"/> / <see cref="Protocol.PropertyId"/>
+    /// (<see cref="Protocol.MultiEffectKey"/>) name (the first
     /// name of a value, see <c>ProtocolNamesAreUnique</c>), so a renumbered protocol leaves the expectations valid.
     /// Numbers use the invariant culture; floats in round-trip format ("R").
     /// </summary>

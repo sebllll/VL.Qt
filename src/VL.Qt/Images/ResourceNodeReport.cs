@@ -29,7 +29,8 @@ namespace VL.Qt
             _warning = new NodeMessage(errors, "Resource Warning");
         }
 
-        /// <summary>Reports the current error (empty if none) and the warning of <paramref name="resource"/>. Main thread, once per Update; no allocation while nothing changes.</summary>
+        /// <summary>Reports the current error (empty if none) and the warning of <paramref name="resource"/>. Main thread, once per Update;
+        /// no allocation while nothing changes.</summary>
         public void Update(QtResource? resource, string error)
         {
             if (_lasting)

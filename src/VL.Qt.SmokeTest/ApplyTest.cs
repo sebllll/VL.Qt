@@ -110,7 +110,8 @@ public static class ApplyTest
         }
     }
 
-    /// <summary>Little-endian payload writer for the entry-based commands (entries are written by hand, not by CommandWriter, so malformed ones are possible).</summary>
+    /// <summary>Little-endian payload writer for the entry-based commands (entries are written by hand, not by CommandWriter, so malformed
+    /// ones are possible).</summary>
     private sealed class Pay
     {
         private readonly List<byte> _b = new();

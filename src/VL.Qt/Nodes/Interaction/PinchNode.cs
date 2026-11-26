@@ -60,12 +60,17 @@ namespace VL.Qt.Nodes
         /// <summary>Adds a pinch handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
         /// <param name="isPinching">Optional channel: true while the gesture runs (written by Qt, author "Qt").</param>
-        /// <param name="scale">Optional channel: scale factor of the gesture, 1 at the start, 2 = fingers twice as far apart (author "Qt"). Keeps the last value after the gesture.</param>
-        /// <param name="rotation">Optional channel: rotation of the gesture in cycles (1 = 360 degrees), clockwise positive as seen on screen (author "Qt"). Keeps the last value after the gesture.</param>
-        /// <param name="translation">Optional channel: movement of the pivot since the gesture began (the fingers' centroid moves like that), in units, in the parent's space (author "Qt"). Keeps the last value after the gesture.</param>
-        /// <param name="pivot">Optional channel: the fingers' centroid when the gesture began, in units, in the parent's space: the point scale and rotation turn around (author "Qt"). Keeps the last value after the gesture.</param>
+        /// <param name="scale">Optional channel: scale factor of the gesture, 1 at the start, 2 = fingers twice as far apart (author "Qt").
+        /// Keeps the last value after the gesture.</param>
+        /// <param name="rotation">Optional channel: rotation of the gesture in cycles (1 = 360 degrees), clockwise positive as seen on
+        /// screen (author "Qt"). Keeps the last value after the gesture.</param>
+        /// <param name="translation">Optional channel: movement of the pivot since the gesture began (the fingers' centroid moves like
+        /// that), in units, in the parent's space (author "Qt"). Keeps the last value after the gesture.</param>
+        /// <param name="pivot">Optional channel: the fingers' centroid when the gesture began, in units, in the parent's space: the point
+        /// scale and rotation turn around (author "Qt"). Keeps the last value after the gesture.</param>
         /// <param name="minPointCount">Fingers needed to start the gesture, at least 2.</param>
-        /// <param name="maxPointCount">Most fingers the gesture follows, at least 2. With more fingers the gesture pauses, it goes on when a finger is lifted.</param>
+        /// <param name="maxPointCount">Most fingers the gesture follows, at least 2. With more fingers the gesture pauses, it goes on when
+        /// a finger is lifted.</param>
         /// <param name="devices">Input devices that count.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]

@@ -24,7 +24,8 @@ namespace VL.Qt.Interop
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Result vlqt_offscreen_unbind(SceneHandle scene);
 
-        /// <summary>1 = bound, 0 = unbound (bind again, e.g. after a device loss of QtNative), <see cref="Result.NullHandle"/> = null handle or no offscreen scene.</summary>
+        /// <summary>1 = bound, 0 = unbound (bind again, e.g. after a device loss of QtNative), <see cref="Result.NullHandle"/> = null
+        /// handle or no offscreen scene.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_offscreen_is_bound(SceneHandle scene);
 

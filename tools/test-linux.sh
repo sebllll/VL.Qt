@@ -242,6 +242,13 @@ if [ "$SMOKE" = 1 ]; then
 fi
 
 if [ "$UNIT" = 1 ]; then
+    # source rules of the closing check (P14, K1/K3/K4): the same step as in tools/build.ps1 -Test
+    step "source rules (tools/check-source-rules.py)"
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -I "$ROOT/tools/check-source-rules.py" --root "$ROOT" || { echo "source rules failed"; fail=1; }
+    else
+        echo "python3 not found, source rules skipped" >&2
+    fi
     step "dotnet test VL.Qt.Tests"
     set +e
     # console logger at normal verbosity: names + messages of failed tests in unit.out; TRX next to it (#429)

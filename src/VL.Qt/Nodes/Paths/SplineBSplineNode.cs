@@ -25,7 +25,8 @@ namespace VL.Qt.Nodes
 
         /// <summary>Returns the path with a smooth curve that follows the control polygon and does not pass through its inner points.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
-        /// <param name="points">The control polygon in units. An open curve starts at the first and ends at the last point. Fewer than two points add nothing.</param>
+        /// <param name="points">The control polygon in units. An open curve starts at the first and ends at the last point. Fewer than two
+        /// points add nothing.</param>
         /// <param name="closed">If true, the curve is a closed loop around the control polygon.</param>
         /// <returns>The path with the spline added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]

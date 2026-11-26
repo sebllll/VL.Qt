@@ -54,7 +54,8 @@ namespace VL.Qt.Nodes
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
         /// <param name="layer">Element blended over the base (e.g. a gradient, an image, a ShaderEffect). Unconnected: no effect.</param>
-        /// <param name="layerSampler">How the layer is read (filter, mipmaps), from the Sampler node. The address has no effect here: outside the element the layer is transparent. Unconnected: as the layer is.</param>
+        /// <param name="layerSampler">How the layer is read (filter, mipmaps), from the Sampler node. The address has no effect here:
+        /// outside the element the layer is transparent. Unconnected: as the layer is.</param>
         /// <param name="blendMode">How the layer and the base are combined.</param>
         /// <param name="opacity">Strength of the layer, 0 = base only, 1 = full blend.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>

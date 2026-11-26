@@ -42,9 +42,12 @@ namespace VL.Qt.Nodes
 
         /// <summary>Adds a point handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
-        /// <param name="isActive">Optional channel: true while a point (mouse button, finger, pen) is down on the element, with Buttons None also while the mouse is over it, i.e. while Position is valid (written by Qt, author "Qt").</param>
-        /// <param name="position">Optional channel: position of the point local to the element, in units, written on change while active (author "Qt"). Keeps the last position after the release or when the mouse leaves.</param>
-        /// <param name="buttons">Mouse buttons that count. None: the mouse counts while it hovers the element (no press needed), touch and pen while down.</param>
+        /// <param name="isActive">Optional channel: true while a point (mouse button, finger, pen) is down on the element, with Buttons
+        /// None also while the mouse is over it, i.e. while Position is valid (written by Qt, author "Qt").</param>
+        /// <param name="position">Optional channel: position of the point local to the element, in units, written on change while active
+        /// (author "Qt"). Keeps the last position after the release or when the mouse leaves.</param>
+        /// <param name="buttons">Mouse buttons that count. None: the mouse counts while it hovers the element (no press needed), touch and
+        /// pen while down.</param>
         /// <param name="devices">Input devices that count.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]

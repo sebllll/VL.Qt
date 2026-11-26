@@ -44,7 +44,8 @@ namespace VL.Qt.Stride
         public string Hint(PixelFormat resourceFormat) => Direct ? ""
             : $"QtRenderer draws into a target without a UNorm view (resource {resourceFormat}, view {ViewFormat}): half-transparent colours blend in linear light as with QtTexture. Draw it into a window or a typeless 8-bit render texture to blend like a Qt window.";
 
-        /// <summary>Returns the size of the scene's texture for a viewport of <paramref name="width"/> x <paramref name="height"/> pixels (rounded, at least 1x1).</summary>
+        /// <summary>Returns the size of the scene's texture for a viewport of <paramref name="width"/> x <paramref name="height"/> pixels
+        /// (rounded, at least 1x1).</summary>
         public static Int2 TextureSize(float width, float height)
             => new(Math.Max(1, (int)MathF.Round(width)), Math.Max(1, (int)MathF.Round(height)));
 

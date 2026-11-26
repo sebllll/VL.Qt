@@ -46,7 +46,8 @@ namespace VL.Qt.Nodes
         /// <param name="autoSize">On: Size is ignored and the implicit size applies (text + padding of the style). Off: Size counts.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
-        /// <param name="onClick">Channel that receives one value per click (author "Qt"). The clicks come from the button itself, no Interaction node is needed.</param>
+        /// <param name="onClick">Channel that receives one value per click (author "Qt"). The clicks come from the button itself, no
+        /// Interaction node is needed.</param>
         /// <param name="text">Label of the button.</param>
         /// <param name="enabled">False greys the button out; it then sends no clicks.</param>
         /// <param name="autoRepeat">Repeats the click while the button is held down.</param>

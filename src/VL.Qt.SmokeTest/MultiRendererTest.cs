@@ -48,7 +48,7 @@ public static class MultiRendererTest
             s.Skip("multirenderer: offscreen scenes need D3D11");
             return;
         }
-        s.Info("multirenderer: #126 one element tree in a window and an offscreen scene");
+        s.Info("multirenderer: one element tree in a window and an offscreen scene");
 
         if (!check(NativeTest.CreateDevice(0, out var device, out var context) == 0, "create test device"))
             return;

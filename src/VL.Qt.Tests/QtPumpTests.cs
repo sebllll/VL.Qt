@@ -193,7 +193,7 @@ namespace VL.Qt.Tests
             var app = new FakeApp();
             var clock = new Clock(0);
             var pump = new QtPump(app, clock);
-            Assert.That(clock.HasTickObservers, "the pump listens to the frame start (#260)");
+            Assert.That(clock.HasTickObservers, "the pump listens to the frame start");
 
             // Host-side 10 ms spike between frame start and frame finished: the vvvv phase.
             clock.Tick();

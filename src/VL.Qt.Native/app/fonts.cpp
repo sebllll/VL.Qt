@@ -35,7 +35,8 @@ namespace {
 // Thread: QFontDatabase app fonts and every text layout belong to the Qt GUI thread, which is the vvvv main thread
 // (vlqt_app_init, basic render loop, no render thread). Adding there means the next layout in the same pump already
 // sees the family, so no queue to another thread is needed; calls from other threads are rejected.
-// Key: path key (canonical path, case-folded on Windows: platform::pathKey) + size + last-modified time. Qt reads the file when it is registered; a later change on disk is
+// Key: path key (canonical path, case-folded on Windows: platform::pathKey) + size + last-modified time. Qt reads the file when it is
+// registered; a later change on disk is
 // not watched, but the next add after a change (path edit, app restart) registers the new version as its own entry.
 // A deleted file keeps working until its entry is removed.
 // Removal: refs 0 only marks the entry; fontsEndFrame removes it at the end of the pump if nobody took it again, so a

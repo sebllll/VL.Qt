@@ -9,15 +9,6 @@ using VL.Qt.Wire;
 namespace VL.Qt.Shaders
 {
     /// <summary>
-    /// One member of the uniform block, raw from QtNative. Type is the GLSL name as written by vlqt_shader_reflect
-    /// ("float", "vec4", "mat4", ..., "other" for anything else); ArrayLength 0 = no array.
-    /// </summary>
-    internal sealed record ReflectedUniform(string Name, string Type, int ArrayLength);
-
-    /// <summary>One combined image sampler, raw from QtNative.</summary>
-    internal sealed record ReflectedSampler(string Name, int Binding);
-
-    /// <summary>
     /// Result of vlqt_shader_reflect: raw facts of one stage. Pin rules (filter qt_*, source → Input,
     /// type mapping) are not applied here but in <see cref="ShaderPinModel"/>.
     /// </summary>
@@ -38,7 +29,8 @@ namespace VL.Qt.Shaders
             new(false, ImmutableArray<ReflectedUniform>.Empty, ImmutableArray<ReflectedSampler>.Empty, error);
 
         /// <summary>
-        /// Bakes source (full Qt GLSL, <paramref name="stage"/> a <see cref="Protocol.ShaderStage"/>) to SPIR-V in QtNative and reflects it. Synchronous, any thread, serialized with the
+        /// Bakes source (full Qt GLSL, <paramref name="stage"/> a <see cref="Protocol.ShaderStage"/>) to SPIR-V in QtNative and reflects
+        /// it. Synchronous, any thread, serialized with the
         /// runtime bakes in QtNative. A failure of QtNative becomes a failed reflection.
         /// </summary>
         public static ShaderReflection Reflect(string source, int stage)

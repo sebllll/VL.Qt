@@ -131,7 +131,7 @@ void prepareBeforeApp()
         // Only with an X display: without DISPLAY xcb cannot start (WSL without WSLg), Qt then aborts at once.
         if (!std::getenv("QT_QPA_PLATFORM") && std::getenv("DISPLAY")) {
             setenv("QT_QPA_PLATFORM", "xcb", 0);
-            emitLog(1, "vlqt.gpu", "WSLg + d3d12: QT_QPA_PLATFORM=xcb (Wayland + d3d12 hangs WSLg, #216)");
+            emitLog(1, "vlqt.gpu", "WSLg + d3d12: QT_QPA_PLATFORM=xcb (Wayland + d3d12 hangs WSLg)");
         }
     }
     // Windowed platforms need a display server; say so before Qt aborts with its generic "no Qt platform plugin" message.
@@ -146,8 +146,8 @@ void prepareBeforeApp()
     const char* gallium = std::getenv("GALLIUM_DRIVER");
     const char* qpa = std::getenv("QT_QPA_PLATFORM");
     if (gallium && std::strcmp(gallium, "d3d12") == 0 && qpa && std::strncmp(qpa, "wayland", 7) == 0) {
-        const char* msg = "QT_QPA_PLATFORM=wayland with GALLIUM_DRIVER=d3d12 can hang the whole WSL VM "
-                          "(#216); use QT_QPA_PLATFORM=xcb or GALLIUM_DRIVER=llvmpipe";
+        const char* msg = "QT_QPA_PLATFORM=wayland with GALLIUM_DRIVER=d3d12 can hang the whole WSL VM"
+                          "; use QT_QPA_PLATFORM=xcb or GALLIUM_DRIVER=llvmpipe";
         emitLog(2, "vlqt.gpu", msg);
     }
 }

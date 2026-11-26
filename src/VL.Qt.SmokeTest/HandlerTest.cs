@@ -9,8 +9,8 @@ using VL.Qt;
 // Input handlers as protocol objects: CREATE / REPARENT / SET / BIND / DESTROY / RESET of
 // a Hover handler, error codes, EVENT_HOVER / EVENT_POINTER per handler feedback, Text containment mask, id reuse, DESTROY/BIND
 // churn of every handler type, and the TEST
-// export vlqt_test_send_touch (touch tap on a Tap handler clicks, multitouch bookkeeping). Scenarios tap / point / wheel
-// (#320): the Tap, Point and Wheel handlers (RunTap, RunPoint, RunWheel).
+// export vlqt_test_send_touch (touch tap on a Tap handler clicks, multitouch bookkeeping). Scenarios tap / point / wheel:
+// the Tap, Point and Wheel handlers (RunTap, RunPoint, RunWheel).
 // Mouse input via vlqt_test_send_mouse; real (OS) pointer input is ignored (VLQT_TEST_SYNTHETIC_INPUT=1, set by QtHost).
 [TestFixture, NonParallelizable]
 public static partial class HandlerTest
@@ -139,7 +139,7 @@ public static partial class HandlerTest
         int Count(uint id) => NativeTest.vlqt_test_handler_count(w, id);
 
         // A: two hover handlers (H1 bound before the REPARENT, H2 after). B: no handler (transparent).
-        const ushort reportPosition = 768; // reserved since #320 (Hover without position): unknown property
+        const ushort reportPosition = 768; // reserved (Hover without position): unknown property
         const uint A = 1, B = 2, H1 = 10, H2 = 11, HB = 12;
         const uint S1 = 31, S2 = 32, S2b = 34, SB = 35;
         cmd.Create(A, Protocol.ElementType.Rectangle);
@@ -401,7 +401,7 @@ public static partial class HandlerTest
         frame();
     }
 ﻿
-    // One test window with the helpers of the #320 scenarios (tap, point, wheel).
+    // One test window with the helpers of the handler scenarios (tap, point, wheel).
     private sealed class Harness : IDisposable
     {
         private readonly Scenario _s;
@@ -531,7 +531,7 @@ public static partial class HandlerTest
         s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"tap: ACCEPTED_BUTTONS on a Wheel handler -> UnknownProperty ({Native.LastError()})");
         h.Cmd.SetBool(TA, Protocol.PropertyId.AcceptedButtons, true);
         s.Check(h.ApplyRc() == Native.Result.BadArgument, $"tap: ACCEPTED_BUTTONS as bool -> BadArgument ({Native.LastError()})");
-        h.Cmd.SetBool(TA, 768, true); // REPORT_POSITION, reserved since #320
+        h.Cmd.SetBool(TA, 768, true); // REPORT_POSITION, reserved
         s.Check(h.ApplyRc() == Native.Result.UnknownProperty, $"tap: REPORT_POSITION on a Tap handler -> UnknownProperty ({Native.LastError()})");
         h.Cmd.Destroy(90);
         h.Cmd.Destroy(91);

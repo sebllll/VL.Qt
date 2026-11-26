@@ -14,7 +14,7 @@ using static Pixels;
 // the samples of pass 1. Raw commands (DIP). Grid of 3 rows (directional, zoom, radial) x 2 columns (small, large parameter
 // set), cells 380 x 190 at (10 + 400 c, 5 + 200 r). Source per cell: Group with a transparent 380 x 190 rectangle (the frame
 // = the effect area, so the blur has room beyond the content), text "MOTION" at the left, a white rectangle 100..160 right /
-// +-25 around the cell centre (190, 95). texelSize = 1 / (380 x dpr, 190 x dpr) and dpr, set here (later by the pass driver of #489).
+// +-25 around the cell centre (190, 95). texelSize = 1 / (380 x dpr, 190 x dpr) and dpr, set here (later by the pass driver of the Effect chain).
 // Long lengths (directional 400 DIP, zoom 400 DIP, radial 90 degrees): cells 780 x 190, text only; compared with pass 2 off
 // (= a single pass), the two passes must be much smoother (second difference along the blur direction).
 // Checks: small leaves the surroundings of the shape dark, large smears into them in the direction of the effect (horizontal /

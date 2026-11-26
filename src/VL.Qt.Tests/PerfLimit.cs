@@ -22,7 +22,8 @@ namespace VL.Qt.Tests
             return !string.IsNullOrWhiteSpace(env) && double.TryParse(env, NumberStyles.Float, CultureInfo.InvariantCulture, out var f) && f > 0 ? f : 1.0;
         }
 
-        /// <summary>Requires <paramref name="value"/> to stay below <paramref name="limit"/> times the factor (same unit, usually ms); warns instead of failing in warn-only mode.</summary>
+        /// <summary>Requires <paramref name="value"/> to stay below <paramref name="limit"/> times the factor (same unit, usually ms);
+        /// warns instead of failing in warn-only mode.</summary>
         public static void Below(double value, double limit, string what)
         {
             var scaled = limit * Factor;

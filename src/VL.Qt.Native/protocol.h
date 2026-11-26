@@ -124,7 +124,8 @@
  *   Mask (per MULTI run): the mask element is an element object of its own (CREATE + its SETs + its children), but it
  *   is not REPARENTed by the host. A MULTI entry MASK_SOURCE ref <maskId> attaches it to that run (effect area
  *   = the run's); the rules below are unchanged from the single layer. QtNative puts its item into a
- *   hidden frame item under the window root that serves as texture source (frame visible false, layer.enabled true), so it never counts for the element's layout, auto size/childrenRect, hit-test or
+ *   hidden frame item under the window root that serves as texture source (frame visible false, layer.enabled true), so it never counts for
+ *   the element's layout, auto size/childrenRect, hit-test or
  *   REPARENT indices. Position rule: the mask lies in the coordinates of the element's PARENT like a sibling (its SIZE,
  *   ANCHOR and TRANSFORM as for an element in that parent, see "Geometry" at vlqt_property, unstretched): a mask covers
  *   exactly the pixels it would cover as a sibling. Moving the element (TRANSFORM, ANCHOR, size change with an anchor
@@ -191,7 +192,7 @@
  *   Properties (block 896): FRAGMENT_SHADER u64 shader id (0 = none: the element draws nothing), VERTEX_SHADER u64
  *   (0 = Qt's default vertex shader: qt_Vertex loc 0, qt_MultiTexCoord0 loc 1 -> qt_TexCoord0), a new id keeps the
  *   old shader until it is Ready (like IMAGE); if the new id fails, the last Ready shader of that slot keeps drawing
- *   (last good version, #483: live editing never goes black), a Failed shader without an earlier Ready one draws
+ *   (last good version: live editing never goes black), a Failed shader without an earlier Ready one draws
  *   nothing; BLENDING bool (default true,
  *   premultiplied: One, OneMinusSrcAlpha); MESH_RESOLUTION ivec2 (grid subdivisions x, y >= 1, default 1, 1; < 1 ->
  *   -7). Shared: SOURCE ref = Input (the element bound to the sampler2D named "source", 0 = none: generative),
@@ -269,7 +270,9 @@
 #define VLQT_BIND_PAYLOAD 8 /* BIND: u32 id, u32 feedbackId (the whole payload) */
 #define VLQT_SET_FIELDS_SIZE 8 /* SET: u32 id, u16 prop, u16 valueType in front of the value */
 #define VLQT_LIST_FIELDS_SIZE 8 /* SET_STYLE, SET_UNIFORMS, SET_QML_PROPERTIES, SET_EFFECT_CHAIN: u32 id, u16 count, u16 flags in front of the entries */
-#define VLQT_ENTRY_HEADER_SIZE 4 /* entry of SET_STYLE (u16 field, u8 state, u8 valueType), SET_UNIFORMS and SET_QML_PROPERTIES (u16 valueType, u16 nameLen) in front of name and value */
+/* Entry of SET_STYLE (u16 field, u8 state, u8 valueType), SET_UNIFORMS and SET_QML_PROPERTIES (u16 valueType, u16 nameLen)
+ * in front of name and value */
+#define VLQT_ENTRY_HEADER_SIZE 4
 #define VLQT_EFFECT_CHAIN_LINK_HEADER_SIZE 8 /* effect chain link: u16 kind, u16 count, u32 bodyLen in front of the body */
 #define VLQT_EFFECT_CHAIN_LINK_SHADER_FIXED_SIZE 20 /* SHADER link body after u16 template, u16 shaderCount and the shader ids: 4 x f32 padding, f32 strength */
 #define VLQT_EVENT_FIELDS_SIZE 4 /* poll record after its header: u32 feedbackId in front of the payload */
@@ -314,7 +317,7 @@ enum vlqt_value_type {
 };
 
 /* Element type ids of CREATE (u16). 2 was TEST_RECT (removed in 07a), 8 MULTI_EFFECT and 16 RECTANGULAR_SHADOW
- * (removed in #459, replaced by the Effect layer), keep them unused. */
+ * (removed, replaced by the Effect layer), keep them unused. */
 enum vlqt_element_type {
     VLQT_ELEMENT_TYPE_GROUP = 1,
     VLQT_ELEMENT_TYPE_RECTANGLE = 3,
@@ -363,14 +366,19 @@ enum vlqt_element_type {
  *   (never shifted by the content), HCenter/VCenter/Right/Bottom = that point of the frame. Content at non-negative
  *   coordinates gives frame (0, 0, right, bottom), i.e. the plain f * size of every other element. AUTO_SIZE off:
  *   frame = SIZE placed by ANCHOR around the group origin, (-fx * w, -fy * h, w, h); the group origin (and so the
- *   children) does not move, TRANSFORM pivots around the origin (= the anchor point of the frame). Recomputed once per frame (polish) after a child changed position, size, visibility or TRANSFORM.
+ *   children) does not move, TRANSFORM pivots around the origin (= the anchor point of the frame). Recomputed once per frame (polish) after
+ *   a child changed position, size, visibility or TRANSFORM.
  *   A snapshot (vlqt_snapshot_start) of a Group is the frame, also its part in negative coordinates; an effect layer on
  *   a Group covers the whole frame (that part is added to the left/top padding of the MultiEffect), so does a
  *   Group as ShaderEffect Input or texture uniform. A child counts by its own visibility, also inside a hidden
  *   Group (e.g. the Input of a ShaderEffect).
- * Blocks: 256.. Rectangle, 512.. Text, 544.. Image, 576.. Row/Column, 608.. reserved (MultiEffect element, removed in #459), 640.. size mode of containers (Item/Group, Row, Column, ShaderEffect only, others -> -6),
- * 672.. Video (SOURCE string and FILL_MODE are shared with Image; Image itself has no SOURCE since #361, -6), 704.. Controls: Button (TEXT and AUTO_SIZE are shared: AUTO_SIZE on =
- * implicit size from the text, default on), from 706 value inputs (SpinBox, CheckBox, Switch, Slider, TextField; VALUE/MINIMUM/MAXIMUM/STEP take the value type of the element), 768.. input handlers (only on handler objects, others -> -6), 800.. reserved (RectangularShadow, removed in #459),
+ * Blocks: 256.. Rectangle, 512.. Text, 544.. Image, 576.. Row/Column, 608.. reserved (MultiEffect element, removed with the Effect layer),
+ * 640.. size mode of containers (Item/Group, Row, Column, ShaderEffect only, others -> -6),
+ * 672.. Video (SOURCE string and FILL_MODE are shared with Image; Image itself has no SOURCE (it takes an image resource), -6), 704..
+ * Controls: Button (TEXT and AUTO_SIZE are shared: AUTO_SIZE on =
+ * implicit size from the text, default on), from 706 value inputs (SpinBox, CheckBox, Switch, Slider, TextField; VALUE/MINIMUM/MAXIMUM/STEP
+ * take the value type of the element), 768.. input handlers (only on handler objects, others -> -6), 800.. reserved (RectangularShadow,
+ * removed with the Effect layer),
  * 832.. Effect chain MULTI keys (not via SET, see the head comment "Effect chain"), 896.. ShaderEffect, 928.. QmlElement, 960.. Shape. */
 enum vlqt_property {
     VLQT_PROPERTY_SIZE = 1,       /* vec2 (w, h), see "Geometry" above (was BOUNDS rectf) */
@@ -417,7 +425,9 @@ enum vlqt_property {
     VLQT_PROPERTY_VALUE = 706,   /* value of a value input (SpinBox i32, CheckBox/Switch bool, Slider f32, TextField string), no EVENT_VALUE echo */
     VLQT_PROPERTY_MINIMUM = 707, /* SpinBox i32 (default INT32_MIN; Qt's 0 is overridden), Slider f32 (default 0) */
     VLQT_PROPERTY_MAXIMUM = 708, /* SpinBox i32 (default INT32_MAX; Qt's 99 is overridden), Slider f32 (default 1) */
-    VLQT_PROPERTY_STEP = 709,    /* SpinBox i32 stepSize of +/-, arrow keys and wheel (default 1), Slider f32 (default 0 = continuous, > 0 also snaps the drag) */
+    /* SpinBox i32 stepSize of +/-, arrow keys and wheel (default 1), Slider f32 (default 0 = continuous,
+     * > 0 also snaps the drag) */
+    VLQT_PROPERTY_STEP = 709,
     VLQT_PROPERTY_EDITABLE = 710, /* bool, SpinBox: the value can be typed (default true); TextField: not readOnly (default true) */
     VLQT_PROPERTY_ORIENTATION = 711, /* i32 Qt::Orientation, Slider: 1 horizontal (default), 2 vertical; others -> ApplyBadValue */
     VLQT_PROPERTY_PLACEHOLDER = 712, /* string, TextField placeholderText shown while empty (default empty) */
@@ -678,7 +688,7 @@ enum vlqt_image_upload {
     VLQT_IMAGE_UPLOAD_WORKER = 2       /* textures created in a worker, pixels copied through a staging texture (D3D11) */
 };
 
-/* Pixel formats of vlqt_image_set_pixels = VL PixelFormat numbers (VL.Core PixelFormat.cs, append-only), #360:
+/* Pixel formats of vlqt_image_set_pixels = VL PixelFormat numbers (VL.Core PixelFormat.cs, append-only):
  *   direct:              R8G8B8A8 = 7, B8G8R8A8 = 9, R8G8B8X8 = 6, B8G8R8X8 = 8 (X: alpha forced to 255)
  *   converted to RGBA8:  R8G8B8 = 4, B8G8R8 = 5, R8 = 1 (grey)
  *   reduced to 8 bit:    R16 = 2 (grey), R32F = 3 (grey, [0,1]), R32G32F = 11 (R, G, 0), R32G32B32A32F = 10,
@@ -707,7 +717,7 @@ enum vlqt_image_upload {
  *
  * VLQT_PROPERTY_AUDIO_TAP (Video). A tap id != 0 attaches a QAudioBufferOutput in the tap's format to the element's
  * QMediaPlayer and sets the player's audioOutput to null: Qt's own sound is off, the player runs on the system clock
- * (spike in #22: with an output, even at volume 0, Qt syncs the picture to the audio device with ~200 ms start offset
+ * (measured in a spike: with an output, even at volume 0, Qt syncs the picture to the audio device with ~200 ms start offset
  * and seconds of slewing). There is no separate "qtAudio" prop: a tap always means Qt is silent, 0 restores the
  * AudioOutput (Video [VL.Qt] never sets the prop and is unchanged). C# swaps from one tap to the next without a 0 in
  * between, so Qt never plays a burst. The tap hangs on the player of the item, never on the QQuickWindow (the window
@@ -736,7 +746,8 @@ enum vlqt_image_upload {
  * counting across passes (pass * container duration + position) without a gap.
  *
  * Reader (C#, audio thread, T5). vlqt_audio_tap_read (vlqt.h) takes no lock, allocates nothing, never frees a tap and
- * never blocks on the main thread; any thread, one reader per tap at a time (the ring has one reader). One call delivers frames of one segment only (it stops at a
+ * never blocks on the main thread; any thread, one reader per tap at a time (the ring has one reader). One call delivers frames of one
+ * segment only (it stops at a
  * segment boundary). dst != NULL: copies and consumes up to maxFrames frames; dst == NULL: consumes (drops) up to
  * maxFrames frames without copying, this is how C# drops samples to catch up; maxFrames == 0: state only. The state
  * describes the first frame the call delivered or dropped (or the next one in the ring when it moved none). Resampling,

@@ -13,7 +13,8 @@ namespace VL.Qt.Nodes
     /// Sequence input of the Spectral nodes) into a stable <see cref="ImmutableArray{T}"/>: each child goes through
     /// <see cref="ElementConversion"/> (an <see cref="IStylable"/> becomes its <see cref="StylableElement"/>), unconnected pins
     /// (null) are dropped, foreign <see cref="IElement"/> implementations are dropped with a warning at the node, and the
-    /// same array instance is returned as long as the children are reference equal element by element. Since <see cref="ImmutableArray{T}"/> equality is reference equality of its backing array, the
+    /// same array instance is returned as long as the children are reference equal element by element. Since
+    /// <see cref="ImmutableArray{T}"/> equality is reference equality of its backing array, the
     /// result can go straight into a node's <c>Props</c> record struct for change detection. No allocation if nothing
     /// changed and the input is a Spread of <see cref="IElement"/> or <see cref="Element"/>. One instance per node, main
     /// thread only.

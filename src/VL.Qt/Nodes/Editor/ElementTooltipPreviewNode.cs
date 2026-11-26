@@ -183,7 +183,8 @@ namespace VL.Qt.Nodes
             }
         }
 
-        /// <summary>Searches the tree (children, mask sources of effects) for a Video; once per new instance; the loops allocate nothing (ImmutableArray struct enumerator).</summary>
+        /// <summary>Searches the tree (children, mask sources of effects) for a Video; once per new instance; the loops allocate nothing
+        /// (ImmutableArray struct enumerator).</summary>
         private static bool ContainsVideo(Element element)
         {
             if (element is Video)

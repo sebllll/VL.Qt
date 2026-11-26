@@ -28,7 +28,8 @@ namespace VL.Qt.Stride
 
         private static Matrix OrIdentity(Matrix m) => m == Matrix.Zero ? Matrix.Identity : m;
 
-        /// <summary>Returns the texture pixel under <paramref name="position"/> (pixels of a window of size <paramref name="clientArea"/>, top-left origin); outside 0 ... Texture Size when the quad is not hit there.</summary>
+        /// <summary>Returns the texture pixel under <paramref name="position"/> (pixels of a window of size <paramref name="clientArea"/>,
+        /// top-left origin); outside 0 ... Texture Size when the quad is not hit there.</summary>
         public Vector2 Map(Vector2 position, Vector2 clientArea)
         {
             if (!_valid || clientArea.X <= 0 || clientArea.Y <= 0)
