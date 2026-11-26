@@ -3,7 +3,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Shaders;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Shaders
 {
     /// <summary>Shader node factory: reflection text parser, annotations, pin rules. No QtNative needed.</summary>
     public class ShaderPinModelTests

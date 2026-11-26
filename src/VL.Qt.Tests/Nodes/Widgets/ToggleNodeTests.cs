@@ -8,10 +8,12 @@ using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Widgets
 {
     /// <summary>Toggle node: description for both looks, property diff, look change, value channel and EVENT_VALUE (bool).</summary>
     public class ToggleNodeTests

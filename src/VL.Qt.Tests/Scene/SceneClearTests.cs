@@ -4,8 +4,9 @@ using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 using VL.Qt.Interop;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Scene
 {
+    using Scene = VL.Qt.Scene;
     /// <summary>Clear color and Clear flag of Scene.Update go to QtNative only when they change.</summary>
     public class SceneClearTests
     {

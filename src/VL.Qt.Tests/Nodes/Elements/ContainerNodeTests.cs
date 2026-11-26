@@ -8,10 +8,11 @@ using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Elements
 {
     /// <summary>Group, Row and Column nodes (07d): children pin group, change detection, layout pins.</summary>
     public class ContainerNodeTests
@@ -25,7 +26,7 @@ namespace VL.Qt.Tests
         [Test]
         public void RowAndColumn_TakeAStyle_AndNewStyleIsNewDescription()
         {
-            var style = new Styles.Style();
+            var style = new VL.Qt.Styles.Style();
             using var row = new RowNode(UnexpectedMessages.Store());
             using var column = new ColumnNode(UnexpectedMessages.Store());
             var children = S(A);

@@ -4,8 +4,9 @@ using VL.Qt.Elements;
 using Rectangle = VL.Qt.Elements.Rectangle;
 using VL.Qt.Interop;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     /// <summary>
     /// Key of <see cref="OccurrenceRegistry"/> (<see cref="OccurrenceKey"/>): an element with a feedback slot is its slot,

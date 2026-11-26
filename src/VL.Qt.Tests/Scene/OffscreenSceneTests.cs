@@ -4,9 +4,10 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Interop;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Shaders;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Scene
 {
     /// <summary>OffscreenScene (QtTexture): the error texts need no native device, the rest needs a built vlqt.dll.</summary>
     public class OffscreenSceneTests

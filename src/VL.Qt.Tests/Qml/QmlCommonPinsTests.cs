@@ -12,8 +12,9 @@ using VL.Lib.Mathematics;
 using VL.Qt.Nodes;
 using VL.Qt.NodeFactories;
 using VL.Qt.Qml;
+using VL.Qt.Tests.Support;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Qml
 {
     /// <summary>The common pins of the generated QML nodes (<see cref="QmlCommonPins"/>) are those of QmlElement (QML-04).</summary>
     [TestFixture]

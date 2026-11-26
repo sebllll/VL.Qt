@@ -7,11 +7,12 @@ using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Path = VL.Lib.IO.Path;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Elements
 {
     /// <summary>Video element + node: defaults, property diff, clamping, EVENT_MEDIA back channel.</summary>
     public class VideoNodeTests

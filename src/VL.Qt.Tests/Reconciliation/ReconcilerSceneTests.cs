@@ -5,10 +5,11 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     /// <summary>Occurrences and placeholders (OccurrenceRegistry) and feedback binding (BIND without flags) of the reconciler.</summary>
     public class ReconcilerSceneTests

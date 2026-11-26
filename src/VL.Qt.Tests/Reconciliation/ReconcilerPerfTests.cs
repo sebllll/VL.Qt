@@ -8,10 +8,11 @@ using VL.Lib.Collections;
 using VL.Qt.Elements;
 using VL.Qt.Reconciliation;
 using VL.Qt.Styles;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     /// <summary>
     /// 04e: steady-state performance of Reconciler → real <see cref="CommandWriter"/> (the path a renderer takes

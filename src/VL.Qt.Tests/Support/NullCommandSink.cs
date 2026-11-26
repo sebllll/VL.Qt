@@ -2,7 +2,7 @@
 using Stride.Core.Mathematics;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Support
 {
     /// <summary>
     /// Base of the fakes that need only some commands: every member of <see cref="ICommandSink"/> does nothing and can be

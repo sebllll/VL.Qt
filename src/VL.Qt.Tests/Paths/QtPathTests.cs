@@ -4,7 +4,7 @@ using NUnit.Framework;
 using VL.Qt.Paths;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Paths
 {
     public class QtPathTests
     {

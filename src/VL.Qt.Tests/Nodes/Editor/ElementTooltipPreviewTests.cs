@@ -7,9 +7,10 @@ using VL.Qt.Elements;
 using VL.Qt.Interop;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Editor
 {
     /// <summary>Tooltip preview of an element on a fake resource API: throttle, change test, one grab at a time, text, release.</summary>
     public class ElementTooltipPreviewTests

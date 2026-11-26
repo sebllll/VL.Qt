@@ -6,9 +6,10 @@ using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Paths;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Elements
 {
     /// <summary>The node Path (package 04): pin defaults, change detection, path limit.</summary>
     public class PathNodeTests

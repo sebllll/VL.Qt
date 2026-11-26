@@ -6,7 +6,7 @@ using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Elements
 {
     public class ElementTests
     {

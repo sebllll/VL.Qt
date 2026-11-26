@@ -2,9 +2,10 @@
 using System.Buffers.Binary;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Window
 {
     // Bounds pin → vlqt_window_create arguments, and parsing of EVENT_WINDOW_GEOMETRY.
     // The screen rules (rect on no screen → centered) live in QtNative (QScreen) and are checked by the SmokeTest.

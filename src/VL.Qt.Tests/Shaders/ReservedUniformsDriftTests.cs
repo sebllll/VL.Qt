@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using NUnit.Framework;
 using VL.Qt.Shaders;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Shaders
 {
     /// <summary>
     /// The one native list of reserved uniform names (effects/shader_item.h) and its C# mirror <see cref="ReservedUniforms"/>

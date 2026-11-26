@@ -6,8 +6,9 @@ using VL.Lib.Collections;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Tests.Support;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Elements
 {
     /// <summary>The nodes Line, Polyline and Polygon (package 03): pin defaults, change detection, point limit.</summary>
     public class ShapeNodesTests

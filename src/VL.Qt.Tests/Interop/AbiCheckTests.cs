@@ -3,7 +3,7 @@ using VL.Qt;
 using VL.Qt.Interop;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Interop
 {
     [TestFixture]
     public sealed class AbiCheckTests

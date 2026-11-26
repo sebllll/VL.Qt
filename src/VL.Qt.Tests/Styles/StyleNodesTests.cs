@@ -4,7 +4,7 @@ using VL.Core;
 using VL.Qt.Nodes;
 using VL.Qt.Styles;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Styles
 {
     /// <summary>Style nodeset: setters, getters, Merge, ResolveState and the cached output of the six process nodes.</summary>
     public class StyleNodesTests

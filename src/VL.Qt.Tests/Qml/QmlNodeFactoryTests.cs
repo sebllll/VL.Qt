@@ -7,8 +7,9 @@ using NUnit.Framework;
 using VL.Core;
 using VL.Qt.NodeFactories;
 using VL.Qt.Qml;
+using VL.Qt.Tests.Support;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Qml
 {
     /// <summary>QML node factory: names, scan of qml/, event filter, descriptions, pins of hand-made declarations. No QtNative, no vvvv.</summary>
     public class QmlNodeFactoryTests

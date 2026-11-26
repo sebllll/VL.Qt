@@ -6,7 +6,7 @@ using System.Linq;
 using NUnit.Framework;
 using VL.Qt.Qml;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Qml
 {
     /// <summary>The QML parser never throws and handles the odd corners of the lexer (QML-12).</summary>
     [TestFixture]

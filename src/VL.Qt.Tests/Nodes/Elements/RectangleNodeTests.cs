@@ -8,10 +8,12 @@ using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Elements
 {
+    using Interaction = VL.Qt.Elements.Interaction;
     /// <summary>Rectangle node and the shared element node core (07b): change detection, outputs, warning.</summary>
     public class RectangleNodeTests
     {

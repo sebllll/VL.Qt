@@ -6,8 +6,9 @@ using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 using VL.Qt.Interop;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Scene
 {
+    using Scene = VL.Qt.Scene;
     /// <summary>SET_SPACE of Scene.Update: written when the Space changes; a Space change alone rewrites no lengths.</summary>
     public class SceneSpaceTests
     {

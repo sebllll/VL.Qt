@@ -3,8 +3,9 @@ using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using VL.Lang;
 using VL.Qt.Nodes;
+using VL.Qt.Tests.Support;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Runtime
 {
     /// <summary>The message store of a node: one entry per phase, one joined message, logged once per distinct text.</summary>
     public class NodeErrorsTests

@@ -8,11 +8,13 @@ using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Widgets
 {
+    using Interaction = VL.Qt.Elements.Interaction;
     /// <summary>Button node: description, property diff, Bang and the On Click channel without Interactive.</summary>
     public class ButtonNodeTests
     {

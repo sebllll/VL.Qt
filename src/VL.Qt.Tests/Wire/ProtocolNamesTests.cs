@@ -1,8 +1,9 @@
 ﻿using System.Linq;
 using NUnit.Framework;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Wire
 {
     /// <summary>The names <see cref="RecordingSink"/> prints for element types and properties.</summary>
     [TestFixture]

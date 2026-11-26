@@ -7,7 +7,7 @@ using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Elements
 {
     /// <summary>Group/Row/Column (Spectral): one Spread input, same behavior as the pin-group variants.</summary>
     public class SpectralNodeTests

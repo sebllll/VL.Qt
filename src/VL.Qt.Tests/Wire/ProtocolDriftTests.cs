@@ -9,7 +9,7 @@ using NUnit.Framework;
 using VL.Qt.Interop;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Wire
 {
     /// <summary>
     /// protocol.h (single source of truth) and its hand-written mirror Protocol.cs agree in name and value, and so do

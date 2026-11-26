@@ -6,7 +6,7 @@ using System.Reflection;
 using Stride.Core.Mathematics;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Support
 {
     /// <summary>
     /// Fake <see cref="ICommandSink"/> for reconciler tests: records every command as a readable line, e.g.

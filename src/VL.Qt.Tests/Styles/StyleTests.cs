@@ -2,9 +2,10 @@
 using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Styles;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Styles
 {
     /// <summary>Styles: StateValues, merge rule, base style, writer diff.</summary>
     public class StyleTests

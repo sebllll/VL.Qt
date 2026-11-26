@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using NUnit.Framework;
 using VL.Qt.Interop;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Interop
 {
     /// <summary>
     /// The structs of vlqt.h and their mirrors in `Interop/Native.*.cs` have the same size and the same offset of the last field.

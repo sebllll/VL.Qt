@@ -5,9 +5,10 @@ using System.Text;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Elements
 {
     /// <summary>SET_EFFECT_CHAIN: wire encoding of the writer and <see cref="Effect.Segment"/>.</summary>
     public class EffectChainTests

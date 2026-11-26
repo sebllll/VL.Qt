@@ -9,12 +9,12 @@ using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Elements
 {
     public class ElementTypeTests
     {
         private static readonly Type[] AllTypes =
-            { typeof(Group), typeof(Elements.Rectangle), typeof(Text), typeof(Image), typeof(Row), typeof(Column), typeof(Video), typeof(Button), typeof(SpinBox), typeof(CheckBox), typeof(Elements.Switch), typeof(Elements.Slider), typeof(TextField), typeof(Shader), typeof(Shape) };
+            { typeof(Group), typeof(VL.Qt.Elements.Rectangle), typeof(Text), typeof(Image), typeof(Row), typeof(Column), typeof(Video), typeof(Button), typeof(SpinBox), typeof(CheckBox), typeof(VL.Qt.Elements.Switch), typeof(VL.Qt.Elements.Slider), typeof(TextField), typeof(Shader), typeof(Shape) };
 
         [TestCaseSource(nameof(AllTypes))]
         public void SealedAndInitOnly(Type t)
@@ -46,7 +46,7 @@ namespace VL.Qt.Tests
         public void TypeIds()
         {
             Assert.That(new Group().Type, Is.EqualTo(ElementType.Item));
-            Assert.That(new Elements.Rectangle().Type, Is.EqualTo(ElementType.Rectangle));
+            Assert.That(new VL.Qt.Elements.Rectangle().Type, Is.EqualTo(ElementType.Rectangle));
             Assert.That(new Text().Type, Is.EqualTo(ElementType.Text));
             Assert.That(new Image().Type, Is.EqualTo(ElementType.Image));
             Assert.That(new Row().Type, Is.EqualTo(ElementType.Row));
@@ -100,7 +100,7 @@ namespace VL.Qt.Tests
         [Test]
         public void RectangleDefaults()
         {
-            var r = new Elements.Rectangle();
+            var r = new VL.Qt.Elements.Rectangle();
             Assert.That(r.Fill, Is.EqualTo(Color4.White));
             Assert.That(r.Radius, Is.EqualTo(0f));
             Assert.That(r.StrokeColor, Is.EqualTo(Color4.Black));
@@ -172,7 +172,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Containers_KeepChildren()
         {
-            var a = new Elements.Rectangle();
+            var a = new VL.Qt.Elements.Rectangle();
             var b = new Text { Content = "x" };
             var kids = ImmutableArray.Create<Element>(a, b);
             Assert.That(new Group { Children = kids }.Children, Is.EqualTo(kids));

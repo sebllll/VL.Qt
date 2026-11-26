@@ -4,9 +4,10 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Qt.Nodes;
+using VL.Qt.Tests.Support;
 using Path = VL.Lib.IO.Path;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Window
 {
     /// <summary>Window settings: icon path resolved once, bounds on create, node identity.</summary>
     public class WindowSettingsTests

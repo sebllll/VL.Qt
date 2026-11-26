@@ -12,11 +12,12 @@ using VL.Qt.Images;
 using VL.Qt.Interop;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Image = VL.Qt.Elements.Image;
 using Path = VL.Lib.IO.Path;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Images
 {
     /// <summary>LoadImage, LoadImage (Async), ToQtImage and the Image pin against the fake QtNative.</summary>
     public class ImageResourceNodeTests

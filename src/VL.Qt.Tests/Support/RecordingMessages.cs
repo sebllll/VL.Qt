@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using VL.Lang;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Support
 {
     /// <summary>
     /// A <see cref="NodeErrors"/> on a recording logger and a recording node message: what a node logs and what it shows at

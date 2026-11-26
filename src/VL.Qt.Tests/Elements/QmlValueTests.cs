@@ -16,7 +16,7 @@ using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Elements
 {
     /// <summary>QmlValue: conversion of patch values to wire values, exact equality, the lines for values that are refused.</summary>
     public class QmlValueTests

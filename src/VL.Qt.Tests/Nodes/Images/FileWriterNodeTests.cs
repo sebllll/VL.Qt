@@ -9,10 +9,11 @@ using VL.Qt.Elements;
 using VL.Qt.Interop;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using Path = VL.Lib.IO.Path;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Images
 {
     /// <summary>FileWriter (IImage) and FileWriter (Element) on fake writes and a fake resource API.</summary>
     public class FileWriterNodeTests

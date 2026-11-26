@@ -5,9 +5,10 @@ using NUnit.Framework;
 using VL.Qt.Elements;
 using VL.Qt.Reconciliation;
 using VL.Qt.Styles;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     /// <summary>Style resolution in the reconciler: base style → Group → … → widget, SET_STYLE diffs only for widgets.</summary>
     public class ReconcilerStyleTests

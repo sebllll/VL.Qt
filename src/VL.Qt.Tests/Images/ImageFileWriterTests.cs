@@ -4,8 +4,9 @@ using System.Linq;
 using System.Threading;
 using NUnit.Framework;
 using VL.Lib.Basics.Imaging;
+using VL.Qt.Tests.Support;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Images
 {
     /// <summary>ImageFileWriter on a fake write function: worker thread, newest wins, one report per finished write.</summary>
     public class ImageFileWriterTests

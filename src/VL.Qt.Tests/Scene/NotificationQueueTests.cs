@@ -5,7 +5,7 @@ using Stride.Core.Mathematics;
 using VL.Lib.IO;
 using VL.Lib.IO.Notifications;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Scene
 {
     /// <summary>NotificationQueue of QtTexture and QtRenderer (VL.Qt, used by VL.Qt.Stride): Input Notifications reach the scene.</summary>
     public class NotificationQueueTests

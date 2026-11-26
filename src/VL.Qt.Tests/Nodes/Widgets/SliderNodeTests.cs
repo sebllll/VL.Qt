@@ -10,10 +10,12 @@ using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Widgets
 {
     /// <summary>Slider node: description, property diff, value channel (f32), clamp, bound order and channel attributes.</summary>
     public class SliderNodeTests

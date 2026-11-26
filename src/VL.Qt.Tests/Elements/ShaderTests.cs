@@ -10,12 +10,13 @@ using VL.Qt.Images;
 using VL.Qt.Interop;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Elements
 {
     /// <summary>Shader: SET_UNIFORMS encoding, uniform diff, properties, shader resources of the node.</summary>
     public class ShaderTests

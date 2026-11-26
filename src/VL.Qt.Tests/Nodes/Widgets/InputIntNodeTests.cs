@@ -10,10 +10,12 @@ using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Widgets
 {
     /// <summary>Input (Int) node: description, property diff, the value channel (pull, user wins, clamp) and EVENT_VALUE.</summary>
     public class InputIntNodeTests

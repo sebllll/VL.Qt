@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 using VL.Lib.IO;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Scene
 {
     /// <summary>InputMapping: vvvv Keys / MouseButtons to Qt values.</summary>
     public class InputMappingTests

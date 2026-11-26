@@ -7,7 +7,7 @@ using VL.Core.Import;
 using VL.Model;
 using VL.Qt.NodeFactories;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Support
 {
     /// <summary>The pin of a parameter of a node's <c>Update</c> as vvvv reads it, for tests that compare a table of pins with the node.</summary>
     internal static class PinReflection

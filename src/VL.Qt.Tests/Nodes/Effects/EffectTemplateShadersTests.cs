@@ -8,9 +8,11 @@ using Stride.Core.Mathematics;
 using VL.Core.Diagnostics;
 using VL.Qt.Elements;
 using VL.Qt.Shaders;
+using VL.Qt.Tests.Shaders;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Effects
 {
     /// <summary>
     /// The annotated template shaders help/Qt/qtshaders/Example*.frag: the same code as the built-in effect shaders of

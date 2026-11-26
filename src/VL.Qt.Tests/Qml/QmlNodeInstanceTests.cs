@@ -12,9 +12,10 @@ using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Qml;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Qml
 {
     /// <summary>QmlNodeInstance: typed pins to dictionary (send rule), property and signal outputs, passthrough.</summary>
     public class QmlNodeInstanceTests
@@ -98,9 +99,9 @@ namespace VL.Qt.Tests
 
         private static string[] Names(QmlElement e) => Sent(e).Keys.OrderBy(k => k, StringComparer.Ordinal).ToArray();
 
-        private FeedbackRouterTests.Poll NewPoll() => new();
+        private Reconciliation.FeedbackRouterTests.Poll NewPoll() => new();
 
-        private void Dispatch(FeedbackRouterTests.Poll poll) => _registry.Dispatch(poll.Bytes);
+        private void Dispatch(Reconciliation.FeedbackRouterTests.Poll poll) => _registry.Dispatch(poll.Bytes);
 
         // --- pins ---
 

@@ -6,8 +6,9 @@ using System.Reactive.Subjects;
 using System.Threading;
 using NUnit.Framework;
 using VL.Lib.Animation;
+using VL.Qt.Tests.Support;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Runtime
 {
     /// <summary>
     /// the pump is bound to one vvvv app (its frame clock), not to the process. F8/F5 = old pump disposed,

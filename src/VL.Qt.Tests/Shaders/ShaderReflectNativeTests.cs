@@ -8,7 +8,7 @@ using NUnit.Framework;
 using VL.Qt.Interop;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Shaders
 {
     /// <summary>vlqt_shader_reflect: the real QtNative, text format of vlqt.h. Needs a built vlqt.dll (tools/build.ps1).</summary>
     public class ShaderReflectNativeTests

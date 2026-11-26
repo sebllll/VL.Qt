@@ -12,11 +12,13 @@ using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Wire
 {
     /// <summary>QmlEventDecoder: decoding of EVENT_QML_PROPERTY and EVENT_QML_SIGNAL, for every value type and for broken payloads.</summary>
     public class QmlEventDecoderTests

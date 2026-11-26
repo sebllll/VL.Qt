@@ -16,7 +16,7 @@ using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Qml
 {
     /// <summary>QmlFileWatcher: which changes count, folder only, change flag taken once.</summary>
     public class QmlFileWatcherTests

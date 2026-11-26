@@ -9,10 +9,11 @@ using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
 using VL.Qt.Styles;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     /// <summary>IStylable in the reconciler and in the children input.</summary>
     public class ReconcilerStylableTests

@@ -12,11 +12,12 @@ using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Elements
 {
     /// <summary>QmlProperties: the converted snapshot of the Properties dictionary, change detection by content, problem lines.</summary>
     public class QmlPropertiesTests

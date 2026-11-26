@@ -4,11 +4,12 @@ using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using K = VL.Qt.Wire.Protocol.MultiEffectKey;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     /// <summary>Auto Padding / Padding of Blur and DropShadow: merged into the one effect area of a run and the reconciler SETs.</summary>
     public class EffectPaddingTests

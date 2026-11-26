@@ -5,11 +5,12 @@ using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Elements;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     /// <summary>SET_EFFECT_CHAIN (plan effects/08 task 5): what the reconciler sends for the Effect chain of an element.</summary>
     public class EffectChainReconcilerTests

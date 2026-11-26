@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Scene
 {
     /// <summary>MultisampleCount and the clamp warning of the Multisample Count pins.</summary>
     public class MultisampleTests

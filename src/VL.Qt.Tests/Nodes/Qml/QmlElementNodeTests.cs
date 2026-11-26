@@ -12,11 +12,12 @@ using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Qml
 {
     /// <summary>QmlElement node: description, reconciler commands, reload, outputs, errors.</summary>
     public class QmlElementNodeTests
@@ -69,7 +70,7 @@ namespace VL.Qt.Tests
             return _sink.Commands.ToArray();
         }
 
-        private FeedbackRouterTests.Poll NewPoll() => new();
+        private Reconciliation.FeedbackRouterTests.Poll NewPoll() => new();
 
         [Test]
         public void Defaults()

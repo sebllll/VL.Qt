@@ -10,10 +10,11 @@ using VL.Core.Diagnostics;
 using VL.Qt.Elements;
 using VL.Qt.Reconciliation;
 using VL.Qt.Shaders;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Shaders
 {
     /// <summary>Filter shader files as links of the effect chain: scan, @padding, pins, link, SET_EFFECT_CHAIN.</summary>
     public class ShaderEffectInstanceTests

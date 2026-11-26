@@ -11,11 +11,14 @@ using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Interaction
 {
+    using Interaction = VL.Qt.Elements.Interaction;
     /// <summary>
     /// Interaction chain: handler diff of the reconciler (create / unchanged / properties /
     /// remove / duplicates / element destroy / resync) and the Hover node (change detection, pull into channels).
@@ -719,8 +722,8 @@ namespace VL.Qt.Tests
         public void TouchPointsNode_WritesSpreadOnlyOnChange()
         {
             using var node = new TouchPointsNode(new RecordingMessages().Errors);
-            var points = Channel.Create(Spread<Elements.TouchPoint>.Empty);
-            var writes = new List<Spread<Elements.TouchPoint>?>();
+            var points = Channel.Create(Spread<VL.Qt.Elements.TouchPoint>.Empty);
+            var writes = new List<Spread<VL.Qt.Elements.TouchPoint>?>();
             using var sub = points.Subscribe(writes.Add);
             writes.Clear();
             void Update() => node.Update(null, points, TouchPointsNode_DefaultDevices, true);
@@ -750,7 +753,7 @@ namespace VL.Qt.Tests
         public void TouchPointsNode_SteadyState_NoAllocation()
         {
             using var node = new TouchPointsNode(new RecordingMessages().Errors);
-            var points = Channel.Create(Spread<Elements.TouchPoint>.Empty);
+            var points = Channel.Create(Spread<VL.Qt.Elements.TouchPoint>.Empty);
             var reg = new FeedbackRouter();
             uint h = reg.Acquire(node.Core.Slot);
             reg.Dispatch(new FeedbackRouterTests.Poll().TouchPoints(h, (1, 50, 0, 0.5f, 0, 0)).Bytes);

@@ -3,9 +3,10 @@ using NUnit.Framework;
 using VL.Lib.Basics.Imaging;
 using VL.Qt.Images;
 using VL.Qt.Nodes;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Editor
 {
     /// <summary>QtImage tooltip preview: the Preview flag only for the editor, ReadPreview, and the node reading once per image.</summary>
     public class QtImageTooltipPreviewTests

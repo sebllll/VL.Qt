@@ -16,7 +16,7 @@ using VL.Qt.Wire;
 using Path = VL.Lib.IO.Path;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Support
 {
     /// <summary>Wire helpers shared by the QmlElement tests: values and events encoded like protocol.h "QmlElement".</summary>
     internal static class QmlWire

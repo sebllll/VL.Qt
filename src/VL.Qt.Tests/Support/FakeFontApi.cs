@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using VL.Qt.Interop;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Support
 {
     /// <summary>The font API of QtNative without Qt: hands out handles and records the calls in order.</summary>
     internal sealed class FakeFontApi : IFontApi

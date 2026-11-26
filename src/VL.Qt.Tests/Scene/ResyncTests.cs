@@ -8,11 +8,13 @@ using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Interop;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Scene
 {
+    using Scene = VL.Qt.Scene;
     /// <summary>
     /// Resync after a failed apply: Reconciler + ResyncController against a fake QtNative that aborts a batch like the real
     /// one; and after a reconcile that throws, through Scene without a native scene.

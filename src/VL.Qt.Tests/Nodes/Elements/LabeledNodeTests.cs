@@ -4,9 +4,10 @@ using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Tests.Support;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Elements
 {
     /// <summary>Labeled node: Row/Column of label Text and element, change detection.</summary>
     public class LabeledNodeTests

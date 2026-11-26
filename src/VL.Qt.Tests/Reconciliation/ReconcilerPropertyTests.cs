@@ -10,11 +10,12 @@ using VL.Qt.Elements;
 using VL.Qt.Images;
 using VL.Qt.Paths;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     /// <summary>Property diff of the reconciler (04c): only changed values are sent, converted via Geometry.</summary>
     public class ReconcilerPropertyTests

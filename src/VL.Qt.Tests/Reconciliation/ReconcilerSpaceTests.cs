@@ -5,10 +5,11 @@ using VL.Lib.Collections;
 using VL.Qt.Elements;
 using VL.Qt.Paths;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     /// <summary>Reconciler and Space: a change of the scale rewrites every length, a change of the Space alone writes nothing.</summary>
     public class ReconcilerSpaceTests

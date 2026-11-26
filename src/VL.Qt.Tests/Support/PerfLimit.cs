@@ -2,7 +2,7 @@
 using System.Globalization;
 using NUnit.Framework;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Support
 {
     /// <summary>
     /// Time limits of the <c>Perf</c> category (TEST-09). Same semantics as the SmokeTest's <c>PerfLimits</c>:

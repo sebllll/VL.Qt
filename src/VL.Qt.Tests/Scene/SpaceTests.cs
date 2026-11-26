@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Scene
 {
     public class SpaceTests
     {

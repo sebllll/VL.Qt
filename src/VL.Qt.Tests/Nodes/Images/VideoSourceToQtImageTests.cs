@@ -12,9 +12,10 @@ using VL.Lib.Basics.Resources;
 using VL.Lib.Basics.Video;
 using VL.Qt.Images;
 using VL.Qt.Nodes;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Images
 {
     /// <summary>VideoSourceToQtImage (CPU path) with a fake video source and the fake resource API, no Qt.</summary>
     public class VideoSourceToQtImageTests

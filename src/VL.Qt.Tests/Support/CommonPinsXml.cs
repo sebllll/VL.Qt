@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Support
 {
     /// <summary>The shared pin texts of <c>src/VL.Qt/Nodes/CommonPins.xml</c>, for tests that check texts written elsewhere against them.</summary>
     internal static class CommonPinsXml

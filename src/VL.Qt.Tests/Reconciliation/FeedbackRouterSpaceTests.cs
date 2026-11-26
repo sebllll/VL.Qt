@@ -2,8 +2,9 @@
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     /// <summary>Events from QtNative come back in units of the scene's Space: Scene Bounds, size, pointer, drag, pinch, touch.</summary>
     public class FeedbackRouterSpaceTests

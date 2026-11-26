@@ -1,9 +1,10 @@
 ﻿using NUnit.Framework;
 using VL.Qt.Interop;
 using VL.Qt.Nodes;
+using VL.Qt.Tests.Support;
 using Path = VL.Lib.IO.Path;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes
 {
     /// <summary>LoadFont against the fake font API: order of add and release, errors, Dispose.</summary>
     public class LoadFontNodeTests

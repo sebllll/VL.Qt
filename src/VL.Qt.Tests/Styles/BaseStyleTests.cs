@@ -2,9 +2,10 @@
 using NUnit.Framework;
 using VL.Qt.Elements;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Styles
 {
     /// <summary>Base style: sent once per Controls element at CREATE, nothing on unchanged frames, again after a resync.</summary>
     public class BaseStyleTests

@@ -8,9 +8,10 @@ using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
 using VL.Qt.Styles;
+using VL.Qt.Tests.Support;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Elements
 {
     /// <summary>
     /// The conversion of a pin value (<see cref="IElement"/>) to the internal <see cref="Element"/>, the warning for a
@@ -281,7 +282,7 @@ namespace VL.Qt.Tests
         }
 
         private static ShaderEffect TextureEffect(params Uniform[] uniforms) =>
-            new(null, Wire.Protocol.EffectTemplate.Single, ImmutableArray.Create(7UL), uniforms.ToSpread(), default, 1);
+            new(null, VL.Qt.Wire.Protocol.EffectTemplate.Single, ImmutableArray.Create(7UL), uniforms.ToSpread(), default, 1);
 
         private sealed class ThrowingStylable : IStylable
         {

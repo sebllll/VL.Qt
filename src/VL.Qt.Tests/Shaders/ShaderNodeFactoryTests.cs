@@ -8,9 +8,10 @@ using VL.Core;
 using VL.Core.Diagnostics;
 using VL.Qt.Elements;
 using VL.Qt.Shaders;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Shaders
 {
     /// <summary>Shader node factory: names, scan of qtshaders/, layout of a node, uniform spread. No QtNative, no vvvv.</summary>
     public class ShaderNodeFactoryTests
@@ -207,7 +208,7 @@ void main() { fragColor = texture(source, qt_TexCoord0) * tint * amount * qt_Opa
         public void Instance_InputPinsMatchDescriptionOrder()
         {
             var layout = Load(fragmentSource, reflection);
-            using var instance = new ShaderInstance(new Nodes.ShaderNode(null, new RecordingMessages().Errors), layout);
+            using var instance = new ShaderInstance(new VL.Qt.Nodes.ShaderNode(null, new RecordingMessages().Errors), layout);
             // Same count, order and type as the description (Input + Input Sampler + 3 uniforms + 12 fixed pins; 4 outputs).
             Assert.That(instance.Inputs.Select(PinType), Is.EqualTo(ShaderDescription.Inputs(layout).Select(d => d.Type)));
             Assert.That(instance.Outputs.Select(PinType), Is.EqualTo(ShaderDescription.Outputs.Select(d => d.Type)));

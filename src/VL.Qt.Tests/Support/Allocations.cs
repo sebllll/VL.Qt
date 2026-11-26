@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Support
 {
     /// <summary>Measures the managed allocations of a frame loop on the current thread.</summary>
     internal static class Allocations

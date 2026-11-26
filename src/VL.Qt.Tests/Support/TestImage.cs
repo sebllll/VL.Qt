@@ -5,7 +5,7 @@ using System.Threading;
 using NUnit.Framework;
 using VL.Lib.Basics.Imaging;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Support
 {
     /// <summary>Image of the tests: own bytes that a test can change, optionally volatile.</summary>
     internal sealed class TestImage : IImage, IImageData

@@ -6,7 +6,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Qml;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Qml
 {
     /// <summary>The parser of the root declarations of a .qml file.</summary>
     [TestFixture]

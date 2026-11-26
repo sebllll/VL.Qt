@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using NUnit.Framework;
 using VL.Qt.Interop;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Interop
 {
     /// <summary>
     /// The exports of QtNative (the <c>VLQT_API</c> declarations of vlqt.h, vlqt_test.h and the testkit's testkit.h) and the

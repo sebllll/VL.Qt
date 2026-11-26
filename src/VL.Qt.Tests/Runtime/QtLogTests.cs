@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Runtime
 {
     /// <summary>
     /// Qt/QtNative messages reach the app host's logger factory with mapped level and the Qt category as log category;

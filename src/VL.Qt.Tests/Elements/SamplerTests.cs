@@ -5,9 +5,10 @@ using VL.Lib.Collections;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Elements
 {
     // Sampler state: wire packing, SET_UNIFORMS entry, diff and removal by the UniformWriter.
     [TestFixture]

@@ -6,10 +6,12 @@ using VL.Lib.Reactive;
 using VL.Qt.Elements;
 using VL.Qt.Images;
 using VL.Qt.Nodes;
+using VL.Qt.Tests.Support;
 using Image = VL.Qt.Elements.Image;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Images
 {
+    using Interaction = VL.Qt.Elements.Interaction;
     /// <summary>Text and Image nodes (07c): defaults, change detection, outputs. The shared core is covered by RectangleNodeTests.</summary>
     public class TextImageNodeTests
     {

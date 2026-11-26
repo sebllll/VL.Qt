@@ -4,10 +4,11 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Nodes.Effects
 {
     /// <summary>The shader effect nodes (phase B): template, shaders, uniforms, padding and strength in DIP, change detection.</summary>
     public class EffectShaderNodesTests

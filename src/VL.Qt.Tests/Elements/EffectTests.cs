@@ -5,11 +5,12 @@ using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Nodes;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using K = VL.Qt.Wire.Protocol.MultiEffectKey;
 using P = VL.Qt.Wire.Protocol.PropertyId;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Elements
 {
     /// <summary>Effect chain: the folded MultiEffect run and the reconciler's effect layer SETs.</summary>
     public class EffectTests

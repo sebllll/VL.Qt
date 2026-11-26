@@ -6,7 +6,7 @@ using VL.Qt.Elements;
 using VL.Qt.Reconciliation;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     public class ItemMirrorTests
     {

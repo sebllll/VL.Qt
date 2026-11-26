@@ -2,7 +2,7 @@
 using Stride.Core.Mathematics;
 using VL.Qt.Wire;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Support
 {
     /// <summary>
     /// Fault injection for reconciler tests: forwards every command to a <see cref="RecordingSink"/> and throws an

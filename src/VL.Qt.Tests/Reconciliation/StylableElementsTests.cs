@@ -4,7 +4,7 @@ using NUnit.Framework;
 using VL.Qt.Elements;
 using VL.Qt.Reconciliation;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     /// <summary>The list of elements that take part in the style (<see cref="StylableElements"/>).</summary>
     public class StylableElementsTests
@@ -20,9 +20,9 @@ namespace VL.Qt.Tests
             ? new StylableElement(new NoStylable())
             : (Element)Activator.CreateInstance(type, nonPublic: true)!;
 
-        private sealed class NoStylable : Styles.IStylable
+        private sealed class NoStylable : VL.Qt.Styles.IStylable
         {
-            public IElement? Build(Styles.Style style) => null;
+            public IElement? Build(VL.Qt.Styles.Style style) => null;
         }
 
         [Test]

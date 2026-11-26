@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 using VL.Qt.NodeFactories;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.NodeFactories
 {
     /// <summary>The layer shared by the shader and the QML node factory: node names and pin names. No QtNative, no vvvv.</summary>
     public class NodeFactoriesTests

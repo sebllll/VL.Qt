@@ -2,7 +2,7 @@
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Scene
 {
     /// <summary>SpaceMapping: scale and origin mode per Space, conversions to Qt logical pixels and back.</summary>
     public class SpaceMappingTests

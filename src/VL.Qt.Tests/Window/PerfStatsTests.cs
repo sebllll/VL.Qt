@@ -2,8 +2,9 @@
 using System.Linq;
 using NUnit.Framework;
 using VL.Qt.Interop;
+using VL.Qt.Tests.Support;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Window
 {
     /// <summary>PerfStats: the main values and the groups (percentiles, counters, host, GC) from the native structs; the slow-frame warning helpers.</summary>
     public class PerfStatsTests
@@ -193,7 +194,7 @@ namespace VL.Qt.Tests
             var window = typeof(WindowScene).GetConstructors().Single().GetParameters().Single(p => p.Name == "vSync");
             Assert.That(window.DefaultValue, Is.True);
 
-            var renderer = typeof(Nodes.RendererNode).GetConstructors().Single().GetParameters().Single(p => p.Name == "vSync");
+            var renderer = typeof(VL.Qt.Nodes.RendererNode).GetConstructors().Single().GetParameters().Single(p => p.Name == "vSync");
             Assert.That(renderer.DefaultValue, Is.True);
             Assert.That(renderer.GetCustomAttributes(typeof(System.ComponentModel.DefaultValueAttribute), false).Cast<System.ComponentModel.DefaultValueAttribute>().Single().Value,
                 Is.True, "the pin default in vvvv");

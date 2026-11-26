@@ -6,10 +6,11 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Elements;
 using VL.Qt.Reconciliation;
+using VL.Qt.Tests.Support;
 using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Reconciliation
 {
     /// <summary>FeedbackRouter: feedback ids, routing of poll records into feedback, pulse logic, rebind (06a).</summary>
     public class FeedbackRouterTests
@@ -515,7 +516,7 @@ namespace VL.Qt.Tests
             Assert.That(res, Is.EqualTo(new DispatchResult(1, 0, null)));
             var points = feedback.TouchPoints();
             Assert.That(points, Has.Count.EqualTo(2));
-            Assert.That(points[0], Is.EqualTo(new Elements.TouchPoint(3, new Vector2(0.5f, 0.25f), 0.5f, new Vector2(0.1f, 0.2f))), "pixels -> units");
+            Assert.That(points[0], Is.EqualTo(new VL.Qt.Elements.TouchPoint(3, new Vector2(0.5f, 0.25f), 0.5f, new Vector2(0.1f, 0.2f))), "pixels -> units");
             Assert.That(points[1].Id, Is.EqualTo(7));
             Assert.That(feedback.TouchUpdates(), Is.EqualTo(1));
 

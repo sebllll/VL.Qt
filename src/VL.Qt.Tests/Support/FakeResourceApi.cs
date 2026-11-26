@@ -16,7 +16,7 @@ using VL.Qt.Wire;
 using Image = VL.Qt.Elements.Image;
 using Path = VL.Lib.IO.Path;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Support
 {
     /// <summary>
     /// The resource API of QtNative without Qt: records calls, hands out ids and status records like vlqt_res_*.
