@@ -15,7 +15,7 @@ tools/build.ps1                        # QtNative + Qt deploy + C# library
 tools/start-vvvv.ps1 -Help "Draw a Rectangle"
 ```
 
-vvvv is taken from `-VvvvDir`, else `%VVVV_DIR%`, else the newest `C:\vvvv\vvvv_gamma_*-win-<arch>`. Only the Qt of your machine's architecture is needed locally; the other one is built by the CI.
+vvvv is taken from `-VvvvDir`, else `%VVVV_DIR%`, else the newest `C:\vvvv\vvvv_gamma_*-win-<arch>`. Only the Qt of your machine's architecture is needed locally; the other one is built by the CI. Check the architecture with PowerShell (`$env:PROCESSOR_ARCHITECTURE`: ARM64 means `win-arm64`, otherwise `win-x64`); Git Bash can report the wrong one on ARM64.
 
 To build QtNative from Visual Studio or Rider (open `src/VL.Qt.Native` as a CMake folder) or with `cmake --preset`, the presets `dev-win-x64` and `dev-win-arm64` read the Qt folder from the environment variable `VLQT_QT_DIR` (for example `C:\Qt\6.12.0\msvc2022_64`); `tools/setup-qt.ps1` prints the value at its end. Without a preset, CMake picks `win-x64` or `win-arm64` from the compiler's architecture. `tools/build-native.ps1` does not need the variable (`-QtDir` or `C:\Qt`).
 
@@ -53,6 +53,11 @@ tools/build-native.ps1
 # C# assemblies + NuGet package
 dotnet build src/VL.Qt -c Release
 
+# The whole gate: fresh native build, C# build, unit tests, SmokeTest, a summary per step
+tools/build.ps1 -Test
+# Narrow: one SmokeTest scenario and the compile-check of one patch
+tools/build.ps1 -Test -Only <scenario> -Patch "help/Qt/HowTo Draw a Rectangle.vl"
+
 # Unit tests
 dotnet test src/VL.Qt.Tests
 
@@ -68,6 +73,8 @@ dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=rectangle
 # Compile-check a patch with vvvvc (exit 0 = no build errors)
 tools/vvvvc.ps1 -File help/HelloWorld.vl
 ```
+
+`tools/build.ps1 -Test` writes the SmokeTest log and the grabbed PNGs to `build/smoke/`; exit code 0 means every step passed. Look at the PNGs when you change rendering. Rebuild QtNative (`tools/build-native.ps1` or `tools/build.ps1`) whenever you touch `src/VL.Qt.Native/`; `-SkipNative` is for C#-only changes.
 
 The SmokeTest also has scenarios that measure (poll cost, `QtTexture` render threads, pump spikes, tearing); how to run and read them is in [Profiling](profiling.md#smoketest-measurement-scenarios). Options of a run (stress duration, update of the reference images, perf limits) are NUnit run settings or environment variables `VLQT_SMOKE_<NAME>`, listed in `src/VL.Qt.SmokeTest/Framework/SmokeParameters.cs`. The drift checks are unit tests (`ProtocolDriftTests`, `NativeLayoutTests`, `ApiDriftTests`), see [Change the protocol](#typical-workflows).
 
@@ -92,7 +99,7 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 |---|---|
 | `build.ps1` | Builds everything: QtNative + Qt deploy, then `dotnet build` of `src/VL.Qt`, `src/VL.Qt.Stride` and `src/VL.Qt.Audio`. `-Test` adds the source rules check, the unit tests (`VL.Qt.Tests`, `VL.Qt.Audio.Tests`) and the SmokeTest (`dotnet test src/VL.Qt.SmokeTest`; results, log and grabs in `build/smoke/`), `-Only <scenario,...>` limits the SmokeTest to those TestCategory values, `-SmokeTimeout <s>` sets its time limit (default 600 s), `-Patch <doc.vl>` compile-checks a patch with vvvvc. `-Rid`, `-Configuration Debug`, `-SkipNative` for C#-only changes, `-ForceDeploy`. Exit 0 = all steps passed, a summary lists each step. |
 | `start-vvvv.ps1` | Starts vvvv with VL.Qt, VL.Qt.Stride and VL.Qt.Audio from this repo (three junctions in the package repository). `-Build` builds QtNative, VL.Qt and VL.Qt.Stride first (VL.Qt.Audio: `tools/build.ps1`), `-Help "Draw Text"` opens `help/Qt/HowTo Draw Text.vl`, `-Patch <file>` any patch, `-PrepareOnly` only sets up the package repository, `-RepoDir` another checkout. |
-| `vvvvc.ps1` | Compiles or exports a patch with vvvvc (vvvv's command-line compiler). `-File <doc.vl>` (default `help/HelloWorld.vl`, a test patch of the repo that is not in the NuGet package; use a `help/Qt/` patch with a package), `-Out <dir>` (default `build/vvvvc`), further arguments go to vvvvc. Exit 0 = no build errors. A patch in `VL.Qt.Stride/` or `VL.Qt.Audio/`, or one that depends on one of them (no feed has them before the release), also gets the dev package repository, `--editable-packages` and a local feed `build/vvvvc-feed` with `VL.Qt` and that package packed as version 0.0.1 (repacked when the build output is newer; run `tools/build.ps1` first). `VL.Audio` is not part of vvvv: the export restores it from NuGet (the version pinned in `VL.Qt.Audio.vl` and the patch, 1.9.21; offline from the NuGet cache). |
+| `vvvvc.ps1` | Compiles or exports a patch with vvvvc (vvvv's command-line compiler). `-File <doc.vl>` (default `help/HelloWorld.vl`, a test patch of the repo that is not in the NuGet package; use a `help/Qt/` patch with a package), `-Out <dir>` (default `build/vvvvc`), further arguments go to vvvvc. Exit 0 = no build errors; run `dotnet build src/VL.Qt -c Release` first. It uses the vvvv found as described under [First build](#first-build); on ARM64 it adds a shim `vvvvc.arm64.dll` to the vvvv installation (the 8.0 ARM64 previews ship an x64 `vvvvc.dll`). A patch in `VL.Qt.Stride/` or `VL.Qt.Audio/`, or one that depends on one of them (no feed has them before the release), also gets the dev package repository, `--editable-packages` and a local feed `build/vvvvc-feed` with `VL.Qt` and that package packed as version 0.0.1 (repacked when the build output is newer; run `tools/build.ps1` first). `VL.Audio` is not part of vvvv: the export restores it from NuGet (the version pinned in `VL.Qt.Audio.vl` and the patch, 1.9.21; offline from the NuGet cache). |
 | `start-vvvv-with-nupkg.ps1` / `.cmd` | Starts vvvv with a packed `VL.Qt.<version>.nupkg` without installing it, e.g. to test a release; the `VL.Qt.Stride.<version>.nupkg` of the same version next to it is unpacked too (VL.Qt.Audio is not). Takes the newest nupkg next to the script or from `-NupkgDir`; `-Help`, `-Patch` like above. The `.cmd` is for double-clicking. |
 
 **Native build and Qt**
@@ -128,7 +135,7 @@ Scripts live in `tools/`. All PowerShell scripts take `-Rid win-x64|win-arm64` w
 | Script | Use |
 |---|---|
 | `fix-encoding.py` | Checks/repairs the BOM: files, `--all`, `--staged` (used by the git hook), `--check` to only report. See [Encoding and git hook](#encoding-and-git-hook). |
-| `vl-patch-check.py` | Read-only check of the VL.Qt nodes in `.vl` files against their pins in `src/VL.Qt.Tests/Api/node-api.txt` (`vl_node_api.py`): hidden pins with a value, IOBoxes on `Interaction`, links to removed pins (errors), IOBoxes at the default value (hints). No argument: all `help/Qt/*.vl`, `help/*.vl`, `VL.Qt.Stride/help/*.vl` and `VL.Qt.Audio/help/*.vl`. `--fix` makes hidden pins with a value visible, `--accept <patch>` puts intended exceptions into `help/.padlint.json`. Test: `test-vl-patch-check.py`. |
+| `vl-patch-check.py` | Read-only check of the VL.Qt nodes in `.vl` files against their pins in `src/VL.Qt.Tests/Api/node-api.txt` (`vl_node_api.py`): hidden pins with a value, IOBoxes on `Interaction`, links to removed pins (errors), IOBoxes at the default value (hints). No argument: all `help/Qt/*.vl`, `help/*.vl`, `VL.Qt.Stride/help/*.vl` and `VL.Qt.Audio/help/*.vl`. The rules are `hidden-non-default`, `forbidden-iobox` and `missing-pin` (errors, exit code 1) and `default-iobox` (a hint, exit code 0). `--fix` makes hidden pins with a value visible, its only change. `--accept <patch>` puts intended exceptions into the baseline `help/.padlint.json` (patch, element Id, rule, reason); add a short reason to each new entry. Regenerate the node-API snapshot after a C# change (see the node API test). Test: `test-vl-patch-check.py`. |
 | `vl-patch-migrate.py` | Applies the rows of `vl-patch-mapping.txt` (renamed nodes and pins, moved categories) to every patch of the repository; `--check` lists what would change. Regression test: `test-vl-patch-migrate.py`. |
 | `record-traces.ps1` | Records command traces from help patches into `src/VL.Qt.SmokeTest/traces/`; the SmokeTest replays them against QtNative and compares the last frame with a reference. Re-record after every protocol change. |
 | `check-source-rules.py` | Closing check of the refactoring, part of the gate (`build.ps1 -Test`, `test-linux.sh`): no issue reference (`#<number>`) in `src`, no comment line over 160 characters, no C# file with two top-level types besides the named exceptions in the script (`--list` prints them with their reasons). Read-only; test: `test-source-rules.py`. |
@@ -143,7 +150,7 @@ The repository builds three NuGet packages:
 | `VL.Qt.Stride` | `VL.Qt.Stride/` (package folder: `VL.Qt.Stride.vl`, `help/`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Stride/` | Qt scenes rendered into Stride textures, Windows only; depends on `VL.Qt` |
 | `VL.Qt.Audio` | `VL.Qt.Audio/` (package folder: `VL.Qt.Audio.vl`, `help/`, `README.md`, build output `lib/net10.0-windows7.0/`); C# source in `src/VL.Qt.Audio/` | `Video (VL.Audio)`: the sound of a video as VL.Audio signals, Windows only; depends on `VL.Qt` (same version) and `VL.Audio`, see [video-audio.md](../video-audio.md) |
 
-`VL.Qt` never references `VL.Qt.Stride` or `VL.Qt.Audio`. `VL.Qt.Stride.vl` (like `VL.Qt.Audio.vl`) is a minimal package document (dependencies and the assembly, no nodes); its help patches may be written in vvvv or directly (see `AGENTS.md`, "Checking patches"); `lib/` is not tracked by git. Why this layout: [design/stride-output.md](../design/stride-output.md#package-layout).
+`VL.Qt` never references `VL.Qt.Stride` or `VL.Qt.Audio`. `VL.Qt.Stride.vl` (like `VL.Qt.Audio.vl`) is a minimal package document (dependencies and the assembly, no nodes); its help patches may be written in vvvv or directly (see [Writing help patches](help-patches.md)); `lib/` is not tracked by git. Why this layout: [design/stride-output.md](../design/stride-output.md#package-layout).
 
 ```powershell
 dotnet build src/VL.Qt.Stride -c Release                  # DLL into VL.Qt.Stride/lib/net10.0-windows7.0/
@@ -172,6 +179,8 @@ The hook needs Python on the `PATH` and skips the check with a notice if there i
 python tools/fix-encoding.py --all             # repair all tracked files
 python tools/fix-encoding.py --check --all     # only report, exit 1 on a wrong BOM
 ```
+
+Multi-line verbatim or raw string literals in C# get the line ending of the file: do not compare them, or checked-in expected-output files, byte for byte with generated text; normalize line endings first. New `.bat`/`.cmd` files are written with CRLF, since they run from disk before git normalizes them. Do not change the BOM or trailing whitespace of lines you do not edit.
 
 If a diff shows whole files as changed, the cause is line endings or BOM: run `git add --renormalize .` or the script, do not rewrite the content.
 

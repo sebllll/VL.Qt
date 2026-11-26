@@ -1,6 +1,6 @@
 # Writing help patches
 
-The rules for the help patches of all three packages. The list of the patches by topic, for users, is [help-patches.md](../help-patches.md); the other rules for `.vl` files are in [AGENTS.md](../../AGENTS.md) ("Checking patches").
+The rules for the help patches of all three packages. The list of the patches by topic, for users, is [help-patches.md](../help-patches.md); the checks are in [Development](development.md#scripts) (`vl-patch-check.py`, `vvvvc.ps1`).
 
 ## Help Browser
 
@@ -9,13 +9,22 @@ The rules for the help patches of all three packages. The list of the patches by
 - Name patches `HowTo <Task in title case>`; the prefix is the role in the Browser (`Example`, `Explanation`, … for the other roles). Rename or delete a patch together with its line in `Help.xml`, in the docs and in the patches that refer to it.
 - Check after a change: every `link` exists and every `.vl` below `help/` is listed once.
 
+## Rules
+
+- `.vl` files (vvvv's XML format) may be written in vvvv or directly, by an agent or a script. A direct edit keeps the format as vvvv saves it: a new unique `Id` for every new element, CRLF, UTF-8 with BOM, and the elements, `Id`s and positions it does not change left as they are. Afterwards `tools/vl-patch-check.py` and `tools/vvvvc.ps1 -File` must pass. A help patch written or rearranged directly gets the `manual-check` label until someone has looked at it in vvvv.
+- Put an IOBox on a pin only if its value differs from the default and says something in the help patch. An IOBox at a pin is the same to the node as an attached value or channel. Example: an IOBox at `Interaction` makes the element opaque to input, so never put one there.
+- Animate (LFO) only where it serves the element (motion demos); otherwise use fixed values.
+- Layout: compact regions, content stacked top to bottom in data-flow order, IOBoxes as a staircase above (inputs) and below (outputs) their node. Choose defaults so the effect is visible.
+- `help/*.props` (export settings) are tracked and written by vvvv; do not edit them by hand.
+- Background: the [vvvv gray book](https://thegraybook.vvvv.org) for the patching conventions.
+
 ## Text scheme
 
 Every help patch has the same four parts, top to bottom:
 
 1. **Title** – `How To …`, font size 25.
 2. **Features** – ONE comment (font size 9) directly below the title: a short headline with the node(s) shown, then 3 to 5 terse bullets (pin names, no prose, no sentences that repeat the title).
-3. **Content** – the patch itself: IOBoxes and nodes as described in `AGENTS.md` ("Checking patches"), with short labels where a picture needs them.
+3. **Content** – the patch itself: IOBoxes and nodes as described under [Rules](#rules), with short labels where a picture needs them.
 4. **Notes** – one comment at the very bottom, below all content: `Notes:` and the longer explanations, one bullet per point, nothing that is already in the features.
 
 Example, `HowTo Draw a Rectangle`:

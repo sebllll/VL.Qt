@@ -14,7 +14,7 @@ Tests live in `src/VL.Qt.Tests` (unit) and `src/VL.Qt.SmokeTest` (QtNative witho
 
 ## Setup and build
 
-Prerequisites, first build, the Visual Studio solution and every script are described in [docs/contributing/development.md](docs/contributing/development.md). In short, on Windows (PowerShell 7):
+Prerequisites, first build, the Visual Studio solution and every script are described in [docs/contributing/development.md](docs/contributing/development.md). The first build in short, on Windows (PowerShell 7):
 
 ```powershell
 tools/setup-qt.ps1          # once: Qt for your machine's architecture into C:\Qt
@@ -22,51 +22,31 @@ tools/build.ps1             # QtNative + Qt deploy + C# library
 tools/start-vvvv.ps1 -Help "Draw a Rectangle"
 ```
 
-- Check the architecture with PowerShell (`$env:PROCESSOR_ARCHITECTURE`: ARM64 → `win-arm64`, otherwise `win-x64`). Git Bash can report the wrong one on ARM64.
-- Only the Qt of your own architecture is needed locally; the other one is built by the CI.
-- vvvv comes from `-VvvvDir`, else `%VVVV_DIR%`, else the newest `C:\vvvv\vvvv_gamma_*-win-<arch>`.
-- Linux (build, run, tests under WSL or natively): [docs/contributing/linux.md](docs/contributing/linux.md) (user side: [docs/linux.md](docs/linux.md)), scripts `tools/*.sh`.
-- After changes in QtNative, restart vvvv (it does not hot-reload native code).
+- Check the architecture, the vvvv lookup and the Linux build there too ([development.md](docs/contributing/development.md#first-build), [linux.md](docs/contributing/linux.md)).
+- After changes in QtNative, rebuild it and restart vvvv (it does not hot-reload native code); use `-SkipNative` for C#-only changes.
 
 ## Tests
 
-```powershell
-tools/build.ps1 -Test                          # fresh native build, C# build, unit tests, SmokeTest, summary per step
-tools/build.ps1 -Test -Only <scenario> -Patch "help/Qt/HowTo Draw a Rectangle.vl"   # narrow SmokeTest + compile-check one patch
-dotnet test src/VL.Qt.Tests                    # unit tests only
-dotnet test src/VL.Qt.SmokeTest -c Release   # SmokeTest only (one scenario: --filter TestCategory=<scenario>)
-dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"   # protocol.h, vlqt.h and their C# mirrors agree?
-```
+All commands (the full gate, one scenario, unit tests, SmokeTest, drift checks) and what they write are in [development.md](docs/contributing/development.md#build-and-test-step-by-step). Protocol changes follow [Change the protocol](docs/contributing/development.md#typical-workflows).
 
-- `tools/build.ps1 -Test` writes the SmokeTest log and grabbed PNGs to `build/smoke/`; exit code 0 means every step passed. Look at the PNGs when you change rendering.
-- Rebuild QtNative (`tools/build-native.ps1` or `tools/build.ps1`) whenever you touch `src/VL.Qt.Native/`. Use `-SkipNative` for C#-only changes.
-- Protocol changes: edit `src/VL.Qt.Native/protocol.h`, mirror in `src/VL.Qt/Wire/Protocol.cs` by hand, run the drift tests above. They compare constants and fixed wire sizes (`ProtocolDriftTests`), the struct layouts of `vlqt.h` (`NativeLayoutTests`, with the `static_assert`s in `app/app.cpp`) and the `VLQT_API` exports with the `[DllImport]`s (`ApiDriftTests`); none needs a GPU.
-- A change is done when the affected help patch, unit tests and SmokeTest pass.
+- A change is done when the affected help patch, unit tests and SmokeTest pass (`tools/build.ps1 -Test` runs all of them).
 
 ## Checking patches
-
-`tools/vvvvc.ps1 [-File <doc.vl>]` compiles/exports a patch with vvvv's command-line compiler (default `help/HelloWorld.vl`, output in `build/vvvvc/`). Exit code 0 means no build errors. Run `dotnet build src/VL.Qt -c Release` first. The script uses the newest vvvv as described under Setup; on ARM64 it adds a shim `vvvvc.arm64.dll` to the vvvv installation (the 8.0 ARM64 previews ship an x64 `vvvvc.dll`).
 
 The help patches in `help/Qt/` (one `HowTo …` per element) are the test base. When you change a node's pins or behavior, adapt the help patch, then check and compile-check it:
 
 ```powershell
-python tools/vl-patch-check.py "help/Qt/HowTo Draw Text.vl"   # no argument: all help/Qt/*.vl, help/*.vl and VL.Qt.Stride/help/*.vl
-tools/vvvvc.ps1 -File "help/Qt/HowTo Draw Text.vl"
+python tools/vl-patch-check.py "help/Qt/HowTo Draw Text.vl"
+tools/vvvvc.ps1 -File "help/Qt/HowTo Draw Text.vl"       # run dotnet build src/VL.Qt -c Release first
 ```
 
-`tools/vl-patch-check.py` is read-only: it compares the VL.Qt nodes in a patch with their pins in the node-API snapshot `src/VL.Qt.Tests/Api/node-api.txt` (read by `tools/vl_node_api.py`, create pins included; regenerate the snapshot after a C# change, see the node API test) and never moves or deletes anything. Errors (exit code 1): a hidden pin that holds a non-default value or a link (`hidden-non-default`; `--fix` makes such pins visible, its only change), an IOBox on `Interaction` (`forbidden-iobox`), a link to a pin the node no longer has (`missing-pin`). Hint (exit code 0): an input IOBox that holds the pin's default (`default-iobox`). Intended exceptions go into the baseline `help/.padlint.json` (patch, element Id, rule, reason) with `--accept <patch>`; add a short reason to each new entry. `tools/test-vl-patch-check.py` is its regression test.
+Both must pass (exit code 0). What the scripts check, `vl-patch-mapping.txt` for renamed nodes and pins, and the rules for writing a help patch are in [docs/contributing/help-patches.md](docs/contributing/help-patches.md) and the [scripts table](docs/contributing/development.md#scripts).
 
-Renamed nodes and pins and moved categories reach the patches through one mapping file, never by hand: add rows `step | kind | scope | old | new` to `tools/vl-patch-mapping.txt` (format in its header) and run `python tools/vl-patch-migrate.py` (`--check` lists what would change and writes nothing). It rewrites every patch of the repository at once and changes only the names a row gives, in the format vvvv saves. The rows of one step apply together, so a swap works, and a second run changes nothing; on a merge conflict in a `.vl` file, merge the mapping file, take either side of the patch and run the script again. Exit code 2 means a bad, conflicting or unknown row (new names are looked up in `src/VL.Qt.Tests/Api/node-api.txt`) or a node whose state cannot be told; nothing is written then. Details: [docs/contributing/help-patches.md](docs/contributing/help-patches.md#renames). `tools/test-vl-patch-migrate.py` is its regression test.
-
-Rules for help patches:
-
-- `.vl` files (vvvv's XML format) may be written in vvvv or directly, by an agent or a script. A direct edit keeps the format as vvvv saves it: a new unique `Id` for every new element, CRLF, UTF-8 with BOM, and the elements, `Id`s and positions it does not change left as they are. Afterwards `tools/vl-patch-check.py` and `tools/vvvvc.ps1 -File` must pass. A help patch written or rearranged directly gets the `manual-check` label until someone has looked at it in vvvv.
-- Put an IOBox on a pin only if its value differs from the default and says something in the help patch. An IOBox at a pin is the same to the node as an attached value or channel. Example: an IOBox at `Interaction` makes the element opaque to input, so never put one there.
-- Animate (LFO) only where it serves the element (motion demos); otherwise use fixed values.
-- Layout: compact regions, content stacked top to bottom in data-flow order, IOBoxes as a staircase above (inputs) and below (outputs) their node. Choose defaults so the effect is visible.
-- Text scheme: title (size 25), directly below ONE terse feature field (headline plus 3 to 5 short bullets), then the content, the longer notes in one `Notes:` comment at the very bottom. Details and example: [docs/contributing/help-patches.md](docs/contributing/help-patches.md).
-- Every patch under `help/` is listed in `help/Help.xml` (Help Browser topics); add, rename or delete the line together with the patch.
-- Background: [vvvv gray book](https://thegraybook.vvvv.org) for the patching conventions.
+- Renamed nodes and pins and moved categories reach the patches only through `tools/vl-patch-mapping.txt` and `tools/vl-patch-migrate.py`, never by hand ([Renames](docs/contributing/help-patches.md#renames)).
+- A `.vl` file written directly keeps the format as vvvv saves it (new unique `Id`s, CRLF, UTF-8 with BOM, unchanged elements untouched) and gets the `manual-check` label until someone has looked at it in vvvv.
+- An IOBox on a pin only where its value differs from the default; never one on `Interaction`.
+- Text scheme (title, one feature field, content, `Notes:`): [docs/contributing/help-patches.md](docs/contributing/help-patches.md#text-scheme).
+- Every patch under `help/` is listed in `help/Help.xml`; add, rename or delete the line together with the patch.
 
 `help/*.props` (export settings) are tracked and written by vvvv; do not edit them by hand.
 
@@ -107,24 +87,12 @@ The reference is the code written by the vvvv team in [VL.StandardLibs](https://
 
 ## Line endings and encoding
 
-- Everything is LF in the repository. `.gitattributes` enforces it; do not convert line endings by hand and do not commit EOL-only fixes. Checked out, `.vl` and `help/**/*.props` have CRLF (that is how vvvv saves them), `*.bat`/`*.cmd` CRLF (for `cmd.exe`), everything else LF. Write new `.bat`/`.cmd` files with CRLF: they run from disk before git normalizes them.
-- Multi-line verbatim or raw string literals in C# get the line ending of the file. Do not compare them, or checked-in expected-output files, byte for byte with generated text; normalize line endings first.
+- Everything is LF in the repository (`.gitattributes`); `.vl` and `help/**/*.props` are checked out with CRLF, as are new `.bat`/`.cmd` files. Do not convert line endings by hand and do not commit EOL-only fixes.
+- UTF-8 **with BOM** only for `.cs` and `.vl`; all other files **without** BOM.
 - Do not change the BOM or trailing whitespace of lines you do not edit.
-- UTF-8 **with BOM** only for `.cs` and `.vl`; all other files **without** BOM. `.editorconfig` covers VS, Rider and VS Code.
-- If a diff shows whole files as changed, the cause is EOL or BOM: `git add --renormalize .` or the script below, do not rewrite content.
+- If a diff shows whole files as changed, the cause is line endings or BOM: `git add --renormalize .` or `tools/fix-encoding.py`, do not rewrite content.
 
-`tools/fix-encoding.py` checks and repairs the BOM. A git hook runs it on the staged files at every commit; enable it once per clone:
-
-```sh
-git config core.hooksPath .githooks
-```
-
-```sh
-python tools/fix-encoding.py --all             # repair all tracked files
-python tools/fix-encoding.py --check --all     # only report (exit 1 on a wrong BOM)
-```
-
-Details: [docs/contributing/development.md](docs/contributing/development.md#encoding-and-git-hook).
+A git hook repairs the BOM at every commit; enable it once per clone, see [Encoding and git hook](docs/contributing/development.md#encoding-and-git-hook) (also: multi-line string literals, the check script).
 
 ## Debugging
 
@@ -139,20 +107,8 @@ In-app overlays, logging and device loss: [docs/diagnostics.md](docs/diagnostics
 
 ## Branches and pull requests
 
-- `develop` is the working branch. Branch feature branches from `develop`, open PRs against `develop`, squash-merge.
-- Every change lands through a PR, never by a push to `develop` or `main`. Contributors push their branch to a fork; maintainers push it to this repository, always with remote and branch named (`git push origin HEAD:<kind>/<issue>-<topic>`), since a bare `git push` may go to another remote or branch. Details: [CONTRIBUTING.md](CONTRIBUTING.md).
-- `main` only receives releases: PR `develop` → `main` (merge commit, no squash), then a `v*` tag on `main` (CI builds all RIDs, the `.nupkg` and the release). No feature PRs directly to `main`.
-- Hotfix for a release: branch from `main`, PR against `main`, then merge `main` into `develop`.
-- **Save CI minutes:** every push to a PR that is not a draft starts the Windows CI (QtNative, pack, smoke test). Open PRs as drafts (`gh pr create --base develop --draft`) and keep them drafts while you work. When the work is complete and `tools/build.ps1 -Test` passes locally, run `gh pr ready` (the CI then runs once). If the CI is red afterwards: `gh pr ready --undo`, fix and check locally, `gh pr ready` again. Do not use `workflow_dispatch` as a substitute; it builds every RID and is more expensive.
-- Keep PRs focused and describe what changed and how you verified it (which scripts, which help patches).
+Branches, pull requests, the fork and maintainer paths and the issue labels are in [CONTRIBUTING.md](CONTRIBUTING.md). What an agent must not forget:
 
-## Issues
-
-Use the issue forms in `.github/ISSUE_TEMPLATE/` (bug report, feature request, task). Every issue gets labels and a milestone when it is created or triaged:
-
-- Type (exactly one): `bug`, `enhancement`, `documentation` or `question` (a spike or a decision).
-- Area (at least one): `area:native`, `area:csharp`, `area:patch` or `area:ci`. An issue that touches native and C# gets both labels. Repository-wide documentation (README, licensing, contributing) needs no area.
-- Topic (at most one, where one fits): `topic:effects`, `topic:images`, `topic:video`, `topic:styles`, `topic:input`, `topic:linux` or `topic:performance`.
-- Extra when needed: `manual-check` (needs a human to look at it in vvvv), `ready`, `good first issue`, `help wanted`.
-- Milestone: version numbers only. `1.0` blocks the release, `2.0` is urgent but does not block it, `3.0` holds distant features and ideas without a date. Until 1.0 is released the package stays at 0.9.x and every issue that has to be done goes into `1.0`.
-- Do not invent new labels or milestones. Close issues that will not be done as "not planned", duplicates as "duplicate".
+- Work on a branch from `develop` and open the pull request as a draft against `develop`; run `gh pr ready` only after `tools/build.ps1 -Test` passes locally (every push to a non-draft PR starts the CI).
+- Never push to `develop` or `main`, never a bare `git push`: name remote and branch (`git push origin HEAD:<kind>/<issue>-<topic>`).
+- Every new issue gets a type, an area and a milestone from the labels in [CONTRIBUTING.md](CONTRIBUTING.md#issue-labels-for-maintainers); do not invent new labels or milestones.

@@ -19,7 +19,7 @@ Contributors working with the repository sources export without the dialog. `too
 tools/vvvvc.ps1 -File help/HelloWorld.vl -Out build/export
 ```
 
-A `.props` next to the patch wins over the command-line arguments `--rid` and `--output-type`. Patches without one (all of `help/Qt/`) get them from the command line, e.g. for Linux arm64: `tools/vvvvc.ps1 -File "help/Qt/HowTo Draw a Rectangle.vl" -Out build/export-linux-arm64 --rid linux-arm64 --output-type Exe --asset-behavior RelativeToOutput`.
+A `.props` next to the patch wins over the command-line arguments `--rid` and `--output-type`. Patches without one (all of `help/Qt/`) get them from the command line, for example for Linux, see [Export from vvvv](linux.md#2-export-from-vvvv).
 
 ## Fonts
 
