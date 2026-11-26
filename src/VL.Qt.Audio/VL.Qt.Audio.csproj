@@ -6,14 +6,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <RootNamespace>VL.Qt.Audio</RootNamespace>
-    <!-- Package folder VL.Qt.Audio/ at the repo root (same layout as VL.Qt.Stride, issue #22). -->
+    <!-- Package folder VL.Qt.Audio/ at the repo root (same layout as VL.Qt.Stride). -->
     <OutputPath>..\..\VL.Qt.Audio\lib\net10.0-windows7.0\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
-    <!-- VL.Audio from nuget.org (net8.0-windows7.0 build, usable from net10); vvvv gamma 8.0 loads it as a package dependency. -->
-    <VlAudioVersion>1.9.21</VlAudioVersion>
   </PropertyGroup>
 
   <ItemGroup>

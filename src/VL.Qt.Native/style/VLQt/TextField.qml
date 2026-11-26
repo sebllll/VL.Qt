@@ -1,4 +1,4 @@
-// VL.Qt base style (#292): TextField. Frame = box, Text = text colour + font (selection = Track fill, placeholder =
+// VL.Qt base style: TextField. Frame = box, Text = text colour + font (selection = Track fill, placeholder =
 // half-opaque text colour). "Pressed" state = editing (activeFocus). Values from the attached VlStyle (see Button.qml).
 import QtQuick
 import QtQuick.Controls.impl

@@ -1,7 +1,8 @@
 import QtQuick
 
-// Test file of the SmokeTest scenario "qml" (#104): every value type of the protocol in a property and in a second property
-// bound to it (the binding result comes back as an event, so the value has made the whole trip patch -> QML -> patch).
+// Test file of the SmokeTest scenario "qml": every value type of the protocol (and the QML types point and size, which are
+// sent as VEC2) in a property and in a second property bound to it (the binding result comes back as an event, so the value has made the
+// whole trip patch -> QML -> patch).
 Item {
     implicitWidth: 100
     implicitHeight: 50
@@ -24,4 +25,12 @@ Item {
     property vector4d v4Out: v4
     property rect box: Qt.rect(0, 0, 0, 0)
     property rect boxOut: box
+    property point pt: Qt.point(0, 0)
+    property point ptOut: pt
+    property size sz: Qt.size(0, 0)
+    property size szOut: sz
+
+    // A signal argument of the type point arrives as a Vector2, like the property.
+    signal located(point p)
+    onPtChanged: located(pt)
 }

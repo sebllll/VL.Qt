@@ -1,23 +1,13 @@
-/* snapshot_resource.h - resource kind VLQT_RES_KIND_SNAPSHOT (#363, images package 06).
- *
- * vlqt_res_snapshot grabs one element of a window with QQuickItem::grabToImage (never grabWindow): asynchronous, the
- * window renders the item into an offscreen texture in its next render and reads it back; QQuickItemGrabResult::ready
- * arrives on the main thread in that or a later pump. The result is a CPU copy (QImage ARGB32_Premultiplied = BGRA8
- * premultiplied in memory), no texture and no upload budget. vlqt_res_read_pixels copies it out.
- *
- * Content comes through the manager's external path (resources.h beginExternal / finishExternal): Pending/Failed ->
- * Decoding (grab in flight) -> Ready | Failed; a grab on a Ready id keeps the old pixels readable until the new ones
- * are there. Only the newest grab of an id counts; older ones in flight are kept alive (Qt still references them)
- * but their result is ignored.
- *
- * A grab never stays in Decoding: endFrame (every pump) fails it when the element or the window was destroyed, the
- * window is no longer exposed (an offscreen scene, never exposed: no longer bound; while bound it is marked dirty so
- * that render_batch renders it, #128) or nothing came for timeoutMs. Released ids drop their result. shutdown drops every grab.
- * Main thread only.
+/* snapshot_resource.h - resource kind VLQT_RESOURCE_KIND_SNAPSHOT: vlqt_snapshot_start grabs one element of a window
+ * with QQuickItem::grabToImage (asynchronous); the result is a CPU copy (QImage ARGB32_Premultiplied), no texture and no
+ * upload budget, which vlqt_snapshot_read copies out. Content comes through the manager's external path (resources.h
+ * beginExternal / finishExternal). A grab never stays in Decoding: endFrame fails it when the element or the window is
+ * gone, the window is not exposed or nothing came for timeoutMs. Main thread only.
+ * Newest-grab rule, timeout and offscreen scenes: docs/design/resources.md, "External content".
  */
 #pragma once
 
-#include "resources.h"
+#include "resources/resources.h"
 
 #include <QtGui/QImage>
 
@@ -26,29 +16,29 @@
 struct vlqt_pixel_desc;
 
 namespace vlqt {
-struct Scene;
+class Scene;
 }
 
-namespace vlqt::res::snap {
+namespace vlqt::res::snapshot {
 
-// The Work of a Ready snapshot: the pixels, ARGB32_Premultiplied, devicePixelRatio 1.
-struct SnapshotWork final : Work
+// The Content of a Ready snapshot: the pixels, ARGB32_Premultiplied, devicePixelRatio 1.
+struct SnapshotContent final : Content
 {
     QImage image;
 };
 
-// The kind for the manager (resources.cpp kindOf).
+// The kind for the manager (resources/resource_registry.cpp kindOf).
 Kind* kind();
 
 // --- C API backends (vlqt.h), main thread ---
-// Element elementId (0 = the window root) of scene. 0 / -7 / -9; element errors end in Failed (RES_EV_ERROR).
+// Element elementId (0 = the window root) of scene. 0 / -7 / -9; element errors end in Failed (RESOURCE_EVENT_ERROR).
 int start(uint64_t id, Scene& scene, unsigned elementId, float scale);
 // Like start, with the scale chosen from the element's frame: longest edge <= maxEdgePx, scale <= 1 (DIP * scale,
 // independent of the DPR). 0 / -7 (maxEdgePx <= 0) / -9.
 int startFit(uint64_t id, Scene& scene, unsigned elementId, int maxEdgePx);
-int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out);
+int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out, int* written, int* required);
 
-// --- Cost of the snapshots for the F5 Resources page (#548) ---
+// --- Cost of the snapshots for the F5 Resources page ---
 // Grab start (startImpl) to a successful delivery (onReady), over the last ~10 s; every snapshot counts.
 struct Stats
 {
@@ -63,4 +53,4 @@ void stats(Stats& out); // main thread, no allocation
 void endFrame(); // gives up hanging grabs, deletes finished ones
 void shutdown(); // drops every grab (before the manager frees the resources)
 
-} // namespace vlqt::res::snap
+} // namespace vlqt::res::snapshot

@@ -1,4 +1,5 @@
 ﻿using System;
+using NUnit.Framework;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Drawing;
@@ -8,22 +9,27 @@ using System.Threading;
 using Stride.Core.Mathematics;
 using VL.Lib.Basics.Imaging;
 using VL.Lib.Mathematics;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
+using VL.Qt.Images;
+using VL.Qt.Interop;
 using VL.Qt.Nodes;
+using VL.Qt.Wire;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 using VlPath = VL.Lib.IO.Path;
+using static Pixels;
 
-// QtImage end to end (#362): LoadImage / LoadImage (Async) / ToQtImage nodes → ResourceClient → QtNative, one QtImage in
-// 100 Image nodes through the Reconciler, release queue. Grabs go to <outDir>/362_*.png.
-static class QtImageTest
+// QtImage end to end: LoadImage / LoadImage (Async) / ToQtImage nodes → ResourceClient → QtNative, one QtImage in
+// 100 Image nodes through the Reconciler, release queue. Grabs go to <OutDir>/362_*.png.
+[TestFixture, NonParallelizable]
+public static class QtImageTest
 {
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
 
-    sealed class SolidImage : IImage, IImageData
+    private sealed class SolidImage : IImage, IImageData
     {
-        readonly byte[] _bytes;
+        private readonly byte[] _bytes;
 
         public SolidImage(int width, int height, byte b, byte g, byte r)
         {
@@ -46,10 +52,14 @@ static class QtImageTest
         public void Dispose() { }
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    /// <summary>QtImage.</summary>
+    [Test, Category("qtimage")]
+    public static void QtImage() => Scenario.Run(s => Run(s));
+
+    private static void Run(Scenario s)
     {
         var asset = ImageTest.FindAsset();
-        check(asset != null, "362: test asset found");
+        s.Check(asset != null, "test asset found");
         if (asset == null)
             return;
 
@@ -62,52 +72,55 @@ static class QtImageTest
             for (int i = 0; i < frames; i++)
             {
                 client.BeforeEvents();
-                pump(1);
+                s.Pump(1);
                 client.AfterEvents();
             }
         }
 
         // 1) LoadImage: synchronous, Ready with its size after the first Update.
-        var load = new LoadImageNode(client);
-        var image = load.Update(new VlPath(asset), false, out var error);
-        check(image is { State: QtImageState.Ready, Width: 30, Height: 10 } && error.Length == 0,
-            $"362: LoadImage ready at once ({image}, error '{error}')");
-        var missing = new LoadImageNode(client);
-        var failed = missing.Update(new VlPath(Path.Combine(outDir, "missing_362.png")), false, out var missingError);
-        check(failed is { State: QtImageState.Failed } && missingError.Length > 0, $"362: LoadImage missing file fails ('{missingError}')");
+        var loadLog = new NodeLog();
+        var load = new LoadImageNode(client, loadLog.Errors);
+        var image = load.Update(new VlPath(asset), false, ImageUpload.Auto);
+        s.Check(image is { State: QtImageState.Ready, Width: 30, Height: 10 } && loadLog.Shown is null,
+            $"LoadImage ready at once ({image}, message '{loadLog.Shown}')");
+        var missingLog = new NodeLog();
+        var missing = new LoadImageNode(client, missingLog.Errors);
+        var failed = missing.Update(new VlPath(Path.Combine(s.OutDir, "missing_362.png")), false, ImageUpload.Auto);
+        s.Check(failed is { State: QtImageState.Failed } && missingLog.Shown is { Length: > 0 }, $"LoadImage missing file fails and marks the node ('{missingLog.Shown}')");
 
         // 2) One QtImage in 100 Image nodes (10 x 10 cells of 0.6 x 0.2 units) through the Reconciler.
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt QtImage test");
-        check(w != IntPtr.Zero, "362: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt QtImage test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var rec = new Reconciler(cmd, new IdAllocator(), new SceneRegistry());
-        var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(_ => throw new InvalidOperationException("unexpected warning"))).ToArray();
-        var toQt = new ToQtImageNode(client);
+        var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
+        var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(UnexpectedMessages.Store())).ToArray();
+        var toQtLog = new NodeLog();
+        var toQt = new ToQtImageNode(client, toQtLog.Errors);
 
         void Frame(QtImage? shared, QtImage? extra, bool clear = false)
         {
             var children = ImmutableArray.CreateBuilder<Element>(101);
             for (int i = 0; i < nodes.Length; i++)
-                children.Add(nodes[i].Update(new Vector2(0.6f, 0.2f), Matrix.Translation(i % 10 * 0.7f, i / 10 * 0.3f, 0), RectangleAnchor.TopLeft,
-                    shared, ImageFillMode.Stretch, false, 1, false, false, null, null, out _, out _));
+                children.Add((Element)nodes[i].Update(new Vector2(0.6f, 0.2f), Matrix.Translation(i % 10 * 0.7f, i / 10 * 0.3f, 0), RectangleAnchor.TopLeft,
+                    shared, FillMode.Stretch, false, 1, false, false, null, null, true, out _, out _));
             children.Add(new VL.Qt.Elements.Image { Size = new Vector2(1, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 3.2f, 0), Source = extra, Smooth = false });
-            cmd.Reset();
+            cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            rec.Update(new Group { Anchor = RectangleAnchor.TopLeft, Children = children.MoveToImmutable() }, Space.DIPTopLeft);
+            rec.Update(new Group { Anchor = RectangleAnchor.TopLeft, Children = children.MoveToImmutable() }, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
-                check(rc == 0, $"362: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+                s.Check(rc == 0, $"apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
         }
 
         // 3) ToQtImage: solid blue BGRA, upload within the budget of the next pump.
-        var blue = toQt.Update(new SolidImage(16, 16, 255, 0, 0), out var toQtError);
+        var blue = toQt.Update(new SolidImage(16, 16, 255, 0, 0), ImageUpload.Auto);
         Frame(image, blue, clear: true);
         Pump(3);
-        check(blue is { State: QtImageState.Ready, Width: 16, Height: 16 } && toQtError.Length == 0, $"362: ToQtImage ready ({blue}, '{toQtError}')");
-        using (var a = grab(w, Path.Combine(outDir, "362_qtimage.png")))
+        s.Check(blue is { State: QtImageState.Ready, Width: 16, Height: 16 } && toQtLog.Shown is null, $"ToQtImage ready ({blue}, '{toQtLog.Shown}')");
+        using (var a = s.Grab(w, "362_qtimage.png"))
         {
             // Cell (i % 10, i / 10) at x = 70 * col, y = 30 * row DIP, 60 x 20: stripes red | green | blue (20 DIP each).
             var cells = 0;
@@ -117,60 +130,60 @@ static class QtImageTest
                 if (ImageTest.IsRed(Px(a, x + 10, y + 10)) && ImageTest.IsGreen(Px(a, x + 30, y + 10)) && ImageTest.IsBlue(Px(a, x + 50, y + 10)))
                     cells++;
             }
-            check(cells == 100, $"362: one QtImage drawn by 100 Image nodes ({cells}/100 cells show the stripes)");
-            check(ImageTest.IsBlue(Px(a, 50, 370)), $"362: ToQtImage pixels drawn ({Px(a, 50, 370)})");
+            s.Check(cells == 100, $"one QtImage drawn by 100 Image nodes ({cells}/100 cells show the stripes)");
+            s.Check(ImageTest.IsBlue(Px(a, 50, 370)), $"ToQtImage pixels drawn ({Px(a, 50, 370)})");
         }
 
-        // 4) ToQtImage with a new instance: new QtImage, same resource, content replaced (red).
-        var red = toQt.Update(new SolidImage(16, 16, 0, 0, 255), out _);
-        check(red != blue && red?.Id == blue?.Id, "362: ToQtImage new input = new QtImage on the same resource");
+        // 4) ToQtImage with a new instance: the same QtImage (one per node), content replaced (red) and drawn.
+        var red = toQt.Update(new SolidImage(16, 16, 0, 0, 255), ImageUpload.Auto);
+        s.Check(ReferenceEquals(red, blue), "ToQtImage new input = the same QtImage, content replaced");
         Frame(image, red);
         Pump(3);
-        using (var a = grab(w, Path.Combine(outDir, "362_qtimage_replaced.png")))
-            check(ImageTest.IsRed(Px(a, 50, 370)), $"362: ToQtImage replaced content drawn ({Px(a, 50, 370)})");
+        using (var a = s.Grab(w, "362_qtimage_replaced.png"))
+            s.Check(ImageTest.IsRed(Px(a, 50, 370)), $"ToQtImage replaced content drawn ({Px(a, 50, 370)})");
 
         // 5) LoadImage (Async): Ready after a few pumps, Is Loaded, On Loaded fired once.
         var async = new LoadImageAsyncNode(client);
         QtImage? fired = null;
         var loadedCount = 0;
-        var first = async.Update(new VlPath(asset), false, true, out var isLoaded, out _, out var onLoaded);
+        var first = async.Update(new VlPath(asset), false, true, ImageUpload.Auto, out var isLoaded, out var onLoaded);
         using var subscription = onLoaded.Subscribe(i => { fired = i; loadedCount++; });
         // Wait by time, not by pump count: the decode runs in a worker, so how many pumps it takes depends on CPU load and
-        // on the worker queue (#391). Keep pumping so the result can be delivered; yield so the worker gets the CPU.
+        // on the worker queue. Keep pumping so the result can be delivered; yield so the worker gets the CPU.
         var asyncWait = Stopwatch.StartNew();
         var asyncPumps = 0;
         while (!isLoaded && asyncWait.ElapsedMilliseconds < 10000)
         {
             Pump(1);
             asyncPumps++;
-            async.Update(new VlPath(asset), false, true, out isLoaded, out _, out _);
+            async.Update(new VlPath(asset), false, true, ImageUpload.Auto, out isLoaded, out _);
             if (!isLoaded)
                 Thread.Sleep(1);
         }
-        check(isLoaded && first is { State: QtImageState.Ready, Width: 30 } && fired == first && loadedCount == 1,
-            $"362: LoadImage (Async) loaded ({first}, fired {loadedCount}, after {asyncWait.ElapsedMilliseconds} ms / {asyncPumps} pumps)");
+        s.Check(isLoaded && first is { State: QtImageState.Ready, Width: 30 } && fired == first && loadedCount == 1,
+            $"LoadImage (Async) loaded ({first}, fired {loadedCount}, after {asyncWait.ElapsedMilliseconds} ms / {asyncPumps} pumps)");
 
         // 6) Dispose: exactly the released ids leave QtNative after the next pumps; the element keeps its own reference.
         var before = Live();
         load.Dispose();
         missing.Dispose();
         async.Dispose();
-        check(client.PendingReleases == 3, $"362: dispose queues the releases ({client.PendingReleases})");
+        s.Check(client.PendingReleases == 3, $"dispose queues the releases ({client.PendingReleases})");
         Frame(null, null);
         Pump(2);
-        check(client.PendingReleases == 0 && client.LiveCount == 1, $"362: releases flushed in the next pump (live {client.LiveCount})");
-        check(Live() == before - 3, $"362: QtNative frees the released images ({before} → {Live()})");
+        s.Check(client.PendingReleases == 0 && client.LiveCount == 1, $"releases flushed in the next pump (live {client.LiveCount})");
+        s.Check(Live() == before - 3, $"QtNative frees the released images ({before} → {Live()})");
         toQt.Dispose();
         foreach (var n in nodes)
             n.Dispose();
         Pump(2);
-        check(client.LiveCount == 0, "362: all images released");
-        Native.vlqt_window_destroy(w);
+        s.Check(client.LiveCount == 0, "all images released");
+        Native.vlqt_scene_destroy(w);
         client.SetPumping(false);
         Pump(1);
     }
 
-    static int Live()
+    private static int Live()
     {
         Span<Native.vlqt_res_info> list = stackalloc Native.vlqt_res_info[256];
         return Native.ResList(list);

@@ -1,9 +1,10 @@
 # Builds everything needed to test VL.Qt locally: QtNative (+ Qt deploy), the C# library, VL.Qt.Stride and VL.Qt.Audio, optionally tests and a patch.
 # Usage: tools/build.ps1 [-Rid win-arm64|win-x64] [-Configuration Release|Debug] [-SkipNative] [-ForceDeploy]
 #                        [-Test] [-Only <scenario,...>] [-SmokeTimeout <s>] [-Patch <doc.vl>]
-#   -Test   unit tests (VL.Qt.Tests, VL.Qt.Audio.Tests) + SmokeTest (log and grabs in build/smoke/); -Only passes --only to the SmokeTest.
-#           Without -Only, QtTexture also runs in both thread modes (render thread, VLQT_OFFSCREEN_THREAD=0), grabs in build/smoke/qttexture-*
-#   -SmokeTimeout  seconds before the SmokeTest is killed (default 600; a full run takes about 4 min on win-arm64)
+#   -Test   unit tests (VL.Qt.Tests, VL.Qt.Audio.Tests) + SmokeTest via `dotnet test src/VL.Qt.SmokeTest` (build/smoke/: smoke.trx,
+#           checks.tsv, smoke.log, grabs/); -Only a,b = NUnit filter TestCategory=a|TestCategory=b (the scenario names).
+#           The QtTexture thread modes, device-lost etc. are own-process tests inside the run (no separate steps).
+#   -SmokeTimeout  seconds: hang timeout of the test host and ScenarioTimeoutSeconds of the SmokeTest (default 600)
 #   -Patch  compile-checks a patch with vvvvc (tools/vvvvc.ps1), e.g. -Patch "help/Qt/HowTo Draw a Rectangle.vl"
 # Rid defaults to the host architecture (only the Qt of that architecture is installed locally).
 # Exit code 0 = all requested steps passed; the summary at the end lists each step.
@@ -73,71 +74,93 @@ Invoke-Step "VL.Qt.Audio ($Configuration)" {
 
 if ($Test)
 {
+    # Timing limits (Perf category of the unit tests, SmokeTest PerfLimits) only warn in the gate; a measurement that
+    # runs alone on a quiet machine sets VLQT_PERF_WARN_ONLY=0 to make them hard. VLQT_PERF_FACTOR scales every limit.
+    if (-not $env:VLQT_PERF_WARN_ONLY) { $env:VLQT_PERF_WARN_ONLY = '1' }
+    # Closing check (P14): no issue references, no long comment lines, no file with two types in src (tools/check-source-rules.py).
+    Invoke-Step 'source rules' {
+        $py = Get-Command python, python3, py -ErrorAction SilentlyContinue | Select-Object -First 1
+        if (-not $py) { throw 'Python not found (needed for tools/check-source-rules.py)' }
+        & $py.Source -I "$repo\tools\check-source-rules.py" --root $repo
+        Assert-Exit 'check-source-rules.py'
+    }
     Invoke-Step 'unit tests' {
         dotnet test "$repo\src\VL.Qt.Tests" -c $Configuration -nologo --logger "console;verbosity=normal" --logger "trx;LogFileName=unit.trx" --results-directory "$repo\build\test-results"
         Assert-Exit 'dotnet test'
+        # Ignored tests (with the reason) and Perf warnings are easy to overlook in a green run: list them.
+        $trx = "$repo\build\test-results\unit.trx"
+        if (Test-Path $trx)
+        {
+            $ns = @{ t = 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010' }
+            foreach ($r in (Select-Xml -Path $trx -XPath '//t:UnitTestResult' -Namespace $ns).Node)
+            {
+                $text = "$($r.Output.StdOut)`n$($r.Output.ErrorInfo.Message)"
+                if ($r.outcome -eq 'NotExecuted' -and $text -notmatch '(?m)^\s*WARN ')
+                {
+                    $why = ($text -split "`n" | Where-Object { $_.Trim() } | Select-Object -First 1)
+                    Write-Host "IGNORED $($r.testName): $why" -ForegroundColor Yellow
+                }
+                foreach ($l in ($text -split "`n" | Where-Object { $_ -match '^\s*WARN ' }))
+                    { Write-Host "WARN $($r.testName): $($l.Trim() -replace '^WARN ', '')" -ForegroundColor Yellow }
+            }
+        }
     }
     Invoke-Step 'audio unit tests' {
         dotnet test "$repo\src\VL.Qt.Audio.Tests" -c $Configuration -nologo --logger "console;verbosity=normal" --logger "trx;LogFileName=audio.trx" --results-directory "$repo\build\test-results"
         Assert-Exit 'dotnet test VL.Qt.Audio.Tests'
     }
-    # One SmokeTest process; stdout.log and grabs go to $out. $threads sets VLQT_OFFSCREEN_THREAD for it (empty = unset: default).
-    function Invoke-Smoke([string]$exe, [string]$out, [string[]]$extraArgs, [string]$threads, [string]$modeLine)
-    {
-        New-Item -ItemType Directory -Force $out | Out-Null
-        $smokeArgs = @("`"$out\grabs`"") + $extraArgs
-        $saved = $env:VLQT_OFFSCREEN_THREAD
-        if ($threads) { $env:VLQT_OFFSCREEN_THREAD = $threads }
-        try
-        {
-            $p = Start-Process $exe -ArgumentList $smokeArgs -NoNewWindow -PassThru `
-                -RedirectStandardOutput "$out\stdout.log" -RedirectStandardError "$out\stderr.log"
-        }
-        finally { $env:VLQT_OFFSCREEN_THREAD = $saved }
-        $null = $p.Handle # without the cached handle ExitCode stays empty (Windows PowerShell): a crash counted as PASS (#534)
-        $sw = [Diagnostics.Stopwatch]::StartNew()
-        if (-not $p.WaitForExit($SmokeTimeout * 1000))
-        {
-            $p.Kill($true)
-            $p.WaitForExit()
-            # The last lines show the scenario that was running when the limit hit.
-            Get-Content "$out\stdout.log" -Tail 5 | Write-Host
-            throw ('timeout after {0:N0} s (-SmokeTimeout {1}), see {2}\stdout.log' -f $sw.Elapsed.TotalSeconds, $SmokeTimeout, $out)
-        }
-        $p.WaitForExit()
-        $log = @(Get-Content "$out\stdout.log")
-        $log -match '^(FAIL|WARN|SMOKE) ' | Write-Host
-        Write-Host ('{0} PASS, {1} FAIL, log + grabs: {2}' -f @($log -match '^PASS ').Count, @($log -match '^FAIL ').Count, $out)
-        if ($p.ExitCode) { throw "exit $($p.ExitCode), see $out\stdout.log" }
-        # the log is the second witness: an empty ExitCode must not turn a red run into PASS
-        if (-not ($log -contains 'SMOKE OK')) { throw "no 'SMOKE OK' in $out\stdout.log" }
-        # the run really used the mode it is named for (QtNative logs it at the first offscreen scene)
-        if ($modeLine -and -not ($log -match [regex]::Escape($modeLine))) { throw "no '$modeLine' in $out\stdout.log: wrong thread mode" }
-    }
-
-    $exe = $null
+    # The SmokeTest is an NUnit project (one Qt start for the run; qttexture-render-thread / qttexture-main-thread, device-lost
+    # and the other own-process scenarios run as helper processes of their own). Results: build/smoke/smoke.trx, grabs in
+    # build/smoke/grabs, Qt log smoke.log, one line per check in checks.tsv.
     Invoke-Step "SmokeTest ($Rid)" {
-        dotnet build "$repo\src\VL.Qt.SmokeTest" -c $Configuration -v q -nologo -p:RuntimeIdentifier=$Rid
-        Assert-Exit 'SmokeTest build'
-        $script:exe = (Get-ChildItem "$repo\src\VL.Qt.SmokeTest\bin\$Configuration" -Recurse -Filter VL.Qt.SmokeTest.exe |
-            Where-Object FullName -like "*\$Rid\*" | Select-Object -First 1).FullName
-        if (-not $exe) { throw "VL.Qt.SmokeTest.exe ($Rid) not found" }
         $out = "$repo\build\smoke"
         if (Test-Path $out) { Remove-Item $out -Recurse -Force }
-        Invoke-Smoke $exe $out $(if ($Only) { '--only', $Only }) '' ''
-    }
-    # QtTexture renders offscreen scenes on a Qt render thread by default or on the main thread (VLQT_OFFSCREEN_THREAD=0, #116):
-    # its suites run in both modes, as processes of their own (the qttexture device loss parts need D3D11On12 from the start,
-    # which the full run does not set). Not with -Only: that is a narrowed run.
-    if (-not $Only)
-    {
-        foreach ($mode in @(@{ Name = 'render thread'; Threads = ''; Line = 'offscreen scenes render on 1 Qt render thread(s)' },
-                            @{ Name = 'main thread'; Threads = '0'; Line = 'offscreen scenes render on the main thread' }))
+        New-Item -ItemType Directory -Force $out | Out-Null
+        $testArgs = @("$repo\src\VL.Qt.SmokeTest", '-c', $Configuration, '-nologo', "-p:RuntimeIdentifier=$Rid",
+            '--logger', 'trx;LogFileName=smoke.trx', '--results-directory', $out,
+            '--blame-hang', '--blame-hang-timeout', "$($SmokeTimeout)s")
+        # -Only a,b: the scenarios are the TestCategory values
+        if ($Only) { $testArgs += '--filter', (($Only -split '[,\s]+' | Where-Object { $_ } | ForEach-Object { "TestCategory=$_" }) -join '|') }
+        # run settings: a scenario that hangs inside Qt counts as blocked after -SmokeTimeout
+        $testArgs += '--', "TestRunParameters.Parameter(name=`"ScenarioTimeoutSeconds`", value=`"$SmokeTimeout`")"
+        dotnet test @testArgs 2>&1 | Tee-Object "$out\dotnet-test.log" | ForEach-Object { if ("$_" -match '^\s*(Failed |Passed!|Failed!|Skipped!|error|warning)|No test matches|\[FAIL\]') { Write-Host $_ } }
+        $exit = $LASTEXITCODE
+        $trx = "$out\smoke.trx"
+        $counters = $null
+        if (Test-Path $trx) { $counters = ([xml](Get-Content $trx -Raw)).TestRun.ResultSummary.Counters }
+        # A test with a warning (a Perf limit in warn-only mode) is NotExecuted in the trx, but it ran: list its WARN lines.
+        $warned = 0
+        if (Test-Path $trx)
         {
-            Invoke-Step "QtTexture ($($mode.Name))" {
-                Invoke-Smoke $exe ("$repo\build\smoke\qttexture-" + ($mode.Name -replace ' ', '-')) @('--only', 'qttexture,QtTextureInput') $mode.Threads $mode.Line
+            $wns = @{ t = 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010' }
+            foreach ($r in (Select-Xml -Path $trx -XPath '//t:UnitTestResult[@outcome="NotExecuted"]' -Namespace $wns).Node)
+            {
+                $wl = @("$($r.Output.StdOut)" -split "`n" | Where-Object { $_ -match '^\s*WARN ' })
+                if ($wl.Count) { $warned++ }
+                foreach ($l in $wl) { Write-Host "WARN $($r.testName): $($l.Trim() -replace '^WARN ', '')" -ForegroundColor Yellow }
             }
         }
+        # Failing tests with their message, then the failing check lines.
+        if (Test-Path $trx)
+        {
+            $ns = @{ t = 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010' }
+            foreach ($r in (Select-Xml -Path $trx -XPath '//t:UnitTestResult[@outcome="Failed"]' -Namespace $ns).Node)
+            {
+                Write-Host "FAILED TEST $($r.testName)" -ForegroundColor Red
+                $msg = $r.Output.ErrorInfo.Message
+                if ($msg) { ($msg -split "`n" | Select-Object -First 8) | ForEach-Object { Write-Host "    $_" -ForegroundColor Red } }
+            }
+        }
+        if (Test-Path "$out\checks.tsv")
+        {
+            $bad = @(Get-Content "$out\checks.tsv" | Where-Object { ($_ -split "`t")[1] -eq 'FAIL' })
+            foreach ($l in $bad) { Write-Host ('FAIL check: ' + ($l -replace "`t", ' | ')) -ForegroundColor Red }
+        }
+        if ($counters) { Write-Host ('{0} passed, {1} failed, {2} not executed of {3} tests; trx + grabs + logs: {4}' -f $counters.passed, $counters.failed, $counters.notExecuted, $counters.total, $out) }
+        if ($exit) { throw "dotnet test exit $exit, see $out\dotnet-test.log" }
+        # an unknown -Only name selects nothing, and dotnet test would still exit 0
+        if (-not $counters -or ([int]$counters.executed + $warned) -eq 0) { throw "no SmokeTest ran (filter: $Only), see $out\dotnet-test.log" }
+        if ([int]$counters.failed -gt 0) { throw "$($counters.failed) tests failed, see $trx" }
     }
 }
 

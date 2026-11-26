@@ -6,45 +6,27 @@ using VL.Core.Import;
 using VL.Lib.Collections;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Nodes
 {
-    /// <summary>How <see cref="BlendNode"/> combines the layer with the element (W3C Compositing and Blending, separable modes).</summary>
-    public enum BlendMode
-    {
-        Normal,
-        Multiply,
-        Screen,
-        Overlay,
-        Add,
-        Subtract,
-        Difference,
-        Darken,
-        Lighten,
-        SoftLight,
-        HardLight,
-        ColorDodge,
-        ColorBurn,
-    }
-
     /// <summary>
     /// Blends a layer (an element) over the element with a blend mode like Multiply, Screen, Overlay, Add, Difference or Soft
     /// Light. The element, with the effect nodes before this one, is the base. The layer is stretched over the element's own
     /// size, also behind a Blur or other effects that make the picture bigger (outside the element the layer is transparent),
     /// and is not drawn itself and does not count for layout. Where the layer is transparent the base stays unchanged.
     /// Without a Layer the chain passes on unchanged.
-    /// Connect Output to the Effect pin of an element, or chain it with other effect nodes (data flow order: the node at the
-    /// Effect pin acts last). A shader effect ends a run of Blur/DropShadow/... nodes and costs a layer of its own.
+    /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/para"/>
     /// </summary>
     [ProcessNode(Name = "Blend", Category = Categories.Effects)]
     public sealed class BlendNode : IDisposable
     {
         internal readonly record struct Props(Element? Layer, Sampler? LayerSampler, BlendMode Mode, float Opacity);
 
-        static readonly string[] s_shaders = { "blend" };
+        private static readonly ShaderEffectSource[] s_shaders = { ShaderEffectSource.Builtin("blend") };
 
-        static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
-            new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.Single, ids,
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
+            new ShaderEffect(previous, Protocol.EffectTemplate.Single, ids,
                 new[]
                 {
                     Uniform.Int("mode", (int)p.Mode),
@@ -53,7 +35,8 @@ namespace VL.Qt.Nodes
                 }.ToSpread(),
                 default);
 
-        readonly BuiltinShaderLink<Props> _link;
+        private readonly ShaderEffectBuilder<Props> _link;
+        private readonly ElementInput _layer;
 
         public BlendNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
@@ -61,25 +44,39 @@ namespace VL.Qt.Nodes
         }
 
         internal BlendNode(ResourceClient? client, NodeErrors? errors = null)
-            => _link = new BuiltinShaderLink<Props>(client, s_shaders, s_create, errors);
+        {
+            _link = new ShaderEffectBuilder<Props>(client, s_shaders, s_create, errors);
+            _layer = new ElementInput(errors, "Layer");
+        }
 
-        internal BuiltinShaderLink<Props> Core => _link;
+        internal ShaderEffectBuilder<Props> Core => _link;
 
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
         /// <param name="layer">Element blended over the base (e.g. a gradient, an image, a ShaderEffect). Unconnected: no effect.</param>
-        /// <param name="layerSampler">How the layer is read (filter, mipmaps), from the Sampler node. The address has no effect here: outside the element the layer is transparent. Unconnected: as the layer is.</param>
-        /// <param name="mode">How the layer and the base are combined.</param>
+        /// <param name="layerSampler">How the layer is read (filter, mipmaps), from the Sampler node. The address has no effect here:
+        /// outside the element the layer is transparent. Unconnected: as the layer is.</param>
+        /// <param name="blendMode">How the layer and the base are combined.</param>
         /// <param name="opacity">Strength of the layer, 0 = base only, 1 = full blend.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
-            Element? layer,
+            IElement? layer,
             [Pin(Visibility = PinVisibility.Optional)] Sampler? layerSampler,
-            BlendMode mode,
-            [DefaultValue(1f)] float opacity)
-            => layer is null ? input : _link.Describe(input, new Props(layer, layerSampler, mode, opacity));
+            BlendMode blendMode,
+            [DefaultValue(1f)] float opacity,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
+        {
+            var element = _layer.Update(layer);
+            return !apply || element is null ? input : _link.Describe(input, new Props(element, layerSampler, blendMode, opacity));
+        }
 
-        public void Dispose() => _link.Dispose();
+        public void Dispose()
+        {
+            _layer.Dispose();
+            _link.Dispose();
+        }
     }
 }

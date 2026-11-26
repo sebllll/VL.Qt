@@ -83,7 +83,7 @@
             <Pin Id="m8JMnMK5wXsDfie7405Bta" Name="Accent" Kind="InputPin" />
             <Pin Id="C6W8RNUGacot4ogFwUPKWQ" Name="Label" Kind="InputPin" />
             <Pin Id="jeY08w5O43mT8EQ763VchA" Name="Properties" Kind="InputPin" IsHidden="true" />
-            <Pin Id="cX9uybdU1ZSInGg9HC18Pa" Name="Size" Kind="InputPin" />
+            <Pin Id="cX9uybdU1ZSInGg9HC18Pa" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="6O4I09BDumWVMHf8pBKabf" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="rdsJnFQtHEOs0BRu9065OL" Name="Transform" Kind="InputPin" />
             <Pin Id="3PjTXqRvjJuN7FwVDMzdmc" Name="Anchor" Kind="InputPin" IsHidden="true" />
@@ -101,7 +101,6 @@
             <Pin Id="MaViMMK2KzE2d4oegdHDdW" Name="Full" Kind="OutputPin" />
             <Pin Id="9raA3zeW6OLJ6GOi6IZzVO" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="ISVrECKvvaRLWLaidggaCK" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="b2oUXfiZ4zZUfhrFRg4iXf" Name="Error" Kind="OutputPin" />
           </Node>
           <Pad Id="KyHrrO3BAPH67JQ0TDZTQk" Bounds="360,381,302,47" ShowValueBox="true" isIOBox="true" Value="Gauge is generated from qml/Gauge.qml next to this patch. Middle click on it opens the file.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
@@ -112,7 +111,6 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="BZsZjAOSzogMYjcfA6QQuT" Comment="Error" Bounds="262,480,300,15" ShowValueBox="true" isIOBox="true" />
           <Pad Id="TRQT81Svt5TPnwcD8RfB6y" Comment="Full" Bounds="222,510,35,35" ShowValueBox="true" isIOBox="true" />
           <Pad Id="OG5OglC77JqTDaGM4pFvFU" Comment="Milestone" Bounds="184,560,60,40" ShowValueBox="true" isIOBox="true" />
           <Pad Id="FhXjbQJ5QGJ8pf91KcCVUA" Comment="Percent" Bounds="144,615,35,15" ShowValueBox="true" isIOBox="true" />
@@ -133,9 +131,9 @@
             <Pin Id="6uUo5KO5AoLaO0xB7PNAZV" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="CY9zPHRmlCiKIZQ82VsuZN" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="1Ti6o80mS68gqM2qnJAMYc" Name="Input" Kind="InputPin" />
-            <Pin Id="RZSPXmH9kt1iTFqoMSwvhf" Name="Space" Kind="InputPin" />
-            <Pin Id="WxxTEF9kD2iMo445fROSx7" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="WPD6dm397Co0uVRSLiyn4O" Name="Enabled" Kind="InputPin" />
+            <Pin Id="RZSPXmH9kt1iTFqoMSwvhf" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="WxxTEF9kD2iMo445fROSx7" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="WPD6dm397Co0uVRSLiyn4O" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="G5rQ2P2juAP3mX4lMGWO0C" Name="Title" Kind="InputPin" />
             <Pin Id="lCZA5TumK5jGXzPXKa0b4O" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="azabpgXNlcxGVjFQx4D1az" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -146,7 +144,7 @@
             <Pin Id="pY1ZlPKG9gjp8WbOVd3zBE" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="MQy5plOTJU9jaRLYhqmqfm" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="orztv7n95UUMR6Vmi83jZo" Bounds="85,740,840,250" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The nodes appear when the qml folder exists next to the saved patch, or in the qml folder of a package; subfolders count. Only files whose name starts with an uppercase letter become nodes (QML's rule for components): main.qml or helpers are skipped. Middle click on the node opens the file.&#xA;- Pins come only from the declarations of the root object: property (input, plus an optional output with the last value QML changed), readonly property (output), signal (output). Types: real, int, bool, string, color, vector2d/3d/4d, rect. The other pins are those of QmlElement (see HowTo Use a QML file).&#xA;- A pin sends nothing until its value differs from the declared default: a binding or an initial value in the file stays in charge until you really set the pin.&#xA;- Save the .qml and the running element reloads. The pins change only when the declarations change (a new, renamed or retyped property or signal, a default, the comment above it, a head tag); links on pins with the same name stay.&#xA;- alias, var, list and object properties get no pin (info at the node). Set them through the hidden Properties pin, the dictionary of QmlElement (plan B).&#xA;- A file that does not parse still gives a node: parser messages show at the node, QML errors at Error.&#xA;- Full and Milestone 100 stay silent here: the LFO ramp falls back to 0 before the animated bar (Behavior, 400 ms) reaches 100 %. Set Value to 1 and they fire. Signals report what QML emits, nothing is lost on the way.&#xA;- Export: the qml folder next to the exported patch is copied next to the exe.&#xA;- Experimental, like QmlElement.">
+          <Pad Id="orztv7n95UUMR6Vmi83jZo" Bounds="85,740,840,305" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The nodes appear when the qml folder exists next to the saved patch, or in the qml folder of a package; subfolders count. Only files whose name starts with an uppercase letter become nodes (QML's rule for components): main.qml or helpers are skipped. Middle click on the node opens the file.&#xA;- Pins come only from the declarations of the root object: property (input, plus an optional output with the last value QML changed), readonly property (output), signal (output). Types: real, int, bool, string, color, vector2d/3d/4d, rect. The other pins are those of QmlElement (see HowTo Use a QML file).&#xA;- A pin sends nothing until its value differs from the declared default: a binding or an initial value in the file stays in charge until you really set the pin.&#xA;- Save the .qml and the running element reloads. The pins change only when the declarations change (a new, renamed or retyped property or signal, a default, the comment above it, a head tag); links on pins with the same name stay.&#xA;- alias, var, list and object properties get no pin (info at the node). Set them through the hidden Properties pin, the dictionary of QmlElement (plan B).&#xA;- A file that does not parse still gives a node: parser messages show at the node, QML errors at the node and in the log.&#xA;- Full and Milestone 100 stay silent here: the LFO ramp falls back to 0 before the animated bar (Behavior, 400 ms) reaches 100 %. Set Value to 1 and they fire. Signals report what QML emits, nothing is lost on the way.&#xA;- Export: the qml folder next to the exported patch is copied next to the exe.&#xA;- Experimental, like QmlElement.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -170,7 +168,6 @@
         <Link Id="RhZLnvzVwPquwkfC4duVTi" Ids="7wrTD11BxzWPHkODNeurjd,m8JMnMK5wXsDfie7405Bta" />
         <Link Id="cPtBnxPZRdbRmezbfDE3xN" Ids="tMehSvSan7yvcVXoPGAGor,C6W8RNUGacot4ogFwUPKWQ" />
         <Link Id="U1JPonN1M0twkn2la6yNU0" Ids="uBxrLAbPJHAK1YCeBdkiO2,rdsJnFQtHEOs0BRu9065OL" />
-        <Link Id="ZOgJXSSFLk21AhLOSb2q7c" Ids="b2oUXfiZ4zZUfhrFRg4iXf,BZsZjAOSzogMYjcfA6QQuT" />
         <Link Id="AMPitshzXsEqIOEIbRZmn4" Ids="MaViMMK2KzE2d4oegdHDdW,TRQT81Svt5TPnwcD8RfB6y" />
         <Link Id="MYQiZITPPO8LlOpRfpCKXO" Ids="nv2e1elr7RkuhML7B6Vooj,OG5OglC77JqTDaGM4pFvFU" />
         <Link Id="NouNvzBFvd2Zpg1MopbYZZ" Ids="cbn2sZb8HlPeFAr70KrAaz,FhXjbQJ5QGJ8pf91KcCVUA" />

@@ -42,13 +42,7 @@
             <Pin Id="Bn8Qw3KrT6vMp1LsG4nAa2" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="Dp1Rs6LxW9tNq4KmH7pCc5" Name="Input" Kind="InputPin" />
             <Pin Id="Gs4Tv9MnQ2wLr7KpJ1qEe8" Name="Is Visible" Kind="OutputPin" />
-            <Pin Id="Jv7Wq2NsR5xKt8LmL3rGg4" Name="Error" Kind="OutputPin" />
           </Node>
-          <Pad Id="Lw3Xr8KpS1vNq6TmN9sHi2" Comment="Error" Bounds="200,350,420,60" ShowValueBox="true" isIOBox="true">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
-              <Choice Kind="TypeFlag" Name="String" />
-            </p:TypeAnnotation>
-          </Pad>
           <Pad Id="Np6Ys1LqT4wKr9MxQ2tJl5" Comment="Measured Size" Bounds="100,250,100,30" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="3D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
@@ -60,7 +54,7 @@
             </p:TypeAnnotation>
           </Pad>
           <Node Bounds="500,160,65,19" Id="5QOpF1gVTUy65wgcmQTZQL">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LoadImage" />
             </p:NodeReference>
@@ -92,21 +86,13 @@
             <Pin Id="Xz8Ia2UbC5fTz1VgZ3dSu7" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="Ya9Jb3VcD6gUa2WhA4eTv8" Name="Input" Kind="InputPin" />
             <Pin Id="Zb1Kc4WdE7hVb3XiB5fUw9" Name="Is Visible" Kind="OutputPin" />
-            <Pin Id="Ac2Ld5XeF8iWc4YjC6gVx1" Name="Error" Kind="OutputPin" />
           </Node>
-          <Pad Id="Bd3Me6YfG9jXd5ZkD7hWy2" Comment="Error" Bounds="500,350,420,60" ShowValueBox="true" isIOBox="true">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
-              <Choice Kind="TypeFlag" Name="String" />
-            </p:TypeAnnotation>
-          </Pad>
         </Canvas>
         <Link Id="Qr9Zt4MwV7xNs2KpS5vLn8" Ids="Tq6Ns1LvW4xKp9RmC2hSs8,Dp1Rs6LxW9tNq4KmH7pCc5" />
-        <Link Id="Uv5Cw1PqX4sKt8LnV2xPq6" Ids="Jv7Wq2NsR5xKt8LmL3rGg4,Lw3Xr8KpS1vNq6TmN9sHi2" />
         <Link Id="Ce4Nf7ZgH1kYe6AlE8iXz3" Ids="Tq6Ns1LvW4xKp9RmC2hSt1,Np6Ys1LqT4wKr9MxQ2tJl5" />
         <Link Id="Df5Og8AhI2lZf7BmF9jYa4" Ids="Pq8As3MtU6xLr2NyR4vKm9,j0z5Gsg6DUFyYjqRq3WO0L" />
         <Link Id="ftnvMOW6XaDnGd0xLb722H" Ids="V230Dk02Zh1awzxG1ORhzh,Su3Dv6PwX9aOu5QbU7yNp2" />
         <Link Id="Eg6Ph9BiJ3mAg8CnG1kZb5" Ids="Tv4Ew7QxY1bPv6RcV8zOq3,Ya9Jb3VcD6gUa2WhA4eTv8" />
-        <Link Id="Fh7Qi1CjK4nBh9DoH2lAc6" Ids="Ac2Ld5XeF8iWc4YjC6gVx1,Bd3Me6YfG9jXd5ZkD7hWy2" />
         <Patch Id="Wx8Dx4QrY7vLs1MpW5yRs9" Name="Create" />
         <Patch Id="Yz1Fy7RsZ2wNt4KqX8zTt4" Name="Update" />
         <ProcessDefinition Id="Ab4Gz2StA5xMv7LrY1aVv7">

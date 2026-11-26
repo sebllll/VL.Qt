@@ -1,58 +1,66 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Threading;
+using VL.Qt.Interop;
+using VL.Qt.Wire;
 using VL.Qt;
 
-// Button (#213, package A): QtQuick.Controls Button with style Basic. Raw protocol against QtNative: creation, implicit
-// size from the text (AUTO_SIZE default on), Bounds size with AUTO_SIZE off, EV_CLICK per clicked signal without the
+// Button (package A): QtQuick.Controls Button with style Basic. Raw protocol against QtNative: creation, implicit
+// size from the text (AUTO_SIZE default on), Bounds size with AUTO_SIZE off, EVENT_CLICK per clicked signal without the
 // Interactive flag, Enabled false suppresses clicks, AutoRepeat repeats clicks while held. Mouse input comes from the
 // TEST export vlqt_test_send_mouse (see InteractionTest).
-static class ButtonTest
+[TestFixture, NonParallelizable]
+public static class ButtonTest
 {
-    readonly record struct Rec(ushort Event, uint Handle, byte[] Payload)
+    /// <summary>Button control.</summary>
+    [Test, Category("button")]
+    public static void Button() => Scenario.Run(Run);
+
+    private readonly record struct Rec(ushort Event, uint Handle, byte[] Payload)
     {
         public float F(int i) => BinaryPrimitives.ReadSingleLittleEndian(Payload.AsSpan(4 * i));
         public uint U32 => BinaryPrimitives.ReadUInt32LittleEndian(Payload);
     }
 
-    static List<Rec> Parse(ReadOnlySpan<byte> b)
+    private static List<Rec> Parse(ReadOnlySpan<byte> b)
     {
         var list = new List<Rec>();
         int off = 0;
         while (off + 12 <= b.Length)
         {
             ushort ev = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off));
-            int len = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(off + 2));
-            if (len < 8 || off + 4 + len > b.Length)
+            int len = (int)BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4));
+            if (len < 4 || off + 8 + len > b.Length)
                 break;
-            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 4)), b.Slice(off + 12, len - 8).ToArray()));
-            off += (4 + len + 3) & ~3;
+            list.Add(new Rec(ev, BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(off + 8)), b.Slice(off + 12, len - 4).ToArray()));
+            off += (8 + len + 3) & ~3;
         }
         return list;
     }
 
-    public static void Run(Action<bool, string> check, Action<int> pump)
+    private static void Run(Scenario s)
     {
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt button test");
-        check(w != IntPtr.Zero, "213: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt button test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var buf = new byte[1 << 16];
         void CheckApply(string what)
         {
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"213: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            cmd.Clear();
         }
         List<Rec> Frame()
         {
-            pump(1);
-            int n = Native.Poll(w, buf);
-            check(n >= 0, $"213: poll ({n})");
+            s.Pump(1);
+            int n = NativeCalls.Poll(w, buf);
+            s.Check(n >= 0, $"poll ({n})");
             return Parse(buf.AsSpan(0, Math.Max(n, 0)));
         }
-        void Mouse(int type, float x, float y) => check(Native.vlqt_test_send_mouse(w, type, x, y) == 0, $"213: test_send_mouse {type}");
+        void Mouse(int type, float x, float y) => s.Check(NativeTest.vlqt_test_send_mouse(w, type, x, y) == 0, $"test_send_mouse {type}");
         static Rec? Last(List<Rec> recs, ushort ev)
         {
             Rec? found = null;
@@ -64,102 +72,102 @@ static class ButtonTest
         {
             uint c = 0;
             foreach (var r in recs)
-                if (r.Event == Protocol.Ev.Click && r.Handle == H) c += r.U32;
+                if (r.Event == Protocol.EventId.Click && r.Handle == H) c += r.U32;
             return c;
         }
         static string S(List<Rec> recs) => string.Join("; ", recs.ConvertAll(r => $"ev{r.Event} h{r.Handle} [{string.Join(",", r.Payload)}]"));
 
         // Created with text, bound without flags; Bounds size 0 + AUTO_SIZE default on -> implicit size.
-        cmd.Reset();
-        cmd.Create(B, Protocol.Type.Button);
-        VL.Qt.Styles.BaseStyle.Write(cmd, B); // like the Reconciler (#292)
+        cmd.Clear();
+        cmd.Create(B, Protocol.ElementType.Button);
+        VL.Qt.Styles.BaseStyle.Write(cmd, B); // like the Reconciler
         cmd.SetPlace(B, 100, 100, 0, 0);
-        cmd.SetString(B, Protocol.Prop.Text, "Click me");
-        cmd.SetBool(B, Protocol.Prop.Enabled, true);
-        cmd.SetBool(B, Protocol.Prop.AutoRepeat, false);
+        cmd.SetString(B, Protocol.PropertyId.Text, "Click me");
+        cmd.SetBool(B, Protocol.PropertyId.Enabled, true);
+        cmd.SetBool(B, Protocol.PropertyId.AutoRepeat, false);
         cmd.Reparent(B, 0, 0);
-        cmd.Bind(B, H, 0);
+        cmd.Bind(B, H);
         CheckApply("button create + text/enabled/autoRepeat");
-        Mouse(Protocol.Mouse.Move, 700, 500);
-        pump(2);
+        Mouse(TestProtocol.Mouse.Move, 700, 500);
+        s.Pump(2);
         var recs = Frame();
         recs.AddRange(Frame());
-        var m = Last(recs, Protocol.Ev.Measured);
-        var sb = Last(recs, Protocol.Ev.SceneBounds);
+        var m = Last(recs, Protocol.EventId.Measured);
+        var sb = Last(recs, Protocol.EventId.SceneBounds);
         float w0 = m?.F(0) ?? 0, h0 = m?.F(1) ?? 0;
-        check(w0 > 20 && h0 > 10, $"213: implicit size from text ({w0} x {h0}) ({S(recs)})");
-        check(sb is { } b0 && b0.F(0) == 100 && b0.F(1) == 100 && b0.F(2) == w0 && b0.F(3) == h0,
-            $"213: AUTO_SIZE on -> item size = implicit size ({S(recs)})");
-        check(Native.vlqt_test_handler_count(w, B) == 0, "213: no Interactive handlers needed for clicks");
+        s.Check(w0 > 20 && h0 > 10, $"implicit size from text ({w0} x {h0}) ({S(recs)})");
+        s.Check(sb is { } b0 && b0.F(0) == 100 && b0.F(1) == 100 && b0.F(2) == w0 && b0.F(3) == h0,
+            $"AUTO_SIZE on -> item size = implicit size ({S(recs)})");
+        s.Check(NativeTest.vlqt_test_handler_count(w, B) == 0, "no Interactive handlers needed for clicks");
 
         // Longer text -> wider implicit size, follows without a new Bounds.
-        cmd.SetString(B, Protocol.Prop.Text, "Click me, I am a much longer label");
+        cmd.SetString(B, Protocol.PropertyId.Text, "Click me, I am a much longer label");
         CheckApply("button longer text");
         recs = Frame();
-        var m1 = Last(recs, Protocol.Ev.Measured);
-        check(m1 is { } mm && mm.F(0) > w0 + 50, $"213: longer text -> wider implicit width ({S(recs)})");
+        var m1 = Last(recs, Protocol.EventId.Measured);
+        s.Check(m1 is { } mm && mm.F(0) > w0 + 50, $"longer text -> wider implicit width ({S(recs)})");
         float w1 = m1?.F(0) ?? w0;
 
-        // Click = press + release over the button -> EV_CLICK 1 without the Interactive flag.
+        // Click = press + release over the button -> EVENT_CLICK 1 without the Interactive flag.
         float cx = 100 + w1 / 2, cy = 100 + h0 / 2;
-        Mouse(Protocol.Mouse.Move, cx, cy);
-        Mouse(Protocol.Mouse.Press, cx, cy);
+        Mouse(TestProtocol.Mouse.Move, cx, cy);
+        Mouse(TestProtocol.Mouse.Press, cx, cy);
         recs = Frame();
-        check(Clicks(recs) == 0, $"213: press alone -> no click ({S(recs)})");
-        Mouse(Protocol.Mouse.Release, cx, cy);
+        s.Check(Clicks(recs) == 0, $"press alone -> no click ({S(recs)})");
+        Mouse(TestProtocol.Mouse.Release, cx, cy);
         recs = Frame();
-        check(Clicks(recs) == 1, $"213: release over the button -> CLICK 1 ({S(recs)})");
+        s.Check(Clicks(recs) == 1, $"release over the button -> CLICK 1 ({S(recs)})");
         recs = Frame();
-        check(Clicks(recs) == 0, $"213: click is sent once ({S(recs)})");
+        s.Check(Clicks(recs) == 0, $"click is sent once ({S(recs)})");
 
         // Release outside -> no click (Qt default).
-        Mouse(Protocol.Mouse.Press, cx, cy);
-        Mouse(Protocol.Mouse.Move, 700, 500);
-        Mouse(Protocol.Mouse.Release, 700, 500);
+        Mouse(TestProtocol.Mouse.Press, cx, cy);
+        Mouse(TestProtocol.Mouse.Move, 700, 500);
+        Mouse(TestProtocol.Mouse.Release, 700, 500);
         recs = Frame();
-        check(Clicks(recs) == 0, $"213: release outside -> no click ({S(recs)})");
+        s.Check(Clicks(recs) == 0, $"release outside -> no click ({S(recs)})");
 
         // Enabled false -> no clicks.
-        cmd.SetBool(B, Protocol.Prop.Enabled, false);
+        cmd.SetBool(B, Protocol.PropertyId.Enabled, false);
         CheckApply("button disabled");
-        Mouse(Protocol.Mouse.Move, cx, cy);
-        Mouse(Protocol.Mouse.Press, cx, cy);
-        Mouse(Protocol.Mouse.Release, cx, cy);
+        Mouse(TestProtocol.Mouse.Move, cx, cy);
+        Mouse(TestProtocol.Mouse.Press, cx, cy);
+        Mouse(TestProtocol.Mouse.Release, cx, cy);
         recs = Frame();
-        check(Clicks(recs) == 0, $"213: disabled -> no click ({S(recs)})");
+        s.Check(Clicks(recs) == 0, $"disabled -> no click ({S(recs)})");
 
         // AutoRepeat: holding the press repeats clicked (Qt: delay 300 ms, interval 100 ms, wall clock timers).
-        cmd.SetBool(B, Protocol.Prop.Enabled, true);
-        cmd.SetBool(B, Protocol.Prop.AutoRepeat, true);
+        cmd.SetBool(B, Protocol.PropertyId.Enabled, true);
+        cmd.SetBool(B, Protocol.PropertyId.AutoRepeat, true);
         CheckApply("button autoRepeat");
-        Mouse(Protocol.Mouse.Press, cx, cy);
+        Mouse(TestProtocol.Mouse.Press, cx, cy);
         uint repeated = 0;
         // Hold until 3 repeats arrived (typically ~700 ms), at most 3 s: a stalled machine delays the wall clock timers,
-        // a missing auto repeat never gets there (#379).
+        // a missing auto repeat never gets there.
         var held = System.Diagnostics.Stopwatch.StartNew();
         while (repeated < 3 && held.ElapsedMilliseconds < 3000)
         {
             Thread.Sleep(50);
             repeated += Clicks(Frame());
         }
-        Mouse(Protocol.Mouse.Release, cx, cy);
+        Mouse(TestProtocol.Mouse.Release, cx, cy);
         repeated += Clicks(Frame());
-        check(repeated >= 3, $"213: autoRepeat -> repeated clicks while held ({repeated})");
+        s.Check(repeated >= 3, $"autoRepeat -> repeated clicks while held ({repeated})");
 
         // AUTO_SIZE off -> Bounds size counts.
-        cmd.SetBool(B, Protocol.Prop.AutoSize, false);
+        cmd.SetBool(B, Protocol.PropertyId.AutoSize, false);
         cmd.SetPlace(B, 100, 100, 200, 60);
         CheckApply("button AUTO_SIZE off");
         recs = Frame();
-        var sb2 = Last(recs, Protocol.Ev.SceneBounds);
-        check(sb2 is { } b2 && b2.F(2) == 200 && b2.F(3) == 60, $"213: AUTO_SIZE off -> Bounds size ({S(recs)})");
+        var sb2 = Last(recs, Protocol.EventId.SceneBounds);
+        s.Check(sb2 is { } b2 && b2.F(2) == 200 && b2.F(3) == 60, $"AUTO_SIZE off -> Bounds size ({S(recs)})");
 
         cmd.Destroy(B);
         CheckApply("button destroy");
-        Native.vlqt_window_destroy(w);
-        pump(1);
+        Native.vlqt_scene_destroy(w);
+        s.Pump(1);
     }
 
-    const uint B = 1;
-    const uint H = 31;
+    private const uint B = 1;
+    private const uint H = 31;
 }

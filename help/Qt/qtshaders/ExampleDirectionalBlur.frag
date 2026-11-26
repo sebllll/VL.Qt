@@ -29,13 +29,13 @@ layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
 
-    // @summary Direction of the blur in degrees: 0 = horizontal, increases clockwise on screen.
+    // @summary Direction of the blur in cycles (1 = full turn): 0 = horizontal, increases clockwise on screen.
     // @default 0
     float angle;
 
     // Not named "length": the GLSL translation renames a member that is called like a GLSL builtin, and the GL backend
     // would then not set it (#77). Avoid builtin names (length, distance, dot, step, mix, ...) for uniforms.
-    // @summary Length of the blur line in DIP (1 unit in a patch = 100 DIP), total and centred on the pixel. 0 = no blur.
+    // @summary Length of the blur line in DIP, total and centred on the pixel. 0 = no blur.
     // @default 10
     // @min 0
     float blurLength;
@@ -68,6 +68,8 @@ int sampleCount(float len)
 // Bilinear sample of the premultiplied source, done by hand: the layers are sampled nearest (not smooth), and a nearest
 // sample every pixel or less would hit some texels twice and skip others, which shows as hatching. Outside the item it is
 // transparent.
+// textureLod, not texture: the source has no mipmaps, so both read the same, but with texture the shader compiler copies the
+// loop maxSamples times, and that large shader crashes the Windows ARM64 software renderer (WARP).
 vec4 fetch(vec2 uv)
 {
     if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0)
@@ -76,8 +78,8 @@ vec4 fetch(vec2 uv)
     vec2 i = floor(p);
     vec2 f = p - i;
     vec2 c = (i + 0.5) * texelSize;
-    return mix(mix(texture(source, c), texture(source, c + vec2(texelSize.x, 0.0)), f.x),
-               mix(texture(source, c + vec2(0.0, texelSize.y)), texture(source, c + texelSize), f.x), f.y);
+    return mix(mix(textureLod(source, c, 0.0), textureLod(source, c + vec2(texelSize.x, 0.0), 0.0), f.x),
+               mix(textureLod(source, c + vec2(0.0, texelSize.y), 0.0), textureLod(source, c + texelSize, 0.0), f.x), f.y);
 }
 
 void main()
@@ -89,7 +91,7 @@ void main()
         return;
     }
     int n = sampleCount(len);
-    float a = radians(angle);
+    float a = 6.28318530718 * angle;
     vec2 step = vec2(cos(a), sin(a)) * len * texelSize;
     vec4 sum = vec4(0.0);
     for (int i = 0; i < n; ++i) {

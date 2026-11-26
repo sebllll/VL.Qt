@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="q0MQbJhwYBlga7aqN9GVeO" Bounds="85,85,572,133" ShowValueBox="true" isIOBox="true" Value="ShaderEffect [Qt]&#xD;&#xA;- Input: element the shader reads as sampler2D &quot;source&quot;, unconnected = generative&#xD;&#xA;- Fragment Code: GLSL text in the patch (default is a commented template)&#xD;&#xA;- Fragment Shader: Path to a baked .qsb, or builtin:wave / builtin:gradient&#xD;&#xA;- Uniforms: spread of nodes from Qt.Elements.Uniform&#xD;&#xA;- Auto Size (default on), Error">
+          <Pad Id="q0MQbJhwYBlga7aqN9GVeO" Bounds="85,85,572,133" ShowValueBox="true" isIOBox="true" Value="ShaderEffect [Qt]&#xD;&#xA;- Input: element the shader reads as sampler2D &quot;source&quot;, unconnected = generative&#xD;&#xA;- Fragment Code: GLSL text in the patch (default is a commented template)&#xD;&#xA;- Fragment Shader: Path to a baked .qsb, or builtin:wave&#xD;&#xA;- Uniforms: spread of nodes from Qt.Elements.Shaders.Uniform&#xD;&#xA;- Auto Size (default on)">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GT7uBkJDVdVgrgRVXuTFjj" Bounds="85,1239,830,366" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The Input is not drawn itself, only the effect output is. Bounds, Transform and Opacity belong on the ShaderEffect, not on its Input; Auto Size takes the size of the Input.&#xD;&#xA;- Fragment Code is baked in the background while you edit; if it has an error, the last working version keeps drawing. It needs no tools: VL.Qt bakes the text itself (Qt Shader Tools).&#xD;&#xA;- Fragment Shader wins over Fragment Code if set. A broken path draws nothing. Vertex Code / Vertex Shader (optional pins) work the same way.&#xD;&#xA;- Uniforms: values by name from the nodes in Qt.Elements.Uniform (Float, Int, Bool, Vector2/3/4, Color, Matrix, Texture, Image), collected in a spread.&#xD;&#xA;- Error shows a GLSL error with its line number, a missing file, a broken .qsb or an unknown / wrongly typed uniform.&#xD;&#xA;- Shader language is GLSL 440, baked with Qt's qsb tool (Qt host tools, not part of VL.Qt): qsb --glsl &quot;100es,120,150&quot; --hlsl 50 --msl 12 -o x.frag.qsb x.frag. qsb is only needed for shaders you bake yourself or ship precompiled.&#xD;&#xA;- Uniform block: layout(std140, binding = 0), qt_Matrix (mat4) and qt_Opacity (float) first, then your members. Member names must match the Uniform node names (case sensitive).&#xD;&#xA;- The Input is layout(binding = 1) uniform sampler2D source; texture coordinates come in as qt_TexCoord0, the result goes to vec4 fragColor (location 0).&#xD;&#xA;- The Input is premultiplied, so the output must be premultiplied too (rgb * alpha). Color uniforms arrive premultiplied as well (rgb * a); Vector4 is passed unchanged.&#xD;&#xA;- shaders/tint.frag next to this patch is the source of the tint example, shaders/tint.frag.qsb is the baked file the node loads.&#xD;&#xA;- builtin:wave needs an Input (uniforms time, amplitude, frequency). builtin:gradient is generative (uniforms time, color).&#xD;&#xA;- Shader files in a qtshaders folder next to the patch become nodes with their own pins, no Uniform nodes needed: see HowTo Create Shader Nodes from Files.">
+          <Pad Id="GT7uBkJDVdVgrgRVXuTFjj" Bounds="85,1239,1387,277" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The Input is not drawn itself, only the effect output is. Size, Transform and Opacity belong on the ShaderEffect, not on its Input; Auto Size takes the size of the Input.&#xD;&#xA;- Fragment Code is baked in the background while you edit; if it has an error, the last working version keeps drawing. It needs no tools: VL.Qt bakes the text itself (Qt Shader Tools).&#xD;&#xA;- Fragment Shader wins over Fragment Code if set. A broken path draws nothing. Vertex Code / Vertex Shader (optional pins) work the same way.&#xD;&#xA;- Uniforms: values by name from the nodes in Qt.Elements.Shaders.Uniform (Float, Int, Bool, Vector2/3/4, Color, Matrix, Texture, Image), collected in a spread.&#xD;&#xA;- A GLSL error with its line number, a missing file, a broken .qsb or an unknown / wrongly typed uniform shows at the node and in the log.&#xD;&#xA;- Shader language is GLSL 440, baked with Qt's qsb tool (Qt host tools, not part of VL.Qt): qsb --glsl &quot;100es,120,150&quot; --hlsl 50 --msl 12 -o x.frag.qsb x.frag. qsb is only needed for shaders you bake yourself or ship precompiled.&#xD;&#xA;- Uniform block: layout(std140, binding = 0), qt_Matrix (mat4) and qt_Opacity (float) first, then your members. Member names must match the Uniform node names (case sensitive).&#xD;&#xA;- The Input is layout(binding = 1) uniform sampler2D source; texture coordinates come in as qt_TexCoord0, the result goes to vec4 fragColor (location 0).&#xD;&#xA;- The Input is premultiplied, so the output must be premultiplied too (rgb * alpha). Color uniforms arrive premultiplied as well (rgb * a); Vector4 is passed unchanged.&#xD;&#xA;- shaders/tint.frag next to this patch is the source of the tint example, shaders/tint.frag.qsb is the baked file the node loads.&#xD;&#xA;- builtin:wave needs an Input (uniforms time, amplitude, frequency).&#xD;&#xA;- Shader files in a qtshaders folder next to the patch become nodes with their own pins, no Uniform nodes needed: see HowTo Create Shader Nodes from Files.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -61,7 +61,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="100,521,265,19" Id="FTDYvdzlfU6civkbHjsMvo">
+          <Node Bounds="100,521,165,19" Id="FTDYvdzlfU6civkbHjsMvo">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -71,35 +71,38 @@
             </p:NodeReference>
             <Pin Id="feLzVtLFxWdVXGaLL4zPDe" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="B0xvy0n4TJxOYvGXdNYRoh" Name="Size" Kind="InputPin" DefaultValue="4, 1.2" />
-            <Pin Id="DcTuj2HgnadRVGQd8zgJNa" Name="Transform" Kind="InputPin" />
+            <Pin Id="DcTuj2HgnadRVGQd8zgJNa" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="H5MKYBmfxh5Nl1609a2x2E" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="nfENitYVE9Bgs6lixAVn57" Name="Text" Kind="InputPin" DefaultValue="WAVE" />
-            <Pin Id="Y9n6H8VKSeSwRJ51K8SXte" Name="Font Family" Kind="InputPin" />
+            <Pin Id="Y9n6H8VKSeSwRJ51K8SXte" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="HretjJESV8nUOROP57rQ3a" Name="Font Size" Kind="InputPin" DefaultValue="0.9" />
-            <Pin Id="NgbYplWxHl0JIlXwGrJnr1" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
-            <Pin Id="deAkxzHNkGryjKlFnYpyDi" Name="Italic" Kind="InputPin" />
+            <Pin Id="NgbYplWxHl0JIlXwGrJnr1" Name="Weight" Kind="InputPin" DefaultValue="700" />
+            <Pin Id="deAkxzHNkGryjKlFnYpyDi" Name="Italic" Kind="InputPin" IsHidden="true" />
             <Pin Id="AsyKboz1p8W0JoNlRCVH7e" Name="Color" Kind="InputPin" DefaultValue="0.1, 0.1, 0.15, 1" />
             <Pin Id="269oUiLwNolhD7HoSSMuao" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="JFzdCKJcL7mKze2ALUSbwI" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" />
-            <Pin Id="y6ZNNx1sUvpUVcN6yq52D2" Name="Wrap" Kind="InputPin" />
+            <Pin Id="y6ZNNx1sUvpUVcN6yq52D2" Name="Wrap" Kind="InputPin" IsHidden="true" />
             <Pin Id="MCu2KqqKkNIOW1e54CVeMl" Name="Elide" Kind="InputPin" IsHidden="true" />
             <Pin Id="M9OSyUiOP3JOvOqYLEi0wp" Name="Line Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="NiJbZ8Tzwj7OABpSAV6Ihr" Name="Letter Spacing" Kind="InputPin" IsHidden="true" />
             <Pin Id="CngYKGLVp9SOmvdXSRDnKA" Name="Autofit" Kind="InputPin" IsHidden="true" />
-            <Pin Id="xJ5AnrQMtNRLoRSCMBHaxv" Name="Opacity" Kind="InputPin" />
+            <Pin Id="xJ5AnrQMtNRLoRSCMBHaxv" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="SEjcuUPA8vNOlDyC30omEU" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="D8bvXrka1EqMiUztiZLTOz" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="ECWwMkfL3E6wNgHm6aD4U1" Name="Interaction" Kind="InputPin" />
+            <Pin Id="ECWwMkfL3E6wNgHm6aD4U1" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="VSGRQSY8mFKML9LsZBfnfO" Name="Output" Kind="OutputPin" />
-            <Pin Id="FVgrkQIpAjYP7CoLVO3riE" Name="Effect" Kind="InputPin" />
+            <Pin Id="FVgrkQIpAjYP7CoLVO3riE" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="L9BoMxeNem9LwxeLqkms3F" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="MMQAdauw315QZYN1NpWJrE" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="Ffymv2eDTNQNVtC0uLCPZN" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="100,887,105,19" Id="xIGgQKRZ0BfxyFGiMPw4gb">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
@@ -107,15 +110,15 @@
             <Pin Id="b3cAdvWfELb6uym9rW2nxe" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Cu4hAKHRN78tqfUnAYPCLh" Name="Input" Kind="InputPin" />
             <Pin Id="TXEzdHTExvtN4LkkrHRQYJ" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
-            <Pin Id="NfhI8C0oz0dQBUdlVg2ksE" Name="Fragment Code" Kind="InputPin" />
+            <Pin Id="NfhI8C0oz0dQBUdlVg2ksE" Name="Fragment Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="7gLHCeGdjuEL2hVlN71sYm" Name="Fragment Shader" Kind="InputPin" />
             <Pin Id="UDULOI0sCirLcNRjP6SW0N" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="K3Kg7YZA9ADPzguGwFhVnP" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="FSGUIRBnTvRaQQ2ZK7v8Fs" Name="Uniforms" Kind="InputPin" />
             <Pin Id="qMDLuTkPsRP7KpC6yIZLRZ" Name="Blending" Kind="InputPin" IsHidden="true" />
             <Pin Id="OnnyRej6owmQAUOxsccbKD" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
-            <Pin Id="HdIZjx6P4hMfSfRFdO9XlG" Name="Size" Kind="InputPin" />
             <Pin Id="KukRgc1XIOrLCRo2X8ZEzW" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="HdIZjx6P4hMfSfRFdO9XlG" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="jxuNZ1ROZMkIVkhIUV8FKu" Name="Transform" Kind="InputPin" />
             <Pin Id="IBMnKm024OyNW7ICvrzNgO" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="FbHHCqFYuj4U9RbETA16hh" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -125,8 +128,8 @@
             <Pin Id="TuUrNJLDiQOHQahTDQ3ptG" Name="Output" Kind="OutputPin" />
             <Pin Id="DyKQR3DsGMQM2chMtQDcO7" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="F8inB2fjTAoNrVZlVyp0V1" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="21Qk9BmvQnQsna6vgayHta" Name="Error" Kind="OutputPin" />
             <Pin Id="FHB8mR236uuP1D1kEfYoAG" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="IHOSCJnFehnPAzNoFpQGAD" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="Dux0NFpMCZ8KZhyNdtcpN3" Comment="Fragment Shader" Bounds="142,560,300,19" ShowValueBox="true" isIOBox="true" Value="builtin:wave">
             <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
@@ -145,11 +148,13 @@
             <Pin Id="xm2bWppSZTV8d962Dueogh" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="160,690,45,19" Id="mSralsJuTVvh5A3Pe4lmlY">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
@@ -160,11 +165,13 @@
             <Pin Id="hNxPe0YCwGj9WIPe8sNEfV" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="240,690,45,19" Id="1zIYketZlV4qPwMoWz7Ys7">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
@@ -174,11 +181,13 @@
             <Pin Id="xzEzf11kPsn0gtfRuXyAQP" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="320,690,45,19" Id="0xuZlwLptoQwkd4GHPonNH">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
@@ -187,7 +196,7 @@
             <Pin Id="SQcnxAO5FJ8b0EkhfwPb5B" Name="Value" Kind="InputPin" DefaultValue="6" />
             <Pin Id="F1npkhhFUDST7aqd75w1ot" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="180,645,45,19" Id="5ta4y93Qc8axLOJze68gIA">
+          <Node Bounds="180,645,25,19" Id="5ta4y93Qc8axLOJze68gIA">
             <p:NodeReference LastCategoryFullName="Math" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="*" />
@@ -211,7 +220,7 @@
             <Pin Id="sQ3lyss2kUOuzoSALEB0si" Name="On New Cycle" Kind="OutputPin" />
             <Pin Id="td3EmR2VU44nC4ZbnjCROp" Name="Cycles" Kind="OutputPin" />
           </Node>
-          <Node Bounds="620,500,165,19" Id="EpyNlXvt42CeeL2VpM3zr8">
+          <Node Bounds="620,500,65,19" Id="EpyNlXvt42CeeL2VpM3zr8">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -221,41 +230,44 @@
             </p:NodeReference>
             <Pin Id="0GTgl54PyvYI0CeFigQrHA" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="XiHFxV5vUQ9h83L1Lsn6Me" Name="Size" Kind="InputPin" DefaultValue="2.4, 1.3" />
-            <Pin Id="91dEFTKdgeSXtlYWeIGGup" Name="Transform" Kind="InputPin" />
+            <Pin Id="91dEFTKdgeSXtlYWeIGGup" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="CFb9Pc0j1jONVKY35wSndN" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="4rEIfpiA1y7YKwU8F30rMi" Name="Color" Kind="InputPin" DefaultValue="0.95, 0.5, 0.1, 1" />
+            <Pin Id="4rEIfpiA1y7YKwU8F30rMi" Name="Fill Color" Kind="InputPin" DefaultValue="0.95, 0.5, 0.1, 1" />
             <Pin Id="PrQqQlToTDh8lnm2WwyKG2" Name="Radius" Kind="InputPin" DefaultValue="0.25" />
-            <Pin Id="l4qQOnvdks4eQPqb8gzu69" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="5bhnCYVz9o9DW60r2mRthc" Name="Stroke Width" Kind="InputPin" />
-            <Pin Id="XKIcLbq40hxMAmI3iRuFix" Name="Opacity" Kind="InputPin" />
+            <Pin Id="l4qQOnvdks4eQPqb8gzu69" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="5bhnCYVz9o9DW60r2mRthc" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="XKIcLbq40hxMAmI3iRuFix" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="ImalcK7P5tAOaJM2Z9NrHo" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="EeiloGAhfZAOGZKMPWj6mE" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="TXPO7fUTIE3OJo6UyK90Ah" Name="Interaction" Kind="InputPin" />
+            <Pin Id="TXPO7fUTIE3OJo6UyK90Ah" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="ViLLteNEfxSI2eshlkqMJI" Name="Output" Kind="OutputPin" />
-            <Pin Id="S4yFWOTA3hBOKVCCPWvVub" Name="Effect" Kind="InputPin" />
+            <Pin Id="S4yFWOTA3hBOKVCCPWvVub" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="J69HBAOjcqkMbSXowJ8BgP" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="RJOUsUMTxL5LpEcK9dQjAO" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="TCsTrJgq4CVLXY2kMItcR5" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="620,887,105,19" Id="0ZZXowb9HQk38hazetA8Af">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
             <Pin Id="53lVUFgmohrbSAQynhWFio" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="GtRj50PBLDe41SSbLyKAk4" Name="Input" Kind="InputPin" />
             <Pin Id="Q87iHGQWCUbP4uGPiJOiKG" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
-            <Pin Id="TnaqikPbU9aOaaQCQfbZC8" Name="Fragment Code" Kind="InputPin" />
+            <Pin Id="TnaqikPbU9aOaaQCQfbZC8" Name="Fragment Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="giElPvh5ffLzRlZWTfTATx" Name="Fragment Shader" Kind="InputPin" />
             <Pin Id="C9crKjzlOFrLV0Nn74FgUq" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="NI4r8YkGp2EPzZswv31xzp" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="Odj5dOast6Ifs7CgSy743z" Name="Uniforms" Kind="InputPin" />
             <Pin Id="Nz8m2vzCrxDCQ3HMNowmkc" Name="Blending" Kind="InputPin" IsHidden="true" />
             <Pin Id="E5o1qfBiEQ3P05exOPBOT0" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
-            <Pin Id="lI8RJoinqWs6m4gE444cRY" Name="Size" Kind="InputPin" />
             <Pin Id="H3IR7khXqvfNlj0kltLBg7" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="lI8RJoinqWs6m4gE444cRY" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="LhZy9bQ5GDcwrY7qQ3N8zR" Name="Transform" Kind="InputPin" />
             <Pin Id="PJlwxh7bBBLPfZrdcINhow" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="65vtQp9d8zruOkCenZAqlL" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -265,8 +277,8 @@
             <Pin Id="MMcw7qWjxZm2R2JckqJ4dV" Name="Output" Kind="OutputPin" />
             <Pin Id="LIo8XuArhQ9PvMDHl2kdMg" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="T3fVqzki7XBLq7iUbDrTyz" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="ZmAV3hFyjVCOYdkMjgRKVS" Name="Error" Kind="OutputPin" />
             <Pin Id="GV05aIepGz2NoGK6D3QGZ1" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="T6yp2jP8FWqL3zXMf2D25N" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="680,740,125,19" Id="PvO1Bl3sj6blpoPm06Tdfh">
             <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.Collections.vl">
@@ -279,11 +291,13 @@
             <Pin Id="MLGGweiV7hFGNLkRfKvxwh" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="680,690,45,19" Id="e8tbtSxerFHvwZkZpBKx9O">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Color" />
@@ -294,11 +308,13 @@
             <Pin Id="zqAT1l28CfcayVY3xcFsO2" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="800,705,45,19" Id="1tgDlB2gD4Hkht5MWbn0I3">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
@@ -336,8 +352,8 @@
             <Pin Id="2EkdcbWZKbPQnxoeRIYU6L" Name="Input 3" Kind="InputPin" />
             <Pin Id="kr0tfcljr4n28B6I91hBuX" Name="Input 4" Kind="InputPin" />
             <Pin Id="CRKs8eR6TXjWiUUNfltjNj" Name="Output" Kind="OutputPin" />
-            <Pin Id="pYfj3BViH0mH5y0OxD5nmE" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="CjCWYXEkbGhPgiSMOhZNin" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="pYfj3BViH0mH5y0OxD5nmE" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="16MbbiGYOyc8kLQXriKj10" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="G0EY51ezLduMritVoK4eCa" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="qemFNyUomq5lS6xODwFGsI" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
@@ -348,6 +364,7 @@
             <Pin Id="RQC4RL5mEIKL85MjT8X8VB" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="Na5PEzZhPqyMLTVrshOuLO" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="EByYOXefjl3LrvKg0qges4" Name="Style" Kind="InputPin" IsHidden="true" />
+            <Pin Id="AEWWP5gdBSzOAGCfWnWhqf" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="100,1170,85,19" Id="ruvsfufrw9e05cWtV5ltQQ">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
@@ -361,20 +378,20 @@
             <Pin Id="ajk14Jn3IjQXA5lxcJmF2V" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="NRvQ4VAEUHKOk0Pmza82zy" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="6pI6i12d2g9lvJttLvYb2O" Name="Input" Kind="InputPin" />
-            <Pin Id="QIpYnwrxs5K7kiamyvVGf2" Name="Space" Kind="InputPin" />
+            <Pin Id="QIpYnwrxs5K7kiamyvVGf2" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="SKOggYuVvBnFk48q6FjW5h" Name="Clear Color" Kind="InputPin" />
             <Pin Id="CUdjI5TGLf9NW3TfZlF1NP" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="LcXgmMffkyKBQU9kMQMEoc" Name="Enabled" Kind="InputPin" />
+            <Pin Id="LcXgmMffkyKBQU9kMQMEoc" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="ThJj299XIo0J4hjvk5NyeH" Name="Title" Kind="InputPin" />
             <Pin Id="P6ttwV1IPdYOI6aoHGzGow" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="ZKZOYeqOc2xYNxdn93SJRX" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="TjumFDnHZPsNV319g094V7" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="E6FQD6dnjZxwSqWc4Ai31i" Name="Error" Kind="OutputPin" />
             <Pin Id="yhhMnR7k9f3F1YO7MDBqPj" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="MMmqq0tkfLIQ0VBtaeLAKL" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="eiJzqVkYPD1hHXh7myaPdo" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="UC1RKHbrDgEOVhe9i20FED" Name="Window" Kind="InputPin" IsHidden="true" />
             <Pin Id="RSQuLRm4AQqPbdL5d9SmA9" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
+            <Pin Id="BYfzchKN7kKN7hdcJVyS5Z" Name="Enable Keyboard Shortcuts" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="w6deaqIn4PNUqohJtFcOjX" Comment="Title" Bounds="182,1136,200,19" ShowValueBox="true" isIOBox="true" Value="HowTo Write a ShaderEffect">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
@@ -468,11 +485,13 @@
             <Pin Id="nkhU2AmuSjHhWDr8CQEjhk" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="1200,690,45,19" Id="kiRyGFUB2ZJeFthIxyumuy">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
@@ -505,25 +524,27 @@
             <Pin Id="wSlWoYdczkcFEpF46JqFyn" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="1140,887,105,19" Id="h5RYSelhNP6Douh6Xql2Za">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
             <Pin Id="WMNAN3p97BA782BtFE94Rj" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="7a4EpVtI0LmNq1AcioJYHx" Name="Input" Kind="InputPin" />
+            <Pin Id="7a4EpVtI0LmNq1AcioJYHx" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="PyS2v0kjF0tMOZ4RHgxkXr" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="SOfCTAHvWCxDjhoWu8TV1o" Name="Fragment Code" Kind="InputPin" />
-            <Pin Id="IvYCFydxIYA2LmOKzyEqYu" Name="Fragment Shader" Kind="InputPin" />
+            <Pin Id="IvYCFydxIYA2LmOKzyEqYu" Name="Fragment Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="mx41x4kWnE1DxqGXTqDDYE" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="SOsdJ7Us4anAPGlB8jnhg2" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="y8pp6K3RSBv8tQ8vSNV11t" Name="Uniforms" Kind="InputPin" />
             <Pin Id="URidrGiAX2bZIdGoCqL7HP" Name="Blending" Kind="InputPin" IsHidden="true" />
             <Pin Id="FFJtT7gk8KUa0mxRrreq32" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
-            <Pin Id="pwnKwdsxXmLt12K9I0i4M2" Name="Size" Kind="InputPin" DefaultValue="4, 1.4" />
             <Pin Id="VwUDtP2c13JyTtgeED3epZ" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="pwnKwdsxXmLt12K9I0i4M2" Name="Size" Kind="InputPin" DefaultValue="4, 1.4" />
             <Pin Id="VkB4Qg6EbA35klF2jsGZma" Name="Transform" Kind="InputPin" />
             <Pin Id="zspS10Ydau5Up6n78NX08e" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="KTqI2E0uxhLyGJZNRPiLkd" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -533,23 +554,9 @@
             <Pin Id="au3bBUVsvzqedxDwdExFrE" Name="Output" Kind="OutputPin" />
             <Pin Id="oGKxKNm5VnzQDgZxIMLeaI" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="3usD5YO4sdiSobXs3kPFRq" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="mFeXQkbxYn6skyFfIjGNE8" Name="Error" Kind="OutputPin" />
             <Pin Id="tqx9cK1OvjxAzTQ5Juw0sc" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GRSUWGJl9uHQZpTwkYhmgE" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="jq7XOP6An6u5V3Zu7yJGh1" Comment="Error" Bounds="1242,921,300,43" ShowValueBox="true" isIOBox="true" Value="">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
-              <Choice Kind="TypeFlag" Name="String" />
-            </p:TypeAnnotation>
-          </Pad>
-          <Pad Id="w2ZtbgzCcaD3RKDczXBDOO" Bounds="1242,969,300,30" ShowValueBox="true" isIOBox="true" Value="Errors (with line number) show up here. The last working version keeps drawing.">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="TypeFlag" Name="String" />
-            </p:TypeAnnotation>
-            <p:ValueBoxSettings>
-              <p:fontsize p:Type="Int32">7</p:fontsize>
-              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
-            </p:ValueBoxSettings>
-          </Pad>
           <Pad Id="qKyQKYNqnecM9ZRgLsj87P" Bounds="1660,288,560,60" ShowValueBox="true" isIOBox="true" Value="4  A Group as source: Text and Rectangle form one input. The Rectangle sits at a negative position (left of and above the Group origin). A Group renders as a whole, its full frame including that part, into the shader.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
@@ -569,29 +576,30 @@
             </p:NodeReference>
             <Pin Id="fKOIxUS0YIzS0eeKlH895P" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="1eUb4HEkgQz1dSQVsUI5s1" Name="Size" Kind="InputPin" DefaultValue="2.2, 0.8" />
-            <Pin Id="w4v6VFsxoH9eqPUZiW8tT6" Name="Transform" Kind="InputPin" />
+            <Pin Id="w4v6VFsxoH9eqPUZiW8tT6" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="Jzg5zC7tCcoWJ15gapdeZd" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="PAynKAQbnDiNyKgLhZSy8C" Name="Text" Kind="InputPin" DefaultValue="GROUP" />
-            <Pin Id="hCVCbNiC3Wx0W9XgAdKuGo" Name="Font Family" Kind="InputPin" />
+            <Pin Id="hCVCbNiC3Wx0W9XgAdKuGo" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="A3IW4AeJxMa9URBZv0BKdP" Name="Font Size" Kind="InputPin" DefaultValue="0.6" />
-            <Pin Id="rCpNyze9803MnjY6SafkwQ" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
-            <Pin Id="KyaknHU6j0lc8e5eqXyHyD" Name="Italic" Kind="InputPin" />
+            <Pin Id="rCpNyze9803MnjY6SafkwQ" Name="Weight" Kind="InputPin" DefaultValue="700" />
+            <Pin Id="KyaknHU6j0lc8e5eqXyHyD" Name="Italic" Kind="InputPin" IsHidden="true" />
             <Pin Id="z4PKpHkvEq3dvtiTyGDBGD" Name="Color" Kind="InputPin" DefaultValue="0.1, 0.1, 0.15, 1" />
             <Pin Id="inoIMd9f1ZLZ3HqtCBRoQC" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="XUNbFj6bd2y9JGS1uZHI5y" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" />
-            <Pin Id="VR1BqjcqmGwzMRtGNsSjF1" Name="Wrap" Kind="InputPin" />
+            <Pin Id="VR1BqjcqmGwzMRtGNsSjF1" Name="Wrap" Kind="InputPin" IsHidden="true" />
             <Pin Id="t5LdQ5YKQdVc50rFTyv1Mo" Name="Elide" Kind="InputPin" IsHidden="true" />
             <Pin Id="kSeqcxHEkegAFARS1rzUpg" Name="Line Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="mq9btNFeGx801f6b5MIhYU" Name="Letter Spacing" Kind="InputPin" IsHidden="true" />
             <Pin Id="3O9zZNVwHvPtLo54Z9uP93" Name="Autofit" Kind="InputPin" IsHidden="true" />
-            <Pin Id="RCwKO6w1rZ14KtpcPUB4Pn" Name="Opacity" Kind="InputPin" />
+            <Pin Id="RCwKO6w1rZ14KtpcPUB4Pn" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="yjyXz3mRn2AJGO67qDBzyl" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="H8m8ZlTGUeeDGvx9hppxss" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="2RdDTstw57uB3VCt3Uouz6" Name="Interaction" Kind="InputPin" />
+            <Pin Id="2RdDTstw57uB3VCt3Uouz6" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="cvL17vOLJTqTDJNaIe3fT2" Name="Output" Kind="OutputPin" />
-            <Pin Id="SVbtHIqOMP0QqYZrjwKPmm" Name="Effect" Kind="InputPin" />
+            <Pin Id="SVbtHIqOMP0QqYZrjwKPmm" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="lSJ3Q6ddGmVqaCUkjEDttW" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="d3X28ioZiZqmsGiHdpEwGb" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="Rde7lTNElTJNz6ly0mi6fa" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="1940,572,165,19" Id="y8IaC5MM2sFJEk22QTj61S">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
@@ -605,18 +613,19 @@
             <Pin Id="7twJ4pcxck9bQo7mDWiFCU" Name="Size" Kind="InputPin" DefaultValue="1.2, 0.8" />
             <Pin Id="wicl8xkbdJlbQr4PhuhFTF" Name="Transform" Kind="InputPin" />
             <Pin Id="8zUoIfC3atuHUlDQBjxJQL" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="DcDkDQFLjZXkcGJ4TBRvLp" Name="Color" Kind="InputPin" DefaultValue="0.95, 0.5, 0.1, 1" />
+            <Pin Id="DcDkDQFLjZXkcGJ4TBRvLp" Name="Fill Color" Kind="InputPin" DefaultValue="0.95, 0.5, 0.1, 1" />
             <Pin Id="0tK5MA7nP6TL1sdAk3pNfI" Name="Radius" Kind="InputPin" DefaultValue="0.15" />
-            <Pin Id="R7pC7ZwJ8LEd17FEOAa3IK" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="FNgcMi08Y7IuMCfPGmb8JR" Name="Stroke Width" Kind="InputPin" />
-            <Pin Id="0G6rRkmg5UJtumYcZiW764" Name="Opacity" Kind="InputPin" />
+            <Pin Id="R7pC7ZwJ8LEd17FEOAa3IK" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FNgcMi08Y7IuMCfPGmb8JR" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="0G6rRkmg5UJtumYcZiW764" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="hZIFicyLw8IfNmAr3XfLYG" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="cEJ05nwVziQSAFMKUmpxtR" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="rQdh2RQouLRwGvvACAyRDz" Name="Interaction" Kind="InputPin" />
+            <Pin Id="rQdh2RQouLRwGvvACAyRDz" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="5jHH2U8O5UwNwqyYuz6Otv" Name="Output" Kind="OutputPin" />
-            <Pin Id="IeIOf7EoezzlHY70TqJrDM" Name="Effect" Kind="InputPin" />
+            <Pin Id="IeIOf7EoezzlHY70TqJrDM" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="3r3yIbfb2ZYLmYG8gzZfQp" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="inu9oqhDcN16hcEIPUS8y9" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="BOn8A5aU97qPaInTqI9t95" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="1960,522,80,19" Id="2dgbpGNr7oGb6sogmlbk41">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
@@ -644,8 +653,8 @@
             <Pin Id="X5jjDPh5i6EUHffeshfH1J" Name="Input" Kind="InputPin" />
             <Pin Id="bxTFsmVKGYu3VugFEd2y3F" Name="Input 2" Kind="InputPin" />
             <Pin Id="O4Kok1MtJ1aedoFOZn9CoA" Name="Output" Kind="OutputPin" />
-            <Pin Id="vgzOcGrcawOzN7j9eAIoy0" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="zUnhSJ9WIz9HZzr2QmvUB0" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="vgzOcGrcawOzN7j9eAIoy0" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="8fR0b35oPR9v1iTGZosdfO" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="bp5wnmK4DNkKSuEu18g1LO" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="zjE2H8GUHnsSEQObO1EMXh" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
@@ -656,40 +665,43 @@
             <Pin Id="tTMqYeZqIuupAzqXghZzyH" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="sCG9L24tRr83y3GGUlysxM" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="pPXVOrhXw9IZW38ybloMgI" Name="Style" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Aq8V2piztlwOUoTV7SiMUC" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="1660,887,185,19" Id="nDU1YYIE5foRNB3AhA8hIW">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+          <Node Bounds="1660,887,85,19" Id="nDU1YYIE5foRNB3AhA8hIW">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
             <Pin Id="DjTEbLZfwvgmtHp4u5iOyg" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="VSq5y8dQkTiY1Xab7Pkurk" Name="Input" Kind="InputPin" />
             <Pin Id="NylYnO3ks25PqHHSCaefmK" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
-            <Pin Id="IUE5QMv0CYnNhbjFLRfnO8" Name="Fragment Code" Kind="InputPin" />
+            <Pin Id="IUE5QMv0CYnNhbjFLRfnO8" Name="Fragment Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="6jFl0wmqD9k5gl9QqgFAik" Name="Fragment Shader" Kind="InputPin" />
             <Pin Id="UHrI8FXR3yDLL3VmW0moKu" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="TvMg0bltuFEigUnR4Vslam" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="aYT2YRKmCGJBHHwQjrGM5C" Name="Uniforms" Kind="InputPin" />
             <Pin Id="WnhosXG4fejfak3zy9qnr1" Name="Blending" Kind="InputPin" IsHidden="true" />
             <Pin Id="ncKNBtjD1Wf19N0zJjFMu5" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
-            <Pin Id="DJaplSM9OHgWz6M4DIVl7N" Name="Size" Kind="InputPin" />
             <Pin Id="I3ZOlNSo0CO7PmJdn1VaJu" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DJaplSM9OHgWz6M4DIVl7N" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="JGmW9iId1rACbt3orX2FvS" Name="Transform" Kind="InputPin" />
             <Pin Id="kJKcGgoNUZZNX3q5vnNpGS" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="22azaR6NQIJ62rO2ztAp6L" Name="Opacity" Kind="InputPin" />
+            <Pin Id="22azaR6NQIJ62rO2ztAp6L" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="HfqN5QOIXA0I2PYLpHs5dn" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="C9J9zC4MH3sAEraH1QlC0h" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="uErGcSUJYZPYPzoCm7ynQ4" Name="Interaction" Kind="InputPin" />
+            <Pin Id="uErGcSUJYZPYPzoCm7ynQ4" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="1gd9WedHjD0maELmF0JNof" Name="Output" Kind="OutputPin" />
             <Pin Id="d3Z5Y4wpl5YfKhkxVrkKYl" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="J1uZesXkM5UTB5rMZYreTH" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
-            <Pin Id="JSBkuNaTC1pfMzvBtG1bmM" Name="Error" Kind="OutputPin" />
-            <Pin Id="xgG1tlGALq7pfppVZsPHG4" Name="Effect" Kind="InputPin" />
+            <Pin Id="xgG1tlGALq7pfppVZsPHG4" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DqXPXHBhz16NmmN21O2jcN" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="1780,757,80,19" Id="Q7NQ1tJV9aZZdgwBb0HYgE">
+          <Node Bounds="1740,830,80,19" Id="Q7NQ1tJV9aZZdgwBb0HYgE">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -714,11 +726,13 @@
             <Pin Id="6j0UP4Nief28H5HwZLMKH2" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="1720,724,41,19" Id="Rh3NeNoUNQySGfF1G5Hzml">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Color" />
@@ -728,11 +742,13 @@
             <Pin Id="rFpWJiT7WrnnfsArpCCmfW" Name="Result" Kind="OutputPin" />
           </Node>
           <Node Bounds="1760,724,39,19" Id="gh0R9byIWgYbFpnwCswMMf">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders.Uniform" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                <p:OuterCategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                    <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                  </p:OuterCategoryReference>
                 </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="OperationCallFlag" Name="Float" />
@@ -795,7 +811,6 @@
         <Link Id="WJeUXOt81IVB8mepCWTOz6" Ids="TsDZ5sUO7EvybTwyb1m7vF,y8pp6K3RSBv8tQ8vSNV11t" />
         <Link Id="qxR3K3LtVNnJV8NkU01a1R" Ids="wSlWoYdczkcFEpF46JqFyn,VkB4Qg6EbA35klF2jsGZma" />
         <Link Id="zJvEHjW3NlQxj3CQFIfkUE" Ids="au3bBUVsvzqedxDwdExFrE,2EkdcbWZKbPQnxoeRIYU6L" />
-        <Link Id="rAzLgPnSXowiIAeEOr1otI" Ids="mFeXQkbxYn6skyFfIjGNE8,jq7XOP6An6u5V3Zu7yJGh1" />
       </Patch>
     </Node>
   </Patch>

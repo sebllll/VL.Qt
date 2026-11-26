@@ -25,7 +25,7 @@
               <Pin Id="jaSSCHM1pRwwrxU32052gq" Name="Radius" Kind="InputPin" />
               <Pin Id="OLxBk3kVar6zDdEQsGwh6y" Name="Transform" Kind="InputPin" />
               <Pin Id="HMQafylaLhv25hlPfmCkCY" Name="Anchor" Kind="InputPin" IsHidden="true" />
-              <Pin Id="M9vcduJZUSc51ydHlEvcvR" Name="Color" Kind="InputPin" />
+              <Pin Id="M9vcduJZUSc51ydHlEvcvR" Name="Fill Color" Kind="InputPin" />
               <Pin Id="3a9UKeiE1diJbN349thhwP" Name="Output" Kind="OutputPin" />
               <Pin Id="3wNBUPzBwD9jaUhkuuZG3g" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
               <Pin Id="4M4vfxhV4ZCDmVFbXfN1Wn" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -43,14 +43,14 @@
                 <Choice Kind="ProcessAppFlag" Name="Drag" />
               </p:NodeReference>
               <Pin Id="pTFHoWokVPIoWTPx1cDdPI" Name="Node Context" Kind="InputPin" IsHidden="true" />
-              <Pin Id="N3rawOdHOf2z9tCmgJfY2s" Name="Input" Kind="InputPin" />
-              <Pin Id="JeAuMetLV385zoeIzXAMCi" Name="Is Dragging" Kind="InputPin" />
-              <Pin Id="CX601B7P5VhbmEkgVTqaQx" Name="Delta" Kind="InputPin" />
-              <Pin Id="tbNboTNKMe2cQMAn4edFE5" Name="Moves Element" Kind="InputPin" />
-              <Pin Id="oASLdi4Et3GsYKdWBt9SrN" Name="Axis" Kind="InputPin" />
+              <Pin Id="N3rawOdHOf2z9tCmgJfY2s" Name="Input" Kind="InputPin" IsHidden="true" />
+              <Pin Id="JeAuMetLV385zoeIzXAMCi" Name="Is Dragging" Kind="InputPin" IsHidden="true" />
+              <Pin Id="CX601B7P5VhbmEkgVTqaQx" Name="Translation" Kind="InputPin" IsHidden="true" />
+              <Pin Id="tbNboTNKMe2cQMAn4edFE5" Name="Moves Element" Kind="InputPin" IsHidden="true" />
+              <Pin Id="oASLdi4Et3GsYKdWBt9SrN" Name="Axis" Kind="InputPin" IsHidden="true" />
               <Pin Id="iu71QUVDL4iqZdPGW6GQd8" Name="Output" Kind="OutputPin" />
-              <Pin Id="AgBEW3KzXeOyMSQsrRk3ty" Name="Minimum" Kind="InputPin" IsHidden="true" />
-              <Pin Id="d08MsBIBXBUM90qlxki8pA" Name="Maximum" Kind="InputPin" IsHidden="true" />
+              <Pin Id="AgBEW3KzXeOyMSQsrRk3ty" Name="Min" Kind="InputPin" IsHidden="true" />
+              <Pin Id="d08MsBIBXBUM90qlxki8pA" Name="Max" Kind="InputPin" IsHidden="true" />
               <Pin Id="t4pBDrZXR7ZdDh44mbRMfX" Name="Buttons" Kind="InputPin" IsHidden="true" />
               <Pin Id="Hed565sUXCpJqUzcndJ8N6" Name="Devices" Kind="InputPin" IsHidden="true" />
             </Node>
@@ -134,7 +134,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="DwY2UFYqT4f5LCF1yaFllr" Bounds="85,85,520,135" ShowValueBox="true" isIOBox="true" Value="Polygon [Qt]&#xD;&#xA;- Points: a Spread of positions, always closed and filled&#xD;&#xA;- Fill, plus an optional stroke: Stroke Color and Stroke Width&#xD;&#xA;- Join: Miter, Bevel or Round corners&#xD;&#xA;- Fill Rule: NonZero (default) or EvenOdd for outlines that cross themselves&#xD;&#xA;- Position and rotation via Transform">
+          <Pad Id="DwY2UFYqT4f5LCF1yaFllr" Bounds="85,85,520,135" ShowValueBox="true" isIOBox="true" Value="Polygon [Qt]&#xD;&#xA;- Points: a Spread of positions, always closed and filled&#xD;&#xA;- Fill Color, plus an optional stroke: Stroke Color and Stroke Width&#xD;&#xA;- Join: Miter, Bevel or Round corners&#xD;&#xA;- Fill Rule: NonZero (default) or EvenOdd for outlines that cross themselves&#xD;&#xA;- Position and rotation via Transform">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -261,7 +261,7 @@
               <Choice Kind="ProcessAppFlag" Name="Group (Spectral)" />
             </p:NodeReference>
             <Pin Id="ivub0TmrcVrKGtSKULjNxp" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="EVPm0fGUXlEQXntvUoZ2gL" Name="Children" Kind="InputPin" />
+            <Pin Id="EVPm0fGUXlEQXntvUoZ2gL" Name="Input" Kind="InputPin" />
             <Pin Id="HuZoeFERPVceudGuFZhTPL" Name="Output" Kind="OutputPin" />
             <Pin Id="mkKNAm44c0X1Jv3VYKmeBw" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="uhYaiVMlNZ8f3W0YqQ0O6v" Name="Auto Size" Kind="InputPin" IsHidden="true" />
@@ -285,7 +285,7 @@
               <Choice Kind="ProcessAppFlag" Name="Group (Spectral)" />
             </p:NodeReference>
             <Pin Id="fAcKPZ83AkoVC5X0CxxOKz" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="y6SXpTu7SrdTurLFqT54O3" Name="Children" Kind="InputPin" />
+            <Pin Id="y6SXpTu7SrdTurLFqT54O3" Name="Input" Kind="InputPin" />
             <Pin Id="doTsjYxedPUsCwYXPFjcop" Name="Output" Kind="OutputPin" />
             <Pin Id="nzBtFgrTm4mWRuphjS0eoC" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="nug1quLOhlbzYZIDtslrcS" Name="Auto Size" Kind="InputPin" IsHidden="true" />
@@ -311,9 +311,9 @@
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="gzOhfpUToyKOH7OEQ3Td2M" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="37f3XTuavggvY37dXOoQZz" Name="Points" Kind="InputPin" />
-            <Pin Id="5XN0Akr7uxEGeXzPifiWZV" Name="Transform" Kind="InputPin" />
-            <Pin Id="gPYYcAnq9mj15Zc3dmeVD6" Name="Fill" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
-            <Pin Id="rniqmG7m68G49sliLRWBFV" Name="Stroke Color" Kind="InputPin" />
+            <Pin Id="5XN0Akr7uxEGeXzPifiWZV" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="gPYYcAnq9mj15Zc3dmeVD6" Name="Fill Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
+            <Pin Id="rniqmG7m68G49sliLRWBFV" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="1HXU1tfqWcKSE8ba67Z6IU" Name="Stroke Width" Kind="InputPin" DefaultValue="0.05" />
             <Pin Id="fnzceyPV2MCmAIkz1DDvGu" Name="Output" Kind="OutputPin" />
             <Pin Id="3ssZoU1PxfogBOQCxIOY7Q" Name="Join" Kind="InputPin" DefaultValue="Round" />
@@ -339,9 +339,9 @@
             </p:NodeReference>
             <Pin Id="5S7FPKWTwOzudK2DZK2bNq" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="ORw08ehYm8Vo1IJhtpaYNJ" Name="Points" Kind="InputPin" />
-            <Pin Id="wSvPjJUL6RncsGjM0cJX1p" Name="Transform" Kind="InputPin" />
-            <Pin Id="a0LjJgZwzIPrbALQQpdWFx" Name="Fill" Kind="InputPin" DefaultValue="0.15, 0.78, 1, 1" />
-            <Pin Id="tqh2NLDW9AAOCI5P7SEh2f" Name="Stroke Color" Kind="InputPin" />
+            <Pin Id="wSvPjJUL6RncsGjM0cJX1p" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="a0LjJgZwzIPrbALQQpdWFx" Name="Fill Color" Kind="InputPin" DefaultValue="0.15, 0.78, 1, 1" />
+            <Pin Id="tqh2NLDW9AAOCI5P7SEh2f" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="8WtkLpk5ZfXO5pPtxWEsRf" Name="Stroke Width" Kind="InputPin" DefaultValue="0.06" />
             <Pin Id="denm0QRpDXvM70G6f65Tzp" Name="Output" Kind="OutputPin" />
             <Pin Id="xQEwSCNq4KMRDrvbIwSwGs" Name="Join" Kind="InputPin" IsHidden="true" />
@@ -372,7 +372,7 @@
             <Pin Id="01xZKS8jto1dRUtsZWCxAj" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="EO6UcawDX7CQrkIu1Grqh9" Comment="Fill Rule" Bounds="716,605,70,15" ShowValueBox="true" isIOBox="true" Value="EvenOdd">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="ShapeFillRule" />
             </p:TypeAnnotation>
           </Pad>
@@ -387,8 +387,8 @@
             <Pin Id="wbI0UdhEOSimS6MgKfKV2n" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="reSb4RgByLszCQkAjFnE0W" Name="Points" Kind="InputPin" />
             <Pin Id="qe56YEWXDbIixmXGYbntUW" Name="Transform" Kind="InputPin" />
-            <Pin Id="fbuxC7Vf1vlTXsaasEQtVN" Name="Fill" Kind="InputPin" DefaultValue="0.15, 0.78, 1, 1" />
-            <Pin Id="dj9oIBpp0lTMkIDTIfTwOj" Name="Stroke Color" Kind="InputPin" />
+            <Pin Id="fbuxC7Vf1vlTXsaasEQtVN" Name="Fill Color" Kind="InputPin" DefaultValue="0.15, 0.78, 1, 1" />
+            <Pin Id="dj9oIBpp0lTMkIDTIfTwOj" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="nkx9FgsndZm3UAFH3mlgXF" Name="Stroke Width" Kind="InputPin" DefaultValue="0.06" />
             <Pin Id="obOs0MQgVczenP4CGCTp55" Name="Output" Kind="OutputPin" />
             <Pin Id="mnXOsh5p9hBtKXMbyuaFwl" Name="Join" Kind="InputPin" IsHidden="true" />
@@ -518,10 +518,10 @@
             <Pin Id="0ydmANZEn3gcqnFrKw8Ijj" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="PdPI4XR8nKZc7nq3qWt8TN" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="oWU6dSJXD9nE52BKmkZX4n" Name="Input" Kind="InputPin" />
-            <Pin Id="9A2GJp4tB9rgQGzdCGTK7b" Name="Space" Kind="InputPin" />
-            <Pin Id="Zy18nkqGF0tBbOzfCgCw9L" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="9A2GJp4tB9rgQGzdCGTK7b" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Zy18nkqGF0tBbOzfCgCw9L" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="MdUwYe3zmCdNHkqk6SvWn3" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="UzrV6h92CUiUx2TWAVa557" Name="Enabled" Kind="InputPin" />
+            <Pin Id="UzrV6h92CUiUx2TWAVa557" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="QlFmPhGeMb39xQO0yy9Kky" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="2OWITEhvmyneBZyVOCwJkl" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="KdQOXzbOadJnl0M24kxgWY" Name="Title" Kind="InputPin" />
@@ -533,7 +533,7 @@
             <Pin Id="TBsBEZoiukNPn7jY0ys4Ix" Name="Window" Kind="InputPin" IsHidden="true" />
             <Pin Id="Gz2sdmblJAcNFr8o2atdLp" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="3sYROub7a9zMPweo2NtwTy" Bounds="85,915,830,250" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The circles are Point nodes, defined in this patch (Circle, Drag and Translate): one Point in a ForEach per shape. Their Position outputs, the centres of the circles, are the Points of the Polygon, so dragging a circle reshapes it. Translation sets the start positions, Radius the size of the circles.&#xD;&#xA;- Both pentagrams share the same draggable points: the second Polygon gets the same Points and is moved to the right by a Transform (TransformSRT), so dragging a circle changes both. The circles sit on the first pentagram.&#xD;&#xA;- Points are in units of the Renderer Space (1 unit = 100 DIP, origin top left), in the space of the parent. Transform acts around the origin of the parent.&#xD;&#xA;- Fill Rule decides which areas of a self-intersecting outline count as inside: NonZero fills every area the outline encloses at least once, EvenOdd leaves out the areas enclosed an even number of times, here the centre of the pentagram.&#xD;&#xA;- A Polygon is filled by default and has no stroke (Stroke Width 0). Defaults follow Skia: Join Miter, Fill Rule NonZero (Skia: Winding).&#xD;&#xA;- A shape holds at most 8190 points; more are cut off and the node shows a warning. Points that change every frame cost real time: stay below about 4000 points, or move the shape with Transform instead.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+          <Pad Id="3sYROub7a9zMPweo2NtwTy" Bounds="85,915,830,305" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The circles are Point nodes, defined in this patch (Circle, Drag and Translate): one Point in a ForEach per shape. Their Position outputs, the centres of the circles, are the Points of the Polygon, so dragging a circle reshapes it. Translation sets the start positions, Radius the size of the circles.&#xD;&#xA;- Both pentagrams share the same draggable points: the second Polygon gets the same Points and is moved to the right by a Transform (TransformSRT), so dragging a circle changes both. The circles sit on the first pentagram.&#xD;&#xA;- Points are in units of the Renderer Space (1 unit = 100 DIP, origin top left), in the space of the parent. Transform acts around the origin of the parent.&#xD;&#xA;- Fill Rule decides which areas of a self-intersecting outline count as inside: NonZero fills every area the outline encloses at least once, EvenOdd leaves out the areas enclosed an even number of times, here the centre of the pentagram.&#xD;&#xA;- A Polygon is filled by default and has no stroke (Stroke Width 0). Defaults follow Skia: Join Miter, Fill Rule NonZero (Skia: Winding).&#xD;&#xA;- Points that change every frame cost real time: stay below about 4000 points, or move the shape with Transform instead.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

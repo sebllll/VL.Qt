@@ -1,7 +1,7 @@
 <Project>
 
   <!-- Packed as buildTransitive/VL.Qt.targets (src/VL.Qt/VL.Qt.csproj). NuGet imports it into every project that references
-       the VL.Qt package, e.g. the exe project of a vvvv export with a NuGet dependency on VL.Qt (#315). There the package is
+       the VL.Qt package, e.g. the exe project of a vvvv export with a NuGet dependency on VL.Qt. There the package is
        no project and VL.Qt.vl.targets is not imported.
 
        The package keeps the Qt runtime (QtNative, Qt libraries, plugins/, qml/) in qt/<rid>/ instead of runtimes/<rid>/native:

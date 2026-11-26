@@ -13,11 +13,12 @@ namespace VL.Qt.Paths
         /// <summary>
         /// Catmull-Rom spline that passes through every point, one cubic per span. <paramref name="alpha"/> sets the knot
         /// spacing (0 uniform, 0.5 centripetal without loops or cusps, 1 chordal; clamped to 0..1),
-        /// <paramref name="tension"/> scales the tangents by <c>1 − tension</c> (1 gives straight lines).
+        /// <paramref name="tension"/> scales the tangents by <c>1 − tension</c> (clamped to 0..1; 1 gives straight lines).
+        /// A NaN alpha counts as 0.5 and a NaN tension as 0, the defaults of the node.
         /// Open ends duplicate the end point as phantom point; its knot interval is zero, so an open curve has tangent 0
-        /// at its end points for every alpha (the control point next to an end point is that end point). Spans of length zero are skipped, and the neighbors of a span are
-        /// the nearest points that differ from its ends, so coincident points never divide by zero. Points that all
-        /// coincide return the path unchanged.
+        /// at its end points for every alpha (the control point next to an end point is that end point). Spans of length
+        /// zero are skipped, and the neighbors of a span are the nearest points that differ from its ends, so coincident
+        /// points never divide by zero. Points that all coincide return the path unchanged.
         /// </summary>
         internal static QtPath CatmullRom(QtPath path, ReadOnlySpan<Vector2> points, bool closed, float alpha, float tension)
         {
@@ -28,7 +29,7 @@ namespace VL.Qt.Paths
             var a = Math.Clamp((double)alpha, 0, 1);
             if (double.IsNaN(a))
                 a = 0.5;
-            var scale = (1 - (double)tension) / 3;
+            var scale = (1 - (double.IsNaN(tension) ? 0 : Math.Clamp((double)tension, 0, 1))) / 3;
             var spans = closed ? n : n - 1;
 
             path = path.MoveTo(points[0].X, points[0].Y);
@@ -84,18 +85,18 @@ namespace VL.Qt.Paths
             return closed ? Periodic(path, points) : Clamped(path, points);
         }
 
-        static QtPath Periodic(QtPath path, ReadOnlySpan<Vector2> points)
+        private static QtPath Periodic(QtPath path, ReadOnlySpan<Vector2> points)
         {
             var n = points.Length;
             // Segment k runs between the points k and k + 1, controlled by k − 1 .. k + 2 (Böhm conversion).
-            var start = Third(points[n - 1], points[0], points[1]);
+            var start = PointAtKnot(points[n - 1], points[0], points[1]);
             path = path.MoveTo(start.X, start.Y);
             for (var k = 0; k < n; k++)
             {
                 var p1 = points[k];
                 var p2 = points[(k + 1) % n];
                 var p3 = points[(k + 2) % n];
-                var end = k == n - 1 ? start : Third(p1, p2, p3);
+                var end = k == n - 1 ? start : PointAtKnot(p1, p2, p3);
                 path = path.CubicTo(
                     (2 * p1.X + p2.X) / 3, (2 * p1.Y + p2.Y) / 3,
                     (p1.X + 2 * p2.X) / 3, (p1.Y + 2 * p2.Y) / 3,
@@ -106,10 +107,10 @@ namespace VL.Qt.Paths
         }
 
         // (p0 + 4·p1 + p2) / 6: the point of a uniform cubic B-spline at the knot of p1.
-        static Vector2 Third(Vector2 p0, Vector2 p1, Vector2 p2) =>
+        private static Vector2 PointAtKnot(Vector2 p0, Vector2 p1, Vector2 p2) =>
             new Vector2((p0.X + 4 * p1.X + p2.X) / 6, (p0.Y + 4 * p1.Y + p2.Y) / 6);
 
-        static QtPath Clamped(QtPath path, ReadOnlySpan<Vector2> points)
+        private static QtPath Clamped(QtPath path, ReadOnlySpan<Vector2> points)
         {
             var n = points.Length;
             var first = points[0];
@@ -145,14 +146,14 @@ namespace VL.Qt.Paths
         }
 
         // Knot j of the clamped knot vector for n points.
-        static double ClampedKnot(int j, int n) => Math.Clamp(j - 3, 0, n - 3);
+        private static double ClampedKnot(int j, int n) => Math.Clamp(j - 3, 0, n - 3);
 
         /// <summary>
         /// The blossom (polar form) f(x1, x2, x3) of segment <paramref name="s"/> of the clamped spline: de Boor's
         /// algorithm with a different parameter per level. The segment uses the points s .. s + 3 and the knot interval
         /// [u(s+3), u(s+4)]; all denominators span that interval, so they are at least 1.
         /// </summary>
-        static Vector2 Blossom(ReadOnlySpan<Vector2> points, int s, double x1, double x2, double x3)
+        private static Vector2 Blossom(ReadOnlySpan<Vector2> points, int s, double x1, double x2, double x3)
         {
             var n = points.Length;
             var i = s + 3;
@@ -171,19 +172,19 @@ namespace VL.Qt.Paths
         }
 
         // de Boor weight for the point j at a level whose knot span is u(j) .. u(j + span).
-        static double Weight(int j, int span, double x, int n)
+        private static double Weight(int j, int span, double x, int n)
         {
             var uj = ClampedKnot(j, n);
             return (x - uj) / (ClampedKnot(j + span, n) - uj);
         }
 
-        static void Lerp(ref double ax, ref double ay, double bx, double by, double t)
+        private static void Lerp(ref double ax, ref double ay, double bx, double by, double t)
         {
             ax += (bx - ax) * t;
             ay += (by - ay) * t;
         }
 
-        static bool HasDistinct(ReadOnlySpan<Vector2> points)
+        private static bool HasDistinct(ReadOnlySpan<Vector2> points)
         {
             for (var i = 1; i < points.Length; i++)
                 if (points[i] != points[0])
@@ -192,7 +193,7 @@ namespace VL.Qt.Paths
         }
 
         // Knot interval |q − p|^alpha (1 for alpha 0); p and q differ.
-        static double Knot(Vector2 p, Vector2 q, double alpha)
+        private static double Knot(Vector2 p, Vector2 q, double alpha)
         {
             double dx = q.X - p.X, dy = q.Y - p.Y;
             return Math.Pow(dx * dx + dy * dy, alpha / 2);
@@ -202,7 +203,7 @@ namespace VL.Qt.Paths
         /// The nearest point from <paramref name="index"/> in <paramref name="step"/> direction that differs from the
         /// point at <paramref name="index"/>, wrapping around if <paramref name="closed"/>. False at an open end.
         /// </summary>
-        static bool TryNeighbor(ReadOnlySpan<Vector2> points, int index, int step, bool closed, out Vector2 neighbor)
+        private static bool TryNeighbor(ReadOnlySpan<Vector2> points, int index, int step, bool closed, out Vector2 neighbor)
         {
             var n = points.Length;
             var p = points[index];

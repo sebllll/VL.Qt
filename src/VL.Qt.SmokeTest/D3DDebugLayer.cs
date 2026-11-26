@@ -9,23 +9,23 @@ using System.Runtime.Versioning;
 /// the number of live objects per object type. Raw COM calls through the vtables, no D3D11 binding needed.
 /// </summary>
 [SupportedOSPlatform("windows")]
-static class D3DDebugLayer
+internal static class D3DDebugLayer
 {
-    static readonly Guid s_iidDebug = new("79cf2233-7536-4948-9d36-1e4692dc5760");
-    static readonly Guid s_iidInfoQueue = new("6543dbb6-1b48-42f5-ab82-e97ec74326f6");
+    private static readonly Guid s_iidDebug = new("79cf2233-7536-4948-9d36-1e4692dc5760");
+    private static readonly Guid s_iidInfoQueue = new("6543dbb6-1b48-42f5-ab82-e97ec74326f6");
 
     // vtable slots (IUnknown = 0..2)
-    const int reportLiveDeviceObjects = 10; // ID3D11Debug
-    const int setMessageCountLimit = 3, clearStoredMessages = 4, getMessage = 5, getNumStoredMessages = 8; // ID3D11InfoQueue
-    const int rldoDetail = 2, rldoIgnoreInternal = 4;
+    private const int reportLiveDeviceObjects = 10; // ID3D11Debug
+    private const int setMessageCountLimit = 3, clearStoredMessages = 4, getMessage = 5, getNumStoredMessages = 8; // ID3D11InfoQueue
+    private const int rldoDetail = 2, rldoIgnoreInternal = 4;
 
-    [UnmanagedFunctionPointer(CallingConvention.Winapi)] delegate int ReportDelegate(IntPtr self, int flags);
-    [UnmanagedFunctionPointer(CallingConvention.Winapi)] delegate int SetLimitDelegate(IntPtr self, ulong limit);
-    [UnmanagedFunctionPointer(CallingConvention.Winapi)] delegate void ClearDelegate(IntPtr self);
-    [UnmanagedFunctionPointer(CallingConvention.Winapi)] delegate ulong CountDelegate(IntPtr self);
-    [UnmanagedFunctionPointer(CallingConvention.Winapi)] delegate int GetMessageDelegate(IntPtr self, ulong index, IntPtr message, ref nuint length);
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate int ReportDelegate(IntPtr self, int flags);
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate int SetLimitDelegate(IntPtr self, ulong limit);
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate void ClearDelegate(IntPtr self);
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate ulong CountDelegate(IntPtr self);
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate int GetMessageDelegate(IntPtr self, ulong index, IntPtr message, ref nuint length);
 
-    static T Slot<T>(IntPtr com, int slot) where T : Delegate
+    private static T Slot<T>(IntPtr com, int slot) where T : Delegate
         => Marshal.GetDelegateForFunctionPointer<T>(Marshal.ReadIntPtr(Marshal.ReadIntPtr(com), slot * IntPtr.Size));
 
     /// <summary>

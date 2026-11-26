@@ -13,35 +13,40 @@ Press these keys in a Qt window (no modifiers). Both overlays are drawn by QtNat
 
 | Key | Action |
 |---|---|
-| F2 | Meter: small frame/pump graph in the corner, on/off |
+| F2 | Meter: small graph in the corner (frame interval, vvvv, GPU, Qt work), on/off |
 | F5 | Stats overlay on, then page by page: Summary, Timeline, Scene, System, Resources (live images: state, size, upload queue/budget, stuck or failed first), then off (the last page is remembered) |
 | Shift+F5 | Stats overlay hide/show, page kept |
 | F6 | Freeze the stats (only while the stats are visible, otherwise F6 goes to the scene) |
 | F7 | Timeline: show/hide the host segments (vvvv, GC, apply), only while the stats are visible |
 
-The Qt phases of a frame are events, vsync wait, sync, render and present. "vsync wait" is the start of the frame (`QRhi::beginFrame`): with the Renderer's `VSync` pin on (the default) Direct3D 11 waits there for the display refresh, not in Present; with `VSync` off it waits there only when the GPU is behind. The wait and the present are not counted as Qt work. The System page also shows "allow tearing yes/no" and "refresh N Hz". Several VSync windows keep the refresh rate on Windows as long as the host dispatches window messages between the pumps (vvvv does); see the [timing decision](decisions/timing.md).
+The keys belong to QtNative: the scene never sees them. A patch that needs F2, F5, F6 or F7 itself (a text field, its own shortcut) switches them off with the optional `Enable Keyboard Shortcuts` pin of `Renderer [Qt]` (default on); the keys then reach the elements and an open overlay stays as it is.
 
-The same numbers are available in a patch: `Renderer [Qt]` has an optional `Perf` output (`PerfStats`), see `help/Qt/HowTo Read Performance.vl`. `PerfStats (Split)` exposes the frame, pump, sync, render, present and GPU timings; `Split Vsync` the vsync wait, `Split Percentiles`, `Split Counters`, `Split Host` (vvvv, wait, apply, reconcile, ops) and `Split Gc` read the further fields.
+The Qt phases of a frame are events, vsync wait, sync, render and present. "vsync wait" is the start of the frame (`QRhi::beginFrame`): with the Renderer's `VSync` pin on (the default) Direct3D 11 waits there for the display refresh, not in Present; with `VSync` off it waits there only when the GPU is behind. The System page also shows "allow tearing yes/no" and "refresh N Hz". Several VSync windows keep the refresh rate on Windows as long as the host dispatches window messages between the pumps (vvvv does); see the [timing note](design/timing.md).
+
+Three words hold the numbers together:
+
+- **Pump**: the whole `vlqt_app_process_events_for` call, with the vsync wait and the present. It is what the frame costs on the vvvv thread; the tables and percentiles show it as it is, not judged against the budget.
+- **Qt work**: events + sync + render, i.e. the pump without the vsync wait and the present, which wait for the display refresh or the GPU. QtNative computes it once per pump (`vlqt_perf_sample.work`, `PerfStats.WorkMs` as average). Everything that judges Qt against the budget uses it: the `over budget` counter (`PerfStats.Counters.OverBudget`, `Recent.OverBudget`), the "work" row and bar of the Summary page, the red highlight of the Timeline page, the F2 series "work" and the slow-frame warning in the vvvv log.
+- **Budget**: vvvv's frame interval, which QtNative renders in step with. VL.Qt hands it to QtNative before each pump (`vlqt_app_set_frame_budget`); C# and QtNative judge against the same value (`PerfStats.Percentiles.BudgetMs`, "budget" on the pages; 60 Hz before the first frame). `long frames` counts frame intervals above 1.5 x the budget.
+
+The averages over the last ~1 s (the last 60 pumps) come from one computation (`PerfWindow` in `diagnostics/perf_stats.cpp`), so `PerfStats`, the F2 meter and the F5 Summary page agree:
+
+- **Frame statistics** (`Fps`, `FrameMs`, `FrameMsMax`, the F2 "fps" and "frame", the "frame" row of the Summary page) use only consecutive frames, like the percentiles: a pump with a frame whose previous pump also had one. After idle pumps (a static scene, an animation that stopped) the interval spans the idle time and is not a frame time. `Fps` is `1000 / FrameMs`; without a consecutive frame in the range it is 0 (the meter shows `-`), not a low number.
+- **Phase averages** (`SyncMs`, `RenderMs`, `PresentMs`, `VsyncMs`, and the phase rows of the Summary page, events included) are per pump that rendered, not diluted by idle pumps.
+- **Pump, Qt work, swaps per pump** are per pump of the range, **GPU** per pump with a timestamp.
+- **A `QtTexture` scene on a render thread** reports the frames it finished since the previous pump, usually those of the previous host frame; its `Sync` and `Render` are only the segments Qt signals, so they are smaller than the time of the same scene rendered on the main thread.
+
+The same numbers are available in a patch: `Renderer [Qt]` has an optional `Perf` output (`PerfStats`), see `help/Qt/HowTo Read Performance.vl`. `PerfStats (Split)` exposes the frame, pump, work, sync, render, present, vsync and GPU timings and five groups, each its own record with a `Split`: `Percentiles` (`PerfPercentiles`: budget and the frame and pump percentiles), `Counters` and `Recent` (`PerfCounters`: since start and over the last 10 s), `Host` (`HostPerfStats`: vvvv, wait, apply, reconcile, ops) and `Gc` (`GcPerfStats`).
 
 ### Overhead of the overlays
 
-The overlays are cheap: with a typical scene the native pump takes a few hundredths to a few tenths of a millisecond longer per frame, depending on the page (the Summary page is the cheapest, the Timeline page and the F2 meter the most expensive). Hide them when you measure the scene itself.
+The overlays are cheap: with a typical scene the pump takes a few hundredths to a few tenths of a millisecond longer per frame, depending on the page (the Summary page is the cheapest, the Timeline page and the F2 meter the most expensive). Hide them when you measure the scene itself.
 
 ### Pump spikes: where they come from
 
-When a pump takes longer than the frame budget, the warning in the vvvv log ends with the Qt phases of each window's last pump (`vlqt_window_get_perf_sample`: vsync wait, sync, render, present, gpu, events, swaps; the time the warning reports is the pump minus vsync wait and present). Use them to find out which phase a spike is in.
+When the Qt work of a pump takes more than half the frame budget, the warning in the vvvv log reports it (the largest `work` of the windows' last pumps) with the host pump, and ends with the Qt phases of each window's last pump (`vlqt_scene_get_perf_sample`: vsync wait, sync, render, present, gpu, events, swaps). Use them to find out which phase a spike is in.
 
-The replay attributes spikes the same way: `dotnet run --project src/VL.Qt.SmokeTest -c Release -- --replay anim[:frames[:rects]] [outDir] --paced [--loop N] [--load N]` plays a built-in animated scene (moving semi-transparent rectangles plus texts that change every frame) at 60 fps. Every spike above 8 ms goes to its largest phase (apply, advance, events, sync, render, present), and the run ends with a `REPLAY spike attribution` line and the number of pumps whose present took longer than 4 ms. `--load N` keeps N threads busy on the CPU meanwhile.
-
-Result (win-x64, D3D11, flip model, swap interval 0 (`VSync` off, so that present does not wait for the refresh), maximum frame latency 2; 3600 frames per run):
-
-| Run | Pump median | Spikes > 8 ms (steady) | Dominant phase | Present > 4 ms |
-|---|---|---|---|---|
-| 300 rectangles | 0.75 ms | 1 | present (once after the window was shown) | 1 of 3591 pumps |
-| 4000 rectangles (GPU-heavy) | 4.9 ms | 1 | present (once after the window was shown) | 1 of 3591 pumps |
-| 300 rectangles, every core busy | 0.69 ms | 13 | apply 8, events 4, present 1 (once after show) | 1 of 3591 pumps |
-
-With `VSync` off, present does **not** block in steady operation (with VSync on, the frame waits for the refresh by design, in the vsync wait segment). Outside start-up it stays at 0.1 ms or less, also with a GPU-heavy scene or a fully loaded CPU. The only slow present comes once per window, 10 to 25 frames after it is shown: it takes 10 to 32 ms, and the frame interval of that pump is about 40 ms. The window is then going through its first frames with the compositor (5 replays in a row: once in every round). The spikes under CPU load are in the C# apply and in the Qt event phase (`events`: posted events, polish, animation ticks): the thread was preempted, nothing is waiting on the GPU or the compositor. So a frame latency waitable object, a tearing present or a present outside the pump would not remove them. Look for CPU contention (other processes, too many busy threads) or work in the events phase instead.
+The replay of the SmokeTest attributes spikes the same way, to the phase that took longest (apply, advance, events, sync, render, present). With `VSync` off, present does not block in steady operation; the only slow present comes once per window, shortly after it is shown. Spikes under CPU load are in the apply and in the Qt events phase: the thread was preempted, nothing waits on the GPU or the compositor. Look for CPU contention (other processes, too many busy threads) or work in the events phase. Numbers, machine and the scenario to rerun: [pump spikes](research/pump-spikes.md).
 
 ## Debug overlay
 
@@ -55,36 +60,40 @@ Every element node and the `Renderer [Qt]` have a `Debug` pin. On an element it 
 
 <img src="images/debug-overlay.png" width="640" alt="Debug overlay: frames, origins, anchors, padding, Row/Column spacing, text baseline">
 
-The legend is also in the `Debug` pin's tooltip. See `help/Qt/HowTo Debug Overlay.vl`.
+The legend is also in the tooltip of the `Debug` pin of `Renderer [Qt]`; the `Debug` pin of an element points to it. See `help/Qt/HowTo Debug Overlay.vl`.
+
+With `Debug` on for all elements, painting the overlay is O(elements) per frame: every frame that changes the scene rebuilds the geometry of every element.
 
 ## Logging and errors
 
-All messages of VL.Qt go to the vvvv **Log window**, nothing goes to the console. If Qt rejects a property of an element, the element node turns orange with the message; QtNative errors appear on the Renderer's `Error` output.
+All messages of VL.Qt go to the vvvv **Log window**, nothing goes to the console. If Qt rejects a property of an element, the element node turns orange with the message; QtNative errors mark the Renderer node.
 
 - **Qt and QtNative:** every `qDebug`/`qInfo`/`qWarning`/`qCritical`/`qFatal`, including QML/JS warnings (e.g. a binding error or a Video that cannot open its file). Levels map Debug → Debug, Info → Information, Warning → Warning, Critical → Error, Fatal → Critical. The log category is the Qt logging category verbatim (`qml`, `js`, `qt.rhi.general`, `vlqt.gpu`, ...), uncategorized messages use `Qt`. Qt's own filter rules (`QT_LOGGING_RULES`) apply before that.
 - **VL.Qt itself:** process-wide messages (pump, `[vlqt.stats]`, slow-frame warnings) use the category `VL.Qt`; the Renderer logs with its own node logger, so the Log window links to the node.
-- **Errors at the node:** if Qt rejects a property of an element (e.g. a QML error), the element node shows an orange warning ("Qt rejected <Property>: ..."), logged as Warning; it clears with the next successful apply. Other QtNative errors (window creation, apply without an element, poll) appear on the Renderer's `Error` output and once in the log. Exceptions in the per-frame pump are logged, shown on `Error` and at the Renderer node (red) until that phase succeeds again. Exceptions in a node's Update are reported by vvvv itself (node turns red, entry in the Log window).
+- **Resources:** the resource manager, the image, snapshot, shader and audio-tap kinds log under `VL.Qt.Resources` (ids as `#index.generation`; state changes on debug level, `QT_LOGGING_RULES=VL.Qt.Resources.debug=true`). The Image element logs under `VL.Qt.Image.Item`.
+- **Errors at the node:** if Qt rejects a property of an element (e.g. a QML error), the element node shows an orange warning ("Qt rejected <Property>: ..."), logged as Warning; it clears with the next successful apply. Other QtNative errors (window creation, apply without an element, poll) mark the Renderer node (red) and go once to the log. Exceptions in the per-frame pump are logged and shown at the Renderer node (red) until that phase succeeds again. A scene that cannot be written (e.g. a value above the size limit of one command) marks the Renderer or QtTexture node with `Reconcile: ...` and is built again from scratch; if that fails again, the scene stays empty until the input changes. A node shows all its messages at once, errors first, one line each: a second problem does not hide the first one. Exceptions in a node's Update are reported by vvvv itself (node turns red, entry in the Log window).
 - **Into a file:** add a logging provider as shown in the VL.CoreLib help `System/Logging/HowTo Configure logging providers` (e.g. AddFile/Serilog). VL.Qt writes no log files of its own.
 - **stderr:** Qt/QtNative messages from Critical (= Error) upwards always also go to stderr, so exports without a log provider still show them. Set `VLQT_LOG_STDERR=1` before the process starts to mirror all levels.
 
 ## GPU device loss
 
-On Windows, Qt Quick shares one Direct3D 11 device with all windows and images. If the GPU driver resets (TDR), the GPU is removed or switched, VL.Qt rebuilds the device, the windows and all images itself. The patch does not have to do anything.
+On Windows, Qt Quick shares one Direct3D 11 device with all windows and images. On a device loss (the GPU driver resets, or the GPU is removed or switched), VL.Qt rebuilds the device, the windows and all images itself. The patch does not have to do anything.
 
 - **What you see:** windows briefly show the last frame or black, then the scene is back. Images stay `Ready` (no `Loading` flicker), snapshots are kept. Rebuilding takes typically around 0.1 s; a real driver reset adds the time Windows needs to detect and reset the GPU (TDR, about 2 s by default).
 - **Log:** Warning "shared D3D11 device lost (GetDeviceRemovedReason ...)", then Info "device rebuilt in ... ms" and Info "device lost: N resource(s) upload again".
 
 ## QtTexture render thread
 
-`QtTexture` scenes render on a Qt render thread, so the vvvv main thread spends only a fraction of a millisecond per scene (polish, hand-off) instead of the whole Qt render. The environment variable `VLQT_OFFSCREEN_THREAD` switches this for diagnosis:
+`QtTexture` and `QtRenderer` scenes render on a Qt render thread, so the vvvv main thread spends only a fraction of a millisecond per scene (polish, hand-off) instead of the whole Qt render. The hidden pin `Render Threads` of both nodes (show it from the node's pin menu) sets this:
 
-- **Values:** unset or empty = one render thread shared by all `QtTexture` scenes of the process (the default). `0` = render on the main thread, inside the draw start, as before the render thread existed. `n` (1 to 16) = a pool of n render threads, each scene gets one at creation, round robin. Anything else logs a Warning and uses 1.
-- **When to set it:** in the environment before vvvv starts, QtNative reads it once at the first `QtTexture` scene. Changing it later has no effect; restart vvvv.
-- **Which mode is running:** Info in the Log window, category `vlqt.offscreen`, once at the first scene: "offscreen scenes render on the main thread" or "offscreen scenes render on N Qt render thread(s)".
-- **0 to tell a render-thread problem from a scene problem:** if a `QtTexture` shows a wrong, stale or missing frame, a hang or a crash, start vvvv with `VLQT_OFFSCREEN_THREAD=0`. If the problem is gone, it is a render-thread problem (report it with the log line, GPU and driver); if it stays, it is the scene or the node. The frame time of the patch grows by the Qt render time of every changed scene, so use it for diagnosis only.
-- **More than 1 for several heavy scenes:** with several `QtTexture` nodes whose scenes are heavy (thousands of items, many texts), a pool of 2 can shorten the frame because the scenes render side by side. Measured on one laptop: it pays with CPU (render time per scene grows by 1.4x with 2 threads) and brings nothing for light scenes or a single scene; keep 1 unless the frame time shows it (`docs/decisions/render-texture.md`, "Qt render thread").
+- **Values:** 1 (the default) = one render thread shared by all `QtTexture` and `QtRenderer` scenes of the process. `0` = render on the main thread, inside the draw start, in the same order of steps. `n` (2 to 16) = a pool of n render threads, each scene gets one at creation, round robin. Values outside 0 … 16 are clamped.
+- **Several nodes:** there is one pool per process, so the largest value of all these nodes counts; 0 applies only when every node has 0.
+- **When it applies:** a scene gets its thread (or the main thread) when its node is created and keeps it. A larger value adds threads at once and applies to the scenes created afterwards; a smaller value and 0 apply only to scenes created afterwards. To move the existing scenes, save the patch with the new value and restart vvvv.
+- **Which mode is running:** Info in the Log window, category `vlqt.renderthread` (the scenes themselves log as `vlqt.offscreen`), at each change: "offscreen scenes created from now on render on the main thread" or "... on N Qt render thread(s)".
+- **0 to tell a render-thread problem from a scene problem:** if a `QtTexture` shows a wrong, stale or missing frame, a hang or a crash, set `Render Threads` to 0 on every node, save and restart vvvv. If the problem is gone, it is a render-thread problem (report it with the log line, GPU and driver); if it stays, it is the scene or the node. The frame time of the patch grows by the Qt render time of every changed scene, so use it for diagnosis only.
+- **More than 1 for several heavy scenes:** with several `QtTexture` nodes whose scenes are heavy (thousands of items, many texts), a pool of 2 can shorten the frame because the scenes render side by side. Measured on one laptop: it pays with CPU (render time per scene grows by 1.4x with 2 threads) and brings nothing for light scenes or a single scene; keep 1 unless the frame time shows it ([measurements](research/render-texture-measurements.md), [design note](design/render-thread.md)).
 - **Windows only:** Qt windows are not affected, `QtTexture` needs Direct3D 11.
 
 ## CPU profiling
 
-For repeatable CPU measurements see [Profiling](profiling.md).
+For repeatable CPU measurements see [Profiling](contributing/profiling.md).

@@ -1,21 +1,22 @@
 ﻿using Stride.Core.Mathematics;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Styles
 {
     /// <summary>
-    /// The VL.Qt base style (#292): neutral, dark, close to the vvvv/ImGui look. The only place with these values
+    /// The VL.Qt base style: neutral, dark, close to the vvvv/ImGui look. The only place with these values
     /// (QtNative has no defaults of its own). Only (field, state) pairs that differ from the Normal state are listed:
     /// QtNative falls back to (field, Normal) for an unset state, so all dimensions are stored once for all states.
     /// </summary>
     internal static class BaseStyle
     {
         // Colors as 0xRRGGBB (sRGB, opaque).
-        static Color4 C(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
+        private static Color4 C(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
 
         // Dimensions are set at Normal only.
-        static StateValues<float> N(float v) => default(StateValues<float>).With(StyleStates.Normal, v);
+        private static StateValues<float> N(float v) => default(StateValues<float>).With(StyleStates.Normal, v);
 
-        static readonly Style s_default = new()
+        private static readonly Style s_default = new()
         {
             Frame = new FrameStyle
             {
@@ -62,11 +63,8 @@ namespace VL.Qt.Styles
             },
         };
 
-        /// <summary>The base style as a <see cref="Style"/> (all fields set at Normal), root of the resolution (#293).</summary>
+        /// <summary>The base style as a <see cref="Style"/> (all fields set at Normal), root of the resolution.</summary>
         public static Style Default => s_default;
-
-        /// <summary>Whether elements of this protocol type are widgets that take a style (Button ... TextField).</summary>
-        public static bool AppliesTo(ushort type) => type is >= Protocol.Type.Button and <= Protocol.Type.TextField;
 
         /// <summary>Writes the complete base style of element <paramref name="id"/> as one SET_STYLE (with CLEAR).</summary>
         public static void Write(ICommandSink sink, uint id) => StyleWriter.Write(sink, id, Default, null);

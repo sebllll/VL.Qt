@@ -20,25 +20,25 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props;
 
-        readonly InteractionNode<Props> _node;
-        IChannel<bool>? _hovered;
-        bool _lastHovered;
+        private readonly InteractionNodeCore<Props> _node;
+        private IChannel<bool>? _hovered;
+        private bool _lastHovered;
 
         public HoverNode(NodeContext nodeContext)
-            => _node = new InteractionNode<Props>(nodeContext, Create);
+            => _node = new InteractionNodeCore<Props>(nodeContext, Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal HoverNode(Func<string, IDisposable> addWarning)
-            => _node = new InteractionNode<Props>(addWarning, Create);
+        internal HoverNode(NodeErrors messages)
+            => _node = new InteractionNodeCore<Props>(messages, Create);
 
-        static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new HoverInteraction(previous, slot);
 
-        internal InteractionNode<Props> Core => _node;
+        internal InteractionNodeCore<Props> Core => _node;
 
         /// <summary>Adds a hover handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
         /// <param name="isHovered">Optional channel: true while the pointer is over the element (written by Qt, author "Qt").</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]
         public Interaction Update(
             Interaction? input,
@@ -47,11 +47,8 @@ namespace VL.Qt.Nodes
             var output = _node.Describe(input, default(Props));
 
             // Pull: state of the last pump (1 frame latency); writes only on change.
-            var sink = _node.Sink;
-            if (isHovered.IsValid())
-                InteractionNode<Props>.Write(isHovered, ref _hovered, ref _lastHovered, sink.IsHovered());
-            else
-                _hovered = null;
+            var feedback = _node.Feedback;
+            FeedbackChannels.WriteState(isHovered, ref _hovered, ref _lastHovered, feedback.IsHovered());
 
             return output;
         }

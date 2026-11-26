@@ -1,13 +1,16 @@
-﻿namespace VL.Qt.Elements
+﻿using VL.Qt.Nodes;
+
+namespace VL.Qt.Elements
 {
     /// <summary>
-    /// Single-line text input (QtQuick.Controls TextField, style Basic, #301). User changes come from Qt's
-    /// <c>editingFinished</c> (Enter or focus loss, only if the text changed) as EV_VALUE (string) into
-    /// <see cref="Element.Sink"/>; SET VALUE is never echoed.
+    /// Single-line text input (QtQuick.Controls TextField, style Basic). User changes come from Qt's
+    /// <c>editingFinished</c> (Enter or focus loss, only if the text changed) as EVENT_VALUE (string) into
+    /// <see cref="Element.Feedback"/>; SET VALUE is never echoed.
     /// </summary>
-    public sealed class TextField : Element
+    internal sealed class TextField : Element
     {
         public TextField() : base(ElementType.TextField) { }
+        internal TextField(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.TextField, common, feedback) { }
 
         /// <summary>On (default): Size is ignored and the implicit size applies. Off: Size counts.</summary>
         public bool AutoSize { get; init; } = true;

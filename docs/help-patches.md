@@ -2,42 +2,7 @@
 
 The help patches in `help/Qt/` show one topic each; open them from the vvvv Help Browser (F1). The Browser groups them in topics, set in [`help/Help.xml`](../help/Help.xml); the patches of the companion packages `VL.Qt.Stride` and `VL.Qt.Audio` (in `VL.Qt.Stride/help/`, `VL.Qt.Audio/help/`) are listed in [`VL.Qt.Stride/help/Help.xml`](../VL.Qt.Stride/help/Help.xml) and [`VL.Qt.Audio/help/Help.xml`](../VL.Qt.Audio/help/Help.xml).
 
-## Help Browser
-
-- `help/Help.xml` is the manifest of the Help Browser: one `<Topic title="…">` per group, one `<VLDocument link="Qt\HowTo ….vl" tags="…" />` per patch (link relative to `help/`, `tags` are search words). The order in the file is the order in the Browser.
-- **Every patch under `help/` belongs in `Help.xml`.** vvvv does list patches that are missing from an existing manifest (below the listed ones, ordered alphabetically; found in the Help Browser code of vvvv 8.0), but without a topic and in an order nobody chose. That is why the export patches (`HelloWorld*`, `HelloConsole`) have a topic of their own and nothing is left out by accident.
-- Name patches `HowTo <Task in title case>`; the prefix is the role in the Browser (`Example`, `Explanation`, … for the other roles). Rename or delete a patch together with its line in `Help.xml`, in the docs and in the patches that refer to it.
-- Check after a change: every `link` exists and every `.vl` below `help/` is listed once.
-
-## Text scheme
-
-Every help patch has the same four parts, top to bottom:
-
-1. **Title** – `How To …`, font size 25.
-2. **Features** – ONE comment (font size 9) directly below the title: a short headline with the node(s) shown, then 3 to 5 terse bullets (pin names, no prose, no sentences that repeat the title).
-3. **Content** – the patch itself: IOBoxes and nodes as described in `AGENTS.md` ("Checking patches"), with short labels where a picture needs them.
-4. **Notes** – one comment at the very bottom, below all content: `Notes:` and the longer explanations, one bullet per point, nothing that is already in the features.
-
-Example, `HowTo Draw a Rectangle`:
-
-```text
-How To Draw a Rectangle                                  (title, size 25)
-
-Rectangle [Qt]                                           (features, size 9)
-- Size, Radius, Color
-- Stroke Color and Stroke Width
-- Anchor: Center or TopLeft
-- Position and rotation via Transform
-
-… the Rectangle nodes, IOBoxes, Renderer …               (content)
-
-Notes:                                                   (notes, size 9, bottom)
-- Size is width and height in units (1 unit = 100 DIP). A Rectangle with width or height 0 is not drawn.
-- Position, rotation and scale come only from Transform. The Anchor is the point of the rectangle that sits at the
-  origin and the pivot of Transform: TopLeft (orange) puts the top left corner on the Translation, Center (default, blue)
-  centers the rectangle on it.
-- Connect it to Renderer [Qt] or a Group [Qt].
-```
+How to write and register a help patch: [Writing help patches](contributing/help-patches.md).
 
 ## Basics
 
@@ -53,6 +18,7 @@ Notes:                                                   (notes, size 9, bottom)
 - `HowTo Group Elements` — grouping, nesting, transforms
 - `HowTo Reuse an Element` — one element at several places of the tree, Interaction per place
 - `HowTo Choose a Space` — the `Space` pin: origin and unit of Normalized, DIP, DIPTopLeft and PixelTopLeft
+- `HowTo Antialias Edges` — `Multisample Count` of the Renderer: None, X2, X4, X8 and what each costs
 
 ## Text
 
@@ -79,7 +45,7 @@ Notes:                                                   (notes, size 9, bottom)
 ## Widgets and Styles
 
 - `HowTo Use a Button` — click as Bang and channel
-- `HowTo Use a Toggle`, `HowTo Use a Slider`, `HowTo Use a TextInput`, `HowTo Use Input (Int)` — input widgets with value channels
+- `HowTo Use a Toggle`, `HowTo Use a Slider`, `HowTo Use Input (String)`, `HowTo Use Input (Int)` — input widgets with value channels
 - `HowTo Style a Widget` — chain style nodes into the Style pin, per state
 - `HowTo Style Control Parts` — indicator and track of Toggle/Slider, Merge with a preset
 - `HowTo Style Widgets with a Group` — one style for everything inside a Group, overrides per widget
@@ -101,7 +67,7 @@ See [Images](images.md).
 
 ## Effects
 
-- `HowTo Chain Effects` — Blur, DropShadow, ColorAdjust and a shader (RGBSplit) on the Effect pin: one layer per run of MultiEffect nodes, a shader node splits the run, order matters
+- `HowTo Chain Effects` — Blur, DropShadow, ColorAdjust and a shader (RGBSplit) on the Effect pin: one layer per group of neighbouring merged effects, a shader node splits the group, order matters
 - `HowTo Mask an Element` — any element (e.g. Text) as alpha mask, Inverted
 - `HowTo Add a Glow` — Glow and InnerShadow
 - `HowTo Blur An Element` — DirectionalBlur, ZoomBlur, RadialBlur
@@ -121,22 +87,25 @@ See [Effects and shaders](effects-and-shaders.md).
 ## QML
 
 - `HowTo Use a QML file` — `QmlElement` with the sample `QmlElement Example.qml`: properties in by name, changed properties and signals out, hot reload on save
+- `HowTo Create QML Nodes from Files` — `qml/` folder next to the patch: one node per `.qml` file, properties as pins, signals as outputs
 
 See [QML files as elements](user-qml.md).
 
 ## Window and Diagnostics
 
-- `HowTo Set a Window Icon` — `WindowSettings` node on the `Window` pin of the Renderer: icon, title, frame, fullscreen
+- `HowTo Set a Window Icon` — `WindowSettings` node on the `Window` pin of the Renderer: icon and initial bounds
 - `HowTo Read the Window Bounds` — window and client bounds as outputs
 - `HowTo Debug Overlay` — layout overlay via the `Debug` pin
 - `HowTo Read Performance` — perf numbers as node outputs
+- `HowTo Avoid Tearing` — the `VSync` pin of the Renderer: Present waits for the display refresh, a change recreates the window
 
 See [Diagnostics](diagnostics.md).
 
 ## Stride
 
-In `VL.Qt.Stride/help/` (package `VL.Qt.Stride`, Windows only), see [Stride texture](../README.md#stride-texture):
+In `VL.Qt.Stride/help/` (package `VL.Qt.Stride`, Windows only), see [Qt in Stride](stride.md):
 
+- `HowTo Draw Qt in a Stride Scene` — `QtRenderer`: Qt elements as a layer over a 3D scene (`RenderEntity`, `AfterScene`), input reaches Button and Slider
 - `HowTo Render Qt into a Stride Texture` — `QtTexture`: a Qt scene (text, shapes) rendered offscreen into a Stride `Texture` with a transparent `Clear Color`, composed over a 3D background with `AlphaBlendPremultiplied`
 - `HowTo Interact with a QtTexture` — `ToTexturePixels` feeds the window input into the scene of a `QtTexture`
 - `HowTo Draw a QtTexture with Transparency` — half-transparent elements over a 3D scene, premultiplied alpha, `Format`, the same scene in a Qt window to compare

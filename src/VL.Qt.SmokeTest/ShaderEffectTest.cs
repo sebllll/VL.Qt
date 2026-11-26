@@ -3,31 +3,38 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Text;
+using NUnit.Framework;
+using VL.Qt.Interop;
+using VL.Qt.Wire;
 using VL.Qt;
+using static Pixels;
 
-// ShaderEffect (#437, effects package 03, task 5): shipped shaders builtin:wave / builtin:gradient, a fixture shader with a
-// second sampler (shaders/dual.frag.qsb: Texture uniform = element, Image uniform = image resource), mesh resolution,
-// broken / missing shader paths, unknown uniform name / wrong type -> EV_ERROR and its correction.
+// Shader (effects package 03, task 5): the shipped shader builtin:wave, the generative shaders/gradient.frag baked from
+// its text (vlqt_shader_load_source), a fixture shader with a second sampler (shaders/dual.frag.qsb: Texture uniform =
+// element, Image uniform = image resource), mesh resolution,
+// broken / missing shader paths, unknown uniform name / wrong type -> EVENT_ERROR and its correction.
 // Raw commands (DIP). Grabs go to <outDir>/shader-effect_*.png.
-static class ShaderEffectTest
+[TestFixture, NonParallelizable]
+public static class ShaderEffectTest
 {
+    [Test, Category("shader-effect")]
+    public static void Shader() => Scenario.Run(Run);
+
     // Case 1: wave
-    const uint Wave = 10, WaveIn = 11;
+    private const uint Wave = 10, WaveIn = 11;
     // Case 2: gradient (generative), also the target of the uniform errors
-    const uint Grad = 20;
+    private const uint Grad = 20;
     // Case 3: fixture with texture uniform (element) and image uniform
-    const uint DualTex = 30, DualTexIn = 31, DualTexOv = 32, DualImg = 33, DualImgIn = 34;
+    private const uint DualTex = 30, DualTexIn = 31, DualTexOv = 32, DualImg = 33, DualImgIn = 34;
     // Mesh resolution
-    const uint Mesh = 40, MeshIn = 41;
+    private const uint Mesh = 40, MeshIn = 41;
     // Case 4: broken / missing shader
-    const uint Broken = 50, BrokenIn = 51, NoShader = 52, NoShaderIn = 53;
-    const uint HWave = 1, HGrad = 2, HBroken = 3;
+    private const uint Broken = 50, BrokenIn = 51, NoShader = 52, NoShaderIn = 53;
+    private const uint HWave = 1, HGrad = 2, HBroken = 3;
 
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
-    static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
-    static bool IsBg(Color c) => Near(c, 0x20, 0x20, 0x20, 8);
+    private static bool Near(Color c, int r, int g, int b, int tol = 14) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
 
-    static string? FindFile(params string[] rel)
+    private static string? FindFile(params string[] rel)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
         {
@@ -38,7 +45,7 @@ static class ShaderEffectTest
     }
 
     // Number of sampled pixels (step 3, logical coordinates) in the region whose color differs by more than 40 in any channel.
-    static int Diff(Bitmap a, Bitmap b, int x0, int y0, int x1, int y1)
+    private static int Diff(Bitmap a, Bitmap b, int x0, int y0, int x1, int y1)
     {
         int n = 0;
         for (int y = y0; y < y1; y += 3)
@@ -50,14 +57,14 @@ static class ShaderEffectTest
         return n;
     }
 
-    sealed record Res(ushort Ev, ulong Id, byte[] Payload);
+    private sealed record Res(ushort Ev, ulong Id, byte[] Payload);
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    private static void Run(Scenario s)
     {
-        var gpu = Program.NeedsRhi(check, "ShaderEffect needs a QRhi scenegraph");
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "Shader needs a QRhi scenegraph");
         var stripes = FindFile("src", "VL.Qt.SmokeTest", "assets", "stripes_rgb_30x10.png");
         var dualQsb = FindFile("src", "VL.Qt.SmokeTest", "shaders", "dual.frag.qsb");
-        check(stripes != null && dualQsb != null, $"437: test files found ({stripes}, {dualQsb})");
+        s.Check(stripes != null && dualQsb != null, $"test files found ({stripes}, {dualQsb})");
         if (stripes == null || dualQsb == null) return;
 
         // Resources: shaders (async, wait), image, and the status queue for the error texts.
@@ -65,67 +72,73 @@ static class ShaderEffectTest
         var resBuf = new byte[16 * 1024];
         void DrainRes()
         {
-            var n = Native.ResPoll(resBuf);
+            var n = NativeCalls.ResPoll(resBuf);
             for (int at = 0; at < n;)
             {
-                var len = BitConverter.ToUInt16(resBuf, at + 2);
-                resEvents.Add(new Res(BitConverter.ToUInt16(resBuf, at), BitConverter.ToUInt64(resBuf, at + 4), resBuf.AsSpan(at + 12, len - 8).ToArray()));
-                at += (4 + len + 3) & ~3;
+                var len = (int)BitConverter.ToUInt32(resBuf, at + 4);
+                resEvents.Add(new Res(BitConverter.ToUInt16(resBuf, at), BitConverter.ToUInt64(resBuf, at + 8), resBuf.AsSpan(at + 16, len - 8).ToArray()));
+                at += (8 + len + 3) & ~3;
             }
         }
         string ResError(ulong id)
         {
             DrainRes();
-            var e = resEvents.FindLast(r => r.Id == id && r.Ev == Protocol.ResEv.Error);
+            var e = resEvents.FindLast(r => r.Id == id && r.Ev == Protocol.ResourceEventId.Error);
             return e == null ? "" : Encoding.UTF8.GetString(e.Payload);
         }
         ulong Load(string path, int kind, int stage, out int state)
         {
             Native.vlqt_res_create(kind, out var id);
-            if (kind == Protocol.ResKind.Shader) Native.vlqt_res_load_shader(id, path, stage);
-            else Native.vlqt_res_load_image(id, path, 0);
+            if (kind == Protocol.ResourceKind.Shader) Native.vlqt_shader_load(id, path, stage);
+            else Native.vlqt_image_load(id, path, 0);
             state = Native.vlqt_res_wait(id, 10000);
             return id;
         }
-        ulong Shader(string path, out int state) => Load(path, Protocol.ResKind.Shader, Protocol.ShaderStage.Fragment, out state);
+        ulong Shader(string path, out int state) => Load(path, Protocol.ResourceKind.Shader, Protocol.ShaderStage.Fragment, out state);
 
         var wave = Shader("builtin:wave", out var sWave);
-        var gradient = Shader("builtin:gradient", out var sGrad);
+        var gradientFile = FindFile("src", "VL.Qt.SmokeTest", "shaders", "gradient.frag");
+        s.Check(gradientFile != null, $"gradient.frag found ({gradientFile})");
+        if (gradientFile == null) return;
+        // Baked at run time from the text: not part of the shipped built-in set.
+        Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var gradient);
+        var rcGrad = Native.vlqt_shader_load_source(gradient, File.ReadAllText(gradientFile), Protocol.ShaderStage.Fragment);
+        var sGrad = rcGrad == 0 ? Native.vlqt_res_wait(gradient, 20000) : Protocol.ResourceState.Failed;
         var dual = Shader(dualQsb, out var sDual);
-        var image = Load(stripes, Protocol.ResKind.Image, 0, out var sImage);
-        check(sWave == Protocol.ResState.Ready && sGrad == Protocol.ResState.Ready && sDual == Protocol.ResState.Ready && sImage == Protocol.ResState.Ready,
-            $"437: shaders builtin:wave/gradient + fixture + image Ready ({sWave}, {sGrad}, {sDual}, {sImage}; {ResError(wave)}{ResError(gradient)}{ResError(dual)})");
+        var image = Load(stripes, Protocol.ResourceKind.Image, 0, out var sImage);
+        s.Check(sWave == Protocol.ResourceState.Ready && sGrad == Protocol.ResourceState.Ready && sDual == Protocol.ResourceState.Ready && sImage == Protocol.ResourceState.Ready,
+            $"shaders builtin:wave, gradient.frag (text) + fixture + image Ready ({sWave}, {sGrad}, {sDual}, {sImage}; {ResError(wave)}{ResError(gradient)}{ResError(dual)})");
 
         // Broken: missing file, not a .qsb (GLSL text), wrong stage (fragment .qsb loaded as vertex shader).
-        var missing = Shader(Path.Combine(outDir, "does-not-exist.frag.qsb"), out var sMissing);
+        var missing = Shader(Path.Combine(s.OutDir, "does-not-exist.frag.qsb"), out var sMissing);
         var glsl = FindFile("src", "VL.Qt.SmokeTest", "shaders", "dual.frag")!;
         var text = Shader(glsl, out var sText);
-        var wrongStage = Load(dualQsb, Protocol.ResKind.Shader, Protocol.ShaderStage.Vertex, out var sStage);
-        check(sMissing == Protocol.ResState.Failed && ResError(missing).Length > 0, $"437: missing shader file -> Failed ({ResError(missing)})");
-        check(sText == Protocol.ResState.Failed && ResError(text).Length > 0, $"437: GLSL text instead of .qsb -> Failed ({ResError(text)})");
-        check(sStage == Protocol.ResState.Failed && ResError(wrongStage).Length > 0, $"437: wrong stage -> Failed ({ResError(wrongStage)})");
+        var wrongStage = Load(dualQsb, Protocol.ResourceKind.Shader, Protocol.ShaderStage.Vertex, out var sStage);
+        s.Check(sMissing == Protocol.ResourceState.Failed && ResError(missing).Length > 0, $"missing shader file -> Failed ({ResError(missing)})");
+        s.Check(sText == Protocol.ResourceState.Failed && ResError(text).Length > 0, $"GLSL text instead of .qsb -> Failed ({ResError(text)})");
+        s.Check(sStage == Protocol.ResourceState.Failed && ResError(wrongStage).Length > 0, $"wrong stage -> Failed ({ResError(wrongStage)})");
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt shader effect test");
-        check(w != IntPtr.Zero, "437: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt shader effect test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var evBuf = new byte[1 << 16];
-        var errors = new Dictionary<uint, string>(); // last EV_ERROR text per handle (empty = cleared)
-        int Apply() => Native.Apply(w, cmd.EndFrame());
+        var errors = new Dictionary<uint, string>(); // last EVENT_ERROR text per handle (empty = cleared)
+        Native.Result Apply() => Native.Apply(w, cmd.EndFrame());
         void CheckApply(string what)
         {
             var rc = Apply();
-            check(rc == 0, $"437: {what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(rc == 0, $"{what} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
         string Err(uint handle)
         {
-            int n = Native.Poll(w, evBuf);
+            int n = NativeCalls.Poll(w, evBuf);
             for (int at = 0; at < n;)
             {
-                ushort ev = BitConverter.ToUInt16(evBuf, at), len = BitConverter.ToUInt16(evBuf, at + 2);
-                if (ev == Protocol.Ev.Error)
-                    errors[BitConverter.ToUInt32(evBuf, at + 4)] = Encoding.UTF8.GetString(evBuf, at + 12, len - 8);
-                at += (4 + len + 3) & ~3;
+                ushort ev = BitConverter.ToUInt16(evBuf, at), len = (ushort)BitConverter.ToUInt32(evBuf, at + 4);
+                if (ev == Protocol.EventId.Error)
+                    errors[BitConverter.ToUInt32(evBuf, at + 8)] = Encoding.UTF8.GetString(evBuf, at + 12, len - 4);
+                at += (8 + len + 3) & ~3;
             }
             return errors.TryGetValue(handle, out var s) ? s : "";
         }
@@ -133,27 +146,27 @@ static class ShaderEffectTest
         // Element helpers: the effect, its hidden input child (index 0) and an optional hidden texture child (index 1).
         void Effect(uint id, float x, float y, float ew, float eh, ulong frag)
         {
-            cmd.Create(id, Protocol.Type.ShaderEffect);
+            cmd.Create(id, Protocol.ElementType.Shader);
             cmd.SetPlace(id, x, y, ew, eh);
-            cmd.SetU64(id, Protocol.Prop.FragmentShader, frag);
+            cmd.SetU64(id, Protocol.PropertyId.FragmentShader, frag);
             cmd.Reparent(id, 0, 1000);
         }
         void Input(uint fx, uint id, float ew, float eh, uint idx, bool stripesImage, float r, float g, float b)
         {
             if (stripesImage)
             {
-                cmd.Create(id, Protocol.Type.Image);
-                cmd.SetU64(id, Protocol.Prop.Image, image);
-                cmd.SetI32(id, Protocol.Prop.FillMode, 0); // stretch: red | green | blue stripes
+                cmd.Create(id, Protocol.ElementType.Image);
+                cmd.SetU64(id, Protocol.PropertyId.Image, image);
+                cmd.SetI32(id, Protocol.PropertyId.FillMode, 0); // stretch: red | green | blue stripes
             }
             else
             {
-                cmd.Create(id, Protocol.Type.Rectangle);
-                cmd.SetColor(id, Protocol.Prop.Color, r, g, b, 1);
+                cmd.Create(id, Protocol.ElementType.Rectangle);
+                cmd.SetColor(id, Protocol.PropertyId.Color, r, g, b, 1);
             }
             cmd.SetPlace(id, 0, 0, ew, eh);
             cmd.Reparent(id, fx, idx);
-            if (idx == 0) cmd.SetRef(fx, Protocol.Prop.Source, id);
+            if (idx == 0) cmd.SetRef(fx, Protocol.PropertyId.Source, id);
         }
         void Waves(float time, float amplitude, float frequency)
         {
@@ -174,7 +187,7 @@ static class ShaderEffectTest
             cmd.EndUniforms();
         }
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
         // 1) wave on the stripes image at (50, 50) 300 x 200: stripes red 50..150 | green 150..250 | blue 250..350
         Effect(Wave, 50, 50, 300, 200, wave);
@@ -183,14 +196,14 @@ static class ShaderEffectTest
         // 2) generative gradient at (400, 50) 300 x 200, no input
         Effect(Grad, 400, 50, 300, 200, gradient);
         Gradient();
-        cmd.Bind(Wave, HWave, 0);
-        cmd.Bind(Grad, HGrad, 0);
+        cmd.Bind(Wave, HWave);
+        cmd.Bind(Grad, HGrad);
         // 3a) fixture, element as texture: input red, overlay (child 1) blue, amount 0.5 -> purple at (50, 300) 200 x 150
         Effect(DualTex, 50, 300, 200, 150, dual);
         Input(DualTex, DualTexIn, 200, 150, 0, false, 1, 0, 0);
-        cmd.Create(DualTexOv, Protocol.Type.Rectangle);
+        cmd.Create(DualTexOv, Protocol.ElementType.Rectangle);
         cmd.SetPlace(DualTexOv, 0, 0, 200, 150);
-        cmd.SetColor(DualTexOv, Protocol.Prop.Color, 0, 0, 1, 1);
+        cmd.SetColor(DualTexOv, Protocol.PropertyId.Color, 0, 0, 1, 1);
         cmd.Reparent(DualTexOv, DualTex, 1);
         cmd.BeginUniforms(DualTex, Protocol.UniformSet.Clear);
         cmd.UniformF32("amount", 0.5f);
@@ -206,7 +219,7 @@ static class ShaderEffectTest
         // 3c) mesh resolution 8 x 8 with wave at (550, 300) 200 x 150
         Effect(Mesh, 550, 300, 200, 150, wave);
         Input(Mesh, MeshIn, 200, 150, 0, true, 0, 0, 0);
-        cmd.SetIvec2(Mesh, Protocol.Prop.MeshResolution, 8, 8);
+        cmd.SetIvec2(Mesh, Protocol.PropertyId.MeshResolution, 8, 8);
         cmd.BeginUniforms(Mesh, Protocol.UniformSet.Clear);
         cmd.UniformF32("time", 0.7f);
         cmd.UniformF32("amplitude", 0.01f);
@@ -215,175 +228,175 @@ static class ShaderEffectTest
         // 4) failed shader (missing file) and no shader at all: draw nothing, input hidden, at (50, 470) and (250, 470)
         Effect(Broken, 50, 470, 150, 100, missing);
         Input(Broken, BrokenIn, 150, 100, 0, true, 0, 0, 0);
-        cmd.Bind(Broken, HBroken, 0);
+        cmd.Bind(Broken, HBroken);
         Effect(NoShader, 250, 470, 150, 100, 0);
         Input(NoShader, NoShaderIn, 150, 100, 0, true, 0, 0, 0);
         CheckApply("shader effect scene");
-        pump(8);
+        s.Pump(8);
 
         // --- 1) wave: baseline (amplitude 0) = stripes, then distorted, then another time ---
-        using var baseline = grab(w, Path.Combine(outDir, "shader-effect_wave_baseline.png"));
+        using var baseline = s.Grab(w, "shader-effect_wave_baseline.png");
         gpu(Near(Px(baseline, 100, 150), 255, 0, 0) && Near(Px(baseline, 200, 150), 0, 255, 0) && Near(Px(baseline, 300, 150), 0, 0, 255)
             && IsBg(Px(baseline, 40, 150)) && IsBg(Px(baseline, 360, 150)),
-            $"437: wave amplitude 0 shows the input stripes ({Px(baseline, 100, 150)}, {Px(baseline, 200, 150)}, {Px(baseline, 300, 150)})");
-        gpu(IsBg(Px(baseline, 100, 100)) == false, "437: input itself hidden (only the effect output is drawn)");
+            $"wave amplitude 0 shows the input stripes ({Px(baseline, 100, 150)}, {Px(baseline, 200, 150)}, {Px(baseline, 300, 150)})");
+        gpu(IsBg(Px(baseline, 100, 100)) == false, "input itself hidden (only the effect output is drawn)");
 
-        cmd.Reset();
+        cmd.Clear();
         Waves(0, 0.05f, 2);
         CheckApply("wave time 0");
-        pump(5);
-        using var waveA = grab(w, Path.Combine(outDir, "shader-effect_wave_a.png"));
-        cmd.Reset();
+        s.Pump(5);
+        using var waveA = s.Grab(w, "shader-effect_wave_a.png");
+        cmd.Clear();
         Waves(1.5f, 0.05f, 2);
         CheckApply("wave time 1.5");
-        pump(5);
-        using var waveB = grab(w, Path.Combine(outDir, "shader-effect_wave_b.png"));
+        s.Pump(5);
+        using var waveB = s.Grab(w, "shader-effect_wave_b.png");
         int dBase = Diff(baseline, waveA, 50, 50, 350, 250), dTime = Diff(waveA, waveB, 50, 50, 350, 250);
-        gpu(dBase > 50, $"437: wave distorts the stripes vs. amplitude 0 ({dBase} differing samples)");
-        gpu(dTime > 50, $"437: animated time changes the distortion between frames ({dTime} differing samples)");
-        gpu(IsBg(Px(waveA, 360, 150)) && IsBg(Px(waveA, 40, 150)), "437: wave stays inside the item");
+        gpu(dBase > 50, $"wave distorts the stripes vs. amplitude 0 ({dBase} differing samples)");
+        gpu(dTime > 50, $"animated time changes the distortion between frames ({dTime} differing samples)");
+        gpu(IsBg(Px(waveA, 360, 150)) && IsBg(Px(waveA, 40, 150)), "wave stays inside the item");
 
         // --- 2) gradient: color premultiplied exactly once, in the bright spot (150, 100 local) -> (550, 150) ---
-        pump(2);
-        using (var a = grab(w, Path.Combine(outDir, "shader-effect_gradient.png")))
+        s.Pump(2);
+        using (var a = s.Grab(w, "shader-effect_gradient.png"))
         {
             // premultiplied output (0.5, 0.25, 0, 0.5) over #202020: (0.5 + 0.125, 0.25 + 0.0627 ... ) -> ~ (144, 80, 16)
             var c = Px(a, 550, 150);
-            gpu(Near(c, 144, 80, 16, 14), $"437: gradient color premultiplied once ({c}; straight would be ~255/..., double ~88/..)");
+            gpu(Near(c, 144, 80, 16, 14), $"gradient color premultiplied once ({c}; straight would be ~255/..., double ~88/..)");
             var dark = Px(a, 405, 55); // uv ~ (0.02, 0.03): sin(0.2 - 2.43) < 0 -> dimmer than the bright spot
-            gpu(dark.R < c.R - 15 && !IsBg(dark), $"437: gradient varies over the item (bright {c}, corner {dark})");
-            gpu(IsBg(Px(a, 390, 150)) && IsBg(Px(a, 710, 150)), "437: gradient stays inside the item bounds");
-            gpu(Err(HGrad).Length == 0 && Err(HWave).Length == 0, "437: no EV_ERROR for valid uniforms");
+            gpu(dark.R < c.R - 15 && !IsBg(dark), $"gradient varies over the item (bright {c}, corner {dark})");
+            gpu(IsBg(Px(a, 390, 150)) && IsBg(Px(a, 710, 150)), "gradient stays inside the item bounds");
+            gpu(Err(HGrad).Length == 0 && Err(HWave).Length == 0, "no EVENT_ERROR for valid uniforms");
         }
 
         // --- 3) fixture with second sampler, mesh resolution ---
-        using (var a = grab(w, Path.Combine(outDir, "shader-effect_samplers.png")))
+        using (var a = s.Grab(w, "shader-effect_samplers.png"))
         {
             var p = Px(a, 150, 375);
-            gpu(Near(p, 128, 0, 128, 20), $"437: Texture uniform (element) mixed 0.5 with the input -> purple ({p})");
-            var s = (Px(a, 340, 375), Px(a, 400, 375), Px(a, 460, 375));
-            gpu(ImageTest.IsRed(s.Item1) && ImageTest.IsGreen(s.Item2) && ImageTest.IsBlue(s.Item3),
-                $"437: Image uniform (QtImage) shows the stripes instead of the yellow input ({s.Item1}, {s.Item2}, {s.Item3})");
+            gpu(Near(p, 128, 0, 128, 20), $"Texture uniform (element) mixed 0.5 with the input -> purple ({p})");
+            var st = (Px(a, 340, 375), Px(a, 400, 375), Px(a, 460, 375));
+            gpu(ImageTest.IsRed(st.Item1) && ImageTest.IsGreen(st.Item2) && ImageTest.IsBlue(st.Item3),
+                $"Image uniform (QtImage) shows the stripes instead of the yellow input ({st.Item1}, {st.Item2}, {st.Item3})");
             var m = Px(a, 650, 375);
-            gpu(ImageTest.IsGreen(m) || Near(m, 0, 255, 0, 60), $"437: mesh resolution 8 x 8 with wave renders ({m})");
+            gpu(ImageTest.IsGreen(m) || Near(m, 0, 255, 0, 60), $"mesh resolution 8 x 8 with wave renders ({m})");
         }
         // Mesh resolution changes at runtime (and back) must not crash.
-        cmd.Reset();
-        cmd.SetIvec2(Mesh, Protocol.Prop.MeshResolution, 1, 1);
+        cmd.Clear();
+        cmd.SetIvec2(Mesh, Protocol.PropertyId.MeshResolution, 1, 1);
         CheckApply("mesh resolution 1 x 1");
-        pump(3);
-        cmd.Reset();
-        cmd.SetIvec2(Mesh, Protocol.Prop.MeshResolution, 32, 4);
+        s.Pump(3);
+        cmd.Clear();
+        cmd.SetIvec2(Mesh, Protocol.PropertyId.MeshResolution, 32, 4);
         CheckApply("mesh resolution 32 x 4");
-        pump(3);
-        using (var a = grab(w, Path.Combine(outDir, "shader-effect_mesh.png")))
-            gpu(!IsBg(Px(a, 650, 375)), $"437: mesh resolution switched 1x1 / 32x4 keeps drawing ({Px(a, 650, 375)})");
-        cmd.Reset();
-        cmd.SetIvec2(Mesh, Protocol.Prop.MeshResolution, 0, 3);
+        s.Pump(3);
+        using (var a = s.Grab(w, "shader-effect_mesh.png"))
+            gpu(!IsBg(Px(a, 650, 375)), $"mesh resolution switched 1x1 / 32x4 keeps drawing ({Px(a, 650, 375)})");
+        cmd.Clear();
+        cmd.SetIvec2(Mesh, Protocol.PropertyId.MeshResolution, 0, 3);
         var rcMesh = Apply();
-        check(rcMesh == -7, $"437: mesh resolution < 1 -> -7 ({rcMesh}: {Native.LastError()})");
+        s.Check(rcMesh == Native.Result.BadArgument, $"mesh resolution < 1 -> BadArgument ({rcMesh}: {Native.LastError()})");
 
         // --- 4) failed shader / no shader: nothing drawn, no crash ---
-        using (var a = grab(w, Path.Combine(outDir, "shader-effect_broken.png")))
+        using (var a = s.Grab(w, "shader-effect_broken.png"))
         {
             gpu(IsBg(Px(a, 125, 520)) && IsBg(Px(a, 325, 520)) && IsBg(Px(a, 75, 490)),
-                $"437: failed shader without an earlier Ready one and no shader draw nothing, input hidden ({Px(a, 125, 520)}, {Px(a, 325, 520)})");
-            check(ResError(missing).Length > 0 && Err(HBroken) is var e0 && e0.Length == 0, $"437: the shader error comes by the resource, not as EV_ERROR of the element ('{Err(HBroken)}')");
+                $"failed shader without an earlier Ready one and no shader draw nothing, input hidden ({Px(a, 125, 520)}, {Px(a, 325, 520)})");
+            s.Check(ResError(missing).Length > 0 && Err(HBroken) is var e0 && e0.Length == 0, $"the shader error comes by the resource, not as EVENT_ERROR of the element ('{Err(HBroken)}')");
         }
         // Recovery: the element gets a good shader later (and the uniforms stay by name): now it draws.
-        cmd.Reset();
-        cmd.SetU64(Broken, Protocol.Prop.FragmentShader, wave);
+        cmd.Clear();
+        cmd.SetU64(Broken, Protocol.PropertyId.FragmentShader, wave);
         cmd.BeginUniforms(Broken, Protocol.UniformSet.Clear);
         cmd.UniformF32("time", 0);
         cmd.UniformF32("amplitude", 0);
         cmd.UniformF32("frequency", 2);
         cmd.EndUniforms();
         CheckApply("failed -> good shader");
-        pump(5);
-        using (var a = grab(w, Path.Combine(outDir, "shader-effect_recovered.png")))
+        s.Pump(5);
+        using (var a = s.Grab(w, "shader-effect_recovered.png"))
             gpu(ImageTest.IsRed(Px(a, 70, 520)) && ImageTest.IsGreen(Px(a, 125, 520)) && ImageTest.IsBlue(Px(a, 180, 520)),
-                $"437: a good shader replaces the failed one ({Px(a, 70, 520)}, {Px(a, 125, 520)}, {Px(a, 180, 520)})");
-        // And back to a failed one (#483): the last good version keeps drawing (live editing never goes black).
-        cmd.Reset();
-        cmd.SetU64(Broken, Protocol.Prop.FragmentShader, missing);
+                $"a good shader replaces the failed one ({Px(a, 70, 520)}, {Px(a, 125, 520)}, {Px(a, 180, 520)})");
+        // And back to a failed one: the last good version keeps drawing (live editing never goes black).
+        cmd.Clear();
+        cmd.SetU64(Broken, Protocol.PropertyId.FragmentShader, missing);
         CheckApply("good -> failed shader");
-        pump(5);
-        using (var a = grab(w, Path.Combine(outDir, "shader-effect_broken_again.png")))
+        s.Pump(5);
+        using (var a = s.Grab(w, "shader-effect_broken_again.png"))
             gpu(ImageTest.IsRed(Px(a, 70, 520)) && ImageTest.IsGreen(Px(a, 125, 520)) && ImageTest.IsBlue(Px(a, 180, 520)),
-                $"483: a failed new shader keeps the last good version drawing ({Px(a, 70, 520)}, {Px(a, 125, 520)}, {Px(a, 180, 520)})");
+                $"a failed new shader keeps the last good version drawing ({Px(a, 70, 520)}, {Px(a, 125, 520)}, {Px(a, 180, 520)})");
 
-        // --- 5) unknown uniform name / wrong type -> EV_ERROR, correction clears it ---
-        cmd.Reset();
+        // --- 5) unknown uniform name / wrong type -> EVENT_ERROR, correction clears it ---
+        cmd.Clear();
         cmd.BeginUniforms(Grad, 0);
         cmd.UniformF32("noSuchUniform", 1);
         cmd.EndUniforms();
         CheckApply("unknown uniform name");
-        pump(3);
+        s.Pump(3);
         var unknown = Err(HGrad);
-        gpu(unknown.Contains("noSuchUniform"), $"437: unknown uniform name -> EV_ERROR ('{unknown}')");
+        gpu(unknown.Contains("noSuchUniform"), $"unknown uniform name -> EVENT_ERROR ('{unknown}')");
 
-        cmd.Reset();
+        cmd.Clear();
         Gradient(); // full send (Clear): valid again
         CheckApply("correction (full send)");
-        pump(3);
-        gpu(Err(HGrad).Length == 0, $"437: correction clears the error ('{Err(HGrad)}')");
+        s.Pump(3);
+        gpu(Err(HGrad).Length == 0, $"correction clears the error ('{Err(HGrad)}')");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(Grad, 0);
         cmd.UniformVec2("time", 1, 2); // time is a float
         cmd.EndUniforms();
         CheckApply("wrong uniform type");
-        pump(3);
+        s.Pump(3);
         var wrong = Err(HGrad);
-        gpu(wrong.Contains("time"), $"437: wrong type (vec2 for float) -> EV_ERROR ('{wrong}')");
-        using (var a = grab(w, Path.Combine(outDir, "shader-effect_error.png")))
-            gpu(!IsBg(Px(a, 550, 150)), $"437: element keeps drawing with the previous values while it has an error ({Px(a, 550, 150)})");
+        gpu(wrong.Contains("time"), $"wrong type (vec2 for float) -> EVENT_ERROR ('{wrong}')");
+        using (var a = s.Grab(w, "shader-effect_error.png"))
+            gpu(!IsBg(Px(a, 550, 150)), $"element keeps drawing with the previous values while it has an error ({Px(a, 550, 150)})");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(Grad, 0);
         cmd.UniformF32("time", gradientTime); // diff: just the corrected entry
         cmd.EndUniforms();
         CheckApply("correction (diff)");
-        pump(3);
-        gpu(Err(HGrad).Length == 0, $"437: corrected entry clears the error ('{Err(HGrad)}')");
+        s.Pump(3);
+        gpu(Err(HGrad).Length == 0, $"corrected entry clears the error ('{Err(HGrad)}')");
 
-        cmd.Reset();
+        cmd.Clear();
         cmd.BeginUniforms(Grad, 0);
         cmd.UniformF32("qt_Opacity", 0.5f); // reserved
         cmd.UniformColor("color", 1, 0.5f, 0, 0.5f);
         cmd.EndUniforms();
         CheckApply("reserved uniform name");
-        pump(3);
+        s.Pump(3);
         var reserved = Err(HGrad);
-        gpu(reserved.Contains("qt_Opacity"), $"437: reserved name -> EV_ERROR ('{reserved}')");
-        cmd.Reset();
+        gpu(reserved.Contains("qt_Opacity"), $"reserved name -> EVENT_ERROR ('{reserved}')");
+        cmd.Clear();
         Gradient();
         CheckApply("correction (full send) 2");
-        pump(3);
-        gpu(Err(HGrad).Length == 0, "437: second correction clears the error");
+        s.Pump(3);
+        gpu(Err(HGrad).Length == 0, "second correction clears the error");
 
-        // Not a ShaderEffect: SET_UNIFORMS on a rectangle -> -6; unknown ref -> -4.
-        cmd.Reset();
+        // Not a Shader: SET_UNIFORMS on a rectangle -> UnknownProperty; unknown ref -> UnknownObject.
+        cmd.Clear();
         cmd.BeginUniforms(WaveIn, 0);
         cmd.UniformF32("time", 1);
         cmd.EndUniforms();
         var rc6 = Apply();
-        check(rc6 == -6, $"437: SET_UNIFORMS on an image -> -6 ({rc6}: {Native.LastError()})");
-        cmd.Reset();
+        s.Check(rc6 == Native.Result.UnknownProperty, $"SET_UNIFORMS on an image -> UnknownProperty ({rc6}: {Native.LastError()})");
+        cmd.Clear();
         cmd.BeginUniforms(DualTex, 0);
         cmd.UniformRef("overlay", 999);
         cmd.EndUniforms();
         var rc4 = Apply();
-        check(rc4 == -4, $"437: texture uniform with an unknown element id -> -4 ({rc4}: {Native.LastError()})");
+        s.Check(rc4 == Native.Result.UnknownObject, $"texture uniform with an unknown element id -> UnknownObject ({rc4}: {Native.LastError()})");
 
         // Lifetime: destroy the effects with children, release the resources, window down (no crash, no leak message).
-        cmd.Reset();
+        cmd.Clear();
         foreach (var id in new[] { Wave, Grad, DualTex, DualImg, Mesh, Broken, NoShader }) cmd.Destroy(id);
         CheckApply("destroy all effects");
-        pump(3);
-        Native.vlqt_window_destroy(w);
+        s.Pump(3);
+        Native.vlqt_scene_destroy(w);
         foreach (var id in new[] { wave, gradient, dual, image, missing, text, wrongStage }) Native.vlqt_res_release(id);
-        pump(2);
-        check(true, "437: window destroyed, resources released");
+        s.Pump(2);
+        s.Check(true, "window destroyed, resources released");
     }
 }

@@ -1,39 +1,38 @@
-﻿using VL.Core;
+﻿using System;
+using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
+using VL.Qt.Wire;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     /// <summary>Adds the segments of another path (Skia AddPath).</summary>
     [ProcessNode(Name = "AddPath", Category = Categories.Paths)]
     public sealed class AddPathNode
     {
-        QtPath? _input;
-        QtPath? _other;
-        PathAddMode _mode;
-        QtPath? _output;
+        internal readonly record struct Props(QtPath Other, PathAddMode Mode)
+        {
+            public bool Equals(Props other)
+                => ReferenceEquals(Other, other.Other) && Mode == other.Mode;
+
+            public override int GetHashCode() => HashCode.Combine(Other, Mode);
+        }
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => Build(input ?? QtPath.Empty, p.Other, p.Mode);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with the segments of the other path added.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
         /// <param name="other">The path to add. Nothing = the empty path, which adds nothing.</param>
-        /// <param name="mode">Append adds the contours of the other path as new contours; Extend turns its first move into a line, so that the first contour continues the last contour of the input.</param>
+        /// <param name="mode">Append adds the contours of the other path as new contours; Extend turns its first move into a line, so that
+        /// the first contour continues the last contour of the input.</param>
         /// <returns>The path with the segments added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
-        public QtPath Update(QtPath? input, QtPath? other, PathAddMode mode = PathAddMode.Append)
-        {
-            input ??= QtPath.Empty;
-            other ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || !ReferenceEquals(other, _other) || mode != _mode)
-            {
-                _input = input;
-                _other = other;
-                _mode = mode;
-                _output = Build(input, other, mode);
-            }
-            return _output;
-        }
+        public QtPath Update(QtPath? input, QtPath? other, PathAddMode mode)
+            => _memo.Get(input, new Props(other ?? QtPath.Empty, mode), s_create);
 
-        static QtPath Build(QtPath path, QtPath other, PathAddMode mode)
+        private static QtPath Build(QtPath path, QtPath other, PathAddMode mode)
         {
             if (other.IsEmpty)
                 return path;
@@ -51,7 +50,7 @@ namespace VL.Qt.Nodes.Paths
         }
 
         // Replays the segments of the added path one by one, its first Move as a Line (a join of the two paths cannot change a segment).
-        static QtPath ExtendWith(QtPath path, FlatPath flat)
+        private static QtPath ExtendWith(QtPath path, FlatPath flat)
         {
             var verbs = flat.Verbs;
             var p = flat.Points;

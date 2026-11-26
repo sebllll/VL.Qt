@@ -103,7 +103,7 @@
           <Patch Id="Av0YOlU4ezWPSYxOvJX6Cd" Name="Update">
             <Pin Id="CB1v3vNABU9OusD2rHYdhy" Name="Value" Kind="InputPin">
               <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
-                <Choice Kind="TypeFlag" Name="Element" />
+                <Choice Kind="TypeFlag" Name="IElement" />
               </p:TypeAnnotation>
             </Pin>
             <Pin Id="JSTZRzKgIEzMp1VYJyDb5S" Name="Context" Kind="InputPin" />
@@ -227,7 +227,7 @@
           <Patch Id="ClTbBqcxxT5N7rNT6BGJip" Name="Create" />
           <Patch Id="CIqzyKIuXtvNGnGRctpthh" Name="Update">
             <Pin Id="U9PavxHKDjCOsaQuYpxrPR" Name="Value" Kind="InputPin">
-              <p:TypeAnnotation LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <p:TypeAnnotation LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
                 <Choice Kind="TypeFlag" Name="QtImage" />
               </p:TypeAnnotation>
             </Pin>
@@ -291,7 +291,7 @@
                   <Choice Kind="TypeFlag" Name="IValueViewer" />
                   <p:TypeArguments>
                     <TypeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
-                      <Choice Kind="TypeFlag" Name="Element" />
+                      <Choice Kind="TypeFlag" Name="IElement" />
                     </TypeReference>
                   </p:TypeArguments>
                 </p:TypeAnnotation>
@@ -322,7 +322,7 @@
                 <p:TypeAnnotation LastCategoryFullName="HDE.Viewers" LastDependency="HDE.WidgetsAndViewers.vl">
                   <Choice Kind="TypeFlag" Name="IValueViewer" />
                   <p:TypeArguments>
-                    <TypeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+                    <TypeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
                       <Choice Kind="TypeFlag" Name="QtImage" />
                     </TypeReference>
                   </p:TypeArguments>

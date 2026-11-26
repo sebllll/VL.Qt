@@ -8,13 +8,12 @@ namespace VL.Qt.Paths
     /// Quad, Cubic and Close). Every arc is split into segments of at most 90 degrees with the control distance
     /// <c>4/3 · tan(θ/4) · r</c>. Angles are in cycles (1 = full turn) like the angle pins of the Skia nodes; 0 points
     /// to the right and positive angles turn clockwise on screen (y down), like Skia.
-    /// The methods return the path extended by the arc; the current point of a path is not stored, so the methods that
-    /// start at it take it as a parameter.
+    /// The methods return the path extended by the arc; those that start at the current point read it from the path.
     /// </summary>
     internal static class ArcGeometry
     {
-        const double quarterTurn = Math.PI / 2;
-        const double cycle = 2 * Math.PI;
+        private const double quarterTurn = Math.PI / 2;
+        private const double cycle = 2 * Math.PI;
 
         /// <summary>
         /// Skia <c>ArcTo (Oval)</c>: the arc of <paramref name="oval"/> from <paramref name="startAngle"/> for
@@ -33,26 +32,36 @@ namespace VL.Qt.Paths
 
         /// <summary>
         /// Skia <c>AddArc</c>: a new contour with the arc of <paramref name="oval"/>. A sweep of one cycle or more adds
-        /// the closed oval, a sweep of zero or an empty oval adds nothing.
+        /// the closed oval starting at <paramref name="startAngle"/> if that is a multiple of a quarter cycle (as Skia
+        /// does); for other start angles it adds the full turn from the start angle as an open arc (Skia adds only a
+        /// point there). A sweep of zero or an empty oval adds nothing.
         /// </summary>
         internal static QtPath AddArc(QtPath path, RectangleF oval, float startAngle, float sweepAngle)
         {
             if (sweepAngle == 0 || oval.Width == 0 || oval.Height == 0)
                 return path;
             if (Math.Abs(sweepAngle) >= 1)
-                return AddOval(path, oval, sweepAngle > 0);
+            {
+                var quarters = startAngle * 4.0;
+                var rounded = Math.Round(quarters);
+                if (Math.Abs(quarters - rounded) <= 1.0 / 4096)
+                    return AddOval(path, oval, sweepAngle > 0, (float)(rounded / 4));
+            }
+
             return ArcTo(path, oval, startAngle, sweepAngle, true);
         }
 
         /// <summary>
-        /// Skia <c>AddOval</c>: a closed contour around <paramref name="oval"/>, starting at the right middle and going
-        /// clockwise (<paramref name="clockwise"/>) or counterclockwise.
+        /// Skia <c>AddOval</c>: a closed contour around <paramref name="oval"/>, starting at <paramref name="startAngle"/>
+        /// (cycles, 0 = right middle) and going clockwise (<paramref name="clockwise"/>) or counterclockwise.
         /// </summary>
-        internal static QtPath AddOval(QtPath path, RectangleF oval, bool clockwise)
+        internal static QtPath AddOval(QtPath path, RectangleF oval, bool clockwise, float startAngle = 0)
         {
             var (cx, cy, rx, ry) = Center(oval);
-            path = path.MoveTo((float)(cx + rx), (float)cy);
-            path = Emit(path, cx, cy, rx, ry, 1, 0, 0, clockwise ? cycle : -cycle, true, cx + rx, cy);
+            var t0 = startAngle * cycle;
+            var (sx, sy) = (cx + rx * Math.Cos(t0), cy + ry * Math.Sin(t0));
+            path = path.MoveTo((float)sx, (float)sy);
+            path = Emit(path, cx, cy, rx, ry, 1, 0, t0, clockwise ? cycle : -cycle, true, sx, sy);
             return path.Close();
         }
 
@@ -62,8 +71,10 @@ namespace VL.Qt.Paths
 
         /// <summary>
         /// Skia <c>AddRoundRect</c>: a closed rectangle with elliptical corners of the radii <paramref name="rx"/> and
-        /// <paramref name="ry"/> (limited to half the width and half the height), starting after the top left corner and
-        /// going clockwise (<paramref name="clockwise"/>) or counterclockwise. Radii of zero give a plain rectangle.
+        /// <paramref name="ry"/>, starting on the left edge below the top left corner and going clockwise
+        /// (<paramref name="clockwise"/>) or counterclockwise. Radii that do not fit are scaled together by one factor
+        /// (<c>min(w / 2rx, h / 2ry)</c>), so a very large radius gives semicircular ends. A radius of zero or less in
+        /// one direction gives a plain rectangle (Skia adds nothing for a negative radius).
         /// </summary>
         internal static QtPath AddRoundRect(QtPath path, RectangleF rect, float rx, float ry, bool clockwise)
         {
@@ -73,8 +84,15 @@ namespace VL.Qt.Paths
             if (t > b)
                 (t, b) = (b, t);
             double w = r - l, h = b - t;
-            double erx = Math.Min(Math.Abs(rx), w / 2), ery = Math.Min(Math.Abs(ry), h / 2);
-            if (erx <= 0 || ery <= 0)
+            double erx = rx, ery = ry;
+            if (erx > 0 && ery > 0)
+            {
+                var scale = Math.Min(1, Math.Min(w / (2 * erx), h / (2 * ery)));
+                erx *= scale;
+                ery *= scale;
+            }
+
+            if (!(erx > 0 && ery > 0))
             {
                 path = path.MoveTo((float)l, (float)t);
                 path = clockwise
@@ -85,31 +103,36 @@ namespace VL.Qt.Paths
 
             // Corner centers: top left, top right, bottom right, bottom left.
             var c = new (double x, double y)[] { (l + erx, t + ery), (r - erx, t + ery), (r - erx, b - ery), (l + erx, b - ery) };
-            // Corner by corner, each a quarter turn. Clockwise from the top edge: top right, bottom right, bottom left,
-            // top left; counterclockwise: top left, bottom left, bottom right, top right. Lines along the edges join them.
+            // Each corner is a quarter turn that starts at angle π + k·π/2 (clockwise) and ends at the next edge; the
+            // lines along the edges join them. Clockwise the contour runs top left, top right, bottom right, bottom
+            // left; counterclockwise bottom left, bottom right, top right, top left.
             var dir = clockwise ? 1 : -1;
-            path = path.MoveTo((float)(l + erx), (float)t);
+            path = path.MoveTo((float)l, (float)(t + ery));
             for (var i = 0; i < 4; i++)
             {
-                var k = clockwise ? (i + 1) % 4 : (4 - i) % 4;
-                var t0 = -quarterTurn + dir * i * quarterTurn;
-                // Counterclockwise the first corner starts at the current point.
-                if (clockwise || i > 0)
+                var k = clockwise ? i : 3 - i;
+                var t0 = Math.PI + k * quarterTurn + (clockwise ? 0 : quarterTurn);
+                // Clockwise the first corner starts at the current point.
+                if (!clockwise || i > 0)
                     path = path.LineTo((float)(c[k].x + erx * Math.Cos(t0)), (float)(c[k].y + ery * Math.Sin(t0)));
                 path = Emit(path, c[k].x, c[k].y, erx, ery, 1, 0, t0, dir * quarterTurn, false, 0, 0);
             }
 
+            // Clockwise the left edge closes the contour; counterclockwise the top left corner ends at the start.
+            if (clockwise)
+                path = path.LineTo((float)l, (float)(t + ery));
             return path.Close();
         }
 
         /// <summary>
-        /// Skia <c>ArcTo (Radius)</c> / SVG elliptical arc: from <paramref name="current"/> to <paramref name="end"/> on
+        /// Skia <c>ArcTo (Radius)</c> / SVG elliptical arc: from the current point of the path to <paramref name="end"/> on
         /// an ellipse with the radii <paramref name="radius"/>, turned by <paramref name="xAxisRotate"/> (cycles).
         /// <paramref name="largeArc"/> picks the arc of more than half a turn, <paramref name="sweep"/> the clockwise one.
         /// Radii that are too small are scaled up (SVG rule); a radius of zero gives a line, equal points give nothing.
         /// </summary>
-        internal static QtPath SvgArcTo(QtPath path, Vector2 current, Vector2 radius, float xAxisRotate, bool largeArc, bool sweep, Vector2 end)
+        internal static QtPath SvgArcTo(QtPath path, Vector2 radius, float xAxisRotate, bool largeArc, bool sweep, Vector2 end)
         {
+            var current = path.LastPoint;
             double x0 = current.X, y0 = current.Y, x1 = end.X, y1 = end.Y;
             if (x0 == x1 && y0 == y1)
                 return path;
@@ -155,13 +178,14 @@ namespace VL.Qt.Paths
         }
 
         /// <summary>
-        /// Skia <c>ArcTo (Tangent)</c>: a line from <paramref name="current"/> towards <paramref name="corner"/>, rounded
+        /// Skia <c>ArcTo (Tangent)</c>: a line from the current point of the path towards <paramref name="corner"/>, rounded
         /// with a circle of <paramref name="radius"/> that touches the line to <paramref name="end"/>. The path ends where
         /// the circle touches that second line, not at <paramref name="end"/>. A radius of zero, equal points or points on
         /// one line give a line to <paramref name="corner"/>.
         /// </summary>
-        internal static QtPath TangentArcTo(QtPath path, Vector2 current, Vector2 corner, Vector2 end, float radius)
+        internal static QtPath TangentArcTo(QtPath path, Vector2 corner, Vector2 end, float radius)
         {
+            var current = path.LastPoint;
             double px = corner.X, py = corner.Y;
             double ax = current.X - px, ay = current.Y - py;
             double bx = end.X - px, by = end.Y - py;
@@ -202,7 +226,7 @@ namespace VL.Qt.Paths
             return Emit(path, cx, cy, radius, radius, 1, 0, a0, dt, true, t1x, t1y);
         }
 
-        static (double cx, double cy, double rx, double ry) Center(RectangleF oval) =>
+        private static (double cx, double cy, double rx, double ry) Center(RectangleF oval) =>
             (oval.X + oval.Width / 2.0, oval.Y + oval.Height / 2.0, Math.Abs(oval.Width) / 2.0, Math.Abs(oval.Height) / 2.0);
 
         /// <summary>
@@ -210,7 +234,7 @@ namespace VL.Qt.Paths
         /// from the parameter angle t0 (radians) for dt. The current point must be the start of the arc. With
         /// <paramref name="snapEnd"/> the last point is exactly (ex, ey), so a chain does not drift.
         /// </summary>
-        static QtPath Emit(QtPath path, double cx, double cy, double rx, double ry, double cosPhi, double sinPhi,
+        private static QtPath Emit(QtPath path, double cx, double cy, double rx, double ry, double cosPhi, double sinPhi,
             double t0, double dt, bool snapEnd, double ex, double ey)
         {
             if (dt == 0)

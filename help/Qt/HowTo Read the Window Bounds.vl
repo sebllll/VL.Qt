@@ -64,20 +64,20 @@
             </p:NodeReference>
             <Pin Id="W8aaEQ94CVy3DBoiDuJjiN" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="b3Sh9kuWLCcrYnXMlpaQIB" Name="Size" Kind="InputPin" />
-            <Pin Id="giq8WJfGkIREdjj8DfDqh1" Name="Transform" Kind="InputPin" />
+            <Pin Id="giq8WJfGkIREdjj8DfDqh1" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="Iy87I94fJLKMRsEjOKcZyL" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="8a2A1VbarPnZGNcbLnkWYw" Name="Color" Kind="InputPin" />
+            <Pin Id="8a2A1VbarPnZGNcbLnkWYw" Name="Fill Color" Kind="InputPin" />
             <Pin Id="PhcCN4nPKEop6NZt7sBdeA" Name="Radius" Kind="InputPin" />
             <Pin Id="cICA2llS931GbgCtFBipWA" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="A4N0mQ51qB811e7jTvT9UX" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="Xs6SQqUoj5bvDXzbR2XfQI" Name="Output" Kind="OutputPin" />
-            <Pin Id="Dbokt9ulSHhxyAIjWldD18" Name="Opacity" Kind="InputPin" />
+            <Pin Id="Dbokt9ulSHhxyAIjWldD18" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="LeddgKn1EExLoxWW5K5alP" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="7gL0PvHDB1joDVZ6OvBxSz" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="MJUTsbJsVXOLIrJkXGenW7" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="EObCsCSVBMfNM9OxBVwxER" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="SYuaa7rFlUxNlwfcuRbmC0" Name="Interaction" Kind="InputPin" />
-            <Pin Id="J27oXcxGakILa0rmc1aIeE" Name="Effect" Kind="InputPin" />
+            <Pin Id="SYuaa7rFlUxNlwfcuRbmC0" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="J27oXcxGakILa0rmc1aIeE" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="170,660,105,19" Id="yhOm6nK8dJ6njJsWA7njAz">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
@@ -92,10 +92,10 @@
             <Pin Id="NAzPI4MtFEnlhbrQnh2X9s" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="EE3aD0cok1iL5mCrsbfNP3" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="rFogwwvx4f2U4urOh9r5ij" Name="Input" Kind="InputPin" />
-            <Pin Id="5RiMDYH8KV8N6S9pQrHmKO" Name="Space" Kind="InputPin" />
-            <Pin Id="u4MqmiCYjSyYUuoSfwhv8n" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="5RiMDYH8KV8N6S9pQrHmKO" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="u4MqmiCYjSyYUuoSfwhv8n" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="TOIpMgSIiJsLKVRDvZ7kxb" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="F0Bvu1cdsNdCXHjd0zrt9I" Name="Enabled" Kind="InputPin" />
+            <Pin Id="F0Bvu1cdsNdCXHjd0zrt9I" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="P3MybhwvhbQLdHVai3Ui7Z" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="VcecQawo3rSvjmPf4n3gM2" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="aozNwuLlblwjlQkmAliQdl" Name="Client Bounds" Kind="OutputPin" />

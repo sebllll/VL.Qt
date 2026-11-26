@@ -2,6 +2,7 @@
 using VL.Core;
 using VL.Core.Import;
 using Path = VL.Lib.IO.Path;
+using VL.Qt.Interop;
 
 namespace VL.Qt.Nodes
 {
@@ -13,35 +14,42 @@ namespace VL.Qt.Nodes
     [ProcessNode(Name = "LoadFont", Category = Categories.Qt)]
     public sealed class LoadFontNode : IDisposable
     {
-        readonly NodeErrors _errors;
-        readonly QtApp _app;
-        string? _path;
-        ulong _handle;
-        string _family = string.Empty;
-        string _error = string.Empty;
+        private readonly NodeErrors _errors;
+        private readonly ResourceNodeReport _report;
+        private readonly IFontApi _api;
+        private string? _path;
+        private ulong _handle;
+        private string _family = string.Empty;
+        private string _error = string.Empty;
 
         public LoadFontNode(NodeContext nodeContext)
+            : this(new NativeFontApi(), new NodeErrors(nodeContext))
         {
-            _errors = new NodeErrors(nodeContext);
-            // Creates the QGuiApplication on first use: QFontDatabase needs it, so a LoadFont before any renderer works.
-            _app = QtApp.Get(nodeContext.AppHost.LoggerFactory);
+        }
+
+        /// <summary>A node on the given font API and message store, in place of the lookup through the <see cref="NodeContext"/>.</summary>
+        internal LoadFontNode(IFontApi api, NodeErrors errors)
+        {
+            _api = api;
+            _errors = errors;
+            _report = new ResourceNodeReport(_errors, lasting: true);
         }
 
         /// <summary>Registers the font file when Path changes.</summary>
         /// <param name="path">Font file (TTF, OTF, TTC). Empty = no font.</param>
-        /// <param name="error">Why the file could not be registered, empty otherwise.</param>
-        /// <returns>The family name of the font (the first one of a font collection), empty when nothing is registered.</returns>
+        /// <returns>The family name of the font (the first one of a font collection), empty when nothing is registered. A file that cannot
+        /// be registered is shown at the node and logged.</returns>
         [return: Pin(Name = "Family")]
-        public string Update(Path path, out string error)
+        public string Update(Path path)
         {
             var p = path?.Value ?? string.Empty;
             if (p != _path)
                 Load(p);
-            error = _error;
+            _report.Update(null, _error);
             return _family;
         }
 
-        void Load(string path)
+        private void Load(string path)
         {
             _path = path;
             var previous = _handle;
@@ -50,36 +58,32 @@ namespace VL.Qt.Nodes
             _error = string.Empty;
             if (path.Length > 0)
             {
-                if (!_app.IsQtThread)
+                if (!_api.IsQtThread)
                     _error = "LoadFont must run on the thread of the Qt app (the vvvv main thread).";
                 // Add before releasing the previous handle: the same file stays registered when only the path spelling changed.
-                else if (Native.FontAdd(path, out var handle, out var families) == 0)
+                else if (_api.Add(path, out var handle, out var families) == Native.Result.Ok)
                 {
                     _handle = handle;
                     var newline = families.IndexOf('\n');
                     _family = newline < 0 ? families : families[..newline];
                 }
                 else
-                    _error = Native.LastError();
+                    _error = _api.LastError();
             }
             Release(previous);
-            if (_error.Length > 0)
-                _errors.Warn(_error, "LoadFont");
-            else
-                _errors.Clear("LoadFont");
         }
 
-        void Release(ulong handle)
+        private void Release(ulong handle)
         {
-            if (handle != 0 && Native.vlqt_font_release(handle) != 0)
-                _errors.LogOnly(Native.LastError());
+            if (handle != 0 && _api.Release(handle) != Native.Result.Ok)
+                _errors.LogOnly(_api.LastError());
         }
 
         public void Dispose()
         {
             Release(_handle);
             _handle = 0;
-            _errors.Dispose();
+            _report.Dispose();
         }
     }
 }

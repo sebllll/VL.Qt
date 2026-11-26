@@ -2,26 +2,27 @@
 using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Qt.Paths;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Tests.Paths
 {
     public class BezierGeometryTests
     {
-        static readonly Vector2[] anchors = { new(0, 0), new(100, 0), new(100, 100) };
-        static readonly Vector2[] none = Array.Empty<Vector2>();
-        static readonly HandleMode[] noModes = Array.Empty<HandleMode>();
+        private static readonly Vector2[] anchors = { new(0, 0), new(100, 0), new(100, 100) };
+        private static readonly Vector2[] none = Array.Empty<Vector2>();
+        private static readonly HandleMode[] noModes = Array.Empty<HandleMode>();
 
-        static QtPath Build(Vector2[] a, Vector2[] inH, Vector2[] outH, HandleMode[] modes, bool closed) =>
+        private static QtPath Build(Vector2[] a, Vector2[] inH, Vector2[] outH, HandleMode[] modes, bool closed) =>
             BezierGeometry.Build(QtPath.Empty, a, inH, outH, modes, closed);
 
-        static (byte[] verbs, float[] points) Flat(QtPath p)
+        private static (byte[] verbs, float[] points) Flat(QtPath p)
         {
             var f = p.Flatten();
             return (f.Verbs.AsSpan().ToArray(), f.Points.AsSpan().ToArray());
         }
 
         // Point layout of an open path: 0 = start, then per segment c1, c2, end (1-3 segment 0, 4-6 segment 1).
-        static void AssertPoint(float[] pts, int pointIndex, float x, float y)
+        private static void AssertPoint(float[] pts, int pointIndex, float x, float y)
         {
             Assert.That(pts[pointIndex * 2], Is.EqualTo(x).Within(1e-4f), $"x of point {pointIndex}");
             Assert.That(pts[pointIndex * 2 + 1], Is.EqualTo(y).Within(1e-4f), $"y of point {pointIndex}");

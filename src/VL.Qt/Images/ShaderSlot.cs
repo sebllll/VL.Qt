@@ -1,24 +1,48 @@
 ﻿using System;
+using VL.Qt.Images;
 
 namespace VL.Qt
 {
     /// <summary>
-    /// One shader stage of a ShaderEffect node (#437): owns the shader resource for the current path or GLSL code (#483). A new source creates
+    /// One shader stage of a Shader node: owns the shader resource for the current path or GLSL code. A new source creates
     /// a new resource and queues the release of the old one (QtNative keeps drawing the old shader until the new one is
     /// Ready, the element switches ids first, see <see cref="ResourceClient.Release"/>); the same source never reloads.
     /// Loading is asynchronous, nothing here waits. Main thread only.
     /// </summary>
     internal sealed class ShaderSlot : IDisposable
     {
-        readonly ResourceClient? _client;
-        readonly int _stage;
-        readonly string _label;
-        string? _source;
-        bool _isCode;
-        ImageResource? _resource;
-        string _createError = string.Empty;
+        /// <summary>Path prefix of a shader shipped with VL.Qt, resolved by QtNative (vlqt_shader_load).</summary>
+        internal const string builtinShaderPrefix = "builtin:";
 
-        /// <param name="client">Creates and releases the shader resources, may be null: then <see cref="Id"/> stays 0 and <see cref="Error"/> reports it.</param>
+        /// <summary>
+        /// Recognizes <c>builtin:&lt;name&gt;</c>, also after vvvv resolved a Path value against the document directory
+        /// (<c>C:\doc\dir\builtin:wave</c>): then the last path segment carries the prefix.
+        /// </summary>
+        internal static bool TryGetBuiltinShader(string path, out string builtin)
+        {
+            var segment = path.AsSpan();
+            var i = path.LastIndexOfAny(new[] { '\\', '/' });
+            if (i >= 0)
+                segment = segment.Slice(i + 1);
+            if (segment.StartsWith(builtinShaderPrefix, StringComparison.Ordinal))
+            {
+                builtin = segment.ToString();
+                return true;
+            }
+            builtin = path;
+            return false;
+        }
+
+        private readonly ResourceClient? _client;
+        private readonly int _stage;
+        private readonly string _label;
+        private string? _source;
+        private bool _isCode;
+        private QtResource? _resource;
+        private string _createError = string.Empty;
+
+        /// <param name="client">Creates and releases the shader resources, may be null: then <see cref="Id"/> stays 0 and
+        /// <see cref="Error"/> reports it.</param>
         /// <param name="stage"><see cref="Protocol.ShaderStage"/>.</param>
         /// <param name="label">Prefix of the error text, e.g. "Fragment shader".</param>
         public ShaderSlot(ResourceClient? client, int stage, string label)
@@ -32,11 +56,11 @@ namespace VL.Qt
         public ulong Id => _resource?.Id ?? 0;
 
         /// <summary>The resource, null without path (tests, status).</summary>
-        public ImageResource? Resource => _resource;
+        public QtResource? Resource => _resource;
 
         /// <summary>
         /// Why the shader is not (fully) usable ("Fragment shader: ..."): the load error, or for a Ready shader the warning of
-        /// QtNative (a uniform the OpenGL backend never sets, #77). Empty if it is loading, fine or not set. Cached, no
+        /// QtNative (a uniform the OpenGL backend never sets). Empty if it is loading, fine or not set. Cached, no
         /// allocation while unchanged.
         /// </summary>
         public string Error
@@ -58,10 +82,10 @@ namespace VL.Qt
             }
         }
 
-        string _errorSource = string.Empty, _errorText = string.Empty;
+        private string _errorSource = string.Empty, _errorText = string.Empty;
 
         /// <summary>
-        /// Loads <paramref name="path"/> if set (not empty), otherwise bakes <paramref name="code"/> (full Qt GLSL, #483,
+        /// Loads <paramref name="path"/> if set (not empty), otherwise bakes <paramref name="code"/> (full Qt GLSL,
         /// not empty/whitespace); only when the effective source (kind + text) differs from the last call. Both empty = no
         /// shader (id 0). While typing, a new code text waits until the running bake is settled (Ready or Failed), then
         /// the latest text of a later call starts; no pending state needed because the node calls this every frame.

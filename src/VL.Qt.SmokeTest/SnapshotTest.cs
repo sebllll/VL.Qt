@@ -1,4 +1,6 @@
-﻿using System;
+﻿using NUnit.Framework;
+using VL.Qt.Images;
+using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,19 +12,22 @@ using System.Threading;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Lib.Basics.Imaging;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Nodes;
+using VL.Qt.Wire;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
+using static Pixels;
 
-// Snapshot (#363): SnapshotNode → ResourceClient → QtNative (QQuickItem::grabToImage, asynchronous). Pixels against
-// vlqt_window_grab, latency in pumps, error paths, hitch rate with periodic snapshots. PNGs go to <outDir>/363_*.png.
-static class SnapshotTest
+// Snapshot: SnapshotNode → ResourceClient → QtNative (QQuickItem::grabToImage, asynchronous). Pixels against
+// vlqt_test_window_grab, latency in pumps, error paths, hitch rate with periodic snapshots. PNGs go to <OutDir>/363_*.png.
+[TestFixture, NonParallelizable]
+public static class SnapshotTest
 {
-    const int MaxLatency = 8; // frames from Grab to Is Ready (a grab needs the next render of its window)
-
-    static Color Px(Bitmap a, int x, int y) => a.GetPixel(x * a.Width / 800, y * a.Height / 600);
+    private const int MaxLatency = 8; // frames from Grab to Is Ready (a grab needs the next render of its window)
 
     /// <summary>BGRA8 premultiplied pixel at (x, y) of the snapshot.</summary>
     internal static (int B, int G, int R, int A) At(IImage image, int x, int y, int sizeDip = 300)
@@ -34,7 +39,7 @@ static class SnapshotTest
         return (bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3]);
     }
 
-    static bool Near(int a, int b, int tolerance) => Math.Abs(a - b) <= tolerance;
+    private static bool Near(int a, int b, int tolerance) => Math.Abs(a - b) <= tolerance;
 
     // Straight-alpha RGBA PNG (the smoke test has no image encoder on Linux, so a minimal one).
     internal static void WritePng(IImage image, string path)
@@ -71,7 +76,7 @@ static class SnapshotTest
         Chunk(f, "IEND", []);
     }
 
-    static void Chunk(Stream s, string type, byte[] data)
+    private static void Chunk(Stream s, string type, byte[] data)
     {
         var n = new byte[4];
         BinaryPrimitives.WriteInt32BigEndian(n, data.Length);
@@ -91,7 +96,11 @@ static class SnapshotTest
         s.Write(n);
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    /// <summary>Group snapshots: result, latency in pumps, error paths, hitch rate.</summary>
+    [Test, Category("snapshot")]
+    public static void Snapshot() => Scenario.Run(Run);
+
+    private static void Run(Scenario s)
     {
         // The client QtApp owns, without a QtApp (the smoke test pumps QtNative itself).
         var client = new ResourceClient(new NativeResourceApi(), Environment.CurrentManagedThreadId, static () => null);
@@ -102,17 +111,18 @@ static class SnapshotTest
             for (int i = 0; i < frames; i++)
             {
                 client.BeforeEvents();
-                pump(1);
+                s.Pump(1);
                 client.AfterEvents();
             }
         }
 
-        var w = Native.vlqt_window_create(800, 600, "VL.Qt snapshot test");
-        check(w != IntPtr.Zero, "363: window_create");
+        var w = NativeCalls.CreateWindow(800, 600, "VL.Qt snapshot test");
+        s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var scene = new SceneRegistry();
-        var rec = new Reconciler(cmd, new IdAllocator(), scene) { Window = w };
+        var scene = new OccurrenceRegistry();
+        var interactions = new InteractionRegistry();
+        var rec = new Reconciler(cmd, new IdAllocator(), scene, interactions) { Window = w };
 
         // Group at (100, 100) DIP, 300 x 200 (fixed size): orange rectangle 100 x 100 at its origin, white text right of it.
         var orange = new VL.Qt.Elements.Rectangle { Size = new Vector2(1, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0), Fill = new Color4(1, 0.6f, 0, 1) };
@@ -122,75 +132,78 @@ static class SnapshotTest
 
         void Frame(Element tree, bool clear = false)
         {
-            cmd.Reset();
+            cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            rec.Update(tree, Space.DIPTopLeft);
+            rec.Update(tree, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
-                check(rc == 0, $"363: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+                s.Check(rc == 0, $"apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
             }
         }
 
         Frame(root, clear: true);
         Pump(3);
 
-        var node = new SnapshotNode(client, scene);
+        var log = new NodeLog();
+        var node = new SnapshotNode(client, scene, log.Errors);
         var latencies = new List<int>();
 
-        // Grab on the node, pump until Is Ready / Error; returns the image (or null) and the frames it took.
+        // Grab on the node, pump until Is Ready or a logged error; returns the image (or null), what was logged and the frames it took.
         IImage? Snap(SnapshotNode n, Element? element, float scale, out string error, out int frames)
         {
-            var image = n.Update(element, out var ready, out error, scale, true);
+            var image = n.Update(element, scale, true, out var ready);
+            error = log.Take();
             frames = 0;
             while (!ready && error.Length == 0 && frames < 120)
             {
                 Pump(1);
                 frames++;
-                image = n.Update(element, out ready, out error, scale);
+                image = n.Update(element, scale, false, out ready);
+                error = log.Take();
             }
             return ready ? image : null;
         }
 
-        // 1) Group with Rectangle + Text: BGRA8 premultiplied, size = group size * Scale, pixels against vlqt_window_grab.
+        // 1) Group with Rectangle + Text: BGRA8 premultiplied, size = group size * Scale, pixels against vlqt_test_window_grab.
         var img1 = Snap(node, group, 1, out var err1, out var frames1);
         latencies.Add(frames1);
-        check(img1 is not null && err1.Length == 0, $"363: snapshot of the group is ready ('{err1}')");
+        s.Check(img1 is not null && err1.Length == 0, $"snapshot of the group is ready ('{err1}')");
         if (img1 is null)
         {
             Cleanup();
             return;
         }
-        check(img1.Info.Width == 300 && img1.Info.Height == 200 && img1.Info.Format == PixelFormat.B8G8R8A8 && img1.Info.IsPremultipliedAlpha && !img1.IsVolatile,
-            $"363: snapshot is 300 x 200 BGRA8 premultiplied, not volatile ({img1.Info.Width} x {img1.Info.Height}, {img1.Info.Format}, premul {img1.Info.IsPremultipliedAlpha})");
-        WritePng(img1, Path.Combine(outDir, "363_snapshot.png"));
+        s.Check(img1.Info.Width == 300 && img1.Info.Height == 200 && img1.Info.Format == PixelFormat.B8G8R8A8 && img1.Info.IsPremultipliedAlpha && !img1.IsVolatile,
+            $"snapshot is 300 x 200 BGRA8 premultiplied, not volatile ({img1.Info.Width} x {img1.Info.Height}, {img1.Info.Format}, premul {img1.Info.IsPremultipliedAlpha})");
+        WritePng(img1, Path.Combine(s.OutDir, "363_snapshot.png"));
         {
             var (b, g, r, a) = At(img1, 50, 50);
-            check(a == 255 && Near(r, 255, 2) && Near(g, 153, 2) && Near(b, 0, 2), $"363: rectangle pixel is orange (B{b} G{g} R{r} A{a})");
+            s.Check(a == 255 && Near(r, 255, 2) && Near(g, 153, 2) && Near(b, 0, 2), $"rectangle pixel is orange (B{b} G{g} R{r} A{a})");
             var (_, _, _, ca) = At(img1, 290, 190);
-            Program.NeedsRhi(check, "the software backend renders grabToImage into an opaque pixmap (screen format RGB32), transparent areas come out black, alpha 255; vlqt.h")(ca == 0, $"363: empty group area is transparent (alpha {ca})");
+            s.NeedsRhi(ca == 0, $"empty group area is transparent (alpha {ca})", "the software backend renders grabToImage into an opaque pixmap (screen format RGB32), transparent areas come out black, alpha 255; vlqt.h");
             int ink = 0;
             for (int y = 20; y < 80; y++)
                 for (int x = 110; x < 290; x++)
                     if (At(img1, x, y).A > 128)
                         ink++;
-            check(ink > 50, $"363: text area is not empty ({ink} opaque pixels)");
+            s.Check(ink > 50, $"text area is not empty ({ink} opaque pixels)");
         }
 
         // Against the window grab (device pixels: the group sits at (100, 100) DIP). The snapshot is composited over the
         // background (0x20) first. Tolerance: Qt renders the text with another glyph cache/AA state per target (window
         // vs offscreen layer), so the mean over the group area may differ a little; fill and background areas must match.
-        using (var a = grab(w, Path.Combine(outDir, "363_window.png")))
+        using (var a = s.Grab(w, "363_window.png"))
         {
             double diff = 0;
             int n = 0, rectOk = 0, rectAll = 0;
             for (int y = 0; y < 200; y += 2)
                 for (int x = 0; x < 300; x += 2)
                 {
-                    var s = At(img1, x, y);
+                    var px = At(img1, x, y);
                     var g = Px(a, 100 + x, 100 + y);
-                    int inv = 255 - s.A;
-                    int sr = s.R + inv * 0x20 / 255, sg = s.G + inv * 0x20 / 255, sb = s.B + inv * 0x20 / 255;
+                    int inv = 255 - px.A;
+                    int sr = px.R + inv * 0x20 / 255, sg = px.G + inv * 0x20 / 255, sb = px.B + inv * 0x20 / 255;
                     diff += (Math.Abs(sr - g.R) + Math.Abs(sg - g.G) + Math.Abs(sb - g.B)) / 3.0;
                     n++;
                     if (x < 96 && y < 96)
@@ -201,9 +214,9 @@ static class SnapshotTest
                     }
                 }
             var mean = diff / n;
-            Console.WriteLine($"INFO 363 snapshot vs window grab: mean abs diff {mean:F2} (0..255), rectangle {rectOk}/{rectAll} within 6");
-            check(rectOk == rectAll, $"363: rectangle pixels equal the window grab ({rectOk}/{rectAll}, tolerance 6)");
-            Program.NeedsRhi(check, "the software backend renders grabToImage into an opaque pixmap (screen format RGB32), transparent areas come out black, alpha 255; vlqt.h")(mean < 4, $"363: snapshot equals the window grab over the group area (mean diff {mean:F2} < 4)");
+            s.Info($"snapshot vs window grab: mean abs diff {mean:F2} (0..255), rectangle {rectOk}/{rectAll} within 6");
+            s.Check(rectOk == rectAll, $"rectangle pixels equal the window grab ({rectOk}/{rectAll}, tolerance 6)");
+            s.NeedsRhi(mean < 4, $"snapshot equals the window grab over the group area (mean diff {mean:F2} < 4)", "the software backend renders grabToImage into an opaque pixmap (screen format RGB32), transparent areas come out black, alpha 255; vlqt.h");
             int inkWindow = 0;
             for (int y = 20; y < 80; y++)
                 for (int x = 110; x < 290; x++)
@@ -217,20 +230,20 @@ static class SnapshotTest
                 for (int x = 110; x < 290; x++)
                     if (At(img1, x, y) is { A: > 128, R: > 160 })
                         inkSnap++;
-            check(inkSnap > 0.6 * inkWindow && inkSnap < 1.6 * inkWindow, $"363: text ink equal to the window grab within 40 % ({inkSnap} vs {inkWindow} px)");
+            s.Check(inkSnap > 0.6 * inkWindow && inkSnap < 1.6 * inkWindow, $"text ink equal to the window grab within 40 % ({inkSnap} vs {inkWindow} px)");
         }
 
         // Scale 2: double the pixels.
         var img2 = Snap(node, group, 2, out var err2, out var frames2);
         latencies.Add(frames2);
-        check(img2 is { Info: { Width: 600, Height: 400 } } && err2.Length == 0, $"363: Scale 2 = 600 x 400 ({img2?.Info.Width} x {img2?.Info.Height}, '{err2}')");
+        s.Check(img2 is { Info: { Width: 600, Height: 400 } } && err2.Length == 0, $"Scale 2 = 600 x 400 ({img2?.Info.Width} x {img2?.Info.Height}, '{err2}')");
         if (img2 is not null)
         {
-            WritePng(img2, Path.Combine(outDir, "363_snapshot_x2.png"));
+            WritePng(img2, Path.Combine(s.OutDir, "363_snapshot_x2.png"));
             var (b, g, r, a) = At(img2, 100, 100, 600);
-            check(a == 255 && Near(r, 255, 2) && Near(g, 153, 2) && Near(b, 0, 2), $"363: Scale 2 rectangle pixel is orange (B{b} G{g} R{r} A{a})");
+            s.Check(a == 255 && Near(r, 255, 2) && Near(g, 153, 2) && Near(b, 0, 2), $"Scale 2 rectangle pixel is orange (B{b} G{g} R{r} A{a})");
         }
-        check(ReferenceEquals(node.Update(group, out _, out _, 2, false), img2), "363: Image stays the last finished snapshot");
+        s.Check(ReferenceEquals(node.Update(group, 2, false, out _), img2), "Image stays the last finished snapshot");
 
         // 2) Latency (frames from Grab to Is Ready); repeat a few times for the range.
         for (int i = 0; i < 8; i++)
@@ -239,7 +252,7 @@ static class SnapshotTest
             latencies.Add(f);
         }
         Console.WriteLine($"snapshot latency: {latencies.Max()} frames (min {latencies.Min()}, {latencies.Count} grabs: {string.Join(",", latencies)})");
-        check(latencies.Max() <= MaxLatency && latencies.Min() >= 1, $"363: latency {latencies.Min()}..{latencies.Max()} frames (1..{MaxLatency})");
+        s.Check(latencies.Max() <= MaxLatency && latencies.Min() >= 1, $"latency {latencies.Min()}..{latencies.Max()} frames (1..{MaxLatency})");
 
         // 3) Element in no renderer: error at the node, no exception.
         var loose = new VL.Qt.Elements.Rectangle { Size = new Vector2(1, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 0, 0) };
@@ -249,50 +262,50 @@ static class SnapshotTest
         try
         {
             looseImage = Snap(node, loose, 1, out looseError, out _);
-            Snap(node, null, 1, out var nullError, out _);
-            check(nullError == SnapshotNode.NotShownError, $"363: no Element = '{nullError}'");
+            var nullImage = Snap(node, null, 1, out var nullError, out _);
+            s.Check(nullImage is null && nullError.Length == 0, $"no Element: no image, the same error is not logged again ('{nullError}')");
         }
         catch (Exception e)
         {
             thrown = e;
         }
-        check(thrown is null, $"363: element in no renderer does not throw ({thrown?.Message})");
-        check(looseImage is null && looseError == SnapshotNode.NotShownError, $"363: element in no renderer: Error '{looseError}'");
+        s.Check(thrown is null, $"element in no renderer does not throw ({thrown?.Message})");
+        s.Check(looseImage is null && looseError == SnapshotGrab.NotShownError, $"element in no renderer: logged '{looseError}'");
         // The node recovers with a shown element.
         var again = Snap(node, group, 1, out var errAgain, out _);
-        check(again is not null && errAgain.Length == 0, $"363: grab of a shown element after the error works ('{errAgain}')");
+        s.Check(again is not null && errAgain.Length == 0, $"grab of a shown element after the error works ('{errAgain}')");
 
         // 4) Error paths on the raw API (own poll, the client does not pump here).
         var events = new List<(ushort Ev, ulong Id, byte[] Payload)>();
         var buf = new byte[64 * 1024];
         void Poll()
         {
-            var n = Native.ResPoll(buf);
-            if (n < 0)
+            var n = NativeCalls.ResPoll(buf, out var required);
+            if (n == (int)Native.Result.BufferTooSmall)
             {
-                buf = new byte[-n * 2];
-                n = Native.ResPoll(buf);
+                buf = new byte[required * 2];
+                n = NativeCalls.ResPoll(buf);
             }
             for (int at = 0; at < n;)
             {
                 var ev = BitConverter.ToUInt16(buf, at);
-                var len = BitConverter.ToUInt16(buf, at + 2);
-                events.Add((ev, BitConverter.ToUInt64(buf, at + 4), buf.AsSpan(at + 12, len - 8).ToArray()));
-                at += (4 + len + 3) & ~3;
+                var len = (int)BitConverter.ToUInt32(buf, at + 4);
+                events.Add((ev, BitConverter.ToUInt64(buf, at + 8), buf.AsSpan(at + 16, len - 8).ToArray()));
+                at += (8 + len + 3) & ~3;
             }
         }
         void RawFrames(int frames)
         {
             for (int i = 0; i < frames; i++)
             {
-                pump(1);
+                s.Pump(1);
                 Poll();
             }
         }
         ulong RawCreate()
         {
-            var rc = Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var id);
-            check(rc == 0 && id != 0, $"363: raw create ({rc})");
+            var rc = Native.vlqt_res_create(Protocol.ResourceKind.Snapshot, out var id);
+            s.Check(rc == 0 && id != 0, $"raw create ({rc})");
             return id;
         }
         // Pumps until the id has Ready/Failed after `from` events (or 120 frames).
@@ -301,8 +314,8 @@ static class SnapshotTest
             for (int i = 0; i < 120; i++)
             {
                 RawFrames(1);
-                var s = events.Skip(from).Where(e => e.Id == id && e.Ev == Protocol.ResEv.State).Select(e => e.Payload[0]).LastOrDefault();
-                if (s is Protocol.ResState.Ready or Protocol.ResState.Failed)
+                var s = events.Skip(from).Where(e => e.Id == id && e.Ev == Protocol.ResourceEventId.State).Select(e => e.Payload[0]).LastOrDefault();
+                if (s is Protocol.ResourceState.Ready or Protocol.ResourceState.Failed)
                     return s;
             }
             return 0;
@@ -312,62 +325,62 @@ static class SnapshotTest
         RawFrames(1); // empty queue
         events.Clear();
         var rel = RawCreate();
-        var rc4 = Native.vlqt_res_snapshot(rel, w, 0, 1);
-        check(rc4 == 0, $"363: raw snapshot of the window root ({rc4})");
+        var rc4 = Native.vlqt_snapshot_start(rel, w, 0, 1);
+        s.Check(rc4 == 0, $"raw snapshot of the window root ({rc4})");
         Native.vlqt_res_release(rel);
         events.Clear(); // what came before the release call is not interesting, only what comes after
         RawFrames(10);
-        check(!events.Any(e => e.Id == rel), $"363: release during the grab: no record afterwards ({events.Count(e => e.Id == rel)})");
-        check(Native.vlqt_res_wait(rel, 0) == -9, "363: released snapshot id is stale");
+        s.Check(!events.Any(e => e.Id == rel), $"release during the grab: no record afterwards ({events.Count(e => e.Id == rel)})");
+        s.Check(Native.vlqt_res_wait(rel, 0) == (int)Native.Result.UnknownId, "released snapshot id is stale");
         var viaNode = new SnapshotNode(client, scene);
-        viaNode.Update(group, out _, out _, 1, true);
+        viaNode.Update(group, 1, true, out _);
         var liveBefore = client.LiveCount;
         viaNode.Dispose();
         Pump(6);
-        check(client.PendingReleases == 0 && client.LiveCount == liveBefore - 1, $"363: node disposed during the grab: released, nothing left (live {client.LiveCount})");
+        s.Check(client.PendingReleases == 0 && client.LiveCount == liveBefore - 1, $"node disposed during the grab: released, nothing left (live {client.LiveCount})");
 
         // 4b) Window destroyed during the grab: Failed (or Ready if the grab was done first), never a hang; afterwards a
         // new grab on the same id works.
-        var w2 = Native.vlqt_window_create(320, 200, "VL.Qt snapshot test 2");
+        var w2 = NativeCalls.CreateWindow(320, 200, "VL.Qt snapshot test 2");
         Native.vlqt_window_show(w2);
-        cmd.Reset();
+        cmd.Clear();
         cmd.ClearColor(0.2f, 0.2f, 0.2f, 1);
-        cmd.Create(1, Protocol.Type.Rectangle);
+        cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetPlace(1, 10, 10, 100, 100);
-        cmd.SetColor(1, Protocol.Prop.Color, 1, 0, 0, 1);
+        cmd.SetColor(1, Protocol.PropertyId.Color, 1, 0, 0, 1);
         cmd.Reparent(1, 0, 0);
         Native.Apply(w2, cmd.EndFrame());
         RawFrames(3);
         events.Clear();
         var id2 = RawCreate();
-        var rcA = Native.vlqt_res_snapshot(id2, w2, 1, 1);
-        Native.vlqt_window_destroy(w2);
+        var rcA = Native.vlqt_snapshot_start(id2, w2, 1, 1);
+        Native.vlqt_scene_destroy(w2);
         var from = events.Count;
         var state = Settle(id2, from);
-        check(rcA == 0 && state is Protocol.ResState.Failed or Protocol.ResState.Ready, $"363: window destroyed during the grab settles ({rcA}, state {state})");
-        Console.WriteLine($"INFO 363 window destroyed during the grab: state {state} (4 = Ready, 5 = Failed)");
-        if (state == Protocol.ResState.Failed)
-            check(events.Any(e => e.Id == id2 && e.Ev == Protocol.ResEv.Error && e.Payload.Length > 0), "363: Failed carries an error text");
+        s.Check(rcA == 0 && state is Protocol.ResourceState.Failed or Protocol.ResourceState.Ready, $"window destroyed during the grab settles ({rcA}, state {state})");
+        s.Info($"window destroyed during the grab: state {state} (4 = Ready, 5 = Failed)");
+        if (state == Protocol.ResourceState.Failed)
+            s.Check(events.Any(e => e.Id == id2 && e.Ev == Protocol.ResourceEventId.Error && e.Payload.Length > 0), "Failed carries an error text");
         from = events.Count;
-        var rcB = Native.vlqt_res_snapshot(id2, w, 0, 1);
-        check(rcB == 0, $"363: new grab on the id after the window died ({rcB})");
+        var rcB = Native.vlqt_snapshot_start(id2, w, 0, 1);
+        s.Check(rcB == 0, $"new grab on the id after the window died ({rcB})");
         var state2 = Settle(id2, from);
-        check(state2 == Protocol.ResState.Ready, $"363: new grab on a window that lives: Ready (state {state2})");
+        s.Check(state2 == Protocol.ResourceState.Ready, $"new grab on a window that lives: Ready (state {state2})");
         // And after a Failed one: unknown element → Failed, the next one starts over.
         from = events.Count;
-        Native.vlqt_res_snapshot(id2, w, 4_000_000, 1);
+        Native.vlqt_snapshot_start(id2, w, 4_000_000, 1);
         var state3 = Settle(id2, from);
         from = events.Count;
-        Native.vlqt_res_snapshot(id2, w, 0, 1);
+        Native.vlqt_snapshot_start(id2, w, 0, 1);
         var state4 = Settle(id2, from);
-        check(state3 == Protocol.ResState.Failed && state4 == Protocol.ResState.Ready, $"363: unknown element fails, the grab after the Failed works (states {state3}, {state4})");
+        s.Check(state3 == Protocol.ResourceState.Failed && state4 == Protocol.ResourceState.Ready, $"unknown element fails, the grab after the Failed works (states {state3}, {state4})");
         Native.vlqt_res_release(id2);
         RawFrames(2);
 
         // 5) Hitch rate: paced to 60 Hz, a moving rectangle; 300 frames without snapshots, then 300 with a snapshot of
         // the group every 10th frame. Hitch = interval > 1.5 x median of the run without snapshots.
-        if (PerfLimits.WarnOnly)
-            Console.WriteLine("SKIP 363: perf run snapshot hitches: perf limits are warn-only (shared runner)");
+        if (PerfLimits.SkipHeavy)
+            s.Skip("perf run snapshot hitches: heavy perf measurement skipped on shared CI runners");
         else
             RunPerf();
 
@@ -391,7 +404,7 @@ static class SnapshotTest
                 Frame(new Group { Anchor = RectangleAnchor.TopLeft, Children = [group, m] });
                 if (snapshots)
                 {
-                    perfNode.Update(group, out var ready, out _, 1, i % 10 == 0);
+                    perfNode.Update(group, 1, i % 10 == 0, out var ready);
                     if (ready) done++;
                 }
                 Pump(1);
@@ -408,33 +421,33 @@ static class SnapshotTest
             var limit = median * 1.5;
             int Hitches(List<double> l) => l.Count(x => x > limit);
             double Rate(List<double> l) => l.Count == 0 ? 0 : 100.0 * Hitches(l) / l.Count;
-            Console.WriteLine($"INFO 363 perf: without snapshots {Hitches(background)}/{background.Count} hitches ({Rate(background):F1} %), "
+            s.Info($"perf: without snapshots {Hitches(background)}/{background.Count} hitches ({Rate(background):F1} %), "
                 + $"snapshot every 10th frame {Hitches(snapshots)}/{snapshots.Count} ({Rate(snapshots):F1} %), median {median:F2} ms, max {snapshots.Max():F1} ms, {done} snapshots delivered");
-            check(done >= 25, $"363: snapshots delivered while running ({done} of 30)");
-            PerfLimits.Below(check, Rate(snapshots), Math.Max(Rate(background) * 3, 5), "363: hitch rate with a snapshot every 10th frame in the range of the background, %");
+            s.Check(done >= 25, $"snapshots delivered while running ({done} of 30)");
+            PerfLimits.Below(s, Rate(snapshots), Math.Max(Rate(background) * 3, 5), "hitch rate with a snapshot every 10th frame in the range of the background, %");
             perfNode.Dispose();
         }
 
-        // 6) F5 Resources page shows the snapshot cost (#548): a burst of snapshots gives a rate and a number for last / max,
+        // 6) F5 Resources page shows the snapshot cost: a burst of snapshots gives a rate and a number for last / max,
         // a second without snapshots brings the rate back to 0/s.
         {
             string SnapLine() => PerfOverlayTest.PageText(w, PerfOverlayTest.ResourcesPage).Split('\n').FirstOrDefault(l => l.StartsWith("snapshots"))?.Trim() ?? "(missing)";
-            check(SnapLine().StartsWith("snapshots "), $"548: Resources page has a snapshots line ('{SnapLine()}')");
+            s.Check(SnapLine().StartsWith("snapshots "), $"Resources page has a snapshots line ('{SnapLine()}')");
             for (int i = 0; i < 4; i++)
             {
                 var sid = RawCreate();
                 var from6 = events.Count;
-                Native.vlqt_res_snapshot(sid, w, 0, 1);
-                check(Settle(sid, from6) == Protocol.ResState.Ready, $"548: burst snapshot {i} is Ready");
+                Native.vlqt_snapshot_start(sid, w, 0, 1);
+                s.Check(Settle(sid, from6) == Protocol.ResourceState.Ready, $"burst snapshot {i} is Ready");
                 Native.vlqt_res_release(sid);
             }
             var burst = SnapLine();
             var m = System.Text.RegularExpressions.Regex.Match(burst, @"^snapshots (\d+)/s last ([0-9.]+) ms max ([0-9.]+) ms$");
-            check(m.Success && int.Parse(m.Groups[1].Value) >= 4 && double.Parse(m.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture) > 0,
-                $"548: after a burst the line shows a rate and numbers ('{burst}')");
+            s.Check(m.Success && int.Parse(m.Groups[1].Value) >= 4 && double.Parse(m.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture) > 0,
+                $"after a burst the line shows a rate and numbers ('{burst}')");
             for (var t = Stopwatch.StartNew(); t.Elapsed.TotalSeconds < 1.3; ) { RawFrames(1); Thread.Sleep(15); }
             var idle = SnapLine();
-            check(System.Text.RegularExpressions.Regex.IsMatch(idle, @"^snapshots 0/s "), $"548: a second later the rate is 0/s ('{idle}')");
+            s.Check(System.Text.RegularExpressions.Regex.IsMatch(idle, @"^snapshots 0/s "), $"a second later the rate is 0/s ('{idle}')");
         }
 
         Cleanup();
@@ -443,13 +456,13 @@ static class SnapshotTest
         {
             node.Dispose();
             Pump(3);
-            check(client.LiveCount == 0, $"363: all snapshot resources released (live {client.LiveCount})");
-            cmd.Reset();
+            s.Check(client.LiveCount == 0, $"all snapshot resources released (live {client.LiveCount})");
+            cmd.Clear();
             rec.Clear();
             Native.Apply(w, cmd.EndFrame());
-            Native.vlqt_window_destroy(w);
+            Native.vlqt_scene_destroy(w);
             client.SetPumping(false);
-            pump(2);
+            s.Pump(2);
         }
     }
 }

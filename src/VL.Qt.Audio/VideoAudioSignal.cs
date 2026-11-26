@@ -4,7 +4,7 @@ using VL.Audio;
 namespace VL.Qt.Audio
 {
     /// <summary>
-    /// The sound of one Video (VL.Audio) as VL.Audio signals, one per channel (#22). Reads the QtNative audio tap whose
+    /// The sound of one Video (VL.Audio) as VL.Audio signals, one per channel. Reads the QtNative audio tap whose
     /// id the node sets (<see cref="TapId"/>) and keeps it in sync with the picture; the loop itself is
     /// <see cref="AudioTapPlayer"/>.
     /// <para>
@@ -19,13 +19,13 @@ namespace VL.Qt.Audio
         /// <summary>Channels of the tap and of <see cref="MultiChannelSignal.Outputs"/>: stereo, Qt mixes mono or multichannel media to it.</summary>
         public const int Channels = 2;
 
-        // WASAPI shared mode when the device period cannot be read: the usual default period.
-        const long fallbackDriverLatencyNs = 10_000_000;
+        // WASAPI shared mode when the stream's buffer cannot be read: the default device period of shared mode.
+        private const long fallbackDriverLatencyNs = 10_000_000;
 
-        readonly AudioTapPlayer _player;
-        string? _latencyDriver;
-        int _latencySampleRate;
-        long _driverLatencyNs;
+        private readonly AudioTapPlayer _player;
+        private string? _latencyDriver;
+        private int _latencySampleRate;
+        private long _driverLatencyNs;
 
         public VideoAudioSignal(IAudioTapReader reader)
         {
@@ -62,9 +62,9 @@ namespace VL.Qt.Audio
 
         /// <summary>
         /// Main thread: the output latency of VL.Audio as far as it knows it, one buffer plus the driver's latency (ASIO:
-        /// the driver's output latency; WASAPI: the device period VL.Audio opens the shared stream with). Queries the
-        /// driver only when driver, sample rate or buffer size change. The rest (display, device internals) is what Audio
-        /// Offset calibrates.
+        /// the driver's output latency; WASAPI: the buffer of the shared stream, which Windows sets to about two device
+        /// periods, not the 3 ms VL.Audio asks for: <see cref="WasapiOutputLatency"/>). Queries the driver only when driver
+        /// or sample rate change. The rest (display, device internals) is what Audio Offset calibrates.
         /// </summary>
         public void UpdateOutputLatency()
         {
@@ -80,7 +80,7 @@ namespace VL.Qt.Audio
             _player.OutputLatencyNs = (long)(BufferSize * 1e9 / sampleRate) + _driverLatencyNs;
         }
 
-        static long QueryDriverLatencyNs(AudioEngine engine, int sampleRate)
+        private static long QueryDriverLatencyNs(AudioEngine engine, int sampleRate)
         {
             try
             {
@@ -88,9 +88,8 @@ namespace VL.Qt.Audio
                     return (long)(asio.PlaybackLatency * 1e9 / sampleRate);
                 if (engine.WasapiDevice?.MMOutDevice is { } device)
                 {
-                    // MMDevice.AudioClient activates a new client per call.
-                    using var client = device.AudioClient;
-                    return client.MinimumDevicePeriod * 100;
+                    if (WasapiOutputLatency.StreamBufferNs(device) is { } bufferNs)
+                        return bufferNs;
                 }
             }
             catch (Exception)

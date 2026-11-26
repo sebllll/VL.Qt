@@ -10,7 +10,7 @@
          3. the RID restored for the exe being built (<exe>/obj/project.assets.json, the exe is the project
             referencing this one), see below
          4. none found or ambiguous: copy all RIDs.
-       Keep the RID path resolution only here, in buildTransitive/VL.Qt.targets and in Native.cs (see docs/decisions/qtnative-deployment.md).
+       Keep the RID path resolution only here, in buildTransitive/VL.Qt.targets and in Native.cs (see docs/design/deployment.md, "Finding Qt at run time").
 
        Layouts: repo sources keep the runtime in runtimes/<rid>/native (copied below). The NuGet package keeps it in
        qt/<rid>/ (#315); should this file be imported from an unpacked package, the package's buildTransitive/VL.Qt.targets
@@ -53,7 +53,8 @@
       <VLQtRuntimeIdentifier Condition="'$(VLQtRuntimeIdentifier)' == ''">$(_VLQtRid)</VLQtRuntimeIdentifier>
     </PropertyGroup>
     <ItemGroup>
-      <_VLQtFile Include="$(MSBuildThisFileDirectory)runtimes\$(_VLQtRuntimesSubdir)**\*.*" />
+      <!-- vlqt_testkit: the SmokeTest's stand-in D3D11 device, built next to vlqt.dll, not part of an app. -->
+      <_VLQtFile Include="$(MSBuildThisFileDirectory)runtimes\$(_VLQtRuntimesSubdir)**\*.*" Exclude="$(MSBuildThisFileDirectory)runtimes\**\vlqt_testkit.*" />
       <Content Include="@(_VLQtFile)">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <Link>runtimes\$(_VLQtRuntimesSubdir)%(RecursiveDir)%(Filename)%(Extension)</Link>

@@ -25,13 +25,53 @@
     <ProjectReference Include="..\VL.Qt\VL.Qt.csproj" />
   </ItemGroup>
 
+  <!-- The test exports of QtNative (NativeTest) and the constants of vlqt_test.h (TestProtocol), shared with the other test projects. -->
+  <ItemGroup>
+    <Compile Include="..\VL.Qt.TestSupport\NativeTest.cs" Link="NativeTest.cs" />
+    <Compile Include="..\VL.Qt.TestSupport\TestProtocol.cs" Link="TestProtocol.cs" />
+  </ItemGroup>
+
+  <!-- A node message store that throws when the node shows a message. -->
+  <ItemGroup>
+    <Compile Include="..\VL.Qt.TestSupport\UnexpectedMessages.cs" Link="UnexpectedMessages.cs" />
+  </ItemGroup>
+
   <!-- VL.Qt.Stride needs Stride's graphics; its classes without D3D11 and rendering are compiled in. PixelFormat lives in
        the package Stride (no native code). -->
   <ItemGroup>
     <PackageReference Include="Stride" Version="$(StrideMathematicsVersion)" />
-    <Compile Include="..\VL.Qt.Stride\NotificationQueue.cs" Link="Stride\NotificationQueue.cs" />
     <Compile Include="..\VL.Qt.Stride\TextureFormats.cs" Link="Stride\TextureFormats.cs" />
     <Compile Include="..\VL.Qt.Stride\LayerComposition.cs" Link="Stride\LayerComposition.cs" />
+    <Compile Include="..\VL.Qt.Stride\TexturePixelMapping.cs" Link="Stride\TexturePixelMapping.cs" />
+    <Compile Include="..\VL.Qt.Stride\TextureState.cs" Link="Stride\TextureState.cs" />
   </ItemGroup>
+
+  <!-- Drift checks (ProtocolDriftTests, ApiDriftTests): the headers of QtNative are read from the output directory. -->
+  <ItemGroup>
+    <None Include="..\VL.Qt.Native\protocol.h" Link="protocol.h" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\VL.Qt.Native\vlqt.h" Link="vlqt.h" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\VL.Qt.Native\effects\shader_item.h" Link="shader_item.h" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\VL.Qt.Native\vlqt_test.h" Link="vlqt_test.h" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\VL.Qt.Native\testkit\testkit.h" Link="testkit.h" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Node-API snapshot (Api/NodeApiSnapshotTests.cs): VL.Qt.Stride and VL.Qt.Audio target net10.0-windows, so they
+       are built but not referenced (this project stays net10.0) and only their DLLs are copied to node-api/, where the test
+       reads their metadata without loading them. Windows only: on Linux the test compares the VL.Qt part. -->
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <ProjectReference Include="..\VL.Qt.Stride\VL.Qt.Stride.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" SetTargetFramework="TargetFramework=net10.0-windows" OutputItemType="NodeApiAssembly" Private="false" />
+    <ProjectReference Include="..\VL.Qt.Audio\VL.Qt.Audio.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" SetTargetFramework="TargetFramework=net10.0-windows" OutputItemType="NodeApiAssembly" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>NodeApiSnapshot</_Parameter1>
+      <_Parameter2>$(MSBuildProjectDirectory)/Api/node-api.txt</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <Target Name="CopyNodeApiAssemblies" AfterTargets="Build" Condition="'@(NodeApiAssembly)' != ''">
+    <Copy SourceFiles="@(NodeApiAssembly)" DestinationFolder="$(OutDir)node-api" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

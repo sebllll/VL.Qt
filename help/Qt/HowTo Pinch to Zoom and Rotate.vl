@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="FwHJ1yB0m6HUP91oS6gFXK" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Pinch [Qt]: two-finger gesture on the element&#xD;&#xA;- Scale: factor, 1 at the start (2 = fingers twice as far apart)&#xD;&#xA;- Rotation: in cycles (1 = 360 degrees), clockwise positive&#xD;&#xA;- Translation: movement of the fingers' centre in units&#xD;&#xA;- Is Active: true while the gesture runs">
+          <Pad Id="FwHJ1yB0m6HUP91oS6gFXK" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Pinch [Qt]: two-finger gesture on the element&#xD;&#xA;- Scale: factor, 1 at the start (2 = fingers twice as far apart)&#xD;&#xA;- Rotation: in cycles (1 = 360 degrees), clockwise positive&#xD;&#xA;- Translation: movement of the fingers' centre in units&#xD;&#xA;- Is Pinching: true while the gesture runs">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GaBfqkcwk3KNjEEXTtTxAo" Bounds="85,1428,830,110" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- All values are counted from the start of the gesture.&#xD;&#xA;- Pinch only reports, it moves nothing: the patch applies the values itself. The channels keep their last value after the gesture, which is why the live values are only used while Is Active is true.&#xD;&#xA;- When Is Active falls (TogEdge, Down Edge) the S+H stores the result, so the image stays where the fingers left it and the next gesture continues from there (FrameDelay closes the loop).">
+          <Pad Id="GaBfqkcwk3KNjEEXTtTxAo" Bounds="85,1428,830,134" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- All values are counted from the start of the gesture.&#xD;&#xA;- Pinch only reports, it moves nothing: the patch applies the values itself. The channels keep their last value after the gesture, which is why the live values are only used while Is Pinching is true.&#xD;&#xA;- When Is Pinching falls (TogEdge, Down Edge) the S+H stores the result, so the image stays where the fingers left it and the next gesture continues from there (FrameDelay closes the loop).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,7 +43,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GkYCvKLfhXeQR1vDZQX03q" Bounds="482,778,460,46" ShowValueBox="true" isIOBox="true" Value="Transform of the image = committed transform combined with the live values while Is Active is true">
+          <Pad Id="GkYCvKLfhXeQR1vDZQX03q" Bounds="482,778,460,46" ShowValueBox="true" isIOBox="true" Value="Transform of the image = committed transform combined with the live values while Is Pinching is true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -126,18 +126,18 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="RHn7r8lVu3U4vQr6OnPdfN" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="J5pFbWcKfv2R4GkJ2AXAis" Name="Input" Kind="InputPin" />
-            <Pin Id="4rntR5r8Yyr686SHJIGswH" Name="Is Active" Kind="InputPin" />
+            <Pin Id="J5pFbWcKfv2R4GkJ2AXAis" Name="Input" Kind="InputPin" IsHidden="true" />
+            <Pin Id="4rntR5r8Yyr686SHJIGswH" Name="Is Pinching" Kind="InputPin" />
             <Pin Id="10WkWyR61IDuKQjmrwesAM" Name="Scale" Kind="InputPin" />
             <Pin Id="sjHAN7Gd61adfgR5dlfzZD" Name="Rotation" Kind="InputPin" />
             <Pin Id="7bhe5YCdtvyBnQzoaoFvTP" Name="Translation" Kind="InputPin" />
-            <Pin Id="DEInc88IPfCPYmcHbc3kS2" Name="Pivot" Kind="InputPin" />
-            <Pin Id="0FmOPhlUe7Z3cEMLfo1WkF" Name="Minimum Point Count" Kind="InputPin" IsHidden="true" />
-            <Pin Id="UQJNjliUD63cdzjAqMS5r9" Name="Maximum Point Count" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DEInc88IPfCPYmcHbc3kS2" Name="Pivot" Kind="InputPin" IsHidden="true" />
+            <Pin Id="0FmOPhlUe7Z3cEMLfo1WkF" Name="Min Point Count" Kind="InputPin" IsHidden="true" />
+            <Pin Id="UQJNjliUD63cdzjAqMS5r9" Name="Max Point Count" Kind="InputPin" IsHidden="true" />
             <Pin Id="3xpvW96XJovxdpsMuYdS17" Name="Devices" Kind="InputPin" IsHidden="true" />
             <Pin Id="FGgU4lIvSNDLm8VPvvM2Mb" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="ibGn53aT0QSNpDcmLPmzJf" Comment="Is Active" Bounds="124,431,35,35" ShowValueBox="true" isIOBox="true">
+          <Pad Id="ibGn53aT0QSNpDcmLPmzJf" Comment="Is Pinching" Bounds="124,431,35,35" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -214,13 +214,13 @@
             <Pin Id="NyA35KvYWfTzTqxXbjh4q8" Name="Output" Kind="StateOutputPin" />
           </Node>
           <Node Bounds="162,1090,66,19" Id="gx238lH3hb863wBabDIlSm">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LoadImage" />
             </p:NodeReference>
             <Pin Id="wO2aIWstI6fMLfcM4ZfQjR" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="FTEZ8TlWzspb1zJ9SZ48B2" Name="Path" Kind="InputPin" />
-            <Pin Id="wYQxSUXJiha04K2q1JWQfL" Name="Mipmaps" Kind="InputPin" />
+            <Pin Id="wYQxSUXJiha04K2q1JWQfL" Name="Mipmaps" Kind="InputPin" IsHidden="true" />
             <Pin Id="Yee674zSgBAC3wZ45DufK9" Name="Image" Kind="OutputPin" />
             <Pin Id="4FhKGzfodUZ06ni9aEGkum" Name="Error" Kind="OutputPin" />
           </Node>
@@ -242,9 +242,9 @@
             <Pin Id="OJznculkOJy4iLLVZo22Uk" Name="Transform" Kind="InputPin" />
             <Pin Id="86C4aLxNVkxpop5J9n6YY2" Name="Anchor" Kind="InputPin" />
             <Pin Id="jw4WSUed3ExGLHrElS0vv7" Name="Image" Kind="InputPin" />
-            <Pin Id="WZDCafGw9mLBlkOITzFd3U" Name="Fill Mode" Kind="InputPin" />
+            <Pin Id="WZDCafGw9mLBlkOITzFd3U" Name="Fill Mode" Kind="InputPin" IsHidden="true" />
             <Pin Id="MFmPhHPxsuyo0PF2V58dsf" Name="Smooth" Kind="InputPin" IsHidden="true" />
-            <Pin Id="QI7SCeAf8KeEiXvQNTCrGK" Name="Opacity" Kind="InputPin" />
+            <Pin Id="QI7SCeAf8KeEiXvQNTCrGK" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="nEOQu8q1nGgtebeAk4Vvwr" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="sFNnGtpph4wuZ6Y1ic7oUh" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="GyjBlsovaRRigR2fqYL1TM" Name="Interaction" Kind="InputPin" />
@@ -258,7 +258,7 @@
               <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="102,1370,105,19" Id="VQkdhYzRZesNi5IoQk9kUY">
+          <Node Bounds="102,1370,65,19" Id="VQkdhYzRZesNi5IoQk9kUY">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -270,10 +270,10 @@
             <Pin Id="D1gMyL4Vaak8IkHj2xS0c0" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="x3c3mbA1I4SEeoLYqFUNBO" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="s5SoU7JyJjC7RmnvelKJbx" Name="Input" Kind="InputPin" />
-            <Pin Id="X2O8EpbEDhI8wAU07QBamj" Name="Space" Kind="InputPin" />
+            <Pin Id="X2O8EpbEDhI8wAU07QBamj" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="1uSdv6j8QKXuQDd17l0rha" Name="Clear Color" Kind="InputPin" />
             <Pin Id="GEVQ6D7svMwOnxCyriYCJY" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="WFHIfBkl6kRnTVlp8ePTx9" Name="Enabled" Kind="InputPin" />
+            <Pin Id="WFHIfBkl6kRnTVlp8ePTx9" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="wUM8QXzeV0BAb714LbB8vJ" Name="Title" Kind="InputPin" />
             <Pin Id="A2Bj77NZlRJqPg3r2EFfEb" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="iVeuB21DkQHcD5RYwhOZG7" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -325,7 +325,7 @@
             </p:NodeReference>
             <Pin Id="PnI7ShRDLJcQSLz7tdbOkW" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="SJbd0TU0S2lO0uat45mmJl" Name="Input" Kind="InputPin" />
-            <Pin Id="FzCXti3nFWiLBf1rWEdGVf" Name="Input 2" Kind="InputPin" />
+            <Pin Id="FzCXti3nFWiLBf1rWEdGVf" Name="Input 2" Kind="InputPin" IsHidden="true" />
             <Pin Id="LfMAXtd3O9MNUQ0bX9VMXu" Name="Output" Kind="OutputPin" />
             <Pin Id="VvsnfoVozVbOynLVcwnUzo" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="MY7AWh7HjktLks5pEmi1oK" Name="Auto Size" Kind="InputPin" IsHidden="true" />

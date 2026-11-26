@@ -5,29 +5,38 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using NUnit.Framework;
+using VL.Qt.Interop;
+using VL.Qt.Wire;
 using VL.Qt;
 
 /// <summary>
-/// Manual scenario (#90 T0b), not part of --all: <c>--tearing [--windows N] [--interval 0|1] [--fullscreen] [--pump-hz N]
-/// [--seconds N]</c>. N windows with a vertical bar sweeping fast across the whole width (tearing shows as a broken
+/// Manual scenario (T0b), explicit NUnit test (category tearing). Its flags come from the run parameter TearingArgs:
+/// <c>[--windows N] [--interval 0|1] [--fullscreen] [--pump-hz N] [--seconds N]</c>. N windows with a vertical bar sweeping fast across the
+/// whole width (tearing shows as a broken
 /// bar), pumped like the vvvv main loop. Once per second a line per window (fps = swaps/s, present and pump p50/p99 from
 /// vlqt_perf_sample, refresh rate of the screen) and one for the whole host pump; at the end a TEARING SUMMARY line per
 /// window over the run without the first second (warm-up). Plausibility warnings: fps ~ 0, refresh n/a, locked session.
 /// Windows: the display is kept awake (SetThreadExecutionState) and a locked session is detected (OpenInputDesktop).
 /// </summary>
-static class TearingTest
+[TestFixture, NonParallelizable]
+public static class TearingTest
 {
-    sealed record Options(int Windows, int Interval, bool Fullscreen, int PumpHz, int Seconds);
+    private sealed record Options(int Windows, int Interval, bool Fullscreen, int PumpHz, int Seconds);
 
-    const float BarFraction = 0.05f; // bar width relative to the window width
-    const float SweepSeconds = 0.6f; // one way across the window, ~3000 px/s on 1920 px: a clear tear line
+    private const float BarFraction = 0.05f; // bar width relative to the window width
+    private const float SweepSeconds = 0.6f; // one way across the window, ~3000 px/s on 1920 px: a clear tear line
 
-    public static int Run(string[] args)
+    /// <summary>Manual swap/tearing measurement; the TEARING lines are in the test output.</summary>
+    [Test, Explicit("manual measurement"), Category("tearing")]
+    public static void Tearing() => Scenario.Run(s => s.Check(Run(SmokeParameters.TearingArgs) == 0, "tearing run"));
+
+    private static int Run(string[] args)
     {
         if (!TryParse(args, out var o, out var error))
         {
             Console.WriteLine("TEARING " + error);
-            Console.WriteLine("usage: --tearing [--windows N (1)] [--interval 0|1 (1)] [--fullscreen] [--pump-hz N (60, 0 = as fast as possible)] [--seconds N (20, 0 = until a window is closed / Ctrl+C)]");
+            Console.WriteLine("usage (parameter TearingArgs): [--windows N (1)] [--interval 0|1 (1)] [--fullscreen] [--pump-hz N (60, 0 = as fast as possible)] [--seconds N (20, 0 = until a window is closed / Ctrl+C)]");
             return 2;
         }
 
@@ -36,7 +45,7 @@ static class TearingTest
         Console.CancelKeyPress += onCancel;
         using var timer = PumpTest.HighResTimer(); // 1 ms timer resolution like vvvv (Windows)
         var keepAwake = OperatingSystem.IsWindows() && Win.KeepDisplayOn(true);
-        var windows = new List<IntPtr>();
+        var windows = new List<SceneHandle>();
         try
         {
             var display = CheckDisplay();
@@ -61,8 +70,8 @@ static class TearingTest
                 }
                 else if (!o.Fullscreen)
                     (x, y) = (10 + i * (width + 10), 60);
-                var w = Native.vlqt_window_create_at(x, y, (int)width, (int)height, titles[i], o.Interval);
-                if (w == IntPtr.Zero)
+                var w = Native.vlqt_window_create(x, y, (int)width, (int)height, titles[i], o.Interval);
+                if (w == SceneHandle.Null)
                 {
                     Console.WriteLine("TEARING window_create failed: " + Native.LastError());
                     return 1;
@@ -73,8 +82,8 @@ static class TearingTest
                     Native.vlqt_window_set_mode(w, Protocol.WindowMode.Borderless | Protocol.WindowMode.Fullscreen, Protocol.WindowMode.Borderless | Protocol.WindowMode.Fullscreen);
                 var cmd = new CommandWriter();
                 cmd.ClearColor(0.06f, 0.06f, 0.06f, 1);
-                cmd.Create(1, Protocol.Type.Rectangle);
-                cmd.SetColor(1, Protocol.Prop.Color, 1, 1, 1, 1);
+                cmd.Create(1, Protocol.ElementType.Rectangle);
+                cmd.SetColor(1, Protocol.PropertyId.Color, 1, 1, 1, 1);
                 cmd.Reparent(1, 0, 0);
                 var rc = Native.Apply(w, cmd.EndFrame());
                 if (rc != 0)
@@ -89,14 +98,14 @@ static class TearingTest
         }
         finally
         {
-            foreach (var w in windows) Native.vlqt_window_destroy(w);
-            for (int i = 0; i < 2; i++) Native.vlqt_app_process_events();
+            foreach (var w in windows) Native.vlqt_scene_destroy(w);
+            for (int i = 0; i < 2; i++) Native.vlqt_app_process_events_for(null, 0);
             if (keepAwake) Win.KeepDisplayOn(false);
             Console.CancelKeyPress -= onCancel;
         }
     }
 
-    static int Loop(Options o, List<IntPtr> windows, string[] titles, (float W, float H)[] sizes, string display0, Func<bool> stopped)
+    private static int Loop(Options o, List<SceneHandle> windows, string[] titles, (float W, float H)[] sizes, string display0, Func<bool> stopped)
     {
         var n = windows.Count;
         var cmd = new CommandWriter();
@@ -146,12 +155,12 @@ static class TearingTest
                 var barW = w * BarFraction;
                 var phase = (now / (2 * SweepSeconds)) % 1.0;
                 var tri = (float)Math.Abs(phase * 2 - 1); // 0..1..0
-                cmd.Reset();
+                cmd.Clear();
                 cmd.SetPlace(1, tri * (w - barW), 0, barW, h);
                 Native.Apply(windows[i], cmd.EndFrame());
             }
-            Native.vlqt_driver_advance(now);
-            Native.vlqt_app_process_events();
+            Native.vlqt_app_advance_animations(now);
+            Native.vlqt_app_process_events_for(null, 0);
             var hostMs = (float)Stopwatch.GetElapsedTime(h0).TotalMilliseconds;
             now = Stopwatch.GetElapsedTime(start).TotalSeconds;
             frame++;
@@ -161,7 +170,7 @@ static class TearingTest
                 for (int i = 0; i < n; i++)
                 {
                     if (Native.vlqt_window_take_close_request(windows[i]) == 1) return Finish();
-                    if (Native.Poll(windows[i], poll) > 0 && WindowPlacement.TryReadGeometry(poll, out var g) && g.Bounds.Width >= 1 && g.Bounds.Height >= 1)
+                    if (NativeCalls.Poll(windows[i], poll) > 0 && WindowPlacement.TryReadGeometry(poll, out var g) && g.Bounds.Width >= 1 && g.Bounds.Height >= 1)
                         sizes[i] = (g.Bounds.Width, g.Bounds.Height);
                 }
 
@@ -175,7 +184,7 @@ static class TearingTest
             var warm = sec >= 1; // the first second (window creation, first presents, shader setup) is warm-up
             for (int i = 0; i < n; i++)
             {
-                if (Native.vlqt_window_get_perf_sample(windows[i], out var s) != 0) continue;
+                if (Native.vlqt_scene_get_perf_sample(windows[i], out var s) != 0) continue;
                 secPump[i].Add(s.pump);
                 if (s.swaps > 0) secPresent[i].Add(s.present);
                 secSwaps[i] += s.swaps;
@@ -240,22 +249,22 @@ static class TearingTest
         }
     }
 
-    // Refresh rate of the screen of the window: Windows API (the real mode of the monitor), else 1000 / budget_ms of the
-    // window stats (QtNative falls back to 60 Hz there, so that is the second choice). n/a = unknown.
-    static string Refresh(IntPtr w, string title)
+    // Refresh rate of the screen of the window: Windows API (the real mode of the monitor), else QScreen::refreshRate from
+    // the F5 System page (Qt falls back to 60 Hz there, so that is the second choice). n/a = unknown.
+    private static string Refresh(SceneHandle w, string title)
     {
         if (OperatingSystem.IsWindows() && Win.RefreshHz(title) is { } hz and > 1)
             return hz.ToString("F1", CultureInfo.InvariantCulture);
-        if (!OperatingSystem.IsWindows() && Native.vlqt_window_get_perf_stats(w, out var st) == 0 && st.budget_ms > 0)
-            return (1000.0 / st.budget_ms).ToString("F1", CultureInfo.InvariantCulture);
+        if (!OperatingSystem.IsWindows() && NativeCalls.ScreenRefreshMs(w) is { } ms)
+            return (1000.0 / ms).ToString("F1", CultureInfo.InvariantCulture);
         return "n/a";
     }
 
     // ok | locked | unknown (non-Windows, or the check itself failed).
-    static string CheckDisplay() => OperatingSystem.IsWindows() ? Win.InputDesktopState() : "unknown";
+    private static string CheckDisplay() => OperatingSystem.IsWindows() ? Win.InputDesktopState() : "unknown";
 
     // Nearest rank, like vlqt_perf_stats.
-    static double Percentile(List<float> values, double p)
+    private static double Percentile(List<float> values, double p)
     {
         if (values.Count == 0) return 0;
         var sorted = values.ToArray();
@@ -263,7 +272,7 @@ static class TearingTest
         return sorted[Math.Clamp((int)Math.Ceiling(p * sorted.Length) - 1, 0, sorted.Length - 1)];
     }
 
-    static bool TryParse(string[] args, out Options o, out string error)
+    private static bool TryParse(string[] args, out Options o, out string error)
     {
         o = new Options(1, 1, false, 60, 20);
         string err = "";
@@ -297,28 +306,28 @@ static class TearingTest
     }
 
     [SupportedOSPlatform("windows")]
-    static class Win
+    private static class Win
     {
-        const uint EsContinuous = 0x80000000, EsDisplayRequired = 0x00000002;
+        private const uint EsContinuous = 0x80000000, EsDisplayRequired = 0x00000002;
 
-        [StructLayout(LayoutKind.Sequential)] struct Rc { public int Left, Top, Right, Bottom; }
+        [StructLayout(LayoutKind.Sequential)] private struct Rc { public int Left, Top, Right, Bottom; }
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        struct MonitorInfoEx
+        private struct MonitorInfoEx
         {
             public int Size; public Rc Monitor, Work; public uint Flags;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string Device;
         }
-        delegate bool MonitorEnum(IntPtr monitor, IntPtr dc, ref Rc rect, IntPtr data);
+        private delegate bool MonitorEnum(IntPtr monitor, IntPtr dc, ref Rc rect, IntPtr data);
 
-        [DllImport("kernel32.dll")] static extern uint SetThreadExecutionState(uint flags);
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindowW(string? cls, string title);
-        [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern bool GetMonitorInfoW(IntPtr m, ref MonitorInfoEx mi);
-        [DllImport("user32.dll")] static extern bool EnumDisplayMonitors(IntPtr dc, IntPtr clip, MonitorEnum cb, IntPtr data);
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern bool EnumDisplaySettingsW(string? device, int mode, byte[] devMode);
-        [DllImport("user32.dll", SetLastError = true)] static extern IntPtr OpenInputDesktop(uint flags, bool inherit, uint access);
-        [DllImport("user32.dll")] static extern bool CloseDesktop(IntPtr desktop);
-        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)] static extern bool GetUserObjectInformationW(IntPtr obj, int index, byte[] info, uint length, out uint needed);
+        [DllImport("kernel32.dll")] private static extern uint SetThreadExecutionState(uint flags);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr FindWindowW(string? cls, string title);
+        [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool GetMonitorInfoW(IntPtr m, ref MonitorInfoEx mi);
+        [DllImport("user32.dll")] private static extern bool EnumDisplayMonitors(IntPtr dc, IntPtr clip, MonitorEnum cb, IntPtr data);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool EnumDisplaySettingsW(string? device, int mode, byte[] devMode);
+        [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr OpenInputDesktop(uint flags, bool inherit, uint access);
+        [DllImport("user32.dll")] private static extern bool CloseDesktop(IntPtr desktop);
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)] private static extern bool GetUserObjectInformationW(IntPtr obj, int index, byte[] info, uint length, out uint needed);
 
         // Keeps the display on while the thread lives; false = the call failed.
         public static bool KeepDisplayOn(bool on) => SetThreadExecutionState(on ? EsContinuous | EsDisplayRequired : EsContinuous) != 0;

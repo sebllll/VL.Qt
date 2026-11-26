@@ -1,13 +1,16 @@
-﻿namespace VL.Qt.Elements
+﻿using VL.Qt.Nodes;
+
+namespace VL.Qt.Elements
 {
     /// <summary>
-    /// Integer input (QtQuick.Controls SpinBox, style Basic, #210). User changes come from Qt's <c>valueModified</c>
-    /// as EV_VALUE into <see cref="Element.Sink"/>; SET VALUE is never echoed. Defaults match QtNative (full int range,
+    /// Integer input (QtQuick.Controls SpinBox, style Basic). User changes come from Qt's <c>valueModified</c>
+    /// as EVENT_VALUE into <see cref="Element.Feedback"/>; SET VALUE is never echoed. Defaults match QtNative (full int range,
     /// not Qt's 0–99). Lengths in units.
     /// </summary>
-    public sealed class SpinBox : Element
+    internal sealed class SpinBox : Element
     {
         public SpinBox() : base(ElementType.SpinBox) { }
+        internal SpinBox(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.SpinBox, common, feedback) { }
 
         /// <summary>On (default): Size is ignored and the implicit size applies. Off: Size counts.</summary>
         public bool AutoSize { get; init; } = true;

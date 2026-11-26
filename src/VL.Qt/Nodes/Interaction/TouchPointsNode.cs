@@ -18,32 +18,35 @@ namespace VL.Qt.Nodes
     /// with other interaction nodes. Values arrive one frame later.
     /// </summary>
     /// <tags>touch, multitouch, finger, fingers, points, pen, pressure, id</tags>
-    [ProcessNode(Name = "Touch Points", Category = Categories.Interaction)]
+    [ProcessNode(Name = "TouchPoints", Category = Categories.Interaction)]
     public sealed class TouchPointsNode : IDisposable
     {
         internal readonly record struct Props(bool Occlusion, PointerDevices Devices);
 
-        readonly InteractionNode<Props> _node;
-        IChannel<Spread<TouchPoint>>? _points;
-        int _lastUpdates;
+        private readonly InteractionNodeCore<Props> _node;
+        private IChannel<Spread<TouchPoint>>? _points;
+        private int _lastUpdates;
 
         public TouchPointsNode(NodeContext nodeContext)
-            => _node = new InteractionNode<Props>(nodeContext, Create);
+            => _node = new InteractionNodeCore<Props>(nodeContext, Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal TouchPointsNode(Func<string, IDisposable> addWarning)
-            => _node = new InteractionNode<Props>(addWarning, Create);
+        internal TouchPointsNode(NodeErrors messages)
+            => _node = new InteractionNodeCore<Props>(messages, Create);
 
-        static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new TouchPointsInteraction(previous, slot, p.Occlusion, p.Devices);
 
-        internal InteractionNode<Props> Core => _node;
+        internal InteractionNodeCore<Props> Core => _node;
 
         /// <summary>Adds a touch points handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
-        /// <param name="points">Optional channel: the points pressed on the element right now, sorted by id; empty when there are none (written by Qt on change, author "Qt"). Positions are local to the element in units; Pressure and Size depend on the device (many touchscreens report 0.5 and 0 x 0).</param>
+        /// <param name="points">Optional channel: the points pressed on the element right now, sorted by id; empty when there are none
+        /// (written by Qt on change, author "Qt"). Positions are local to the element in units; Pressure and Size depend on the device
+        /// (many touchscreens report 0.5 and 0 x 0).</param>
         /// <param name="devices">Input devices that count. The default is touch screen and pen; add Mouse to see the mouse as a point too.</param>
-        /// <param name="occlusion">On: a finger whose press an element on top takes (Click or Drag on it, a Button) is not reported here. Off: all fingers on the element are reported.</param>
+        /// <param name="occlusion">On: a finger whose press an element on top takes (Click or Drag on it, a Button) is not reported here.
+        /// Off: all fingers on the element are reported.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]
         public Interaction Update(
             Interaction? input,
@@ -55,26 +58,10 @@ namespace VL.Qt.Nodes
 
             // Pull: state of the last pump (1 frame latency). A new Spread only when Qt reported a change; at rest
             // nothing is built or written. A channel connected later gets the current points, but only if there was
-            // any event yet (an untouched sink would overwrite the value of the channel for nothing).
-            if (!points.IsValid())
-            {
-                _points = null;
-                return output;
-            }
-            var sink = _node.Sink;
-            int updates = sink.TouchUpdates();
-            if (!ReferenceEquals(points, _points))
-            {
-                _points = points;
-                _lastUpdates = updates;
-                if (updates != 0)
-                    points.SetValueAndAuthor(sink.TouchPoints(), InteractionNode<Props>.Author);
-            }
-            else if (updates != _lastUpdates)
-            {
-                _lastUpdates = updates;
-                points.SetValueAndAuthor(sink.TouchPoints(), InteractionNode<Props>.Author);
-            }
+            // any event yet (an untouched feedback would overwrite the value of the channel for nothing).
+            var feedback = _node.Feedback;
+            if (FeedbackChannels.TakeUpdate(points, ref _points, ref _lastUpdates, feedback.TouchUpdates()))
+                points!.SetValueAndAuthor(feedback.TouchPoints(), ChannelAuthors.QtChannelAuthor);
             return output;
         }
 

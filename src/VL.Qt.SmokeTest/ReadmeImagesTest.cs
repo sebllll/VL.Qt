@@ -3,25 +3,39 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Text.RegularExpressions;
+using NUnit.Framework;
+using VL.Qt.Interop;
+using VL.Qt.Wire;
 using VL.Qt;
+using static Pixels;
 
-// README pictures of the Effect chain (#489, plan effects/08 Task 8a), not a test of behaviour: renders reproducible grabs
-// of effect chains (raw SET_EFFECT_CHAIN) and copies them to docs/images/. Dark ground, the text "VL.Qt", one cell of
+// Effect chain pictures (plan effects/08 Task 8a): renders reproducible grabs of effect chains (raw SET_EFFECT_CHAIN)
+// and compares them with src/VL.Qt.SmokeTest/references/ (ImageCompare, on WARP in a helper process); the
+// explicit test `update-refs` writes the references. docs/images is not touched. Dark ground, the text "VL.Qt", one cell of
 // 410 x 230 DIP per picture (scaled by s, the label at the bottom), same values in the collage and in the single pictures.
 //   effect-chain.png            Blur -> RGBSplit -> DropShadow (left) against the reverse order (right); RGBSplit baked from
-//                               help/Qt/qtshaders/RGBSplit.frag, padding from its "@padding" line
+//                               help/Qt/qtshaders/RGBSplit.frag, padding = its amount (DIP)
 //   effect-glow / -directional-blur / -zoom-blur / -radial-blur / -innershadow / -displace .png
 //                               one effect each, as links with the builtin shaders (values as in EffectPassesTest/MotionBlurTest)
 //   effects-collage.png         all of them as a 4 x 2 grid, 1640 px wide
-// Checks only that the picture is not empty. Grabs: <outDir>/readme-images_*.png. On Windows the pictures are scaled to
-// their target width (the grab is in device pixels), elsewhere copied as they are.
-static class ReadmeImagesTest
+// Grabs: <outDir>/readme-images_*.png (a failed compare also writes readme-images_<name>_diff.png). The pictures are scaled
+// to their target width before the compare (the grab is in device pixels). Text uses the bundled DejaVu Sans.
+[TestFixture, NonParallelizable]
+public static class ReadmeImagesTest
 {
-    const float CellW = 410, CellH = 230;
-    const float TextW = 300, TextH = 120, FontSize = 90;
-    const float Bg = 0x16 / 255f;
+    /// <summary>Effect chain pictures against the references (WARP, own process).</summary>
+    [Test, Category("readme-images"), Category("image-compare"), Category("own-process")]
+    public static void ReadmeImages() => Scenario.RunLocal(s => ImageCompare.Run(s, new[] { "readme-images" }));
 
-    const string WaveMap =
+    /// <summary>Writes the README pictures into docs/images on the normal renderer (not the references).</summary>
+    [Test, Explicit("writes docs/images"), Category("readme-docs"), Category("own-process")]
+    public static void ReadmeImagesDocs() => Scenario.RunLocal(s => ImageCompare.RunDocs(s, new[] { "readme-images" }));
+
+    private const float CellW = 410, CellH = 230;
+    private const float TextW = 300, TextH = 120, FontSize = 90;
+    private const float Bg = 0x16 / 255f;
+
+    private const string WaveMap =
         "#version 440\n" +
         "layout(location = 0) in vec2 qt_TexCoord0;\n" +
         "layout(location = 0) out vec4 fragColor;\n" +
@@ -31,73 +45,24 @@ static class ReadmeImagesTest
         "    fragColor = vec4(0.5 + 0.5 * sin(uv.y * 12.566), 0.5 + 0.5 * sin(uv.x * 12.566), 0.5, 1.0) * qt_Opacity;\n" +
         "}\n";
 
-    internal static string? FindUp(params string[] rel)
+    internal static void Run(Scenario s)
     {
-        for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
-        {
-            var p = Path.Combine(d.FullName, Path.Combine(rel));
-            if (File.Exists(p) || Directory.Exists(p))
-                return p;
-        }
-        return null;
-    }
-
-    // Copies a grab to its target; on Windows scaled to the target width (the grab is in device pixels).
-    internal static string Save(string grabPath, string target, int width)
-    {
-#if WINDOWS
-        using (var a = new Bitmap(grabPath))
-        {
-            var height = (int)MathF.Round(a.Height * width / (float)a.Width);
-            using var scaled = new Bitmap(width, height);
-            using (var g = Graphics.FromImage(scaled))
-            {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                g.DrawImage(a, 0, 0, width, height);
-            }
-            scaled.Save(target, System.Drawing.Imaging.ImageFormat.Png);
-        }
-#else
-        File.Copy(grabPath, target, true);
-#endif
-        return target;
-    }
-
-    // Share of the sampled pixels that differ from the ground: > 0 = something is drawn.
-    internal static double Ink(Bitmap a)
-    {
-        int n = 0, ink = 0;
-        for (var y = 0; y < a.Height; y += 6)
-            for (var x = 0; x < a.Width; x += 6, n++)
-            {
-                var c = a.GetPixel(x, y);
-                if (Math.Abs(c.R - 0x16) + Math.Abs(c.G - 0x16) + Math.Abs(c.B - 0x16) > 60)
-                    ink++;
-            }
-        return ink / (double)Math.Max(n, 1);
-    }
-
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
-    {
-        Program.NeedsRhi(check, "the effects are ShaderEffects");
-        Directory.CreateDirectory(outDir);
-        var imagesDir = FindUp("docs", "images");
-        check(imagesDir != null, $"readme-images: docs/images found ({imagesDir})");
-        if (imagesDir == null) return;
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "the effects are ShaderEffects");
+        Directory.CreateDirectory(s.OutDir);
+        var family = ImageCompare.LoadFont(s);
 
         ulong Builtin(string name)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-            Native.vlqt_res_load_shader(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
-            check(Native.vlqt_res_wait(id, 10000) == Protocol.ResState.Ready, $"readme-images: shader builtin:{name} Ready");
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+            Native.vlqt_shader_load(id, "builtin:" + name, Protocol.ShaderStage.Fragment);
+            s.Check(Native.vlqt_res_wait(id, 10000) == Protocol.ResourceState.Ready, $"readme-images: shader builtin:{name} Ready");
             return id;
         }
         ulong Baked(string code, string what)
         {
-            Native.vlqt_res_create(Protocol.ResKind.Shader, out var id);
-            Native.vlqt_res_load_shader_source(id, code, Protocol.ShaderStage.Fragment);
-            check(Native.vlqt_res_wait(id, 20000) == Protocol.ResState.Ready, $"readme-images: {what} baked, Ready");
+            Native.vlqt_res_create(Protocol.ResourceKind.Shader, out var id);
+            Native.vlqt_shader_load_source(id, code, Protocol.ShaderStage.Fragment);
+            s.Check(Native.vlqt_res_wait(id, 20000) == Protocol.ResourceState.Ready, $"readme-images: {what} baked, Ready");
             return id;
         }
         var glowPre = Builtin("glow_prefilter");
@@ -109,12 +74,13 @@ static class ReadmeImagesTest
         var radial = Builtin("radial_blur");
         var displace = Builtin("displace");
         var waveMap = Baked(WaveMap, "wave map");
-        var splitFile = FindUp("help", "Qt", "qtshaders", "RGBSplit.frag");
-        check(splitFile != null, $"readme-images: RGBSplit.frag found ({splitFile})");
+        var splitFile = ImageCompare.FindUp("help", "Qt", "qtshaders", "RGBSplit.frag");
+        s.Check(splitFile != null, $"readme-images: RGBSplit.frag found ({splitFile})");
         if (splitFile == null) return;
         var splitCode = File.ReadAllText(splitFile);
         var split = Baked(splitCode, "RGBSplit.frag");
-        var splitPad = float.Parse(Regex.Match(splitCode, @"//\s*@padding\s+([\d.]+)").Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+        s.Check(Regex.IsMatch(splitCode, @"//\s*@padding\s+amount\b"), "readme-images: RGBSplit.frag takes its padding from the uniform amount");
+        const float splitAmount = 8; // DIP, the distance of the shifted copies (also the padding, as in the file head)
 
         var cmd = new CommandWriter();
         uint next = 1;
@@ -123,26 +89,26 @@ static class ReadmeImagesTest
         static void Blur(CommandWriter c, float s)
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
-            c.EffectF32(Protocol.Prop.EffectBlur, 0.22f);
-            c.EffectI32(Protocol.Prop.EffectBlurMax, (int)MathF.Round(16 * s));
+            c.MultiEffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Blur, 0.22f);
+            c.MultiEffectI32(Protocol.MultiEffectKey.BlurMax, (int)MathF.Round(16 * s));
             c.EndLink();
         }
         static void Shadow(CommandWriter c, float s)
         {
             c.BeginMultiLink();
-            c.EffectBool(Protocol.Prop.EffectShadowEnabled, true);
-            c.EffectColor(Protocol.Prop.EffectShadowColor, 1, 0.55f, 0.2f, 0.9f);
-            c.EffectF32(Protocol.Prop.EffectShadowHorizontalOffset, 16 * s);
-            c.EffectF32(Protocol.Prop.EffectShadowVerticalOffset, 16 * s);
-            c.EffectF32(Protocol.Prop.EffectShadowBlur, 0.15f);
+            c.MultiEffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.MultiEffectColor(Protocol.MultiEffectKey.ShadowColor, 1, 0.55f, 0.2f, 0.9f);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 16 * s);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 16 * s);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowBlur, 0.15f);
             c.EndLink();
         }
         void Split(CommandWriter c, float s)
         {
-            var p = splitPad * s;
-            c.BeginShaderLink(Protocol.EffectTemplate.Single, [split], p, p, p, p, 0);
-            c.UniformF32("amount", 0.022f);
+            var p = splitAmount * s;
+            c.BeginEffectChainLink(Protocol.EffectTemplate.Single, [split], p, p, p, p, 0);
+            c.UniformF32("amount", splitAmount * s);
             c.UniformVec2("direction", 1, 0);
             c.UniformColor("tint", 1, 1, 1, 1);
             c.UniformBool("scanlines", false);
@@ -153,36 +119,38 @@ static class ReadmeImagesTest
         void Cell(string kind, string label, float ox, float oy, float s, uint order)
         {
             uint ground = next++, text = next++, labelId = next++, map = next++;
-            cmd.Create(ground, Protocol.Type.Rectangle);
+            cmd.Create(ground, Protocol.ElementType.Rectangle);
             cmd.SetPlace(ground, ox + 5 * s, oy + 5 * s, (CellW - 10) * s, (CellH - 10) * s);
-            cmd.SetColor(ground, Protocol.Prop.Color, 0.105f, 0.115f, 0.14f, 1);
-            cmd.SetF32(ground, Protocol.Prop.Radius, 10 * s);
+            cmd.SetColor(ground, Protocol.PropertyId.Color, 0.105f, 0.115f, 0.14f, 1);
+            cmd.SetF32(ground, Protocol.PropertyId.Radius, 10 * s);
             cmd.Reparent(ground, 0, order * 3);
 
-            cmd.Create(labelId, Protocol.Type.Text);
+            cmd.Create(labelId, Protocol.ElementType.Text);
             cmd.SetPlace(labelId, ox + 22 * s, oy + (CellH - 42) * s, (CellW - 44) * s, 26 * s);
-            cmd.SetString(labelId, Protocol.Prop.Text, label);
-            cmd.SetF32(labelId, Protocol.Prop.FontSize, 15 * s);
-            cmd.SetColor(labelId, Protocol.Prop.Color, 0.52f, 0.57f, 0.66f, 1);
-            cmd.SetI32(labelId, Protocol.Prop.HorizontalAlignment, 1);
-            cmd.SetI32(labelId, Protocol.Prop.VerticalAlignment, 128);
+            cmd.SetString(labelId, Protocol.PropertyId.Text, label);
+            cmd.SetString(labelId, Protocol.PropertyId.FontFamily, family);
+            cmd.SetF32(labelId, Protocol.PropertyId.FontSize, 15 * s);
+            cmd.SetColor(labelId, Protocol.PropertyId.Color, 0.52f, 0.57f, 0.66f, 1);
+            cmd.SetI32(labelId, Protocol.PropertyId.HorizontalAlignment, 1);
+            cmd.SetI32(labelId, Protocol.PropertyId.VerticalAlignment, 128);
             cmd.Reparent(labelId, 0, order * 3 + 1);
 
-            cmd.Create(text, Protocol.Type.Text);
+            cmd.Create(text, Protocol.ElementType.Text);
             cmd.SetPlace(text, ox + (CellW - TextW) / 2 * s, oy + 28 * s, TextW * s, TextH * s);
-            cmd.SetString(text, Protocol.Prop.Text, "VL.Qt");
-            cmd.SetF32(text, Protocol.Prop.FontSize, FontSize * s);
-            cmd.SetI32(text, Protocol.Prop.FontWeight, 700);
-            cmd.SetI32(text, Protocol.Prop.HorizontalAlignment, 4);
-            cmd.SetI32(text, Protocol.Prop.VerticalAlignment, 128);
-            cmd.SetColor(text, Protocol.Prop.Color, 0.94f, 0.93f, 0.9f, 1);
+            cmd.SetString(text, Protocol.PropertyId.Text, "VL.Qt");
+            cmd.SetString(text, Protocol.PropertyId.FontFamily, family);
+            cmd.SetF32(text, Protocol.PropertyId.FontSize, FontSize * s);
+            cmd.SetI32(text, Protocol.PropertyId.FontWeight, 700);
+            cmd.SetI32(text, Protocol.PropertyId.HorizontalAlignment, 4);
+            cmd.SetI32(text, Protocol.PropertyId.VerticalAlignment, 128);
+            cmd.SetColor(text, Protocol.PropertyId.Color, 0.94f, 0.93f, 0.9f, 1);
             cmd.Reparent(text, 0, order * 3 + 2);
 
             void Pyramid(ulong pre, ulong comp, float radius, Action<CommandWriter, float> uniforms)
             {
                 var p = MathF.Ceiling(1.5f * radius * s);
                 cmd.BeginEffectChain(text);
-                cmd.BeginShaderLink(Protocol.EffectTemplate.Pyramid, [pre, comp], p, p, p, p, radius * s);
+                cmd.BeginEffectChainLink(Protocol.EffectTemplate.Pyramid, [pre, comp], p, p, p, p, radius * s);
                 uniforms(cmd, p);
                 cmd.EndLink();
                 cmd.EndEffectChain();
@@ -206,7 +174,7 @@ static class ReadmeImagesTest
                     });
                     break;
                 case "innershadow":
-                    cmd.SetColor(text, Protocol.Prop.Color, 1, 0.66f, 0.3f, 1);
+                    cmd.SetColor(text, Protocol.PropertyId.Color, 1, 0.66f, 0.3f, 1);
                     Pyramid(isPre, isComp, 9, (c, p) =>
                     {
                         c.UniformVec2("offset", 0, 7 * s / (TextH * s + 2 * p));
@@ -220,7 +188,7 @@ static class ReadmeImagesTest
                     const float L = 14;
                     var pad = (L / 2 + L / 64) * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [directional], pad, 0, pad, 0, 0);
+                    cmd.BeginEffectChainLink(Protocol.EffectTemplate.TwoPass, [directional], pad, 0, pad, 0, 0);
                     cmd.UniformF32("angle", 0);
                     cmd.UniformF32("blurLength", L * s);
                     cmd.EndLink();
@@ -232,7 +200,7 @@ static class ReadmeImagesTest
                     const float L = 40;
                     var pad = L * 0.6f * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [zoom], pad, pad, pad, pad, 0);
+                    cmd.BeginEffectChainLink(Protocol.EffectTemplate.TwoPass, [zoom], pad, pad, pad, pad, 0);
                     cmd.UniformVec2("center", 0.5f, 0.5f);
                     cmd.UniformF32("blurLength", L * s);
                     cmd.EndLink();
@@ -243,20 +211,20 @@ static class ReadmeImagesTest
                 {
                     var pad = 30 * s;
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.TwoPass, [radial], pad, pad, pad, pad, 0);
+                    cmd.BeginEffectChainLink(Protocol.EffectTemplate.TwoPass, [radial], pad, pad, pad, pad, 0);
                     cmd.UniformVec2("center", 0.5f, 0.5f);
-                    cmd.UniformF32("angle", 8);
+                    cmd.UniformF32("angle", 8f / 360f);
                     cmd.EndLink();
                     cmd.EndEffectChain();
                     break;
                 }
                 case "displace":
                     // The map is never reparented: it only serves as texture of the link.
-                    cmd.Create(map, Protocol.Type.ShaderEffect);
-                    cmd.SetU64(map, Protocol.Prop.FragmentShader, waveMap);
+                    cmd.Create(map, Protocol.ElementType.Shader);
+                    cmd.SetU64(map, Protocol.PropertyId.FragmentShader, waveMap);
                     cmd.SetPlace(map, 0, 0, TextW * s, TextH * s);
                     cmd.BeginEffectChain(text);
-                    cmd.BeginShaderLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
+                    cmd.BeginEffectChainLink(Protocol.EffectTemplate.Single, [displace], 0, 0, 0, 0, 0);
                     cmd.UniformF32("displacement", 7 * s);
                     cmd.UniformRef("map", map);
                     cmd.EndLink();
@@ -267,34 +235,33 @@ static class ReadmeImagesTest
 
         void Render(string name, int width, float winW, float winH, params (string kind, string label)[] cells)
         {
-            cmd.Reset();
+            cmd.Clear();
             next = 1;
-            var w = Native.vlqt_window_create((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme images");
-            check(w != IntPtr.Zero, $"readme-images {name}: window_create");
+            var w = NativeCalls.CreateCompareWindow((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme images");
+            s.Check(w != SceneHandle.Null, $"readme-images {name}: window_create");
             Native.vlqt_window_show(w);
-            pump(4);
+            s.Pump(4);
             cmd.ClearColor(Bg, Bg, Bg, 1);
             var cols = cells.Length > 2 ? 4 : cells.Length;
-            var s = winW / (cols * CellW);
+            var scale = winW / (cols * CellW);
             uint order = 0;
             foreach (var (kind, label) in cells)
             {
-                Cell(kind, label, order % (uint)cols * CellW * s, order / (uint)cols * CellH * s, s, order);
+                Cell(kind, label, order % (uint)cols * CellW * scale, order / (uint)cols * CellH * scale, scale, order);
                 order++;
             }
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"readme-images {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
-            pump(10);
-            var grabPath = Path.Combine(outDir, $"readme-images_{name}.png");
-            using (var a = grab(w, grabPath))
+            s.Check(rc == 0, $"readme-images {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            cmd.Clear();
+            s.Pump(10);
+            var grabPath = Path.Combine(s.OutDir, $"readme-images_{name}.png");
+            using (var a = s.Grab(w, grabPath))
             {
-                var ink = Ink(a);
-                check(ink > 0.02, $"readme-images {name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
+                var ink = ImageCompare.Ink(a);
+                s.Check(ink > 0.02, $"readme-images {name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
             }
-            var target = Save(grabPath, Path.Combine(imagesDir!, name + ".png"), width);
-            Console.WriteLine($"INFO readme-images: {target} ({new FileInfo(target).Length / 1024} KB)");
-            Native.vlqt_window_destroy(w);
+            ImageCompare.Check(s, "readme-images_" + name, grabPath, width);
+            Native.vlqt_scene_destroy(w);
         }
 
         const string forward = "Blur → RGBSplit → DropShadow", reverse = "DropShadow → RGBSplit → Blur";

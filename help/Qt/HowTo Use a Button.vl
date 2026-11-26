@@ -35,20 +35,20 @@
             <Pin Id="mAEteb59rfCfRAFlbvMeeN" Name="Auto Size" Kind="InputPin" />
             <Pin Id="LFxiEa58dOHNGKTsl90lJE" Name="Transform" Kind="InputPin" />
             <Pin Id="Pmxne1yKuJ1NDp1kGAvsGL" Name="Anchor" Kind="InputPin" />
-            <Pin Id="sNvk4e7QCLrVqxJMvordAR" Name="Text" Kind="InputPin" />
+            <Pin Id="sNvk4e7QCLrVqxJMvordAR" Name="Text" Kind="InputPin" IsHidden="true" />
             <Pin Id="Pgk3E4JLUNWNoRaR9OAJA5" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="rpozIacv69r8FUQhZQx96n" Name="Auto Repeat" Kind="InputPin" />
-            <Pin Id="dJtdDW6KaZBOQ7wjLaVrps" Name="Is Clicked" Kind="InputPin" />
+            <Pin Id="dJtdDW6KaZBOQ7wjLaVrps" Name="On Click" Kind="InputPin" />
             <Pin Id="txnc9ZI0yaTbAj2ulcZ45y" Name="Output" Kind="OutputPin" />
             <Pin Id="hWHxHOQP1eJd01YZwFS0OU" Name="Bang" Kind="OutputPin" />
-            <Pin Id="eZsdYzEqM1PM4Sp57KCpFW" Name="Opacity" Kind="InputPin" />
+            <Pin Id="eZsdYzEqM1PM4Sp57KCpFW" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="N7AvzWXUHsyL2GmIr0fr6k" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="PIhO9AYsoel28BlqzMimx2" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="CpfgMcnQAHfMEu2WPRGBrX" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="SODcUrXRHXRPgKp0eYGpUb" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="Ol4SZWDW3SWLTz4AbEEOny" Name="Interaction" Kind="InputPin" />
-            <Pin Id="ExgzZy3tG0ONHsWxqnXg4G" Name="Effect" Kind="InputPin" />
-            <Pin Id="SrvvLaHWu0zPT3aZg2ucPo" Name="Style" Kind="InputPin" />
+            <Pin Id="ExgzZy3tG0ONHsWxqnXg4G" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="SrvvLaHWu0zPT3aZg2ucPo" Name="Style" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="100,890,85,19" Id="i32wyAjhVFDgbOf2l4v9Ez">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
@@ -62,10 +62,10 @@
             <Pin Id="TY5YlAtmJGWJhKe2iuXnvV" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="TpgcxGSZNmELEwRXnGv5QP" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="lYW977Gt97i9XLeVBrv4NP" Name="Input" Kind="InputPin" />
-            <Pin Id="7Q331zS68Bvr1fLWEHOzQy" Name="Space" Kind="InputPin" />
-            <Pin Id="fayFity6qwcBf23J9CjxLf" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="7Q331zS68Bvr1fLWEHOzQy" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="fayFity6qwcBf23J9CjxLf" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="TuE30q0BbFmMDePdMzEGHL" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="LOY344laXGKln5g1ZKJ7Hu" Name="Enabled" Kind="InputPin" />
+            <Pin Id="LOY344laXGKln5g1ZKJ7Hu" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="p7oLSJkZalyGr6ZLlzr48M" Name="Title" Kind="InputPin" />
             <Pin Id="QUYeq79BIygPJM2mZ6AQkL" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="Haq8vmkp1zhL3BK6Ijao1H" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -134,19 +134,19 @@
             <Pin Id="BDzxQuSHMGCMLwxjVvwQ4I" Name="Value" Kind="OutputPin" />
             <Pin Id="H0Syzi6cY8aOO7RmXDpVbl" Name="On Data" Kind="OutputPin" />
           </Node>
-          <Pad Id="QZrXyHE8n6mLjpHryojzp9" Comment="Is Clicked" Bounds="433,614,35,35" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="QZrXyHE8n6mLjpHryojzp9" Comment="On Click" Bounds="433,614,35,35" ShowValueBox="true" isIOBox="true" />
           <Pad Id="MpNMynWrb6uP0dABLk2TZi" Comment="Rotation" Bounds="192,384,35,15" ShowValueBox="true" isIOBox="true" Value="0.125">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="260,710,45,19" Id="H2lZ9N6P5yEMOLlcuizZU7">
+          <Node Bounds="260,710,25,19" Id="H2lZ9N6P5yEMOLlcuizZU7">
             <p:NodeReference LastCategoryFullName="Qt.Interaction" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Hover" />
             </p:NodeReference>
             <Pin Id="MAgDomYezNKNfXbBFWl74Z" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="CPX8dnMG0jSQcSY9fW0eKs" Name="Input" Kind="InputPin" />
+            <Pin Id="CPX8dnMG0jSQcSY9fW0eKs" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="BNvTZ6LYQrwLCn4RQZ0feI" Name="Is Hovered" Kind="InputPin" />
             <Pin Id="Ei1C2maCrumP3gE1v2bCNj" Name="Output" Kind="OutputPin" />
           </Node>
@@ -173,7 +173,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="wtvdxmdjkxBs5VwBVtpimu" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Button [Qt]&#xD;&#xA;- Bang: true for one frame per click (here counted)&#xD;&#xA;- Is Clicked: channel pin, a Reactive Channel of Unit (shows as a bang)&#xD;&#xA;- Enabled, Auto Repeat, Auto Size">
+          <Pad Id="wtvdxmdjkxBs5VwBVtpimu" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Button [Qt]&#xD;&#xA;- Bang: true for one frame per click (here counted)&#xD;&#xA;- On Click: channel pin, a Reactive Channel of Unit (shows as a bang)&#xD;&#xA;- Enabled, Auto Repeat, Auto Size">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -182,7 +182,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="dGla7uN4vRQZihlDnDYwBp" Bounds="85,969,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A click is reported when the mouse is released over the button (like Qt clicked).&#xD;&#xA;- Enabled = false greys the button out and blocks clicks. Auto Repeat repeats the click while the button is held down.&#xD;&#xA;- Auto Size takes the size from the text: Size is ignored while it is on, the position comes from Transform and Anchor.">
+          <Pad Id="dGla7uN4vRQZihlDnDYwBp" Bounds="85,969,830,95" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A click is reported when the mouse is released over the button (like Qt clicked).&#xD;&#xA;- Enabled = false greys the button out and blocks clicks. Auto Repeat repeats the click while the button is held down.&#xD;&#xA;- Auto Size takes the size from the text: Size is ignored while it is on, the position comes from Transform and Anchor.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

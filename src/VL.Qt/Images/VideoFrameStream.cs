@@ -8,7 +8,7 @@ using VL.Lib.Basics.Video;
 namespace VL.Qt
 {
     /// <summary>
-    /// The frames of one <see cref="IVideoSource"/> for one consumer (#114), the pattern of VideoSourceToImage in
+    /// The frames of one <see cref="IVideoSource"/> for one consumer, the pattern of VideoSourceToImage in
     /// VL.CoreLib against the VL.Core types only (VL.Qt does not reference VL.CoreLib):
     /// <list type="bullet">
     /// <item>Push: a dedicated thread starts the player (IVideoSource2) and grabs frames; it only puts the frame handle
@@ -20,17 +20,17 @@ namespace VL.Qt
     /// </summary>
     internal sealed class VideoFrameStream : IDisposable
     {
-        const int joinTimeoutMs = 2000;
+        private const int joinTimeoutMs = 2000;
 
-        readonly IVideoSource _source;
-        readonly VideoPlaybackContext _ctx;
-        readonly bool _push;
-        readonly BlockingCollection<IResourceHandle<VideoFrame>> _queue = new(boundedCapacity: 1);
-        readonly CancellationTokenSource _cancel = new();
-        readonly Thread? _thread;
-        IVideoPlayer? _player;
-        bool _started, _disposed;
-        volatile string _error = string.Empty;
+        private readonly IVideoSource _source;
+        private readonly VideoPlaybackContext _ctx;
+        private readonly bool _push;
+        private readonly BlockingCollection<IResourceHandle<VideoFrame>> _queue = new(boundedCapacity: 1);
+        private readonly CancellationTokenSource _cancel = new();
+        private readonly Thread? _thread;
+        private IVideoPlayer? _player;
+        private bool _started, _disposed;
+        private volatile string _error = string.Empty;
 
         public VideoFrameStream(IVideoSource source, VideoPlaybackContext ctx, bool push)
         {
@@ -70,7 +70,7 @@ namespace VL.Qt
             return TryGrab(out var frame) ? frame?.GetHandle() : null;
         }
 
-        void Run()
+        private void Run()
         {
             var token = _cancel.Token;
             IVideoPlayer? player = null;
@@ -117,7 +117,7 @@ namespace VL.Qt
             }
         }
 
-        bool TryAdd(IResourceHandle<VideoFrame> handle, CancellationToken token)
+        private bool TryAdd(IResourceHandle<VideoFrame> handle, CancellationToken token)
         {
             try
             {
@@ -129,7 +129,7 @@ namespace VL.Qt
             }
         }
 
-        bool TryStart(IVideoSource2 source, out IVideoPlayer? player)
+        private bool TryStart(IVideoSource2 source, out IVideoPlayer? player)
         {
             try
             {
@@ -144,7 +144,7 @@ namespace VL.Qt
             }
         }
 
-        bool TryGrab(out IResourceProvider<VideoFrame>? frame)
+        private bool TryGrab(out IResourceProvider<VideoFrame>? frame)
         {
             try
             {
@@ -161,7 +161,7 @@ namespace VL.Qt
             }
         }
 
-        void SetError(Exception e, string what)
+        private void SetError(Exception e, string what)
         {
             var text = $"{what}: {e.Message}";
             if (text == _error)

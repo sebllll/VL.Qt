@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="IUjcRO82yxDZgiIXHldReb" Bounds="85,85,830,103" ShowValueBox="true" isIOBox="true" Value="Renderer [Qt], pin VSync&#xD;&#xA;- true: Present waits for the display refresh, no tearing&#xD;&#xA;- false: Present never blocks, tearing is possible&#xD;&#xA;- Applies when the window is created: a change recreates the window&#xD;&#xA;- Known state: with several VSync windows the frame rate drops to about refresh / number of windows">
+          <Pad Id="IUjcRO82yxDZgiIXHldReb" Bounds="85,85,830,103" ShowValueBox="true" isIOBox="true" Value="Renderer [Qt], pin V Sync&#xD;&#xA;- true: Present waits for the display refresh, no tearing&#xD;&#xA;- false: Present never blocks, tearing is possible&#xD;&#xA;- Applies when the window is created: a change recreates the window&#xD;&#xA;- Known state: with several VSync windows the frame rate drops to about refresh / number of windows">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -106,9 +106,9 @@
             <Pin Id="OhulVWYVWQ2SV7UDlGu6Nk" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="8w5CbtQLh6e1YcP89YKTH8" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="z5rWeWbQ1YxXRwrrpg1bnJ" Name="Input" Kind="InputPin" />
-            <Pin Id="AgIxXcMWpuNPek6NCPRvVe" Name="Space" Kind="InputPin" />
+            <Pin Id="AgIxXcMWpuNPek6NCPRvVe" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="0VZNvvuFYgOzFRQzNQ5KKm" Name="Clear Color" Kind="InputPin" DefaultValue="0.05, 0.05, 0.08, 1" />
-            <Pin Id="H3uT1P6Yd58UXTAmL7GhIQ" Name="Enabled" Kind="InputPin" />
+            <Pin Id="H3uT1P6Yd58UXTAmL7GhIQ" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="iv1cZg86rIgU7VGtdyWvZW" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="dzlcX16gI71gN2Ae62vZGC" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="5QVp1CAowKqbhzsIiG1gBq" Name="Title" Kind="InputPin" DefaultValue="HowTo Avoid Tearing" />
@@ -119,7 +119,7 @@
             <Pin Id="mZz7I7j1gmQGl05jQsErlW" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="HUjg9HJIw5DK9W0wH8Rzfr" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="kFx8B1p0xKOfsm3oWSLeX9" Bounds="85,745,830,127" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Tearing: the display shows parts of two frames at once, so the edges of fast horizontal motion break into a step. The bars (one LFO through SineWave and Map to the window width, 10 units here) make it easy to see.&#xD;&#xA;- To compare, set VSync to false and look at the diagonal edges while the bars move; set it back to true and they stay clean. The pin is read when the window is created, so each change recreates the window.&#xD;&#xA;- VSync true waits for the display refresh inside Present. With several VSync windows the waits add up in one pump, so each window runs at about refresh / number of windows; the vvvv main loop is blocked with them. Tracked in VL.Qt issue 90.&#xD;&#xA;- The window size is set on the Renderer (Bounds, 1000 x 500 DIP = 10 x 5 units); the Map range matches it.">
+          <Pad Id="kFx8B1p0xKOfsm3oWSLeX9" Bounds="85,745,830,155" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Tearing: the display shows parts of two frames at once, so the edges of fast horizontal motion break into a step. The bars (one LFO through SineWave and Map to the window width, 10 units here) make it easy to see.&#xD;&#xA;- To compare, set V Sync to false and look at the diagonal edges while the bars move; set it back to true and they stay clean. The pin is read when the window is created, so each change recreates the window.&#xD;&#xA;- VSync true waits for the display refresh inside Present. With several VSync windows the waits add up in one pump, so each window runs at about refresh / number of windows; the vvvv main loop is blocked with them. Tracked in VL.Qt issue 90.&#xD;&#xA;- The window size is set on the Renderer (Bounds, 1000 x 500 DIP = 10 x 5 units); the Map range matches it.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -128,7 +128,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="FEVfGBk88D9kd0jjyRmnx1" Comment="VSync" Bounds="102,620,35,35" ShowValueBox="true" isIOBox="true" Value="True">
+          <Pad Id="FEVfGBk88D9kd0jjyRmnx1" Comment="V Sync" Bounds="102,620,35,35" ShowValueBox="true" isIOBox="true" Value="True">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
@@ -159,7 +159,7 @@
                 <Pin Id="P10J06cV514OYtUcvNk3OU" Name="Size" Kind="InputPin" DefaultValue="0.15, 8" />
                 <Pin Id="N7epgtAJ29QPvyXnPgWxAf" Name="Transform" Kind="InputPin" />
                 <Pin Id="U3skZiTv0byMZJmOejtAgM" Name="Anchor" Kind="InputPin" DefaultValue="Center" />
-                <Pin Id="EvuOvsxBxdvPRm9DHGfzuD" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
+                <Pin Id="EvuOvsxBxdvPRm9DHGfzuD" Name="Fill Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
                 <Pin Id="EA6HNpJIJRWQZiFEC9yiVM" Name="Radius" Kind="InputPin" IsHidden="true" />
                 <Pin Id="DvAVlFmWNRfOZ40VIm2ekk" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
                 <Pin Id="JaRvSwrRAIxNZaPBvD9gSH" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -223,7 +223,7 @@
               <Choice Kind="ProcessAppFlag" Name="Group (Spectral)" />
             </p:NodeReference>
             <Pin Id="NO3krj3l8XeOUceEGHx65C" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="VMqrfFi2V9aMskDoIaAYzF" Name="Children" Kind="InputPin" />
+            <Pin Id="VMqrfFi2V9aMskDoIaAYzF" Name="Input" Kind="InputPin" />
             <Pin Id="JYB7EjnAvtbLI0ivTabCBg" Name="Output" Kind="OutputPin" />
             <Pin Id="BRlCoSbq3NjNpngx2IZuwl" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="PihFoLJiMSdPYD3pCxDtZn" Name="Auto Size" Kind="InputPin" IsHidden="true" />
