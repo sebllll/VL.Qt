@@ -16,7 +16,7 @@ using VL.Qt.Tests.Support;
 
 namespace VL.Qt.Tests.Qml
 {
-    /// <summary>The common pins of the generated QML nodes (<see cref="QmlCommonPins"/>) are those of QmlElement (QML-04).</summary>
+    /// <summary>The common pins of the generated QML nodes (<see cref="QmlCommonPins"/>) are those of QmlElement.</summary>
     [TestFixture]
     public sealed class QmlCommonPinsTests
     {

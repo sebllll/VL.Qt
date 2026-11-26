@@ -74,7 +74,7 @@ Invoke-Step "VL.Qt.Audio ($Configuration)" {
 
 if ($Test)
 {
-    # Timing limits (Perf category of the unit tests, SmokeTest PerfLimits) only warn in the gate (TEST-09); a measurement that
+    # Timing limits (Perf category of the unit tests, SmokeTest PerfLimits) only warn in the gate; a measurement that
     # runs alone on a quiet machine sets VLQT_PERF_WARN_ONLY=0 to make them hard. VLQT_PERF_FACTOR scales every limit.
     if (-not $env:VLQT_PERF_WARN_ONLY) { $env:VLQT_PERF_WARN_ONLY = '1' }
     # Closing check (P14): no issue references, no long comment lines, no file with two types in src (tools/check-source-rules.py).

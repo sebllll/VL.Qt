@@ -11,7 +11,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// Global pump (plan 02a/02b) without vvvv: simulated IFrameClock, two windows, 120 frames.
+// Global pump without vvvv: simulated IFrameClock, two windows, 120 frames.
 [TestFixture, NonParallelizable]
 public static class PumpTest
 {

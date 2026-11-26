@@ -15,7 +15,7 @@ using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 using static Pixels;
 
-// Group/Row/Column nodes (07d) end to end: nodes → Reconciler → CommandWriter → real QtNative.
+// Group/Row/Column nodes end to end: nodes → Reconciler → CommandWriter → real QtNative.
 // Grabs go to <OutDir>/07d_*.png. Node inputs are units (DIPTopLeft, 1 unit = 100 DIP), pixel checks are DIP.
 [TestFixture, NonParallelizable]
 public static class ContainerNodeTest

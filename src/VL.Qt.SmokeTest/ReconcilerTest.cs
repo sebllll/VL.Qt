@@ -16,7 +16,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 using static Pixels;
 
-// End-to-end path of plan 04e: element tree → Reconciler → CommandWriter → real QtNative.
+// End-to-end path: element tree → Reconciler → CommandWriter → real QtNative.
 // Grabs go to <OutDir>/04_reconciler*.png. Element values are units (Space DIPTopLeft, 1 unit = 100 DIP);
 // the expected pixel positions below are logical pixels (DIP).
 [TestFixture, NonParallelizable]

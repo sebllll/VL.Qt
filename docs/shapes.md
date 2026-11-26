@@ -16,7 +16,7 @@
 
 ## Geometry space
 
-- Points are in the parent space, in units of the scene `Space` (like Skia's path layers); `0, 0` is the origin of the parent, not a corner of the shape.
+- Points are in the parent space, in units of the `Space` of the renderer (like Skia's path layers); `0, 0` is the origin of the parent, not a corner of the shape.
 - `Transform` applies around the origin of the parent, not around the center of the shape. To rotate or scale a shape around its own center, build the points around `0, 0` and move them with `Transform` (translation).
 - There is no `Anchor` and no `Size` pin. The size of the element is the extent of its geometry (`max(0, maxX)` by `max(0, maxY)` of the points). Row, Column and the tooltip preview use it; coordinates to the left of or above the origin do not enlarge it.
 

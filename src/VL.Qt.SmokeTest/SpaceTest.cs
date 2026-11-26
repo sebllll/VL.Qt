@@ -26,7 +26,7 @@ using static Pixels;
 // the grab (<OutDir>/143_space_*.png), the Scene Bounds of both rectangles in units (round trip through QtNative), the
 // position of a synthetic click in units (Point node, local to the rectangle). At the end a resync (invalid command before a
 // Space change) must restore origin and scale. The device pixel ratio is read from the scene; another one needs its own run:
-// $env:QT_SCALE_FACTOR=1.5; dotnet run --project src/VL.Qt.SmokeTest -c Release -- --only space (DIP: 150 device pixels).
+// $env:QT_SCALE_FACTOR=1.5; dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=space (DIP: 150 device pixels).
 [TestFixture, NonParallelizable]
 public static class SpaceTest
 {

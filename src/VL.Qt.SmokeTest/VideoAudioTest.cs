@@ -295,7 +295,7 @@ public static class VideoAudioTest
         s.Check(rate2 > 0.97 && rate2 < 1.03 && s2.Peak > 0.01f && s2.Flags == (Protocol.AudioTap.Attached | Protocol.AudioTap.Playing),
             $"videoaudio: tap switch live: {rate2:F3} s/s at 44.1 kHz, peak {s2.Peak:F3}, flags {s2.Flags}");
 
-        // 6. A second Video with the same tap is refused (one player per tap, COMP-03): still 1 s per s, not 2. The apply
+        // 6. A second Video with the same tap is refused (one player per tap): still 1 s per s, not 2. The apply
         // stops at the refused command, so the tap goes last.
         cmd.Create(Video2Id, Protocol.ElementType.Video);
         cmd.SetPlace(Video2Id, 0, 0, 160, 90);

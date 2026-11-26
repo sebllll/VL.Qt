@@ -15,7 +15,7 @@ For vvvv users. The user pages carry a contributor note only as a closing "for c
 | [linux.md](linux.md) | Exporting for Linux, running the result (WSL or native), fonts, building the Linux runtime from source. |
 | [coordinates.md](coordinates.md) | The `Space` pin (origin and unit of all lengths) and the layout with `Row` and `Column`. |
 | [shapes.md](shapes.md) | `Line`, `Polyline` and `Polygon`: pins, geometry space, stroke and fill defaults (like Skia), dash and trim, limits (cost of changing points). |
-| [styles.md](styles.md) | The VLQt base style, the `Style` pin, style nodes, and self-made widgets with `IStylable`. |
+| [styles.md](styles.md) | The VLQt base style, the `Style` pin, style nodes, and stylable widgets (`IStylable`). |
 | [images.md](images.md) | `QtImage` as GPU resource, the loader nodes, `ToQtImage`, `Snapshot`, mipmaps and frame budget. |
 | [effects-and-shaders.md](effects-and-shaders.md) | The `Effect` pin and its nodes, ShaderEffect, the `Sampler` node, shader nodes generated from `.frag` files. |
 | [user-qml.md](user-qml.md) | `QmlElement`: load a `.qml` file of your own as an element, properties in, changes and signals out, hot reload, limits; nodes with named pins generated from `.qml` files in `qml/` folders. |
@@ -34,7 +34,7 @@ For contributors and coding agents. The working conventions (build, tests, code 
 |---|---|
 | [contributing/development.md](contributing/development.md) | Prerequisites, first build, Visual Studio solution, the three packages (VL.Qt, VL.Qt.Stride, VL.Qt.Audio), scripts, tests, encoding and git hook, project layout, typical workflows. |
 | [contributing/architecture.md](contributing/architecture.md) | Element tree, reconciler, QtNative, timing, rendering and events. |
-| [contributing/protocol.md](contributing/protocol.md) | The command protocol: what commands, events and values mean (geometry, handlers, effect chain, shaders, resources, audio tap). The wire format is in `protocol.h`. |
+| [contributing/protocol.md](contributing/protocol.md) | The command protocol: what commands, events and values mean (geometry, handlers, effect chain, shaders, resources, audio tap). The protocol itself is in `protocol.h`. |
 | [contributing/add-an-element.md](contributing/add-an-element.md) | Walkthrough: one element through protocol, element record, diff, node, QtNative item, feedback, tests and help patch. |
 | [contributing/help-patches.md](contributing/help-patches.md) | Writing help patches: the Help Browser manifest, the text scheme, renames through the mapping file. |
 | [contributing/linux.md](contributing/linux.md) | Building the Linux runtime from source, testing under WSLg, timing checks on slower machines, known problems of the tests. |
@@ -67,7 +67,7 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [design/element-model.md](design/element-model.md) | What an element is: immutable descriptions and their exceptions, the pins every element node shares, geometry and the coordinate space. |
 | [design/events-and-interaction.md](design/events-and-interaction.md) | How input and values that only Qt knows come back to the patch: feedback, the Interaction nodes and their channels, latency and threads. |
 | [design/input.md](design/input.md) | The input handlers of QtNative: events per handler and when they are sent, grabs and occlusion, drag offset, Touch Points and Pinch, what a change of the feedback does, and the Qt behaviour behind the rules. |
-| [design/reconciler.md](design/reconciler.md) | How the reconciler turns the element tree into commands: one frame, the skip test, the order of the commands, occurrences and placeholders, input handlers, effect chains, styles, self-made widgets, and the resync after an exception. |
+| [design/reconciler.md](design/reconciler.md) | How the reconciler turns the element tree into commands: one frame, the skip test, the order of the commands, occurrences and placeholders, input handlers, effect chains, styles, stylable widgets, and the resync after an exception. |
 | [design/reconciler-identity.md](design/reconciler-identity.md) | How the reconciler decides every frame between updating a Qt object and creating a new one, and what counts as one element (its feedback slot) when it is shown at several places. |
 | [design/paths.md](design/paths.md) | Lines, paths and splines on Qt Quick Shapes: the shape elements, `QtPath`, the `Qt.Paths` nodes and their Skia-like defaults, geometry space, wire format and costs. |
 | [design/user-qml.md](design/user-qml.md) | Loading a user `.qml` file as an element (`QmlElement`) and the QML node factory: wire path, pins from a C# parser, hot reload, errors, time and licensing. |

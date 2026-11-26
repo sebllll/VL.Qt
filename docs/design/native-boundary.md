@@ -1,6 +1,6 @@
 # Native boundary
 
-The API between C# and QtNative: one command buffer per frame in, one event buffer out, a plain C ABI around both. Code: `src/VL.Qt.Native/vlqt.h` (exports, with the conventions block at its head), `protocol.h` and `src/VL.Qt/Wire/Protocol.cs` (wire format), `src/VL.Qt/Interop/` (P/Invoke surface, one `Native.*.cs` per group of `vlqt.h`, and the library loader). How the layers fit together is in [../architecture.md](../contributing/architecture.md); how QtNative is packaged and found is in [deployment.md](deployment.md).
+The API between C# and QtNative: one command buffer per frame in, one event buffer out, a plain C ABI around both. Code: `src/VL.Qt.Native/vlqt.h` (exports, with the conventions block at its head), `protocol.h` and `src/VL.Qt/Wire/Protocol.cs` (the protocol), `src/VL.Qt/Interop/` (P/Invoke surface, one `Native.*.cs` per group of `vlqt.h`, and the library loader). How the layers fit together is in [../architecture.md](../contributing/architecture.md); how QtNative is packaged and found is in [deployment.md](deployment.md).
 
 ## Context
 

@@ -40,7 +40,7 @@ The same numbers are available in a patch: `Renderer [Qt]` has an optional `Perf
 
 ### Overhead of the overlays
 
-The overlays are cheap: with a typical scene the native pump takes a few hundredths to a few tenths of a millisecond longer per frame, depending on the page (the Summary page is the cheapest, the Timeline page and the F2 meter the most expensive). Hide them when you measure the scene itself.
+The overlays are cheap: with a typical scene the pump takes a few hundredths to a few tenths of a millisecond longer per frame, depending on the page (the Summary page is the cheapest, the Timeline page and the F2 meter the most expensive). Hide them when you measure the scene itself.
 
 ### Pump spikes: where they come from
 
@@ -77,7 +77,7 @@ All messages of VL.Qt go to the vvvv **Log window**, nothing goes to the console
 
 ## GPU device loss
 
-On Windows, Qt Quick shares one Direct3D 11 device with all windows and images. If the GPU driver resets (TDR), the GPU is removed or switched, VL.Qt rebuilds the device, the windows and all images itself. The patch does not have to do anything.
+On Windows, Qt Quick shares one Direct3D 11 device with all windows and images. On a device loss (the GPU driver resets, or the GPU is removed or switched), VL.Qt rebuilds the device, the windows and all images itself. The patch does not have to do anything.
 
 - **What you see:** windows briefly show the last frame or black, then the scene is back. Images stay `Ready` (no `Loading` flicker), snapshots are kept. Rebuilding takes typically around 0.1 s; a real driver reset adds the time Windows needs to detect and reset the GPU (TDR, about 2 s by default).
 - **Log:** Warning "shared D3D11 device lost (GetDeviceRemovedReason ...)", then Info "device rebuilt in ... ms" and Info "device lost: N resource(s) upload again".

@@ -5,7 +5,7 @@ using NUnit.Framework;
 namespace VL.Qt.Tests.Support
 {
     /// <summary>
-    /// Time limits of the <c>Perf</c> category (TEST-09). Same semantics as the SmokeTest's <c>PerfLimits</c>:
+    /// Time limits of the <c>Perf</c> category. Same semantics as the SmokeTest's <c>PerfLimits</c>:
     /// <c>VLQT_PERF_FACTOR=&lt;x&gt;</c> multiplies every limit (&lt; 1 tightens, proves that the check bites),
     /// <c>VLQT_PERF_WARN_ONLY=1</c> turns an exceeded limit into a warning (tools/build.ps1, tools/test-linux.sh and the CI set it).
     /// Allocation checks do not go through here: they are deterministic and stay hard.

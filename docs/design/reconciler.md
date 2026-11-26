@@ -1,6 +1,6 @@
 # Reconciler
 
-How the reconciler turns the element tree of one renderer into commands for QtNative, frame after frame: the walk, the skip test, the order of the commands, occurrences, input handlers, effect chains, styles, self-made widgets and what happens when a reconcile throws. The code is in `src/VL.Qt/Reconciliation/`: `Reconciler` (the walk), `ItemMirror`, `HandlerMirror` and `EffectChainMirror` (what was sent), `PropertyDiff` and `HandlerPropertyDiff` (the SETs), `PrimaryOccurrences`, `OccurrenceRegistry` and `InteractionRegistry` (where things are shown), `FeedbackRouter` (the way back). The identity rules (position plus type, the key of an element, several renderers) are in [reconciler-identity.md](reconciler-identity.md); how events arrive in the nodes is in [events-and-interaction.md](events-and-interaction.md). Words as in the [glossary](../glossary.md): the element tree, an occurrence (one place where an element appears), a mirror (what was sent for one occurrence).
+How the reconciler turns the element tree of one renderer into commands for QtNative, frame after frame: the walk, the skip test, the order of the commands, occurrences, input handlers, effect chains, styles, stylable widgets and what happens when a reconcile throws. The code is in `src/VL.Qt/Reconciliation/`: `Reconciler` (the walk), `ItemMirror`, `HandlerMirror` and `EffectChainMirror` (what was sent), `PropertyDiff` and `HandlerPropertyDiff` (the SETs), `PrimaryOccurrences`, `OccurrenceRegistry` and `InteractionRegistry` (where things are shown), `FeedbackRouter` (the way back). The identity rules (position plus type, the key of an element, several renderers) are in [reconciler-identity.md](reconciler-identity.md); how events arrive in the nodes is in [events-and-interaction.md](events-and-interaction.md). Words as in the [glossary](../glossary.md): the element tree, an occurrence (one place where an element appears), a mirror (what was sent for one occurrence).
 
 ## Context
 
@@ -32,7 +32,7 @@ A subtree is skipped when all five conditions hold:
 1. the new element is reference-equal to the one in the mirror (`ItemMirror.Element`);
 2. the pass is not forced;
 3. the mirror is not marked `MustVisit` (a video inside it was taken over by an earlier occurrence, so it has to turn into a placeholder);
-4. the subtree holds no self-made widget (`ItemMirror.ContainsStylable`; see Self-made widgets);
+4. the subtree holds no stylable widget (`ItemMirror.ContainsStylable`; see Stylable widgets);
 5. the style inherited at this position is reference-equal to the one the mirror was last reconciled with (`ItemMirror.InheritedStyle`).
 
 Immutable descriptions make the first condition valid. A resolved style that stays equal keeps its reference (see Styles).
@@ -84,13 +84,13 @@ Every visited item is bound to the feedback slot of its description (BIND with a
 
 ### Effect chains
 
-The Effect pin is cut into links in application order (`Effect.Segment`) and sent as one SET_EFFECT_CHAIN by `EffectChainWriter`, only when the chain instance changed (reference comparison; no chain is a chain of 0 links). The elements the links refer to (the mask of a merged run, the texture of a shader uniform) are objects of their own (`EffectChainMirror.Objects`): reconciled without REPARENT before the chain is sent, destroyed after it when no longer used. An unchanged chain only retries its objects, and is sent again when an object got another id or the unit scale changed.
+The Effect pin is cut into links in application order (`Effect.Segment`) and sent as one SET_EFFECT_CHAIN by `EffectChainWriter`, only when the chain instance changed (reference comparison; no chain is a chain of 0 links). The elements the links refer to (the mask of merged effects, the texture of a shader uniform) are objects of their own (`EffectChainMirror.Objects`): reconciled without REPARENT before the chain is sent, destroyed after it when no longer used. An unchanged chain only retries its objects, and is sent again when an object got another id or the unit scale changed.
 
 ### Styles
 
 The base style is the inherited style under the window root. A `Group` and every widget merge their own style over the inherited one (`StyleMerge`), other elements pass it on. The merge only runs when the inherited or the own style changed by reference, and an equal result keeps the old reference, so unchanged children stay skipped under a re-merged parent. Widgets send their resolved style right after CREATE and later as a diff against `ItemMirror.SentStyle` (`StyleWriter`); primitives never get SET_STYLE. `StylableElements` is the one list of the classes that take part.
 
-### Self-made widgets
+### Stylable widgets
 
 A child that is a `StylableElement` (the placeholder of an `IStylable`) is built with the style inherited at its position, and the returned element is reconciled in its place. Build runs on every pass, because a patched widget is usually a mutable instance whose reference does not change; its ancestors are therefore never skipped (`ContainsStylable`), the elements around it still are. An exception, a cycle of stylables or a foreign `IElement` is caught per call and shown at the feedback of the parent (`MessageKind.BuildError`); the element of the last successful Build stays.
 

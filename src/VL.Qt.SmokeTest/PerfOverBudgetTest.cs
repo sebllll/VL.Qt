@@ -4,7 +4,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// NDIAG-01 regression: the pump includes the VSync wait (QRhi::beginFrame) and the present, but over budget counts only Qt
+// The pump includes the VSync wait (QRhi::beginFrame) and the present, but over budget counts only Qt
 // work (vlqt_perf_sample.work = pump - vsync - present) above the budget, and the budget is vvvv's frame interval
 // (vlqt_app_set_frame_budget; E13, C4). Four parts: (1) vlqt_perf_eval on synthetic pumps of 18 ms of which 14 ms are
 // VSync wait (Qt work 3.5 ms): no pump is over budget. (2) The budget follows vlqt_app_set_frame_budget. (3) A VSync window
@@ -13,7 +13,7 @@ using VL.Qt;
 [TestFixture, NonParallelizable]
 public static class PerfOverBudgetTest
 {
-    /// <summary>NDIAG-01: over budget counts Qt work only, not the VSync wait and the present.</summary>
+    /// <summary>Over budget counts Qt work only, not the VSync wait and the present.</summary>
     [Test, Category("perf-over-budget")]
     public static void PerfOverBudget() => Scenario.Run(Run);
 

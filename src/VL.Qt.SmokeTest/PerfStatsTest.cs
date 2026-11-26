@@ -59,7 +59,7 @@ public static class PerfStatsTest
         s.Check(rc == 0 && st.long_frames == 0 && st.idle == 56 && st.frames == 16 && st.frame_max == 16,
             $"perfstats: on demand -> long frames 0, idle 56, 16 consecutive frames, frame max 16 (long {st.long_frames}, idle {st.idle}, frames {st.frames}, max {st.frame_max})");
 
-        // NDIAG-02: frame statistics (vlqt_perf: fps, frame_ms) only from consecutive frames. 60 pumps of 16 ms frames,
+        // Frame statistics (vlqt_perf: fps, frame_ms) only from consecutive frames. 60 pumps of 16 ms frames,
         // with and without a 2 s idle gap (the frame after it has interval 2000 and a previous pump without a frame).
         var anim = new Native.vlqt_perf_sample[60];
         for (int i = 0; i < 60; i++)

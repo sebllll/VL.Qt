@@ -11,7 +11,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests.Reconciliation
 {
-    /// <summary>Structure diff of the reconciler (04b): identity, create/destroy/reparent, clear.</summary>
+    /// <summary>Structure diff of the reconciler: identity, create/destroy/reparent, clear.</summary>
     public class ReconcilerStructureTests
     {
         private RecordingSink _sink = null!;

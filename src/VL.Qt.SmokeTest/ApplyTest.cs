@@ -12,8 +12,8 @@ using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 
-// Tests of vlqt_scene_apply / vlqt_scene_poll (plan 01c). Buffers are built by a tiny local
-// encoder so this test does not depend on CommandWriter (01b).
+// Tests of vlqt_scene_apply / vlqt_scene_poll. Buffers are built by a tiny local
+// encoder so this test does not depend on CommandWriter.
 [TestFixture, NonParallelizable]
 public static class ApplyTest
 {
@@ -155,7 +155,7 @@ public static class ApplyTest
         }
     }
 
-    // Rejection branches of the entry-based commands and of path values (NCMD-15): each case asserts the return code and a part
+    // Rejection branches of the entry-based commands and of path values: each case asserts the return code and a part
     // of the reason. A malformed command changes nothing, so the elements stay valid across the cases.
     private static void RejectCases(Scenario s, SceneHandle w, Buf b)
     {
@@ -317,7 +317,7 @@ public static class ApplyTest
         Err("unknown type", b.Clear().Create(6, 999), Native.Result.UnknownType, "unknown type 999");
         Err("unknown property", b.Clear().Create(7, Protocol.ElementType.Group).Color(7, 1, 1, 1), Native.Result.UnknownProperty, "not supported by type GROUP");
         Err("value type mismatch", b.Clear().SetFloats(1, Protocol.PropertyId.Size, Protocol.ValueType.F32, 1), Native.Result.BadArgument, "expects value type");
-        // One finite check in Elements::set for every float value (NELM-03): NaN/inf never reach a setter.
+        // One finite check in Elements::set for every float value: NaN/inf never reach a setter.
         Err("NaN opacity", b.Clear().SetFloats(1, Protocol.PropertyId.Opacity, Protocol.ValueType.F32, float.NaN), Native.Result.BadArgument, "must be finite");
         Err("NaN size component", b.Clear().SetFloats(1, Protocol.PropertyId.Size, Protocol.ValueType.Vec2, 1, float.NaN), Native.Result.BadArgument, "must be finite");
         Err("infinite transform component", b.Clear().SetFloats(1, Protocol.PropertyId.Transform, Protocol.ValueType.Mat4,
@@ -341,7 +341,7 @@ public static class ApplyTest
         s.Check(Native.GetApplyError(w, out ae) == 0 && ae.Id == 9 && ae.Prop == Protocol.PropertyId.Color, $"apply error id: -6 -> {ae.Id}/{ae.Prop}");
         Err("clear color, no id", b.Clear().Raw(Protocol.Op.SetClearColor, 4, 4), Native.Result.BadLength, "expected 16");
         s.Check(Native.GetApplyError(w, out ae) == 0 && ae.Id == 0 && ae.Op == Protocol.Op.SetClearColor, $"apply error id: CLEAR_COLOR -> id {ae.Id}");
-        // The op table checks the minimum length of a variable payload; id and property still come from the row (W4-33).
+        // The op table checks the minimum length of a variable payload; id and property still come from the row.
         var shortSet = new byte[6];
         BinaryPrimitives.WriteUInt32LittleEndian(shortSet, 9);
         BinaryPrimitives.WriteUInt16LittleEndian(shortSet.AsSpan(4), Protocol.PropertyId.Color);
@@ -369,13 +369,13 @@ public static class ApplyTest
         using (var a = s.Grab(w, "apply3.png"))
             s.Check(Near(Px(a, 200, 175), 255, 255, 0), $"apply: command before the error stays applied (yellow) ({Px(a, 200, 175)})");
 
-        // Poll: id 1 is bound (handle 42) -> EVENT_MEASURED + EVENT_SCENE_BOUNDS once (06b), plus the first
+        // Poll: id 1 is bound (handle 42) -> EVENT_MEASURED + EVENT_SCENE_BOUNDS once, plus the first
         // EVENT_WINDOW_GEOMETRY of the window (40 bytes, client position), then nothing.
         var ev = new byte[128];
         var needRc = NativeCalls.Poll(w, Span<byte>.Empty, out var need);
         s.Check(needRc == (int)Native.Result.BufferTooSmall && need == 20 + 28 + 40, $"poll: cap 0 -> buffer too small, required {need} ({needRc})");
         // The poll collects once: a change between the too-small call and its retry is not collected into the retry,
-        // so the retry returns exactly the required size and the change arrives with the next poll (NCMD-04).
+        // so the retry returns exactly the required size and the change arrives with the next poll.
         s.Check(Apply(b.Clear().Size(1, 123, 45)) == 0, "poll: size change of the bound item between the two calls");
         s.Check(NativeCalls.Poll(w, ev) == 20 + 28 + 40, "poll: measured + scene bounds of the bound item + window geometry");
         var later = NativeCalls.Poll(w, ev);

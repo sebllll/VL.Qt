@@ -14,7 +14,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests.Nodes.Elements
 {
-    /// <summary>Group, Row and Column nodes (07d): children pin group, change detection, layout pins.</summary>
+    /// <summary>Group, Row and Column nodes: children pin group, change detection, layout pins.</summary>
     public class ContainerNodeTests
     {
         private static readonly Rectangle A = new() { Size = new Vector2(1, 0.5f) };
@@ -170,7 +170,7 @@ namespace VL.Qt.Tests.Nodes.Elements
             Assert.That(sink.OfOp("REPARENT"), Is.EqualTo(new[] { "REPARENT 1 0 0", "REPARENT 2 1 0", "REPARENT 3 1 1", "REPARENT 4 1 2" }));
             Assert.That(sink.Commands, Does.Contain($"SET 1 Spacing f32(10)"), "units → DIP in Geometry");
             Assert.That(sink.Commands, Does.Contain($"SET 1 ChildAlignment i32({(int)HorizontalAlignment.Center})"));
-            // Layout children: only the size goes out (04c).
+            // Layout children: only the size goes out.
             Assert.That(sink.OfOp("SET").Where(s => s.Split(' ')[2] == nameof(P.Size)),
                 Is.EqualTo(new[] { $"SET 2 Size vec2(100,50)", $"SET 3 Size vec2(100,50)", $"SET 4 Size vec2(100,50)" }));
 

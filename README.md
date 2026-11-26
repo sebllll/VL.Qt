@@ -88,7 +88,7 @@ vvvv exports only console apps on Linux, without Stride/Skia, so VL.Qt opens its
 | | Qt Bridge for C# | VL.Qt |
 |---|---|---|
 | UI written in | QML files | the vvvv patch (element tree) |
-| C# is | the backend (view models, data models) | what builds the scene |
+| C# is | the backend (view models, data models) | what builds the element tree |
 | Main loop and time | owned by Qt | owned by vvvv (`IFrameClock`, deterministic) |
 | Glue between C# and Qt | generated at build time, needs a C++ toolchain | prebuilt QtNative, no toolchain needed |
 | Made for | desktop apps with a QML front end | live-patched 2D motion graphics, typography and interactive UI |

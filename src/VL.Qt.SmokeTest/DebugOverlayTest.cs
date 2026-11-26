@@ -16,7 +16,7 @@ using static Pixels;
 // Debug overlay: VLQT_PROPERTY_DEBUG per element and vlqt_scene_set_debug for the whole window. The overlay is drawn
 // by QtNative on top of the scene (frame cyan, origin magenta, anchor yellow, overflow red, implicit orange, ...). Checks: layout, Measured Size,
 // Scene Bounds (Auto Size included) and hit-testing are identical with and without debug; the overlay appears in the
-// grab and disappears again; its repaints are no scene change, and it follows a layout change without an apply (NDIAG-09).
+// grab and disappears again; its repaints are no scene change, and it follows a layout change without an apply.
 // Grabs: <OutDir>/30_debug_off.png, 30_debug_overlay.png, 30_debug_element.png, 30_debug_follow_*.png.
 [TestFixture, NonParallelizable]
 public static class DebugOverlayTest

@@ -12,7 +12,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 
 namespace VL.Qt.Tests.Reconciliation
 {
-    /// <summary>FeedbackRouter: feedback ids, routing of poll records into feedback, pulse logic, rebind (06a).</summary>
+    /// <summary>FeedbackRouter: feedback ids, routing of poll records into feedback, pulse logic, rebind.</summary>
     public class FeedbackRouterTests
     {
         /// <summary>Builds a synthetic poll buffer like QtNative: u16 event, u16 flags, u32 len, u32 feedbackId, payload, 4-aligned.</summary>

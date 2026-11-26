@@ -9,7 +9,7 @@ You export on Windows and run the result on Linux. WSL2 with WSLg (Windows 11) i
 
 ## 1. Prepare the patch
 
-- Build the scene as usual and end it in a `Renderer [Qt]`.
+- Build the element tree as usual and end it in a `Renderer [Qt]`.
 - Add a `KeepAppAlive [System]` to the top patch (Application) with `Is Alive` = true. A console app otherwise ends after the first frame, without a window and without a message. This also holds for the `HowTo …` help patches: they have no `KeepAppAlive`, add one to try them on Linux.
 - Set `Bound To Document` on the Renderer to true if closing the window should end the app.
 

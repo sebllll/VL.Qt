@@ -4,7 +4,7 @@ How QtNative and the Qt runtime are licensed, packaged and found at run time. Co
 
 ## Context
 
-VL.Qt is open source and ships Qt next to its own native layer. Qt searches for its libraries and plugins next to `vvvv.exe` by default, which is not where a vvvv package lives, and vvvv hosts many other packages in the same process.
+VL.Qt is open source and ships Qt next to QtNative. Qt searches for its libraries and plugins next to `vvvv.exe` by default, which is not where a vvvv package lives, and vvvv hosts many other packages in the same process.
 
 ## Design
 

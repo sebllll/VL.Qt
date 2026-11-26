@@ -721,7 +721,7 @@ namespace VL.Qt.Tests.Reconciliation
             // The timing of this path is ReconcilerPerfTests.Group_1000BoundChildren_OneChangePerFrame_Fast (category Perf).
         }
 
-        // --- exception inside Update (REC-01, fault injection with ThrowingSink) ---
+        // --- exception inside Update (fault injection with ThrowingSink) ---
 
         private static int LiveObjects(RecordingSink sink)
         {
@@ -855,7 +855,7 @@ namespace VL.Qt.Tests.Reconciliation
         [Test]
         public void LongString_WithARealCommandWriter_DoesNotThrowOutOfUpdate()
         {
-            // 100,000 characters do not fit a u16 payload length; the u32 length of the command header carries them (PROTO-02).
+            // 100,000 characters do not fit a u16 payload length; the u32 length of the command header carries them.
             var rec = new Reconciler(new CommandWriter(), new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             var text = new Text { Content = new string('x', 100_000) };
             Assert.DoesNotThrow(() => rec.Update(G(text), SpaceMapping.Default));

@@ -49,7 +49,7 @@
     <PackageReference Include="NUnit3TestAdapter" Version="5.*" />
   </ItemGroup>
 
-  <!-- The library as it ships (TEST-10); its package references are compile-only, the real assemblies come from here. -->
+  <!-- The library as it ships; its package references are compile-only, the real assemblies come from here. -->
   <ItemGroup>
     <ProjectReference Include="..\VL.Qt\VL.Qt.csproj" />
     <PackageReference Include="VL.Core" Version="$(VvvvVersion)" />
@@ -58,7 +58,7 @@
     <PackageReference Include="System.Reactive" Version="$(SystemReactiveVersion)" />
   </ItemGroup>
 
-  <!-- VideoAudioOwnedTapTest (COMP-03): the Windows audio session meter shows whether Qt itself plays sound. -->
+  <!-- VideoAudioOwnedTapTest: the Windows audio session meter shows whether Qt itself plays sound. -->
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
   </ItemGroup>

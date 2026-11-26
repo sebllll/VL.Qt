@@ -38,7 +38,7 @@ QString errorLines(const QQmlComponent& component)
 
 // Per engine: size and modification time of each file at its last compile. The engine keeps compiled components by URL
 // and does not look at the file again before clearComponentCache(), so a new item of a file that changed on disk would
-// get the old component (QML-06). Owned by the engine (child object), so it goes with it.
+// get the old component. Owned by the engine (child object), so it goes with it.
 class FileStamps : public QObject
 {
 public:

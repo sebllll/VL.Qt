@@ -14,7 +14,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 namespace VL.Qt.Tests.Nodes.Elements
 {
     using Interaction = VL.Qt.Elements.Interaction;
-    /// <summary>Rectangle node and the shared element node core (07b): change detection, outputs, warning.</summary>
+    /// <summary>Rectangle node and the shared element node core: change detection, outputs, warning.</summary>
     public class RectangleNodeTests
     {
         private static readonly Vector2 DefaultSize = new(1, 1);

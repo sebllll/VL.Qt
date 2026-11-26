@@ -8,7 +8,7 @@ using VL.Qt.Qml;
 
 namespace VL.Qt.Tests.Qml
 {
-    /// <summary>The QML parser never throws and handles the odd corners of the lexer (QML-12).</summary>
+    /// <summary>The QML parser never throws and handles the odd corners of the lexer.</summary>
     [TestFixture]
     internal sealed class QmlParserRobustnessTests
     {
@@ -162,8 +162,8 @@ namespace VL.Qt.Tests.Qml
             Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "after" }));
         }
 
-        // 0b/0o: Default stays 0 (not read as a number, no message); no finding covers it (W1-14).
-        [Ignore("no finding covers it (W1-14; QML-12 only asks for tests): 0b/0o numbers are not evaluated, the default stays 0")]
+        // 0b/0o: Default stays 0 (not read as a number, no message); not implemented.
+        [Ignore("0b/0o numbers are not evaluated, the default stays 0")]
         [TestCase("0b101", 5)]
         [TestCase("0B11", 3)]
         [TestCase("0o17", 15)]

@@ -13,7 +13,7 @@ using VL.Qt;
 /// (images package 08): stress test of the resource manager. Runs <c>seconds</c> with a fixed, logged seed and mixes
 /// load/release (file and pixels), stale ids after release, image elements created/destroyed/re-pointed, a second window
 /// opened/closed and a simulated hotswap (all handles dropped and recreated). At the end vlqt_res_list must be empty, no
-/// leak warning in the log, no crash, no hang (watchdog). Only runs when named explicitly (--only resource-stress),
+/// leak warning in the log, no crash, no hang (watchdog). Only runs when named explicitly (`--filter TestCategory=resource-stress`),
 /// also the target of the ASan/TSan runs under Linux.
 /// One System.Random(seed) drives everything on the main thread: the resource API is main-thread only (vlqt.h), so there
 /// is deliberately no background thread calling vlqt_res_* (a stray call is only guarded against table corruption).

@@ -4,7 +4,7 @@ using NUnit.Framework;
 using VL.Qt;
 using VL.Qt.Interop;
 
-// CAPI-01 / NAPP-02: vlqt_last_error is the text of the last failing call on the calling thread, and every failing call
+// vlqt_last_error is the text of the last failing call on the calling thread, and every failing call
 // sets one. Two checks: the isolation itself without Qt (core-abi: no GPU needed), and the case the contract is for, a
 // vlqt_font_add on a worker thread (not the Qt thread) while the Qt thread fails an apply.
 [TestFixture, NonParallelizable]

@@ -9,9 +9,9 @@ using VL.Qt.Wire;
 using VL.Qt;
 
 /// <summary>
-/// task 5.4 (perf): main-thread time per QtTexture and frame time of offscreen scenes rendered on a Qt render thread
-/// (default) or on the main thread (Render Threads 0, <c>VLQT_SMOKE_RENDERTHREADS=0</c>), and "same frame" in every frame. Opt-in, not part
-/// of --all (about a minute): <c>--only qttextureperf</c>, run alone because the thread count is fixed at the first scene.
+/// Perf: main-thread time per QtTexture and frame time of offscreen scenes rendered on a Qt render thread
+/// (default) or on the main thread (Render Threads 0, <c>VLQT_SMOKE_RENDERTHREADS=0</c>), and "same frame" in every frame. Opt-in (about a minute),
+/// run it alone with <c>--filter TestCategory=qttextureperf</c> because the thread count is fixed at the first scene.
 /// A frame imitates vvvv + Stride: apply the changes (Update), render_batch (draw start), 6 ms of Stride CPU work, then
 /// a GPU read of scene 0's texture on the test device (Stride's draw: Map waits for the GPU). A marker rectangle carries the
 /// frame number; after the read every scene's texture must show this frame's marker (same frame, 100 % of the frames).

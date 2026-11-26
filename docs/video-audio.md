@@ -1,6 +1,6 @@
 # Video sound through VL.Audio
 
-`Video (VL.Audio)` plays a video file like `Video` of VL.Qt, but its sound comes out as [VL.Audio](https://www.nuget.org/packages/VL.Audio/) `AudioSignal`s: mixing, effects, device and channel choice (ASIO/WASAPI) and analysis work as with any other audio source. It lives in the companion package `VL.Qt.Audio` (category `Qt.Elements`, **Windows only**: VL.Audio is NAudio-based). Design and status: [issue #22](https://github.com/sebllll/VL.Qt/issues/22).
+`Video (VL.Audio)` plays a video file like `Video` of VL.Qt, but its sound comes out as [VL.Audio](https://www.nuget.org/packages/VL.Audio/) `AudioSignal`s: mixing, effects, device and channel choice (ASIO/WASAPI) and analysis work as with any other audio source. It lives in the companion package `VL.Qt.Audio` (category `Qt.Elements`, **Windows only**: VL.Audio is NAudio-based).
 
 `Video (VL.Audio)` is **experimental** (`SymbolSmell.Experimental`, like the other companion nodes) until its end-to-end latency has been checked in vvvv on Windows x64 (see [Output latency](#output-latency)).
 
@@ -26,7 +26,7 @@ Help patch: `HowTo Play a Video with VL.Audio` (in the Help Browser under `Audio
 
 ## How it works
 
-The `MediaPlayer` of the Video element gets a `QAudioBufferOutput` (Qt 6.8+, FFmpeg backend) in the format of the VL.Audio engine (float, stereo, its sample rate; Qt resamples) and its `audioOutput` is set to null. Without an audio output the player runs on the system clock; with one, even muted, Qt would sync the picture to the audio device with about 200 ms of start offset and seconds of slewing (spike in the issue).
+The `MediaPlayer` of the Video element gets a `QAudioBufferOutput` (Qt 6.8+, FFmpeg backend) in the format of the VL.Audio engine (float, stereo, its sample rate; Qt resamples) and its `audioOutput` is set to null. Without an audio output the player runs on the system clock; with one, even muted, Qt would sync the picture to the audio device with about 200 ms of start offset and seconds of slewing.
 
 The buffers go from the player's worker thread into a lock-free ring (about 500 ms) of an *audio tap*, a resource of QtNative that lives independently of the element. `VideoAudioSignal` reads it on VL.Audio's audio thread without allocating. The contract between QtNative and C# is documented in `src/VL.Qt.Native/protocol.h`, "Audio tap". A new sample rate of the engine means a new tap; the element switches to it without a pause in between.
 

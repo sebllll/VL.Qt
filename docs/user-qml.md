@@ -11,14 +11,14 @@ Experimental (`SymbolSmell.Experimental`): pins and behavior can still change, s
 | `File` | `Path` | The `.qml` file. Its root must be an `Item` (Rectangle, Item, ... but not a `Window`), else the node shows an error. Empty = nothing loaded. |
 | `Properties` | `Dictionary<string, object>` | Values for properties of the QML root, by name. Only entries that changed are sent. |
 | `Auto Size` | `bool` | On (default): the element takes the size of the QML root. Off: `Size` sets `width` and `height` of the root. |
-| `Size` | `Vector2` | Optional. Width and height of the element, in units (1 unit = 100 DIP), only with `Auto Size` off. |
+| `Size` | `Vector2` | Optional. Width and height of the element, in units of the renderer's `Space` (default `DIPTopLeft`: 1 unit = 100 DIP), only with `Auto Size` off. |
 | common element pins | | `Transform`, `Anchor`, `Opacity`, `Clip`, `Debug`, `Interaction`, `Effect`, like every element ([element model](design/element-model.md)). |
 | out `Output` | `Element` | The element, connect it to a `Group` or `Renderer`. |
 | out `Properties` | `Dictionary<string, object>` | Last value of each root property that QML changed. |
 | out `Signals` | `Spread<QmlSignal>` | Signals of the root emitted since the last frame, in order. `QmlSignal` has `Name` and `Arguments` (`Spread<object>`). |
 | out `Measured Size`, `Scene Bounds` | | Optional, like on the other elements. |
 
-Property values are passed on unchanged in QML units (device-independent pixels), only `Size` is in units of the renderer's space.
+Property values are passed on unchanged in DIP (what QML calls units), only `Size` is in units of the renderer's `Space`.
 
 ## Value types
 
@@ -91,7 +91,7 @@ A QML **`Timer`** runs on wall time, it does not follow the frame clock. Use ani
 
 ## Nodes from QML files
 
-Instead of `QmlElement` with a `Properties` dictionary, a `.qml` file can become **a node of its own** with named pins, like the shader nodes from `qtshaders/`. Put the file in a folder named `qml/` next to the saved patch, or in the `qml/` folder of a package (subfolders count), and the node appears in the node browser, category `Qt.Elements.Qml`. Middle click on the node (or right click > Definition > Open) opens the `.qml` in your default editor. Help patch: `HowTo Create QML Nodes from Files` (example files in `help/Qt/qml/`). Tracked in [#107](https://github.com/sebllll/VL.Qt/issues/107), decisions in [design/user-qml.md](design/user-qml.md).
+Instead of `QmlElement` with a `Properties` dictionary, a `.qml` file can become **a node of its own** with named pins, like the shader nodes from `qtshaders/`. Put the file in a folder named `qml/` next to the saved patch, or in the `qml/` folder of a package (subfolders count), and the node appears in the node browser, category `Qt.Elements.Qml`. Middle click on the node (or right click > Definition > Open) opens the `.qml` in your default editor. Help patch: `HowTo Create QML Nodes from Files` (example files in `help/Qt/qml/`). Decisions in [design/user-qml.md](design/user-qml.md).
 
 Experimental: the generated nodes can change like `QmlElement`, although vvvv shows no experimental mark on them (a node factory cannot set one, see [Limitations](#limitations-of-the-generated-nodes)).
 

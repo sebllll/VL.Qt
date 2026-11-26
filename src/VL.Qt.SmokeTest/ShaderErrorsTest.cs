@@ -9,7 +9,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// Bake errors, the bake cache and the rename warning of shader_resource.cpp (NFX-23), read from the resource events,
+// Bake errors, the bake cache and the rename warning of shader_resource.cpp, read from the resource events,
 // not from pixels: no window, no GPU. A broken GLSL source ends Failed with one error line per glslang error,
 // "fragment code, line <n>: <text>". The same source a second time comes from the cache (errors are cached too): its
 // events are in the first poll after the wait, and no glslang run is needed. A uniform named like a GLSL builtin
@@ -136,7 +136,7 @@ public static class ShaderErrorsTest
         s.Check(statePlain == Protocol.ResourceState.Ready && !Of(plain, Protocol.ResourceEventId.Warning).Any() && !Of(plain, Protocol.ResourceEventId.Error).Any(),
             $"an ordinary uniform name gives no warning and no error ({statePlain})");
 
-        // --- a uniform block that is not at binding 0 is rejected with a clear error (NFX-19) ---
+        // --- a uniform block that is not at binding 0 is rejected with a clear error ---
         var moved = Load(WithLength.Replace("std140, binding = 0", "std140, binding = 3"), out var stateMoved, out _);
         ids.Add(moved);
         var movedText = Of(moved, Protocol.ResourceEventId.Error).LastOrDefault()?.Text ?? "";

@@ -18,11 +18,11 @@ using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 
 /// <summary>
-/// Wave 1, task W1-17: two measurements that decide later work. Both are explicit (a measurement, not a gate)
+/// Two measurements that decide later work. Both are explicit (a measurement, not a gate)
 /// and warn-only: they never fail on a number.
-/// C16 / NODE-02: does <c>Clip</c> ever change a pixel on Rectangle and Circle? Rectangle and Circle with fill, stroke and a
+/// Does <c>Clip</c> ever change a pixel on Rectangle and Circle? Rectangle and Circle with fill, stroke and a
 /// DropShadow, Clip off against Clip on, grabbed and compared pixel by pixel.
-/// E8 / NRES-02: main-thread cost of replacing the pixels of an image resource every frame (what a video source does):
+/// Main-thread cost of replacing the pixels of an image resource every frame (what a video source does):
 /// <c>vlqt_image_set_pixels</c> + pump + resource poll per frame, against the same loop with an unchanged image. The delta is the
 /// cost of the per-frame upload. 1080p and 4K, BGRA (the format of VL.Video), paced at 60 Hz like the vvvv frame clock.
 /// Parameters (run settings or VLQT_SMOKE_&lt;NAME&gt;): <c>VideoUploadRuns</c> (default 5), <c>VideoUploadFrames</c> (default 240).
@@ -31,11 +31,11 @@ using RectangleF = Stride.Core.Mathematics.RectangleF;
 public static class ClipVideoPerfTest
 {
     /// <summary>C16: Clip off against Clip on for Rectangle and Circle, with and without DropShadow.</summary>
-    [Test, Explicit("measurement W1-17"), Category("clip-grab")]
+    [Test, Explicit("measurement"), Category("clip-grab")]
     public static void ClipGrab() => Scenario.Run(RunClip);
 
     /// <summary>E8: main-thread cost of a new frame per image resource (video), 1080p and 4K.</summary>
-    [Test, Explicit("measurement W1-17"), Category("video-upload-perf"), Category("Perf")]
+    [Test, Explicit("measurement"), Category("video-upload-perf"), Category("Perf")]
     public static void VideoUploadPerf() => Scenario.Run(RunVideo);
 
     // ---- C16 ----

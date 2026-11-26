@@ -8,7 +8,7 @@ using VL.Qt.Interop;
 using VL.Qt.Styles;
 
 /// <summary>
-/// Compares grabbed windows with reference images (TEST-03). The compare always runs on WARP (the software D3D11 adapter,
+/// Compares grabbed windows with reference images. The compare always runs on WARP (the software D3D11 adapter,
 /// forced by QSG_RHI_PREFER_SOFTWARE_RENDERER=1 before Qt starts, so the compare scenes run in a helper process of their own:
 /// <see cref="Run"/>), so a local run and the CI see the same pixels. References live in
 /// src/VL.Qt.SmokeTest/references/&lt;name&gt;.png (not in docs/images, README pictures never change through a test run).
@@ -70,7 +70,7 @@ internal static class ImageCompare
     }
 
     /// <summary>
-    /// Writes all references: the scenes of <see cref="Scenes"/> in one helper process, every recorded trace (TEST-04) in a
+    /// Writes all references: the scenes of <see cref="Scenes"/> in one helper process, every recorded trace in a
     /// process of its own, exactly like the compare runs them.
     /// </summary>
     public static void UpdateAll(Scenario s)
