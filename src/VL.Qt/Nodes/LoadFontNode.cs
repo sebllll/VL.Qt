@@ -16,18 +16,23 @@ namespace VL.Qt.Nodes
     {
         private readonly NodeErrors _errors;
         private readonly ResourceNodeReport _report;
-        private readonly QtApp _app;
+        private readonly IFontApi _api;
         private string? _path;
         private ulong _handle;
         private string _family = string.Empty;
         private string _error = string.Empty;
 
         public LoadFontNode(NodeContext nodeContext)
+            : this(new NativeFontApi(), new NodeErrors(nodeContext))
         {
-            _errors = new NodeErrors(nodeContext);
+        }
+
+        /// <summary>A node on the given font API and message store, in place of the lookup through the <see cref="NodeContext"/>.</summary>
+        internal LoadFontNode(IFontApi api, NodeErrors errors)
+        {
+            _api = api;
+            _errors = errors;
             _report = new ResourceNodeReport(_errors, lasting: true);
-            // Creates the QGuiApplication on first use: QFontDatabase needs it, so a LoadFont before any renderer works.
-            _app = QtApp.Get();
         }
 
         /// <summary>Registers the font file when Path changes.</summary>
@@ -53,25 +58,25 @@ namespace VL.Qt.Nodes
             _error = string.Empty;
             if (path.Length > 0)
             {
-                if (!_app.IsQtThread)
+                if (!_api.IsQtThread)
                     _error = "LoadFont must run on the thread of the Qt app (the vvvv main thread).";
                 // Add before releasing the previous handle: the same file stays registered when only the path spelling changed.
-                else if (Native.FontAdd(path, out var handle, out var families) == Native.Result.Ok)
+                else if (_api.Add(path, out var handle, out var families) == Native.Result.Ok)
                 {
                     _handle = handle;
                     var newline = families.IndexOf('\n');
                     _family = newline < 0 ? families : families[..newline];
                 }
                 else
-                    _error = Native.LastError();
+                    _error = _api.LastError();
             }
             Release(previous);
         }
 
         private void Release(ulong handle)
         {
-            if (handle != 0 && Native.vlqt_font_release(handle) != Native.Result.Ok)
-                _errors.LogOnly(Native.LastError());
+            if (handle != 0 && _api.Release(handle) != Native.Result.Ok)
+                _errors.LogOnly(_api.LastError());
         }
 
         public void Dispose()
