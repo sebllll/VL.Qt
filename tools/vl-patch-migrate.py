@@ -35,10 +35,10 @@ from xml.sax.saxutils import escape
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, TOOLS)
-import vl_pin_catalog as pc  # noqa: E402
+import vl_node_api as node_api  # noqa: E402
 
 DEFAULT_MAPPING = os.path.join(TOOLS, 'vl-patch-mapping.txt')
-DEFAULT_API = os.path.join(ROOT, 'src', 'VL.Qt.Tests', 'Api', 'node-api.txt')
+DEFAULT_API = node_api.DEFAULT_API
 DEFAULT_PATCHES = ('help/**/*.vl', '*.vl', 'VL.Qt.Stride/**/*.vl', 'VL.Qt.Audio/**/*.vl', 'src/**/*.vl')
 SKIP_DIRS = {'bin', 'obj'}
 QT_DEPENDENCY = re.compile(r'VL\.Qt(\.|$)')
@@ -51,8 +51,8 @@ class MigrateError(Exception):
 
 
 def pin_name(name):
-    """Pin name of a row: a C# parameter name (fillColor) becomes the vvvv name (Fill Color) by the catalog's rule."""
-    return pc.title_case(name) if name[:1].islower() else name
+    """Pin name of a row: a C# parameter name (fillColor) becomes the vvvv name (Fill Color) by the rule of the snapshot test."""
+    return node_api.title_case(name) if name[:1].islower() else name
 
 
 def esc(value):
