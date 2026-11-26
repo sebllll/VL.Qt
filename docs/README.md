@@ -29,7 +29,7 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 
 | Note | Content |
 |---|---|
-| [design/resources.md](design/resources.md) | The resource manager of QtNative: ids, states, threads, reference counts, replacement, external content and device loss. |
+| [design/resources.md](design/resources.md) | The resource manager of QtNative: ids, states (diagram), threads, content ownership, reference counts, status records, replacement, images (upload paths, texture handles), snapshots, and device loss with what is restored. |
 | [design/effects.md](design/effects.md) | The Effect chain in QtNative: item tree and stages, shader passes, the blur pyramid, the Shader item (uniforms, samplers, threads), alpha rules and the runtime bake of shader code. |
 | [design/render-loop.md](design/render-loop.md) | Which Qt Quick render loop QtNative runs, the rules for item code that follow from it and the places that rely on the basic loop. |
 | [design/render-thread.md](design/render-thread.md) | Lifetime of an offscreen scene, the pool of render threads (pin `Render Threads`), the frame of a batch, back pressure, which thread runs what and the lock on the shared device's context. |
