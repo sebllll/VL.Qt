@@ -358,12 +358,26 @@
             <Pin Id="t21cnoViQWhtkw1S0aGICZ" Name="Output" Kind="OutputPin" />
             <Pin Id="A1LHppxhXiIOX9eHqPxHzZ" Name="Apply" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="fa3MQeCb63FMqc3VXdlN0Y" Comment="Amount" Bounds="1035,420,35,15" ShowValueBox="true" isIOBox="true" Value="0.4">
+          <Pad Id="fa3MQeCb63FMqc3VXdlN0Y" Comment="Amount" Bounds="1035,519,35,15" ShowValueBox="true" isIOBox="true" Value="0.4">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="993,450,45,19" Id="G47KbbSmjcZANW7fwOUuS0">
+          <Node Bounds="993,450,65,19" Id="cLq0tI1jkszp88r7fYkDc9">
+            <p:NodeReference LastCategoryFullName="Qt.Effects" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Effects" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+              <Choice Kind="ProcessAppFlag" Name="Colorize" />
+            </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
+            <Pin Id="6kVncLVPFjTTZ2bdC37H4K" Name="Input" Kind="InputPin" />
+            <Pin Id="VPRIVrEScHcEYpYGky8q06" Name="Color" Kind="InputPin" DefaultValue="1, 0.6, 0.2, 1" />
+            <Pin Id="jrTAGiDO5psXGHgQT4Rrg3" Name="Amount" Kind="InputPin" DefaultValue="0.3" />
+            <Pin Id="iuRfFkKfeb3Q1MSc0sorvC" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="993,549,45,19" Id="G47KbbSmjcZANW7fwOUuS0">
             <p:NodeReference LastCategoryFullName="Qt.Effects" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Effects" NeedsToBeDirectParent="true">
@@ -473,7 +487,7 @@
             <Pin Id="X4t6LqQKQWZWklQGJNV6oM" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="DFPMfiK0uESNabw7f87D9e" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="2dW5lLJAQfb0oBb1CvdsYf" Bounds="1059,235,450,46" ShowValueBox="true" isIOBox="true" Value="3  ColorAdjust -&gt; Blur -&gt; DropShadow: no shader, one layer. The Rectangle takes the Blur output, the Text the DropShadow output.">
+          <Pad Id="2dW5lLJAQfb0oBb1CvdsYf" Bounds="1059,235,450,46" ShowValueBox="true" isIOBox="true" Value="3  ColorAdjust -&gt; Colorize -&gt; Blur -&gt; DropShadow: no shader, one layer. The Rectangle takes the Blur output, the Text the DropShadow output.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -501,7 +515,8 @@
         <Link Id="cUZBrRSTSyjYOa55AcLPXN" Ids="8EDivROLogdObhpDm7cUrc,aboYO8hVMEzjN1PyYAeJp3" />
         <Link Id="DsrWQI1Qrk5fKvqEfoqslF" Ids="lG6SxW00I5XTVli25QhtE6,QX9j9Bx0JKfgXL3KGUVw24" />
         <Link Id="yMyeJjmMBrpGXhCB4qxs8c" Ids="fa3MQeCb63FMqc3VXdlN0Y,uoBC98sz6ZdRCx1DrFSx3h" />
-        <Link Id="hElsNk9mYuG5i1aBen00tq" Ids="t21cnoViQWhtkw1S0aGICZ,OHwnaIfEBi4Cop27eQpQom" />
+        <Link Id="hElsNk9mYuG5i1aBen00tq" Ids="t21cnoViQWhtkw1S0aGICZ,6kVncLVPFjTTZ2bdC37H4K" />
+        <Link Id="NqpafMuhXXF9WXIGEYSslB" Ids="iuRfFkKfeb3Q1MSc0sorvC,OHwnaIfEBi4Cop27eQpQom" />
         <Link Id="3z4X3rt5VoIZhpNhK5Vnek" Ids="O3pi92AKZzHfUQ4m0qH0kq,mun1VelVPNwqu5QrirWxUZ" />
         <Link Id="Fx0Ce5XBZgMhKZJ59Pacij" Ids="O3pi92AKZzHfUQ4m0qH0kq,5hXbsGcHG8w9Wlqrqb3jQa" />
         <Link Id="fwGLgo4cW9XFb4uZ4DIqVO" Ids="1mP22aWpNLRnXRGYLlV5bJ,iy6ea3vADHLYvkJS10NMD7" />
