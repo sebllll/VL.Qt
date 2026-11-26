@@ -2,7 +2,7 @@
 
 A design note explains why something is built as it is: the problem, the rules the code follows, what follows from them and which alternatives were rejected. It describes the present state. Behaviour for users is on the user pages in [docs/](../README.md); a note links to its user page and to the code it is about.
 
-New notes start from [_template.md](_template.md). Notes that still sit in `docs/decisions/` and `docs/topics/` move here and take the template.
+New notes start from [_template.md](_template.md).
 
 ## Rules for every note
 

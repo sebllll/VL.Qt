@@ -51,4 +51,4 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [design/native-boundary.md](design/native-boundary.md) | The C ABI between C# and QtNative: one command buffer per frame, events by polling, return codes and last error, the version rule and logging. |
 | [design/deployment.md](design/deployment.md) | How QtNative is licensed (LGPL), packaged and located at runtime: Qt version, private classes, platforms, the `qt/<rid>/` tree and export. |
 | [research/02_shapes-spike.md](research/02_shapes-spike.md) | Spike for lines and paths (#154): Qt Quick Shapes with a custom path element, `CurveRenderer` quality and benchmark, recommended limits. |
-| [topics/style-nodeset.md](topics/style-nodeset.md) | Design of the nodes that build, merge and read styles for interactive widgets. |
+| [design/styles.md](design/styles.md) | Design of the nodes that build, merge and read styles for interactive widgets. |
