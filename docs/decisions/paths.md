@@ -1,6 +1,6 @@
 # Lines, Paths and Splines (brainstorm)
 
-Status: planned, see [plans/paths/00_overview.md](../plans/paths/00_overview.md). Shapes and paths were out of scope in [element-catalog-v1.md](../design/element-catalog-v1.md).
+Status: planned, see [plans/paths/00_overview.md](../plans/paths/00_overview.md). Shapes and paths were out of scope in [element-model.md](../design/element-model.md).
 
 ## Decided
 - **Both use cases are in scope from the start** (2026-11-18): motion graphics (few paths, animated trim, crisp edges) and data-heavy content (many points that change every frame). Categories and aspects (Advanced, Experimental) are designed together with the node set.
