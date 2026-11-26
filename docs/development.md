@@ -266,6 +266,6 @@ tools/                      # build, test, patch-check, profiling and release sc
 4. Run `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"` to check that header and C# agree: constants and fixed wire sizes of `protocol.h` and the constants of `vlqt_test.h` (`ProtocolDriftTests`, against `Protocol.cs` and `TestProtocol.cs`), struct layouts of `vlqt.h` (`NativeLayoutTests`, numbers also in the `static_assert`s of `app/app.cpp`) and the `VLQT_API` exports of `vlqt.h`, `vlqt_test.h` and `testkit/testkit.h` against the `[DllImport]`s of `Native` and `NativeTest` (`ApiDriftTests`)
 5. Implement both sides (`elements/`, `Elements/`, `Reconciliation/`)
 
-**Add a new element type:** the C# side (element class, node, pins, help patch, tests) is the section [Adding an element node](architecture.md#adding-an-element-node) of the architecture page; the native item and its property table are in `elements/` (`type_*.cpp`, registered in `elements/element_types.cpp`), their IDs in `protocol.h` and `Protocol.cs` as under **Change the protocol**.
+**Add a new element type:** follow the walkthrough [Add an element](contributing/add-an-element.md): protocol entry, element record, diff, node, QtNative item, feedback, tests and help patch. The conventions of the node are in [Adding an element node](architecture.md#adding-an-element-node).
 
 See [Architecture](architecture.md) for how the pieces fit together.

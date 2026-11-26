@@ -19,6 +19,7 @@ User and contributor documentation. For an overview and installation see the [pr
 | [versioning.md](versioning.md) | Version numbers, what counts as the API, obsolete and experimental nodes. |
 | [glossary.md](glossary.md) | The words of VL.Qt and of the Qt behind it (element, scene, renderer, layer, pump, QRhi ...), one sentence each. |
 | [architecture.md](architecture.md) | Element tree, reconciler, QtNative, timing, rendering and events. |
+| [contributing/add-an-element.md](contributing/add-an-element.md) | Walkthrough: one element through protocol, element record, diff, node, QtNative item, feedback, tests and help patch. |
 | [development.md](development.md) | Prerequisites, first build, Visual Studio solution, the three packages (VL.Qt, VL.Qt.Stride, VL.Qt.Audio), scripts, tests, release, project layout, typical workflows, encoding and git hook. |
 | [protocol.md](protocol.md) | The command protocol: what commands, events and values mean (geometry, handlers, effect chain, shaders, resources, audio tap). The wire format is in `protocol.h`. |
 

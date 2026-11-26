@@ -10,7 +10,7 @@ VL.Qt brings Qt 6 (Qt Quick) to vvvv gamma as a library, focused on 2D graphics 
 - `src/VL.Qt.Native/` – **QtNative**, the C++ layer that owns Qt and the render thread (`vlqt.dll`, `libvlqt.so`).
 - `help/Qt/` – help patches (`HowTo …`), the test base for nodes and the user-facing examples.
 
-Tests live in `src/VL.Qt.Tests` (unit) and `src/VL.Qt.SmokeTest` (QtNative without vvvv). How the pieces fit: [docs/architecture.md](docs/architecture.md). Index of all docs: [docs/README.md](docs/README.md).
+Tests live in `src/VL.Qt.Tests` (unit) and `src/VL.Qt.SmokeTest` (QtNative without vvvv). How the pieces fit: [docs/architecture.md](docs/architecture.md). Adding an element through all layers: [docs/contributing/add-an-element.md](docs/contributing/add-an-element.md). Index of all docs: [docs/README.md](docs/README.md).
 
 ## Setup and build
 
