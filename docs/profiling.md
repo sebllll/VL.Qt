@@ -49,64 +49,46 @@ To compare with another renderer, build the same scenario as a patch with the ot
 - Do not launch the program through Ultra (`ultra profile -- <exe>`): the window is then never shown, Qt renders nothing, and the profile misses the whole render side.
 - "GUI thread" is vvvv's update, the Qt events, the scene graph sync and the render (VL.Qt uses Qt's `basic` render loop on that thread). Sync and render are split by function name and don't add up to the whole thread.
 
-## Measurement path (#20)
+## SmokeTest measurement scenarios
 
-`Measured Size` and `Scene Bounds` of every bound element come from the poll (`collectMeasurements`, `src/VL.Qt.Native/scene/measure.cpp`). Since #20 it reads the geometry only of elements whose geometry changed since the last poll (x/y, size, implicit size, parent, Matrix4x4, anchor, Group frame) and of everything below them; a static scene reads none. Media, error, clicks and user values are read only for element types that have them.
+The SmokeTest (`src/VL.Qt.SmokeTest`, NUnit) drives QtNative without vvvv and has scenarios that measure. Run one by its category, as a filter of `dotnet test` or with `tools/build.ps1 -Test -Only <scenario>`. Options come from the run settings or from environment variables `VLQT_SMOKE_<NAME>` (`src/VL.Qt.SmokeTest/Framework/SmokeParameters.cs`). Logs and grabs land in `build/smoke/`.
 
-Measured without a profiler by the SmokeTest (`tools/build.ps1 -Test -Only measure`, lines `INFO 20` in `build/smoke/stdout.log`): N bound `Rectangle` in one Group, median of 201 polls, Stopwatch around `vlqt_scene_poll`, items measured per poll counted as EVENT_MEASURED / EVENT_SCENE_BOUNDS records in the poll buffer. win-x64, Release.
-
-| Scene | Before: poll | Before: measured/poll | After: poll | After: measured/poll |
-|---|---|---|---|---|
-| 500 static | 0.044 ms | 500 | 0.004 ms | 0 |
-| 2000 static | 0.183 ms | 2000 | 0.017 ms | 0 |
-| 500, one moving | 0.042 ms | 500 | 0.001 ms | 1 |
-| 2000, one moving | 0.186 ms | 2000 | 0.002 ms | 1 |
-
-What remained in the static rows after #20 was not the measurement: when Qt did not render in a pump (nothing changed), the poll first ran `Scene::polish` over all elements (#215), which is linear in the element count. In the "one moving" rows Qt rendered, so the poll skips it. A change of an ancestor still measures its whole subtree, as it must (all of it moved).
-
-Since #71 `Scene::polish` returns at once when nothing changed since the last poll: no apply, no marked geometry, no window geometry change and no polish request pending in the window (`itemsToPolish`, where Row/Column, Text implicit size and Group frames register until Qt polishes them in a render). Same measurement, static scenes only (the "one moving" rows did not run it before either):
-
-| Scene | Before #71: poll | After #71: poll |
+| Scenario | What it measures | Run |
 |---|---|---|
-| 500 static | 0.0039 ms | 0.0001 ms |
-| 2000 static | 0.0171 ms | 0.0001 ms |
+| `measure` | the cost of the poll that reads `Measured Size` and `Scene Bounds`: a static scene measures nothing and polishes nothing | `tools/build.ps1 -Test -Only measure` |
+| `qttextureperf` | what `QtTexture` scenes cost the vvvv main thread on a render thread and on the main thread (about a minute, own process, explicit) | `tools/build.ps1 -Test -Only qttextureperf`; `VLQT_SMOKE_RENDERTHREADS=0` runs only the main-thread mode |
+| `replay-cli` | replays a command trace (or the built-in `anim` scene) like the vvvv main loop and attributes pump spikes to a phase (explicit) | parameters `ReplayTrace`, `ReplayArgs` |
+| `tearing` | N windows with a fast sweeping bar, to see tearing and present times (explicit) | parameter `TearingArgs` |
 
-The SmokeTest `measure` checks that a poll without a render right after an apply still reports the new layout (Button text in a Row, Column spacing, Text measure) and that the next render agrees with it.
+Timing checks of the SmokeTest tell a busy machine from a regression: a check that reads peaks or long frames prints `SKIP ... host too loaded` instead of failing when the loop of the test itself stalled. Such a SKIP is not a pass: repeat the run on a quieter machine. `tools/perf-baseline.ps1` runs the perf scenarios several times and compares medians with a stored baseline.
 
-## QtTexture on the render thread (#116)
+The numbers of these scenarios, with machine, Qt version and date, are in [research/](research/): [poll measurements](research/poll-measurements.md) (a static scene polls in 0.0001 ms at 2000 elements), [render texture measurements](research/render-texture-measurements.md) (a render thread cuts the main-thread time per `QtTexture` from 0.7 to 2.8 ms to under 0.35 ms; more threads only help several heavy scenes and cost CPU) and [pump spikes](research/pump-spikes.md).
 
-`QtTexture` scenes render on a Qt render thread (switch and background: [Diagnostics](diagnostics.md#qttexture-render-thread)). The SmokeTest scenario `qttextureperf` measures what that costs the vvvv main thread, without vvvv. It is not part of `--all` (about a minute) and runs alone, because the thread count is fixed at the first scene:
+### Tearing test pattern
+
+A manual scenario, not part of the normal run: N windows, each with a vertical bar sweeping fast across the whole width, so tearing shows as a broken bar. It pumps like the vvvv main loop and prints numbers once per second into the test output.
 
 ```powershell
-tools/build.ps1 -Test -Only qttextureperf                                      # fresh build, then the scenario
-dotnet run --project src/VL.Qt.SmokeTest -c Release -- --only qttextureperf    # scenario only
+$env:VLQT_SMOKE_TEARINGARGS = '--windows 2 --interval 0 --seconds 20'
+dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=tearing --logger "console;verbosity=detailed"
 ```
 
-The process measures the render thread (the SmokeTest parameter `RenderThreads`, default 1 thread) and then starts itself with `VLQT_SMOKE_RENDERTHREADS=0` for the main thread numbers; set `VLQT_SMOKE_RENDERTHREADS=0` yourself to run only the latter. Scenes are 1280×720: heavy = 2000 rounded rectangles + 80 texts, light = 100 + 4; 1, 4 and 8 heavy and 8 light scenes. Each frame imitates vvvv + Stride: apply (50 colours, 10 texts and a frame marker change per scene), `render_batch`, 6 ms Stride CPU work, a GPU read of scene 0 (stands in for Stride's draw), then a read of every scene's marker. The log (`INFO qttextureperf …` in `build/smoke/stdout.log`) has per configuration: render_batch per QtTexture, apply, Stride read wait, frame time and the perf sample of scene 0.
+| Argument | Default | Meaning |
+| --- | --- | --- |
+| `--windows N` | 1 | Number of windows (1 to 8), side by side. |
+| `--interval 0\|1` | 1 | Swap interval: 0 = Present never waits, 1 = VSync. |
+| `--fullscreen` | off | Borderless fullscreen; window i on screen i if there is one (Windows), else all on the primary screen. |
+| `--pump-hz N` | 60 | Pump rate (like the vvvv main loop); 0 = as fast as possible. |
+| `--seconds N` | 20 | Duration; 0 = until a window is closed or Ctrl+C. |
 
-- **Checks:** every texture holds the frame's own marker in every frame (same frame, 100 %); after the measured frames a snapshot of scene 0's marker every 10th frame (snapshots under load) must finish with a marker of a frame since its request while same frame still holds (log: `snapshots under load`, latency in frames, render_batch time meanwhile); and in threaded mode on a hardware adapter the median main-thread time per QtTexture of the heavy scenes stays below 0.5 ms (`PerfLimits` factor applies, 1.5 on arm64). On a software adapter (WARP, CI runners) QtNative waits for the submission on the main thread by design: the scenario runs a shorter matrix, logs the main-thread time and skips that limit; the same-frame check stays.
-- **Main-thread time per QtTexture** is what `render_batch` costs the main thread: polish, the blocking sync (the render thread's `beginFrame` and `sync`, while the items must not change) and the hand-off of the render job. The Qt render itself (about 2.5 ms for a heavy scene here) runs on the render thread, overlapping Stride's frame. The main thread blocks longer only if the render thread is more than one frame behind; the cost then shows as *Stride read wait* (Stride's GPU waits for Qt's write signal), not in the render_batch time. The apply (Update of the scene) stays on the main thread in both modes.
-- **PerfStats of a threaded scene** (`vlqt_scene_get_perf*`, the F5 overlay) come from the render thread's signals and are handed to the pump when a frame has ended: a sample shows the frames finished since the previous pump, usually the previous host frame's. `sync` and `render` there are the segments between Qt's signals (synchronizing, `render()` of the scene graph), not the whole render job, so they are smaller than the main-thread time per QtTexture of the main-thread mode (1.1 ms render against 2.5 ms for one heavy scene).
+Per second and window: `fps` (swaps/s), `present` and `pump` p50/p99 in ms (from `vlqt_perf_sample` of that second's pumps), the refresh rate of the window's screen (`n/a` if unknown), and once per second the `hostpump` p50/p99 (apply, advance and process events of all windows). The first second is warm-up. At the end one line per window over the run without the warm-up:
 
-Medians in ms (Snapdragon X Plus 8 cores, Adreno X1-45, Windows 11 ARM64, Qt 6.12, 2026-11-15; two runs, within ±0.1 ms for the main-thread time, ±10 % for the frame time):
+```
+TEARING SUMMARY win=0 windows=2 interval=1 fullscreen=0 fps=59.9 present_p50=0.36 present_p99=0.73 pump_p50=0.70 pump_p99=1.24 hostpump_p50=0.76 hostpump_p99=1.33 refresh=60.0 display=ok
+```
 
-| Scenes | main time per QtTexture: render thread / main thread | frame: render thread / main thread | Stride read wait: render thread / main thread |
-|---|---|---|---|
-| 1 heavy | 0.30 / 2.6 | 7.7 / 9.9 | 1.0 / 1.0 |
-| 4 heavy | 0.19 / 2.8 | 12.1 / 19.1 | 4.7 / 1.0 |
-| 8 heavy | 0.17 / 2.8 | 23.9 / 30.6 | 15.2 / 1.0 |
-| 8 light | 0.09 / 0.75 | 8.3 / 13.8 | 0.9 / 1.0 |
-
-With one render thread, 4 and 8 heavy scenes render one after the other (about 2.5 ms each), so the frame is bound by that sum: the main thread is free, but Stride's GPU waits for the last scene (read wait). A pool of 2 threads shortens that for several heavy scenes at the cost of CPU ([Diagnostics](diagnostics.md#qttexture-render-thread)).
+`pump` is the whole `vlqt_app_process_events_for`, so it is the same for every window of one run. On Windows the display is kept awake during the run (`SetThreadExecutionState`) and a locked session is detected (`display=ok|locked|unknown`). `TEARING WARNING` lines say when the numbers cannot be trusted: fps about 0, refresh `n/a`, or a locked session. A bad argument fails the test.
 
 ## Thread names
 
-QtNative names its threads, so they are easy to find in a profile, a thread dump or the debugger (Windows: thread description, Linux: thread name; the same names, at most 15 characters):
-
-| Name | Thread |
-|---|---|
-| `vlqt-gui` | The Qt GUI thread: the thread that creates the `QGuiApplication` (`vlqt_app_init`), i.e. the thread of the host (the vvvv main thread, the main thread of the SmokeTest). It is named only while it has no name yet, a name the host gave it stays. |
-| `vlqt-res-0` … `vlqt-res-3` | The decode workers of the resource manager (images, shaders; their number is `VLQT_RES_WORKERS`, at most 16). |
-| `vlqt-render-0` … | The Qt render threads of `QtTexture` scenes (#116): scene graph, sync and render of the offscreen scenes; their number is the pin `Render Threads` (default 1, at most 16, none with 0). |
-
-Qt's own threads keep their names (`QQmlThread`, `QFFmpeg::StreamDecoder0` …). Tools that read thread descriptions (WinDbg and cdb, Visual Studio, ETW-based profilers) show the names instead of "Thread (id)"; on Linux they are the `comm` of the thread (`ps -L`, `top -H`, gdb `info threads`).
+QtNative names its threads (`vlqt-gui`, `vlqt-res-0` …, `vlqt-render-0` …), so they are easy to find in a profile, a thread dump or the debugger. The names and what each thread runs are in the Threads section of [Architecture](architecture.md#threads). Windows shows them as the thread description (WinDbg and cdb, Visual Studio, ETW-based profilers), Linux as the `comm` of the thread (`ps -L`, `top -H`, gdb `info threads`). Qt's own threads keep their names (`QQmlThread`, `QFFmpeg::StreamDecoder0` …).

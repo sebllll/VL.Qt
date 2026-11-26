@@ -102,4 +102,4 @@ All of these are tracked in [#155](https://github.com/sebllll/VL.Qt/issues/155):
 
 ## Evidence
 
-[../research/02_shapes-spike.md](../research/02_shapes-spike.md): the benchmark behind the per-point costs, measured with Qt 6.12.0 on Windows arm64 with Direct3D 11; x64 not measured. Its scenario (`shapes-bench`) ran on a spike branch and is not in the repository; to repeat the measurement, write a SmokeTest that changes the points of a `SHAPE` every frame (the `shapes` scenario in `src/VL.Qt.SmokeTest/ShapeTest.cs` is the starting point).
+[../research/shapes-benchmark.md](../research/shapes-benchmark.md): the benchmark behind the per-point costs, measured with Qt 6.12.0 on Windows arm64 with Direct3D 11; x64 not measured. Its scenario (`shapes-bench`) ran on a spike branch and is not in the repository; to repeat the measurement, write a SmokeTest that changes the points of a `SHAPE` every frame (the `shapes` scenario in `src/VL.Qt.SmokeTest/ShapeTest.cs` is the starting point).

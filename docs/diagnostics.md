@@ -45,17 +45,7 @@ The overlays are cheap: with a typical scene the native pump takes a few hundred
 
 When the Qt work of a pump takes more than half the frame budget, the warning in the vvvv log reports it (the largest `work` of the windows' last pumps) with the host pump, and ends with the Qt phases of each window's last pump (`vlqt_scene_get_perf_sample`: vsync wait, sync, render, present, gpu, events, swaps). Use them to find out which phase a spike is in.
 
-The replay attributes spikes the same way: `dotnet run --project src/VL.Qt.SmokeTest -c Release -- --replay anim[:frames[:rects]] [outDir] --paced [--loop N] [--load N]` plays a built-in animated scene (moving semi-transparent rectangles plus texts that change every frame) at 60 fps. Every spike above 8 ms goes to its largest phase (apply, advance, events, sync, render, present), and the run ends with a `REPLAY spike attribution` line and the number of pumps whose present took longer than 4 ms. `--load N` keeps N threads busy on the CPU meanwhile.
-
-Result (win-x64, D3D11, flip model, swap interval 0 (`VSync` off, so that present does not wait for the refresh), maximum frame latency 2; 3600 frames per run):
-
-| Run | Pump median | Spikes > 8 ms (steady) | Dominant phase | Present > 4 ms |
-|---|---|---|---|---|
-| 300 rectangles | 0.75 ms | 1 | present (once after the window was shown) | 1 of 3591 pumps |
-| 4000 rectangles (GPU-heavy) | 4.9 ms | 1 | present (once after the window was shown) | 1 of 3591 pumps |
-| 300 rectangles, every core busy | 0.69 ms | 13 | apply 8, events 4, present 1 (once after show) | 1 of 3591 pumps |
-
-With `VSync` off, present does **not** block in steady operation (with VSync on, the frame waits for the refresh by design, in the vsync wait segment). Outside start-up it stays at 0.1 ms or less, also with a GPU-heavy scene or a fully loaded CPU. The only slow present comes once per window, 10 to 25 frames after it is shown: it takes 10 to 32 ms, and the frame interval of that pump is about 40 ms. The window is then going through its first frames with the compositor (5 replays in a row: once in every round). The spikes under CPU load are in the C# apply and in the Qt event phase (`events`: posted events, polish, animation ticks): the thread was preempted, nothing is waiting on the GPU or the compositor. So a frame latency waitable object, a tearing present or a present outside the pump would not remove them. Look for CPU contention (other processes, too many busy threads) or work in the events phase instead.
+The replay of the SmokeTest attributes spikes the same way, to the phase that took longest (apply, advance, events, sync, render, present). With `VSync` off, present does not block in steady operation; the only slow present comes once per window, shortly after it is shown. Spikes under CPU load are in the apply and in the Qt events phase: the thread was preempted, nothing waits on the GPU or the compositor. Look for CPU contention (other processes, too many busy threads) or work in the events phase. Numbers, machine and the scenario to rerun: [pump spikes](research/pump-spikes.md).
 
 ## Debug overlay
 

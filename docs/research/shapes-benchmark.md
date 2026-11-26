@@ -1,16 +1,14 @@
-# Qt Quick Shapes spike (research, 2026-11-18)
+# Qt Quick Shapes benchmark (research, 2026-11-18)
 
-Spike for the shape elements (design in [design/paths.md](../design/paths.md)). Question: does the planned native route (`QQuickShape` with the `CurveRenderer`, one `QQuickShapePath`, our path element, today `ShapePathElement`) work, and where does it reach its limits?
+Spike and benchmark for the shape elements (design in [design/paths.md](../design/paths.md)). Question: does the planned native route (`QQuickShape` with the `CurveRenderer`, one `QQuickShapePath`, our path element, today `ShapePathElement`) work, and where does it reach its limits?
 
 ## Sources
 
-- Spike branch: https://github.com/sebllll/VL.Qt/tree/spike/154-shapes (commits `78ee4db`, `7a2ffef`; not merged; the code went into the shape elements).
-- Prototype files on that branch:
-  - [`src/VL.Qt.Native/pathelement.h`](https://github.com/sebllll/VL.Qt/blob/spike/154-shapes/src/VL.Qt.Native/pathelement.h) and [`pathelement.cpp`](https://github.com/sebllll/VL.Qt/blob/spike/154-shapes/src/VL.Qt.Native/pathelement.cpp): `VlPathElement`, a subclass of the private `QQuickCurve`.
-  - [`src/VL.Qt.Native/test_shapes.cpp`](https://github.com/sebllll/VL.Qt/blob/spike/154-shapes/src/VL.Qt.Native/test_shapes.cpp): `vlqt_test_shape_*` entry points (create shape, set points or path, stroke, trim, renderer).
-  - [`src/VL.Qt.SmokeTest/ShapesSpikeTest.cs`](https://github.com/sebllll/VL.Qt/blob/spike/154-shapes/src/VL.Qt.SmokeTest/ShapesSpikeTest.cs): scenarios `shapes-spike` (Q2–Q6, PNGs) and `shapes-bench` (Q7).
-- Run: `dotnet run --project src/VL.Qt.SmokeTest -c Release -- build/smoke --only shapes-bench`; PNGs and the benchmark table land in `build/smoke/` (`shapes_q*.png`, `shapes_bench.md`).
-- Qt 6.12.0 on Windows arm64, Direct3D 11. x64 numbers are not measured (no x64 machine in the spike).
+- Machine and versions: Windows 11 arm64, 8 logical CPUs, Qt 6.12.0, Direct3D 11, Release builds, 2026-11-18. **x64 not measured.**
+- Prototype: a spike branch with `VlPathElement` (a subclass of the private `QQuickCurve`, today `src/VL.Qt.Native/elements/shape_path_element.cpp`), `vlqt_test_shape_*` test exports and two SmokeTest scenarios, `shapes-spike` (Q2–Q6, PNGs) and `shapes-bench` (Q7). The branch was not merged; its code went into the shape elements.
+- Scenario to rerun: none in the repository. To repeat the measurement, write a SmokeTest scenario with the conditions of Q7 (`dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=<scenario>`).
+- Pictures: the three PNGs below are in `docs/images/`; the others were not kept.
+
 
 ## Findings
 
@@ -18,7 +16,7 @@ Spike for the shape elements (design in [design/paths.md](../design/paths.md)). 
 
 `tools/build-native.ps1` builds with `Qt6::QuickShapes` and `Qt6::QuickShapesPrivate` linked into `vlqt`; `runtimes/win-arm64/native/` then contains `Qt6QuickShapes.dll` and `qml/QtQuick/Shapes/` (`import QtQuick.Shapes` in `qml/deploy.qml` makes `windeployqt` take them).
 
-Consequence: the shape elements take the CMake lines and the import from the spike branch.
+Consequence: the shape elements link `Qt6::QuickShapes` and `Qt6::QuickShapesPrivate` and import `QtQuick.Shapes` like the spike.
 
 ### Q2 Custom element: yes, curves are exact
 
@@ -26,7 +24,7 @@ Consequence: the shape elements take the CMake lines and the import from the spi
 
 ![Cubic path at 8× scale, CurveRenderer left, GeometryRenderer right](../images/shapes-spike-q2-cubic-x8.png)
 
-Re-processing: a new path is only drawn after `QQuickPathElement::changed()` (`QQuickPath::processPath` runs `addToPath` again, then `QQuickShapePath` emits `shapePathChanged`). Without the signal the old line stays on screen (`shapes_q2_signal_1_nonotify.png` vs. `shapes_q2_signal_2_notify.png` on the branch).
+Re-processing: a new path is only drawn after `QQuickPathElement::changed()` (`QQuickPath::processPath` runs `addToPath` again, then `QQuickShapePath` emits `shapePathChanged`). Without the signal the old line stays on screen.
 
 Consequence: every data change in QtNative ends with `emit changed()` (`VlPathElement::notifyChanged`), once per frame and element after all properties are set. The route in [design/paths.md](../design/paths.md) holds.
 
@@ -52,28 +50,28 @@ Consequence: `Trim Start`/`End`/`Offset` map directly to `ShapePath.trim`. Anima
 
 ### Q5 Dash: confirmed
 
-`dashPattern` and `dashOffset` are in units of the stroke width. With the `CurveRenderer` dashes also work on curves: width 10 and pattern `[2, 1]` give dashes 20 long with 10 gaps (`shapes_q5_dash.png` on the branch).
+`dashPattern` and `dashOffset` are in units of the stroke width. With the `CurveRenderer` dashes also work on curves: width 10 and pattern `[2, 1]` give dashes 20 long with 10 gaps.
 
 Consequence: the plan holds: the reconciler divides the Skia-like absolute dash lengths by the stroke width. Stroke width 0 turns the stroke off, so no division by 0 arises.
 
 ### Q6 Size, negative coordinates, MSAA
 
 - A `Shape` with width and height 0 draws.
-- Negative coordinates draw outside the item bounds (no clipping to the item) (`shapes_q6_size0_negative.png`).
-- The `CurveRenderer` smooths edges without MSAA. MSAA 4 adds GPU time: from about 0.15 ms to 0.5–3 ms, fluctuating (`shapes_q6_msaa1.png`, `shapes_q6_msaa4.png`).
+- Negative coordinates draw outside the item bounds (no clipping to the item).
+- The `CurveRenderer` smooths edges without MSAA. MSAA 4 adds GPU time: from about 0.15 ms to 0.5–3 ms, fluctuating.
 - `QQuickShapePath::miterLimit` is an `int`: the default 4 is fine, fractional values are not representable.
 
-Consequence: the plan's "element size = extent of the geometry, no `Size` pin" works; no minimum size and no offset trick needed. Recommend MSAA off for shape-only scenes (the renderer pin of #118 stays the user's choice). The miter limit is rounded in QtNative, see [design/paths.md](../design/paths.md).
+Consequence: the plan's "element size = extent of the geometry, no `Size` pin" works; no minimum size and no offset trick needed. Recommend MSAA off for shape-only scenes (the renderer pin stays the user's choice). The miter limit is rounded in QtNative, see [design/paths.md](../design/paths.md).
 
 ### Q7 Benchmark
 
-Conditions (details in `shapes_bench.md` on the branch):
+Conditions:
 
-- 2026-11-18, Windows 11 arm64, 8 logical CPUs, Qt 6.12.0, D3D11, Release builds. One window 1280×720 DIP (1920×1080 pixels), VSync off, MSAA 4 (window default); frame budget of a 60 Hz screen 16.7 ms.
+- One window 1280×720 DIP (1920×1080 pixels), VSync off, MSAA 4 (window default); frame budget of a 60 Hz screen 16.7 ms.
 - Per case and point count 60 warm-up frames, then 300 measured frames, 3 runs with new shapes (5 when the runs spread by more than 1.5×). Values: median over the runs of the per-run mean and p95.
 - Stroke width 2, no fill, `CurveRenderer` unless the row says otherwise. Geometry: sine wave across the window (8 periods). Cubic path: Move + (n − 1)/3 cubics, so 8190 points are 2729 segments. "100 elements": 10×10 grid of 100-point polylines, each rotated every frame.
-- **GUI and render thread are the same thread** in VL.Qt (Qt's basic render loop), so the times are wall-clock ms on the main thread, split by phase. **GUI** = setting the data (P/Invoke, `changed()`, `processPath`) plus polish (`QQuickShape` hands the path to its renderer). **Render** = sync (`updatePaintNode`) plus recording the commands. Present, vsync and GPU time are in the details of `shapes_bench.md`.
-- Creative Cloud keeps about 55 % of the CPU busy on this machine: read the numbers as upper bounds.
+- **GUI and render thread are the same thread** in VL.Qt (Qt's basic render loop), so the times are wall-clock ms on the main thread, split by phase. **GUI** = setting the data (P/Invoke, `changed()`, `processPath`) plus polish (`QQuickShape` hands the path to its renderer). **Render** = sync (`updatePaintNode`) plus recording the commands. Present, vsync and GPU time were measured too and are not reported here.
+- The machine was loaded by other programs: read the numbers as upper bounds.
 
 Result, ms per frame, mean / p95:
 
@@ -129,4 +127,4 @@ For the follow-ups (the public issue is linked in [design/paths.md](../design/pa
 ## Open points
 
 - x64 numbers: repeat `shapes-bench` on an x64 machine before the 1.0 release and correct the limits if they differ.
-- The numbers were taken with Creative Cloud load; a quiet machine may be faster. The recommended limits are on the safe side.
+- The numbers were taken on a loaded machine; a quiet machine may be faster. The recommended limits are on the safe side.
