@@ -40,6 +40,8 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [design/offscreen-input.md](design/offscreen-input.md) | Input and keyboard focus of offscreen scenes: the pin `Input Notifications`, `ToTexturePixels`, translation, native injection and focus. |
 | [design/clear-and-msaa.md](design/clear-and-msaa.md) | `Clear` off through the `PreviousFrameLayer`, and MSAA: the window swap, the clamp and the offscreen resolve. |
 | [research/render-texture-measurements.md](research/render-texture-measurements.md) | Measurements of the render threads, the MSAA counts and the cost of `Clear` off (one arm64 notebook, x64 not measured). |
+| [research/poll-measurements.md](research/poll-measurements.md) | Cost of the scene poll for static scenes before and after the change-based measuring and the polish skip (win-x64). |
+| [research/pump-spikes.md](research/pump-spikes.md) | Which phase of a pump the rare long frames come from, by replaying an animated scene (win-x64). |
 | [design/element-model.md](design/element-model.md) | What an element is: immutable descriptions and their exceptions, the pins every element node shares, geometry and the coordinate space. |
 | [design/events-and-interaction.md](design/events-and-interaction.md) | How input and values that only Qt knows come back to the patch: feedback, the Interaction nodes and their channels, latency and threads. |
 | [design/input.md](design/input.md) | The input handlers of QtNative: events per handler and when they are sent, grabs and occlusion, drag offset, Touch Points and Pinch, what a change of the feedback does, and the Qt behaviour behind the rules. |
@@ -50,5 +52,5 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [design/qt-bridge.md](design/qt-bridge.md) | Why VL.Qt does not use Qt Bridge for C#: the comparison, the redundancy check and the sources. |
 | [design/native-boundary.md](design/native-boundary.md) | The C ABI between C# and QtNative: one command buffer per frame, events by polling, return codes and last error, the version rule and logging. |
 | [design/deployment.md](design/deployment.md) | How QtNative is licensed (LGPL), packaged and located at runtime: Qt version, private classes, platforms, the `qt/<rid>/` tree and export. |
-| [research/02_shapes-spike.md](research/02_shapes-spike.md) | Spike for lines and paths (#154): Qt Quick Shapes with a custom path element, `CurveRenderer` quality and benchmark, recommended limits. |
+| [research/shapes-benchmark.md](research/shapes-benchmark.md) | Spike and benchmark for lines and paths: Qt Quick Shapes with a custom path element, `CurveRenderer` quality, costs, recommended limits (arm64 notebook, x64 not measured). |
 | [design/styles.md](design/styles.md) | Design of the nodes that build, merge and read styles for interactive widgets. |

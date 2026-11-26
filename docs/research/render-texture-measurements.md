@@ -24,6 +24,22 @@ Scene: 1280×720, 2000 rounded rectangles + 80 texts ("heavy") or 100 + 4 ("ligh
 - WARP (software device): the foreign context waiting for a value the render thread signals later deadlocked in 9 of 10 runs (hardware: never). The fallback in [render-thread.md](../design/render-thread.md) (wait for the submission on the main thread) ran 2 of 2.
 - The `qttexture` suite passed with one render thread: 208 PASS, 0 FAIL at the time.
 
+### Run of the final scenario
+
+Same scenario and machine as above (Snapdragon X Plus, Qt 6.12, 2026-11-15), after the per-scene thread variant was dropped: the SmokeTest measures the render thread (`RenderThreads`, default 1) and then starts itself with `VLQT_SMOKE_RENDERTHREADS=0` for the main-thread numbers; set that variable yourself to run only the latter. Scenes are 1280×720: heavy = 2000 rounded rectangles + 80 texts, light = 100 + 4; 1, 4 and 8 heavy and 8 light scenes. The log lines (`INFO qttextureperf ...` in the test output) have per configuration: render_batch per QtTexture, apply, Stride read wait, frame time and the perf sample of scene 0. Medians in ms, two runs, within ±0.1 ms for the main-thread time and ±10 % for the frame time:
+
+| Scenes | main time per QtTexture: render thread / main thread | frame: render thread / main thread | Stride read wait: render thread / main thread |
+|---|---|---|---|
+| 1 heavy | 0.30 / 2.6 | 7.7 / 9.9 | 1.0 / 1.0 |
+| 4 heavy | 0.19 / 2.8 | 12.1 / 19.1 | 4.7 / 1.0 |
+| 8 heavy | 0.17 / 2.8 | 23.9 / 30.6 | 15.2 / 1.0 |
+| 8 light | 0.09 / 0.75 | 8.3 / 13.8 | 0.9 / 1.0 |
+
+- **What the scenario checks:** every texture holds the frame's own marker in every frame (same frame, 100 %); after the measured frames a snapshot of scene 0's marker every 10th frame (snapshots under load) must finish with a marker of a frame since its request while same frame still holds (log: `snapshots under load`, latency in frames, render_batch time meanwhile); and in threaded mode on a hardware adapter the median main-thread time per QtTexture of the heavy scenes stays below 0.5 ms (`PerfLimits` factor applies, 1.5 on arm64). On a software adapter (WARP, CI runners) QtNative waits for the submission on the main thread by design: the scenario runs a shorter matrix, logs the main-thread time and skips that limit; the same-frame check stays.
+- **Main-thread time per QtTexture** is what `render_batch` costs the main thread: polish, the blocking sync (the render thread's `beginFrame` and `sync`, while the items must not change) and the hand-off of the render job. The Qt render itself (about 2.5 ms for a heavy scene here) runs on the render thread, overlapping Stride's frame. The main thread blocks longer only if the render thread is more than one frame behind; the cost then shows as *Stride read wait* (Stride's GPU waits for Qt's write signal), not in the render_batch time.
+- **One render thread renders the scenes one after the other** (about 2.5 ms each), so the frame of 4 and 8 heavy scenes is bound by that sum: the main thread is free, but Stride's GPU waits for the last scene (read wait). A pool of 2 shortens that at the cost of CPU.
+- **PerfStats of a threaded scene** (`vlqt_scene_get_perf*`, the F5 overlay) come from the render thread's signals and are handed to the pump when a frame has ended: a sample shows the frames finished since the previous pump, usually the previous host frame's. `sync` and `render` there are the segments between Qt's signals (synchronizing, `render()` of the scene graph), not the whole render job, so they are smaller than the main-thread time per QtTexture of the main-thread mode (1.1 ms render against 2.5 ms for one heavy scene).
+
 ## MSAA cost
 
 Scenario to rerun: none for the cost. The measurement came from a spike scenario that was replaced by `Msaa` (`src/VL.Qt.SmokeTest/MsaaTest.cs`), which checks edges, counts and the window swap but does not time them. Reproduce by timing a window and a `QtTexture` with the scene below at each `Multisample Count`, with VSync off, reading `PerfStats` (GPU ms) for the window and `render_batch` + readback for the texture.
