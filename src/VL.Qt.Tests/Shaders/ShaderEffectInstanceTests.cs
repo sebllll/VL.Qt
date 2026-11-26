@@ -419,7 +419,7 @@ void main() { fragColor = vec4(phase); }
         [TestCase(Space.PixelTopLeft)]
         public void Link_PaddingOfBothFormsGoesOutInDip_InEverySpace(Space space)
         {
-            using var fixedForm = new ShaderEffectInstance(_client, Load(filterSource, filterReflection).ForChain(NullLogger.Instance, "Test.frag"));
+            using var fixedForm = new ShaderEffectInstance(_client, LoadChain(filterSource, filterReflection));
             fixedForm.Update();
             using var uniformForm = new ShaderEffectInstance(_client, LoadBlur(blurHead));
             ((IVLPin<float>)uniformForm.Uniforms.Pins[0]).Value = 40f;
@@ -428,7 +428,7 @@ void main() { fragColor = vec4(phase); }
             {
                 var sink = new RecordingSink();
                 var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-                rec.Update(new Rectangle { Effect = Output(instance) }, space);
+                rec.Update(new Rectangle { Effect = Output(instance) }, new SpaceMapping(space, new Vector2(800, 600), 1f));
                 var link = sink.OfOp("CHAIN").Single().Split(" | ").Last();
                 Assert.That(link, Does.Contain(pad).And.Contain(uniform), $"{space}: {link}");
             }
