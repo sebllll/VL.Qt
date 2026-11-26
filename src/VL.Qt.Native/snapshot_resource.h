@@ -1,19 +1,9 @@
-/* snapshot_resource.h - resource kind VLQT_RESOURCE_KIND_SNAPSHOT (images package 06).
- *
- * vlqt_snapshot_start grabs one element of a window with QQuickItem::grabToImage (never grabWindow): asynchronous, the
- * window renders the item into an offscreen texture in its next render and reads it back; QQuickItemGrabResult::ready
- * arrives on the main thread in that or a later pump. The result is a CPU copy (QImage ARGB32_Premultiplied = BGRA8
- * premultiplied in memory), no texture and no upload budget. vlqt_snapshot_read copies it out.
- *
- * Content comes through the manager's external path (resources.h beginExternal / finishExternal): Pending/Failed ->
- * Decoding (grab in flight) -> Ready | Failed; a grab on a Ready id keeps the old pixels readable until the new ones
- * are there. Only the newest grab of an id counts; older ones in flight are kept alive (Qt still references them)
- * but their result is ignored.
- *
- * A grab never stays in Decoding: endFrame (every pump) fails it when the element or the window was destroyed, the
- * window is no longer exposed (an offscreen scene, never exposed: no longer bound; while bound it is marked dirty so
- * that render_batch renders it) or nothing came for timeoutMs. Released ids drop their result. shutdown drops every grab.
- * Main thread only.
+/* snapshot_resource.h - resource kind VLQT_RESOURCE_KIND_SNAPSHOT: vlqt_snapshot_start grabs one element of a window
+ * with QQuickItem::grabToImage (asynchronous); the result is a CPU copy (QImage ARGB32_Premultiplied), no texture and no
+ * upload budget, which vlqt_snapshot_read copies out. Content comes through the manager's external path (resources.h
+ * beginExternal / finishExternal). A grab never stays in Decoding: endFrame fails it when the element or the window is
+ * gone, the window is not exposed or nothing came for timeoutMs. Main thread only.
+ * Newest-grab rule, timeout and offscreen scenes: docs/design/resources.md, "External content".
  */
 #pragma once
 

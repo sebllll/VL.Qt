@@ -1,25 +1,13 @@
 /* image_texture_cache.h - the texture of an image resource (image_resource.h) in a window, for the Image element
  * (qt_image_item.h) and the image samplers of the Shader item (effects/shader_item.h).
  *
- * One texture per window, QRhi and source, shared by every item of that window. The source is the shared texture
- * (GpuTexture, gpu_texture.h) on the shared device, else the content. The cache holds weak references: an entry lives
- * as long as an item holds it, and the items drop theirs in releaseResources/invalidateSceneGraph, before the window's
- * QRhi goes. The QRhi is part of the key because Qt replaces a window's QRhi after a device loss while the QQuickWindow
- * stays: a texture of another QRhi than window->rhi() is never returned.
- *   - shared device (Windows/D3D11): a QRhiTexture of the window's QRhi created from the resource's native texture
- *     (createFrom, same format and mip flags), no copy. The entry holds the GpuTexture (and with it a reference on the
- *     native texture) for as long as the wrapper lives: a resource freed or replaced meanwhile never leaves a dangling
- *     texture, and the pool fills the texture again only after every window let its wrapper go.
- *   - no shared device (Linux, VLQT_SHARED_DEVICE=0) or no QRhi (software backend): createTextureFromImage of the
- *     resource's CPU copy, once per window; the entry holds the content, whose pixels the texture may still read.
- *
- * Device lost: content of an older device generation (ImageContent::generation) gets no texture until its
- * replacement is Ready; neither does a window on the shared device that still renders with its old QRhi right after
- * device::rebuild. A window that is not on the shared device draws no image resources (warning once per window).
- *
- * Threads: the thread that renders the window, the main thread waiting meanwhile (updatePaintNode, see
- * qt_image_item.h). A texture belongs to the thread that made it; a holder on the main thread lets it go through
- * render_thread::retire.
+ * One texture per window, QRhi and source, shared by every item of that window; the cache holds weak references, the
+ * items drop theirs in releaseResources/invalidateSceneGraph before the window's QRhi goes. A texture of another QRhi
+ * than window->rhi() is never returned. Shared device (Windows/D3D11): a QRhiTexture created from the native texture of
+ * the resource, no copy. Otherwise createTextureFromImage of the CPU copy. Content of an older device generation gets
+ * no texture until its replacement is Ready. Threads: the thread that renders the window (see qt_image_item.h).
+ * Why the QRhi is in the key, who owns the native texture and what happens on a device loss: docs/design/resources.md,
+ * "Images" and "Device loss".
  */
 #pragma once
 

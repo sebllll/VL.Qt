@@ -53,31 +53,11 @@ struct EffectComponents {
     quint64 pyramidDown = 0, pyramidUp = 0; // builtin:pyramid_down / pyramid_up, loaded on first use, shared by all links
 };
 
-/* The Effect chain of one element (protocol.h "Effect chain"), QObject child of the element's item.
- *
- * Item tree: the element's layer creates the root (layer.effect = EffectComponents::root, an EffectChainItem with the
- * element's geometry and transform, source = the layer texture); the root finds this object as a child of the layer's
- * source item and asks it to build one stage per link under the root, in application order. A stage is an Item covering
- * the effect area of its link (root = element coordinates); its fx (MultiEffect, or the pass-through ShaderEffect of a
- * SHADER link) samples the input (the layer texture for the first link, the previous stage otherwise) and sits where the
- * input lies. Intermediate stages are hidden and have a layer (texture provider of the next link: a MultiEffect sets
- * that layer's sourceRect to its padded input rect itself, no extra texture), the last stage draws. The effect area
- * grows from link to link by the link's padding (MultiEffect: itemRect incl. auto padding).
- *
- * SHADER stage (SINGLE, TWO_PASS, PYRAMID): the stage covers its input plus the
- * link's padding; the input's texture covers the same area (the stage sets the sourceRect of the input's layer, or of the
- * element's layer source for the first link, to it), so each pass maps it 1:1 over UV 0..1. SINGLE = fx (ShaderItem,
- * chain pass) samples the input; TWO_PASS = fx (hidden, own layer) with passIndex = 0, fx2 samples fx
- * with passIndex = 1, same table otherwise. PYRAMID (doc 21 "Blur-Pyramide"): fx = composite (draws, source = input,
- * glow/shadow = U1 or D1), the passes D1 (prefilter, source = input) .. Dn (pyramid_down) and U(n-1) .. U1 (pyramid_up,
- * base = Dk) are hidden ShaderItems with a layer under the stage, sized p_k / dpr (p_0 = stage x dpr, p_k =
- * ceil(p_(k-1) / 2), n: steps until the smaller side is under 4 px). The step count follows the stage size and dpr only
- * (layoutPyramid on a size / dpr change; passes beyond n stay in the pool, unsampled, until the stage goes); the radius
- * writes the weights only. Values only on the same structure (kind and template): no new item.
- *
- * The links are the desired state; the stages exist while the root does (a recreated root rebuilds them). The mask fields
- * of a link (MultiPart) are kept by Elements (frame items, protocol.h mask rule); a stage binds its mask frame's
- * layer.sourceRect to the stage's effect area. */
+/* The Effect chain of one element (protocol.h "Effect chain"), QObject child of the element's item. It builds one stage
+ * per link under the root of the layer.effect, in application order, and writes the values of the links to the stages.
+ * The links are the desired state; the stages exist while the root does. GUI thread. Item tree, shader passes, the blur
+ * pyramid and the same-structure rule: docs/design/effects.md, "Item tree of a chain", "Shader link stages" and "Blur
+ * pyramid". The mask fields of a link (MultiPart) are kept by Elements. */
 class EffectChain final : public QObject
 {
     Q_OBJECT

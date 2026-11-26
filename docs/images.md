@@ -22,7 +22,7 @@ Images are GPU resources (`QtImage`), separate from the `Image [Qt]` element tha
 - **Upload** (optional pin of the four upload nodes, hidden by default) chooses how the pixels reach the GPU: `Auto` (files in a worker, pixels on the main thread), `MainThread` (stripes within the frame budget) or `Worker` (texture made in a worker, D3D11). For measurements; `Auto` fits nearly always.
 - **Errors** go to the log. A failed load or upload (`LoadImage`, `LoadImage (Async)`, `ToQtImage`, `VideoSourceToQtImage`) also marks the node until an input changes, and the failed image draws nothing; a failed `Snapshot` or `FileWriter` is only logged (`FileWriter` has `Success` next to `Is Done`).
 - **F5 → Resources** lists all live images with state, size, references and age, failed or stuck ones first, plus upload queue and budget.
-- **Device loss:** after a GPU reset all windows and images are rebuilt; the output comes back by itself (see [GPU device loss](diagnostics.md#gpu-device-loss)).
+- **Device loss:** after a GPU reset all windows and images are rebuilt; the output comes back by itself (see [GPU device loss](diagnostics.md#gpu-device-loss)); images loaded from a file are read again from disk, so a file changed meanwhile shows its new content (a deleted file ends in a failed image).
 
 ## Help patches
 
