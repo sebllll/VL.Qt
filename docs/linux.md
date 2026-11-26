@@ -27,7 +27,7 @@ The export needs these settings; vvvv keeps them in a `.props` file next to the 
 
 **In the editor:** open the application exporter from the quad menu, set the values from the table and export.
 
-**From the command line** (the `.props` next to the patch wins over `--rid`). With the repo sources, the test patch `help/HelloWorldLinux.vl` is exported like this:
+**From the command line** (see [Exporting an app](export.md#from-the-repository)). With the repo sources, the test patch `help/HelloWorldLinux.vl` is exported like this:
 
 ```powershell
 tools/vvvvc.ps1 -File help/HelloWorldLinux.vl -Out build/export-linux
@@ -39,13 +39,13 @@ For a patch without a `.props` (all of `help/Qt/`, also the patches that ship in
 tools/vvvvc.ps1 -File "help/Qt/HowTo Draw a Rectangle.vl" -Out build/export-linux-arm64 --rid linux-arm64 --output-type Exe --asset-behavior RelativeToOutput
 ```
 
-The export contains an executable without file extension (`HelloWorldLinux`), its `.dll` files and the Qt runtime in `runtimes/linux-x64/native/` (only for this RID, about 120 MB on x64). vvvvc exports **self-contained** by default: the .NET runtime is inside the folder (on x64 about 550 MB in total for `HelloWorldLinux`), so the target needs no .NET. With `--self-contained false` the export is framework-dependent (about 130 MB on x64) and needs the .NET 10 runtime on the target.
+The export contains an executable without file extension (`HelloWorldLinux`), its `.dll` files and the Qt runtime in `runtimes/linux-x64/native/` (only for this RID, about 120 MB on x64). The export is self-contained by default (on x64 about 550 MB in total for `HelloWorldLinux`, so the target needs no .NET); with `--self-contained false` it is framework-dependent (about 130 MB on x64) and needs the .NET 10 runtime on the target, see [Exporting an app](export.md).
 
 > [!IMPORTANT]
 > The Qt runtime for Linux has to be inside the VL.Qt package you export with. The release package contains all four RIDs. When you work with VL.Qt from the repo sources, build the Linux runtime first in WSL (see [Building the Linux runtime from source](contributing/linux.md#building-the-linux-runtime-from-source)), otherwise `runtimes/linux-*` is missing from the export. The export still succeeds in that case; the check is a `runtimes/<rid>/native/` folder in the export (about 45 files).
 
 > [!WARNING]
-> The `.props` next to a patch wins over `--rid`. `help/HelloWorldLinux.props` says `linux-x64`: exported on an arm64 machine with only the `linux-arm64` runtime built, it silently gets **no Qt runtime** at all. For arm64 use a patch without a `.props` and the arguments above, or set the runtime identifier to `linux-arm64` in the exporter dialog.
+> A `.props` next to a patch wins over `--rid` ([Exporting an app](export.md#from-the-repository)). `help/HelloWorldLinux.props` says `linux-x64`: exported on an arm64 machine with only the `linux-arm64` runtime built, it silently gets **no Qt runtime** at all. For arm64 use a patch without a `.props` and the arguments above, or set the runtime identifier to `linux-arm64` in the exporter dialog.
 
 ## 3. Set up WSL once
 
