@@ -14,7 +14,7 @@
 # heavy measurements run. Run on a quiet machine, nothing else in parallel, and the same machine for before and after: the CPU load
 # before each run is recorded. Perf scenarios: see $Categories. Which numbers are "apply time" (time to apply one command frame
 # in QtNative): the names containing "apply" (and the 10000-SET/1000-SET apply measurements); writer/reconcile/poll/pump/first-frame
-# numbers are other timings. The table in docs-internal/plans/refactor/perf-baseline.md lists them.
+# numbers are other timings.
 param(
     [ValidateRange(1, 50)] [int]$Runs = 5,
     [ValidateSet('win-arm64', 'win-x64')] [string]$Rid,

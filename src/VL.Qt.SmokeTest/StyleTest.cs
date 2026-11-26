@@ -305,7 +305,7 @@ public static class StyleTest
         s.Pump(1);
     }
 
-    // All controls with the base style in a grid on a dark background; hover on the first button. For Sebastian's visual check.
+    // All controls with the base style in a grid on a dark background; hover on the first button. For a visual check.
     private static void Gallery(Scenario s)
     {
         var w = NativeCalls.CreateWindow(800, 600, "VL.Qt style gallery");

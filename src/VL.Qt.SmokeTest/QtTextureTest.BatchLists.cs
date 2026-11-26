@@ -10,7 +10,7 @@ using VL.Qt;
 /// renders for the first time, right after a batch that posted A's render. Checks: every frame of both scenes shows its
 /// colour (both threads render in every batch, no stale or missing frame after the late first batch of the second
 /// thread). Own process: the batch lists are per process; the pool size comes from vlqt_offscreen_set_render_threads,
-/// as the pin Render Threads sets it. finishPostedRenders (ORCH_182) already drains a posted job before the next batch
+/// as the pin Render Threads sets it. finishPostedRenders already drains a posted job before the next batch
 /// builds its lists, so this run guards the fixed address as an invariant; it does not reproduce the former
 /// use-after-free on its own.
 /// </summary>

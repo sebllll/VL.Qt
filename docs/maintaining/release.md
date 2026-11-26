@@ -28,10 +28,11 @@ One-time setup by a maintainer (repository settings):
 Per release:
 
 - [ ] Everything for the release is merged into `develop`; `tools/build.ps1 -Test` and the CI on `develop` are green.
+- [ ] The release notes are in `docs/releases/<version>.md` (for example `docs/releases/1.0.0.md` for the tag `v1.0.0`): the job `release` uses the file as the body of the GitHub release, and GitHub's generated notes when there is none.
 - [ ] Open the PR `develop` -> `main` and merge it with a merge commit (no squash).
 - [ ] Tag the merge commit on `main`: `git tag v<version>` (for example `v1.0.0`, `v1.1.0-rc.1`) and `git push origin v<version>`. The tag name is the package version.
 - [ ] The tag starts `build.yml` with all four RIDs. Check the job `pack`: the step "Verify package" prints the package size (limit 250 MB), the `qt/<rid>/` layout and the nuspec metadata (id, version, license, repository); the steps "Verify package (VL.Qt.Stride)" and "Verify package (VL.Qt.Audio)" do the same for the companion packages.
-- [ ] The job `release` creates the GitHub release with all `.nupkg` files and pushes them to nuget.org (approve the deployment first if the environment has a required reviewer).
+- [ ] The job `release` creates the GitHub release with all `.nupkg` files and the release notes, and pushes the packages to nuget.org (approve the deployment first if the environment has a required reviewer).
 - [ ] Without `NUGET_USER` (or in a fork) the push is skipped with a notice instead of an error. A failed login means the policy does not match (repository, workflow file, environment) or has expired. Fallback: push by hand with `dotnet nuget push <file> -s https://api.nuget.org/v3/index.json -k <key>` and a short-lived API key.
 - [ ] A tag on a commit that is not on `main` builds and tests but does not release (warning in the job `release-gate`). Delete the tag and tag the right commit.
 - [ ] After publishing: check the package on nuget.org and install it with `tools/start-vvvv-with-nupkg.ps1`.

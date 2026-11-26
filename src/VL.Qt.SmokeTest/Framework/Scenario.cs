@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using NUnit.Framework;
 using VL.Qt;
@@ -282,8 +283,14 @@ internal sealed class Scenario
     {
         foreach (var w in _warnings)
             Assert.Warn(w);
-        if (_failures.Count == 0 && error == null && completed)
+        // Assert.Ignore or Assert.Inconclusive in the body (e.g. a scenario for another platform) is a skip, not a failure.
+        var skipped = error is IgnoreException or InconclusiveException;
+        if (_failures.Count == 0 && (error == null || skipped) && completed)
+        {
+            if (skipped)
+                ExceptionDispatchInfo.Throw(error!);
             return;
+        }
         // The Qt log of this scenario helps with a failure; a passing scenario keeps the output short.
         if (QtHost.LogSince(logStart) is { Length: > 0 } log)
         {
@@ -295,7 +302,7 @@ internal sealed class Scenario
             lock (s_syncRoot)
                 foreach (var f in _failures)
                     Assert.Fail(f);
-            if (error != null)
+            if (error != null && !skipped)
                 Assert.Fail("exception: " + error);
             if (!completed)
                 Assert.Fail($"did not return within {timeout.TotalSeconds:F0} s: the Qt thread is blocked, later scenarios do not run");

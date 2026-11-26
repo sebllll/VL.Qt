@@ -24,6 +24,7 @@ For vvvv users. The user pages carry a contributor note only as a closing "for c
 | [tooltips.md](tooltips.md) | Preview images for `Element` and `QtImage` links in the vvvv editor. |
 | [diagnostics.md](diagnostics.md) | Performance overlays (F2/F5), the `Debug` overlay, logging and errors, GPU device loss. |
 | [versioning.md](versioning.md) | Version numbers, what counts as the API, obsolete and experimental nodes. |
+| [releases/0.10.0.md](releases/0.10.0.md) | Release notes of 0.10.0: what changed and what a patch saved with 0.9.x needs. |
 | [glossary.md](glossary.md) | The words of VL.Qt and of the Qt behind it (element, scene, renderer, layer, pump, QRhi ...), one sentence each. |
 
 ## Contributing
@@ -48,7 +49,6 @@ For the maintainers of the repository.
 | Page | Content |
 |---|---|
 | [maintaining/release.md](maintaining/release.md) | CI, the repository settings for a release, the release steps and the contributors list. |
-| [../docs-internal/README.md](../docs-internal/README.md) | Working plans of the current release; removed after the release. |
 
 ## Design notes
 
