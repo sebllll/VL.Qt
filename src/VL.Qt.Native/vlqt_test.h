@@ -4,8 +4,8 @@
  * ships), but they are not part of the API of vlqt.h. They may change or go in any version; the only promise is the
  * one of VLQT_ABI_VERSION (protocol.h): the number changes whenever a signature, constant or struct here changes.
  * Conventions as in vlqt.h (top comment): C ABI, cdecl, UTF-8 strings, return codes of vlqt_result, vlqt_last_error,
- * buffer exports, threads (main thread, except vlqt_test_perf_eval, vlqt_test_perf_host_eval and vlqt_test_write_image:
- * any thread). Definitions: test/test_*.cpp.
+ * buffer exports, threads (main thread, except vlqt_test_perf_eval and vlqt_test_perf_host_eval: any thread).
+ * Definitions: test/test_*.cpp.
  * The stand-in D3D11 device of the QtTexture tests is a library of its own, not part of QtNative: testkit/testkit.h. */
 #pragma once
 
@@ -103,8 +103,8 @@ VLQT_API int   vlqt_test_handler_count(vlqt_scene* window, unsigned int id);
 /* Sets the perf overlay of the window like the keys do: flags as vlqt_scene_get_overlay returns them (bit0 meter, bit1
  * stats, bit3 freeze with the stats, bits 4..6 = page + 1, 0 = the remembered page). 0, VLQT_ERR_NULL_HANDLE. */
 VLQT_API int   vlqt_test_set_overlay(vlqt_scene* window, int flags);
-/* Busy-waits ms inside one phase of the window's next rendered frame (0 events, 1 sync, 2 render, 3 present, 4 vsync
- * wait) to check that the F5 timeline attributes a spike. 0, VLQT_ERR_NULL_HANDLE. */
+/* Busy-waits ms inside one phase of the window's next rendered frame (0 events, 1 vsync wait, 2 sync, 3 render, 4
+ * present: the frame order) to check that the F5 timeline attributes a spike. 0, VLQT_ERR_NULL_HANDLE. */
 VLQT_API int   vlqt_test_perf_spike(vlqt_scene* window, int phase, float ms);
 /* Plain UTF-8 text of an F5 page (0 Summary, 1 Timeline, 2 Scene, 3 System, 4 Resources; others empty), built on
  * demand, overlay state unchanged: a buffer export (vlqt.h). VLQT_ERR_NULL_HANDLE. */
@@ -125,9 +125,6 @@ VLQT_API int   vlqt_test_device_lost(int mode);
  * failed. */
 VLQT_API int   vlqt_test_res_read_pixels(unsigned long long id, unsigned char* out, int cap, int* width, int* height,
                                          int* written, int* required);
-/* Writes a test image (vertical stripes red, green, blue, white) as PNG/JPG by extension. 0, VLQT_ERR_BAD_ARGUMENT,
- * VLQT_ERR_IO. */
-VLQT_API int   vlqt_test_write_image(const char* utf8Path, int width, int height, int quality);
 /* References of a font handle of vlqt_font_add, 0 = removal pending (end of pump), VLQT_ERR_UNKNOWN_ID = removed or
  * unknown. */
 VLQT_API int   vlqt_test_font_refs(unsigned long long handle);
@@ -143,12 +140,6 @@ VLQT_API int   vlqt_test_offscreen_state(vlqt_scene* scene, unsigned long long* 
  * uploadBytes of budget in stripes. flags bit0 = decode fails, bit1 = upload fails. 0, VLQT_ERR_BAD_ARGUMENT,
  * VLQT_ERR_UNKNOWN_ID. */
 VLQT_API int   vlqt_test_res_start(unsigned long long id, int decodeMs, long long uploadBytes, int flags);
-/* The state machine's transition (VLQT_RESOURCE_STATE_*), 0 = done, VLQT_ERR_BAD_ARGUMENT = rejected (logged),
- * VLQT_ERR_UNKNOWN_ID. */
-VLQT_API int   vlqt_test_res_transition(unsigned long long id, int from, int to);
-/* Element reference +1 (delta 1) or -1 (delta -1), like an element of package 04. 0, VLQT_ERR_BAD_ARGUMENT,
- * VLQT_ERR_UNKNOWN_ID. */
-VLQT_API int   vlqt_test_res_element_ref(unsigned long long id, int delta);
 
 #ifdef __cplusplus
 }

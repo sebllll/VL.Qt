@@ -11,8 +11,7 @@
 //    processEvents; for an offscreen scene it is the scene's render thread (offscreen/offscreen_render.cpp), which also
 //    runs detectRenderer.
 //  - Shared: m_done under m_doneLock (afterFrameEnd adds a finished frame, endPump takes it: the only hand-off of
-//    measurements), m_spikePhase/m_spikeMs (atomics, test hook). The process-wide renderer warning is a
-//    std::atomic<bool> in device/renderer_info.cpp.
+//    measurements). The process-wide renderer warning is a std::atomic<bool> in device/renderer_info.cpp.
 //  - Render thread to GUI thread: detectRenderer reads the renderer on the signal thread, where the QRhi is valid, and
 //    hands the result to publishRenderer on the GUI thread (a queued call when the signal thread is another one). It
 //    never writes a QML property or a member of the GUI side from the signal thread.
@@ -34,7 +33,6 @@
 #include <QtQuick/QQuickItem>
 
 #include <array>
-#include <atomic>
 #include <mutex>
 #include <vector>
 
@@ -60,9 +58,9 @@ public:
     enum Flags { Meter = 1, Stats = 2, Freeze = 8 };
     enum Page { Summary, Timeline, Scene, System, Resources, PageCount };
     static constexpr int kPageShift = 4;
-    // Phases for injectSpike (test): events = outside vsync/sync/render/present but inside the pump. Vsync is last to
-    // keep the numbers of vlqt_test_perf_spike; the frame order (events, vsync, sync, ...) is kPhaseOrder in perf_pages.cpp.
-    enum Phase { PhaseEvents, PhaseSync, PhaseRender, PhasePresent, PhaseVsync, PhaseCount };
+    // The Qt phases of a pump in frame order (timeline bottom -> top, summary rows, injectSpike): events = outside
+    // vsync/sync/render/present but inside the pump.
+    enum QtPhase { PhaseEvents, PhaseVsync, PhaseSync, PhaseRender, PhasePresent, PhaseCount };
 
     PerfMonitor(QQuickWindow* window, QQmlEngine* engine);
     ~PerfMonitor() override;
@@ -88,13 +86,11 @@ public:
     void setKeysEnabled(bool on);
     bool keysEnabled() const { return m_keys; }
 
-    // test hook: busy-waits ms inside the given phase of the next rendered frame (vlqt_test_perf_spike).
+    // test hook: busy-waits ms inside the given QtPhase of the next rendered frame (vlqt_test_perf_spike). A one-shot
+    // connection to a frame signal, so a monitor with nothing injected has no test code in its frame path.
     void injectSpike(int phase, float ms);
     // Element registry for the Scene page; set once after both exist, read only while that page is shown.
     void setScene(const vlqt::Scene* scene) { m_scene = scene; }
-    // test hook (vlqt_test_perf_text): plain text of a page (all five; Summary/Timeline with body/foot), built on demand,
-    // overlay state unchanged. Defined in perf_pages.cpp.
-    QString pageText(int page) const;
 
     int count() const { return m_count; }
     // Oldest to newest; i in [0, count()).
@@ -113,7 +109,6 @@ private:
     void publishRenderer(RendererInfo info);
     void updateOverlay();
     void setFrozen(bool on);
-    void spin(int phase);
     // The text of the pages (perf_pages.cpp).
     QString summaryPage(QString* body) const;
     QString timelinePage(QString* foot) const;
@@ -154,8 +149,9 @@ private:
     bool m_frozen = false;
     std::vector<PerfSample> m_frozenRing; // filled while frozen
     mutable std::vector<vlqt::res::OverviewRow> m_resRows; // Resources page: reused, no allocation once grown
-    std::atomic<int> m_spikePhase{-1}; // set on the main thread, taken in a frame signal (render thread for a scene)
-    std::atomic<float> m_spikeMs{0};
+    QMetaObject::Connection m_spike; // the pending injectSpike, if any
+
+    friend QString perfPageText(const PerfMonitor& monitor, int page); // perf_pages.h
 
 public:
     // host values (apply/reconcile, ops, .NET GC) of the last completed pump. false = no pump yet.

@@ -47,6 +47,24 @@ internal static class NativeCalls
         return Count(rc, written);
     }
 
+    /// <summary>
+    /// Writes a test image of four vertical stripes (red, green, blue, white; opaque) as PNG/JPG by extension through the production
+    /// writer <see cref="Native.ImageWriteFile"/>, for the checks that load a file of a known size and colors.
+    /// </summary>
+    public static Native.Result WriteStripedImage(string path, int width, int height, int quality)
+    {
+        // B8G8R8A8 (VL PixelFormat 9), premultiplied: opaque, so the same bytes as straight.
+        ReadOnlySpan<uint> colors = [0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFFFFFFFF];
+        var row = new uint[width];
+        for (int x = 0; x < width; x++)
+            row[x] = colors[x * 4 / width];
+        var pixels = new byte[width * height * 4];
+        for (int y = 0; y < height; y++)
+            Buffer.BlockCopy(row, 0, pixels, y * width * 4, width * 4);
+        var desc = new Native.vlqt_pixel_desc { width = width, height = height, row_bytes = width * 4, format = 9, premultiplied = 1 };
+        return Native.ImageWriteFile(in desc, pixels, path, quality, out _);
+    }
+
     public static int ReadPixels(ulong id, Span<byte> buffer, out int width, out int height) => ReadPixels(id, buffer, out width, out height, out _);
 
     public static int ReadPixels(ulong id, Span<byte> buffer, out int width, out int height, out int required)

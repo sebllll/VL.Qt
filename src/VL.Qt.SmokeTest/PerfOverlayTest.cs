@@ -33,7 +33,7 @@ public static class PerfOverlayTest
     private const int Stats = 2, Freeze = 8, PageShift = 4;
     internal const int ResourcesPage = 4;
     private const int Summary = 0, Timeline = 1, Scene = 2, SystemPage = 3;
-    private const int PhaseSync = 1, PhaseRender = 2, PhaseVsync = 4;
+    private const int PhaseVsync = 1, PhaseSync = 2, PhaseRender = 3;
 
     private static int Page(SceneHandle w) => ((Native.vlqt_scene_get_overlay(w) >> PageShift) & 7) - 1;
     private static bool Visible(SceneHandle w) => (Native.vlqt_scene_get_overlay(w) & Stats) != 0;

@@ -27,7 +27,7 @@ inline constexpr Rgb kFrameColor{255, 255, 255};
 inline constexpr Rgb kBudgetColor{255, 208, 64};
 
 // Timeline segments, in frame order bottom -> top: the host side of the frame before the Qt pump (vvvv
-// update, .NET GC pause, apply), then the Qt phases (PerfMonitor::Phase in kPhaseOrder). Host values come from
+// update, .NET GC pause, apply), then the Qt phases (PerfMonitor::QtPhase). Host values come from
 // PerfSample.host (0 without a report).
 // GC is carved out of the vvvv segment: the pause is reported per frame without its position, and most collections
 // fall into the vvvv update (allocations of the patch); a pause longer than the vvvv update is shown in full.
@@ -43,5 +43,9 @@ float segMs(const PerfSample& s, int seg);
 int firstSeg();
 // Bar height: the shown segments; = pump without host segments (events = pump - vsync - sync - render - present).
 float stackMs(const PerfSample& s);
+
+// Plain text of an F5 page (PerfMonitor::Page; Summary and Timeline with body/foot), built on demand, overlay state
+// unchanged. The test export vlqt_test_perf_text; also tells the pages from a monitor without an overlay.
+QString perfPageText(const PerfMonitor& monitor, int page);
 
 } // namespace vlqt

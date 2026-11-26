@@ -110,9 +110,6 @@ namespace VL.Qt
         public static extern Native.Result vlqt_test_device_lost(int mode);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern Native.Result vlqt_test_res_read_pixels(ulong id, ref byte @out, int cap, out int width, out int height, out int written, out int required);
-        /// <summary>Writes a stripe test image (red, green, blue, white) as PNG/JPG by extension.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Native.Result vlqt_test_write_image([MarshalAs(UnmanagedType.LPUTF8Str)] string path, int width, int height, int quality);
         /// <summary>References of a font handle, 0 = removal pending, <see cref="Native.Result.UnknownId"/> = removed or unknown.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_font_refs(ulong handle);
@@ -125,12 +122,6 @@ namespace VL.Qt
         /// <summary>Starts a Pending test resource (decode sleeps decodeMs, upload uses uploadBytes; flags 1 = decode fails, 2 = upload fails).</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Native.Result vlqt_test_res_start(ulong id, int decodeMs, long uploadBytes, int flags);
-        /// <summary>State machine transition; <see cref="Native.Result.BadArgument"/> = rejected, <see cref="Native.Result.UnknownId"/> = stale id.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Native.Result vlqt_test_res_transition(ulong id, int from, int to);
-        /// <summary>Element reference +1 / -1.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Native.Result vlqt_test_res_element_ref(ulong id, int delta);
 
         /// <summary>Content of a Ready image as RGBA8 premultiplied, a buffer export (<see cref="Native.Result.NoData"/> = not Ready).</summary>
         public static Native.Result ResReadPixels(ulong id, Span<byte> @out, out int width, out int height, out int written, out int required)

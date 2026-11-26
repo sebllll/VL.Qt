@@ -65,6 +65,4 @@ void endFrame()
     image::endFrame(); // after the frees: textures and buffers of freed images go back to their pools first
 }
 
-int testTransition(uint64_t id, int from, int to) { return manager().testTransition(id, from, to); }
-
 } // namespace vlqt::res
