@@ -114,7 +114,7 @@ public static class ReadmeGalleryTest
             cmd.Clear();
             next = 1;
             order = 0;
-            var w = NativeCalls.CreateWindow((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme gallery");
+            var w = NativeCalls.CreateCompareWindow((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme gallery");
             s.Check(w != SceneHandle.Null, $"readme-gallery {name}: window_create");
             Native.vlqt_window_show(w);
             s.Pump(4);

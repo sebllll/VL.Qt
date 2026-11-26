@@ -146,7 +146,7 @@ internal static class ImageCompare
         }
         refDir = Path.Combine(refDir, "references");
         var refPath = Path.Combine(refDir, name + ".png");
-        using var actual = Scale(grabPath, width);
+        using var actual = Scale(grabPath, width, out var grabSize);
         if (SmokeParameters.UpdateRefs)
         {
             Directory.CreateDirectory(refDir);
@@ -162,6 +162,9 @@ internal static class ImageCompare
         using var reference = new Bitmap(refPath);
         var diffPath = Path.Combine(Path.GetDirectoryName(grabPath)!, name + "_diff.png");
         var (ok, text) = Compare(actual, reference, diffPath);
+        // A grab of another aspect ratio than the scene's window (a window clamped by the screen) shows in the grab size.
+        if (actual.Size != reference.Size)
+            text += $", grab {grabSize.Width}x{grabSize.Height}";
         s.Info($"{name}: {text}");
         s.Check(ok, $"{name}: matches reference ({text}); grab {grabPath}" + (ok ? "" : $", diff image {diffPath}"));
     }
@@ -174,17 +177,18 @@ internal static class ImageCompare
         if (imagesDir == null)
             return;
         var target = Path.Combine(imagesDir, DocsName(name) + ".png");
-        using (var scaled = Scale(grabPath, width))
+        using (var scaled = Scale(grabPath, width, out _))
             scaled.Save(target, System.Drawing.Imaging.ImageFormat.Png);
         s.Info($"{name}: {target} ({new FileInfo(target).Length / 1024} KB)");
     }
 
     private static string DocsName(string name) => name.StartsWith("readme-images_") ? name["readme-images_".Length..] : name.StartsWith("readme-gallery_") ? name["readme-gallery_".Length..] : name;
 
-    /// <summary>The picture scaled to the target width (bicubic, deterministic); the caller disposes it.</summary>
-    private static Bitmap Scale(string path, int width)
+    /// <summary>The picture scaled to the target width (bicubic, deterministic) and its size before; the caller disposes it.</summary>
+    private static Bitmap Scale(string path, int width, out Size size)
     {
         using var a = new Bitmap(path);
+        size = a.Size;
         var height = (int)MathF.Round(a.Height * width / (float)a.Width);
         var scaled = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
         using var g = Graphics.FromImage(scaled);
