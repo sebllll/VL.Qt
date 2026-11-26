@@ -150,7 +150,7 @@ See [Diagnostics](diagnostics.md).
 
 ## Stride
 
-In `VL.Qt.Stride/help/` (package `VL.Qt.Stride`, Windows only), see [Stride texture](../README.md#stride-texture):
+In `VL.Qt.Stride/help/` (package `VL.Qt.Stride`, Windows only), see [Qt in Stride](stride.md):
 
 - `HowTo Draw Qt in a Stride Scene` — `QtRenderer`: Qt elements as a layer over a 3D scene (`RenderEntity`, `AfterScene`), input reaches Button and Slider
 - `HowTo Render Qt into a Stride Texture` — `QtTexture`: a Qt scene (text, shapes) rendered offscreen into a Stride `Texture` with a transparent `Clear Color`, composed over a 3D background with `AlphaBlendPremultiplied`

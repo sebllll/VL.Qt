@@ -1,20 +1,26 @@
 # VL.Qt.Stride
 
-Companion package of [VL.Qt](https://www.nuget.org/packages/VL.Qt/) for Stride in [vvvv gamma](https://visualprogramming.net): Qt 6 (Qt Quick) scenes built with VL.Qt, rendered into Stride textures. Windows only, experimental.
+Companion package of [VL.Qt](https://www.nuget.org/packages/VL.Qt/) for Stride in [vvvv gamma](https://visualprogramming.net): Qt 6 (Qt Quick) scenes built with VL.Qt, shown in a Stride scene. **Windows only (Direct3D 11) and experimental.**
 
 ## What it contains
 
-The node `QtTexture` (category `Qt`): like `Renderer [Qt]`, but without a window; it outputs a Stride `Texture` (premultiplied alpha, GPU only, same frame). Pins, limits (no input yet, same GPU adapter) and the help patch `HowTo Render Qt into a Stride Texture` are described in the [VL.Qt README](https://github.com/sebllll/VL.Qt#stride-texture).
+- **`QtTexture`** (category `Stride.Textures.Source`): renders a scene into a Stride `Texture` without a window. GPU only, premultiplied alpha, ready in the same frame. Takes mouse, touch and keyboard input at `Input Notifications`.
+- **`QtRenderer`** (category `Stride.Rendering`): a layer for after the 3D scene that draws a scene into the render target it is drawn into. Half-transparent content blends like in a Qt window. Takes the input of the window.
+- **`ToTexturePixels`** (category `Stride.Input`): maps the input of a window to the pixels of a `QtTexture` shown on a quad.
+
+Which node to use, pins and defaults, formats and alpha, input, render threads and limits (same GPU adapter as the Qt windows, device loss): [Qt in Stride](https://github.com/sebllll/VL.Qt/blob/main/docs/stride.md).
 
 ## Install
 
-Add `VL.Qt.Stride` to the dependencies of your vvvv patch. It pulls in `VL.Qt` with the same version; Stride (`VL.Stride`) comes with vvvv. It is built and released together with `VL.Qt` from the same repository, so the two versions always match. The help patches are in the Help Browser under `Qt`.
+Add `VL.Qt.Stride` to the dependencies of your vvvv patch. It pulls in `VL.Qt` with the same version; Stride (`VL.Stride`) comes with vvvv. It is built and released together with `VL.Qt` from the same repository, so the two versions always match.
+
+The help patches are in the Help Browser under the topic `Stride`.
 
 ## Documentation
 
+- [Qt in Stride](https://github.com/sebllll/VL.Qt/blob/main/docs/stride.md)
 - [VL.Qt README and getting started](https://github.com/sebllll/VL.Qt#readme)
 - [Documentation index](https://github.com/sebllll/VL.Qt/blob/main/docs/README.md)
-- [Design notes for this package](https://github.com/sebllll/VL.Qt/blob/main/docs/design/stride-output.md)
 
 ## License
 
