@@ -8,22 +8,6 @@ using VL.Qt.Wire;
 
 namespace VL.Qt.Shaders
 {
-    /// <summary>Shader stage of a reflection, values as <see cref="Protocol.ShaderStage"/> (VLQT_SHADER_STAGE_*).</summary>
-    internal enum ShaderStage
-    {
-        Vertex = Protocol.ShaderStage.Vertex,
-        Fragment = Protocol.ShaderStage.Fragment,
-    }
-
-    /// <summary>
-    /// One member of the uniform block, raw from QtNative. Type is the GLSL name as written by vlqt_shader_reflect
-    /// ("float", "vec4", "mat4", ..., "other" for anything else); ArrayLength 0 = no array.
-    /// </summary>
-    internal sealed record ReflectedUniform(string Name, string Type, int ArrayLength);
-
-    /// <summary>One combined image sampler, raw from QtNative.</summary>
-    internal sealed record ReflectedSampler(string Name, int Binding);
-
     /// <summary>
     /// Result of vlqt_shader_reflect: raw facts of one stage. Pin rules (filter qt_*, source → Input,
     /// type mapping) are not applied here but in <see cref="ShaderPinModel"/>.
@@ -45,15 +29,16 @@ namespace VL.Qt.Shaders
             new(false, ImmutableArray<ReflectedUniform>.Empty, ImmutableArray<ReflectedSampler>.Empty, error);
 
         /// <summary>
-        /// Bakes source (full Qt GLSL) to SPIR-V in QtNative and reflects it. Synchronous, any thread, serialized with the
+        /// Bakes source (full Qt GLSL, <paramref name="stage"/> a <see cref="Protocol.ShaderStage"/>) to SPIR-V in QtNative and reflects
+        /// it. Synchronous, any thread, serialized with the
         /// runtime bakes in QtNative. A failure of QtNative becomes a failed reflection.
         /// </summary>
-        public static ShaderReflection Reflect(string source, ShaderStage stage)
+        public static ShaderReflection Reflect(string source, int stage)
         {
             var buffer = new byte[initialBufferSize];
             while (true)
             {
-                var rc = Native.vlqt_shader_reflect(source, (int)stage, ref buffer[0], buffer.Length, out var written, out var required);
+                var rc = Native.vlqt_shader_reflect(source, stage, ref buffer[0], buffer.Length, out var written, out var required);
                 if (rc == Native.Result.BufferTooSmall)
                 {
                     buffer = new byte[required];
@@ -68,7 +53,7 @@ namespace VL.Qt.Shaders
 
         /// <summary>
         /// Parses the text format of vlqt_shader_reflect (see vlqt.h). Testable without QtNative. Unknown or malformed lines
-        /// are ignored (task 3 decides whether they become part of Error).
+        /// are ignored.
         /// </summary>
         public static ShaderReflection Parse(string text)
         {

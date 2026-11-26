@@ -28,7 +28,6 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <summary>For tests: a client on a fake API; null <paramref name="messages"/> reports nothing.</summary>
         internal LoadImageNode(ResourceClient client, NodeErrors? messages = null)
         {
             _client = client;
@@ -38,7 +37,8 @@ namespace VL.Qt.Nodes
         /// <summary>Loads the file when Path, Mipmaps or Upload change and waits until it is on the GPU.</summary>
         /// <param name="path">Image file (PNG, JPG, BMP, ... everything Qt reads; EXIF rotation is applied). Empty = no image.</param>
         /// <param name="mipmaps">Generate mipmaps (+33 % GPU memory): smoother when the image is drawn much smaller than its size.</param>
-        /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
+        /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in
+        /// stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
         /// <returns>The image, also when loading failed (State Failed, draws nothing; the node shows why and logs it). Nothing for an empty path.</returns>
         [return: Pin(Name = "Image")]
         public QtImage? Update(Path path, bool mipmaps,

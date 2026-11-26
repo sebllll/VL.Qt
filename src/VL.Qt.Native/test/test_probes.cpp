@@ -8,6 +8,7 @@
 #include "../app/exports.h"
 #include "offscreen/offscreen.h"
 #include "diagnostics/perf.h"
+#include "diagnostics/perf_pages.h"
 #include "../protocol.h"
 #include "test_hooks.h"
 #ifdef Q_OS_WIN
@@ -18,9 +19,7 @@
 #endif
 
 #include <QtCore/QLoggingCategory>
-#include <QtGui/QColor>
 #include <QtGui/QImage>
-#include <QtGui/QPainter>
 #include <QtQuick/QQuickItem>
 #include <QtQuick/QQuickWindow>
 #include <rhi/qrhi.h>
@@ -49,7 +48,7 @@ namespace {
 Q_LOGGING_CATEGORY(lcGrab, "vlqt.grab")
 
 #ifndef Q_OS_WIN
-// W1-21: on Qt's offscreen platform with OpenGL, Mesa's software winsys can keep an old size of the window's default
+// On Qt's offscreen platform with OpenGL, Mesa's software winsys can keep an old size of the window's default
 // framebuffer (offscreen_glx.h), so a grab would read only part of the frame. Before a grab, make the window's context
 // current (Qt sizes its X window to the window) and invalidate the drawable, so the grab's frame takes the window's size.
 // Returns the GL context, or null on other platforms and backends.
@@ -191,7 +190,7 @@ VLQT_API int vlqt_test_perf_text(vlqt_scene* p, int page, char* out, int cap, in
             return rc;
         if (const int rc = vlqt::checkScene(p, "vlqt_test_perf_text"); rc != VLQT_OK)
             return rc;
-        const QByteArray utf8 = asSceneHandle(p)->perf->pageText(page).toUtf8();
+        const QByteArray utf8 = vlqt::perfPageText(*asSceneHandle(p)->perf, page).toUtf8();
         return vlqt::copyText(utf8.constData(), int(utf8.size()), out, cap, written, required);
     });
 }
@@ -251,22 +250,6 @@ VLQT_API int vlqt_test_res_read_pixels(unsigned long long id, unsigned char* out
 {
     return guardedGuiBuffer("vlqt_test_res_read_pixels", out, cap, written, required,
         [&] { return vlqt::res::image::testRead(id, out, cap, width, height, written, required); });
-}
-
-// Paints a QImage without a window: any thread.
-VLQT_API int vlqt_test_write_image(const char* utf8Path, int width, int height, int quality)
-{
-    return guarded([&] {
-        if (!utf8Path || width <= 0 || height <= 0)
-            return fail(VLQT_ERR_BAD_ARGUMENT, "test_write_image: null path or size <= 0");
-        QImage img(width, height, QImage::Format_RGB32);
-        QPainter p(&img);
-        const QColor colors[] = {Qt::red, Qt::green, Qt::blue, Qt::white};
-        for (int i = 0; i < 4; i++)
-            p.fillRect(QRect(width * i / 4, 0, width * (i + 1) / 4 - width * i / 4, height), colors[i]);
-        p.end();
-        return img.save(QString::fromUtf8(utf8Path), nullptr, quality) ? VLQT_OK : fail(VLQT_ERR_IO, "test_write_image: saving failed");
-    });
 }
 
 VLQT_API int vlqt_test_font_refs(unsigned long long handle)

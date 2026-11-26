@@ -4,7 +4,7 @@ using VL.Qt.Wire;
 namespace VL.Qt.Interop
 {
     /// <summary>
-    /// Compares the ABI version of vlqt.dll with the one of this VL.Qt.dll (<see cref="Protocol.AbiVersion"/>, PROTO-01).
+    /// Compares the ABI version of vlqt.dll with the one of this VL.Qt.dll (<see cref="Protocol.AbiVersion"/>).
     /// A mismatch (a stale native build, a package mixed from two builds) is refused up front: later it shows up as frames
     /// that fail in a loop or as a property that is set silently on the wrong target.
     /// </summary>

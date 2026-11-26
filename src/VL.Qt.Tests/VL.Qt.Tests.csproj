@@ -31,6 +31,11 @@
     <Compile Include="..\VL.Qt.TestSupport\TestProtocol.cs" Link="TestProtocol.cs" />
   </ItemGroup>
 
+  <!-- A node message store that throws when the node shows a message. -->
+  <ItemGroup>
+    <Compile Include="..\VL.Qt.TestSupport\UnexpectedMessages.cs" Link="UnexpectedMessages.cs" />
+  </ItemGroup>
+
   <!-- VL.Qt.Stride needs Stride's graphics; its classes without D3D11 and rendering are compiled in. PixelFormat lives in
        the package Stride (no native code). -->
   <ItemGroup>
@@ -38,6 +43,7 @@
     <Compile Include="..\VL.Qt.Stride\TextureFormats.cs" Link="Stride\TextureFormats.cs" />
     <Compile Include="..\VL.Qt.Stride\LayerComposition.cs" Link="Stride\LayerComposition.cs" />
     <Compile Include="..\VL.Qt.Stride\TexturePixelMapping.cs" Link="Stride\TexturePixelMapping.cs" />
+    <Compile Include="..\VL.Qt.Stride\TextureState.cs" Link="Stride\TextureState.cs" />
   </ItemGroup>
 
   <!-- Drift checks (ProtocolDriftTests, ApiDriftTests): the headers of QtNative are read from the output directory. -->
@@ -49,7 +55,7 @@
     <None Include="..\VL.Qt.Native\testkit\testkit.h" Link="testkit.h" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <!-- Node-API snapshot (Api/NodeApiSnapshotTests.cs, TEST-01): VL.Qt.Stride and VL.Qt.Audio target net10.0-windows, so they
+  <!-- Node-API snapshot (Api/NodeApiSnapshotTests.cs): VL.Qt.Stride and VL.Qt.Audio target net10.0-windows, so they
        are built but not referenced (this project stays net10.0) and only their DLLs are copied to node-api/, where the test
        reads their metadata without loading them. Windows only: on Linux the test compares the VL.Qt part. -->
   <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">

@@ -11,6 +11,7 @@
     /// <param name="Min">IOBox lower limit in the CLR type of the pin, null if not annotated.</param>
     /// <param name="Max">IOBox upper limit in the CLR type of the pin, null if not annotated.</param>
     /// <param name="Summary">@summary as pin help, null if not given.</param>
+    /// <param name="IsOptional">@optional: the pin is hidden until shown (image pins: the image pin, its sampler pin is always hidden).</param>
     internal sealed record ShaderPin(
         string Name,
         string UniformName,
@@ -18,5 +19,6 @@
         object? Default,
         object? Min,
         object? Max,
-        string? Summary);
+        string? Summary,
+        bool IsOptional = false);
 }

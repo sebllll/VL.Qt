@@ -94,7 +94,7 @@ public static class QtImageTest
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-        var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(_ => throw new InvalidOperationException("unexpected warning"))).ToArray();
+        var nodes = Enumerable.Range(0, 100).Select(_ => new ImageNode(UnexpectedMessages.Store())).ToArray();
         var toQtLog = new NodeLog();
         var toQt = new ToQtImageNode(client, toQtLog.Errors);
 
@@ -107,7 +107,7 @@ public static class QtImageTest
             children.Add(new VL.Qt.Elements.Image { Size = new Vector2(1, 1), Anchor = RectangleAnchor.TopLeft, Transform = Matrix.Translation(0, 3.2f, 0), Source = extra, Smooth = false });
             cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            rec.Update(new Group { Anchor = RectangleAnchor.TopLeft, Children = children.MoveToImmutable() }, Space.DIPTopLeft);
+            rec.Update(new Group { Anchor = RectangleAnchor.TopLeft, Children = children.MoveToImmutable() }, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
@@ -134,7 +134,7 @@ public static class QtImageTest
             s.Check(ImageTest.IsBlue(Px(a, 50, 370)), $"ToQtImage pixels drawn ({Px(a, 50, 370)})");
         }
 
-        // 4) ToQtImage with a new instance: the same QtImage (one per node, NODW-06), content replaced (red) and drawn.
+        // 4) ToQtImage with a new instance: the same QtImage (one per node), content replaced (red) and drawn.
         var red = toQt.Update(new SolidImage(16, 16, 0, 0, 255), ImageUpload.Auto);
         s.Check(ReferenceEquals(red, blue), "ToQtImage new input = the same QtImage, content replaced");
         Frame(image, red);

@@ -1,36 +1,13 @@
-/* image_resource.h - resource kind VLQT_RESOURCE_KIND_IMAGE (images package 03): the content of an image and the C API
- * backends. The kind itself is in image_kind.h/.cpp, its two upload paths in image_upload_rhi.cpp and image_upload_d3d11.*.
+/* image_resource.h - resource kind VLQT_RESOURCE_KIND_IMAGE: the content of an image and the C API backends. The kind
+ * itself is in image_kind.h/.cpp, its two upload paths in image_upload_rhi.cpp and image_upload_d3d11.*.
  *
- * An image comes from a file (vlqt_image_load) or from pixels of C# (vlqt_image_set_pixels) and ends up as a
- * texture on the process device (device/device.h): an ID3D11Texture2D created by the upload QRhi, independent of windows.
- *
- *   load:   QImageReader (setAutoTransform for the EXIF rotation) + conversion to 8 bit premultiplied, in a worker.
- *   pixels: synchronous copy into an own buffer in the entry point, conversion (format table in image_kind.cpp,
- *           comment in protocol.h) in a worker.
- *   upload: worker path (image_upload_d3d11.*, D3D11 only): the worker creates an empty texture and an empty staging
- *           texture; on the main thread the staging texture is mapped, a copy task writes the pixels into it (an image
- *           within the frame budget: the main thread), then Unmap + CopyResource (GPU copy) and the texture is wrapped
- *           (CreateTexture2D with initial data blocked the render for as long as it ran);
- *           main-thread path (image_upload_rhi.cpp): stripes of at most the frame budget through one offscreen frame of
- *           the upload QRhi per resource and pump. Ready only when every stripe is there. Mipmaps: on the worker path the
- *           texture is created with its mip chain, the main thread copies level 0 and records GenerateMips (no
- *           offscreen frame, no wait); on the stripes path generateMips follows the last stripe.
- *           The upload argument of vlqt_image_load / vlqt_image_set_pixels (vlqt_image_upload) chooses the path;
- *           AUTO: files the worker path, pixels the stripes (measurements in #360). C# sets it with the pin Upload of
- *           LoadImage, LoadImage (Async), ToQtImage and VideoSourceToQtImage.
- *
- * Source kept for the re-upload after a device loss (package 10): the path for files (no CPU copy after the
- * upload, restore decodes the file again), the converted CPU copy for pixels (restore only uploads it again). A Content
- * remembers the device generation it was made for (generation()); QtImageItem draws only content of the current one.
- * Without a shared device (Linux, VLQT_SHARED_DEVICE=0) there is no texture: the resource keeps the converted QImage and
- * is Ready after the decode (image()).
- *
- * A new load/set_pixels on the same id replaces the content: the old texture stays until the new one is complete
- * (docs/design/resources.md, replacement), so elements never show an empty frame.
- *
- * Content replaced every frame (a video through set_pixels) reuses what the frame before left: the texture comes from
- * the pool of gpu_texture.h once no window shows it any more, the raw buffer of set_pixels from a small pool of buffers
- * of the same size (image_kind.cpp). Both pools let go of what nobody took for about a second (endFrame).
+ * An image comes from a file (vlqt_image_load) or from pixels of C# (vlqt_image_set_pixels) and ends up as a texture on
+ * the process device (device/device.h), independent of windows. Without a shared device (Linux, VLQT_SHARED_DEVICE=0)
+ * there is no texture: the resource keeps the converted QImage (image()). A new load or set_pixels on the same id
+ * replaces the content; the old texture stays until the new one is complete. A Content remembers the device
+ * generation it was made for (generation()); QtImageItem draws only content of the current one.
+ * Decode, the upload paths and why, the source kept for the restore after a device loss, the texture pool and
+ * replacement every frame: docs/design/resources.md, "Images", "Replacement" and "Device loss".
  */
 #pragma once
 
@@ -63,7 +40,7 @@ public:
     // Frees the GPU objects like Kind::releaseDevice, so a Content the manager did not destroy cannot leak them.
     ~ImageContent() override;
 
-    // --- for elements (package 04) and shader items, main thread, on a Ready resource ---
+    // --- for the Image element and shader items, main thread, on a Ready resource ---
     // Texture on the process device (upload QRhi), nullptr without a shared device (then image() holds the pixels).
     QRhiTexture* texture() const;
     // Native texture object (ID3D11Texture2D* for D3D11), nullptr like texture().
@@ -121,7 +98,7 @@ int readPreview(uint64_t id, unsigned char* dst, int cap, vlqt_pixel_desc* desc,
 // Once per pump after the uploads (res::endFrame), main thread: frees pooled textures and buffers nobody took for a while.
 void endFrame();
 
-// Current content of a Ready image resource, nullptr otherwise (also during the first load). Package 04 takes an
+// Current content of a Ready image resource, nullptr otherwise (also during the first load). The Image element takes an
 // element reference (res::acquire) for as long as it draws it.
 std::shared_ptr<ImageContent> ready(uint64_t id);
 

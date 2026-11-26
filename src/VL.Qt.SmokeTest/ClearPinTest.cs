@@ -15,13 +15,13 @@ using VL.Qt.Wire;
 using Color = System.Drawing.Color;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
-// Acceptance scenario of #117 and #138 (Clear pin): drives the feedback layer (src/VL.Qt.Native/feedback.h) through the
+// Acceptance scenario of the Clear pin: drives the feedback layer (src/VL.Qt.Native/feedback.h) through the
 // SET_CLEAR command, in a window and in an offscreen scene (QtTexture). Clear off with a transparent Clear Color (alpha 0):
 // a moving rectangle leaves a trail, a semi-transparent full-size rectangle fades it, effect layers, snapshots and the debug
 // overlay stay correct, a resize clears once, MSAA edges match Clear on. The alpha of Clear Color while Clear is off
 // is the fade strength: 0.25 fades older positions away, 1 equals Clear on, a change at runtime keeps the layer. Clear on
 // again: trail gone, and cost and idle behaviour as in the baseline measured before the first switch. Prints the numbers
-// the decision in docs/decisions/render-texture.md ("Clear pin") is based on. Grabs: <OutDir>/clear_pin_*.png (window)
+// the decision in docs/design/clear-and-msaa.md is based on. Grabs: <OutDir>/clear_pin_*.png (window)
 // and clear_pin_offscreen_*.png.
 public static class ClearPinTest
 {
@@ -144,7 +144,7 @@ public static class ClearPinTest
             cmd.Clear();
             if (first) cmd.ClearColor(WindowGrey, WindowGrey, WindowGrey, 1);
             first = false;
-            rec.Update(Tree(), Space.DIPTopLeft);
+            rec.Update(Tree(), SpaceMapping.Default);
             if (cmd.Length > 0)
                 s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"clear-pin: apply {Native.LastError()}");
             Pump(1);
@@ -197,7 +197,7 @@ public static class ClearPinTest
         // 1) Off: the first frame starts from the clear colour (no garbage), the moving rectangle leaves a trail.
         x = 50;
         Frame();
-        // Alpha 0: nothing fades, pure accumulation (an opaque Clear Color with Clear off is Clear on since #138).
+        // Alpha 0: nothing fades, pure accumulation (an opaque Clear Color with Clear off is Clear on).
         s.Check(SetMode(w, WindowGrey, false, 0) == 0, "clear-pin: set_clear 0 (alpha 0)");
         Frame();
         using (var img = s.Grab(w, P("first")))
@@ -404,7 +404,7 @@ public static class ClearPinTest
         void MsaaFrame()
         {
             cmd.Clear();
-            rec.Update(Msaa(), Space.DIPTopLeft);
+            rec.Update(Msaa(), SpaceMapping.Default);
             if (cmd.Length > 0)
                 s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"clear-pin: apply {Native.LastError()}");
             Pump(1);
@@ -457,7 +457,7 @@ public static class ClearPinTest
                 gpuOn.Add(Measure(120).Gpu);
                 SetMode(w, WindowGrey, false, 0);
                 gpuOff.Add(Measure(120).Gpu);
-                // For comparison: alpha 0.25 draws the fill (alpha 0 draws nothing, so it costs no more than Clear off before #138).
+                // For comparison: alpha 0.25 draws the fill (alpha 0 draws nothing, so it costs no more than Clear off before the Clear pin).
                 SetClearColor(w, WindowGrey, 0.25f);
                 gpuFade.Add(Measure(120).Gpu);
             }
@@ -469,7 +469,7 @@ public static class ClearPinTest
         SetMode(w, WindowGrey, true, 1);
 
         cmd.Clear();
-        rec.Update(null, Space.DIPTopLeft);
+        rec.Update(null, SpaceMapping.Default);
         if (cmd.Length > 0)
             Native.Apply(w, cmd.EndFrame());
         Native.vlqt_scene_destroy(w);
@@ -562,7 +562,7 @@ public static class ClearPinTest
             $"clear-pin offscreen: rebind with a new size clears the trail, no garbage ({odd} odd, {At(px2, 4, 8)}, {At(px2, 64, 8)})");
         // Once: accumulation goes on after the rebind.
         // The recursive layer allocates its second texture on the next frame, so the first frame after the rebind is dropped once
-        // more: accumulation is stable from the third frame on (reported in #117, not a garbage frame).
+        // more: accumulation is stable from the third frame on (reported once, not a garbage frame).
         Move(60);
         Render();
         Move(68);

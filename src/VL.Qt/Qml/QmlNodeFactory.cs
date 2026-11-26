@@ -37,6 +37,8 @@ namespace VL.Qt.Qml
 
         private const string extension = ".qml";
 
+        private static readonly TimeSpan throttle = TimeSpan.FromMilliseconds(150);
+
         /// <summary>
         /// Registers the factory at the app host (called from <see cref="Initialization.Configure"/>), over the app host's
         /// NodeFactoryCache like the shader factory, so the factory (and its file watchers) lives across compilations; one sub
@@ -157,6 +159,8 @@ namespace VL.Qt.Qml
         internal static IObservable<object> WatchSignature(QmlFile file, Func<string?> signature)
             => NodeBuilding.WatchDir(Path.GetDirectoryName(file.FilePath)!)
                 .Where(IsQmlEvent)
+                // An editor fires two or three events per save: one parse per save, and not one of a half-written file.
+                .Throttle(throttle)
                 .Where(_ => signature() is { } known && CurrentSignature(file) is { } current && current != known)
                 .Select(static e => (object)e);
 

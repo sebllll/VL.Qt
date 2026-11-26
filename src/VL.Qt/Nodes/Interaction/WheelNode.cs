@@ -27,9 +27,8 @@ namespace VL.Qt.Nodes
         public WheelNode(NodeContext nodeContext)
             => _node = new InteractionNodeCore<Props>(nodeContext, Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal WheelNode(Func<string, IDisposable> addWarning)
-            => _node = new InteractionNodeCore<Props>(addWarning, Create);
+        internal WheelNode(NodeErrors messages)
+            => _node = new InteractionNodeCore<Props>(messages, Create);
 
         private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new WheelInteraction(previous, slot, p.Devices);
@@ -38,8 +37,11 @@ namespace VL.Qt.Nodes
 
         /// <summary>Adds a wheel handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
-        /// <param name="delta">Optional channel: wheel motion since the last frame in notches (one notch = 120 wheel units; trackpads give fractions), x horizontal, y vertical, positive y = away from the user. Written every frame with motion, then once (0, 0) (author "Qt").</param>
-        /// <param name="value">Optional channel: accumulated wheel motion in notches (same unit as Delta). Each frame with motion adds the delta to the current value of the channel (author "Qt"), so it can be set or reset from outside. No limits.</param>
+        /// <param name="delta">Optional channel: wheel motion since the last frame in notches (one notch = 120 wheel units; trackpads give
+        /// fractions), x horizontal, y vertical, positive y = away from the user. Written every frame with motion, then once (0, 0) (author
+        /// "Qt").</param>
+        /// <param name="value">Optional channel: accumulated wheel motion in notches (same unit as Delta). Each frame with motion adds the
+        /// delta to the current value of the channel (author "Qt"), so it can be set or reset from outside. No limits.</param>
         /// <param name="devices">Input devices that count.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]

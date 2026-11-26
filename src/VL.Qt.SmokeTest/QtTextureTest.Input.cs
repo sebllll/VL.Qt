@@ -31,8 +31,6 @@ public static partial class QtTextureTest
 {
     private sealed class InputRig : IDisposable
     {
-        internal sealed class NoMessage : IDisposable { public void Dispose() { } }
-
         public const int W = 400, H = 300;
         private static readonly Vector2 s_client = new(W, H);
 
@@ -42,16 +40,16 @@ public static partial class QtTextureTest
         private readonly SceneHandle[] _batch;
         public readonly bool Ok;
 
-        private readonly RectangleNode _rectA = new(_ => new NoMessage()), _rectP = new(_ => new NoMessage()), _rectB = new(_ => new NoMessage()), _rectC = new(_ => new NoMessage());
-        private readonly GroupNode _group = new(_ => new NoMessage());
-        private readonly SliderNode _slider = new(_ => new NoMessage());
-        private readonly InputStringNode _text = new(_ => new NoMessage());
-        private readonly HoverNode _hover = new(_ => new NoMessage());
-        private readonly ClickNode _clickA = new(_ => new NoMessage()), _clickMouse = new(_ => new NoMessage()), _clickTouch = new(_ => new NoMessage()), _clickPen = new(_ => new NoMessage());
-        private readonly WheelNode _wheel = new(_ => new NoMessage());
-        private readonly DragNode _drag = new(_ => new NoMessage());
-        private readonly PinchNode _pinch = new(_ => new NoMessage());
-        private readonly TouchPointsNode _touchPoints = new(_ => new NoMessage());
+        private readonly RectangleNode _rectA = new(new NodeLog().Errors), _rectP = new(new NodeLog().Errors), _rectB = new(new NodeLog().Errors), _rectC = new(new NodeLog().Errors);
+        private readonly GroupNode _group = new(new NodeLog().Errors);
+        private readonly SliderNode _slider = new(new NodeLog().Errors);
+        private readonly InputStringNode _text = new(new NodeLog().Errors);
+        private readonly HoverNode _hover = new(new NodeLog().Errors);
+        private readonly ClickNode _clickA = new(new NodeLog().Errors), _clickMouse = new(new NodeLog().Errors), _clickTouch = new(new NodeLog().Errors), _clickPen = new(new NodeLog().Errors);
+        private readonly WheelNode _wheel = new(new NodeLog().Errors);
+        private readonly DragNode _drag = new(new NodeLog().Errors);
+        private readonly PinchNode _pinch = new(new NodeLog().Errors);
+        private readonly TouchPointsNode _touchPoints = new(new NodeLog().Errors);
 
         // Channels of the nodes: values in, the last author of a write says it came from Qt.
         public readonly IChannel<bool> Hovered = Channel.Create(false), Pressed = Channel.Create(false);
@@ -212,7 +210,7 @@ public static partial class QtTextureTest
             s.Skip("QtTextureInput: D3D11 only");
             return;
         }
-        s.Info("QtTextureInput: #119 input into an offscreen scene");
+        s.Info("QtTextureInput: input into an offscreen scene");
         using var rig = new InputRig(s);
         if (!rig.Ok)
             return;
@@ -320,8 +318,8 @@ public static partial class QtTextureTest
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var buf = new byte[1 << 16];
-        using var rect = new RectangleNode(_ => new InputRig.NoMessage());
-        using var wheel = new WheelNode(_ => new InputRig.NoMessage());
+        using var rect = new RectangleNode(new NodeLog().Errors);
+        using var wheel = new WheelNode(new NodeLog().Errors);
         var delta = Channel.Create(Vector2.Zero);
         var values = new List<Vector2>();
         using var sub = delta.Subscribe(values.Add);
@@ -333,7 +331,7 @@ public static partial class QtTextureTest
                 var e = rect.Update(new Vector2(1, 0.8f), Matrix.Translation(0.2f, 0.2f, 0), RectangleAnchor.TopLeft, new Color4(1, 0, 0, 1), 0,
                     new Color4(0, 0, 0, 1), 0, 1, false, false, wheel.Update(null, delta, null, PointerDevices.All), null, true, out _, out _);
                 cmd.Clear();
-                rec.Update((Element)e, Space.DIPTopLeft);
+                rec.Update((Element)e, SpaceMapping.Default);
                 if (cmd.Length > 0)
                     s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "wheel reference: apply " + Native.LastError());
                 s.Pump(1);
@@ -361,7 +359,7 @@ public static partial class QtTextureTest
             horizontal = values.Count > 0 ? values[0] : null;
         }
         cmd.Clear();
-        rec.Update(null, Space.DIPTopLeft);
+        rec.Update(null, SpaceMapping.Default);
         if (cmd.Length > 0)
             Native.Apply(w, cmd.EndFrame());
         Native.vlqt_scene_destroy(w);
@@ -410,7 +408,7 @@ public static partial class QtTextureTest
         s.Check(rig.Wheels.Count >= 1 && Near(rig.Wheels[0], 1, 0), $"wheel: SendWheel dx +120 -> Delta (1, 0) ({Dump()})");
 
         // The horizontal wheel notification: no vvvv input source creates one, so there is no window to match; the convention
-        // is positive WheelDelta = left, as Qt's angleDelta.x and VL.ImGui (render-texture.md "Input"), passed through unchanged.
+        // is positive WheelDelta = left, as Qt's angleDelta.x and VL.ImGui (docs/design/offscreen-input.md, "Translation"), passed through unchanged.
         rig.Wheels.Clear();
         rig.HWheel(50, 50, 120);
         rig.Frames();
@@ -442,7 +440,7 @@ public static partial class QtTextureTest
         Counts("touch tap", 1, 1, 0);
 
         // vvvv has no pen notification: SendPointer with the pen device. QtNative delivers a pen as a window on Windows gets
-        // one (render-texture.md "Input"): tablet events from a stylus, so only the Click node with Devices = Pen takes it.
+        // one (docs/design/offscreen-input.md, "Translation"): tablet events from a stylus, so only the Click node with Devices = Pen takes it.
         Thread.Sleep(700);
         var p = new Vector2(190, 60);
         s.Check(rig.R.SendPointer(Protocol.PointerDevice.Pen, Protocol.Pointer.Press, 3, p, 0, 0) == Native.Result.Ok

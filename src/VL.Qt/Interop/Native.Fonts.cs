@@ -9,7 +9,8 @@ namespace VL.Qt.Interop
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern Result vlqt_font_add([MarshalAs(UnmanagedType.LPUTF8Str)] string path, out ulong handle, ref byte families, int familiesCap, out int written, out int required);
 
-        /// <summary>Drops one reference of a font handle; the font is removed at the end of the pump when none is left. <see cref="Result.WrongThread"/>, <see cref="Result.UnknownId"/>.</summary>
+        /// <summary>Drops one reference of a font handle; the font is removed at the end of the pump when none is left.
+        /// <see cref="Result.WrongThread"/>, <see cref="Result.UnknownId"/>.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Result vlqt_font_release(ulong handle);
 

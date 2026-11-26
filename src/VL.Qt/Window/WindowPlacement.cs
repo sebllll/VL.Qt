@@ -52,7 +52,7 @@ namespace VL.Qt
                 if (r.Event != Protocol.EventId.WindowGeometry || r.FeedbackId != 0 || r.Payload.Length < 20)
                     continue;
                 var bounds = new RectangleF(r.ReadF32(0), r.ReadF32(4), r.ReadF32(8), r.ReadF32(12));
-                // Client top-left since #465 (28 bytes); an older record has none: client = outer position.
+                // Client top-left (28 bytes); an older record has none: client = outer position.
                 var client = r.Payload.Length >= 28 ? new RectangleF(r.ReadF32(20), r.ReadF32(24), bounds.Width, bounds.Height) : bounds;
                 geometry = new WindowGeometry(bounds, (WindowStates)r.ReadU32(16), client);
                 found = true;

@@ -25,7 +25,7 @@ std::vector<RenderThread*> s_pool; // never deleted (render_thread.h)
 RenderThread::RenderThread(int index)
     : m_index(index)
 {
-    // The same name for Qt and for the OS (profilers, dumps): app/thread_name.h, docs/profiling.md.
+    // The same name for Qt and for the OS (profilers, dumps): app/thread_name.h, docs/contributing/profiling.md.
     const QByteArray name = "vlqt-render-" + QByteArray::number(index);
     m_thread.setObjectName(QString::fromLatin1(name));
     m_thread.start();

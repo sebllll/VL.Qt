@@ -14,8 +14,8 @@ using VL.Qt.Wire;
 using Rectangle = VL.Qt.Elements.Rectangle;
 
 // Node level interaction: Hover -> element Interaction pin -> Reconciler (handler
-// objects) -> QtNative -> FeedbackRouter -> channels. The raw QtNative side of the input handlers is HandlerTest (the #208 bind
-// flags Interactive / Pointer are gone since #320). Mouse input comes from the TEST export vlqt_test_send_mouse; real
+// objects) -> QtNative -> FeedbackRouter -> channels. The raw QtNative side of the input handlers is HandlerTest (the bind
+// flags Interactive / Pointer are gone: the input handlers replaced them). Mouse input comes from the TEST export vlqt_test_send_mouse; real
 // (OS) pointer input is ignored by the test windows (VLQT_TEST_SYNTHETIC_INPUT=1, set by QtHost).
 [TestFixture, NonParallelizable]
 public static partial class InteractionTest
@@ -54,8 +54,6 @@ public static partial class InteractionTest
     [Test, Category("pinch-node")]
     public static void PinchNode() => Scenario.Run(RunPinchNode);
 
-    private sealed class NoMessage : IDisposable { public void Dispose() { } }
-
     // scenario "interaction-chain": node level Hover -> Rectangle (Interaction pin) ->
     // Reconciler (handler objects) -> QtNative -> FeedbackRouter.Dispatch -> pull in Hover.Update -> channels.
     private static void RunChain(Scenario s)
@@ -66,9 +64,9 @@ public static partial class InteractionTest
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var buf = new byte[1 << 16];
-        var hover = new HoverNode(_ => new NoMessage());
-        var hover2 = new HoverNode(_ => new NoMessage());
-        var rect = new RectangleNode(_ => new NoMessage());
+        var hover = new HoverNode(new NodeLog().Errors);
+        var hover2 = new HoverNode(new NodeLog().Errors);
+        var rect = new RectangleNode(new NodeLog().Errors);
         var hovered = Channel.Create(false);
         var hovered2 = Channel.Create(false);
         bool attach = true, chainTwo = false;
@@ -83,7 +81,7 @@ public static partial class InteractionTest
             var e = rect.Update(new Vector2(2, 1), Matrix.Translation(1, 1, 0), RectangleAnchor.TopLeft, new Color4(0.2f, 0.4f, 0.8f, 1), 0,
                 new Color4(0, 0, 0, 1), 0, 1, false, false, attach ? chain : null, null, true, out _, out _);
             cmd.Clear();
-            rec.Update((Element)e, Space.DIPTopLeft);
+            rec.Update((Element)e, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());
@@ -139,7 +137,7 @@ public static partial class InteractionTest
         s.Check(Handlers() == 2 && hovered.Value, $"chain: re-attached -> handlers + hovered ({Handlers()}, {hovered.Value})");
 
         cmd.Clear();
-        rec.Update(null, Space.DIPTopLeft);
+        rec.Update(null, SpaceMapping.Default);
         if (cmd.Length > 0)
             s.Check(Native.Apply(w, cmd.EndFrame()) == 0, "chain: clear");
         hover.Dispose();
@@ -158,11 +156,11 @@ public static partial class InteractionTest
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         var buf = new byte[1 << 16];
-        var hover = new HoverNode(_ => new NoMessage());
+        var hover = new HoverNode(new NodeLog().Errors);
         var hovered = Channel.Create(false);
-        using var text = new TextNode(_ => new NoMessage());
-        using var group = new GroupNode(_ => new NoMessage());
-        using var button = new ButtonNode(_ => new NoMessage());
+        using var text = new TextNode(new NodeLog().Errors);
+        using var group = new GroupNode(new NodeLog().Errors);
+        using var button = new ButtonNode(new NodeLog().Errors);
         // (1, 1, 2, 1) units = (100, 100, 200, 100) DIP.
         var bounds = new RectangleF(1, 1, 2, 1);
         var factories = new (string Name, Func<Interaction?, Element> Make)[]
@@ -181,7 +179,7 @@ public static partial class InteractionTest
             void Frame(bool attach)
             {
                 cmd.Clear();
-                rec.Update(make(hover.Update(null, hovered) is var chain && attach ? chain : null), Space.DIPTopLeft);
+                rec.Update(make(hover.Update(null, hovered) is var chain && attach ? chain : null), SpaceMapping.Default);
                 if (cmd.Length > 0)
                 {
                     var rc = Native.Apply(w, cmd.EndFrame());
@@ -205,7 +203,7 @@ public static partial class InteractionTest
             Frame(false);
             s.Check(!hovered.Value, $"elements {name}: Interaction removed -> Is Hovered false");
             cmd.Clear();
-            rec.Update(null, Space.DIPTopLeft);
+            rec.Update(null, SpaceMapping.Default);
             if (cmd.Length > 0)
                 s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"elements {name}: clear");
         }

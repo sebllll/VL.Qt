@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="csSWj9DxQSYgDMFMbGBKxN" Bounds="85,772,830,110" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- One QtImage from LoadImage can be used by any number of Image elements. LoadImage loads the file (PNG, JPG, ...) once.&#xD;&#xA;- Fit keeps the aspect, Crop keeps the aspect and fills the Size.&#xD;&#xA;- An Image with width or height 0 is not drawn. Measured Size reports the natural size of the image in units once loaded.&#xD;&#xA;- Stable 60 fps: load images in advance or async, never synchronously in the running frame.&#xD;&#xA;- See also: HowTo Preload Images, HowTo Use an IImage, HowTo Take a Snapshot.">
+          <Pad Id="csSWj9DxQSYgDMFMbGBKxN" Bounds="85,772,830,134" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- One QtImage from LoadImage can be used by any number of Image elements. LoadImage loads the file (PNG, JPG, ...) once.&#xD;&#xA;- Fit keeps the aspect, Crop keeps the aspect and fills the Size.&#xD;&#xA;- An Image with width or height 0 is not drawn. Measured Size reports the natural size of the image in units once loaded.&#xD;&#xA;- Stable 60 fps: load images in advance or async, never synchronously in the running frame.&#xD;&#xA;- See also: HowTo Preload Images, HowTo Use an IImage, HowTo Take a Snapshot.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -81,13 +81,13 @@
             <Pin Id="40ddVdxISRSeYXncorxSGi" Name="Fill Mode" Kind="InputPin" DefaultValue="Fit" />
             <Pin Id="iSw2Ui9RVFv7gvMx11NXf1" Name="Output" Kind="OutputPin" />
             <Pin Id="J0bsnOqCSq9OiLEOjKqsaG" Name="Smooth" Kind="InputPin" IsHidden="true" />
-            <Pin Id="6uEHsgjyDcbO8OAiQLSVuJ" Name="Opacity" Kind="InputPin" />
+            <Pin Id="6uEHsgjyDcbO8OAiQLSVuJ" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="IeeNUdDCcooNU3pPLFwREa" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="osSyek707sF4bT3N2mrJnF" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="MUEREReYLK3Nyskv8vLK08" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="URu5dR3F7GHNKlDJgJ7p9o" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Osp6llMDTsHLSABLrNG0xf" Name="Interaction" Kind="InputPin" />
-            <Pin Id="KQ05pwIMGurM39z3VabMDZ" Name="Effect" Kind="InputPin" />
+            <Pin Id="Osp6llMDTsHLSABLrNG0xf" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KQ05pwIMGurM39z3VabMDZ" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="100,703,85,19" Id="aTtMAwtgAZrl0UwSk9kmZE">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
@@ -101,9 +101,9 @@
             <Pin Id="G1fOPg4RDnLLTzQbuf94Md" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="MVZAVbDmHFUMfHjzN7OdgD" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="UHMqrPrkERARGpO5iNtlor" Name="Input" Kind="InputPin" />
-            <Pin Id="uxtx5yv4MNUUmhFdmngwTA" Name="Space" Kind="InputPin" />
-            <Pin Id="n22YMrV5NQ8yKm80YUideO" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="i8fqnqRinTgrW2mSiicoSi" Name="Enabled" Kind="InputPin" />
+            <Pin Id="uxtx5yv4MNUUmhFdmngwTA" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="n22YMrV5NQ8yKm80YUideO" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="i8fqnqRinTgrW2mSiicoSi" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="puclwZZK1herSrhtXY3Emv" Name="Title" Kind="InputPin" />
             <Pin Id="DnWKxMr9odTNmqKsyAixWS" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="TQJc15KTbG6PkcgNftO3vB" Name="Perf" Kind="OutputPin" IsHidden="true" />

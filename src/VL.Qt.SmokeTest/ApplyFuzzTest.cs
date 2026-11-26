@@ -7,7 +7,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// Decoder robustness (NCMD-15): the recorded traces (src/VL.Qt.SmokeTest/traces) are damaged in two ways and applied to QtNative:
+// Decoder robustness: the recorded traces (src/VL.Qt.SmokeTest/traces) are damaged in two ways and applied to QtNative:
 // every command buffer truncated at every 4th byte, and single bytes flipped (fixed seed). Whatever arrives, vlqt_scene_apply must
 // return 0 or a negative ApplyResult, never crash, and vlqt_scene_get_apply_error must tell the same story as the return code.
 // The damaged frame k is applied to the scene that frames 0..k-1 built; afterwards the scene is rebuilt (RESET + replay), so the
@@ -20,7 +20,8 @@ public static class ApplyFuzzTest
     // Flipped buffers per frame: one per 2 bytes, at least 64.
     private const int FlipsPerBytes = 2, MinFlips = 64;
 
-    /// <summary>One recorded trace, damaged: truncated at every 4th byte and byte flips; apply returns 0 or an ApplyResult and agrees with apply_error.</summary>
+    /// <summary>One recorded trace, damaged: truncated at every 4th byte and byte flips; apply returns 0 or an ApplyResult and agrees with
+    /// apply_error.</summary>
     [Test, TestCaseSource(typeof(TraceReplay), "TraceNames"), Category("apply-fuzz")]
     public static void Fuzz(string name) => Scenario.Run(s => Run(s, name));
 

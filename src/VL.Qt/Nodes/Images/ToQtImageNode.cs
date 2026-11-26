@@ -28,7 +28,6 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <summary>For tests: a client on a fake API; null <paramref name="messages"/> reports nothing.</summary>
         internal ToQtImageNode(ResourceClient client, NodeErrors? messages = null)
         {
             _client = client;
@@ -36,9 +35,12 @@ namespace VL.Qt.Nodes
         }
 
         /// <summary>Uploads Input when it is a new instance or volatile, or when Upload changes.</summary>
-        /// <param name="input">8-bit RGBA/BGRA/RGBX/BGRX directly; RGB, grey, 16 bit and float are converted to 8 bit RGBA (with a warning for 16 bit and float). Nothing = no image.</param>
-        /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
-        /// <returns>The image: the same QtImage for all inputs (one GPU resource per node, its content is replaced), nothing without an Input. A failed upload is shown at the node and logged.</returns>
+        /// <param name="input">8-bit RGBA/BGRA/RGBX/BGRX directly; RGB, grey, 16 bit and float are converted to 8 bit RGBA (with a warning
+        /// for 16 bit and float). Nothing = no image.</param>
+        /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in
+        /// stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
+        /// <returns>The image: the same QtImage for all inputs (one GPU resource per node, its content is replaced), nothing without an
+        /// Input. A failed upload is shown at the node and logged.</returns>
         [return: Pin(Name = "Image")]
         public QtImage? Update(IImage? input,
             [Pin(Visibility = PinVisibility.Optional)] ImageUpload upload)

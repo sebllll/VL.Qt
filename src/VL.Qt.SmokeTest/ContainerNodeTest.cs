@@ -15,7 +15,7 @@ using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 using static Pixels;
 
-// Group/Row/Column nodes (07d) end to end: nodes → Reconciler → CommandWriter → real QtNative.
+// Group/Row/Column nodes end to end: nodes → Reconciler → CommandWriter → real QtNative.
 // Grabs go to <OutDir>/07d_*.png. Node inputs are units (DIPTopLeft, 1 unit = 100 DIP), pixel checks are DIP.
 [TestFixture, NonParallelizable]
 public static class ContainerNodeTest
@@ -23,8 +23,6 @@ public static class ContainerNodeTest
     private static bool IsRed(Color c) => c.R > 200 && c.G < 40 && c.B < 40;
     private static bool IsGreen(Color c) => c.G > 200 && c.R < 40 && c.B < 40;
     private static bool IsBlue(Color c) => c.B > 200 && c.R < 40 && c.G < 40;
-
-    private static IDisposable NoWarning(string _) => throw new InvalidOperationException("unexpected node warning");
 
     private static readonly Color4 Red = new(1, 0, 0, 1), Green = new(0, 1, 0, 1), Blue = new(0, 0, 1, 1);
 
@@ -39,12 +37,12 @@ public static class ContainerNodeTest
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-        var red = new RectangleNode(NoWarning);
-        var green = new RectangleNode(NoWarning);
-        var blue = new RectangleNode(NoWarning);
-        var column = new ColumnNode(NoWarning);
-        var row = new RowNode(NoWarning);
-        var group = new GroupNode(NoWarning);
+        var red = new RectangleNode(UnexpectedMessages.Store());
+        var green = new RectangleNode(UnexpectedMessages.Store());
+        var blue = new RectangleNode(UnexpectedMessages.Store());
+        var column = new ColumnNode(UnexpectedMessages.Store());
+        var row = new RowNode(UnexpectedMessages.Store());
+        var group = new GroupNode(UnexpectedMessages.Store());
 
         Element Rect(RectangleNode n, Color4 fill, float w = 1, float h = 1, float x = 0, float y = 0)
             => (Element)n.Update(new Vector2(w, h), Matrix.Translation(x, y, 0), RectangleAnchor.TopLeft, fill, 0, new Color4(0, 0, 0, 1), 0, 1, false, false,
@@ -54,7 +52,7 @@ public static class ContainerNodeTest
         {
             cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            rec.Update(root, Space.DIPTopLeft);
+            rec.Update(root, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());

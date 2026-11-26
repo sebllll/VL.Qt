@@ -2,12 +2,12 @@
 
 Usage:
   python tools/vl-patch-check.py [<patch.vl|glob> ...]    check (default: help/Qt/*.vl, help/*.vl,
-                                                          VL.Qt.Stride/help/*.vl and VL.Qt.Audio/help/*.vl)
+                                                          VL.Qt.Stride/help/*.vl, its manual checks and VL.Qt.Audio/help/*.vl)
   python tools/vl-patch-check.py --fix <patch.vl> ...      also make hidden pins with a value visible
   python tools/vl-patch-check.py --accept [--reason=TEXT] <patch.vl> ...   put the current findings into the baseline
 Options: --baseline=<file> (default help/.padlint.json), --quiet (no summary line).
 
-It never moves or deletes anything. The pins of the nodes come from the C# sources (tools/vl_pin_catalog.py).
+It never moves or deletes anything. The pins of the nodes come from the node-API snapshot (src/VL.Qt.Tests/Api/node-api.txt, tools/vl_node_api.py).
 
 Errors (exit code 1):
   hidden-non-default  a pin is hidden (IsHidden="true") but holds a value that differs from its default (a DefaultValue
@@ -32,12 +32,17 @@ import xml.etree.ElementTree as ET
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import vl_pin_catalog as pc  # noqa: E402
+import vl_node_api as api  # noqa: E402
 
 P = '{property}'
-DEFAULT_PATCHES = ('help/Qt/*.vl', 'help/*.vl', 'VL.Qt.Stride/help/*.vl', 'VL.Qt.Audio/help/*.vl')
+DEFAULT_PATCHES = ('help/Qt/*.vl', 'help/*.vl', 'VL.Qt.Stride/help/*.vl', 'src/VL.Qt.Stride/help/manual-checks/*.vl', 'VL.Qt.Audio/help/*.vl')
 DEFAULT_BASELINE = os.path.join(ROOT, 'help', '.padlint.json')
 ERRORS = ('hidden-non-default', 'forbidden-iobox', 'missing-pin', 'stale-baseline')
+# An IOBox on these pins is an error: an IOBox on Interaction makes the element opaque to input.
+FORBIDDEN_IOBOX = {'Interaction'}
+# Pins whose value the node itself writes into the document (node name, pin name): Save Bounds of the Renderer stores
+# the window geometry in the hidden Bounds pin (#143), so a value there is expected.
+WRITTEN_BY_NODE = {('Renderer', 'Bounds')}
 KNOWN_EXTRA_PINS = {'Node Context'}  # written by vvvv for every process node, hidden, not part of the catalog
 
 
@@ -73,7 +78,7 @@ def check_patch(raw, catalog):
     for n in root.iter('Node'):
         name = node_name(n, catalog)
         if name:
-            spec_node = pc.resolve_overload(catalog[name], [p.get('Name') for p in n.findall('Pin')])
+            spec_node = api.resolve_overload(catalog[name], [p.get('Name') for p in n.findall('Pin')])
             for pin in n.findall('Pin'):
                 pins[pin.get('Id')] = (name, pin, spec_node)
     iopads = {p.get('Id'): p for p in root.iter('Pad') if p.get('isIOBox') == 'true' and p.get('SlotId') is None}
@@ -90,7 +95,7 @@ def check_patch(raw, catalog):
     findings = []
     for pid, (name, pin, spec_node) in pins.items():
         pin_name = pin.get('Name')
-        spec = pc.find_pin(spec_node, pin_name)
+        spec = api.find_pin(spec_node, pin_name)
         linked = peers.get(pid, [])
         if spec is None:
             if linked and pin_name not in KNOWN_EXTRA_PINS:
@@ -101,8 +106,8 @@ def check_patch(raw, catalog):
             continue
         if sources.get(pid):
             findings.append(Finding('hidden-non-default', name, pin_name, pid, 'hidden, but linked'))
-        elif (pin.get('DefaultValue') is not None and not spec['written_by_node']
-              and pc.is_default(pin.get('DefaultValue'), spec) is False):
+        elif (pin.get('DefaultValue') is not None and (name, pin_name) not in WRITTEN_BY_NODE
+              and api.is_default(pin.get('DefaultValue'), spec) is False):
             findings.append(Finding('hidden-non-default', name, pin_name, pid,
                                     f'hidden, but holds "{pin.get("DefaultValue")}" (default "{spec["default"]}")'))
 
@@ -114,13 +119,13 @@ def check_patch(raw, catalog):
         if pad_id not in sources.get(pid, []):
             continue  # an output IOBox: the pin feeds the pad
         name, pin, spec_node = pins[pid]
-        spec = pc.find_pin(spec_node, pin.get('Name'))
+        spec = api.find_pin(spec_node, pin.get('Name'))
         if spec is None or spec['direction'] != 'in':
             continue
-        if spec['forbid_iobox']:
+        if spec['name'] in FORBIDDEN_IOBOX:
             findings.append(Finding('forbidden-iobox', name, spec['name'], pad_id,
                                     'an IOBox here makes the element opaque to input; link an interaction node or nothing'))
-        elif pc.is_default(pad.get('Value'), spec):
+        elif api.is_default(pad.get('Value'), spec):
             value = pad.get('Value', spec['default'])
             findings.append(Finding('default-iobox', name, pin.get('Name'), pad_id,
                                     f'IOBox holds the default "{value}"'))
@@ -196,7 +201,7 @@ def main(argv):
         return 2
     baseline_path = opts.get('--baseline', DEFAULT_BASELINE)
     baseline = load_baseline(baseline_path)
-    catalog = pc.load_catalog()
+    catalog = api.load_catalog()
 
     errors = hints = fixed = 0
     keys = set()

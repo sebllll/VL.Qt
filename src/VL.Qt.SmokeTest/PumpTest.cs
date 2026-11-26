@@ -11,7 +11,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// Global pump (plan 02a/02b) without vvvv: simulated IFrameClock, two windows, 120 frames.
+// Global pump without vvvv: simulated IFrameClock, two windows, 120 frames.
 [TestFixture, NonParallelizable]
 public static class PumpTest
 {
@@ -191,7 +191,7 @@ public static class PumpTest
     {
         var clock = new SimClock();
         var log = new CollectingLogger();
-        var app = QtApp.CreateForTest(log);
+        var app = QtApp.Create(log);
         var pump = new QtPump(app, clock);
         s.Check(app.ParticipantCount == 0, "pump: no participants at start");
 
@@ -218,7 +218,7 @@ public static class PumpTest
             ms[f] = Stopwatch.GetElapsedTime(t).TotalMilliseconds;
             present[f] = a.Last.present + b.Last.present;
             // Per pump (last perf sample): exactly 1 swap, also in the first pump: the gate counts expose renders too
-            // (XWayland sends two Expose on show; before that #253 allowed 2). Linux (X11, Wayland): the window is
+            // (XWayland sends two Expose on show; before that 2 were allowed). Linux (X11, Wayland): the window is
             // mapped/configured asynchronously, pumps before its first swap may have none (platform, L4e). Windows: strict.
             // The 60-sample summary ring must hold one sample per pump.
             foreach (var w in new[] { a, b })

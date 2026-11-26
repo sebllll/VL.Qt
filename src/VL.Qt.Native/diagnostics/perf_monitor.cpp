@@ -30,6 +30,16 @@ constexpr double kTimelineIntervalMs = 50;
 
 int s_lastPage = 0; // F5 page shown last (any window); new windows open on it
 
+// Busy-waits ms (injectSpike).
+void spin(float ms)
+{
+    QElapsedTimer t;
+    t.start();
+    const qint64 ns = qint64(double(ms) * 1e6);
+    while (t.nsecsElapsed() < ns) {
+    }
+}
+
 } // namespace
 
 PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
@@ -49,27 +59,22 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
     // Windows (basic render loop): all signals arrive on the GUI (vvvv) thread inside processEvents. Offscreen scenes:
     // on the scene's render thread (offscreen/offscreen_render.cpp); afterFrameEnd hands the frame to endPump
     // (perf_monitor.h, m_done).
-    // m_spikePhase >= 0 only after vlqt_test_perf_spike (test hook).
     // vsync wait: beforeFrameBegin -> beforeSynchronizing. The wait for the refresh happens in QRhi::beginFrame, between
-    // those two signals, and Qt has no signal at its end (docs/design/timing.md, "Vsync wait"). Software backend: no
+    // those two signals, and Qt has no signal at its end (docs/design/timing.md, "VSync and the wait for the display"). Software backend: no
     // beforeFrameBegin, the segment is 0.
     connect(window, &QQuickWindow::beforeFrameBegin, this, [this] {
-        if (m_spikePhase.load(std::memory_order_relaxed) >= 0) spin(PhaseEvents);
         m_tFrameBegin = nowMs();
     }, Qt::DirectConnection);
     connect(window, &QQuickWindow::beforeSynchronizing, this, [this] {
-        if (m_spikePhase.load(std::memory_order_relaxed) >= 0) spin(m_tFrameBegin >= 0 ? PhaseVsync : PhaseEvents);
         m_tSyncBegin = nowMs();
         if (m_tFrameBegin >= 0)
             m_pending.vsync += float(m_tSyncBegin - std::exchange(m_tFrameBegin, -1.0));
     }, Qt::DirectConnection);
     connect(window, &QQuickWindow::afterSynchronizing, this, [this] {
-        if (m_spikePhase.load(std::memory_order_relaxed) >= 0) spin(PhaseSync);
         m_pending.sync += float(nowMs() - m_tSyncBegin);
     }, Qt::DirectConnection);
     connect(window, &QQuickWindow::beforeRendering, this, [this] { m_tRenderBegin = nowMs(); }, Qt::DirectConnection);
     connect(window, &QQuickWindow::afterRendering, this, [this] {
-        if (m_spikePhase.load(std::memory_order_relaxed) >= 0) spin(PhaseRender);
         m_tRenderEnd = nowMs();
         m_pending.render += float(m_tRenderEnd - m_tRenderBegin);
         // Valid between beginFrame and endFrame; reports the last frame the GPU has finished.
@@ -78,7 +83,6 @@ PerfMonitor::PerfMonitor(QQuickWindow* window, QQmlEngine* engine)
                 m_pending.gpu = float(cb->lastCompletedGpuTime() * 1000.0);
     }, Qt::DirectConnection);
     connect(window, &QQuickWindow::frameSwapped, this, [this] {
-        if (m_spikePhase.load(std::memory_order_relaxed) >= 0) spin(PhasePresent);
         const double now = nowMs();
         m_pending.present += float(now - m_tRenderEnd);
         if (m_tLastSwap >= 0)
@@ -267,19 +271,19 @@ void PerfMonitor::setFrozen(bool on)
 
 void PerfMonitor::injectSpike(int phase, float ms)
 {
-    m_spikeMs.store(ms, std::memory_order_relaxed);
-    m_spikePhase.store(phase >= 0 && phase < PhaseCount && ms > 0 ? phase : -1, std::memory_order_release);
-}
-
-void PerfMonitor::spin(int phase)
-{
-    int expected = phase;
-    if (!m_spikePhase.compare_exchange_strong(expected, -1, std::memory_order_acquire))
+    QObject::disconnect(m_spike); // a second injection replaces a pending one
+    if (phase < 0 || phase >= PhaseCount || ms <= 0)
         return;
-    QElapsedTimer t;
-    t.start();
-    const qint64 ns = qint64(double(m_spikeMs.load(std::memory_order_relaxed)) * 1e6);
-    while (t.nsecsElapsed() < ns) {
+    // The spin runs in the first slot connected after the monitor's own ones (Qt calls slots in connection order), so
+    // it lands between the timestamps the monitor took: the signal that opens a segment of the phase, or for the events
+    // the one that closes the frame (nothing is measured outside a frame).
+    const auto once = Qt::ConnectionType(Qt::DirectConnection | Qt::SingleShotConnection);
+    switch (phase) {
+    case PhaseEvents: m_spike = connect(m_window, &QQuickWindow::afterFrameEnd, this, [ms] { spin(ms); }, once); break;
+    case PhaseVsync: m_spike = connect(m_window, &QQuickWindow::beforeFrameBegin, this, [ms] { spin(ms); }, once); break;
+    case PhaseSync: m_spike = connect(m_window, &QQuickWindow::beforeSynchronizing, this, [ms] { spin(ms); }, once); break;
+    case PhaseRender: m_spike = connect(m_window, &QQuickWindow::beforeRendering, this, [ms] { spin(ms); }, once); break;
+    default: m_spike = connect(m_window, &QQuickWindow::afterRendering, this, [ms] { spin(ms); }, once); break;
     }
 }
 

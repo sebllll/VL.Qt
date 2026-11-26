@@ -26,15 +26,15 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="SspaOmGLhrawEO6gN1fucL" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="AEmFCai2xtCbDPiLuh5Pmg" Name="Size" Kind="InputPin" />
+            <Pin Id="AEmFCai2xtCbDPiLuh5Pmg" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="LyxXPy3ln3KOoHVK1TsZqW" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="MfwAKnS3VDuNGoVniaym8O" Name="Transform" Kind="InputPin" />
+            <Pin Id="MfwAKnS3VDuNGoVniaym8O" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="HRdtREIwknELxeYVBlwMnP" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="7XlXWrTQqmtFIpgL7j1qMy" Name="Channel" Kind="InputPin" />
             <Pin Id="ITnZLuEeP4qUrZdDQimW5x" Name="Output" Kind="OutputPin" />
             <Pin Id="ePEair5M3CQlbsktvBSLdQ" Name="Value" Kind="OutputPin" />
             <Pin Id="VeULIm728UrXSQdRpAEE4H" Name="Has Changed" Kind="OutputPin" />
-            <Pin Id="A69L537uB2RPeNwnq3l1sI" Name="Placeholder" Kind="InputPin" />
+            <Pin Id="A69L537uB2RPeNwnq3l1sI" Name="Placeholder" Kind="InputPin" IsHidden="true" />
             <Pin Id="CSz1O73w2HzMYwxy9bUU9A" Name="Editable" Kind="InputPin" IsHidden="true" />
             <Pin Id="VCCdZknTGx4LuKBqUHiBp2" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="F7FMIIdat8RNgzwumnf8Vb" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -88,9 +88,9 @@
               <Choice Kind="ProcessAppFlag" Name="Input (String)" />
             </p:NodeReference>
             <Pin Id="PyhNhvtD3C93ldTcun5mLg" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="oUQOdTG6JOT9fswxBZreJ2" Name="Size" Kind="InputPin" />
+            <Pin Id="oUQOdTG6JOT9fswxBZreJ2" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="DS9nqvJGGPGOZDcHNVNSeC" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="BT196QvWUPPNg7QHeUbvZe" Name="Transform" Kind="InputPin" />
+            <Pin Id="BT196QvWUPPNg7QHeUbvZe" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="HX9dSqeiS7sMIQluWGBMta" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="0t95qDsB8sqWa72I90KOqz" Name="Channel" Kind="InputPin" />
             <Pin Id="wSjojoZvU97RlN5xIPcjDw" Name="Placeholder" Kind="InputPin" />
@@ -132,12 +132,12 @@
               <Choice Kind="ProcessAppFlag" Name="Input (String)" />
             </p:NodeReference>
             <Pin Id="ygInYzkXYogOHisjvygb25" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="W7YXGeQ3aty6KTzRLL277i" Name="Size" Kind="InputPin" />
+            <Pin Id="W7YXGeQ3aty6KTzRLL277i" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="Re0QmaXhiRBN2hxGmybwWN" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Een3cKk2dQhLx5bvqsWvaq" Name="Transform" Kind="InputPin" />
+            <Pin Id="Een3cKk2dQhLx5bvqsWvaq" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="SY34yDqX6uzL6jkMNCt0MV" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="KeMm5xuAmiuiuhS0x4qoYz" Name="Channel" Kind="InputPin" />
-            <Pin Id="EikPghaNlImN03hMsJKX8A" Name="Placeholder" Kind="InputPin" />
+            <Pin Id="EikPghaNlImN03hMsJKX8A" Name="Placeholder" Kind="InputPin" IsHidden="true" />
             <Pin Id="59F4yP4RMpwJ6UHMofOMjD" Name="Editable" Kind="InputPin" />
             <Pin Id="8TpKcNtLl1VQFJUvskKhMq" Name="Output" Kind="OutputPin" />
             <Pin Id="TSpIyDThQsWMBJSbc7SEoL" Name="Enabled" Kind="InputPin" IsHidden="true" />
@@ -207,10 +207,10 @@
             <Pin Id="TDD82h3dCV6MVU0fX89V3J" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="GtczGxA67BOOqiHX3nXehY" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="pHFywuNiujZZSY28pvH9rn" Name="Error" Kind="OutputPin" />
-            <Pin Id="EO0C5UIxRumN4kSQkaOT8d" Name="Space" Kind="InputPin" />
-            <Pin Id="VzRjZBDRG9eQPX0IT3adMP" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="EO0C5UIxRumN4kSQkaOT8d" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VzRjZBDRG9eQPX0IT3adMP" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="GqoFHrw8xCJOZZZonnW9nm" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="QsDDcKz2hUzMeOkqztIqRR" Name="Enabled" Kind="InputPin" />
+            <Pin Id="QsDDcKz2hUzMeOkqztIqRR" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="9dpsduUIURe6quoPz6GMs0" Name="Title" Kind="InputPin" DefaultValue="HowTo Use Input (String)" />
             <Pin Id="GuesAIkg6VKOXF57GYFBvw" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="MuNXhwBNFsoLgwvAZ4LDuh" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
@@ -236,7 +236,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="qTVlRuzTzIyLcpV733uB7k" Bounds="85,1009,830,110" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A plain value or an IOBox on Channel is the start value and sets the text from the patch.&#xD;&#xA;- The typed text is committed on Enter or when the field loses focus, and only when it changed.&#xD;&#xA;- Enter keeps the focus; a click or tap anywhere else in the window commits and leaves the field, Esc discards the edit and leaves it.&#xD;&#xA;- Setting the channel from the patch while the user is typing replaces what was typed.&#xD;&#xA;- Labels come from a Labeled element around each text field (here a Column stacks the Labeled fields).">
+          <Pad Id="qTVlRuzTzIyLcpV733uB7k" Bounds="85,1009,830,134" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A plain value or an IOBox on Channel is the start value and sets the text from the patch.&#xD;&#xA;- The typed text is committed on Enter or when the field loses focus, and only when it changed.&#xD;&#xA;- Enter keeps the focus; a click or tap anywhere else in the window commits and leaves the field, Esc discards the edit and leaves it.&#xD;&#xA;- Setting the channel from the patch while the user is typing replaces what was typed.&#xD;&#xA;- Labels come from a Labeled element around each text field (here a Column stacks the Labeled fields).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -253,10 +253,10 @@
             <Pin Id="KDlGqFVEbZXSpDDEaaBC1Y" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="gTL59EwbsjsIABe02aXUHV" Name="Input" Kind="InputPin" />
             <Pin Id="kWbB93ftXhvyphk4u7d8yk" Name="Text" Kind="InputPin" />
-            <Pin Id="MNaYxOenGL01xFaMz7zKS4" Name="Label Width" Kind="InputPin" />
-            <Pin Id="hkQAZocpWAXj0Upg63F97v" Name="Label Position" Kind="InputPin" />
+            <Pin Id="MNaYxOenGL01xFaMz7zKS4" Name="Label Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="hkQAZocpWAXj0Upg63F97v" Name="Label Position" Kind="InputPin" IsHidden="true" />
             <Pin Id="i0IXvI20f7D0EhXPxIbyrN" Name="Spacing" Kind="InputPin" IsHidden="true" />
-            <Pin Id="BPQT2zxRrCKMIu5feDFcoV" Name="Transform" Kind="InputPin" />
+            <Pin Id="BPQT2zxRrCKMIu5feDFcoV" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="EcrPQ1QvmPXSOaTFbgwKn6" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="TDFG4SseTft6VFanKtCwvU" Name="Label Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="5EbrGN6bxi2LUbv1yFVzoH" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -279,10 +279,10 @@
             <Pin Id="l7W73KFYiVQ1r4ax0KNfxs" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="mWxeextGIiFWQPdJfF34lL" Name="Input" Kind="InputPin" />
             <Pin Id="rtXawIsCKZVdhy6Nz9nCEq" Name="Text" Kind="InputPin" />
-            <Pin Id="cUGhAzMW9qWQTvC4ZQs7ry" Name="Label Width" Kind="InputPin" />
-            <Pin Id="rQjmZUfwCIAXtD7n6BkzpK" Name="Label Position" Kind="InputPin" />
+            <Pin Id="cUGhAzMW9qWQTvC4ZQs7ry" Name="Label Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="rQjmZUfwCIAXtD7n6BkzpK" Name="Label Position" Kind="InputPin" IsHidden="true" />
             <Pin Id="fdYtb6S16KlhElm31DZncV" Name="Spacing" Kind="InputPin" IsHidden="true" />
-            <Pin Id="bMpatuEPbcZXUVHK9oUEza" Name="Transform" Kind="InputPin" />
+            <Pin Id="bMpatuEPbcZXUVHK9oUEza" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="mRnkYAhVW3Y06ET9C16BDX" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="7vtFN6AkPoENaHwEJyXNq3" Name="Label Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="W7tcfFENY3CghwCM1WgtbW" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -305,10 +305,10 @@
             <Pin Id="Sg45V1MOgRoPqlyhNpp8vt" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="tFDf0YNgbZIWFq6JskkW9F" Name="Input" Kind="InputPin" />
             <Pin Id="Z4JBvpZNGqRmfGbKrM4TMC" Name="Text" Kind="InputPin" />
-            <Pin Id="1UDPPkYK56bs8bFZJLavMq" Name="Label Width" Kind="InputPin" />
-            <Pin Id="LW0BRSYATxeT2ckgBp08On" Name="Label Position" Kind="InputPin" />
+            <Pin Id="1UDPPkYK56bs8bFZJLavMq" Name="Label Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LW0BRSYATxeT2ckgBp08On" Name="Label Position" Kind="InputPin" IsHidden="true" />
             <Pin Id="5tsCPT2sYs7vCbC8JPTx8L" Name="Spacing" Kind="InputPin" IsHidden="true" />
-            <Pin Id="yrAbaOsxKQdlh52wGyKB97" Name="Transform" Kind="InputPin" />
+            <Pin Id="yrAbaOsxKQdlh52wGyKB97" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="rbljSuSRrF0mcuBQZCEfIW" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="s90o3P7nRUestu1luill4y" Name="Label Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="6IiyMsIgdZt8iot3OWtPJH" Name="Opacity" Kind="InputPin" IsHidden="true" />

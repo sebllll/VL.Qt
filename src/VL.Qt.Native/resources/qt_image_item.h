@@ -1,22 +1,17 @@
-/* qt_image_item.h - the Image element (images package 04): draws an image resource (image_resource.h).
+/* qt_image_item.h - the Image element: draws an image resource (image_resource.h).
  *
  * PROP_IMAGE sets the resource id (0 = no image). The item takes an element reference (res::acquire) for the id it
- * shows and for the id it waits for, and drops it on a change or in the destructor. Until the new resource is Ready
- * the old image stays (no empty frame); a replacement of the same id shows up the same way (res::changedThisFrame).
+ * shows and for the id it waits for, and drops it on a change or in the destructor; until the new resource is Ready the
+ * old image stays. Textures come from resources/image_texture_cache.h, one per window, QRhi and content.
+ * Threads: the item lives on the main thread; updatePaintNode and invalidateSceneGraph run on the window's render thread
+ * (the main thread waits in sync). A texture belongs to the thread that made it: the item lets it go in
+ * updatePaintNode and invalidateSceneGraph, from the main thread through render_thread::retire, always before the
+ * window's QRhi. Device lost: the old image is not drawn until its replacement is Ready.
+ * Handles, wrappers and the draw rule: docs/design/resources.md, "Images".
  *
- * Textures: from the cache of resources/image_texture_cache.h, one per window, QRhi and content.
- * Threads: the item lives on the main thread. updatePaintNode and invalidateSceneGraph run on the window's render thread
- * (the main thread for on-screen windows and offscreen scenes without one), updatePaintNode while the main thread waits
- * (sync), so it may read the device and the window as the main thread would. A texture belongs to the thread that made
- * it: the item lets it go in updatePaintNode and invalidateSceneGraph directly, from the main thread (releaseResources,
- * destructor) through render_thread::retire, always before the window's QRhi. A texture freed on another thread logs
- * a warning.
- *
- * Device lost: the old image is not drawn until its replacement is Ready (image_texture_cache.h).
- *
- * Fill modes of the protocol (vlqt_fill_mode: Stretch, Fit, Crop, Tile; centered like QML Image); Tile makes one image node
- * per tile, at most kMaxTiles. smooth (QQuickItem) picks linear or nearest filtering, linear
- * also uses the mipmaps of a resource loaded with VLQT_IMAGE_LOAD_MIPMAPS. Implicit size = image size.
+ * Fill modes (vlqt_fill_mode: Stretch, Fit, Crop, Tile; centered like QML Image); Tile makes one image node per tile, at
+ * most kMaxTiles. smooth (QQuickItem) picks linear or nearest filtering, linear also uses the mipmaps of a resource
+ * loaded with VLQT_IMAGE_LOAD_MIPMAPS. Implicit size = image size.
  */
 #pragma once
 

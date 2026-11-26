@@ -36,7 +36,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="180,255,45,19" Id="HWIxyUuPFV9QPv0vjkOnfu">
+          <Node Bounds="190,240,45,19" Id="HWIxyUuPFV9QPv0vjkOnfu">
             <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LFO" />
@@ -89,6 +89,7 @@
             <Pin Id="HAvRnbVnf06MnOQoIwGnUa" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="PnL2L5286ReLkQqSzD2MVH" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="NcuftqZji0oLIJjNAi06lY" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="IJFrPzDigDQMTuPSruUIgz" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="315,300,80,19" Id="Qv6UstCERTHNU4e5L7m4QS">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="VL.CoreLib.vl">
@@ -128,6 +129,7 @@
             <Pin Id="EhJRAdOGNziP1W48xUcIYQ" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="U4rPut6RqExMvn0eMnR27A" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="MmeeedS7CZRNHA33xkOh2F" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="GaxNB6S7chZMoVCVSpp7iy" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="HdyvGqYp73SMKRfn9NDmPs" Comment="Text" Bounds="532,316,120,19" ShowValueBox="true" isIOBox="true" Value="Qt over Stride">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
@@ -147,11 +149,11 @@
             <Pin Id="HHxtpnCcMYiN0xOhlkN8uZ" Name="Transform" Kind="InputPin" />
             <Pin Id="JXRkTGwOFnxNODyl77jPB1" Name="Anchor" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="NGoWdRVPNAUPxVc8iOLxcJ" Name="Text" Kind="InputPin" />
-            <Pin Id="Ia6fWK0lmgQLFKrGZuzfsO" Name="Font Family" Kind="InputPin" />
+            <Pin Id="Ia6fWK0lmgQLFKrGZuzfsO" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="VeIoHSoOQOaLoY8hVZUTmm" Name="Font Size" Kind="InputPin" DefaultValue="0.8" />
             <Pin Id="T6n9pOTiXLjQJYloIoizhe" Name="Weight" Kind="InputPin" IsHidden="true" />
             <Pin Id="J7zFodBtBDHOgoTLbquXiA" Name="Italic" Kind="InputPin" IsHidden="true" />
-            <Pin Id="O3n3m77SBvpOwrpyTu4aMS" Name="Color" Kind="InputPin" />
+            <Pin Id="O3n3m77SBvpOwrpyTu4aMS" Name="Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="NDhYk7retySNMhzW7WjI6w" Name="Output" Kind="OutputPin" />
             <Pin Id="HgZLdYOQTxDLm47ySBmYeF" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="VOq72KEPrhQMxd3u7j80VD" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" />
@@ -167,6 +169,7 @@
             <Pin Id="Lzyi7XgksHfLc0gAjljZwk" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="HyfoVFOTtbaOdpfi1NRW2N" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="LbtLDmnVoJqPAFwToBSOHQ" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="IHUjGJq4nUVNYkM4P5LUec" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="EBA5wtMPOQJOYX1onKFeAg" Bounds="253,457,300,49" ShowValueBox="true" isIOBox="true" Value="Qt scene in the texture: 12.8 x 7.2 units (1280 x 720 DIP), origin top left. The LFO turns the orange square.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
@@ -190,8 +193,8 @@
             <Pin Id="CTDAK7SrOZaMbLGYChcwy9" Name="Input 2" Kind="InputPin" />
             <Pin Id="QFkfEq7n5bdNkuU3gfGYqa" Name="Input 3" Kind="InputPin" />
             <Pin Id="A7PmCbuWUwGObwG472D4Ln" Name="Output" Kind="OutputPin" />
-            <Pin Id="IsavM9eSH5wL0J8Eqz7tcI" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="HGNxK0q4qeBMqOVzbG4Cyd" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="IsavM9eSH5wL0J8Eqz7tcI" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="PCN0X73h54OQLdCa4yEfLW" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="DGg5CG0sKEHMGrvrrsZyzw" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="DyZ5DBMA87wPnoSf2A8flb" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -202,6 +205,7 @@
             <Pin Id="P0CzfeBxCyVLmzVhURdxek" Name="Style" Kind="InputPin" IsHidden="true" />
             <Pin Id="RF85XAaKil3L2zQeekARaN" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="RcgwoNyBrZSPH0fPivx0Ix" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="IbchtmvLEXGN50mH3AKSjY" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="TFUiVZFBLPUQByVakpyK3U" Comment="Size" Bounds="142,467,35,28" ShowValueBox="true" isIOBox="true" Value="1280, 720">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
@@ -218,11 +222,15 @@
             <Pin Id="Mrxce3qu9vcNUFU44ykYFe" Name="Input" Kind="InputPin" />
             <Pin Id="JVdKP2E3beVNASIzQt7U57" Name="Size" Kind="InputPin" />
             <Pin Id="JYEVVSBBfVtOhUubrvL1Hd" Name="Output" Kind="OutputPin" />
-            <Pin Id="IVbjIAjK3lTN0up7xnyIb5" Name="Space" Kind="InputPin" />
-            <Pin Id="K6dSifg3psRPkUQV335xYg" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="Tg3lJX39wdVNrRvCcloNbQ" Name="Format" Kind="InputPin" />
-            <Pin Id="RJeuUd2uF1JQMT8dhmDoIo" Name="Enabled" Kind="InputPin" />
+            <Pin Id="IVbjIAjK3lTN0up7xnyIb5" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="K6dSifg3psRPkUQV335xYg" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="V3ZIlGCGmymOpCRz2G7k7j" Name="Clear" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Tg3lJX39wdVNrRvCcloNbQ" Name="Format" Kind="InputPin" IsHidden="true" />
+            <Pin Id="RJeuUd2uF1JQMT8dhmDoIo" Name="Enabled" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DVdqCpymJcSQZukl3oAzir" Name="Input Notifications" Kind="InputPin" IsHidden="true" />
             <Pin Id="Sdc9UBsZgrEM0AELfn5HHM" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="SaElUkHuloBPkK9Mi1F47t" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
+            <Pin Id="N6r7YdsnvdYMCAejodinpF" Name="Render Threads" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="180,600,127,19" Id="PUbVpXexkzkLF1x7c9u6Ff">
             <p:NodeReference LastCategoryFullName="Stride.API.Graphics.BlendStateDescription" LastDependency="VL.Stride.vl">
@@ -392,7 +400,7 @@
             <Pin Id="GkTAIKj85JoOZN6HphxBl0" Name="Back Buffer" Kind="OutputPin" IsHidden="true" />
             <Pin Id="RJy5ie1FajBLoF51g5Tqe2" Name="Depth Buffer" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="NjtJKKvuC5xOvcQVd2bXL8" Bounds="85,870,840,180" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The texture is premultiplied alpha. Draw it with AlphaBlendPremultiplied (AlphaBlend expects straight alpha and darkens half-transparent parts). Where straight alpha is expected, unpremultiply it first (RGB divided by alpha), otherwise the edges get dark fringes.&#xD;&#xA;- Space: only DIPTopLeft for now, 1 unit = 100 DIP, origin at the top left corner of the texture.&#xD;&#xA;- Windows only (Direct3D 11). QtTexture is Experimental: pins and behavior may still change.">
+          <Pad Id="NjtJKKvuC5xOvcQVd2bXL8" Bounds="85,870,840,220" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The texture is premultiplied alpha. Draw it with AlphaBlendPremultiplied (AlphaBlend expects straight alpha and darkens half-transparent parts). Where straight alpha is expected, unpremultiply it first (RGB divided by alpha), otherwise the edges get dark fringes.&#xD;&#xA;- Space: only DIPTopLeft for now, 1 unit = 100 DIP, origin at the top left corner of the texture.&#xD;&#xA;- Windows only (Direct3D 11). QtTexture is Experimental: pins and behavior may still change.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

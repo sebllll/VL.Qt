@@ -8,7 +8,7 @@ namespace VL.Qt.Audio.Tests
     /// <summary>
     /// The version of VL.Audio is written in <c>Directory.Build.props</c> (<c>VlAudioVersion</c>, used by the NuGet
     /// dependency of VL.Qt.Audio) and in <c>VL.Qt.Audio/VL.Qt.Audio.vl</c> (<c>NugetDependency</c>, which vvvv reads): an
-    /// update of one must not leave the other behind (COMP-15).
+    /// update of one must not leave the other behind.
     /// </summary>
     [TestFixture]
     public sealed class VlAudioVersionTests

@@ -12,7 +12,8 @@ using VL.Qt;
 
 /// <summary>
 /// Manual scenario (T0b), explicit NUnit test (category tearing). Its flags come from the run parameter TearingArgs:
-/// <c>[--windows N] [--interval 0|1] [--fullscreen] [--pump-hz N] [--seconds N]</c>. N windows with a vertical bar sweeping fast across the whole width (tearing shows as a broken
+/// <c>[--windows N] [--interval 0|1] [--fullscreen] [--pump-hz N] [--seconds N]</c>. N windows with a vertical bar sweeping fast across the
+/// whole width (tearing shows as a broken
 /// bar), pumped like the vvvv main loop. Once per second a line per window (fps = swaps/s, present and pump p50/p99 from
 /// vlqt_perf_sample, refresh rate of the screen) and one for the whole host pump; at the end a TEARING SUMMARY line per
 /// window over the run without the first second (warm-up). Plausibility warnings: fps ~ 0, refresh n/a, locked session.
@@ -27,7 +28,7 @@ public static class TearingTest
     private const float SweepSeconds = 0.6f; // one way across the window, ~3000 px/s on 1920 px: a clear tear line
 
     /// <summary>Manual swap/tearing measurement; the TEARING lines are in the test output.</summary>
-    [Test, Explicit("manual measurement (#90)"), Category("tearing")]
+    [Test, Explicit("manual measurement"), Category("tearing")]
     public static void Tearing() => Scenario.Run(s => s.Check(Run(SmokeParameters.TearingArgs) == 0, "tearing run"));
 
     private static int Run(string[] args)

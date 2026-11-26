@@ -20,7 +20,8 @@ namespace VL.Qt.Nodes
         /// <summary>Returns the path with a rectangle whose corners are quarter ellipses.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
         /// <param name="rectangle">The rectangle in units.</param>
-        /// <param name="radius">The horizontal (X) and vertical (Y) radius of the corners in units, scaled down together if they do not fit (a very large radius gives semicircular ends); zero or less gives a plain rectangle.</param>
+        /// <param name="radius">The horizontal (X) and vertical (Y) radius of the corners in units, scaled down together if they do not fit
+        /// (a very large radius gives semicircular ends); zero or less gives a plain rectangle.</param>
         /// <param name="direction">The direction in which the contour runs.</param>
         /// <returns>The path with the contour added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]

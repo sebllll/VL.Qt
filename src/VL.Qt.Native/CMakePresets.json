@@ -3,7 +3,7 @@
   "configurePresets": [
     {
       "name": "dev-win-x64",
-      "displayName": "Dev win-x64 (Qt from $VLQT_QT_DIR, see docs/development.md)",
+      "displayName": "Dev win-x64 (Qt from $VLQT_QT_DIR, see docs/contributing/development.md)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/../../build/win-x64",
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
@@ -15,7 +15,7 @@
     },
     {
       "name": "dev-win-arm64",
-      "displayName": "Dev win-arm64 (Qt from $VLQT_QT_DIR, see docs/development.md)",
+      "displayName": "Dev win-arm64 (Qt from $VLQT_QT_DIR, see docs/contributing/development.md)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/../../build/win-arm64",
       "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },

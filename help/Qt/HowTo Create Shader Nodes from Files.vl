@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="AUNpDXtMTQG7seDJlWy2SC" Bounds="85,819,830,350" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Subfolders of qtshaders count, too. The node is named like the file: RGBSplit.frag gives the node RGBSplit. A .vert with the same name belongs to it.&#xD;&#xA;- @summary in the file head is the help text of the node. An extra sampler2D becomes an image pin.&#xD;&#xA;- Every other uniform in the uniform block becomes a pin, the camel case name split into words (colorA gives Color A), in the order of the file. Supported: float, vec2, vec3, vec4, int, bool, mat4.&#xD;&#xA;- Annotations are // comments above the uniform or at the end of its line: @min and @max are limits of the pad only (nothing is clamped), @color turns a vec4 into a color (components 0..1), @summary is the help text of the pin.&#xD;&#xA;- Blending, Size, Transform and the hidden pins work like on ShaderEffect.&#xD;&#xA;- The nodes appear when the qtshaders folder exists next to the saved patch. New, renamed or deleted files update the node browser while vvvv runs.&#xD;&#xA;- Save the .frag and the node updates. Pins with the same name keep their links and values. A shader with a compile error shows the error with its line number at the node; the pins of the last valid state stay.&#xD;&#xA;- Unknown annotations and unsupported uniform types (uint, ivec, mat3, arrays) show as warnings at the node, the pin is skipped or takes its default.&#xD;&#xA;- The shader is full Qt GLSL 440, like in the ShaderEffect node (see HowTo Write a ShaderEffect): the uniform block starts with qt_Matrix and qt_Opacity, the output is premultiplied. qtshaders/RGBSplit.frag and Stripes.frag are commented as templates, open them in an editor next to this patch.&#xD;&#xA;- Two .frag files with the same name in one qtshaders tree give an error at both nodes. A .vert without a .frag makes no node.&#xD;&#xA;- A filter (with sampler2D source) also appears as a node in Qt.Effects, same name, with Output and Error: it chains like Blur or DropShadow on the Effect pin of an element. @padding in the file head (DIP) lets it draw beyond the element. See HowTo Chain Shader Effects.">
+          <Pad Id="AUNpDXtMTQG7seDJlWy2SC" Bounds="85,819,830,427" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Subfolders of qtshaders count, too. The node is named like the file: RGBSplit.frag gives the node RGBSplit. A .vert with the same name belongs to it.&#xD;&#xA;- @summary in the file head is the help text of the node. An extra sampler2D becomes an image pin.&#xD;&#xA;- Every other uniform in the uniform block becomes a pin, the camel case name split into words (colorA gives Color A), in the order of the file. Supported: float, vec2, vec3, vec4, int, bool, mat4.&#xD;&#xA;- Annotations are // comments above the uniform or at the end of its line: @min and @max are limits of the pad only (nothing is clamped), @color turns a vec4 into a color (components 0..1), @summary is the help text of the pin.&#xD;&#xA;- Blending, Size, Transform and the hidden pins work like on ShaderEffect.&#xD;&#xA;- The nodes appear when the qtshaders folder exists next to the saved patch. New, renamed or deleted files update the node browser while vvvv runs.&#xD;&#xA;- Save the .frag and the node updates. Pins with the same name keep their links and values. A shader with a compile error shows the error with its line number at the node; the pins of the last valid state stay.&#xD;&#xA;- Unknown annotations and unsupported uniform types (uint, ivec, mat3, arrays) show as warnings at the node, the pin is skipped or takes its default.&#xD;&#xA;- The shader is full Qt GLSL 440, like in the ShaderEffect node (see HowTo Write a ShaderEffect): the uniform block starts with qt_Matrix and qt_Opacity, the output is premultiplied. qtshaders/RGBSplit.frag and Stripes.frag are commented as templates, open them in an editor next to this patch.&#xD;&#xA;- Two .frag files with the same name in one qtshaders tree give an error at both nodes. A .vert without a .frag makes no node.&#xD;&#xA;- A filter (with sampler2D source) also appears as a node in Qt.Effects, same name, with Output and Error: it chains like Blur or DropShadow on the Effect pin of an element. @padding in the file head (DIP) lets it draw beyond the element. See HowTo Chain Shader Effects.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,7 +43,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="ljKxMTIHhjGvhBKa6lMbWK" Bounds="88,272,480,65" ShowValueBox="true" isIOBox="true" Value="1  RGBSplit.frag is a filter: its sampler2D source is the Input pin. Amount has @min/@max, Direction a @default, Tint is a @color, Scanlines a bool.">
+          <Pad Id="ljKxMTIHhjGvhBKa6lMbWK" Bounds="88,272,480,65" ShowValueBox="true" isIOBox="true" Value="1  RGBSplit.frag is a filter: its sampler2D source is the Input pin. Amount (DIP) has @min/@max, Direction a @default, Tint is a @color, Scanlines a bool.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -71,27 +71,27 @@
             </p:NodeReference>
             <Pin Id="vWU1ThNxTqF7f83LHZHxEI" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="cdvsg1An7AGUjDhLa87EzT" Name="Size" Kind="InputPin" DefaultValue="4, 1.2" />
-            <Pin Id="WBw90G8wGvFecMP4QmMFLE" Name="Transform" Kind="InputPin" />
+            <Pin Id="WBw90G8wGvFecMP4QmMFLE" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="JbzEeKi2iuGrlX9EuaKuiI" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="e05WrJcT49FTKDnF0CkIIK" Name="Text" Kind="InputPin" />
-            <Pin Id="iNjTOLarAuGzFsQtkRdWSV" Name="Font Family" Kind="InputPin" />
+            <Pin Id="iNjTOLarAuGzFsQtkRdWSV" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="IUlzQqN78vFoLt1QRQqZfF" Name="Font Size" Kind="InputPin" DefaultValue="0.9" />
             <Pin Id="ZlPzVIHCwpGGFGlwxaGG8N" Name="Weight" Kind="InputPin" DefaultValue="700" />
-            <Pin Id="U8k2wfsHQkGFM1xwvRgY7A" Name="Italic" Kind="InputPin" />
+            <Pin Id="U8k2wfsHQkGFM1xwvRgY7A" Name="Italic" Kind="InputPin" IsHidden="true" />
             <Pin Id="XWBxp99HghFJ2Zno7Nk7XR" Name="Color" Kind="InputPin" DefaultValue="1, 1, 1, 1" />
             <Pin Id="m03uyiJtbxFjNmCcVdZLtE" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="dBe3J7IMViFpcynhkY3edB" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" />
-            <Pin Id="AXqbtOxhkfG0L9mnOTXuzS" Name="Wrap" Kind="InputPin" />
+            <Pin Id="AXqbtOxhkfG0L9mnOTXuzS" Name="Wrap" Kind="InputPin" IsHidden="true" />
             <Pin Id="2jGCdWmn6GGSc7RBXT3IGI" Name="Elide" Kind="InputPin" IsHidden="true" />
             <Pin Id="A3nLrxaEJOGQsnjBcL8CJF" Name="Line Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="CJVM7R2YlXGieoARbsu1zV" Name="Letter Spacing" Kind="InputPin" IsHidden="true" />
             <Pin Id="mWsKnGrzOxG9E2Z9tPnCWG" Name="Autofit" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Gd0gY10zumGHtd1SrJUK1T" Name="Opacity" Kind="InputPin" />
+            <Pin Id="Gd0gY10zumGHtd1SrJUK1T" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="TsuTZn6iIzF8Pbul8ODRuJ" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="rTyruAWz6mFbGewlsbplaQ" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="vbj8QeJ748FOoVi3Vlr88F" Name="Interaction" Kind="InputPin" />
+            <Pin Id="vbj8QeJ748FOoVi3Vlr88F" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="Qx2azIgN51F9hwMsikBRgO" Name="Output" Kind="OutputPin" />
-            <Pin Id="19SmwQKO7xFjSMX7JcE1iP" Name="Effect" Kind="InputPin" />
+            <Pin Id="19SmwQKO7xFjSMX7JcE1iP" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="PzXAbh1x6aGjCmfcUrv9eN" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="CGPnUIxxVZGgeIAuwbFUbS" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
@@ -110,11 +110,11 @@
             <Pin Id="QRKKQ8MKoXqLVw2UuKIwYh" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="qTlSdFlZdqFPOybCTKoPAH" Name="Amount" Kind="InputPin" />
             <Pin Id="SvsKUw6ZcSG36SbIrhnKMF" Name="Direction" Kind="InputPin" DefaultValue="1, 0.25" />
-            <Pin Id="OswCGVtmWlF9MBDGeiNhoN" Name="Tint" Kind="InputPin" />
+            <Pin Id="OswCGVtmWlF9MBDGeiNhoN" Name="Tint" Kind="InputPin" IsHidden="true" />
             <Pin Id="a812Mq1NE0Gn0qtYrgpgkS" Name="Scanlines" Kind="InputPin" />
-            <Pin Id="ttczhU4B9CGzNJdi4WnEZA" Name="Blending" Kind="InputPin" />
+            <Pin Id="ttczhU4B9CGzNJdi4WnEZA" Name="Blending" Kind="InputPin" IsHidden="true" />
             <Pin Id="QqjeRTupO4F5yyLzFnFRAM" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
-            <Pin Id="3LonJcDms9F01lc1g8PkxI" Name="Size" Kind="InputPin" />
+            <Pin Id="3LonJcDms9F01lc1g8PkxI" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="6jwnzhdkm0FBSsciuUkh3J" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="iOVVZuJN1nFTNcj0iOBW4K" Name="Transform" Kind="InputPin" />
             <Pin Id="K1PoI2KzxaGcB9GAdzLbfM" Name="Anchor" Kind="InputPin" IsHidden="true" />
@@ -147,7 +147,7 @@
               <Choice Kind="TypeFlag" Name="Boolean" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="O6pTaB0eWtFi9UeXcGU7OT" Comment="Amount" Bounds="122,447,35,15" ShowValueBox="true" isIOBox="true" Value="0.03">
+          <Pad Id="O6pTaB0eWtFi9UeXcGU7OT" Comment="Amount" Bounds="122,447,35,15" ShowValueBox="true" isIOBox="true" Value="12">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
@@ -245,10 +245,10 @@
             <Pin Id="sf3uhavatVGd7GU4vTHd1P" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="uaRspw4bmgGWFqa4hWtQ5T" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="RJWNmfyaS9FUJtwPTIpL6N" Name="Input" Kind="InputPin" />
-            <Pin Id="UkrLlW6Oy5Fw7hJlap5aOS" Name="Space" Kind="InputPin" />
+            <Pin Id="UkrLlW6Oy5Fw7hJlap5aOS" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="cRr39yZgjmGqJm7DvDRxsC" Name="Clear Color" Kind="InputPin" />
             <Pin Id="TG1F1BnfDAePveQ5VMpXCZ" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="dvvS4qbWPCG9vnBr8HTEES" Name="Enabled" Kind="InputPin" />
+            <Pin Id="dvvS4qbWPCG9vnBr8HTEES" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="hUjOKnYUPiGdJtsXG7511P" Name="Title" Kind="InputPin" />
             <Pin Id="Knn5LdPAJgGkgrm797z0nN" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="seCwrmNJATGU8ma8r5JkAP" Name="Perf" Kind="OutputPin" IsHidden="true" />

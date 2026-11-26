@@ -57,12 +57,14 @@ namespace VL.Qt.Interop
 
         /// <summary>
         /// Copies and consumes up to dst.Length / channels frames of one segment (interleaved). Returns the frames copied,
-        /// <see cref="Result.BadArgument"/> (channels mismatch, not initialised) or <see cref="Result.UnknownId"/> (released id). An empty dst only fills the state.
+        /// <see cref="Result.BadArgument"/> (channels mismatch, not initialised) or <see cref="Result.UnknownId"/> (released id). An empty
+        /// dst only fills the state.
         /// </summary>
         public static int AudioTapRead(ulong id, Span<float> dst, int channels, out vlqt_audio_tap_state state)
             => vlqt_audio_tap_read(id, ref MemoryMarshal.GetReference(dst), channels > 0 ? dst.Length / channels : 0, channels, out state);
 
-        /// <summary>Drops up to maxFrames frames of one segment without copying (catching up). Returns the frames dropped, <see cref="Result.BadArgument"/> or <see cref="Result.UnknownId"/>.</summary>
+        /// <summary>Drops up to maxFrames frames of one segment without copying (catching up). Returns the frames dropped,
+        /// <see cref="Result.BadArgument"/> or <see cref="Result.UnknownId"/>.</summary>
         public static int AudioTapDrop(ulong id, int maxFrames, int channels, out vlqt_audio_tap_state state)
             => vlqt_audio_tap_read_drop(id, IntPtr.Zero, maxFrames, channels, out state);
     }

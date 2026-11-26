@@ -27,9 +27,8 @@ namespace VL.Qt.Nodes
         public ImageNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<Image, Props>(nodeContext, s_create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal ImageNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<Image, Props>(addWarning, s_create);
+        internal ImageNode(NodeErrors messages)
+            => _node = new ElementNodeCore<Image, Props>(messages, s_create);
 
         private static readonly Func<CommonInputs, Props, FeedbackSlot, Image> s_create = static (c, p, slot) => new Image(c, slot)
             {
@@ -43,7 +42,8 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='size']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
-        /// <param name="image">The image to draw (LoadImage, LoadImage (Async), ToQtImage). Nothing = empty element. While a new image loads, the previous one stays visible.</param>
+        /// <param name="image">The image to draw (LoadImage, LoadImage (Async), ToQtImage). Nothing = empty element. While a new image
+        /// loads, the previous one stays visible.</param>
         /// <param name="fillMode">How the image fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill), Tile.</param>
         /// <param name="smooth">Smooth (bilinear) scaling.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>

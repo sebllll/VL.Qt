@@ -6,7 +6,8 @@ using VL.Qt.Styles;
 
 namespace VL.Qt.Nodes
 {
-    /// <summary>Sets the shape of the indicator (slider handle, check mark, switch knob, SpinBox -/+) for the given states. Unconnected pins stay unset (inherited). Color: SetColors or SetColor.</summary>
+    /// <summary>Sets the shape of the indicator (slider handle, check mark, switch knob, SpinBox -/+) for the given states. Unconnected
+    /// pins stay unset (inherited). Color: SetColors or SetColor.</summary>
     [ProcessNode(Name = "SetIndicator", Category = "Qt.Style.Indicator")]
     public sealed class SetIndicatorNode
     {

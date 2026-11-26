@@ -7,7 +7,7 @@ using VL.Qt.Interop;
 namespace VL.Qt
 {
     /// <summary>
-    /// The test exports of QtNative for the SmokeTest, the Probe and the unit tests: <c>vlqt_test_*</c> of vlqt.dll
+    /// The test exports of QtNative for the SmokeTest and the unit tests: <c>vlqt_test_*</c> of vlqt.dll
     /// (vlqt_test.h) and of vlqt_testkit.dll (testkit/testkit.h, Windows only). Linked into the test projects, never part of
     /// the library. The unit test ApiDriftTests compares the imports with the headers.
     /// </summary>
@@ -44,13 +44,15 @@ namespace VL.Qt
         /// <summary>Synthetic mouse event (<see cref="Wire.TestProtocol.Mouse"/>), x/y in window DIP.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Native.Result vlqt_test_send_mouse(SceneHandle w, int type, float x, float y);
-        /// <summary>Synthetic touch point event (<see cref="Wire.TestProtocol.Touch"/>) for point id, x/y in window DIP; <see cref="Native.Result.BadArgument"/> = unknown type or id state.</summary>
+        /// <summary>Synthetic touch point event (<see cref="Wire.TestProtocol.Touch"/>) for point id, x/y in window DIP;
+        /// <see cref="Native.Result.BadArgument"/> = unknown type or id state.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Native.Result vlqt_test_send_touch(SceneHandle w, int type, int id, float x, float y);
         /// <summary>Mouse event (Move, Press, Release) queued like platform input, delivered later.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Native.Result vlqt_test_queue_mouse(SceneHandle w, int type, float x, float y);
-        /// <summary>Touch point event queued like platform input, delivered later; <see cref="Native.Result.BadArgument"/> = unknown type or id state.</summary>
+        /// <summary>Touch point event queued like platform input, delivered later; <see cref="Native.Result.BadArgument"/> = unknown type
+        /// or id state.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Native.Result vlqt_test_queue_touch(SceneHandle w, int type, int id, float x, float y);
         /// <summary>Synthetic wheel event at x/y (window DIP), angleDelta in eighths of a degree (120 = one notch).</summary>
@@ -65,7 +67,8 @@ namespace VL.Qt
 
         // --- Probes (vlqt_test.h) ---
 
-        /// <summary>Grabs the window's frame into a PNG file; <see cref="Native.Result.NoData"/> = no image, <see cref="Native.Result.Io"/> = not saved.</summary>
+        /// <summary>Grabs the window's frame into a PNG file; <see cref="Native.Result.NoData"/> = no image, <see cref="Native.Result.Io"/>
+        /// = not saved.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Native.Result vlqt_test_window_grab(SceneHandle w, [MarshalAs(UnmanagedType.LPUTF8Str)] string pngPath);
         /// <summary>vlqt_perf_stats computed from given samples and timestamps (ms, ascending) with a fixed budget.</summary>
@@ -107,9 +110,6 @@ namespace VL.Qt
         public static extern Native.Result vlqt_test_device_lost(int mode);
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern Native.Result vlqt_test_res_read_pixels(ulong id, ref byte @out, int cap, out int width, out int height, out int written, out int required);
-        /// <summary>Writes a stripe test image (red, green, blue, white) as PNG/JPG by extension.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Native.Result vlqt_test_write_image([MarshalAs(UnmanagedType.LPUTF8Str)] string path, int width, int height, int quality);
         /// <summary>References of a font handle, 0 = removal pending, <see cref="Native.Result.UnknownId"/> = removed or unknown.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern int vlqt_test_font_refs(ulong handle);
@@ -122,12 +122,6 @@ namespace VL.Qt
         /// <summary>Starts a Pending test resource (decode sleeps decodeMs, upload uses uploadBytes; flags 1 = decode fails, 2 = upload fails).</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Native.Result vlqt_test_res_start(ulong id, int decodeMs, long uploadBytes, int flags);
-        /// <summary>State machine transition; <see cref="Native.Result.BadArgument"/> = rejected, <see cref="Native.Result.UnknownId"/> = stale id.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Native.Result vlqt_test_res_transition(ulong id, int from, int to);
-        /// <summary>Element reference +1 / -1.</summary>
-        [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
-        public static extern Native.Result vlqt_test_res_element_ref(ulong id, int delta);
 
         /// <summary>Content of a Ready image as RGBA8 premultiplied, a buffer export (<see cref="Native.Result.NoData"/> = not Ready).</summary>
         public static Native.Result ResReadPixels(ulong id, Span<byte> @out, out int width, out int height, out int written, out int required)

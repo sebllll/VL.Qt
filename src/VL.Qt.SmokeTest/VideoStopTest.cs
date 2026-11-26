@@ -33,8 +33,8 @@ public static class VideoStopTest
     [Test, Category("videostop")]
     public static void VideoStop() => Scenario.Run(s => Run(s));
 
-    /// <summary>Quick repro of #130 with 5 rounds.</summary>
-    [Test, Explicit("quick repro of #130 with 5 rounds"), Category("video-stop-repro")]
+    /// <summary>Quick repro of the video stop crash with 5 rounds.</summary>
+    [Test, Explicit("quick repro of the video stop crash with 5 rounds"), Category("video-stop-repro")]
     public static void VideoStopRepro() => Scenario.Run(s => Run(s, 5));
 
     private static void Run(Scenario s, int rounds = 3)

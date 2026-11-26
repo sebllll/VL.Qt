@@ -17,6 +17,11 @@ namespace VL.Qt
     /// so the Log window links to the node and logging providers get it too) when it appears or its text changes, so a
     /// message repeated every frame is logged once. A message source that holds a text holds a <see cref="Nodes.NodeMessage"/>.
     /// Exceptions thrown in a node's Update are not caught: vvvv shows and logs those itself. Main thread only.
+    /// <para>
+    /// This is the one seam for the messages of a node: next to its <c>NodeContext</c> constructor a node has an internal one that
+    /// takes the store, so that a unit test passes a store on a recording logger and message (a <c>NodeContext</c> needs a running
+    /// vvvv: without an app host it cannot be created, and without a runtime it shows nothing).
+    /// </para>
     /// </summary>
     internal sealed class NodeErrors : IDisposable
     {
@@ -45,13 +50,6 @@ namespace VL.Qt
             Logger = logger;
             _show = show;
         }
-
-        /// <summary>
-        /// Returns a store without logger that shows its message with <paramref name="addWarning"/> (the warning
-        /// constructors of the element nodes, which run without a NodeContext).
-        /// </summary>
-        internal static NodeErrors ShownBy(Func<string, IDisposable> addWarning)
-            => new(NullLogger.Instance, (_, text) => addWarning(text));
 
         /// <summary>Logger of the node (category and node path of this node).</summary>
         public ILogger Logger { get; }

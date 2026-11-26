@@ -9,7 +9,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// Replays command traces recorded with VLQT_TRACE_COMMANDS (plan 01e): file = repeated "u32 length (LE) + frame bytes".
+// Replays command traces recorded with VLQT_TRACE_COMMANDS: file = repeated "u32 length (LE) + frame bytes".
 // The trace has no window id, so all frames are applied to one 800x600 window (traces of one window replay exactly).
 [TestFixture, NonParallelizable]
 public static class ReplayTest

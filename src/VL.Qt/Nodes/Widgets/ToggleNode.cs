@@ -28,9 +28,8 @@ namespace VL.Qt.Nodes
         public ToggleNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<Element, Props>(nodeContext, s_create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal ToggleNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<Element, Props>(addWarning, s_create);
+        internal ToggleNode(NodeErrors messages)
+            => _node = new ElementNodeCore<Element, Props>(messages, s_create);
 
         private static readonly Func<CommonInputs, Props, FeedbackSlot, Element> s_create = static (c, p, slot) => p.Look == ToggleLook.Switch
             ? new Switch(c, slot)
@@ -51,7 +50,8 @@ namespace VL.Qt.Nodes
         internal ElementNodeCore<Element, Props> Core => _node;
 
         /// <include file="../CommonPins.xml" path="docs/set[@name='autosize']/param[@name='size']"/>
-        /// <param name="autoSize">On: Size is ignored and the implicit size of the style applies (check box about 0.4 x 0.4, switch about 0.68 x 0.4). Off: Size counts and the toggle is centered in it.</param>
+        /// <param name="autoSize">On: Size is ignored and the implicit size of the style applies (check box about 0.4 x 0.4, switch about
+        /// 0.68 x 0.4). Off: Size counts and the toggle is centered in it.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='widget']/param[@name='channel']"/>

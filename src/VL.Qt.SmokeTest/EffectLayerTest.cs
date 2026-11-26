@@ -12,7 +12,7 @@ using VL.Qt;
 using Color = System.Drawing.Color;
 using static Pixels;
 
-// Effect layer in QtNative (plan effects/01 Task 2, since #489 by SET_EFFECT_CHAIN): a chain of one MULTI run on the
+// Effect layer in QtNative (plan effects/01 Task 2, by SET_EFFECT_CHAIN): a chain of one MULTI run on the
 // element's own item (layer.effect = one MultiEffect), raw commands. Blur + shadow + color adjust on a Text and a
 // Rectangle in a Row; Row layout and hit-test unchanged; linkCount 0 removes the MultiEffect again (no leak, image as
 // without effect); REPARENT indices ignore the effect sibling; two MULTI runs (the second run greys the first run's

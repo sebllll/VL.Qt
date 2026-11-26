@@ -30,9 +30,8 @@ namespace VL.Qt.Nodes
         public TouchPointsNode(NodeContext nodeContext)
             => _node = new InteractionNodeCore<Props>(nodeContext, Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal TouchPointsNode(Func<string, IDisposable> addWarning)
-            => _node = new InteractionNodeCore<Props>(addWarning, Create);
+        internal TouchPointsNode(NodeErrors messages)
+            => _node = new InteractionNodeCore<Props>(messages, Create);
 
         private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new TouchPointsInteraction(previous, slot, p.Occlusion, p.Devices);
@@ -41,9 +40,12 @@ namespace VL.Qt.Nodes
 
         /// <summary>Adds a touch points handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
-        /// <param name="points">Optional channel: the points pressed on the element right now, sorted by id; empty when there are none (written by Qt on change, author "Qt"). Positions are local to the element in units; Pressure and Size depend on the device (many touchscreens report 0.5 and 0 x 0).</param>
+        /// <param name="points">Optional channel: the points pressed on the element right now, sorted by id; empty when there are none
+        /// (written by Qt on change, author "Qt"). Positions are local to the element in units; Pressure and Size depend on the device
+        /// (many touchscreens report 0.5 and 0 x 0).</param>
         /// <param name="devices">Input devices that count. The default is touch screen and pen; add Mouse to see the mouse as a point too.</param>
-        /// <param name="occlusion">On: a finger whose press an element on top takes (Click or Drag on it, a Button) is not reported here. Off: all fingers on the element are reported.</param>
+        /// <param name="occlusion">On: a finger whose press an element on top takes (Click or Drag on it, a Button) is not reported here.
+        /// Off: all fingers on the element are reported.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]
         public Interaction Update(

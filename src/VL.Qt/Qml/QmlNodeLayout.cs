@@ -60,6 +60,22 @@ namespace VL.Qt.Qml
             return outputs;
         }
 
+        /// <summary>True if a message is an error: the file does not read or parse, or its name exists twice.</summary>
+        public bool HasErrors => Messages.Any(static m => m.Type == MessageType.Error);
+
+        /// <summary>
+        /// The last good layout <paramref name="good"/> with the errors of the version <paramref name="failed"/> that does not read
+        /// or parse, and a note that the pins are the old ones (<see cref="LastGood{T}"/>).
+        /// </summary>
+        internal static QmlNodeLayout KeepPins(QmlNodeLayout good, QmlNodeLayout failed)
+        {
+            var messages = ImmutableArray.CreateBuilder<Message>(failed.Messages.Length + good.Messages.Length + 1);
+            messages.AddRange(failed.Messages.Where(static m => m.Type == MessageType.Error));
+            messages.Add(new Message(MessageType.Warning, LastGood<QmlNodeLayout>.KeptNote));
+            messages.AddRange(good.Messages);
+            return good with { Messages = messages.ToImmutable() };
+        }
+
         private static IVLPinDescription Describe(QmlCommonPin pin)
             => new FilePinDescription(pin.Name, pin.Type, pin.Default, pin.Summary.Length == 0 ? null : pin.Summary, pin.IsVisible);
 

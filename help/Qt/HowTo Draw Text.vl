@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="bE13wDKtNrvKbqO2yFhYsZ" Bounds="85,710,830,62" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A Text with width or height 0 in Size is not drawn.&#xD;&#xA;- The position comes from Transform, the Anchor says which point of the box sits there.">
+          <Pad Id="bE13wDKtNrvKbqO2yFhYsZ" Bounds="85,710,830,76" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A Text with width or height 0 in Size is not drawn.&#xD;&#xA;- The position comes from Transform, the Anchor says which point of the box sits there.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -70,8 +70,8 @@
             <Pin Id="JejQsbcxpT3FvOXujMhaUQ" Name="Font Family" Kind="InputPin" />
             <Pin Id="t9tCHX30bDH8PTKxIVpWHX" Name="Font Size" Kind="InputPin" />
             <Pin Id="BaD4iNwtaNtsAqZKOnzvTp" Name="Weight" Kind="InputPin" DefaultValue="700" />
-            <Pin Id="jrTnDoCHNpTfG4FJSpALeA" Name="Italic" Kind="InputPin" />
-            <Pin Id="ZHL4Lt8BGHcVrniZxIWocz" Name="Color" Kind="InputPin" />
+            <Pin Id="jrTnDoCHNpTfG4FJSpALeA" Name="Italic" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ZHL4Lt8BGHcVrniZxIWocz" Name="Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="anyFl1VpnC005Hl6g9RqoC" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="WvhOmcY3SnXV7n4cIplo6q" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="5nk7jNGpMa0OnCGT3iWV8a" Name="Wrap" Kind="InputPin" DefaultValue="WordWrap" />
@@ -80,13 +80,13 @@
             <Pin Id="VQCTMuvBoAEPzcGC3pD7OJ" Name="Line Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="B8UYoBvjTZ4L0Uxvg9Lq3Q" Name="Letter Spacing" Kind="InputPin" IsHidden="true" />
             <Pin Id="MZefUMLDkNAOdwo61NxlVm" Name="Autofit" Kind="InputPin" IsHidden="true" />
-            <Pin Id="44uvRjr5GtUOn2YHbWgrH0" Name="Opacity" Kind="InputPin" />
+            <Pin Id="44uvRjr5GtUOn2YHbWgrH0" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="Mly4YPKXa1CL7foKxtE7gh" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="JyO08BvTmNQAq5iRnTKQc8" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="NjSRFuyNhZDNTzGtzlAD7U" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="GeAsAW3wH1kMN9D6Wy8Nrj" Name="Debug" Kind="InputPin" DefaultValue="True" />
-            <Pin Id="F5aXVvn23wyPj8FEpuQC6b" Name="Interaction" Kind="InputPin" />
-            <Pin Id="Gw9M7ctRLfTOe1L5tWExxU" Name="Effect" Kind="InputPin" />
+            <Pin Id="F5aXVvn23wyPj8FEpuQC6b" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Gw9M7ctRLfTOe1L5tWExxU" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="94,641,85,19" Id="pZMJdLbjMNAk5hklSjs2K9">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
@@ -100,10 +100,10 @@
             <Pin Id="KLApXhz2d6pPdIeE6KThhB" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="LaKQVE9B3L1P6BwsXb09fX" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="E6SVto52pSQerFQ1asptls" Name="Input" Kind="InputPin" />
-            <Pin Id="UgW7HUyEAqeQnBdhEY3HJa" Name="Space" Kind="InputPin" />
-            <Pin Id="UMzQrxtJIkZ7eoSIRxCvhf" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="UgW7HUyEAqeQnBdhEY3HJa" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="UMzQrxtJIkZ7eoSIRxCvhf" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="RtTkLvlo3e8PRmoJuOW5EW" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="vQZm33VlLO0n6UWHnzwHaM" Name="Enabled" Kind="InputPin" />
+            <Pin Id="vQZm33VlLO0n6UWHnzwHaM" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="7QfijW3a3ZzicHdXVHfST5" Name="Title" Kind="InputPin" />
             <Pin Id="EkpAtz5ZkQ2MtUGJoO8K8w" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="HbueMYHQhojLpBOwZSRt3F" Name="Perf" Kind="OutputPin" IsHidden="true" />

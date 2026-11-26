@@ -135,7 +135,7 @@ public static class StylableTest
             cmd.Clear();
             if (clear)
                 cmd.ClearColor(BgGray, BgGray, BgGray, 1);
-            rec.Update(root, Space.DIPTopLeft);
+            rec.Update(root, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());

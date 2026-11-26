@@ -24,6 +24,11 @@ namespace VL.Qt
     /// load starts them again.</item>
     /// </list>
     /// No finalizers and no native callbacks. Main (Qt) thread only, except <see cref="Release"/>.
+    /// <para>
+    /// This is the one seam of the native resource API: a node that uses a client has an internal constructor that takes the client
+    /// (and its other collaborators, e.g. the <see cref="NodeErrors"/> of the node) in place of the lookup through its
+    /// <c>NodeContext</c>, so that a unit test passes a client on a fake <see cref="IResourceApi"/>, which needs no Qt.
+    /// </para>
     /// </summary>
     internal sealed class ResourceClient
     {
@@ -158,7 +163,8 @@ namespace VL.Qt
         /// <summary>
         /// Starts loading the .qsb <paramref name="path"/> of <paramref name="stage"/> (<see cref="Protocol.ShaderStage"/>) into
         /// <paramref name="resource"/> (asynchronous, errors arrive as status records). <c>builtin:&lt;name&gt;</c> (a shader shipped
-        /// with VL.Qt, see <see cref="ShaderSlot.TryGetBuiltinShader"/>) is passed as <c>builtin:&lt;name&gt;</c>, any other path is made absolute here. Returns false and fails the resource if
+        /// with VL.Qt, see <see cref="ShaderSlot.TryGetBuiltinShader"/>) is passed as <c>builtin:&lt;name&gt;</c>, any other path is made
+        /// absolute here. Returns false and fails the resource if
         /// the path is invalid or QtNative refuses.
         /// </summary>
         public bool LoadShader(QtResource resource, string path, int stage)

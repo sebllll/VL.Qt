@@ -25,7 +25,8 @@ namespace VL.Qt.Interop
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern Result vlqt_image_set_pixels(ulong id, in vlqt_pixel_desc desc, in byte data, int len, int upload);
 
-        /// <summary>Starts or replaces the content of an image resource from pixels (copied synchronously); upload: <see cref="Protocol.ImageUpload"/>.</summary>
+        /// <summary>Starts or replaces the content of an image resource from pixels (copied synchronously); upload:
+        /// <see cref="Protocol.ImageUpload"/>.</summary>
         public static Result ImageSetPixels(ulong id, in vlqt_pixel_desc desc, ReadOnlySpan<byte> data, int upload = Protocol.ImageUpload.Auto)
             => vlqt_image_set_pixels(id, in desc, in MemoryMarshal.GetReference(data), data.Length, upload);
 

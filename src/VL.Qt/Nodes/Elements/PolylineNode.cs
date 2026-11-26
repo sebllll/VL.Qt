@@ -21,12 +21,12 @@ namespace VL.Qt.Nodes
 
         public PolylineNode(NodeContext nodeContext) => _core = new ShapeNodeCore(nodeContext);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal PolylineNode(Func<string, IDisposable> addWarning) => _core = new ShapeNodeCore(addWarning);
+        internal PolylineNode(NodeErrors messages) => _core = new ShapeNodeCore(messages);
 
         internal ShapeNodeCore Core => _core;
 
-        /// <param name="points">Vertices in units, in the parent space. Transform acts around the origin of the parent space, not around the shape; the shape reports (max X, max Y) of the points as its size.</param>
+        /// <param name="points">Vertices in units, in the parent space. Transform acts around the origin of the parent space, not around
+        /// the shape; the shape reports (max X, max Y) of the points as its size.</param>
         /// <param name="closed">Connects the last point to the first.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='shape']/param[@name='transform']"/>
         /// <param name="strokeColor">Color of the stroke.</param>

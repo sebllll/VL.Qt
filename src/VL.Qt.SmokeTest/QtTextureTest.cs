@@ -78,7 +78,7 @@ public static partial class QtTextureTest
             s.Skip("qttexture: D3D11 only");
             return;
         }
-        s.Info("qttexture: #116 test exports");
+        s.Info("qttexture: test exports");
 
         // Invalid arguments.
         s.Check(NativeTest.CreateDevice(2, out var none, out var noneCtx) == Native.Result.BadArgument

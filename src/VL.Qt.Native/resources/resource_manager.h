@@ -80,9 +80,6 @@ public:
     // New device: everything with GPU content uploads again within the budget.
     void deviceRestored();
 
-    // test hook: vlqt_test_res_transition (test/test_resource_kind.cpp).
-    int testTransition(uint64_t id, int from, int to);
-
 private:
     // True on the main thread; else logs once (qCCritical, what = API name) and returns false.
     bool onMainThread(const char* what) const;

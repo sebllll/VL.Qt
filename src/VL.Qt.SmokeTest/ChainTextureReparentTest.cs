@@ -6,14 +6,14 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// NCMD-17: the texture element of a SHADER link (here the layer of a Blend) is parked hidden under the root like a mask.
+// The texture element of a SHADER link (here the layer of a Blend) is parked hidden under the root like a mask.
 // A REPARENT of it while a chain samples it is refused (-8, like an attached mask), so the element is never in the tree
 // and the chain's texture at once; once no chain samples it, a REPARENT shows it again. Orange R at (250, 150)
 // 300 x 150 DIP with Blend, blue layer L at (0, 0) 300 x 150. Grabs: <OutDir>/chain-texture-reparent_*.png.
 [TestFixture, NonParallelizable]
 public static class ChainTextureReparentTest
 {
-    /// <summary>NCMD-17: REPARENT of the texture element of a chain link is refused while the chain samples it.</summary>
+    /// <summary>REPARENT of the texture element of a chain link is refused while the chain samples it.</summary>
     [Test, Category("chain-texture-reparent")]
     public static void ChainTextureReparent() => Scenario.Run(Run);
 

@@ -1,6 +1,6 @@
 # Versioning
 
-VL.Qt follows [Semantic Versioning](https://semver.org) from version 1.0.0 on. Versions before 1.0.0 (`0.9.x`) are previews without these guarantees.
+VL.Qt follows [Semantic Versioning](https://semver.org). The guarantees below hold from version 1.0.0 on. Before 1.0.0 a minor release may break: nodes, pins and categories may be renamed or removed without an `Obsolete` phase, and the help patches change with the break.
 
 ## What counts as the API
 
@@ -22,7 +22,7 @@ Not part of the API:
 
 ## Obsolete nodes
 
-A node or pin is not renamed or removed in one step. First it gets the aspect `Obsolete`: existing patches keep working, the node help names the replacement, and new patches should use that. It is removed in the next major version at the earliest.
+From 1.0.0 on, a node or pin is not renamed or removed in one step. First it gets the aspect `Obsolete`: existing patches keep working, the node help names the replacement, and new patches should use that. It is removed in the next major version at the earliest.
 
 ## Experimental nodes
 
@@ -41,4 +41,4 @@ using VL.Core.Import;
 public sealed class MyNode : IDisposable { /* ... */ }
 ```
 
-- Use `SymbolSmell.Experimental` for experimental nodes and `SymbolSmell.Obsolete` for nodes on their way out. Mention it in the `/// <summary>` of the node, so it appears in the node help.
+- Use `SymbolSmell.Experimental` for experimental nodes and `SymbolSmell.Obsolete` (from 1.0.0 on) for nodes on their way out. Mention it in the `/// <summary>` of the node, so it appears in the node help.

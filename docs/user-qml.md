@@ -2,7 +2,7 @@
 
 `QmlElement` loads a `.qml` file of your own into the element tree. The patch sets properties of the QML root by name, and the properties QML changes and the signals it emits come back as outputs. It is an escape hatch for existing QML components and for things VL.Qt has no element for, not a second UI model: the patch still owns the tree, QML is one leaf (or one subtree) in it.
 
-Experimental (`SymbolSmell.Experimental`): pins and behavior can still change, see [Versioning](versioning.md). Help patch: `HowTo Use a QML file` with the sample `help/Qt/QmlElement Example.qml`. To get a node with named pins from a `.qml` file instead of the dictionary, see [Nodes from QML files](#nodes-from-qml-files). Why it is built this way: [decisions/user-qml.md](decisions/user-qml.md).
+Experimental (`SymbolSmell.Experimental`): pins and behavior can still change, see [Versioning](versioning.md). Help patch: `HowTo Use a QML file` with the sample `help/Qt/QmlElement Example.qml`. To get a node with named pins from a `.qml` file instead of the dictionary, see [Nodes from QML files](#nodes-from-qml-files). Why it is built this way: [design/user-qml.md](design/user-qml.md).
 
 ## Pins
 
@@ -11,14 +11,14 @@ Experimental (`SymbolSmell.Experimental`): pins and behavior can still change, s
 | `File` | `Path` | The `.qml` file. Its root must be an `Item` (Rectangle, Item, ... but not a `Window`), else the node shows an error. Empty = nothing loaded. |
 | `Properties` | `Dictionary<string, object>` | Values for properties of the QML root, by name. Only entries that changed are sent. |
 | `Auto Size` | `bool` | On (default): the element takes the size of the QML root. Off: `Size` sets `width` and `height` of the root. |
-| `Size` | `Vector2` | Optional. Width and height of the element, in units (1 unit = 100 DIP), only with `Auto Size` off. |
-| common element pins | | `Transform`, `Anchor`, `Opacity`, `Clip`, `Debug`, `Interaction`, `Effect`, like every element ([element catalog](design/element-catalog-v1.md)). |
+| `Size` | `Vector2` | Optional. Width and height of the element, in units of the renderer's `Space` (default `DIPTopLeft`: 1 unit = 100 DIP), only with `Auto Size` off. |
+| common element pins | | `Transform`, `Anchor`, `Opacity`, `Clip`, `Debug`, `Interaction`, `Effect`, like every element ([element model](design/element-model.md)). |
 | out `Output` | `Element` | The element, connect it to a `Group` or `Renderer`. |
 | out `Properties` | `Dictionary<string, object>` | Last value of each root property that QML changed. |
 | out `Signals` | `Spread<QmlSignal>` | Signals of the root emitted since the last frame, in order. `QmlSignal` has `Name` and `Arguments` (`Spread<object>`). |
 | out `Measured Size`, `Scene Bounds` | | Optional, like on the other elements. |
 
-Property values are passed on unchanged in QML units (device-independent pixels), only `Size` is in units of the renderer's space.
+Property values are passed on unchanged in DIP (what QML calls units), only `Size` is in units of the renderer's `Space`.
 
 ## Value types
 
@@ -85,15 +85,17 @@ Limits:
 
 ## Time: animations and timers
 
-QML animations (`Behavior`, `NumberAnimation`, `SpringAnimation`, states with transitions, ...) run on the frame clock of the renderer (the same clock as everything else, see [Timing](decisions/timing.md)): they are deterministic and follow the time of the patch.
+QML animations (`Behavior`, `NumberAnimation`, `SpringAnimation`, states with transitions, ...) run on the frame clock of the renderer (the same clock as everything else, see [Timing](design/timing.md)): they are deterministic and follow the time of the patch.
 
 A QML **`Timer`** runs on wall time, it does not follow the frame clock. Use animations or drive the time from the patch (a property) where timing must be reproducible.
 
 ## Nodes from QML files
 
-Instead of `QmlElement` with a `Properties` dictionary, a `.qml` file can become **a node of its own** with named pins, like the shader nodes from `qtshaders/`. Put the file in a folder named `qml/` next to the saved patch, or in the `qml/` folder of a package (subfolders count), and the node appears in the node browser, category `Qt.Elements.Qml`. Middle click on the node (or right click > Definition > Open) opens the `.qml` in your default editor. Help patch: `HowTo Create QML Nodes from Files` (example files in `help/Qt/qml/`). Tracked in [#107](https://github.com/sebllll/VL.Qt/issues/107), decisions in [decisions/user-qml.md](decisions/user-qml.md).
+Instead of `QmlElement` with a `Properties` dictionary, a `.qml` file can become **a node of its own** with named pins, like the shader nodes from `qtshaders/`. Put the file in a folder named `qml/` next to the saved patch, or in the `qml/` folder of a package (subfolders count), and the node appears in the node browser, category `Qt.Elements.Qml`. Middle click on the node (or right click > Definition > Open) opens the `.qml` in your default editor. Help patch: `HowTo Create QML Nodes from Files` (example files in `help/Qt/qml/`). Decisions in [design/user-qml.md](design/user-qml.md).
 
 Experimental: the generated nodes can change like `QmlElement`, although vvvv shows no experimental mark on them (a node factory cannot set one, see [Limitations](#limitations-of-the-generated-nodes)).
+
+<img src="images/qml-node-factory.png" width="820" alt="Help patch 'HowTo Create QML Nodes from Files': the node Gauge generated from Gauge.qml with its pins, the Qt window with the bar and the QML source in VS Code">
 
 ### Which files become nodes
 
@@ -184,7 +186,7 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 
 ### Errors
 
-- A file that does **not parse** (no root object, unbalanced braces, unterminated string or comment) still gets a node with the common pins, its head tags and the parser messages, so a typo does not drop the node and its links. It gets no property or signal pins until it parses again.
+- A file that does **not parse** (no root object, unbalanced braces, unterminated string or comment) or cannot be read (locked by the editor that saves it) keeps the pins of its last version that did, so a typo does not drop the node, its links and its values; the error shows at the node and in the log. Without an earlier good version the node has the common pins, its head tags and the parser messages, and no property or signal pins until the file parses.
 - A sibling root type that does not parse or cannot be read is **not** an error of the file: the message is a warning (with the sibling's file name) and its declarations are missing.
 - Parser messages show as messages at the node: errors, then warnings, then one info for the declarations without a pin. The same lines go to the vvvv log.
 - Compile, load and type errors of the QML itself, and values that could not be set, show at the node (warning, the message as tooltip) and in the vvvv log, as at `QmlElement`.
@@ -199,11 +201,11 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 
 ## Licensing of imports
 
-VL.Qt ships only the LGPL modules of Qt (see [QtNative deployment](decisions/qtnative-deployment.md)). There is no import filter: an `import` of anything that is not shipped, such as `QtQuick3D`, `QtCharts` or `QtDataVisualization`, fails to load and the message shows at the node and in the vvvv log. Qt Quick (`import QtQuick`) and its basic modules are available.
+VL.Qt ships only the LGPL modules of Qt (see [QtNative deployment](design/deployment.md)). There is no import filter: an `import` of anything that is not shipped, such as `QtQuick3D`, `QtCharts` or `QtDataVisualization`, fails to load and the message shows at the node and in the vvvv log. Qt Quick (`import QtQuick`) and its basic modules are available.
 
 ## Out of scope
 
 - Pins for what has no type in the table of [Value types](#value-types) (`alias`, `var`, lists, objects): the `Properties` dictionary stays the interface for those, also at the generated nodes.
-- C# objects or models handed to QML as context properties (the idea of Qt Bridge for C#, see [qt-bridges.md](decisions/qt-bridges.md)).
+- C# objects or models handed to QML as context properties (the idea of Qt Bridge for C#, see [qt-bridge.md](design/qt-bridge.md)).
 - Calling QML functions from the patch.
 - Pointer input inside the QML file (`MouseArea`, handlers) is not part of the design; use the `Interaction` pin on the element. Use signals and properties to carry results back.

@@ -68,7 +68,6 @@ namespace VL.Qt.Qml
         {
         }
 
-        /// <summary>For tests: with a QmlElementNode built on its test constructor.</summary>
         internal QmlNodeInstance(QmlElementNode element, QmlNodeLayout layout)
         {
             _element = element;

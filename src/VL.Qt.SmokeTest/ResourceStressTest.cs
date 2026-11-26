@@ -13,7 +13,7 @@ using VL.Qt;
 /// (images package 08): stress test of the resource manager. Runs <c>seconds</c> with a fixed, logged seed and mixes
 /// load/release (file and pixels), stale ids after release, image elements created/destroyed/re-pointed, a second window
 /// opened/closed and a simulated hotswap (all handles dropped and recreated). At the end vlqt_res_list must be empty, no
-/// leak warning in the log, no crash, no hang (watchdog). Only runs when named explicitly (--only resource-stress),
+/// leak warning in the log, no crash, no hang (watchdog). Only runs when named explicitly (`--filter TestCategory=resource-stress`),
 /// also the target of the ASan/TSan runs under Linux.
 /// One System.Random(seed) drives everything on the main thread: the resource API is main-thread only (vlqt.h), so there
 /// is deliberately no background thread calling vlqt_res_* (a stray call is only guarded against table corruption).
@@ -63,7 +63,7 @@ public static class ResourceStressTest
         foreach (var (name, w, h, weight) in new[] { ("s64.png", 64, 48, 4), ("m256.jpg", 256, 256, 4), ("m640.png", 640, 480, 3), ("l1080.png", 1920, 1080, 2), ("xl4k.jpg", 3840, 2160, 1) })
         {
             var path = Path.Combine(dir, name);
-            s.Check(NativeTest.vlqt_test_write_image(path, w, h, 90) == 0, $"test image {name} written");
+            s.Check(NativeCalls.WriteStripedImage(path, w, h, 90) == 0, $"test image {name} written");
             files.Add((path, weight));
         }
         var broken = Path.Combine(dir, "broken.png");

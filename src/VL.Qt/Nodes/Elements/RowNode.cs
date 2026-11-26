@@ -15,7 +15,8 @@ namespace VL.Qt.Nodes
 {
     /// <summary>
     /// Stacks its inputs horizontally (Qt Row positioner). Only the size of a child is used, its Transform
-    /// position is ignored (Transform stays visual, around the child's Anchor); children of size 0 take no space (children with Opacity 0 keep theirs). Ctrl+/Ctrl- adds/removes inputs.
+    /// position is ignored (Transform stays visual, around the child's Anchor); children of size 0 take no space (children with Opacity 0
+    /// keep theirs). Ctrl+/Ctrl- adds/removes inputs.
     /// Lengths in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP).
     /// </summary>
     [ProcessNode(Name = "Row", Category = Categories.Elements)]
@@ -32,10 +33,9 @@ namespace VL.Qt.Nodes
             _children = new ChildrenInput(_node.Messages);
         }
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal RowNode(Func<string, IDisposable> addWarning)
+        internal RowNode(NodeErrors messages)
         {
-            _node = new ElementNodeCore<Row, Props>(addWarning, Create);
+            _node = new ElementNodeCore<Row, Props>(messages, Create);
             _children = new ChildrenInput(_node.Messages);
         }
 
@@ -52,7 +52,8 @@ namespace VL.Qt.Nodes
         internal ElementNodeCore<Row, Props> Core => _node;
         internal ChildrenInput Children => _children;
 
-        /// <param name="children">Child elements, left to right; self-made widgets (IStylable) are built with the style resolved here. Unconnected inputs are skipped.</param>
+        /// <param name="children">Child elements, left to right; self-made widgets (IStylable) are built with the style resolved here.
+        /// Unconnected inputs are skipped.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='autosize']/param[@name='size']"/>
         /// <param name="autoSize">On: Size is ignored and the implicit size applies (content + padding). Off: Size counts, also 0.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>

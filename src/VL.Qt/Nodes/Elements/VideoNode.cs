@@ -29,9 +29,8 @@ namespace VL.Qt.Nodes
         public VideoNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<Video, Props>(nodeContext, Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal VideoNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<Video, Props>(addWarning, Create);
+        internal VideoNode(NodeErrors messages)
+            => _node = new ElementNodeCore<Video, Props>(messages, Create);
 
         /// <summary>Builds the element from the inputs; also used by Video (VL.Audio) in VL.Qt.Audio.</summary>
         internal static readonly Func<CommonInputs, Props, FeedbackSlot, Video> Create = static (c, p, slot) => new Video(c, slot)
@@ -74,7 +73,8 @@ namespace VL.Qt.Nodes
         /// <param name="keepLastFrame">When playback ends (Loop off), the last frame stays visible; otherwise the element is cleared.</param>
         /// <param name="rate">Playback speed (1 = normal). Values below 0.01 are clamped (no reverse playback).</param>
         /// <param name="volume">Audio volume 0..1 (linear, clamped).</param>
-        /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill). Tile is not supported by a video: it is drawn as Stretch and the node shows a warning.</param>
+        /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill). Tile is not supported by
+        /// a video: it is drawn as Stretch and the node shows a warning.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>

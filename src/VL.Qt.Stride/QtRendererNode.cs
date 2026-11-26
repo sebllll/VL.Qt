@@ -67,9 +67,12 @@ namespace VL.Qt.Stride
         /// <param name="input">Root element (null = empty scene).</param>
         /// <param name="space">Coordinate space of the elements: origin and size of one unit, see <see cref="Space"/>.</param>
         /// <param name="clearColor">Background of the layer (straight alpha, premultiplied here). Alpha 0 shows the target through it.</param>
-        /// <param name="enabled">False freezes the layer: no updates of Input, Space or Clear Color, nothing renders and no input reaches the scene; it keeps drawing the last content.</param>
+        /// <param name="enabled">False freezes the layer: no updates of Input, Space or Clear Color, nothing renders and no input reaches
+        /// the scene; it keeps drawing the last content.</param>
         /// <param name="debug">Debug overlay for all elements of the scene (same as the Debug pin of Renderer [Qt]).</param>
-        /// <param name="renderThreads">Number of Qt render threads that render the QtTextures and QtRenderers of the process (0 ... 16; 0 renders them on the main thread, for diagnosis). The largest value of all these nodes counts. A scene keeps the thread it got when it was created: a larger value adds threads at once, a smaller value and 0 apply to scenes created afterwards.</param>
+        /// <param name="renderThreads">Number of Qt render threads that render the QtTextures and QtRenderers of the process (0 ... 16; 0
+        /// renders them on the main thread, for diagnosis). The largest value of all these nodes counts. A scene keeps the thread it got
+        /// when it was created: a larger value adds threads at once, a smaller value and 0 apply to scenes created afterwards.</param>
         /// <returns>The layer: connect it where a Stride renderer goes, e.g. after the scene of a window.</returns>
         [Fragment]
         [return: Pin(Name = "Output")]
@@ -85,7 +88,7 @@ namespace VL.Qt.Stride
                 _scene = new SharedTextureScene(_nodeContext, renderThreads);
             else
                 _scene.SetRenderThreads(renderThreads);
-            // Size and format come from the last draw: before it nothing renders (render-texture.md, "Timing"). A layer that
+            // Size and format come from the last draw: before it nothing renders (docs/design/stride-output.md, "Frame timing"). A layer that
             // was not drawn since the last Update (disconnected) freezes: nothing renders for nobody.
             var drawnLastFrame = _lastDrawFrame != _lastDrawFrameSeen;
             _lastDrawFrameSeen = _lastDrawFrame;

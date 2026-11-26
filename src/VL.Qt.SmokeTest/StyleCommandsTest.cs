@@ -7,7 +7,7 @@ using VL.Qt.Interop;
 using VL.Qt.Styles;
 using VL.Qt.Wire;
 
-// SET_STYLE as a command (NFX-23, applyStyleEntries in scene/commands.cpp): every malformed variant returns its ApplyResult and,
+// SET_STYLE as a command (applyStyleEntries in scene/commands.cpp): every malformed variant returns its ApplyResult and,
 // because the whole command is checked before the table is written, leaves the style as it was. No API reads the style
 // table, so "unchanged" is read from one pixel of the button frame (the base style paints it grey, a written FrameColor
 // entry would paint it red). Every bad command starts with a valid red FrameColor entry, so a table written before the

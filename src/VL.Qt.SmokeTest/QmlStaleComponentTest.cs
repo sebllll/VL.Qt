@@ -8,7 +8,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 
-// QML-06: QQmlEngine caches compiled components by URL, QtNative clears the cache only when the reload counter of an
+// QQmlEngine caches compiled components by URL, QtNative clears the cache only when the reload counter of an
 // existing item changes. Item 1 loads A.qml (red). A.qml is rewritten (blue, a new property `extra`). Item 2 is created
 // with the same Source and reload 0, item 1 is not bumped: item 2 must show the file on disk (blue, `extra` known), not
 // the cached component. This is what a generated QML node sees when vvvv rebuilds it after a declaration change while the
@@ -16,7 +16,7 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class QmlStaleComponentTest
 {
-    /// <summary>QML-06: a new item of a file changed on disk gets the new file, not the cached component.</summary>
+    /// <summary>A new item of a file changed on disk gets the new file, not the cached component.</summary>
     [Test, Category("qml-stale-component")]
     public static void QmlStaleComponent() => Scenario.Run(Run);
 

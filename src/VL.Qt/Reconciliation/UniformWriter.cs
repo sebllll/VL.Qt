@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using VL.Qt.Elements;
+using VL.Qt.Shaders;
 using VL.Qt.Wire;
 
 namespace VL.Qt.Reconciliation
@@ -12,7 +13,8 @@ namespace VL.Qt.Reconciliation
     /// </summary>
     internal static class UniformWriter
     {
-        /// <summary>The state of <paramref name="sampler"/> as the wire carries it (protocol.h "Sampler"): bytes filter, mip filter, address U, address V.</summary>
+        /// <summary>The state of <paramref name="sampler"/> as the wire carries it (protocol.h "Sampler"): bytes filter, mip filter,
+        /// address U, address V.</summary>
         public static ulong PackSampler(Sampler sampler)
             => (ulong)sampler.Filter
                 | (ulong)sampler.MipFilter << 8
@@ -32,15 +34,16 @@ namespace VL.Qt.Reconciliation
             next.Clear();
             foreach (var u in effect.Uniforms)
             {
-                if (u is null || !Protocol.IsValidName(u.Name))
+                // Reserved names are an error at the node (ShaderNode); QtNative sets the automatic ones itself.
+                if (u is null || !Protocol.IsValidName(u.Name) || ReservedUniforms.ItemAutomatic.Contains(u.Name))
                     continue;
                 if (u.ValueType != Protocol.ValueType.Sampler)
-                    next[new UniformKey(u.Name, false)] = Resolve(u, effect, children);
+                    next[UniformKey.Of(u)] = Resolve(u, effect, children);
                 if (u.Sampler is { } sampler)
                     next[new UniformKey(u.Name, true)] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(sampler));
             }
             if (effect.InputSampler is { } inputSampler)
-                next[new UniformKey("source", true)] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(inputSampler));
+                next[new UniformKey(ReservedUniforms.InputSampler, true)] = new UniformValue(Protocol.ValueType.Sampler, default, 0, PackSampler(inputSampler));
 
             var clear = false;
             foreach (var key in sent.Keys)

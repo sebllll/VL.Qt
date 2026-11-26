@@ -27,7 +27,6 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <summary>For tests: a client on a fake API and an own scene registry; null <paramref name="messages"/> reports nothing.</summary>
         internal SnapshotNode(ResourceClient client, OccurrenceRegistry scene, NodeErrors? messages = null)
         {
             _grab = new SnapshotGrab(client, scene);
@@ -36,9 +35,11 @@ namespace VL.Qt.Nodes
 
         /// <summary>Starts a snapshot of Element on Grab; Image keeps the last finished one.</summary>
         /// <param name="input">Element or Group to grab; it has to be shown in a renderer.</param>
-        /// <param name="scale">Pixels per DIP: pixel size = element size in DIP * Scale, independent of the screen's DPI scaling (deterministic for export).</param>
+        /// <param name="scale">Pixels per DIP: pixel size = element size in DIP * Scale, independent of the screen's DPI scaling
+        /// (deterministic for export).</param>
         /// <param name="grab">Starts a new snapshot (the previous image stays until it is done).</param>
-        /// <param name="isReady">True in the frame a new image arrived, typically one frame after Grab. A failed snapshot sets no Is Ready and is logged.</param>
+        /// <param name="isReady">True in the frame a new image arrived, typically one frame after Grab. A failed snapshot sets no Is Ready
+        /// and is logged.</param>
         /// <returns>The last finished snapshot as BGRA8 premultiplied (own copy, not volatile); null before the first one.</returns>
         [return: Pin(Name = "Image")]
         public IImage? Update(IElement? input, [DefaultValue(1f)] float scale, bool grab, out bool isReady)

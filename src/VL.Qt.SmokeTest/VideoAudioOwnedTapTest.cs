@@ -8,7 +8,7 @@ using VL.Qt;
 using NAudio.CoreAudioApi;
 #endif
 
-// COMP-03: a Video whose audio tap is already attached to another Video must not keep Qt's own AudioOutput (the C# node
+// A Video whose audio tap is already attached to another Video must not keep Qt's own AudioOutput (the C# node
 // sets Volume 1 whenever it has a tap, so that item would play through the system device while the first one plays
 // through VL.Audio). setVideoTap (resources/audio_tap.cpp) mutes it and refuses the prop with ApplyBadValue. The probe
 // is the audio session meter of this process (Windows Core Audio): it moves only when Qt itself plays sound. Control: a
@@ -19,7 +19,7 @@ public static class VideoAudioOwnedTapTest
 {
     private const uint Video1Id = 1, Video2Id = 2, Video3Id = 3, Handle = 41;
 
-    /// <summary>COMP-03: a second Video on an owned audio tap must not play Qt's sound.</summary>
+    /// <summary>A second Video on an owned audio tap must not play Qt's sound.</summary>
     [Test, Category("videoaudio-owned")]
     public static void VideoAudioOwnedTap() => Scenario.Run(Run);
 

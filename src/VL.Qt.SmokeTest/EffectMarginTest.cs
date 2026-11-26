@@ -7,7 +7,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// Margin limit of an effect chain (#342): the effect area, and with it every layer texture of the chain, grows by the
+// Margin limit of an effect chain: the effect area, and with it every layer texture of the chain, grows by the
 // links' paddings and by MultiEffect's auto padding (blurMax x (1 + blurMultiplier)); Qt bounds none of them. QtNative
 // cuts the margins of all links together to the window's larger side per side (at least 1024 DIP), so an extreme value
 // (the apply-fuzz OOM on llvmpipe: 16k x 16k layers) stays bounded. The largest layer is read from the Scene page of the

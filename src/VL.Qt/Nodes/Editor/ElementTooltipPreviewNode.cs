@@ -59,7 +59,6 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <summary>For tests: a client on a fake API, an own scene registry, and injected change counter and clock.</summary>
         internal ElementTooltipPreviewNode(ResourceClient client, OccurrenceRegistry scene, Func<SceneHandle, long> changeCount, Func<double> clockSeconds)
         {
             _client = client;
@@ -183,7 +182,8 @@ namespace VL.Qt.Nodes
             }
         }
 
-        /// <summary>Searches the tree (children, mask sources of effects) for a Video; once per new instance; the loops allocate nothing (ImmutableArray struct enumerator).</summary>
+        /// <summary>Searches the tree (children, mask sources of effects) for a Video; once per new instance; the loops allocate nothing
+        /// (ImmutableArray struct enumerator).</summary>
         private static bool ContainsVideo(Element element)
         {
             if (element is Video)

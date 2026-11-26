@@ -22,12 +22,12 @@ namespace VL.Qt.Nodes
 
         public PathNode(NodeContext nodeContext) => _core = new ShapeNodeCore(nodeContext);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal PathNode(Func<string, IDisposable> addWarning) => _core = new ShapeNodeCore(addWarning);
+        internal PathNode(NodeErrors messages) => _core = new ShapeNodeCore(messages);
 
         internal ShapeNodeCore Core => _core;
 
-        /// <param name="path">Path to draw, in units, in the parent space. null = nothing is drawn. Transform acts around the origin of the parent space, not around the shape; the shape reports (max X, max Y) of the path, control points included, as its size.</param>
+        /// <param name="path">Path to draw, in units, in the parent space. null = nothing is drawn. Transform acts around the origin of the
+        /// parent space, not around the shape; the shape reports (max X, max Y) of the path, control points included, as its size.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='shape']/param[@name='transform']"/>
         /// <param name="fillColor">Fill color of the enclosed area. Transparent by default.</param>
         /// <param name="strokeColor">Color of the stroke.</param>

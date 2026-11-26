@@ -6,7 +6,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 
-// NFX-02: two samplers of one Shader read the same element, the lower binding with a mip filter and the higher one
+// Two samplers of one Shader read the same element, the lower binding with a mip filter and the higher one
 // with a state that has none (Nearest filter, no mips). The layer request of the element must be the OR of both, also after
 // the second refresh, when the element already holds a request (before the fix the last sampler won there). The sampler with
 // the mip filter is read, minified (stripes, uv * 14): with mips every pixel is the purple mean, without they alias.
@@ -14,7 +14,7 @@ using static Pixels;
 [TestFixture, NonParallelizable]
 public static class SamplerMipSharedTest
 {
-    /// <summary>NFX-02: one element read by two samplers, the mip filter only on the lower binding.</summary>
+    /// <summary>One element read by two samplers, the mip filter only on the lower binding.</summary>
     [Test, Category("sampler-mip-shared")]
     public static void SamplerMipShared() => Scenario.Run(Run);
 

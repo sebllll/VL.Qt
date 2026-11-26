@@ -122,7 +122,7 @@ public static class SharedDeviceTest
         }
     }
 
-    // Checks of one window count. The regression of #90 (each window at half the refresh rate) is systematic and doubles the
+    // Checks of one window count. The regression (each window at half the refresh rate) is systematic and doubles the
     // median render interval: hard check. fps and host pump p99 also drop when another process loads the GPU (measured on
     // an Adreno X1-45 next to a second SmokeTest: 49..52 fps, while the median interval stays at one refresh), so they are
     // perf limits (PerfLimits: factor, warn-only) and measured again, up to 3 rounds, only while a limit is exceeded.

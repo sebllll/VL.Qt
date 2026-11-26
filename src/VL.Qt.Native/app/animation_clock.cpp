@@ -16,7 +16,7 @@ namespace {
 using vlqt::fail;
 using vlqt::guardedGui;
 
-// Animation time comes from vvvv (IFrameClock), not from a wall clock (decisions/user-qml.md, timing.md).
+// Animation time comes from vvvv (IFrameClock), not from a wall clock (docs/design/timing.md, "Clock and driver"; docs/design/user-qml.md, "Time").
 // QUnifiedTimer (Qt 6, qabstractanimation.cpp) computes its time as driverStartTime + driver->elapsed() while the driver
 // runs, so elapsed() must count from start() like QAnimationDriver's own timer: the absolute vvvv time made every
 // animation after the clock had moved jump by that time (one step to the end value). When the driver is stopped,

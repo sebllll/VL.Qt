@@ -23,12 +23,12 @@ namespace VL.Qt.Nodes
 
         public LineNode(NodeContext nodeContext) => _core = new ShapeNodeCore(nodeContext);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal LineNode(Func<string, IDisposable> addWarning) => _core = new ShapeNodeCore(addWarning);
+        internal LineNode(NodeErrors messages) => _core = new ShapeNodeCore(messages);
 
         internal ShapeNodeCore Core => _core;
 
-        /// <param name="from">Start of the line in units, in the parent space. Transform acts around the origin of the parent space, not around the line.</param>
+        /// <param name="from">Start of the line in units, in the parent space. Transform acts around the origin of the parent space, not
+        /// around the line.</param>
         /// <param name="to">End of the line in units, in the parent space.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='shape']/param[@name='transform']"/>
         /// <param name="strokeColor">Color of the stroke.</param>

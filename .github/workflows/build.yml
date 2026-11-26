@@ -5,7 +5,7 @@ name: build
 # push (the PR already ran the same code). Branches: work PRs go to develop, main only gets releases (PR develop -> main,
 # then tag v*).
 # Public repo (github.event.repository.private == false): the hosted runners are free there, so the arm64 entries (win-arm64,
-# linux-arm64) also run on PRs. The rest is the same; see docs/development.md.
+# linux-arm64) also run on PRs. The rest is the same; see docs/contributing/development.md.
 # Tag v* = everything (all 4 RIDs win-x64/win-arm64/linux-x64/linux-arm64, tests, SmokeTest, one .nupkg VL.Qt with all
 # RIDs, release). workflow_dispatch = like a tag, without release (the way to get a .nupkg from develop or main on demand); with
 # sabotage != none only x64 matters (win-x64 + linux-x64, no arm64, no .nupkg). New jobs are gated from the start (#197):
@@ -40,6 +40,21 @@ env:
   FULL: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.sabotage == 'none') }}
 
 jobs:
+  # Patch checker (TEST-02, python only, a few seconds): runs with the rest of the workflow, i.e. at the checkpoints (a PR
+  # against develop made ready, a tag, workflow_dispatch). Not needed by pack/smoke. A PR that only changes paths in
+  # paths-ignore above (help patches, tools/*.py) starts no workflow at all.
+  patches:
+    name: patch checker
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Regression test of the checker
+        run: python3 tools/test-vl-patch-check.py
+      - name: Check all help patches
+        run: python3 tools/vl-patch-check.py
+
   # Job id stays "shim" (it builds QtNative, src/VL.Qt.Native): it is referenced by needs/if below.
   shim:
     name: QtNative (${{ matrix.rid }})
@@ -597,7 +612,7 @@ jobs:
           if [ "$IS_MAIN_REPO" != 'true' ]; then
             echo "::notice::Not pushed to nuget.org: only sebllll/VL.Qt publishes the package."
           elif [ -z "$NUGET_USER" ]; then
-            echo "::notice::Not pushed to nuget.org: variable NUGET_USER is not set in the environment release (see docs/development.md, Release)."
+            echo "::notice::Not pushed to nuget.org: variable NUGET_USER is not set in the environment release (see docs/maintaining/release.md)."
           else
             echo "push=true" >> "$GITHUB_OUTPUT"
           fi

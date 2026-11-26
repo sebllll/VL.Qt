@@ -1,5 +1,6 @@
-// Test exports of vlqt_test.h: the resource kind VLQT_RESOURCE_KIND_TEST (decode sleeps, upload consumes budget in stripes)
-// and direct access to the state machine and the element references of the resource manager (resources.h).
+// Test export of vlqt_test.h: the resource kind VLQT_RESOURCE_KIND_TEST (decode sleeps, upload consumes budget in stripes).
+// No production kind has deterministic timings, so the SmokeTest cannot test the state machine, the budget and the
+// cancellation without it.
 #include "../vlqt_test.h"
 #include "../app/exports.h"
 #include "resources/resources.h"
@@ -83,22 +84,6 @@ VLQT_API int vlqt_test_res_start(unsigned long long id, int decodeMs, long long 
         work->failDecode = (flags & 1) != 0;
         work->failUpload = (flags & 2) != 0;
         return vlqt::res::start(id, std::move(work), 0);
-    });
-}
-
-VLQT_API int vlqt_test_res_transition(unsigned long long id, int from, int to)
-{
-    return guarded([&] { return vlqt::res::testTransition(id, from, to); });
-}
-
-VLQT_API int vlqt_test_res_element_ref(unsigned long long id, int delta)
-{
-    return guarded([&] {
-        if (delta == 1)
-            return vlqt::res::acquire(id);
-        if (delta == -1)
-            return vlqt::res::releaseElement(id);
-        return vlqt::fail(VLQT_ERR_BAD_ARGUMENT, "test_res_element_ref: delta " + std::to_string(delta) + " is not 1 or -1");
     });
 }
 

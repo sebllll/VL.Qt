@@ -26,7 +26,7 @@ public static partial class InteractionTest
         private readonly CommandWriter _cmd = new();
         private readonly Reconciler _rec;
         private readonly byte[] _buf = new byte[1 << 16];
-        private readonly RectangleNode _rect = new(_ => new NoMessage());
+        private readonly RectangleNode _rect = new(new NodeLog().Errors);
         public readonly SceneHandle W;
         public Func<Interaction?> Chain = () => null;
         public RectangleF Bounds = new(1, 1, 2, 1);
@@ -49,7 +49,7 @@ public static partial class InteractionTest
             var e = _rect.Update(Bounds.Sz(), Bounds.Tr(), RectangleAnchor.TopLeft, new Color4(0.2f, 0.4f, 0.8f, 1), 0,
                 new Color4(0, 0, 0, 1), 0, 1, false, false, Chain(), null, true, out _, out SceneBounds);
             _cmd.Clear();
-            _rec.Update((Element)e, Space.DIPTopLeft);
+            _rec.Update((Element)e, SpaceMapping.Default);
             if (_cmd.Length > 0)
             {
                 var rc = Native.Apply(W, _cmd.EndFrame());
@@ -72,7 +72,7 @@ public static partial class InteractionTest
         public void Dispose()
         {
             _cmd.Clear();
-            _rec.Update(null, Space.DIPTopLeft);
+            _rec.Update(null, SpaceMapping.Default);
             if (_cmd.Length > 0)
                 _s.Check(Native.Apply(W, _cmd.EndFrame()) == 0, _tag + ": clear");
             _rect.Dispose();
@@ -86,7 +86,7 @@ public static partial class InteractionTest
     // Scenario "click-node": mouse, double click, touch, long press, Buttons, Devices.
     private static void RunClick(Scenario s)
     {
-        using var click = new ClickNode(_ => new NoMessage());
+        using var click = new ClickNode(new NodeLog().Errors);
         using var rig = new Rig("click", s);
         var pressed = Channel.Create(false);
         var clicked = Channel.Create(Unit.Default);
@@ -191,9 +191,9 @@ public static partial class InteractionTest
     // Buttons None = hover position of the mouse.
     private static void RunPoint(Scenario s)
     {
-        using var hover = new HoverNode(_ => new NoMessage());
-        using var click = new ClickNode(_ => new NoMessage());
-        using var point = new PointNode(_ => new NoMessage());
+        using var hover = new HoverNode(new NodeLog().Errors);
+        using var click = new ClickNode(new NodeLog().Errors);
+        using var point = new PointNode(new NodeLog().Errors);
         using var rig = new Rig("point", s);
         var active = Channel.Create(false);
         var position = Channel.Create(Vector2.Zero);
@@ -290,7 +290,7 @@ public static partial class InteractionTest
     // Scenario "wheel-node": Delta in notches, once per frame with motion, then once (0, 0); Devices.
     private static void RunWheel(Scenario s)
     {
-        using var wheel = new WheelNode(_ => new NoMessage());
+        using var wheel = new WheelNode(new NodeLog().Errors);
         using var rig = new Rig("wheel", s);
         var delta = Channel.Create(Vector2.Zero);
         var values = new List<Vector2>();
@@ -337,7 +337,7 @@ public static partial class InteractionTest
     // puts it back, Moves Element off only reports.
     private static void RunDragNode(Scenario s)
     {
-        using var drag = new DragNode(_ => new NoMessage());
+        using var drag = new DragNode(new NodeLog().Errors);
         using var rig = new Rig("drag-node", s);
         var dragging = Channel.Create(false);
         var delta = Channel.Create(Vector2.Zero);

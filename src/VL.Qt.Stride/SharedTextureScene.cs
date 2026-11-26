@@ -28,15 +28,11 @@ namespace VL.Qt.Stride
         private readonly NotificationQueue _input;
         private readonly RenderThreadRequest _renderThreads;
         private Texture? _texture;
-        private GraphicsDevice? _device;
-        private Int2 _size;
-        private PixelFormat _format;
-        private MultisampleCount _samples;
+        private readonly TextureState _state = new();
         private string _textureError = "", _batchError = "";
-        // _created: the texture state matches the inputs seen last (also when it is an error); _hasContent: the scene was
-        // bound to the current texture once, so it holds content; _scheduled: the scene is in the batch of QtTextureRenderer
-        // until the draw takes it out.
-        private bool _created, _hasContent, _scheduled, _enabled, _disposed;
+        // _hasContent: the scene was bound to the current texture once, so it holds content; _scheduled: the scene is in
+        // the batch of QtTextureRenderer until the draw takes it out.
+        private bool _hasContent, _scheduled, _enabled, _disposed;
         private const string SamplesPhase = "Multisample Count";
         private const string BuildPhase = "Build";
         private const string ReconcilePhase = "Reconcile";
@@ -72,7 +68,7 @@ namespace VL.Qt.Stride
         /// The texture Qt renders into, null while it cannot be used: not created or bound (see <see cref="Error"/>), or, when
         /// enabled, the scene is not bound. Disabled it keeps the last content, also after QtNative unbound the scene.
         /// </summary>
-        public Texture? Texture => _texture is not null && _textureError.Length == 0 && (_enabled ? _scene.IsBound : _hasContent) ? _texture : null;
+        public Texture? Texture => TextureState.Visible(_texture, _textureError, _enabled, _scene.IsBound, _hasContent);
 
         /// <summary>
         /// Sets the node's value of Render Threads (the largest value of all nodes sizes QtNative's pool). It applies to the
@@ -84,9 +80,7 @@ namespace VL.Qt.Stride
         public bool IsBound => _scene.IsBound;
 
         /// <summary>Last error (texture, binding, apply, poll or render in QtNative), empty if ok.</summary>
-        public string Error => _textureError.Length > 0 ? _textureError
-            : _scene.Error.Length > 0 ? _scene.Error
-            : _batchError;
+        public string Error => TextureState.FirstError(_textureError, _scene.Error, _batchError);
 
         /// <summary>
         /// Updates the scene and schedules its render for the next draw; enabled = false freezes it (nothing is created, recreated,
@@ -114,7 +108,7 @@ namespace VL.Qt.Stride
                 EnsureTexture(size, format, samples);
 
             _scene.Debug = debug;
-            // Qt does not premultiply the clear colour itself (render-texture.md, task 1.8).
+            // Qt does not premultiply the clear colour itself (docs/design/stride-output.md, "Formats, colour space and alpha").
             var premultiplied = new Color4(clearColor.R * clearColor.A, clearColor.G * clearColor.A, clearColor.B * clearColor.A, clearColor.A);
             _scene.Update(_element.Update(input), space, premultiplied, clear, enabled);
             // A stylable linked to Input failed to build (exception, cycle, foreign result): warning until a Build succeeds.
@@ -135,37 +129,27 @@ namespace VL.Qt.Stride
         }
 
         // Creates the shared texture and binds the scene when size, format or Stride's device change (a Stride reset releases
-        // the texture in OnStrideDeviceGone and clears _created); rebinds it after QtNative unbound the scene.
+        // the texture in OnStrideDeviceGone and the state asks to recreate); rebinds it after QtNative unbound the scene.
         private void EnsureTexture(Int2 size, PixelFormat format, MultisampleCount samples)
         {
             var device = _renderer.GraphicsDevice;
             var max = device is null ? int.MaxValue : StrideInterop.MaxTextureSize(device);
-            size = new Int2(Math.Clamp(size.X, 1, max), Math.Clamp(size.Y, 1, max));
-            if (_created && size == _size && format == _format && device == _device)
+            size = TextureState.ClampSize(size, max);
+            switch (_state.Update(size, format, device, samples, _texture is not null))
             {
-                if (_texture is not null)
-                {
-                    if (samples != _samples)
-                    {
-                        // The texture stays, the scene renders into it with the new count (unbind, bind).
-                        _samples = samples;
-                        _scene.Unbind();
-                        TryBind();
-                    }
-                    else
-                        RebindIfUnbound();
-                }
-                else
-                    _samples = samples;
-                return;
+                case TextureState.Change.Rebind:
+                    // The texture stays, the scene renders into it with the new count (unbind, bind).
+                    _scene.Unbind();
+                    TryBind();
+                    return;
+                case TextureState.Change.RebindIfUnbound:
+                    RebindIfUnbound();
+                    return;
+                case TextureState.Change.None:
+                    return;
             }
 
             ReleaseTexture();
-            _created = true;
-            _size = size;
-            _format = format;
-            _samples = samples;
-            _device = device;
             _textureError = "";
 
             if (device is null)
@@ -175,7 +159,7 @@ namespace VL.Qt.Stride
             }
             if (!TextureFormats.TryGetTextureFormat(format, out var textureFormat))
             {
-                _textureError = $"{TextureFormats.FormatError} (got {format})";
+                _textureError = TextureFormats.FormatErrorFor(format);
                 return;
             }
             if (StrideInterop.GetNativeDevice(device) == IntPtr.Zero)
@@ -214,7 +198,7 @@ namespace VL.Qt.Stride
                 var handle = StrideInterop.CreateNtHandle(_texture!);
                 try
                 {
-                    _scene.Bind(StrideInterop.GetNativeDevice(_device!), handle, _size, (int)_format, _samples);
+                    _scene.Bind(StrideInterop.GetNativeDevice(_renderer.GraphicsDevice!), handle, _state.Size, (int)_state.Format, _state.Samples);
                 }
                 finally
                 {
@@ -236,8 +220,7 @@ namespace VL.Qt.Stride
         private void OnStrideDeviceGone()
         {
             ReleaseTexture();
-            _created = false;
-            _device = null;
+            _state.DeviceGone();
         }
 
         // Order: Qt side (render target, opened texture, fences) -> Stride texture. D3D11 keeps what the GPU still uses alive.
@@ -253,7 +236,7 @@ namespace VL.Qt.Stride
         // The count QtNative used is lower than requested (device limit): warning at the node until the next bind fits.
         private void ReportSamples()
         {
-            var warning = _scene.LastBindSucceeded ? Multisample.ClampWarning(_samples, _scene.UsedSamples) : null;
+            var warning = _scene.LastBindSucceeded ? Multisample.ClampWarning(_state.Samples, _scene.UsedSamples) : null;
             if (warning is not null)
                 _errors.Warn(warning, SamplesPhase);
             else

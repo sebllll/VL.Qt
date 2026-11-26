@@ -14,7 +14,7 @@ namespace VL.Qt.Reconciliation
     /// Feedback ids of one window: <c>uint feedbackId ↔ FeedbackSlot</c>. The reconciler acquires an id per binding and releases
     /// it on unbind, slot change or destroy; <see cref="Dispatch"/> writes the poll buffer into the bound slots. Ids count up and
     /// are not reused, so late events of a released id are dropped. Several ids may share a slot (one per occurrence). Main thread only.
-    /// Design: docs/design/reconciler.md, "Feedback binding"; docs/design/events.md, "Feedback binding".
+    /// Design: docs/design/reconciler.md, "Feedback binding"; docs/design/events-and-interaction.md, "Feedback binding".
     /// </summary>
     internal sealed class FeedbackRouter
     {
@@ -175,7 +175,8 @@ namespace VL.Qt.Reconciliation
         private const int touchPointSize = 24;
         private const int maxTouchPoints = 64;
 
-        /// <summary>EVENT_TOUCH_POINTS: u32 count, then per point id, x, y, pressure, w, h. Sent on change, i.e. every frame of a moving touch: the points are structs, one spread is allocated per event.</summary>
+        /// <summary>EVENT_TOUCH_POINTS: u32 count, then per point id, x, y, pressure, w, h. Sent on change, i.e. every frame of a moving
+        /// touch: the points are structs, one spread is allocated per event.</summary>
         private static bool ApplyTouchPoints(ReadOnlySpan<byte> payload, FeedbackState state, in SpaceMapping mapping)
         {
             if (payload.Length < 4)

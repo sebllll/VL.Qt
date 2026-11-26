@@ -36,37 +36,37 @@ namespace VL.Qt.Shaders
         private readonly ValuePin<bool> _apply = new(true);
         private readonly ValuePin<Effect?> _output = new(null);
 
-        public ShaderEffectInstance(NodeContext nodeContext, ShaderNodeLayout layout)
+        public ShaderEffectInstance(NodeContext nodeContext, ShaderEffectLayout layout)
             : this(ResourceClient.ForApp(nodeContext.AppHost), layout, new NodeErrors(nodeContext))
         {
         }
 
-        /// <summary>For tests: a client on a fake resource API, no node errors.</summary>
-        internal ShaderEffectInstance(ResourceClient? client, ShaderNodeLayout layout, NodeErrors? errors = null)
+        internal ShaderEffectInstance(ResourceClient? client, ShaderEffectLayout layout, NodeErrors? errors = null)
         {
-            var template = layout.Passes == 2 ? Protocol.EffectTemplate.TwoPass : Protocol.EffectTemplate.Single;
             _builder = new ShaderEffectBuilder<Props>(client, new[] { ShaderEffectSource.Fragment(layout.FragmentSource) },
-                (previous, ids, p) => new ShaderEffect(previous, template, ids, p.Uniforms, p.Padding), errors);
-            _padding = layout.Padding;
+                (previous, ids, p) => new ShaderEffect(previous, layout.Template, ids, p.Uniforms, p.Padding), errors);
             _uniforms = new ShaderUniforms(layout.Pins);
-            if (layout.PaddingUniform != null)
+            switch (layout.Padding)
             {
-                for (var i = 0; i < layout.Pins.Length; i++)
-                {
-                    if (layout.Pins[i].Type == ShaderPinType.Float && layout.Pins[i].UniformName == layout.PaddingUniform)
+                case ShaderPadding.FixedPadding fixedPadding:
+                    _padding = fixedPadding.Dip;
+                    break;
+                case ShaderPadding.UniformPadding uniformPadding:
+                    // The layout only holds a uniform that is a float pin of its pins.
+                    for (var i = 0; i < layout.Pins.Length; i++)
                     {
-                        _paddingPin = (IVLPin<float>)_uniforms.Pins[i];
-                        _paddingFactor = layout.PaddingFactor;
-                        break;
+                        if (layout.Pins[i].Type == ShaderPinType.Float && layout.Pins[i].UniformName == uniformPadding.Uniform)
+                        {
+                            _paddingPin = (IVLPin<float>)_uniforms.Pins[i];
+                            _paddingFactor = uniformPadding.Factor;
+                            break;
+                        }
                     }
-                }
+                    break;
             }
         }
 
-        /// <summary>Links created so far (tests).</summary>
-        internal int Created => _builder.Created;
-
-        /// <summary>Uniform pins in pin order (tests).</summary>
+        /// <summary>Uniform pins in pin order.</summary>
         internal ShaderUniforms Uniforms => _uniforms;
 
         /// <summary>Input pins in the order of the description's inputs.</summary>

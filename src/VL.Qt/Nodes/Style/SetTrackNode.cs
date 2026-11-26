@@ -6,7 +6,8 @@ using VL.Qt.Styles;
 
 namespace VL.Qt.Nodes
 {
-    /// <summary>Sets the shape of the track (slider groove, switch track, check box) for the given states. Unconnected pins stay unset (inherited). Colors: SetColors or SetColor/SetFillColor.</summary>
+    /// <summary>Sets the shape of the track (slider groove, switch track, check box) for the given states. Unconnected pins stay unset
+    /// (inherited). Colors: SetColors or SetColor/SetFillColor.</summary>
     [ProcessNode(Name = "SetTrack", Category = "Qt.Style.Track")]
     public sealed class SetTrackNode
     {

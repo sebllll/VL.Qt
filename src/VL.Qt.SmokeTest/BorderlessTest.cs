@@ -77,7 +77,7 @@ public static class BorderlessTest
             && a1.Bounds.Y >= b1.Bounds.Y && a1.Bounds.X >= b1.Bounds.X && a1.IsVisible,
             $"borderless on: client size kept, outer top-left moved in by the frame ({g0?.Bounds} -> {g1?.Bounds})");
         // Wayland (or a window manager that ignores the hint): no frame to remove, position unchanged. offscreen has 2 px
-        // margins and drops them here too since #255 (before, its margins were only refreshed by a later resize).
+        // margins and drops them here too (before, its margins were only refreshed by a later resize).
         if (g1 is { } f1 && g0 is { } f0 && f1.Bounds.Y == f0.Bounds.Y)
             s.Info($"borderless: no frame difference on this platform ({f0.Bounds} -> {f1.Bounds})");
         if (c0 is { } p0 && c1 is { } p1)

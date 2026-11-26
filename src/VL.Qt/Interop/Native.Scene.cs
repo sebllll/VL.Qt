@@ -9,13 +9,15 @@ namespace VL.Qt.Interop
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern void vlqt_scene_destroy(SceneHandle w);
 
-        /// <summary>Applies a command buffer (protocol.h). <see cref="Result.Ok"/>, <see cref="Result.NullHandle"/> or the apply range <see cref="Result.BadLength"/> ... <see cref="Result.Invalid"/>; text: <see cref="LastError"/>.</summary>
+        /// <summary>Applies a command buffer (protocol.h). <see cref="Result.Ok"/>, <see cref="Result.NullHandle"/> or the apply range
+        /// <see cref="Result.BadLength"/> ... <see cref="Result.Invalid"/>; text: <see cref="LastError"/>.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         private static extern Result vlqt_scene_apply(SceneHandle w, in byte buf, int len);
 
         public static Result Apply(SceneHandle w, ReadOnlySpan<byte> buf) => vlqt_scene_apply(w, in MemoryMarshal.GetReference(buf), buf.Length);
 
-        /// <summary>Raw details of the last apply of a scene (vlqt.h); <c>reason</c> is valid only until the next apply: read through <see cref="GetApplyError"/>.</summary>
+        /// <summary>Raw details of the last apply of a scene (vlqt.h); <c>reason</c> is valid only until the next apply: read through
+        /// <see cref="GetApplyError"/>.</summary>
         [StructLayout(LayoutKind.Sequential)]
         internal struct vlqt_apply_error
         {
@@ -63,7 +65,8 @@ namespace VL.Qt.Interop
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern Result vlqt_scene_get_metrics(SceneHandle w, out vlqt_scene_metrics metrics);
 
-        /// <summary>Number of frames with scene changes in window w (not the renders a grab triggers); &gt;= 0, <see cref="Result.NullHandle"/> null window.</summary>
+        /// <summary>Number of frames with scene changes in window w (not the renders a grab triggers); &gt;= 0,
+        /// <see cref="Result.NullHandle"/> null window.</summary>
         [DllImport(Lib, CallingConvention = CallingConvention.Cdecl)]
         public static extern long vlqt_scene_get_change_count(SceneHandle w);
 

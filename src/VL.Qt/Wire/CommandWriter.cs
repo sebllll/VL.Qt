@@ -214,7 +214,8 @@ namespace VL.Qt.Wire
                 WriteF32(p.Slice(4 + 4 * i), values[i]);
         }
 
-        /// <summary>path: u32 verbCount, u32 pointCount, verbs padded with zeros to 4 bytes, points as x,y f32 pairs (<paramref name="points"/> holds 2 floats per point).</summary>
+        /// <summary>path: u32 verbCount, u32 pointCount, verbs padded with zeros to 4 bytes, points as x,y f32 pairs
+        /// (<paramref name="points"/> holds 2 floats per point).</summary>
         public void SetPath(uint id, ushort prop, ReadOnlySpan<byte> verbs, ReadOnlySpan<float> points)
         {
             if ((points.Length & 1) != 0)

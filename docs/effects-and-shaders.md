@@ -21,19 +21,19 @@ Every element has an `Effect` pin. Chain the nodes of `Qt.Effects` to it, like t
 
 <img src="images/effects-basic.png" width="820" alt="Blur, DropShadow, ColorAdjust, Colorize and Mask on the same element">
 
-The chain runs in data flow order, like TextureFX in Stride: the top node acts first, the node at the `Effect` pin last. `Blur`, `DropShadow`, `ColorAdjust`, `Colorize` and `Mask` are the **merged effects**: neighbours in the chain merge into one offscreen layer (Qt's MultiEffect). Inside such a run Qt applies them in its own fixed order, so their order among each other does not matter, and each kind counts once: for a duplicate the node nearest to the `Effect` pin wins and the element shows a warning. A **shader effect** (the other nodes of `Qt.Effects`, and the shader nodes of [Shaders in the effect chain](#shaders-in-the-effect-chain)) ends the run and costs a layer of its own. Size, transform and layout stay with the element.
+The chain runs in data flow order, like TextureFX in Stride: the top node acts first, the node at the `Effect` pin last. `Blur`, `DropShadow`, `ColorAdjust`, `Colorize` and `Mask` are the **merged effects**: neighbours in the chain merge into one offscreen layer (Qt's MultiEffect). Inside such a group Qt applies them in its own fixed order, so their order among each other does not matter, and each kind counts once: for a duplicate the node nearest to the `Effect` pin wins and the element shows a warning. A **shader effect** (the other nodes of `Qt.Effects`, and the shader nodes of [Shaders in the effect chain](#shaders-in-the-effect-chain)) ends the group and costs a layer of its own. Size, transform and layout stay with the element.
 
-**Apply:** every effect node has an optional last input pin `Apply` (default on). Off, the node passes the chain at `Input` on unchanged, as if it was not there, so an effect can be switched without relinking. The filter shaders of the chain have it too (`Apply` is a reserved pin name there: a uniform called `Apply` shows as `Apply 2`).
+**Apply:** every effect node has an optional last input pin `Apply` (default on). Off, the node passes the chain at `Input` on unchanged, as if it was not there, so an effect can be switched without relinking. The shader effect nodes have it too (`Apply` is a reserved pin name there: a uniform called `Apply` shows as `Apply 2`).
 
 ### Mask and padding
 
 - **Mask:** any element works as mask, e.g. a Text. It lives in the coordinates of the parent, like a sibling: the mask covers exactly the place where it would be drawn on its own.
 - **Lengths:** Blur `Max Radius` and the `Padding` pins are in DIP too; a `Padding` of 6 is 6 DIP in every space (see [Shader effects](#shader-effects)).
-- **Optional pins:** Blur `Max Radius`, `Radius Multiplier`, `Auto Padding`, `Padding`; DropShadow `Scale`, `Auto Padding`, `Padding`. With Auto Padding on (default) the layer grows automatically by what blur and shadow need. Qt knows one effect area per layer: if Auto Padding is off on any Blur or DropShadow of a run, it is off for the whole layer of that run, and the area is the largest Padding per side of those nodes, so it suffices for all of them.
+- **Optional pins:** Blur `Max Radius`, `Radius Multiplier`, `Auto Padding`, `Padding`; DropShadow `Scale`, `Auto Padding`, `Padding`. With Auto Padding on (default) the layer grows automatically by what blur and shadow need. Qt knows one effect area per layer: if Auto Padding is off on any Blur or DropShadow of neighbouring merged effects, it is off for their whole layer, and the area is the largest Padding per side of those nodes, so it suffices for all of them.
 
 ### Shader effects
 
-`Glow`, `InnerShadow`, `DirectionalBlur`, `ZoomBlur`, `RadialBlur`, `Displace` and `Blend` are shader effects with their own passes; the pictures show the first six applied to the text `VL.Qt`. Every length of an effect is in DIP, whatever the space of the renderer (Blur `Max Radius`, `Padding`, DropShadow `Offset`, Glow `Radius`, the lengths of the blurs and Displace); angles are in cycles. They end a run of merged effects and cost a layer of their own; Glow and InnerShadow use a blur pyramid, so their cost hardly depends on the radius.
+`Glow`, `InnerShadow`, `DirectionalBlur`, `ZoomBlur`, `RadialBlur`, `Displace` and `Blend` are shader effects with their own passes; the pictures show the first six applied to the text `VL.Qt`. Every length of an effect is in DIP, whatever the space of the renderer (Blur `Max Radius`, `Padding`, DropShadow `Offset`, Glow `Radius`, the lengths of the blurs and Displace); angles are in cycles. They end a group of neighbouring merged effects and cost a layer of their own; Glow and InnerShadow use a blur pyramid, so their cost hardly depends on the radius.
 
 <table>
 <tr><td align="center"><img src="images/effect-glow.png" width="260" alt="The text VL.Qt with Glow"><br>Glow</td><td align="center"><img src="images/effect-directional-blur.png" width="260" alt="The text VL.Qt with Directional Blur"><br>Directional Blur</td><td align="center"><img src="images/effect-zoom-blur.png" width="260" alt="The text VL.Qt with Zoom Blur"><br>Zoom Blur</td></tr>
@@ -42,7 +42,7 @@ The chain runs in data flow order, like TextureFX in Stride: the top node acts f
 
 ### Shaders in the effect chain
 
-Every filter shader from a `qtshaders/` folder (one with a `sampler2D source`, see [Shader nodes from files](#shader-nodes-from-files)) also appears as a node in `Qt.Effects`, with the same name and pins. Put it anywhere in the chain; here the order does matter, because each shader works on what comes out of the node before it:
+Every shader from a `qtshaders/` folder that has a `sampler2D source` (see [Shader nodes from files](#shader-nodes-from-files)) also appears as a **shader effect node** in `Qt.Effects`, with the same name and pins. Put it anywhere in the chain; here the order does matter, because each shader works on what comes out of the node before it:
 
 <img src="images/effect-chain.png" width="820" alt="The text VL.Qt: Blur, RGBSplit, DropShadow on the left, DropShadow, RGBSplit, Blur on the right; the shadow is split and blurred in the second picture">
 
@@ -56,7 +56,7 @@ Own fragment shaders (optionally with a vertex shader) are written in Qt's GLSL 
 
 **Shader nodes from files (normal way):** every `.frag` file in a `qtshaders/` folder becomes a node with one pin per uniform (see [Shader nodes from files](#shader-nodes-from-files)).
 
-**ShaderEffect node (runtime variant, `Qt.Elements.Shaders`):** for shader code that is built, generated or loaded at runtime, which a file cannot cover. The node is marked advanced, so it only shows in the node browser with the advanced filter. The shader code goes into the `Fragment Code` string pin, or `Fragment Shader` points to a pre-baked `.qsb` file. VL.Qt bakes it in a worker; while a new version is baking or has errors, the last working one keeps drawing. Compile errors show at the `Error` output with their line number. Uniforms come from the nodes in `Qt.Elements.Shaders.Uniform` (also advanced) and are matched by name, an element or Group on `Input` becomes the `source` texture.
+**ShaderEffect node (runtime variant, `Qt.Elements.Shaders`):** for shader code that is built, generated or loaded at runtime, which a file cannot cover. The node is marked advanced, so it only shows in the node browser with the advanced filter. The shader code goes into the `Fragment Code` string pin, or `Fragment Shader` points to a pre-baked `.qsb` file. VL.Qt bakes it in a worker; while a new version is baking or has errors, the last working one keeps drawing. Compile errors show at the node and in the log with their line number. Uniforms come from the nodes in `Qt.Elements.Shaders.Uniform` (also advanced) and are matched by name, an element or Group on `Input` becomes the `source` texture.
 
 ### Sampler node
 
@@ -68,10 +68,10 @@ Every `.frag` file in a folder named `qtshaders` next to the patch becomes a nod
 
 - `RGBSplit.frag` gives the node `RGBSplit`, a `.vert` with the same name belongs to it. Subfolders count too.
 - A `sampler2D source` becomes the `Input` pin: the shader is a filter. Without it, it is a generator without Input pin. Further `sampler2D` become image pins.
-- Uniforms become pins in the order of the file, the name split into words (`pixelSize` → `Pixel Size`). Types: `float`, `vec2`, `vec3`, `vec4`, `int`, `bool`, `mat4`.
-- Annotations as `//` comments, see [Annotations](#annotations): file head tags (`@category`, `@summary`, `@padding`, `@passes`, `@chainonly`) and uniform tags (`@default`, `@min`, `@max`, `@color`, `@summary`).
-- Pins with the same name keep their links and values when the file changes. Compile errors, unknown annotations and unsupported uniform types (`uint`, `ivec`, `mat3`, arrays) show at the node.
-- A filter shader is also a node of the effect chain, see [Shaders in the effect chain](#shaders-in-the-effect-chain).
+- Uniforms become pins in the order of the file, the name split into words at a lower-to-upper case change, at `_` and before a digit (`pixelSize` → `Pixel Size`, `pass1` → `Pass 1`, `tint_color` → `Tint Color`). Types: `float`, `vec2`, `vec3`, `vec4`, `int`, `bool`, `mat4`.
+- Annotations as `//` comments, see [Annotations](#annotations): file head tags (`@category`, `@summary`, `@remarks`, `@tags`, `@padding`, `@passes`, `@chainonly`) and uniform tags (`@default`, `@min`, `@max`, `@color`, `@optional`, `@summary`).
+- Pins with the same name keep their links and values when the file changes. Compile errors, unknown annotations and unsupported uniform types (`uint`, `ivec`, `mat3`, arrays) show at the node. While a file does not compile or cannot be read, the node keeps the pins and the shader of its last version that worked, so a typo loses no links or values; the error shows at the node and in the log.
+- A shader with a `sampler2D source` also makes a shader effect node, see [Shaders in the effect chain](#shaders-in-the-effect-chain).
 
 <img src="images/shader-nodes-from-files.png" width="820" alt="Help patch 'HowTo Create Shader Nodes from Files': two shader nodes generated from .frag files, the Qt window and the shader source in VS Code">
 
@@ -89,10 +89,12 @@ layout(std140, binding = 0) uniform buf {
     mat4 qt_Matrix;
     float qt_Opacity;
 
-    // @summary Distance of the shifted copies, as a fraction of the element size.
-    // @default 0.02
+    vec2 texelSize; // set by VL.Qt, no pin
+    float dpr;      // set by VL.Qt, no pin
+
+    // @summary Distance of the shifted copies in DIP.
+    // @default 10
     // @min 0
-    // @max 0.2
     float amount;
 
     // @default 1, 0
@@ -105,7 +107,7 @@ layout(binding = 1) uniform sampler2D source;
 
 void main()
 {
-    vec2 offset = direction * amount;
+    vec2 offset = direction * amount * dpr * texelSize; // DIP -> pixels -> UV
     vec4 a = texture(source, qt_TexCoord0 + offset);
     vec4 b = texture(source, qt_TexCoord0);
     vec4 c = texture(source, qt_TexCoord0 - offset);
@@ -123,18 +125,28 @@ Annotations are `//` comments. Unknown tags show at the node.
 
 | Tag | Meaning |
 |---|---|
-| `@category <path>` | node category of the element node; with `@chainonly` the category of the effect chain node (default `Qt.Effects`) |
+| `@category <path>` | node category. A path that starts with `Qt.` is absolute and moves the element node (with `@chainonly` the shader effect node, default `Qt.Effects`). Any other path is relative and is appended to the default category of each node: `@category Examples` gives `Qt.Elements.Shaders.Examples` and `Qt.Effects.Examples`. A change takes effect at once |
 | `@summary <text>` | node help; goes on in the following comment lines until the next blank line |
-| `@padding <left, top, right, bottom>` | room around the element in DIP (like the shader's pixel uniforms: no conversion by the renderer's space) that the shader may draw into as an effect chain node; one number for all four sides, or four numbers. Without it the shader stays inside the element |
+| `@remarks <text>` | longer node help below the summary; goes on in the following comment lines like `@summary` |
+| `@tags <a, b, ...>` | search words of the node browser, separated by commas (`@tags hue, saturation, contrast`); goes on in the following comment lines. A change takes effect at once |
+| `@padding <left, top, right, bottom>` | room around the element in DIP (like the shader's pixel uniforms: no conversion by the renderer's space) that the shader may draw into as a shader effect node; one number for all four sides, or four numbers. Without it the shader stays inside the element |
 | `@padding <uniform> [factor]` | all four sides = `abs(value of that float uniform pin) * factor` (factor default 1), recomputed when the pin value changes. A uniform that does not exist or is not a `float` is an error at the node |
-| `@passes 1\|2` | `2`: the effect chain node runs the shader twice, the second pass on the result of the first (default 1, other numbers are an error at the node) |
-| `@chainonly` | the file makes only the effect chain node, no element node |
+| `@passes 1\|2` | `2`: the shader effect node runs the shader twice, the second pass on the result of the first (default 1, other numbers are an error at the node) |
+| `@chainonly` | the file makes only the shader effect node, no element node; without `sampler2D source` the node shows the "not a filter" error |
 
-**Uniform** (directly above it or at the end of its line): `@default`, `@min`, `@max` (limits of the pad only), `@color` (a `vec4` becomes a color), `@summary`.
+**Uniform** (directly above it or at the end of its line): `@default`, `@min`, `@max` (limits of the pad only), `@color` (a `vec4` becomes a color), `@optional` (the pin is hidden until shown, like an optional pin of a C# node; its default still applies; on a `sampler2D` it hides the image pin), `@summary`.
 
-**Units:** a uniform of a file shader reaches the shader as it is, so a length uniform is in DIP (the renderer's space does not scale it), like `@padding`. Document it as DIP in its `@summary`; `dpr` turns DIP into device pixels.
+**Units:** a uniform of a file shader reaches the shader as it is, so a length uniform is in DIP (the renderer's space does not scale it), like `@padding`. Document it as DIP in its `@summary`. To turn a length in DIP into texture coordinates, multiply it by `dpr * texelSize` (see the next paragraph); the same value then looks the same at every device pixel ratio and on a scaled element.
 
-**Names set by VL.Qt** (no pin, an own entry of that name is an error): `qt_Matrix`, `qt_Opacity`, and in the effect chain `source`, `texelSize` (1 / pixel size of the sampled texture), `dpr`, `weight`, `elementRect` and `passIndex`. `base`, `glow` and `shadow` are reserved there too: a shader file with a uniform of that name gets no pin and an error at its effect chain node. The same goes for an entry of such a name in the Uniforms of a ShaderEffect (`qt_Matrix`, `qt_Opacity`, `source`): an error at the node, the entry is ignored. The list lives once, in `effects/shader_item.h` (`kItemReservedUniforms`, `kChainAutomaticUniforms`, `kChainReservedUniforms`), and `ReservedUniforms` in C# mirrors it (a unit test compares them). `passIndex` is a `float` that VL.Qt writes into the uniform block if the shader declares it: 0 in a single pass and in pass 1, 1 in pass 2.
+**Names set by VL.Qt** (no pin, an own entry of that name is an error): `qt_Matrix`, `qt_Opacity`, `source` (the Input), and, in the uniform block of every shader that declares them (element and shader effect node alike):
+
+| Uniform | Type | Value |
+|---|---|---|
+| `texelSize` | `vec2` | 1 / pixel width, 1 / pixel height of `source` (the layer of the element: its size in DIP x device pixel ratio; in a chain pass the texture of that pass, padding included) |
+| `dpr` | `float` | device pixels per DIP of the window (1 for an offscreen scene) |
+| `viewSize` | `vec2` | drawn size of the element in DIP (in a chain pass: of the pass, padding included) |
+
+`length_in_dip * dpr * texelSize` is a length in texture coordinates, `length_in_dip * dpr` one in device pixels, and `viewSize` in DIP: `qt_TexCoord0 * viewSize` is the position in DIP. A shader that blurs by a radius in DIP looks the same at device pixel ratios 1 and 2. In the effect chain `weight`, `elementRect` and `passIndex` are set too. `base`, `glow` and `shadow` are reserved there as well: a shader file with a uniform of that name gets no pin and an error at its effect chain node. The same goes for an entry of such a name in the Uniforms of a ShaderEffect (`qt_Matrix`, `qt_Opacity`, `source`, `texelSize`, `dpr`, `viewSize`): an error at the node, the entry is ignored. The list lives once, in `effects/shader_item.h` (`kItemReservedUniforms`, `kItemAutomaticUniforms`, `kChainAutomaticUniforms`, `kChainReservedUniforms`), and `ReservedUniforms` in C# mirrors it (a unit test compares them). `passIndex` is a `float` that VL.Qt writes into the uniform block if the shader declares it: 0 in a single pass and in pass 1, 1 in pass 2.
 
 ### Two-pass effects
 
@@ -152,9 +164,11 @@ Where pass 1 needs no more than 64 samples, pass 2 blurs by less than a pixel an
 
 ### Own effects from templates
 
-The five built-in shader effects stay C# nodes (`Blend`, `Displace`, `DirectionalBlur`, `ZoomBlur`, `RadialBlur`). Their shader code is also in `help/Qt/qtshaders/` as annotated templates, chain-only files in the category `Qt.Effects.Examples`:
+The five built-in shader effects stay C# nodes (`Blend`, `Displace`, `DirectionalBlur`, `ZoomBlur`, `RadialBlur`). Their shader code is also in `help/Qt/qtshaders/` as annotated templates, files with `@chainonly` in the category `Qt.Effects.Examples`:
 
 `ExampleBlend.frag`, `ExampleDisplace.frag`, `ExampleDirectionalBlur.frag`, `ExampleZoomBlur.frag`, `ExampleRadialBlur.frag`.
+
+A node is identified by its name and category. If two shader files make the same node (e.g. `Glow.frag` and `Glow_.frag`), or the shader effect node of a file has the name of a built-in effect node in `Qt.Effects` (e.g. `Blur.frag`), the node shows an error that names the files; rename one of them. The same file name in different categories is fine.
 
 To make an effect of your own: copy a file into a `qtshaders/` folder next to your patch, rename it (the file name is the node name), change the code and the annotations. The templates carry the comments that explain `@passes`, `@padding` and the premultiplied alpha. They show up as nodes in `Qt.Effects` next to the built-in ones.
 

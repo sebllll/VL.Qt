@@ -132,7 +132,7 @@ internal static class QtHost
 
     private static void Init()
     {
-        // Test windows ignore the real cursor (only vlqt_test_send_mouse input), read by QtNative per window (06c).
+        // Test windows ignore the real cursor (only vlqt_test_send_mouse input), read by QtNative per window.
         SetEnv("VLQT_TEST_SYNTHETIC_INPUT", "1");
         // Controls hover (base style Hovered state): Qt turns it off where the platform has no hover effects
         // (Linux offscreen in CI), so the style test would see Normal there. Same behaviour on every platform.

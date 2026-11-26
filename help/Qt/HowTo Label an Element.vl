@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="4JSFEqRauIaODRO4x4AIDK" Bounds="85,706,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Here Labeled takes Slider, Toggle, Input (Int), Input (String) and Button, each with a Text.&#xD;&#xA;- One IOBox on Label Width of all Labeled nodes keeps the elements aligned.&#xD;&#xA;- Labeled is built from a Text and a Row/Column, so its Output goes into a Column like any other element.">
+          <Pad Id="4JSFEqRauIaODRO4x4AIDK" Bounds="85,706,830,95" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Here Labeled takes Slider, Toggle, Input (Int), Input (String) and Button, each with a Text.&#xD;&#xA;- One IOBox on Label Width of all Labeled nodes keeps the elements aligned.&#xD;&#xA;- Labeled is built from a Text and a Row/Column, so its Output goes into a Column like any other element.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -62,16 +62,16 @@
               <Choice Kind="ProcessAppFlag" Name="Slider (Float)" />
             </p:NodeReference>
             <Pin Id="pwHZSTkXm5Np5plIjCEXX0" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="M0qe983wFKZOk9j9WfORh1" Name="Size" Kind="InputPin" />
+            <Pin Id="M0qe983wFKZOk9j9WfORh1" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="QrMJN2T4pNSMRDfynYSxnh" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="G2MVWyii8CNLJQJ5EEZVUM" Name="Transform" Kind="InputPin" />
+            <Pin Id="G2MVWyii8CNLJQJ5EEZVUM" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="BvZTJI6tNhfOGtgvV1C28U" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="3Faw49D1gz7to3wbYa5pYg" Name="Channel" Kind="InputPin" />
             <Pin Id="EMT53jKm5CqMjtotzJJBRC" Name="Output" Kind="OutputPin" />
-            <Pin Id="P9vPzIl4mxFO6Ww2GeQmTm" Name="Min" Kind="InputPin" />
-            <Pin Id="LhwUxpZcnw0MDN2Aa25Eoz" Name="Max" Kind="InputPin" />
+            <Pin Id="P9vPzIl4mxFO6Ww2GeQmTm" Name="Min" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LhwUxpZcnw0MDN2Aa25Eoz" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="NmvFGjzy5ItLDmZQLHf8jQ" Name="Step" Kind="InputPin" IsHidden="true" />
-            <Pin Id="BWSXmTenkvQOzl8iFyn3l7" Name="Orientation" Kind="InputPin" />
+            <Pin Id="BWSXmTenkvQOzl8iFyn3l7" Name="Orientation" Kind="InputPin" IsHidden="true" />
             <Pin Id="NLuxef4o5ALOmpLnkxqdkp" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="EC53wFSJptIL8FFUW0FPnn" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="GhM66f60bVkOnyxt2qfxOr" Name="Clip" Kind="InputPin" IsHidden="true" />
@@ -98,9 +98,9 @@
             <Pin Id="qyUOkziJzOXD3dJbDMp5kF" Name="Text" Kind="InputPin" DefaultValue="Volume" />
             <Pin Id="VJSNohXMDNCzij3uj8SqW6" Name="Label Width" Kind="InputPin" />
             <Pin Id="2wwhHixgTEXpBOvnPnTPkG" Name="Output" Kind="OutputPin" />
-            <Pin Id="UxZHSyUAm4lP5jdoh1Xn3y" Name="Label Position" Kind="InputPin" />
+            <Pin Id="UxZHSyUAm4lP5jdoh1Xn3y" Name="Label Position" Kind="InputPin" IsHidden="true" />
             <Pin Id="NuPKwZoBF9ZPLynnx7DXOA" Name="Spacing" Kind="InputPin" IsHidden="true" />
-            <Pin Id="GNOC211N3TMPmxtRrvVWVK" Name="Transform" Kind="InputPin" />
+            <Pin Id="GNOC211N3TMPmxtRrvVWVK" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="JCGPbmzXbYPLBsw43j5UF7" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="TaBNRx0hJy2L3sF8aU1M6t" Name="Label Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="Ra9Y0pDcXPbMw8Ma6ACvRu" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -126,13 +126,13 @@
               <Choice Kind="ProcessAppFlag" Name="Toggle" />
             </p:NodeReference>
             <Pin Id="ubE8Y4AxKJxFKYSoiFybAE" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="F5sQr9EGXXnMKmZ9PP5qhW" Name="Size" Kind="InputPin" />
+            <Pin Id="F5sQr9EGXXnMKmZ9PP5qhW" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="NQYwTrONCFqMc46WFQxePB" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Ia0Fni9v2ZQMjGSwoUFitm" Name="Transform" Kind="InputPin" />
+            <Pin Id="Ia0Fni9v2ZQMjGSwoUFitm" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="BEhCCEuDeY5LFyK1Ss46Sx" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="EMtD5P5ID5WDifwplxTmcF" Name="Channel" Kind="InputPin" />
             <Pin Id="gATsFrsJxr9ZEjPUGwWWO6" Name="Output" Kind="OutputPin" />
-            <Pin Id="VxCzLlzCdptMbDcWpWxKeG" Name="Look" Kind="InputPin" />
+            <Pin Id="VxCzLlzCdptMbDcWpWxKeG" Name="Look" Kind="InputPin" IsHidden="true" />
             <Pin Id="P6hXliA31TLN6M1GSZ4uvr" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="RbnVD6wfqGkNyXrOIMLgF9" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="BhGmLRi143DPBD3p9OZfoQ" Name="Clip" Kind="InputPin" IsHidden="true" />
@@ -158,9 +158,9 @@
             <Pin Id="XhpUAnREZbh56u8Vlk1EBO" Name="Text" Kind="InputPin" DefaultValue="Enabled" />
             <Pin Id="a7k39TupkLKa1vt9fN0CqL" Name="Label Width" Kind="InputPin" />
             <Pin Id="mcvHZTRrxxPSlOrBidyub9" Name="Output" Kind="OutputPin" />
-            <Pin Id="FFlufL5ncAZON4aUzMnbu9" Name="Label Position" Kind="InputPin" />
+            <Pin Id="FFlufL5ncAZON4aUzMnbu9" Name="Label Position" Kind="InputPin" IsHidden="true" />
             <Pin Id="GPbWTi9DExlP6q3I2vp9Ur" Name="Spacing" Kind="InputPin" IsHidden="true" />
-            <Pin Id="DvCXayxEa6dPTvJ0gOmawK" Name="Transform" Kind="InputPin" />
+            <Pin Id="DvCXayxEa6dPTvJ0gOmawK" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="UXP5wfyZj9EMIw0FoMRrOI" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="Qy7eqO0YyA8Pbrr8OHsU9B" Name="Label Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="Nb9lwbcKygxOZubL3hMTb6" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -183,14 +183,14 @@
               <Choice Kind="ProcessAppFlag" Name="Input (Int)" />
             </p:NodeReference>
             <Pin Id="InTKsodU8mXaVrT6sEXYgd" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Rs2Ixyo1yr8MZfMwp8wsBt" Name="Size" Kind="InputPin" />
+            <Pin Id="Rs2Ixyo1yr8MZfMwp8wsBt" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="JC99kuh4hwMNDcQt85LGf3" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="OIIGhNtUQyVNntaD8Xe4cq" Name="Transform" Kind="InputPin" />
+            <Pin Id="OIIGhNtUQyVNntaD8Xe4cq" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="RmP3gFhtCHHPECvfgHexXi" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="ip3SU7TiqLmIIrap92CsPc" Name="Channel" Kind="InputPin" />
             <Pin Id="fepIg6mfNiqVYjGQe8J00Z" Name="Output" Kind="OutputPin" />
-            <Pin Id="L9wGIMchx64LkK5aTrWHJa" Name="Min" Kind="InputPin" />
-            <Pin Id="Otp7XRJqpBMOyXJ2wfQ5Jj" Name="Max" Kind="InputPin" />
+            <Pin Id="L9wGIMchx64LkK5aTrWHJa" Name="Min" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Otp7XRJqpBMOyXJ2wfQ5Jj" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="BXbT5C9s9JwORHvHO9YJDq" Name="Step" Kind="InputPin" IsHidden="true" />
             <Pin Id="PRmBb65GkJtNz0hOQqz12c" Name="Editable" Kind="InputPin" IsHidden="true" />
             <Pin Id="HoYRBNQD3msMZQtMLZsBnh" Name="Enabled" Kind="InputPin" IsHidden="true" />
@@ -218,9 +218,9 @@
             <Pin Id="6RtLIC5mEQa46L7f9ibcnC" Name="Text" Kind="InputPin" DefaultValue="Voices" />
             <Pin Id="ltKSqwhmRGPQjBevO9LL8E" Name="Label Width" Kind="InputPin" />
             <Pin Id="UDMELkpbkpKwXwq2KwIj3A" Name="Output" Kind="OutputPin" />
-            <Pin Id="HtRc9othksNO0QgiWTJF1r" Name="Label Position" Kind="InputPin" />
+            <Pin Id="HtRc9othksNO0QgiWTJF1r" Name="Label Position" Kind="InputPin" IsHidden="true" />
             <Pin Id="UYgQ7fwQPPJNd5W2BUUSU3" Name="Spacing" Kind="InputPin" IsHidden="true" />
-            <Pin Id="HuJYs7TvzddP01qPfV01jI" Name="Transform" Kind="InputPin" />
+            <Pin Id="HuJYs7TvzddP01qPfV01jI" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="Bw08nmDeHtHMX5tyQEghKK" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="IgsMqDaNrd6QMNyfQuIRQW" Name="Label Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="Uc16NVvNXsXO3bmuCN6Q1u" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -243,13 +243,13 @@
               <Choice Kind="ProcessAppFlag" Name="Input (String)" />
             </p:NodeReference>
             <Pin Id="yo6S6x2WWdDHIPSFebeV5V" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="MBYn50jsgPQLXFSIG8RlDS" Name="Size" Kind="InputPin" />
+            <Pin Id="MBYn50jsgPQLXFSIG8RlDS" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="EJwJRmYhmyVNcaSbC3dSo7" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="TFTJ9SRFkFZODE7i0vq8n2" Name="Transform" Kind="InputPin" />
+            <Pin Id="TFTJ9SRFkFZODE7i0vq8n2" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="Rf9DAbr92rfLyj86zYLyTz" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="FfTRPBX1pscANXk2GEdq0P" Name="Channel" Kind="InputPin" />
             <Pin Id="GgPXnPyH8G1WLNWnPqUHRc" Name="Output" Kind="OutputPin" />
-            <Pin Id="Id4MiprOHrdNwx5Q9j58l5" Name="Placeholder" Kind="InputPin" />
+            <Pin Id="Id4MiprOHrdNwx5Q9j58l5" Name="Placeholder" Kind="InputPin" IsHidden="true" />
             <Pin Id="LZYzKeLqWFYQBjM3U4kcoP" Name="Editable" Kind="InputPin" IsHidden="true" />
             <Pin Id="Q0uw0P6NhJ5OPSY8PXHNJc" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="Uj1sEqxFZJLNZa5ibmYc1K" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -278,7 +278,7 @@
             <Pin Id="tU1u7bvtFLabQYRbOYsmsD" Name="Label Position" Kind="InputPin" DefaultValue="Top" />
             <Pin Id="OOb638GpY1DlM6y2txPSNE" Name="Output" Kind="OutputPin" />
             <Pin Id="HL6HS0VJJKpNbK7oTFfpW6" Name="Spacing" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Q3vmwp5CGT4OGJL2mhWF3y" Name="Transform" Kind="InputPin" />
+            <Pin Id="Q3vmwp5CGT4OGJL2mhWF3y" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="DwNGkviNYZFL0ZgAN99Y9f" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="Dc9GwpqYiQfMlfBTEEAQsb" Name="Label Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="BY5FN68ZwQvN391mDyoLNM" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -296,15 +296,15 @@
               <Choice Kind="ProcessAppFlag" Name="Button" />
             </p:NodeReference>
             <Pin Id="ZTZF4g3VtBqnOHg0rrft31" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="P8x50x6rhlhPCbXxGzg97N" Name="Size" Kind="InputPin" />
+            <Pin Id="P8x50x6rhlhPCbXxGzg97N" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="IRJvIvhmUGEPRFTHPAmKTY" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="KsZAqBjUlHNPbYXjPd3jwZ" Name="Transform" Kind="InputPin" />
+            <Pin Id="KsZAqBjUlHNPbYXjPd3jwZ" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="PikE8dm01JmMm18Ai95bF1" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="GoPNvr315pqPFX4p4cVQk9" Name="Text" Kind="InputPin" DefaultValue="Reset" />
             <Pin Id="NIovZwhnA2BtczBDGWoUsx" Name="Output" Kind="OutputPin" />
             <Pin Id="Q7tdsgBqTXuNZFd3XFI4O7" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="COtxTJz3stfPoqFTn7zgi9" Name="Auto Repeat" Kind="InputPin" IsHidden="true" />
-            <Pin Id="IC5UJVROKYNP0AgDg3u0DL" Name="On Click" Kind="InputPin" />
+            <Pin Id="IC5UJVROKYNP0AgDg3u0DL" Name="On Click" Kind="InputPin" IsHidden="true" />
             <Pin Id="CN8YyKzKxBtPOgwzjRlcmX" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="EGkEV0giHjDOWlqlWtRYqA" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="QQXh1RCnvQjMYmKI3YGkh6" Name="Debug" Kind="InputPin" IsHidden="true" />
@@ -328,9 +328,9 @@
             <Pin Id="y33bqOp1NvaDOSzN2tqfCQ" Name="Text" Kind="InputPin" DefaultValue="Reset" />
             <Pin Id="inIwZmSgJ3mxZhTKpqj39T" Name="Label Width" Kind="InputPin" />
             <Pin Id="99V6aTbrym5alOXGnKHiTj" Name="Output" Kind="OutputPin" />
-            <Pin Id="OqITYwmZv7oMZxdeEvk2fF" Name="Label Position" Kind="InputPin" />
+            <Pin Id="OqITYwmZv7oMZxdeEvk2fF" Name="Label Position" Kind="InputPin" IsHidden="true" />
             <Pin Id="LTwi6pJ2ZK9NL7fxqCeHgs" Name="Spacing" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Ot6OsBaC2tTOdtnKWdEhk9" Name="Transform" Kind="InputPin" />
+            <Pin Id="Ot6OsBaC2tTOdtnKWdEhk9" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="Ja3sxPtcWv5PtQeQ0Tn7yZ" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="NW5CKfQBupJMH0Fgh8Xoeg" Name="Label Height" Kind="InputPin" IsHidden="true" />
             <Pin Id="N5UaQIklBqAPukT2Tsqk6g" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -386,10 +386,10 @@
             <Pin Id="BABEe8E7QTCM6TCW67iG3H" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="HXwE0GzeiFHL4Zf1pXl0XC" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="ITL1nI3cdlgEb6Pm1hQ9zl" Name="Error" Kind="OutputPin" />
-            <Pin Id="MbC7KzFFG7eO3aI4RFXWRk" Name="Space" Kind="InputPin" />
-            <Pin Id="KEaQDPHfcnSOUoOeTUiarq" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="MbC7KzFFG7eO3aI4RFXWRk" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KEaQDPHfcnSOUoOeTUiarq" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="AZeCFHFazPAN136J4tGqLd" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="FZHACaItBtNQLRu2omNatU" Name="Enabled" Kind="InputPin" />
+            <Pin Id="FZHACaItBtNQLRu2omNatU" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="zfsKSGFGwegkZRQHJDLWNh" Name="Title" Kind="InputPin" DefaultValue="HowTo Label an Element" />
             <Pin Id="CZugnTXXS1VMhHz5Xi8KFG" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="LkYIs3s0IMEOfw944Tatm9" Name="Fullscreen" Kind="InputPin" IsHidden="true" />

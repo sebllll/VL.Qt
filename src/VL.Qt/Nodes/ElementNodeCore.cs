@@ -43,10 +43,10 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <param name="addWarning">Shows the node's message, the result removes it (no NodeContext/AppHost needed).</param>
+        /// <param name="messages">Store of the node, owned by the core (disposed with it).</param>
         /// <param name="create">Builds a description; use a static lambda (no capture → no allocation).</param>
-        public ElementNodeCore(Func<string, IDisposable> addWarning, Func<CommonInputs, TProps, FeedbackSlot, TElement> create)
-            : this(NodeErrors.ShownBy(addWarning), create, string.Empty, ownsMessages: true)
+        public ElementNodeCore(NodeErrors messages, Func<CommonInputs, TProps, FeedbackSlot, TElement> create)
+            : this(messages, create, string.Empty, ownsMessages: true)
         {
         }
 
@@ -81,9 +81,6 @@ namespace VL.Qt.Nodes
         /// <summary>Error currently shown at the node (reported by Qt for the element), null if none.</summary>
         public string? Error => _error.Text;
 
-        /// <summary>Number of descriptions created so far (for tests).</summary>
-        public int Created { get; private set; }
-
         /// <summary>
         /// Returns the description for the inputs: the last instance if nothing changed, else a new one.
         /// Also updates the node warning and error and reads the outputs from the feedback (state of the last pump, in units).
@@ -96,7 +93,6 @@ namespace VL.Qt.Nodes
                 _last = _create(common, props, Slot);
                 _common = common;
                 _props = props;
-                Created++;
             }
             _warning.Set(Feedback.Warning);
             _error.Set(Feedback.Error);

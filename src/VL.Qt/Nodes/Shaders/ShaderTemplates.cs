@@ -6,7 +6,7 @@
         public const string Fragment = """
             #version 440
             // Fragment shader for the ShaderEffect node: full Qt GLSL (Vulkan style, like Qt's qsb tool takes it).
-            // Edit the text and the effect updates while you type; errors show at the Error pin, the last
+            // Edit the text and the effect updates while you type; errors show at the node, the last
             // working version keeps drawing meanwhile.
 
             // Position inside the element, 0..1 (x to the right, y down).
@@ -14,8 +14,8 @@
             layout(location = 0) out vec4 fragColor;
 
             // All uniforms live in this one block. It must start with qt_Matrix and qt_Opacity.
-            // Below them add your own: a uniform gets its value from a Uniform node (Qt.Elements) with
-            // the same name and type; without such a node the value is 0.
+            // Below them add your own: a uniform gets its value from a Float or Color node of
+            // Qt.Elements.Shaders.Uniform with the same name; without such a node the value is 0.
             layout(std140, binding = 0) uniform buf {
                 mat4 qt_Matrix;
                 float qt_Opacity;

@@ -42,6 +42,7 @@ A few rules explain the choice of words. Where a user reads a word, vvvv's meani
 | **snapshot** | the picture of an element as an image resource |
 | **node-API snapshot** | the text file of the public C# surface that a test compares |
 | **frame** | one frame of vvvv's mainloop, nothing else; the one exception is the style group `Frame` (background and border of a widget), written "the Frame style" |
+| **device loss** | the GPU driver resets (on Windows a TDR, timeout detection and recovery) or the GPU is removed or switched; VL.Qt rebuilds the device, the windows and the images |
 | **pump** | Qt's work for one vvvv frame: events, animations, rendering |
 | **host** | the vvvv app that embeds QtNative |
 | **animation clock** | the time Qt's animations run on, set by vvvv |

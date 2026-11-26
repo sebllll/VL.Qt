@@ -11,7 +11,7 @@
 #                                     a node or type name moves only that one, which must be in exactly that category
 #   old    the name before the step; new: the name after it. Scope names the node as it is called before the step.
 #          Pins in vvvv spelling (Fill Color) or as the C# parameter (fillColor -> Fill Color, the rule of
-#          tools/vl_pin_catalog.py). The new names must be in src/VL.Qt.Tests/Api/node-api.txt after all steps.
+#          tools/vl_node_api.py). The new names must be in src/VL.Qt.Tests/Api/node-api.txt after all steps.
 #
 # Never change or remove a row once it is merged: the script reads from each node which steps it has seen, by the
 # names the rows give. On a merge conflict, keep the rows of both sides (the side merged first comes first), take

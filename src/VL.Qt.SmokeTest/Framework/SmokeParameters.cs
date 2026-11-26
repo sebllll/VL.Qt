@@ -31,7 +31,7 @@ internal static class SmokeParameters
     /// <summary>Flags of the manual tearing scenario, e.g. "--windows 2 --interval 0 --seconds 10".</summary>
     public static string[] TearingArgs => Split(Get("TearingArgs"));
 
-    /// <summary>replay-cli: trace file (01e) and its flags, e.g. "--loop 3 --paced".</summary>
+    /// <summary>replay-cli: trace file and its flags, e.g. "--loop 3 --paced".</summary>
     public static string? ReplayTrace => Get("ReplayTrace");
     public static string[] ReplayArgs => Split(Get("ReplayArgs"));
 

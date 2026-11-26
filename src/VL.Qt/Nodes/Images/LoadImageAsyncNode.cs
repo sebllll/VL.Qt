@@ -33,7 +33,6 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <summary>For tests: a client on a fake API; null <paramref name="messages"/> reports nothing.</summary>
         internal LoadImageAsyncNode(ResourceClient client, NodeErrors? messages = null)
         {
             _client = client;
@@ -44,10 +43,12 @@ namespace VL.Qt.Nodes
         /// <summary>Starts loading when Path, Mipmaps or Upload change; the output switches when the new image is ready.</summary>
         /// <param name="path">Image file (PNG, JPG, BMP, ... everything Qt reads; EXIF rotation is applied). Empty = no image.</param>
         /// <param name="mipmaps">Generate mipmaps (+33 % GPU memory): smoother when the image is drawn much smaller than its size.</param>
-        /// <param name="keepPrevious">Keep the previous image at the output while the new one loads (and when it fails). Off: the output switches at once to the loading image, which draws nothing until it is ready.</param>
+        /// <param name="keepPrevious">Keep the previous image at the output while the new one loads (and when it fails). Off: the output
+        /// switches at once to the loading image, which draws nothing until it is ready.</param>
         /// <param name="isLoaded">True when the image of the current Path is ready. False also when it failed: the node then shows why and logs it.</param>
         /// <param name="onLoaded">Fires the image when a load is complete (on the main thread, during the frame's Qt pump).</param>
-        /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
+        /// <param name="upload">How the pixels get onto the GPU: Auto (files in a worker, pixels on the main thread), Main Thread (in
+        /// stripes within the frame budget) or Worker (texture made in a worker, D3D11). For measurements; Auto fits nearly always.</param>
         /// <returns>The image; nothing until the first load is complete (Keep Previous) or for an empty path.</returns>
         [return: Pin(Name = "Image")]
         public QtImage? Update(

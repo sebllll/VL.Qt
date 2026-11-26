@@ -34,10 +34,6 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <summary>
-        /// For tests: a client on a fake API, an own scene registry and a writer on a fake write function; null
-        /// <paramref name="messages"/> reports nothing.
-        /// </summary>
         internal FileWriterElementNode(ResourceClient client, OccurrenceRegistry scene, ImageFileWriter writer, NodeErrors? messages = null)
         {
             _grab = new SnapshotGrab(client, scene);
@@ -47,12 +43,15 @@ namespace VL.Qt.Nodes
 
         /// <summary>Grabs Element on Write and writes it to File Path.</summary>
         /// <param name="input">Element or Group to write; it has to be shown in a renderer.</param>
-        /// <param name="filePath">Target file; the extension picks the format (png, jpg, bmp, ...). Missing folders are created, an existing file is overwritten.</param>
+        /// <param name="filePath">Target file; the extension picks the format (png, jpg, bmp, ...). Missing folders are created, an
+        /// existing file is overwritten.</param>
         /// <param name="isDone">True in the frame the write ended, also when the grab or the write failed (see Success).</param>
-        /// <param name="success">True if the last write that ended wrote the file; set in the frame of Is Done and held until the next one. A failure is logged.</param>
+        /// <param name="success">True if the last write that ended wrote the file; set in the frame of Is Done and held until the next one.
+        /// A failure is logged.</param>
         /// <param name="scale">Pixels per DIP: pixel size = element size in DIP * Scale, independent of the screen's DPI scaling.</param>
         /// <param name="quality">0..100 for lossy formats (JPG, WebP); ignored for PNG and BMP.</param>
-        /// <param name="write">Grabs the element and starts writing it. A Write while another write runs waits; of several waiting Writes only the newest is written.</param>
+        /// <param name="write">Grabs the element and starts writing it. A Write while another write runs waits; of several waiting Writes
+        /// only the newest is written.</param>
         public void Update(
             IElement? input,
             Path filePath,

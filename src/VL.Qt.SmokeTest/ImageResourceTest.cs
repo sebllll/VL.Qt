@@ -145,7 +145,7 @@ public static class ImageResourceTest
             foreach (var ext in new[] { "png", "jpg" })
             {
                 var path = Path.Combine(dir, $"{name}.{ext}");
-                s.Check(NativeTest.vlqt_test_write_image(path, fw, fh, 90) == 0, $"test image {name}.{ext} written");
+                s.Check(NativeCalls.WriteStripedImage(path, fw, fh, 90) == 0, $"test image {name}.{ext} written");
                 files.Add((path, fw, fh, ext == "jpg" ? 12 : 0));
             }
         var broken = Path.Combine(dir, "broken.png");

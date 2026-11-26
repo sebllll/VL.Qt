@@ -18,7 +18,8 @@ internal static class GeometryExtensions
         s.SetMat4(id, Protocol.PropertyId.Transform, Matrix.Translation(x, y, 0));
     }
 
-    /// <summary>Old "Bounds + Transform around the default pivot": ANCHOR Center, TRANSFORM = m · T(center of the rect), so m acts around the center of the rectangle (x, y, w, h).</summary>
+    /// <summary>Old "Bounds + Transform around the default pivot": ANCHOR Center, TRANSFORM = m · T(center of the rect), so m acts around
+    /// the center of the rectangle (x, y, w, h).</summary>
     public static void SetPlaceXf(this ICommandSink s, uint id, float x, float y, float w, float h, in Matrix m)
     {
         s.SetVec2(id, Protocol.PropertyId.Size, w, h);

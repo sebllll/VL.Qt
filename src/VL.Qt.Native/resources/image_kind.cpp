@@ -69,7 +69,7 @@ uchar unitToByte(float v)
     return uchar(std::clamp(v, 0.0f, 1.0f) * 255.0f + 0.5f);
 }
 
-// Upload path (measured in #360 and #390, numbers in the PRs): files -> worker path (empty textures in the worker,
+// Upload path (measured, numbers in the PRs): files -> worker path (empty textures in the worker,
 // the pixels through a mapped staging texture filled by a copy task, then a GPU copy: < 1 ms per 4K on the main
 // thread; stripes instead: the first write into a new 4K texture costs ~9 ms on the main thread, ~1 ms per 8 MB after
 // it, 20 x 4K: 22 % hitches), pixels -> stripes in the frame budget (set_pixels per frame). Mipmaps take the worker
@@ -88,7 +88,7 @@ bool validUpload(int upload)
 }
 
 /* Raw buffers of set_pixels, kept for the next set_pixels of the same size: a 1080p frame is 8 MB that the main thread
- * would otherwise allocate and fault in per frame (W1-17: 1.7 ms of set_pixels at 1080p). Taken on the main thread
+ * would otherwise allocate and fault in per frame (1.7 ms of set_pixels at 1080p). Taken on the main thread
  * (setPixels), given back by the worker (convertPixels, when the converted copy replaces the raw one) or by the last
  * holder of a content (~ImageContent, any thread): hence the mutex. Only buffers no other QByteArray shares are kept
  * (a restored content shares the raw copy of the old one). The buffers themselves are freed outside the lock. */

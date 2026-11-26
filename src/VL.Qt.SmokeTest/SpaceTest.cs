@@ -26,12 +26,10 @@ using static Pixels;
 // the grab (<OutDir>/143_space_*.png), the Scene Bounds of both rectangles in units (round trip through QtNative), the
 // position of a synthetic click in units (Point node, local to the rectangle). At the end a resync (invalid command before a
 // Space change) must restore origin and scale. The device pixel ratio is read from the scene; another one needs its own run:
-// $env:QT_SCALE_FACTOR=1.5; dotnet run --project src/VL.Qt.SmokeTest -c Release -- --only space (DIP: 150 device pixels).
+// $env:QT_SCALE_FACTOR=1.5; dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=space (DIP: 150 device pixels).
 [TestFixture, NonParallelizable]
 public static class SpaceTest
 {
-    private sealed class NoMessage : IDisposable { public void Dispose() { } }
-
     private static readonly Color4 Bg = new(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
     private const float Eps = 2e-3f;
 
@@ -58,7 +56,7 @@ public static class SpaceTest
         if (r.Window == SceneHandle.Null)
             return;
 
-        using var point = new PointNode(_ => new NoMessage());
+        using var point = new PointNode(new NodeLog().Errors);
         var active = Channel.Create(false);
         var position = Channel.Create(Vector2.Zero);
         var redFeedback = new ElementFeedback();

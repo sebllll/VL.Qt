@@ -16,9 +16,6 @@
     <File Path="../VL.Qt.vl.targets" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="VL.Qt.Probe/VL.Qt.Probe.csproj">
-      <BuildDependency Project="VL.Qt.Native/VL.Qt.Native.csproj" />
-    </Project>
     <Project Path="VL.Qt.SmokeTest/VL.Qt.SmokeTest.csproj">
       <BuildDependency Project="VL.Qt.Native/VL.Qt.Native.csproj" />
     </Project>

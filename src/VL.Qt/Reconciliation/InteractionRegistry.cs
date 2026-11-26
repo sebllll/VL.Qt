@@ -44,7 +44,8 @@ namespace VL.Qt.Reconciliation
         /// <summary>Handler that currently serves the interaction with feedback <paramref name="key"/>, or null.</summary>
         public HandlerMirror? ActiveHandlerOf(FeedbackSlot key) => _entries.TryGetValue(key, out var e) ? e.Active : null;
 
-        /// <summary>Makes <paramref name="handler"/> of <paramref name="reconciler"/> the active handler of its key (the caller checked that there is none).</summary>
+        /// <summary>Makes <paramref name="handler"/> of <paramref name="reconciler"/> the active handler of its key (the caller checked
+        /// that there is none).</summary>
         public void Activate(HandlerMirror handler, Reconciler reconciler)
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrAddDefault(_entries, handler.Key, out _);

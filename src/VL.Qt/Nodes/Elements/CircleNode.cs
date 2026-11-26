@@ -23,13 +23,13 @@ namespace VL.Qt.Nodes
         public CircleNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<Rectangle, RectangleNode.Props>(nodeContext, RectangleNode.Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal CircleNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<Rectangle, RectangleNode.Props>(addWarning, RectangleNode.Create);
+        internal CircleNode(NodeErrors messages)
+            => _node = new ElementNodeCore<Rectangle, RectangleNode.Props>(messages, RectangleNode.Create);
 
         internal ElementNodeCore<Rectangle, RectangleNode.Props> Core => _node;
 
-        /// <param name="radius">Radius; the circle takes 2 × Radius in width and height. 0 = not drawn. The position comes from Transform and Anchor (default TopLeft: the corner of the bounding square; Center: the circle's center at the origin).</param>
+        /// <param name="radius">Radius; the circle takes 2 × Radius in width and height. 0 = not drawn. The position comes from Transform
+        /// and Anchor (default TopLeft: the corner of the bounding square; Center: the circle's center at the origin).</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <param name="fillColor">Fill color.</param>
@@ -38,7 +38,8 @@ namespace VL.Qt.Nodes
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='plain']/param[@name='clip']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
-        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input. Hit-testing uses the square, not the circle.</param>
+        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for
+        /// input. Hit-testing uses the square, not the circle.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='plain']/param[@name='measuredSize']"/>

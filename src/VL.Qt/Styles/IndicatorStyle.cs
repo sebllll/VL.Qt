@@ -37,7 +37,8 @@ namespace VL.Qt.Styles
             };
         }
 
-        /// <summary>Wire mapping: writes the entries of <paramref name="cur"/> that differ from <paramref name="last"/> (see <see cref="StyleWriter"/>).</summary>
+        /// <summary>Wire mapping: writes the entries of <paramref name="cur"/> that differ from <paramref name="last"/> (see
+        /// <see cref="StyleWriter"/>).</summary>
         public static void Visit(ref StyleWriter.Pass pass, IndicatorStyle? cur, IndicatorStyle? last)
         {
             pass.Color(Protocol.StyleField.IndicatorColor, cur?.Color ?? default, last?.Color ?? default);

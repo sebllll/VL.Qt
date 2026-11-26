@@ -24,8 +24,8 @@ public static class ImagePreviewTest
         Directory.CreateDirectory(dir);
         var big = Path.Combine(dir, "big.png");
         var small = Path.Combine(dir, "small.png");
-        s.Check(NativeTest.vlqt_test_write_image(big, 4000, 2000, 90) == 0, "4000x2000 test image written");
-        s.Check(NativeTest.vlqt_test_write_image(small, 100, 80, 90) == 0, "100x80 test image written");
+        s.Check(NativeCalls.WriteStripedImage(big, 4000, 2000, 90) == 0, "4000x2000 test image written");
+        s.Check(NativeCalls.WriteStripedImage(small, 100, 80, 90) == 0, "100x80 test image written");
 
         ulong Create()
         {

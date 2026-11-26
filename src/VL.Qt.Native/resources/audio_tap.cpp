@@ -603,7 +603,7 @@ bool setVideoTap(Elements&, ElementEntry& node, const ResolvedProp&, const Value
         err = "Video without a media player";
         return false;
     }
-    // One player per tap (COMP-03): a second item on the tap stays muted, else it plays Qt's sound next to the tap.
+    // One player per tap: a second item on the tap stays muted, else it plays Qt's sound next to the tap.
     // Nothing re-runs this setter when the owner detaches, so the refusal is final for this value.
     if (work->owner && work->owner != a) {
         a->mute(player);

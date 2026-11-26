@@ -7,15 +7,15 @@ using VL.Qt.Elements;
 using VL.Qt.Interop;
 using VL.Qt.Wire;
 
-// NAPP-10 / W4-84: QML animations follow vlqt_app_advance_animations forward; the driver ignores a time below the current
-// one (docs/architecture.md, "Timing and animation").
+// QML animations follow vlqt_app_advance_animations forward; the driver ignores a time below the current
+// one (docs/contributing/architecture.md, "Timing and animation").
 // A QmlElement animates v from 0 to 100 in 10 s (10 per second of the frame clock). The clock runs 2 s, jumps back by 1 s
 // and runs forward again: v holds its value at the jump and while the clock is below 2 s (at 1.5 s still held), and goes on
 // forward once the clock passes the old 2 s (0.5 s later: about 5 more). A time that is not finite is refused.
 [TestFixture, NonParallelizable]
 public static class AnimationScrubTest
 {
-    /// <summary>NAPP-10: a backward jump of the frame clock is ignored by the driver, a QML animation holds; a non-finite time is refused.</summary>
+    /// <summary>A backward jump of the frame clock is ignored by the driver, a QML animation holds; a non-finite time is refused.</summary>
     [Test, Category("animation-scrub")]
     public static void AnimationScrub() => Scenario.Run(Run);
 

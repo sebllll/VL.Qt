@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="8DwkNhFdnXsiVpzz63FfkC" Bounds="99,1150,830,62" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Same values as the F5 overlay.&#xD;&#xA;- Averages over about 1 s, Max = worst pump.">
+          <Pad Id="8DwkNhFdnXsiVpzz63FfkC" Bounds="99,1150,830,76" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Same values as the F5 overlay.&#xD;&#xA;- Averages over about 1 s, Max = worst pump.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -58,14 +58,14 @@
             </p:NodeReference>
             <Pin Id="Hw2Text4Kq7Lm2Np5Rs8Ta" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Hw2Text4Kq7Lm2Np5Rs8Tb" Name="Size" Kind="InputPin" />
-            <Pin Id="DM8XnEfX57eOeMkqyUdooU" Name="Transform" Kind="InputPin" />
+            <Pin Id="DM8XnEfX57eOeMkqyUdooU" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="9rP9hG1613YrpIJanx1XJq" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="Hw2Text4Kq7Lm2Np5Rs8Tc" Name="Text" Kind="InputPin" DefaultValue="Hello Performance" />
-            <Pin Id="I4sxRJiymjKPffAjhoPqSq" Name="Font Family" Kind="InputPin" />
+            <Pin Id="I4sxRJiymjKPffAjhoPqSq" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="Hw2Text4Kq7Lm2Np5Rs8Td" Name="Font Size" Kind="InputPin" DefaultValue="0.5" />
             <Pin Id="Hw2Text4Kq7Lm2Np5Rs8Te" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="FKnWJdpc02TO6eaLBFmudk" Name="Italic" Kind="InputPin" IsHidden="true" />
-            <Pin Id="MapRDkNpu27Oi5hnyqW1xt" Name="Color" Kind="InputPin" />
+            <Pin Id="MapRDkNpu27Oi5hnyqW1xt" Name="Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="Hw2Text4Kq7Lm2Np5Rs8Tf" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="Hw2Text4Kq7Lm2Np5Rs8Tg" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="Hw2Text4Kq7Lm2Np5Rs8Th" Name="Output" Kind="OutputPin" />
@@ -94,9 +94,9 @@
             <Pin Id="TZk9vmCINn8QSVPYVKOlRx" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="QCESmtkpGeVQIF3kSVg3i1" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="Hw4Rnd4Kq7Lm2Np5Rs8Tb" Name="Input" Kind="InputPin" />
-            <Pin Id="EDacWaSCu64OU5nF5ALMRJ" Name="Space" Kind="InputPin" />
+            <Pin Id="EDacWaSCu64OU5nF5ALMRJ" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="Qo5iPVqFy5eOZs2FVzUgdJ" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="Cnxh8tgjKqlOj1dLr7bZpA" Name="Enabled" Kind="InputPin" />
+            <Pin Id="Cnxh8tgjKqlOj1dLr7bZpA" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="13MnLmFViVJ0PIoxLqXR2I" Name="Title" Kind="InputPin" />
             <Pin Id="L2vwm6WfPijO8Zv9qSZRpg" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="F30pM32esWwMH8HIR1eJ1k" Name="Perf" Kind="OutputPin" />

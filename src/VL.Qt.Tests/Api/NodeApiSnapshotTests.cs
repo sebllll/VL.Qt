@@ -21,7 +21,7 @@ using VL.Qt.Shaders;
 namespace VL.Qt.Tests.Api
 {
     /// <summary>
-    /// Node-API snapshot (TEST-01): every public type and member of VL.Qt, VL.Qt.Stride and VL.Qt.Audio with the attributes
+    /// Node-API snapshot: every public type and member of VL.Qt, VL.Qt.Stride and VL.Qt.Audio with the attributes
     /// vvvv reads, plus the pins of the nodes the shader and QML node factories generate, compared with Api/node-api.txt.
     /// The assemblies are read as metadata (System.Reflection.Metadata), so nothing is loaded or resolved. One fact per
     /// line, sorted ordinally: a git diff of the file reads as a rename list. VLQT_UPDATE_SNAPSHOT=1 rewrites the file.
@@ -136,7 +136,7 @@ namespace VL.Qt.Tests.Api
             return result;
         }
 
-        /// <summary>C# name to vvvv pin name, the rule of tools/vl_pin_catalog.py (title_case): `fillColor` → `Fill Color`.</summary>
+        /// <summary>C# name to vvvv pin name, the rule of tools/vl_node_api.py (title_case): `fillColor` → `Fill Color`.</summary>
         internal static string TitleCase(string name)
         {
             if (name.Length == 0)
@@ -191,8 +191,8 @@ Item {
                 var lines = new List<string> { $"factory Shader | default category {ShaderNodeFactory.DefaultCategory}" };
                 foreach (var file in ShaderNodeFactory.Scan(dir).OrderBy(f => f.FullName, StringComparer.Ordinal))
                 {
-                    var layout = ShaderNodeLayout.Load(file, (_, _) => ShaderReflection.Parse(file.Name == "Plain" ? "ok\n" : testShaderReflection), NullLogger.Instance);
-                    lines.AddRange(GeneratedNodeLines("Shader", file.FullName, file.Category, ShaderNodeDescription.Inputs(layout), ShaderNodeDescription.Outputs));
+                    var layout = ShaderLayout.From(ShaderSource.Load(file, (_, _) => ShaderReflection.Parse(file.Name == "Plain" ? "ok\n" : testShaderReflection)), file);
+                    lines.AddRange(GeneratedNodeLines("Shader", file.FullName, file.Category, ShaderDescription.Inputs(layout), ShaderDescription.Outputs));
                 }
                 return lines;
             }
@@ -836,7 +836,8 @@ Item {
                 _ => PrimitiveTypeCode.Int32,
             };
 
-            /// <summary>Enum facts of a type by full name: local from this metadata, external by loading the referenced assembly; null if not an enum or not found.</summary>
+            /// <summary>Enum facts of a type by full name: local from this metadata, external by loading the referenced assembly; null if
+            /// not an enum or not found.</summary>
             private EnumInfo? Enum(string type)
             {
                 if (_localEnums.TryGetValue(type, out var local))

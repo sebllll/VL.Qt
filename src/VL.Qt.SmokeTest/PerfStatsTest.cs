@@ -36,14 +36,15 @@ public static class PerfStatsTest
         // Frames: 1..100 without x1 and x2 (80 values, 8 per decade): ranks 40 / 76 / 80 -> 50 / 96 / 100.
         s.Check(st.frame_p50 == 50 && st.frame_p95 == 96 && st.frame_p99 == 100 && st.frame_max == 100,
             $"perfstats: frame p50/p95/p99/max = 50/96/100/100 ({st.frame_p50}/{st.frame_p95}/{st.frame_p99}/{st.frame_max})");
-        // Over budget (Qt work = pump here: no vsync wait, no present): pump 17..100 = 84 (recent 51..100 = 50). Long frames (> 25 ms, swap in this and the previous
+        // Over budget (Qt work = pump here: no vsync wait, no present): pump 17..100 = 84 (recent 51..100 = 50). Long frames (> 25 ms, swap
+        // in this and the previous
         // pump): i 25..99 minus i % 10 == 0 or 1 = 61 (recent i 50..99: 40). Idle / multi: 10 each (recent 5).
         s.Check(st.pumps == 100 && st.over_budget == 84 && st.long_frames == 61 && st.idle == 10 && st.multi_swap == 10,
             $"perfstats: counters since start 100/84/61/10/10 ({st.pumps}/{st.over_budget}/{st.long_frames}/{st.idle}/{st.multi_swap})");
         s.Check(st.recent_pumps == 50 && st.recent_over_budget == 50 && st.recent_long_frames == 40 && st.recent_idle == 5 && st.recent_multi_swap == 5,
             $"perfstats: counters last 10 s 50/50/40/5/5 ({st.recent_pumps}/{st.recent_over_budget}/{st.recent_long_frames}/{st.recent_idle}/{st.recent_multi_swap})");
 
-        // #261 on-demand: a frame every 8th pump (16 ms pumps, frame = 128 ms after 7 idle pumps) -> no long frames,
+        // On-demand: a frame every 8th pump (16 ms pumps, frame = 128 ms after 7 idle pumps) -> no long frames,
         // no frame intervals; a following animated burst (frame 16 ms each pump) counts normally.
         samples = new Native.vlqt_perf_sample[80];
         t = new double[80];
@@ -58,7 +59,7 @@ public static class PerfStatsTest
         s.Check(rc == 0 && st.long_frames == 0 && st.idle == 56 && st.frames == 16 && st.frame_max == 16,
             $"perfstats: on demand -> long frames 0, idle 56, 16 consecutive frames, frame max 16 (long {st.long_frames}, idle {st.idle}, frames {st.frames}, max {st.frame_max})");
 
-        // NDIAG-02: frame statistics (vlqt_perf: fps, frame_ms) only from consecutive frames. 60 pumps of 16 ms frames,
+        // Frame statistics (vlqt_perf: fps, frame_ms) only from consecutive frames. 60 pumps of 16 ms frames,
         // with and without a 2 s idle gap (the frame after it has interval 2000 and a previous pump without a frame).
         var anim = new Native.vlqt_perf_sample[60];
         for (int i = 0; i < 60; i++)

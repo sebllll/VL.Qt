@@ -8,7 +8,7 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 using VL.Qt;
 
-// Value inputs of #301 (package 2a): QtQuick.Controls CheckBox and Switch (Toggle, bool), Slider (f32) and TextField
+// Value inputs: QtQuick.Controls CheckBox and Switch (Toggle, bool), Slider (f32) and TextField
 // (string), style Basic, raw protocol against QtNative. Same guarantees as SpinBox: EVENT_VALUE only after user
 // changes (click/Space, press/drag/wheel/arrow keys, Enter/focus loss with changed text), never for SET, the user value
 // captured at the signal survives a stale SET before the poll, several changes in one frame = one event, a rebind drops
@@ -304,7 +304,8 @@ public static class ValueInputsTest
         cmd.SetPlace(Sl, 600, 100, 40, 400);
         CheckApply("slider vertical bounds");
         Frame();
-        Click(620, 100 + SliderInset + (400 - 2 * SliderInset) * 0.1f); // 10 % from the top = 90 % of -10..10 = 8 -> 7.5 (the value is 5 from the dropped change)
+        // 10 % from the top = 90 % of -10..10 = 8 -> 7.5 (the value is 5 from the dropped change)
+        Click(620, 100 + SliderInset + (400 - 2 * SliderInset) * 0.1f);
         ExpectF32(Frame(), HL2, 7.5f, 0.001f, "slider vertical click (top = maximum)");
         cmd.SetI32(Sl, Protocol.PropertyId.Orientation, 3);
         var badRc = Native.Apply(w, cmd.EndFrame());

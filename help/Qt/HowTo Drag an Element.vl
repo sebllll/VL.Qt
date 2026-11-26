@@ -27,9 +27,9 @@
             <Pin Id="6JlLrT00pyi78T0igtccyG" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="w2pANSDDUasnc8ULtipEOS" Name="Fill Color" Kind="InputPin" DefaultValue="0.2, 0.4, 0.9, 1" />
             <Pin Id="CG1zr0WpV03VKl5A6QXaTX" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
-            <Pin Id="BM9h7zZEJh7mhz4wZwPd8c" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="fK8fVZ7blKGltxuh4fjO6s" Name="Stroke Width" Kind="InputPin" />
-            <Pin Id="Q2LhKqUt4zM0uK1EdpO394" Name="Opacity" Kind="InputPin" />
+            <Pin Id="BM9h7zZEJh7mhz4wZwPd8c" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="fK8fVZ7blKGltxuh4fjO6s" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Q2LhKqUt4zM0uK1EdpO394" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="H7657cjYH6BTtwgdZKllMQ" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="DxjyYAbRzRuhd5HcMRNezd" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="qnGgydmhce3tPEmg3LRIh3" Name="Interaction" Kind="InputPin" />
@@ -56,11 +56,11 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="JQAgHnItxCTdnfLjiZ8jZ7" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Sjk3GOmFbhExOIqbmC64uW" Name="Input" Kind="InputPin" />
+            <Pin Id="Sjk3GOmFbhExOIqbmC64uW" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="GpPHjnZfnL8jxY6ejXsfNe" Name="Is Dragging" Kind="InputPin" />
-            <Pin Id="BkXXXItQarQZXM1Cqtu0db" Name="Translation" Kind="InputPin" />
-            <Pin Id="3BqXx50bZ4HBg8Cu0LZDSu" Name="Moves Element" Kind="InputPin" />
-            <Pin Id="Iev9Wzchs5idWrSITy1oct" Name="Axis" Kind="InputPin" />
+            <Pin Id="BkXXXItQarQZXM1Cqtu0db" Name="Translation" Kind="InputPin" IsHidden="true" />
+            <Pin Id="3BqXx50bZ4HBg8Cu0LZDSu" Name="Moves Element" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Iev9Wzchs5idWrSITy1oct" Name="Axis" Kind="InputPin" IsHidden="true" />
             <Pin Id="K69oXo25oeNMRxTvIgHsQh" Name="Min" Kind="InputPin" IsHidden="true" />
             <Pin Id="VlSZaCL3LBnQWRNas4koQJ" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="StnZy3WSn6WXJlU5KzoWbE" Name="Buttons" Kind="InputPin" IsHidden="true" />
@@ -114,10 +114,10 @@
               <Choice Kind="ProcessAppFlag" Name="Drag" />
             </p:NodeReference>
             <Pin Id="fj1JutmEBkHjysGnrp6t3z" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="tcTDIpy3MFiSduUKHnm52q" Name="Input" Kind="InputPin" />
-            <Pin Id="M7FJQe5kQl0iLcE4NEe8zT" Name="Is Dragging" Kind="InputPin" />
+            <Pin Id="tcTDIpy3MFiSduUKHnm52q" Name="Input" Kind="InputPin" IsHidden="true" />
+            <Pin Id="M7FJQe5kQl0iLcE4NEe8zT" Name="Is Dragging" Kind="InputPin" IsHidden="true" />
             <Pin Id="SkfeLkcmoLrDcz1TqGFujt" Name="Translation" Kind="InputPin" />
-            <Pin Id="QDFyfuQEzSXjKbkTGQxIYK" Name="Moves Element" Kind="InputPin" />
+            <Pin Id="QDFyfuQEzSXjKbkTGQxIYK" Name="Moves Element" Kind="InputPin" IsHidden="true" />
             <Pin Id="oZjdiI63diM6CqEBNxpoZD" Name="Axis" Kind="InputPin" DefaultValue="Horizontal" />
             <Pin Id="MDQxyUKt5s1gyupPmd4cFY" Name="Min" Kind="InputPin" />
             <Pin Id="xRXepOohMQgKaPW3weH10b" Name="Max" Kind="InputPin" />
@@ -160,7 +160,7 @@
             </p:NodeReference>
             <Pin Id="XlCmK0lxbFstOnd3BkfMI9" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="h23hp9TsHzi6TtlqaNK4bZ" Name="Size" Kind="InputPin" DefaultValue="3.6, 2.2" />
-            <Pin Id="Wfw7Lhgo7oSghcIQvkJVfT" Name="Transform" Kind="InputPin" />
+            <Pin Id="Wfw7Lhgo7oSghcIQvkJVfT" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="MYeaBFB7CiBec97cHHnh3k" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="1kOYsu7wKGnjGomicdgBbl" Name="Fill Color" Kind="InputPin" DefaultValue="0.25, 0.25, 0.3, 1" />
             <Pin Id="Tz3ntIHP54iDck9Mqbxwpo" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
@@ -204,11 +204,11 @@
               <Choice Kind="ProcessAppFlag" Name="Drag" />
             </p:NodeReference>
             <Pin Id="z7OgJKVAN3Ij4mqXUEhSMS" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="PjnPHimiNTndi4wEWNdDXY" Name="Input" Kind="InputPin" />
-            <Pin Id="4Pii5v8ucWGBPCU6cSS0Yk" Name="Is Dragging" Kind="InputPin" />
-            <Pin Id="ZFij9xbLejXZ9Kv2qfw58B" Name="Translation" Kind="InputPin" />
-            <Pin Id="hGeVmVnEBr4EUCatTnY51R" Name="Moves Element" Kind="InputPin" />
-            <Pin Id="6UpKFu3dzACPf6Wl2wAeN8" Name="Axis" Kind="InputPin" />
+            <Pin Id="PjnPHimiNTndi4wEWNdDXY" Name="Input" Kind="InputPin" IsHidden="true" />
+            <Pin Id="4Pii5v8ucWGBPCU6cSS0Yk" Name="Is Dragging" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ZFij9xbLejXZ9Kv2qfw58B" Name="Translation" Kind="InputPin" IsHidden="true" />
+            <Pin Id="hGeVmVnEBr4EUCatTnY51R" Name="Moves Element" Kind="InputPin" IsHidden="true" />
+            <Pin Id="6UpKFu3dzACPf6Wl2wAeN8" Name="Axis" Kind="InputPin" IsHidden="true" />
             <Pin Id="RXYcKUcJkA6PEyp8vjNeJp" Name="Min" Kind="InputPin" IsHidden="true" />
             <Pin Id="AXebbtbV102M58fSRcRi91" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="sqaPwHey1PWLiLn6h6rbvC" Name="Buttons" Kind="InputPin" IsHidden="true" />
@@ -222,7 +222,7 @@
             </p:NodeReference>
             <Pin Id="bwe3DBzQ5YiP80tnqXn54O" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Bc53n7AZVixMkbNZAVzUDd" Name="Size" Kind="InputPin" DefaultValue="1, 1.2" />
-            <Pin Id="FgIX7PMWX5kkbcfjtAFwoV" Name="Transform" Kind="InputPin" />
+            <Pin Id="FgIX7PMWX5kkbcfjtAFwoV" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="pOYaxW9qgIbnWgbZEyforr" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="VneI26Om7IvRyAmxkTWSUZ" Name="Fill Color" Kind="InputPin" DefaultValue="0.3, 0.5, 0.35, 1" />
             <Pin Id="r2KCvUsC7JCyie0NXxCU1s" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
@@ -244,7 +244,7 @@
             </p:NodeReference>
             <Pin Id="corC9HBJQp5rVYC8a7tePk" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="quuAy7MgZ3K1wnRejVpLOY" Name="Size" Kind="InputPin" DefaultValue="1, 1.2" />
-            <Pin Id="FoeaipnD7PgFJzzPbxN88V" Name="Transform" Kind="InputPin" />
+            <Pin Id="FoeaipnD7PgFJzzPbxN88V" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="qkPPAzAKnEk6WoUTRE4ygb" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="O6hbdlEqXCaZQJsxqyrZP1" Name="Fill Color" Kind="InputPin" DefaultValue="0.9, 0.3, 0.5, 1" />
             <Pin Id="04XXs3EjRxICYxGXM6ODT6" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
@@ -266,7 +266,7 @@
             </p:NodeReference>
             <Pin Id="PrsQBGeX4Qpmvjl2mKlsFl" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="5t0WHlnMTOctaxgpP7LLxn" Name="Size" Kind="InputPin" DefaultValue="1, 1.2" />
-            <Pin Id="VucRvkagSTloqqad8zSqjx" Name="Transform" Kind="InputPin" />
+            <Pin Id="VucRvkagSTloqqad8zSqjx" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="iWi9fSLGfNXjlJ3SWp46Pu" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="IiOORFJD2WAUdAL3CWUf49" Name="Fill Color" Kind="InputPin" DefaultValue="0.3, 0.5, 0.35, 1" />
             <Pin Id="s3ZQsN3godjXP1h37zwvMr" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
@@ -288,11 +288,11 @@
               <Choice Kind="ProcessAppFlag" Name="Drag" />
             </p:NodeReference>
             <Pin Id="x5sCrHVb1Be0mePGDwAfoy" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="GLtkMuUIqtzTLNJxHcTnGw" Name="Input" Kind="InputPin" />
-            <Pin Id="6djqjcYV7cJZ8rbpQLFkzV" Name="Is Dragging" Kind="InputPin" />
-            <Pin Id="6YHdf9oaNyikMktNV176bv" Name="Translation" Kind="InputPin" />
-            <Pin Id="P3pAza644ahzQHIxXmUFuE" Name="Moves Element" Kind="InputPin" />
-            <Pin Id="boI040ABU6AFICEyZeYOOP" Name="Axis" Kind="InputPin" />
+            <Pin Id="GLtkMuUIqtzTLNJxHcTnGw" Name="Input" Kind="InputPin" IsHidden="true" />
+            <Pin Id="6djqjcYV7cJZ8rbpQLFkzV" Name="Is Dragging" Kind="InputPin" IsHidden="true" />
+            <Pin Id="6YHdf9oaNyikMktNV176bv" Name="Translation" Kind="InputPin" IsHidden="true" />
+            <Pin Id="P3pAza644ahzQHIxXmUFuE" Name="Moves Element" Kind="InputPin" IsHidden="true" />
+            <Pin Id="boI040ABU6AFICEyZeYOOP" Name="Axis" Kind="InputPin" IsHidden="true" />
             <Pin Id="F14nG4wucBKPQacKQtpAIR" Name="Min" Kind="InputPin" IsHidden="true" />
             <Pin Id="LJS9BNYHRS9NaYe85DveTo" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="bcq3ViB0kxud7EIbWN42Ul" Name="Buttons" Kind="InputPin" IsHidden="true" />
@@ -398,11 +398,11 @@
               <Choice Kind="ProcessAppFlag" Name="Drag" />
             </p:NodeReference>
             <Pin Id="zD8ZOuHziXVWWnKfbNX8Fu" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="6ICNm2nYb2ZoUIJbeFRH1L" Name="Input" Kind="InputPin" />
-            <Pin Id="2kaP8En86P0j6NFC6gbSsf" Name="Is Dragging" Kind="InputPin" />
-            <Pin Id="N3AcMn1nVxiVJfnOSNyGkb" Name="Translation" Kind="InputPin" />
-            <Pin Id="RDDEZATdexEue5veGsLALR" Name="Moves Element" Kind="InputPin" />
-            <Pin Id="tv645Eiktlt10SDcfvtTUz" Name="Axis" Kind="InputPin" />
+            <Pin Id="6ICNm2nYb2ZoUIJbeFRH1L" Name="Input" Kind="InputPin" IsHidden="true" />
+            <Pin Id="2kaP8En86P0j6NFC6gbSsf" Name="Is Dragging" Kind="InputPin" IsHidden="true" />
+            <Pin Id="N3AcMn1nVxiVJfnOSNyGkb" Name="Translation" Kind="InputPin" IsHidden="true" />
+            <Pin Id="RDDEZATdexEue5veGsLALR" Name="Moves Element" Kind="InputPin" IsHidden="true" />
+            <Pin Id="tv645Eiktlt10SDcfvtTUz" Name="Axis" Kind="InputPin" IsHidden="true" />
             <Pin Id="BVehb2rqY10LOJSmop1YcM" Name="Min" Kind="InputPin" IsHidden="true" />
             <Pin Id="U3qutyQgx75PpOBMKTTalm" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="UcI3ucwMaVSkTmeGpAMcsg" Name="Buttons" Kind="InputPin" IsHidden="true" />
@@ -420,9 +420,9 @@
             <Pin Id="b7jJfH3kBCwYYSyCac1BVX" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="e6zlx6cepDuFEL6PRnYwK9" Name="Fill Color" Kind="InputPin" DefaultValue="0.1, 0.65, 0.65, 1" />
             <Pin Id="KJQmOHDbwGfoHEm3XeCZEM" Name="Radius" Kind="InputPin" DefaultValue="0.1" />
-            <Pin Id="IbyXnFP6i0FsNKh2kVRqkQ" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="SZPM8two54ItXtMbyyICcF" Name="Stroke Width" Kind="InputPin" />
-            <Pin Id="Lu6NLUoKkkMMcNcUckWvBE" Name="Opacity" Kind="InputPin" />
+            <Pin Id="IbyXnFP6i0FsNKh2kVRqkQ" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="SZPM8two54ItXtMbyyICcF" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Lu6NLUoKkkMMcNcUckWvBE" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="HSYJ1xM6zpxctGGSwAjvcD" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="z13xugT1qzi5K1y2JQlccH" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="jGe9Cf2NvEwsVDVYLotdSj" Name="Interaction" Kind="InputPin" />
@@ -438,11 +438,11 @@
               <Choice Kind="ProcessAppFlag" Name="Drag" />
             </p:NodeReference>
             <Pin Id="mshaQrUGjfCShLv5u6cA6p" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="gpjQmy0B99xJA6agSsy7JP" Name="Input" Kind="InputPin" />
+            <Pin Id="gpjQmy0B99xJA6agSsy7JP" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="aoNUycASbz6THO9ruj5EF2" Name="Is Dragging" Kind="InputPin" />
             <Pin Id="ORgJn1wWIxMnxoqYhGk4oj" Name="Translation" Kind="InputPin" />
             <Pin Id="JlNf5LMfRvLinjPZ708nhZ" Name="Moves Element" Kind="InputPin" DefaultValue="False" />
-            <Pin Id="uiO03Bcv9pMoOrL5wlorGS" Name="Axis" Kind="InputPin" />
+            <Pin Id="uiO03Bcv9pMoOrL5wlorGS" Name="Axis" Kind="InputPin" IsHidden="true" />
             <Pin Id="ARFyGQSbbdVM1QV7N3zM8B" Name="Min" Kind="InputPin" IsHidden="true" />
             <Pin Id="OFfDrJvJxkDNgtrmifQvEK" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="tyjXOlURHS0ZkHc1PGlWJz" Name="Buttons" Kind="InputPin" IsHidden="true" />
@@ -522,10 +522,10 @@
             <Pin Id="4E8x3PWOa5fj8bFl7mIeTI" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="DgWFjoKrNEPVlDaybRgfFd" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="UJzZbQQe2jjYjpX4DVY4Ch" Name="Input" Kind="InputPin" />
-            <Pin Id="s7ZvYDFVDPoIMXDXGX8R8p" Name="Space" Kind="InputPin" />
+            <Pin Id="s7ZvYDFVDPoIMXDXGX8R8p" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="Jg6UalztcVTBz8agDG0cth" Name="Clear Color" Kind="InputPin" />
             <Pin Id="Hd5Y6o5EPddLBbldbKVh3I" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="ZDBs0AhflJ7qqz50qDqAA4" Name="Enabled" Kind="InputPin" />
+            <Pin Id="ZDBs0AhflJ7qqz50qDqAA4" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="meRCkskcvs5kGYV5WzH9Bb" Name="Title" Kind="InputPin" />
             <Pin Id="v49DWZa91bk5bou2q3WC0r" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="74xpUlEUI73W4bDcMKiHEo" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -565,7 +565,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="Obb0XpQiRVhamytIEiF3Rf" Bounds="85,2887,830,270" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Moves Element adds an offset to the position from the Transform pin or from the layout, in the parent's space. Try the five cases in the renderer window with mouse and, if you have one, touch.&#xD;&#xA;- 1: A changed Transform pin puts the element back to the position of the pin: change Position while it is dragged away and a new drag starts from there. After a restart the pin value applies again, nothing is written back into the patch. Values of Is Dragging arrive one frame later.&#xD;&#xA;- 2: Of nested elements the innermost takes the drag: the knob slides, the rest of the panel moves the whole panel. The knob drags on one axis (Horizontal) and is limited by Minimum and Maximum, relative to its position from the Transform pin (here 0 to 2.8 units); a drag mostly along the other axis is left to the panel. Translation of the knob is the slider value. A Group has no area of its own: with Auto Size off and size 0 there is nothing to grab, so here the Size is set; with Auto Size on it measures its children.&#xD;&#xA;- 3: The space in the Row stays reserved and the other children do not move. The same works for a Column and for Groups.&#xD;&#xA;- 4: A changed Transform pin resets the drag every frame, so the animation always wins. This is the usual vvvv pattern, nothing is written back. Scene Bounds follows the animation.&#xD;&#xA;- 5: Delta is the movement of the running drag in the parent's space, after Axis and limits. It stays after the release until the next drag starts. Use it to move something else or to drive a value.&#xD;&#xA;- The Group at the bottom collects the five cases for the Renderer (Space DIPTopLeft, 1 unit = 100 DIP, window 1000 x 700 DIP).">
+          <Pad Id="Obb0XpQiRVhamytIEiF3Rf" Bounds="85,2887,830,329" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Moves Element adds an offset to the position from the Transform pin or from the layout, in the parent's space. Try the five cases in the renderer window with mouse and, if you have one, touch.&#xD;&#xA;- 1: A changed Transform pin puts the element back to the position of the pin: change Position while it is dragged away and a new drag starts from there. After a restart the pin value applies again, nothing is written back into the patch. Values of Is Dragging arrive one frame later.&#xD;&#xA;- 2: Of nested elements the innermost takes the drag: the knob slides, the rest of the panel moves the whole panel. The knob drags on one axis (Horizontal) and is limited by Minimum and Maximum, relative to its position from the Transform pin (here 0 to 2.8 units); a drag mostly along the other axis is left to the panel. Translation of the knob is the slider value. A Group has no area of its own: with Auto Size off and size 0 there is nothing to grab, so here the Size is set; with Auto Size on it measures its children.&#xD;&#xA;- 3: The space in the Row stays reserved and the other children do not move. The same works for a Column and for Groups.&#xD;&#xA;- 4: A changed Transform pin resets the drag every frame, so the animation always wins. This is the usual vvvv pattern, nothing is written back. Scene Bounds follows the animation.&#xD;&#xA;- 5: Delta is the movement of the running drag in the parent's space, after Axis and limits. It stays after the release until the next drag starts. Use it to move something else or to drive a value.&#xD;&#xA;- The Group at the bottom collects the five cases for the Renderer (Space DIPTopLeft, 1 unit = 100 DIP, window 1000 x 700 DIP).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

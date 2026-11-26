@@ -46,7 +46,7 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="9HdWI7jKOSJnBMKZJHDvrl" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="ISSpgSJJeYaP5iV9Zja669" Name="Input" Kind="InputPin" />
+            <Pin Id="ISSpgSJJeYaP5iV9Zja669" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="j1UND8uDWccXiDfaDDyoni" Name="Points" Kind="InputPin" />
             <Pin Id="OKh0q8hNxh0kx8CbcKGjpz" Name="Devices" Kind="InputPin" />
             <Pin Id="V0nTtXmelYJwm8Tfc6E8SP" Name="Occlusion" Kind="InputPin" IsHidden="true" />
@@ -64,13 +64,13 @@
             </p:NodeReference>
             <Pin Id="bwUaBBXQgl02XyJuOwPBZk" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="9ZdTAdlWkit9t3DlopIbXd" Name="Size" Kind="InputPin" DefaultValue="10, 7" />
-            <Pin Id="Y2V6NPYmUxuNViz0Hq64SA" Name="Transform" Kind="InputPin" />
+            <Pin Id="Y2V6NPYmUxuNViz0Hq64SA" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="c6avaAAsaeyVxLlf83HDsb" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="czYhQbZFcZfQSNSXIL4A8R" Name="Fill Color" Kind="InputPin" DefaultValue="0.18, 0.2, 0.26, 1" />
-            <Pin Id="uvTMrmfNUwqAGULjS9187h" Name="Radius" Kind="InputPin" />
-            <Pin Id="rnEDlENF8W9aUtLsRj8cYz" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="bBtd2JMJWpuIev4nkBU7i4" Name="Stroke Width" Kind="InputPin" />
-            <Pin Id="RfElcNM9SHlyUBlPBbrCJ2" Name="Opacity" Kind="InputPin" />
+            <Pin Id="uvTMrmfNUwqAGULjS9187h" Name="Radius" Kind="InputPin" IsHidden="true" />
+            <Pin Id="rnEDlENF8W9aUtLsRj8cYz" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="bBtd2JMJWpuIev4nkBU7i4" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
+            <Pin Id="RfElcNM9SHlyUBlPBbrCJ2" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="z9NRfpgzB2emPLrKfiiQmA" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="AbUb5Eeg7nrMzcCTK8bAV0" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="TkGl4G3GW5IkyLDMszWVA8" Name="Interaction" Kind="InputPin" />
@@ -145,7 +145,7 @@
                 <Pin Id="6JNAoDl4EqVpNfhWiuljjF" Name="Transform" Kind="InputPin" />
                 <Pin Id="5tPCyRJ4gFh93NmZLf9pE4" Name="Anchor" Kind="InputPin" />
                 <Pin Id="hV2pe4E0qRevxYCEaLTOGT" Name="Text" Kind="InputPin" />
-                <Pin Id="33xjsfumXnTz99J1kocRIj" Name="Font Family" Kind="InputPin" />
+                <Pin Id="33xjsfumXnTz99J1kocRIj" Name="Font Family" Kind="InputPin" IsHidden="true" />
                 <Pin Id="01kn92t4EjsafwnD9bqGi3" Name="Font Size" Kind="InputPin" DefaultValue="0.4" />
                 <Pin Id="BSxMepUex5j32tZguSTPPv" Name="Weight" Kind="InputPin" DefaultValue="700" />
                 <Pin Id="7Q6LGk0pwXT49sH54agJzR" Name="Italic" Kind="InputPin" IsHidden="true" />
@@ -237,7 +237,7 @@
             <Pin Id="VorWF6l8e7RLYwBqFaiZt8" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="MnJyoVLfIQyOKQleMyp0Z4" Name="Style" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="98,1087,105,19" Id="hExmwczrfqSPuyX8evlulW">
+          <Node Bounds="98,1087,65,19" Id="hExmwczrfqSPuyX8evlulW">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -249,9 +249,9 @@
             <Pin Id="YivKJlplNuRS30q4W7Gbn4" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="FgPTGHj28QcPeZ3EdIMgbU" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="TIqP7SAC4EaDBXhnkvjzBR" Name="Input" Kind="InputPin" />
-            <Pin Id="Esy5Rl39rmVkgmcSKcg7CV" Name="Space" Kind="InputPin" />
+            <Pin Id="Esy5Rl39rmVkgmcSKcg7CV" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="c7mEM2VWMvnVmaeEPTgrwi" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="bHkT2Hvt0YK16ZHiWZOVUE" Name="Enabled" Kind="InputPin" />
+            <Pin Id="bHkT2Hvt0YK16ZHiWZOVUE" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="eXTszN1JpFn2NjSEt4CsKY" Name="Title" Kind="InputPin" />
             <Pin Id="GyN0a72bIPZbqADLyqRmkh" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="m3G28AZcGuiGTZNqN2x7mp" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -281,7 +281,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="J7TGdmQwBZwMio4aWYRxTy" Bounds="85,1391,830,110" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Hover on touch exists only while a finger is down (a finger does not hover).&#xD;&#xA;- Pressure and Size depend on the device, many touchscreens always report Pressure 0.5 and Size 0 x 0.&#xD;&#xA;- Holding a finger still for a long time can open a right-click on Windows (press and hold, can be switched off in the Windows pen and touch settings), unless QtNative suppresses it.&#xD;&#xA;- With Occlusion on, a finger taken by a Click or Drag element on top is not reported here.">
+          <Pad Id="J7TGdmQwBZwMio4aWYRxTy" Bounds="85,1391,830,134" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Hover on touch exists only while a finger is down (a finger does not hover).&#xD;&#xA;- Pressure and Size depend on the device, many touchscreens always report Pressure 0.5 and Size 0 x 0.&#xD;&#xA;- Holding a finger still for a long time can open a right-click on Windows (press and hold, can be switched off in the Windows pen and touch settings), unless QtNative suppresses it.&#xD;&#xA;- With Occlusion on, a finger taken by a Click or Drag element on top is not reported here.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

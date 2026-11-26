@@ -155,7 +155,8 @@ namespace VL.Qt.Reconciliation
             return false;
         }
 
-        /// <summary>Makes the occurrence <paramref name="item"/> of the owner's tree the primary one; the former primary (if any) becomes a further occurrence.</summary>
+        /// <summary>Makes the occurrence <paramref name="item"/> of the owner's tree the primary one; the former primary (if any) becomes a
+        /// further occurrence.</summary>
         public void SetPrimary(OccurrenceKey key, ItemMirror item)
         {
             ref var entry = ref CollectionsMarshal.GetValueRefOrNullRef(_entries, key);

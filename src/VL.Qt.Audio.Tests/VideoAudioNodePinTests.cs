@@ -13,7 +13,7 @@ namespace VL.Qt.Audio.Tests
 {
     /// <summary>
     /// Video (VL.Audio) promises the same pins as Video and copies them by hand: a pin added to or renamed in VideoNode
-    /// alone must fail here (COMP-08).
+    /// alone must fail here.
     /// </summary>
     [TestFixture]
     public sealed class VideoAudioNodePinTests

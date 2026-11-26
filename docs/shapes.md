@@ -16,7 +16,7 @@
 
 ## Geometry space
 
-- Points are in the parent space, in units of the scene `Space` (like Skia's path layers); `0, 0` is the origin of the parent, not a corner of the shape.
+- Points are in the parent space, in units of the `Space` of the renderer (like Skia's path layers); `0, 0` is the origin of the parent, not a corner of the shape.
 - `Transform` applies around the origin of the parent, not around the center of the shape. To rotate or scale a shape around its own center, build the points around `0, 0` and move them with `Transform` (translation).
 - There is no `Anchor` and no `Size` pin. The size of the element is the extent of its geometry (`max(0, maxX)` by `max(0, maxY)` of the points). Row, Column and the tooltip preview use it; coordinates to the left of or above the origin do not enlarge it.
 
@@ -122,7 +122,21 @@ Help patches: `HowTo Draw a Bezier Curve with Handles` (handles and modes), `How
 - Prefer `Transform`, `Trim` and `Opacity` to changing points for animation; animated trim costs 2.5 ms at 8190 points, 0.3 ms at 100.
 - Many small shapes are fine: 100 polylines of 100 points, each rotated every frame, take 0.3 ms.
 
-Numbers and method: [research/02_shapes-spike.md](research/02_shapes-spike.md). Design: [decisions/paths.md](decisions/paths.md).
+Numbers and method: [research/shapes-benchmark.md](research/shapes-benchmark.md). Design: [design/paths.md](design/paths.md).
+
+## Examples
+
+<img src="images/paths-path.png" width="820" alt="Path elements: a filled and stroked triangle, an open curve, and two rounded squares with a circular hole, one filled with the even-odd rule">
+
+*`HowTo Draw a Path`: fill and stroke, and a fill rule for a path with a hole.*
+
+<img src="images/paths-splines.png" width="820" alt="Spline (CatmullRom) with Alpha 0, 0.5 and 1 and Spline (BSpline) through the same five points">
+
+*`HowTo Draw Splines`: the same five points as `Spline (CatmullRom)` with three Alpha values and as `Spline (BSpline)`.*
+
+<img src="images/paths-polygon.png" width="820" alt="A star as Polygon with draggable corners, and the same star filled with the NonZero fill rule">
+
+*`HowTo Draw a Polygon`: draggable corners; the fill rule decides what is inside of a self-intersecting polygon.*
 
 ## Help patches
 

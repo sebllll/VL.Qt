@@ -46,7 +46,7 @@ namespace VL.Qt.Elements
             if (count < _states.Count) _states.RemoveRange(count, _states.Count - count);
         }
 
-        // --- API for the element nodes (plan 06). Values are written by the FeedbackRouter after each poll,
+        // --- API for the element nodes. Values are written by the FeedbackRouter after each poll,
         // i.e. 1 frame latency. Reading a slot that never received an event returns the default. ---
 
         /// <summary>Pointer is over the item (Hover node and handler feedback).</summary>

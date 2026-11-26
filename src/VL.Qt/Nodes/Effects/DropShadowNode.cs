@@ -29,8 +29,11 @@ namespace VL.Qt.Nodes
         /// <param name="offset">Shadow offset (x, y) in DIP.</param>
         /// <param name="blurAmount">Softness of the shadow, 0..1 (limited by Max Radius of a Blur in the chain, default 32 DIP).</param>
         /// <param name="scale">Size of the shadow relative to the element, around its center.</param>
-        /// <param name="autoPadding">On: the effect area grows by what the shadow needs. Off: Padding applies. Qt has one effect area per element: if any Blur or DropShadow in the chain has this off, the area is the side-wise maximum of the Padding of all those links.</param>
-        /// <param name="padding">Extra effect area around the element in DIP (x = left, y = top, width = right, height = bottom); only used with Auto Padding off.</param>
+        /// <param name="autoPadding">On: the effect area grows by what the shadow needs. Off: Padding applies. Qt has one effect area per
+        /// element: if any Blur or DropShadow in the chain has this off, the area is the side-wise maximum of the Padding of all those
+        /// links.</param>
+        /// <param name="padding">Extra effect area around the element in DIP (x = left, y = top, width = right, height = bottom); only used
+        /// with Auto Padding off.</param>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
         /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]

@@ -16,7 +16,7 @@ using Rectangle = VL.Qt.Elements.Rectangle;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 using static Pixels;
 
-// End-to-end path of plan 04e: element tree → Reconciler → CommandWriter → real QtNative.
+// End-to-end path: element tree → Reconciler → CommandWriter → real QtNative.
 // Grabs go to <OutDir>/04_reconciler*.png. Element values are units (Space DIPTopLeft, 1 unit = 100 DIP);
 // the expected pixel positions below are logical pixels (DIP).
 [TestFixture, NonParallelizable]
@@ -58,7 +58,7 @@ public static class ReconcilerTest
         {
             cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            rec.Update(root, Space.DIPTopLeft);
+            rec.Update(root, SpaceMapping.Default);
             int count = cmd.Count - (clear ? 1 : 0);
             if (cmd.Length > 0)
             {
@@ -144,7 +144,7 @@ public static class ReconcilerTest
         var b = new Group { Anchor = RectangleAnchor.TopLeft, Children = ImmutableArray.Create(changed) };
 
         var t = Stopwatch.StartNew();
-        rec.Update(a, Space.DIPTopLeft);
+        rec.Update(a, SpaceMapping.Default);
         double createReconcileMs = t.Elapsed.TotalMilliseconds;
         int createCommands = cmd.Count;
         t.Restart();
@@ -157,7 +157,7 @@ public static class ReconcilerTest
         void Step(int i)
         {
             cmd.Clear();
-            rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
+            rec.Update((i & 1) == 0 ? b : a, SpaceMapping.Default);
             if (Native.Apply(w, cmd.EndFrame()) != 0) errors++;
         }
         for (int i = 0; i < 100; i++) Step(i); // warm-up
@@ -170,7 +170,7 @@ public static class ReconcilerTest
         {
             long t0 = Stopwatch.GetTimestamp();
             cmd.Clear();
-            rec.Update((i & 1) == 0 ? b : a, Space.DIPTopLeft);
+            rec.Update((i & 1) == 0 ? b : a, SpaceMapping.Default);
             var buf = cmd.EndFrame();
             long t1 = Stopwatch.GetTimestamp();
             if (Native.Apply(w, buf) != 0) errors++;

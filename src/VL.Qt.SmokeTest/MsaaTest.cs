@@ -16,10 +16,11 @@ using VL.Qt;
 /// <summary>
 /// (MSAA): sample count of a window and of an offscreen scene. A rotated rectangle and a thin diagonal bar: without
 /// MSAA no pixel has an intermediate value, with it the edges do. Live change of a window (X4, None, X8, X4: swap chain
-/// count, rect, scene, apply), no replacement at the same count, real key input and fullscreen after a swap, Clear off across a swap (trail lost, feedback layer rebuilt), offscreen
+/// count, rect, scene, apply), no replacement at the same count, real key input and fullscreen after a swap, Clear off across a swap (trail
+/// lost, feedback layer rebuilt), offscreen
 /// (UNORM, SRGB and float through the linear pass; rebind 1, 4, 1) and the clamp of unsupported counts. The checks count
 /// edge pixels and read swap chain counts; nothing depends on time. The cost per count (spike) is in
-/// docs/decisions/render-texture.md.
+/// docs/design/clear-and-msaa.md, "MSAA".
 /// </summary>
 [TestFixture, NonParallelizable]
 public static class MsaaTest
@@ -123,7 +124,7 @@ public static class MsaaTest
             s.Skip("msaa: Qt Quick software backend has no multisampling");
             return;
         }
-        s.Info("msaa: #118 window and offscreen sample counts");
+        s.Info("msaa: window and offscreen sample counts");
         ClampPart(s);
         WindowPart(s);
         InputPart(s);
@@ -241,7 +242,7 @@ public static class MsaaTest
         var w = NativeCalls.CreateWindow(W, H, title);
         var cmd = new CommandWriter();
         cmd.Clear();
-        cmd.ClearColor(0, 0, 0, 0); // alpha 0: pure accumulation (an opaque colour with Clear off is Clear on since #138)
+        cmd.ClearColor(0, 0, 0, 0); // alpha 0: pure accumulation (an opaque colour with Clear off is Clear on)
         cmd.SetClear(false);
         cmd.Create(1, Protocol.ElementType.Rectangle);
         cmd.SetPlace(1, 20, 130, 30, 30);

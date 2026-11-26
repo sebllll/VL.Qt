@@ -6,7 +6,7 @@ namespace VL.Qt
 {
     /// <summary>
     /// Takes the notifications of an Input Notifications pin from whatever thread they arrive on and hands them to the
-    /// main thread in order (render-texture.md "Timing"). <see cref="Subscribe"/> and <see cref="Drain"/> on the main
+    /// main thread in order (docs/design/events-and-interaction.md, "Threads"). <see cref="Subscribe"/> and <see cref="Drain"/> on the main
     /// thread only; the lock is short and allocation-free (the two lists are reused).
     /// </summary>
     internal sealed class NotificationQueue : IObserver<INotification>, IDisposable
@@ -24,7 +24,8 @@ namespace VL.Qt
             _sink = sink ?? throw new ArgumentNullException(nameof(sink));
         }
 
-        /// <summary>Subscribes to <paramref name="source"/>; the same instance again does nothing, another one replaces the subscription and keeps what is queued.</summary>
+        /// <summary>Subscribes to <paramref name="source"/>; the same instance again does nothing, another one replaces the subscription
+        /// and keeps what is queued.</summary>
         /// <remarks>
         /// A patch that builds its input in every frame (e.g. GetNotifications of VL.Stride, an operation that returns a new
         /// observable per call) hands a new source to every Update. The notifications that arrived since the last Update

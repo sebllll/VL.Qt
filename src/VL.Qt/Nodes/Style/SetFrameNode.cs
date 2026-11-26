@@ -6,7 +6,8 @@ using VL.Qt.Styles;
 
 namespace VL.Qt.Nodes
 {
-    /// <summary>Sets the shape of the frame for the given states. Unconnected pins stay unset (inherited). Colors: SetColors or SetColor/SetBorderColor.</summary>
+    /// <summary>Sets the shape of the frame for the given states. Unconnected pins stay unset (inherited). Colors: SetColors or
+    /// SetColor/SetBorderColor.</summary>
     [ProcessNode(Name = "SetFrame", Category = "Qt.Style.Frame")]
     public sealed class SetFrameNode
     {

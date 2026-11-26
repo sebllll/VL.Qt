@@ -10,7 +10,7 @@ using static Pixels;
 // builtin:displace (effects package 04, task A3): one-pass displacement of the input by a map element.
 // 3 x 3 grid of 240 x 140 DIP cells on 0x20 grey; the source is a white Text "HAL", centered, with margin all around
 // (the shift stays inside the cell). texelSize = 1 / pixel size of the cell (240 x 140 DIP x dpr) and dpr, set here like
-// the pass driver of #489 does (doc 21: texelSize is per pixel, the shift in DIP).
+// the pass driver of the Effect chain does (doc 21: texelSize is per pixel, the shift in DIP).
 //   (0,0) reference: the text without an effect.
 //   (1,0) wave map (R = sin over y, G = sin over x), displacement 0 -> same picture as the reference.
 //   (2,0) wave map, displacement 8; (0,1) wave map, displacement -8 (negative: other direction); (1,1) wave map, 20 (large).

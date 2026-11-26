@@ -249,7 +249,7 @@ void applyFullscreen(SceneHandle* w, bool on)
     }
 }
 
-// Window swap (vlqt_window_set_samples; docs/decisions/render-texture.md, "MSAA"). The basic render loop fixes a
+// Window swap (vlqt_window_set_samples; docs/design/clear-and-msaa.md, "MSAA"). The basic render loop fixes a
 // window's sample count when it creates the window's QRhi (QSGGuiThreadRenderLoop::ensureRhi: the swap chain and the
 // render context that layers use); QWindow::destroy()/show() recreates the swap chain with the old count. So the handle
 // gets a new QQuickWindow with format f: same screen, geometry, window states, flags, title, icon, colour, filters,
@@ -319,7 +319,7 @@ vlqt_scene* createHandle(QQuickWindow* window, OffscreenScene* state)
     w->offscreen.reset(state);
     w->window.reset(window);
     w->engine = newEngine();
-    // Transparent until the first VLQT_OP_SET_CLEAR_COLOR: the QtTexture default (render-texture.md), unlike a window.
+    // Transparent until the first VLQT_OP_SET_CLEAR_COLOR: the QtTexture default (docs/design/clear-and-msaa.md), unlike a window.
     window->setColor(Qt::transparent);
     // Change count (vlqt_scene_get_change_count); no render gate: without a platform window a scene gets no
     // UpdateRequest or Expose.

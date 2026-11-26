@@ -8,7 +8,7 @@ using VL.Qt.Wire;
 using VL.Qt;
 using static Pixels;
 
-// Blend and Displace behind a Blur in the Effect chain (Sebastian's report on PR #528): the chain grows by the padding of
+// Blend and Displace behind a Blur in the Effect chain (a reported case): the chain grows by the padding of
 // the Blur (MultiEffect, automatic padding), the layer / map element must still sit exactly on the ELEMENT (QtNative auto uniform
 // elementRect), not be stretched over the grown effect area, and the halo of the Blur must survive the Blend pass.
 // Scene (one window per case): a 300 x 150 DIP orange rectangle R at (250, 150) on 0x20 grey; the layer is
@@ -21,7 +21,7 @@ using static Pixels;
 //   (c) Blend alone (no padding anywhere): blue on the element, background around it.
 //   (d) Blur -> Displace: the map (clamped outside the element) shifts the content left, the blurred edge is intact.
 //   (e) rebuild-blur: Blur, Blur -> Displace, Displace -> Blur, Displace, Blur in ONE window: the last Blur keeps its halo; and
-//       rebuild-blur-gap: Blur, Displace, Blur. #529: a Displace at the first link wrote the element layer's ShaderEffectSource
+//       rebuild-blur-gap: Blur, Displace, Blur. A Displace at the first link wrote the element layer's ShaderEffectSource
 //       sourceRect past the layer's cached value, so the next Blur's (equal) padded layer.sourceRect never arrived (hard edge).
 // Raw commands (DIP). Grabs: <outDir>/blend-chain_*.png.
 [TestFixture, NonParallelizable]
