@@ -27,9 +27,8 @@ namespace VL.Qt.Nodes
         public ButtonNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<Button, Props>(nodeContext, s_create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal ButtonNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<Button, Props>(addWarning, s_create);
+        internal ButtonNode(NodeErrors messages)
+            => _node = new ElementNodeCore<Button, Props>(messages, s_create);
 
         private static readonly Func<CommonInputs, Props, FeedbackSlot, Button> s_create = static (c, p, slot) => new Button(c, slot)
             {

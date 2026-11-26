@@ -43,7 +43,6 @@ namespace VL.Qt.Nodes
             _ctx = new VideoPlaybackContext(clock, errors.Logger);
         }
 
-        /// <summary>For tests: a client on a fake API and a playback context without a device; null <paramref name="messages"/> reports nothing.</summary>
         internal VideoSourceToQtImageNode(ResourceClient client, VideoPlaybackContext ctx, NodeErrors? messages = null)
         {
             _client = client;

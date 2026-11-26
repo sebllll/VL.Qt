@@ -17,13 +17,10 @@ namespace VL.Qt.Tests
     public class ButtonNodeTests
     {
         private static readonly Vector2 DefaultSize = new(1, 0.4f);
-        private static readonly IDisposable NoWarning = new Nop();
-        private sealed class Nop : IDisposable { public void Dispose() { } }
-
         private ButtonNode _node = null!;
 
         [SetUp]
-        public void SetUp() => _node = new ButtonNode(_ => NoWarning);
+        public void SetUp() => _node = new ButtonNode(new RecordingMessages().Errors);
 
         [TearDown]
         public void TearDown() => _node.Dispose();
@@ -67,7 +64,7 @@ namespace VL.Qt.Tests
         {
             var sink = new RecordingSink();
             var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-            rec.Update(Update(), Space.DIPTopLeft);
+            rec.Update(Update(), SpaceMapping.Default);
             Assert.That(sink.Commands, Does.Contain($"CREATE 1 Button"));
             Assert.That(sink.Commands, Does.Contain($"SET 1 Text string(Button)"));
             Assert.That(sink.Commands.Any(c => c.StartsWith($"SET 1 Enabled ") || c.StartsWith($"SET 1 AutoRepeat ")
@@ -75,7 +72,7 @@ namespace VL.Qt.Tests
             Assert.That(sink.Commands.Single(c => c.StartsWith("BIND 1 ")), Does.Match(@"^BIND 1 \d+$"), "BIND carries only id and feedback id");
 
             sink.Clear();
-            rec.Update(Update(text: "OK", enabled: false, autoRepeat: true, autoSize: false), Space.DIPTopLeft);
+            rec.Update(Update(text: "OK", enabled: false, autoRepeat: true, autoSize: false), SpaceMapping.Default);
             Assert.That(sink.Commands, Is.EquivalentTo(new[]
             {
                 $"SET 1 AutoSize bool(0)", $"SET 1 Text string(OK)", $"SET 1 Enabled bool(0)", $"SET 1 AutoRepeat bool(1)",
@@ -116,7 +113,7 @@ namespace VL.Qt.Tests
         [Test]
         public void InteractionPin_PassedToDescription_ChangeByReference()
         {
-            var chain = new HoverNode(_ => NoWarning).Update(null, null);
+            var chain = new HoverNode(new RecordingMessages().Errors).Update(null, null);
             var a = Update(out _, interaction: chain);
             Assert.That(a.Interaction, Is.SameAs(chain));
             Assert.That(Update(out _, interaction: chain), Is.SameAs(a));

@@ -585,14 +585,14 @@ namespace VL.Qt.Tests
             var a = new ElementFeedback();
             var b = new ElementFeedback();
 
-            rec.Update(R(1, new FeedbackSlot(a, 0)), Space.DIPTopLeft);
+            rec.Update(R(1, new FeedbackSlot(a, 0)), SpaceMapping.Default);
             uint ha = rec.Root!.BoundFeedbackId;
             rec.FeedbackRouter.Dispatch(new Poll().Hover(ha, true).Press(ha, true).Bytes);
             Assert.That(a.IsHovered() && a.IsPressed(), Is.True);
 
             // Same object, other feedback: BIND with a new handle (no flags); old feedback loses hover/press right away.
             cmds.Clear();
-            rec.Update(R(1, new FeedbackSlot(b, 0)), Space.DIPTopLeft);
+            rec.Update(R(1, new FeedbackSlot(b, 0)), SpaceMapping.Default);
             uint hb = rec.Root!.BoundFeedbackId;
             Assert.That(hb, Is.Not.EqualTo(ha));
             Assert.That(cmds.Commands, Does.Contain($"BIND {rec.Root.Id} {hb}"));
@@ -605,12 +605,12 @@ namespace VL.Qt.Tests
             Assert.That(a.TakeClicks(0), Is.Zero);
 
             // Unbind and destroy release the handle.
-            rec.Update(R(1, default), Space.DIPTopLeft);
+            rec.Update(R(1, default), SpaceMapping.Default);
             Assert.That(rec.FeedbackRouter.Count, Is.Zero);
             Assert.That(b.IsHovered(), Is.False);
-            rec.Update(R(1, new FeedbackSlot(b, 0)), Space.DIPTopLeft);
+            rec.Update(R(1, new FeedbackSlot(b, 0)), SpaceMapping.Default);
             Assert.That(rec.FeedbackRouter.Count, Is.EqualTo(1));
-            rec.Update(null, Space.DIPTopLeft);
+            rec.Update(null, SpaceMapping.Default);
             Assert.That(rec.FeedbackRouter.Count, Is.Zero);
         }
 
@@ -634,7 +634,7 @@ namespace VL.Qt.Tests
             var rec = new Reconciler(new RecordingSink(), new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
             var feedback = new ElementFeedback();
             var col = new Column { Children = ImmutableArray.Create<Element>(R(1, new FeedbackSlot(feedback, 0)), R(2, new FeedbackSlot(feedback, 1)), R(3, new FeedbackSlot(feedback, 2))) };
-            rec.Update(col, Space.DIPTopLeft);
+            rec.Update(col, SpaceMapping.Default);
 
             var kids = rec.Root!.Children;
             var poll = new Poll();
@@ -655,7 +655,7 @@ namespace VL.Qt.Tests
             // Spread order changes: slots move with the elements, new handles, late records of old handles dropped.
             uint old0 = kids[0].BoundFeedbackId;
             col = new Column { Children = ImmutableArray.Create<Element>(R(1, new FeedbackSlot(feedback, 1)), R(2, new FeedbackSlot(feedback, 0)), R(3, new FeedbackSlot(feedback, 2))) };
-            rec.Update(col, Space.DIPTopLeft);
+            rec.Update(col, SpaceMapping.Default);
             Assert.That(feedback.IsHovered(1), Is.False); // released slot loses hover
             res = rec.FeedbackRouter.Dispatch(new Poll().Measured(old0, 9, 9).Measured(rec.Root!.Children[0].BoundFeedbackId, 700, 50).Bytes);
             Assert.That(res, Is.EqualTo(new DispatchResult(1, 1, null)));

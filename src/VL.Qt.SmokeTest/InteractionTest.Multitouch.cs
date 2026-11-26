@@ -18,7 +18,7 @@ public static partial class InteractionTest
     // Scenario "touch-points-node": two fingers -> two TouchPoints with stable ids in units, moves, release one by one.
     private static void RunTouchPointsNode(Scenario s)
     {
-        using var node = new TouchPointsNode(_ => new NoMessage());
+        using var node = new TouchPointsNode(new NodeLog().Errors);
         using var rig = new Rig("touch-points-node", s);
         var points = Channel.Create(Spread<TouchPoint>.Empty);
         int writes = 0;
@@ -74,7 +74,7 @@ public static partial class InteractionTest
     // value stays after the release, the channel's own value is not overwritten before a gesture.
     private static void RunPinchNode(Scenario s)
     {
-        using var node = new PinchNode(_ => new NoMessage());
+        using var node = new PinchNode(new NodeLog().Errors);
         using var rig = new Rig("pinch-node", s);
         var active = Channel.Create(false);
         var scale = Channel.Create(5f);

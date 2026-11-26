@@ -13,17 +13,10 @@ namespace VL.Qt.Tests
     /// <summary>The node Path (package 04): pin defaults, change detection, path limit.</summary>
     public class PathNodeTests
     {
-        private string? _warning;
-        private int _warnings; // currently shown warnings
+        private RecordingMessages _m = new();
 
-        private sealed class Removal(PathNodeTests t) : IDisposable { public void Dispose() => t._warnings--; }
-
-        private IDisposable AddWarning(string text)
-        {
-            _warnings++;
-            _warning = text;
-            return new Removal(this);
-        }
+        [SetUp]
+        public void ResetMessages() => _m = new();
 
         // Pin defaults as declared on Update (what vvvv passes for unconnected pins).
         private static Element Path(PathNode n, QtPath? path, out Vector2 size)
@@ -48,7 +41,7 @@ namespace VL.Qt.Tests
         [Test]
         public void Defaults()
         {
-            using var node = new PathNode(AddWarning);
+            using var node = new PathNode(_m.Errors);
             var path = Triangle();
             var s = (Shape)Path(node, path, out _);
             Assert.That(s.Path, Is.SameAs(path));
@@ -63,13 +56,13 @@ namespace VL.Qt.Tests
             Assert.That(s.TrimOffset, Is.EqualTo(0f));
             Assert.That(s.FillRule, Is.EqualTo(ShapeFillRule.NonZero));
             Assert.That(s.Anchor, Is.EqualTo(RectangleAnchor.TopLeft));
-            Assert.That(_warnings, Is.EqualTo(0));
+            Assert.That(_m.Shown, Is.Null);
         }
 
         [Test]
         public void Size_IsExtentOfPath()
         {
-            using var node = new PathNode(AddWarning);
+            using var node = new PathNode(_m.Errors);
             var s = (Shape)Path(node, Triangle(), out _);
             Assert.That(s.Size, Is.EqualTo(Shape.ExtentOf(Triangle())));
             Assert.That(s.Size, Is.EqualTo(new Vector2(3, 4)));
@@ -78,7 +71,7 @@ namespace VL.Qt.Tests
         [Test]
         public void SamePath_SameElement()
         {
-            using var node = new PathNode(AddWarning);
+            using var node = new PathNode(_m.Errors);
             var path = Triangle();
             var a = Path(node, path);
             Assert.That(Path(node, path), Is.SameAs(a));
@@ -87,7 +80,7 @@ namespace VL.Qt.Tests
         [Test]
         public void NewPathSameContent_SameElement()
         {
-            using var node = new PathNode(AddWarning);
+            using var node = new PathNode(_m.Errors);
             var a = Path(node, Triangle());
             Assert.That(Path(node, Triangle()), Is.SameAs(a));
         }
@@ -95,7 +88,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ChangedPath_NewElement()
         {
-            using var node = new PathNode(AddWarning);
+            using var node = new PathNode(_m.Errors);
             var a = Path(node, Triangle(3));
             var b = Path(node, Triangle(5));
             Assert.That(b, Is.Not.SameAs(a));
@@ -105,22 +98,22 @@ namespace VL.Qt.Tests
         [Test]
         public void Null_IsEmptyAndDrawsNothing()
         {
-            using var node = new PathNode(AddWarning);
+            using var node = new PathNode(_m.Errors);
             var a = (Shape)Path(node, null, out _);
             Assert.That(a.Path!.IsEmpty, Is.True);
             Assert.That(a.Size, Is.EqualTo(Vector2.Zero));
             Assert.That(Path(node, QtPath.Empty), Is.SameAs(a), "null and Empty are the same input");
-            Assert.That(_warnings, Is.EqualTo(0));
+            Assert.That(_m.Shown, Is.Null);
         }
 
         [Test]
         public void LongPath_IsDrawnWithoutWarning()
         {
-            using var node = new PathNode(AddWarning);
+            using var node = new PathNode(_m.Errors);
             var path = Long(50_000);
             var s = (Shape)Path(node, path);
             Assert.That(s.Path, Is.SameAs(path));
-            Assert.That(_warnings, Is.EqualTo(0));
+            Assert.That(_m.Shown, Is.Null);
         }
     }
 }

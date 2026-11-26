@@ -42,7 +42,6 @@ namespace VL.Qt.Shaders
         {
         }
 
-        /// <summary>For tests: with a ShaderNode built on the test constructor.</summary>
         internal ShaderInstance(ShaderNode effect, ShaderLayout layout)
         {
             _effect = effect;
@@ -53,7 +52,7 @@ namespace VL.Qt.Shaders
             _uniforms = new ShaderUniforms(layout.Pins);
         }
 
-        /// <summary>Uniform pins in pin order (tests).</summary>
+        /// <summary>Uniform pins in pin order.</summary>
         internal ShaderUniforms Uniforms => _uniforms;
 
         /// <summary>Input pins in the order of the description's inputs.</summary>

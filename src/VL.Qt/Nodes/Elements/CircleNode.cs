@@ -23,9 +23,8 @@ namespace VL.Qt.Nodes
         public CircleNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<Rectangle, RectangleNode.Props>(nodeContext, RectangleNode.Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal CircleNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<Rectangle, RectangleNode.Props>(addWarning, RectangleNode.Create);
+        internal CircleNode(NodeErrors messages)
+            => _node = new ElementNodeCore<Rectangle, RectangleNode.Props>(messages, RectangleNode.Create);
 
         internal ElementNodeCore<Rectangle, RectangleNode.Props> Core => _node;
 

@@ -113,7 +113,7 @@ namespace VL.Qt
         /// <summary>Exception of the last reconcile, null if it worked (<see cref="Scene.ReconcileFault"/>).</summary>
         internal Exception? ReconcileFault => _scene.ReconcileFault;
 
-        /// <summary>Command buffer of the next apply (test seam: SmokeTest injects an invalid command).</summary>
+        /// <summary>Command buffer of the next apply: what the reconciler wrote this frame, sent to QtNative by the apply.</summary>
         internal CommandWriter Commands => _scene.Commands;
 
         /// <summary>Number of resyncs after failed applies.</summary>

@@ -93,8 +93,11 @@ namespace VL.Qt
             }
         }
 
-        /// <summary>Test hook (SmokeTest 02b): a separate instance, not cached. Driven by a <see cref="QtPump"/> on a simulated clock.</summary>
-        internal static QtApp CreateForTest(ILogger? logger)
+        /// <summary>
+        /// A separate instance, not the cached one of <see cref="Get"/>, for a host that owns the pump (a <see cref="QtPump"/> on
+        /// its own clock) and the Qt log.
+        /// </summary>
+        internal static QtApp Create(ILogger? logger)
         {
             QtLog.Reset();
             s_initError = null;

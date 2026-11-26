@@ -27,7 +27,7 @@ namespace VL.Qt.Nodes
         // The shader ids belong to the comparison: a recreated shader gives the link a new id.
         private readonly record struct Key(ulong Id0, ulong Id1, TProps Props);
 
-        /// <param name="client">Creates the shader resources, may be null (tests): the chain then passes on unchanged.</param>
+        /// <param name="client">Creates the shader resources, may be null: the chain then passes on unchanged.</param>
         /// <param name="shaders">The shaders by role (see <see cref="ShaderEffect.ShaderIds"/>).</param>
         /// <param name="create">Builds the link; use a static lambda (no capture → no allocation).</param>
         /// <param name="errors">Shows shader problems at the node, may be null.</param>
@@ -41,9 +41,6 @@ namespace VL.Qt.Nodes
             for (var i = 0; i < shaders.Length; i++)
                 _slots[i] = new ShaderSlot(client, Protocol.ShaderStage.Fragment, shaders[i].Label);
         }
-
-        /// <summary>Number of links created so far (tests).</summary>
-        public int Created => _memo.Created;
 
         /// <summary>The link for the inputs: the last instance if nothing changed, else a new one; <paramref name="input"/> while a shader
         /// is missing. Call once per Update.</summary>

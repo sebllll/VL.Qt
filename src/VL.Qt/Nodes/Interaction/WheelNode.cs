@@ -27,9 +27,8 @@ namespace VL.Qt.Nodes
         public WheelNode(NodeContext nodeContext)
             => _node = new InteractionNodeCore<Props>(nodeContext, Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal WheelNode(Func<string, IDisposable> addWarning)
-            => _node = new InteractionNodeCore<Props>(addWarning, Create);
+        internal WheelNode(NodeErrors messages)
+            => _node = new InteractionNodeCore<Props>(messages, Create);
 
         private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new WheelInteraction(previous, slot, p.Devices);

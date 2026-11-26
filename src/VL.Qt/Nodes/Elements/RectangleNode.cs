@@ -25,9 +25,8 @@ namespace VL.Qt.Nodes
         public RectangleNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<Rectangle, Props>(nodeContext, Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal RectangleNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<Rectangle, Props>(addWarning, Create);
+        internal RectangleNode(NodeErrors messages)
+            => _node = new ElementNodeCore<Rectangle, Props>(messages, Create);
 
         internal static readonly Func<CommonInputs, Props, FeedbackSlot, Rectangle> Create = static (c, p, slot) => new Rectangle(c, slot)
             {

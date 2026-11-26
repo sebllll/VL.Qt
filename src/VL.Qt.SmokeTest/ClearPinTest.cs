@@ -144,7 +144,7 @@ public static class ClearPinTest
             cmd.Clear();
             if (first) cmd.ClearColor(WindowGrey, WindowGrey, WindowGrey, 1);
             first = false;
-            rec.Update(Tree(), Space.DIPTopLeft);
+            rec.Update(Tree(), SpaceMapping.Default);
             if (cmd.Length > 0)
                 s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"clear-pin: apply {Native.LastError()}");
             Pump(1);
@@ -404,7 +404,7 @@ public static class ClearPinTest
         void MsaaFrame()
         {
             cmd.Clear();
-            rec.Update(Msaa(), Space.DIPTopLeft);
+            rec.Update(Msaa(), SpaceMapping.Default);
             if (cmd.Length > 0)
                 s.Check(Native.Apply(w, cmd.EndFrame()) == 0, $"clear-pin: apply {Native.LastError()}");
             Pump(1);
@@ -469,7 +469,7 @@ public static class ClearPinTest
         SetMode(w, WindowGrey, true, 1);
 
         cmd.Clear();
-        rec.Update(null, Space.DIPTopLeft);
+        rec.Update(null, SpaceMapping.Default);
         if (cmd.Length > 0)
             Native.Apply(w, cmd.EndFrame());
         Native.vlqt_scene_destroy(w);

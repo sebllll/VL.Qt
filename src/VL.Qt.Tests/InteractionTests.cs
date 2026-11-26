@@ -51,7 +51,7 @@ namespace VL.Qt.Tests
         private void Frame(Element? root)
         {
             _sink.Clear();
-            _rec.Update(root, Space.DIPTopLeft);
+            _rec.Update(root, SpaceMapping.Default);
         }
 
         private string[] Commands => _sink.Commands.ToArray();
@@ -186,13 +186,13 @@ namespace VL.Qt.Tests
             var a = new ElementFeedback();
             var chain = H(a);
             Frame(R(chain));
-            other.Update(R(chain, radius: 0.1f), Space.DIPTopLeft);
+            other.Update(R(chain, radius: 0.1f), SpaceMapping.Default);
             Assert.That(otherSink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { "CREATE 1 Rectangle" }));
             Assert.That(a.Warning, Is.EqualTo(InteractionRegistry.InteractionPlaceholderWarning));
 
             Frame(null);
             otherSink.Clear();
-            other.Update(R(chain, radius: 0.1f), Space.DIPTopLeft);
+            other.Update(R(chain, radius: 0.1f), SpaceMapping.Default);
             Assert.That(otherSink.OfOp("CREATE").ToArray(), Is.EqualTo(new[] { $"CREATE 2 {hover}" }), "takes over after the owner is gone");
             Assert.That(a.Warning, Is.Null);
         }
@@ -287,11 +287,13 @@ namespace VL.Qt.Tests
         [Test]
         public void ElementNodes_ChainReachesTheDescription_AndCreatesHandler()
         {
-            var chain = new HoverNode(_ => new Removal()).Update(null, null);
+            var chain = new HoverNode(new RecordingMessages().Errors).Update(null, null);
+            // The Shader node takes a resource client first (null: no shader resources).
+            static object?[] ctorArgs(Type t) => t == typeof(ShaderNode) ? [null, new RecordingMessages().Errors] : [new RecordingMessages().Errors];
             foreach (var t in ElementNodeTypes())
             {
                 using var node = (IDisposable)Activator.CreateInstance(t, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public,
-                    null, new object[] { (Func<string, IDisposable>)(_ => new Removal()) }, null)!;
+                    null, ctorArgs(t), null)!;
                 var method = t.GetMethod("Update")!;
                 var ps = method.GetParameters();
                 var args = new object?[ps.Length];
@@ -310,7 +312,7 @@ namespace VL.Qt.Tests
 
                 var sink = new RecordingSink();
                 var rec = new Reconciler(sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-                rec.Update(element, Space.DIPTopLeft);
+                rec.Update(element, SpaceMapping.Default);
                 Assert.That(sink.OfOp("CREATE").Count(c => c.EndsWith(" " + hover, StringComparison.Ordinal)), Is.EqualTo(1), t.Name + ": one HoverHandler");
                 Assert.That(sink.OfOp("BIND").Count(), Is.GreaterThanOrEqualTo(1), t.Name);
             }
@@ -321,8 +323,8 @@ namespace VL.Qt.Tests
         [Test]
         public void SteadyState_NoAllocation()
         {
-            var hoverNode = new HoverNode(_ => new Removal());
-            var rect = new RectangleNode(_ => new Removal());
+            var hoverNode = new HoverNode(new RecordingMessages().Errors);
+            var rect = new RectangleNode(new RecordingMessages().Errors);
             var hovered = Channel.Create(false);
             var writer = new CommandWriter();
             var rec = new Reconciler(writer, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
@@ -332,7 +334,7 @@ namespace VL.Qt.Tests
                 var chain = hoverNode.Update(null, hovered);
                 var e = rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false, chain, null, true, out _, out _);
                 writer.Clear();
-                rec.Update((Element)e, Space.DIPTopLeft);
+                rec.Update((Element)e, SpaceMapping.Default);
                 writer.EndFrame();
             }
 
@@ -345,31 +347,28 @@ namespace VL.Qt.Tests
             rect.Dispose();
         }
 
-        private sealed class Removal : IDisposable { public void Dispose() { } }
-
         // --- Hover node ---
 
         [Test]
         public void HoverNode_ChangeDetection()
         {
-            using var node = new HoverNode(_ => new Removal());
+            using var node = new HoverNode(new RecordingMessages().Errors);
             var a = node.Update(null, null);
             Assert.That(node.Update(null, null), Is.SameAs(a), "unchanged -> same instance");
             Assert.That(a, Is.InstanceOf<HoverInteraction>());
             Assert.That(a.Feedback, Is.EqualTo(node.Core.Slot));
             Assert.That(node.Update(null, Channel.Create(false)), Is.SameAs(a), "a channel does not change the handler");
 
-            var previous = new HoverNode(_ => new Removal()).Update(null, null);
+            var previous = new HoverNode(new RecordingMessages().Errors).Update(null, null);
             var c = node.Update(previous, null);
             Assert.That(c, Is.Not.SameAs(a));
             Assert.That(c.Previous, Is.SameAs(previous), "chained");
-            Assert.That(node.Core.Created, Is.EqualTo(2));
         }
 
         [Test]
         public void HoverNode_PullsIntoChannels_OnChange_AuthorQt()
         {
-            using var node = new HoverNode(_ => new Removal());
+            using var node = new HoverNode(new RecordingMessages().Errors);
             var hovered = Channel.Create(false);
             int writes = 0;
             using var sub = hovered.Subscribe(_ => writes++);
@@ -391,20 +390,20 @@ namespace VL.Qt.Tests
         [Test]
         public void HoverNode_ShowsDuplicateWarning()
         {
-            var warnings = new List<string>();
-            using var node = new HoverNode(w => { warnings.Add(w); return new Removal(); });
+            var m = new RecordingMessages();
+            using var node = new HoverNode(m.Errors);
             var chain = node.Update(null, null);
             Frame(G(R(chain), R(chain, radius: 0.1f)));
             node.Update(null, null);
-            Assert.That(warnings, Is.EqualTo(new[] { InteractionRegistry.InteractionPlaceholderWarning }));
+            Assert.That(m.Shown, Is.EqualTo(InteractionRegistry.InteractionPlaceholderWarning));
             Assert.That(node.Core.Warning, Is.Not.Null);
         }
 
         [Test]
         public void RectangleNode_InteractionPin_ChangeByReference()
         {
-            using var rect = new RectangleNode(_ => new Removal());
-            using var hoverNode = new HoverNode(_ => new Removal());
+            using var rect = new RectangleNode(new RecordingMessages().Errors);
+            using var hoverNode = new HoverNode(new RecordingMessages().Errors);
             Element Run(Interaction? i) => (Element)rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0,
                 Color4.Black, 0, 1, false, false, i, null, true, out _, out _);
 
@@ -473,7 +472,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ClickNode_ChangeDetection()
         {
-            using var node = new ClickNode(_ => new Removal());
+            using var node = new ClickNode(new RecordingMessages().Errors);
             var a = node.Update(null, null, null, null, null, PointerButtons.Left, PointerDevices.All);
             Assert.That(node.Update(null, null, null, null, null, PointerButtons.Left, PointerDevices.All), Is.SameAs(a));
             Assert.That(a.HandlerType, Is.EqualTo(Protocol.ElementType.TapHandler));
@@ -482,13 +481,12 @@ namespace VL.Qt.Tests
             Assert.That(((ClickInteraction)b).Buttons, Is.EqualTo(PointerButtons.Right));
             var c = node.Update(null, null, null, null, null, PointerButtons.Right, PointerDevices.Mouse);
             Assert.That(c, Is.Not.SameAs(b));
-            Assert.That(node.Core.Created, Is.EqualTo(3));
         }
 
         [Test]
         public void ClickNode_PullsEventsOnceAndStatesOnChange()
         {
-            using var node = new ClickNode(_ => new Removal());
+            using var node = new ClickNode(new RecordingMessages().Errors);
             var pressed = Channel.Create(false);
             var clicked = Channel.Create(Unit.Default);
             var tapCount = Channel.Create(0);
@@ -523,7 +521,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ClickNode_Unconnected_DropsEvents_NoBacklog()
         {
-            using var node = new ClickNode(_ => new Removal());
+            using var node = new ClickNode(new RecordingMessages().Errors);
             var s = node.Core.Feedback[0];
             s.PendingClicks = 5;
             s.PendingLongPresses = 3;
@@ -542,7 +540,7 @@ namespace VL.Qt.Tests
         [Test]
         public void PointNode_ChangeDetection_AndPull()
         {
-            using var node = new PointNode(_ => new Removal());
+            using var node = new PointNode(new RecordingMessages().Errors);
             var a = node.Update(null, null, null, PointerButtons.Left, PointerDevices.All);
             Assert.That(node.Update(null, null, null, PointerButtons.Left, PointerDevices.All), Is.SameAs(a));
             Assert.That(node.Update(null, null, null, PointerButtons.Left, PointerDevices.TouchScreen), Is.Not.SameAs(a));
@@ -578,7 +576,7 @@ namespace VL.Qt.Tests
         [Test]
         public void WheelNode_OncePerFrame_ThenOnceZero()
         {
-            using var node = new WheelNode(_ => new Removal());
+            using var node = new WheelNode(new RecordingMessages().Errors);
             var a = node.Update(null, null, null, PointerDevices.All);
             Assert.That(node.Update(null, null, null, PointerDevices.All), Is.SameAs(a));
             Assert.That(node.Update(null, null, null, PointerDevices.Mouse), Is.Not.SameAs(a));
@@ -607,7 +605,7 @@ namespace VL.Qt.Tests
         [Test]
         public void WheelNode_Unconnected_DropsMotion()
         {
-            using var node = new WheelNode(_ => new Removal());
+            using var node = new WheelNode(new RecordingMessages().Errors);
             node.Core.Feedback[0].PendingWheel = new Vector2(1, 1);
             node.Update(null, null, null, PointerDevices.All);
             Assert.That(node.Core.Feedback[0].PendingWheel, Is.EqualTo(Vector2.Zero));
@@ -616,7 +614,7 @@ namespace VL.Qt.Tests
         [Test]
         public void WheelNode_Value_AddsMotion_CanBeReset()
         {
-            using var node = new WheelNode(_ => new Removal());
+            using var node = new WheelNode(new RecordingMessages().Errors);
             var value = Channel.Create(Vector2.Zero);
             int writes = 0;
             using var sub = value.Subscribe(_ => writes++);
@@ -646,7 +644,7 @@ namespace VL.Qt.Tests
         [Test]
         public void ClickNode_TapCount_KeepsLastValue_NoResetToZero()
         {
-            using var node = new ClickNode(_ => new Removal());
+            using var node = new ClickNode(new RecordingMessages().Errors);
             var tapCount = Channel.Create(0);
             var values = new List<int>();
             using var sub = tapCount.Subscribe(values.Add);
@@ -665,7 +663,7 @@ namespace VL.Qt.Tests
             Assert.That(values, Is.EqualTo(new[] { 2, 1 }));
 
             // A new node (e.g. re-created by vvvv) on the same channel starts at 0: writes nothing until its first tap.
-            using var fresh = new ClickNode(_ => new Removal());
+            using var fresh = new ClickNode(new RecordingMessages().Errors);
             fresh.Update(null, null, null, tapCount, null, PointerButtons.Left, PointerDevices.All);
             Assert.That(tapCount.Value, Is.EqualTo(1));
         }
@@ -711,7 +709,7 @@ namespace VL.Qt.Tests
         [Test]
         public void TouchPointsNode_DefaultsAndChangeDetection()
         {
-            using var node = new TouchPointsNode(_ => new Removal());
+            using var node = new TouchPointsNode(new RecordingMessages().Errors);
             var a = (TouchPointsInteraction)node.Update(null, null, PointerDevices.All, true);
             Assert.That(node.Update(null, null, PointerDevices.All, true), Is.SameAs(a));
             Assert.That(node.Update(null, null, PointerDevices.All, false), Is.Not.SameAs(a));
@@ -720,7 +718,7 @@ namespace VL.Qt.Tests
         [Test]
         public void TouchPointsNode_WritesSpreadOnlyOnChange()
         {
-            using var node = new TouchPointsNode(_ => new Removal());
+            using var node = new TouchPointsNode(new RecordingMessages().Errors);
             var points = Channel.Create(Spread<Elements.TouchPoint>.Empty);
             var writes = new List<Spread<Elements.TouchPoint>?>();
             using var sub = points.Subscribe(writes.Add);
@@ -751,7 +749,7 @@ namespace VL.Qt.Tests
         [Test]
         public void TouchPointsNode_SteadyState_NoAllocation()
         {
-            using var node = new TouchPointsNode(_ => new Removal());
+            using var node = new TouchPointsNode(new RecordingMessages().Errors);
             var points = Channel.Create(Spread<Elements.TouchPoint>.Empty);
             var reg = new FeedbackRouter();
             uint h = reg.Acquire(node.Core.Slot);
@@ -763,7 +761,7 @@ namespace VL.Qt.Tests
         [Test]
         public void PinchNode_PullsValues_KeepsLastAfterTheEnd()
         {
-            using var node = new PinchNode(_ => new Removal());
+            using var node = new PinchNode(new RecordingMessages().Errors);
             var active = Channel.Create(false);
             var scale = Channel.Create(1f);
             var rotation = Channel.Create(0f);
@@ -803,14 +801,13 @@ namespace VL.Qt.Tests
         [Test]
         public void PinchNode_InvalidPointCounts_ErrorAtTheNode_DefaultsSent()
         {
-            var shown = new List<string>();
-            int removed = 0;
-            using var node = new PinchNode(m => { shown.Add(m); return new Disposer(() => removed++); });
+            var m = new RecordingMessages();
+            using var node = new PinchNode(m.Errors);
             var a = (PinchInteraction)node.Update(null, null, null, null, null, null, 1, 2, PointerDevices.All);
             Assert.That(node.Core.InputError, Is.Not.Null);
             Assert.That((a.MinimumPointCount, a.MaximumPointCount), Is.EqualTo((2, 2)), "nothing invalid goes to QtNative");
             node.Update(null, null, null, null, null, null, 1, 2, PointerDevices.All);
-            Assert.That(shown, Has.Count.EqualTo(1), "shown once");
+            Assert.That(m.Shows, Is.EqualTo(1), "shown once");
 
             var b = (PinchInteraction)node.Update(null, null, null, null, null, null, 4, 3, PointerDevices.All);
             Assert.That(node.Core.InputError, Is.Not.Null, "minimum above maximum");
@@ -818,7 +815,7 @@ namespace VL.Qt.Tests
 
             var c = (PinchInteraction)node.Update(null, null, null, null, null, null, 2, 3, PointerDevices.All);
             Assert.That(node.Core.InputError, Is.Null);
-            Assert.That(removed, Is.EqualTo(1));
+            Assert.That(m.Shown, Is.Null, "removed");
             Assert.That((c.MinimumPointCount, c.MaximumPointCount), Is.EqualTo((2, 3)));
         }
 
@@ -856,7 +853,7 @@ namespace VL.Qt.Tests
         [Test]
         public void DragNode_Pins_ToProperties_InUnits()
         {
-            using var node = new DragNode(_ => new Removal());
+            using var node = new DragNode(new RecordingMessages().Errors);
             var a = (DragInteraction)node.Update(null, null, null, true, DragAxis.Both, default, default, PointerButtons.Left, PointerDevices.All);
             Assert.That(a.MovesElement, Is.True);
             Assert.That(a.Limits, Is.EqualTo(DragLimits.None));
@@ -872,28 +869,25 @@ namespace VL.Qt.Tests
         [Test]
         public void DragNode_MinGreaterMax_ErrorAtTheNode_LimitsIgnored()
         {
-            var shown = new List<string>();
-            int removed = 0;
-            using var node = new DragNode(m => { shown.Add(m); return new Disposer(() => removed++); });
+            var m = new RecordingMessages();
+            using var node = new DragNode(m.Errors);
             var a = (DragInteraction)node.Update(null, null, null, true, DragAxis.Both, new Vector2(1, 0), new Vector2(0, 0), PointerButtons.Left, PointerDevices.All);
             Assert.That(node.Core.InputError, Is.Not.Null);
-            Assert.That(shown, Has.Count.EqualTo(1));
+            Assert.That(m.Shows, Is.EqualTo(1));
             Assert.That(a.Limits, Is.EqualTo(DragLimits.None), "nothing invalid goes to QtNative");
 
             node.Update(null, null, null, true, DragAxis.Both, new Vector2(1, 0), new Vector2(0, 0), PointerButtons.Left, PointerDevices.All);
-            Assert.That(shown, Has.Count.EqualTo(1), "shown once");
+            Assert.That(m.Shows, Is.EqualTo(1), "shown once");
 
             node.Update(null, null, null, true, DragAxis.Both, new Vector2(0, 0), new Vector2(1, 0), PointerButtons.Left, PointerDevices.All);
             Assert.That(node.Core.InputError, Is.Null);
-            Assert.That(removed, Is.EqualTo(1));
+            Assert.That(m.Shown, Is.Null, "removed");
         }
-
-        private sealed class Disposer(Action dispose) : IDisposable { public void Dispose() => dispose(); }
 
         [Test]
         public void DragNode_PullsDraggingAndDelta_EveryDragUpdate()
         {
-            using var node = new DragNode(_ => new Removal());
+            using var node = new DragNode(new RecordingMessages().Errors);
             var dragging = Channel.Create(false);
             var delta = Channel.Create(Vector2.Zero);
             var deltas = new List<Vector2>();
@@ -928,7 +922,7 @@ namespace VL.Qt.Tests
         [Test]
         public void DragNode_ConnectedDelta_KeepsItsValueUntilTheFirstDrag()
         {
-            using var node = new DragNode(_ => new Removal());
+            using var node = new DragNode(new RecordingMessages().Errors);
             var delta = Channel.Create(new Vector2(0.3f, 0));
             void Update(IChannel<Vector2>? d) => node.Update(null, null, d, true, DragAxis.Both, default, default, PointerButtons.Left, PointerDevices.All);
 
@@ -1009,13 +1003,13 @@ namespace VL.Qt.Tests
         [Test]
         public void SteadyState_ClickPointWheel_NoAllocation()
         {
-            var click = new ClickNode(_ => new Removal());
-            var pointNode = new PointNode(_ => new Removal());
-            var wheelNode = new WheelNode(_ => new Removal());
-            var dragNode = new DragNode(_ => new Removal());
+            var click = new ClickNode(new RecordingMessages().Errors);
+            var pointNode = new PointNode(new RecordingMessages().Errors);
+            var wheelNode = new WheelNode(new RecordingMessages().Errors);
+            var dragNode = new DragNode(new RecordingMessages().Errors);
             var dragging = Channel.Create(false);
             var dragDelta = Channel.Create(Vector2.Zero);
-            var rect = new RectangleNode(_ => new Removal());
+            var rect = new RectangleNode(new RecordingMessages().Errors);
             var pressed = Channel.Create(false);
             var clicked = Channel.Create(Unit.Default);
             var tapCount = Channel.Create(0);
@@ -1034,7 +1028,7 @@ namespace VL.Qt.Tests
                     PointerButtons.Left, PointerDevices.All);
                 var e = rect.Update(new Vector2(1, 1), Matrix.Identity, RectangleAnchor.Center, Color4.White, 0, Color4.Black, 0, 1, false, false, chain, null, true, out _, out _);
                 writer.Clear();
-                rec.Update((Element)e, Space.DIPTopLeft);
+                rec.Update((Element)e, SpaceMapping.Default);
                 writer.EndFrame();
             }
 

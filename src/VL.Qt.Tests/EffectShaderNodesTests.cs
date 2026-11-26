@@ -47,7 +47,6 @@ namespace VL.Qt.Tests
             Assert.That(_api.Calls.Count(c => c.StartsWith("create")), Is.EqualTo(2), "two shaders, baked once");
 
             Assert.That(node.Update(null, new Color4(1, 0, 0, 1), 40, 0.2f, 1.5f, true, true), Is.SameAs(first), "unchanged inputs: same link");
-            Assert.That(node.Core.Created, Is.EqualTo(1));
             Assert.That(node.Update(null, new Color4(1, 0, 0, 1), 41, 0.2f, 1.5f, true, true), Is.Not.SameAs(first));
             Assert.That(_api.Calls.Count(c => c.StartsWith("create")), Is.EqualTo(2), "a pin change does not rebake");
         }

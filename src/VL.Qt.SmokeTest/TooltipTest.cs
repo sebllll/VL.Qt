@@ -89,7 +89,7 @@ public static class TooltipTest
         {
             cmd.Clear();
             if (clear) cmd.ClearColor(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-            rec.Update(current, Space.DIPTopLeft);
+            rec.Update(current, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());

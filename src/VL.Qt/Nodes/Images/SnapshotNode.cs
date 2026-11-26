@@ -27,7 +27,6 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <summary>For tests: a client on a fake API and an own scene registry; null <paramref name="messages"/> reports nothing.</summary>
         internal SnapshotNode(ResourceClient client, OccurrenceRegistry scene, NodeErrors? messages = null)
         {
             _grab = new SnapshotGrab(client, scene);

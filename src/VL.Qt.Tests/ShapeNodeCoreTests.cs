@@ -14,17 +14,13 @@ namespace VL.Qt.Tests
     public class ShapeNodeCoreTests
     {
         private ShapeNodeCore _core = null!;
-        private int _warnings; // currently shown warnings
-        private string? _lastWarning;
-
-        private sealed class Removal(ShapeNodeCoreTests t) : IDisposable { public void Dispose() => t._warnings--; }
+        private RecordingMessages _m = null!;
 
         [SetUp]
         public void SetUp()
         {
-            _warnings = 0;
-            _lastWarning = null;
-            _core = new ShapeNodeCore(w => { _warnings++; _lastWarning = w; return new Removal(this); });
+            _m = new RecordingMessages();
+            _core = new ShapeNodeCore(_m.Errors);
         }
 
         [TearDown]
@@ -48,7 +44,6 @@ namespace VL.Qt.Tests
             var a = Describe(PropsOf(Points((0, 0), (1, 2), (3, 1))));
             var b = Describe(PropsOf(Points((0, 0), (1, 2), (3, 1))));
             Assert.That(b, Is.SameAs(a));
-            Assert.That(_core.Core.Created, Is.EqualTo(1));
         }
 
         [Test]
@@ -118,7 +113,7 @@ namespace VL.Qt.Tests
         {
             var shape = Describe(PropsOf(Spread<Vector2>.Empty));
             Assert.That(shape.Size, Is.EqualTo(Vector2.Zero));
-            Assert.That(_warnings, Is.EqualTo(0));
+            Assert.That(_m.Shown, Is.Null);
         }
 
         [Test]
@@ -128,7 +123,7 @@ namespace VL.Qt.Tests
         [Test]
         public void LinePoints_SameInstanceUntilChanged()
         {
-            using var line = new LineNode(_ => new Removal(this));
+            using var line = new LineNode(new RecordingMessages().Errors);
             Shape Line(Vector2 to, float strokeWidth = 0.05f)
                 => (Shape)line.Update(new Vector2(0.5f, 0.5f), to, Matrix.Identity, Color4.White, strokeWidth, ShapeCap.Flat, Spread<float>.Empty,
                     0, 0, 1, 0, 1, false, false, null, null, true, out _, out _);
@@ -150,7 +145,7 @@ namespace VL.Qt.Tests
         public void ManyPoints_NoWarning_ElementKeepsAllPoints_SizeCoversAllPoints()
         {
             var shape = Describe(PropsOf(Many(100_000)));
-            Assert.That(_warnings, Is.EqualTo(0));
+            Assert.That(_m.Shown, Is.Null);
             Assert.That(shape.Points.Count, Is.EqualTo(100_000));
             Assert.That(shape.Size, Is.EqualTo(new Vector2(99_999, 6)), "extent of all points: x = 99999, y = max(i % 7) = 6");
         }

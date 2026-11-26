@@ -31,9 +31,8 @@ namespace VL.Qt.Nodes
         public PointNode(NodeContext nodeContext)
             => _node = new InteractionNodeCore<Props>(nodeContext, Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal PointNode(Func<string, IDisposable> addWarning)
-            => _node = new InteractionNodeCore<Props>(addWarning, Create);
+        internal PointNode(NodeErrors messages)
+            => _node = new InteractionNodeCore<Props>(messages, Create);
 
         private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new PointInteraction(previous, slot, p.Buttons, p.Devices);

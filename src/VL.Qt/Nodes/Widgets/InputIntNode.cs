@@ -28,9 +28,8 @@ namespace VL.Qt.Nodes
         public InputIntNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<SpinBox, Props>(nodeContext, s_create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal InputIntNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<SpinBox, Props>(addWarning, s_create);
+        internal InputIntNode(NodeErrors messages)
+            => _node = new ElementNodeCore<SpinBox, Props>(messages, s_create);
 
         private static readonly Func<CommonInputs, Props, FeedbackSlot, SpinBox> s_create = static (c, p, slot) => new SpinBox(c, slot)
             {

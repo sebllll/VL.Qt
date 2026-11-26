@@ -35,14 +35,8 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <summary>For tests: the node's message goes to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal LabeledNode(Func<string, IDisposable> addWarning)
-            : this(NodeErrors.ShownBy(addWarning))
-        {
-        }
-
         // One store for the label, both layouts and the element input: one message at the node.
-        private LabeledNode(NodeErrors messages)
+        internal LabeledNode(NodeErrors messages)
         {
             _messages = messages;
             _text = new ElementNodeCore<Text, TextProps>(messages, s_createText, "Label ");

@@ -28,9 +28,8 @@ namespace VL.Qt.Nodes
         public ToggleNode(NodeContext nodeContext)
             => _node = new ElementNodeCore<Element, Props>(nodeContext, s_create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal ToggleNode(Func<string, IDisposable> addWarning)
-            => _node = new ElementNodeCore<Element, Props>(addWarning, s_create);
+        internal ToggleNode(NodeErrors messages)
+            => _node = new ElementNodeCore<Element, Props>(messages, s_create);
 
         private static readonly Func<CommonInputs, Props, FeedbackSlot, Element> s_create = static (c, p, slot) => p.Look == ToggleLook.Switch
             ? new Switch(c, slot)

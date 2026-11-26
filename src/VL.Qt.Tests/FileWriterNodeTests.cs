@@ -72,7 +72,7 @@ namespace VL.Qt.Tests
             _elementNode.Dispose();
         }
 
-        private static void Finish(ImageFileWriter writer) => Assert.That(writer.WaitIdle(timeout), Is.True, "the write did not finish");
+        private static void Finish(ImageFileWriter writer) => Assert.That(writer.WaitUntilIdle(timeout), Is.True, "the write did not finish");
 
         private void Pump()
         {
@@ -83,7 +83,7 @@ namespace VL.Qt.Tests
         private void Show()
         {
             _reconciler.Window = new SceneHandle(1);
-            _reconciler.Update(_element, Space.DIPTopLeft);
+            _reconciler.Update(_element, SpaceMapping.Default);
         }
 
         private void Update(IImage? image, string? path, out bool isDone, out bool success, bool write = false, int quality = 90)

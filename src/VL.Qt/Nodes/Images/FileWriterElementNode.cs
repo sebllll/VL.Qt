@@ -34,10 +34,6 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <summary>
-        /// For tests: a client on a fake API, an own scene registry and a writer on a fake write function; null
-        /// <paramref name="messages"/> reports nothing.
-        /// </summary>
         internal FileWriterElementNode(ResourceClient client, OccurrenceRegistry scene, ImageFileWriter writer, NodeErrors? messages = null)
         {
             _grab = new SnapshotGrab(client, scene);

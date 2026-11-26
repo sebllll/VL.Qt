@@ -19,9 +19,6 @@ namespace VL.Qt.Tests
     public class InputIntNodeTests
     {
         private static readonly Vector2 DefaultSize = new(1.4f, 0.4f);
-        private static readonly IDisposable NoWarning = new Nop();
-        private sealed class Nop : IDisposable { public void Dispose() { } }
-
         private InputIntNode _node = null!;
         private FeedbackRouter _registry = null!;
         private uint _handle;
@@ -31,7 +28,7 @@ namespace VL.Qt.Tests
         [SetUp]
         public void SetUp()
         {
-            _node = new InputIntNode(_ => NoWarning);
+            _node = new InputIntNode(new RecordingMessages().Errors);
             _registry = new FeedbackRouter();
             _handle = _registry.Acquire(new FeedbackSlot(_node.Core.Feedback, 0));
             _sink = new RecordingSink();
@@ -54,7 +51,7 @@ namespace VL.Qt.Tests
         private string[] Frame(out int value, out bool bang, IChannel<int>? channel = null, Optional<int> min = default, Optional<int> max = default)
         {
             _sink.Clear();
-            _reconciler.Update(Update(out value, out bang, channel, min, max), Space.DIPTopLeft);
+            _reconciler.Update(Update(out value, out bang, channel, min, max), SpaceMapping.Default);
             return _sink.Commands.ToArray();
         }
 
@@ -89,7 +86,7 @@ namespace VL.Qt.Tests
             Assert.That(Update(), Is.SameAs(a));
 
             _sink.Clear();
-            _reconciler.Update(Update(out _, out _, step: 5, editable: false, enabled: false, autoSize: false), Space.DIPTopLeft);
+            _reconciler.Update(Update(out _, out _, step: 5, editable: false, enabled: false, autoSize: false), SpaceMapping.Default);
             Assert.That(_sink.Commands, Is.EquivalentTo(new[]
             {
                 $"SET 1 AutoSize bool(0)", $"SET 1 Step i32(5)", $"SET 1 Editable bool(0)", $"SET 1 Enabled bool(0)",
@@ -234,7 +231,7 @@ namespace VL.Qt.Tests
             for (int i = 0; i < 100; i++) { Update(ch); Update(); }
             Assert.That(Allocations.Fewest(() => Update(ch)), Is.EqualTo(0), "connected");
 
-            var unconnected = new InputIntNode(_ => NoWarning);
+            var unconnected = new InputIntNode(new RecordingMessages().Errors);
             for (int i = 0; i < 100; i++) unconnected.Update(true, DefaultSize, default, RectangleAnchor.Center, null, default, default, 1, true, true, 1, false, false, null, null, null, out _, out _, out _, out _);
             Assert.That(Allocations.Fewest(() => unconnected.Update(true, DefaultSize, default, RectangleAnchor.Center, null, default, default, 1, true, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "unconnected (null)");
             unconnected.Dispose();

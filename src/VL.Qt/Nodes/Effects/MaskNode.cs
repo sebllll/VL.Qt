@@ -35,7 +35,7 @@ namespace VL.Qt.Nodes
         {
         }
 
-        /// <param name="messages">Store of the node; null shows nothing (tests).</param>
+        /// <param name="messages">Store of the node; null shows nothing.</param>
         internal MaskNode(NodeErrors? messages = null)
         {
             _messages = messages;

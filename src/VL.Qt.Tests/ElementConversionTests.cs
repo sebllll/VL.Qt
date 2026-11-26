@@ -35,25 +35,6 @@ namespace VL.Qt.Tests
         {
         }
 
-        private sealed class Warnings
-        {
-            public List<string> Shown { get; } = new();
-            public int Removed { get; private set; }
-
-            public IDisposable Add(string text)
-            {
-                Shown.Add(text);
-                return new Remover(this);
-            }
-
-            private sealed class Remover : IDisposable
-            {
-                private readonly Warnings _owner;
-                public Remover(Warnings owner) => _owner = owner;
-                public void Dispose() => _owner.Removed++;
-            }
-        }
-
         private RecordingSink _sink = null!;
         private Reconciler _rec = null!;
 
@@ -64,7 +45,7 @@ namespace VL.Qt.Tests
             _rec = new Reconciler(_sink, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
         }
 
-        private void Update(Element? root) => _rec.Update(root, Space.DIPTopLeft);
+        private void Update(Element? root) => _rec.Update(root, SpaceMapping.Default);
 
         // Conversion ---------------------------------------------------------
 
@@ -113,26 +94,26 @@ namespace VL.Qt.Tests
         [Test]
         public void ElementInput_Foreign_WarnsOnce_RemovedWhenGone()
         {
-            var warnings = new Warnings();
-            using var input = new ElementInput(NodeErrors.ShownBy(warnings.Add));
+            var m = new RecordingMessages();
+            using var input = new ElementInput(m.Errors);
 
             Assert.That(input.Update(new Foreign()), Is.Null);
             Assert.That(input.Update(new Foreign()), Is.Null);
-            Assert.That(warnings.Shown, Has.Count.EqualTo(1));
-            Assert.That(warnings.Shown[0], Does.Contain(nameof(Foreign)));
-            Assert.That(input.Warning, Is.EqualTo(warnings.Shown[0]));
+            Assert.That(m.Shows, Is.EqualTo(1));
+            Assert.That(m.Shown, Does.Contain(nameof(Foreign)));
+            Assert.That(input.Warning, Is.EqualTo(m.Shown));
 
             var r = new Rectangle();
             Assert.That(input.Update(r), Is.SameAs(r));
             Assert.That(input.Warning, Is.Null);
-            Assert.That(warnings.Removed, Is.EqualTo(1));
+            Assert.That(m.Shown, Is.Null, "removed");
         }
 
         [Test]
         public void ChildrenInput_ForeignChild_Warns()
         {
-            var warnings = new Warnings();
-            using var input = new ChildrenInput(NodeErrors.ShownBy(warnings.Add));
+            var m = new RecordingMessages();
+            using var input = new ChildrenInput(m.Errors);
             var r = new Rectangle();
 
             var children = input.Update(new IElement?[] { r, new Foreign() }.ToSpread());
@@ -142,7 +123,7 @@ namespace VL.Qt.Tests
 
             input.Update(new IElement?[] { r }.ToSpread());
             Assert.That(input.Warning, Is.Null);
-            Assert.That(warnings.Removed, Is.EqualTo(1));
+            Assert.That(m.Shown, Is.Null, "removed");
         }
 
         // Stylables returning stylables ---------------------------------------

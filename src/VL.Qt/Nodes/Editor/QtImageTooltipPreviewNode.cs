@@ -22,7 +22,6 @@ namespace VL.Qt.Nodes
             _client = ResourceClient.ForApp(nodeContext.AppHost);
         }
 
-        /// <summary>For tests: a client on a fake API.</summary>
         internal QtImageTooltipPreviewNode(ResourceClient client)
         {
             _client = client;

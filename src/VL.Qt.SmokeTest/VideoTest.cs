@@ -349,8 +349,6 @@ public static class VideoTest
         RunNode(s, a, b);
     }
 
-    private static IDisposable NoWarning(string _) => throw new InvalidOperationException("unexpected node warning");
-
     /// <summary>Video node → Reconciler → QtNative → poll → FeedbackRouter → node outputs Position/Duration.</summary>
     private static void RunNode(Scenario s, string a, string b)
     {
@@ -359,7 +357,7 @@ public static class VideoTest
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
         var rec = new Reconciler(cmd, new IdAllocator(), new OccurrenceRegistry(), new InteractionRegistry());
-        var node = new VideoNode(NoWarning);
+        var node = new VideoNode(UnexpectedMessages.Store());
         var buf = new byte[1 << 16];
         float pos = 0, dur = 0;
         Vector2 size = default;
@@ -369,7 +367,7 @@ public static class VideoTest
             var e = node.Update(new Vector2(3.2f, 1.8f), Matrix.Translation(0.2f, 0.2f, 0), RectangleAnchor.TopLeft, new VPath(path), play, true, true, 1, 1,
                 FillMode.Fit, 1, false, false, null, null, true, out pos, out dur, out size, out _);
             cmd.Clear();
-            rec.Update((Element)e, Space.DIPTopLeft);
+            rec.Update((Element)e, SpaceMapping.Default);
             if (cmd.Length > 0)
             {
                 var rc = Native.Apply(w, cmd.EndFrame());

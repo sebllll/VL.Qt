@@ -35,7 +35,7 @@ namespace VL.Qt.Tests
 
         private static string RadiusEntry(float r) => $" {Protocol.StyleField.FrameRadius}/0=f32({r})";
 
-        private void Update(Element root) => _rec.Update(root, Space.DIPTopLeft);
+        private void Update(Element root) => _rec.Update(root, SpaceMapping.Default);
 
         [Test]
         public void WidgetWithoutStyle_GetsBaseStyle_FullWithClear_RightAfterCreate()

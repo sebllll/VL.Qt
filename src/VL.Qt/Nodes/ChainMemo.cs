@@ -19,9 +19,6 @@ namespace VL.Qt.Nodes
         private TProps _props;
         private TEffect? _output;
 
-        /// <summary>Number of links created so far (for tests).</summary>
-        public int Created { get; private set; }
-
         /// <summary>Forgets the last link, so the next <c>Get</c> builds a new one (e.g. while the node passes its input on, or on dispose).</summary>
         public void Reset()
         {
@@ -39,7 +36,6 @@ namespace VL.Qt.Nodes
                 _output = create(input, props);
                 _input = input;
                 _props = props;
-                Created++;
             }
             return _output;
         }
@@ -52,7 +48,6 @@ namespace VL.Qt.Nodes
                 _output = create(input, props, state);
                 _input = input;
                 _props = props;
-                Created++;
             }
             return _output;
         }

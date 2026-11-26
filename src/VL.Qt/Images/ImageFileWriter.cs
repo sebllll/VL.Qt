@@ -20,7 +20,7 @@ namespace VL.Qt
 
         private readonly Func<IImage, string, int, string> _write;
         private readonly object _syncRoot = new();
-        // Idle = no write runs or waits; the tests wait on it.
+        // Idle = no write runs or waits (see WaitUntilIdle).
         private readonly ManualResetEventSlim _idle = new(true);
         private Job? _pending;
         private bool _running, _finished, _disposed;
@@ -99,8 +99,8 @@ namespace VL.Qt
             }
         }
 
-        /// <summary>For tests: waits until no write runs or waits any more; false on timeout.</summary>
-        internal bool WaitIdle(TimeSpan timeout) => _idle.Wait(timeout);
+        /// <summary>Waits until no write runs or waits any more; false on timeout.</summary>
+        internal bool WaitUntilIdle(TimeSpan timeout) => _idle.Wait(timeout);
 
         private void Run(Job? job)
         {

@@ -99,7 +99,7 @@ namespace VL.Qt.Tests
         private void Frame(Element root)
         {
             _sink.Clear();
-            _rec.Update(root, Space.DIPTopLeft);
+            _rec.Update(root, SpaceMapping.Default);
         }
 
         private static Spread<Uniform> U(params Uniform[] uniforms) => uniforms.ToSpread();
@@ -255,25 +255,14 @@ namespace VL.Qt.Tests
             _api = new FakeResourceApi();
             _client = new ResourceClient(_api, Environment.CurrentManagedThreadId, static () => null);
             _client.SetPumping(true);
-            _shown = string.Empty;
-            _node = new ShaderNode(_client, text =>
-            {
-                _shown = text;
-                return new Hide(() => _shown = string.Empty);
-            });
+            _m = new RecordingMessages();
+            _node = new ShaderNode(_client, _m.Errors);
         }
 
         // The text shown at the node (errors first, one line each): what the Error output carried before.
-        private string _shown = string.Empty;
+        private string _shown => _m.Shown ?? string.Empty;
 
-        private sealed class Hide : IDisposable
-        {
-            private readonly Action _hide;
-
-            public Hide(Action hide) => _hide = hide;
-
-            public void Dispose() => _hide();
-        }
+        private RecordingMessages _m = new();
 
         private void Pump()
         {

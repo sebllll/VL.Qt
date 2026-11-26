@@ -17,9 +17,6 @@ namespace VL.Qt.Tests
     public class ToggleNodeTests
     {
         private static readonly Vector2 DefaultSize = new(0.68f, 0.4f);
-        private static readonly IDisposable NoWarning = new Nop();
-        private sealed class Nop : IDisposable { public void Dispose() { } }
-
         private ToggleNode _node = null!;
         private FeedbackRouter _registry = null!;
         private uint _handle;
@@ -29,7 +26,7 @@ namespace VL.Qt.Tests
         [SetUp]
         public void SetUp()
         {
-            _node = new ToggleNode(_ => NoWarning);
+            _node = new ToggleNode(new RecordingMessages().Errors);
             _registry = new FeedbackRouter();
             _handle = _registry.Acquire(new FeedbackSlot(_node.Core.Feedback, 0));
             _sink = new RecordingSink();
@@ -50,7 +47,7 @@ namespace VL.Qt.Tests
         private string[] Frame(out bool value, out bool bang, IChannel<bool>? channel = null, ToggleLook look = ToggleLook.Checkbox)
         {
             _sink.Clear();
-            _reconciler.Update(Update(out value, out bang, channel, look), Space.DIPTopLeft);
+            _reconciler.Update(Update(out value, out bang, channel, look), SpaceMapping.Default);
             return _sink.Commands.ToArray();
         }
 
@@ -95,7 +92,7 @@ namespace VL.Qt.Tests
             Assert.That(Update(), Is.SameAs(a));
 
             _sink.Clear();
-            _reconciler.Update(Update(out _, out _, enabled: false, autoSize: false), Space.DIPTopLeft);
+            _reconciler.Update(Update(out _, out _, enabled: false, autoSize: false), SpaceMapping.Default);
             Assert.That(_sink.Commands, Is.EquivalentTo(new[] { $"SET 1 AutoSize bool(0)", $"SET 1 Enabled bool(0)" }));
         }
 
@@ -190,7 +187,7 @@ namespace VL.Qt.Tests
             for (int i = 0; i < 100; i++) { Update(ch); Update(); }
             Assert.That(Allocations.Fewest(() => Update(ch)), Is.EqualTo(0), "connected");
 
-            var unconnected = new ToggleNode(_ => NoWarning);
+            var unconnected = new ToggleNode(new RecordingMessages().Errors);
             for (int i = 0; i < 100; i++) unconnected.Update(true, DefaultSize, default, RectangleAnchor.Center, null, ToggleLook.Switch, true, 1, false, false, null, null, null, out _, out _, out _, out _);
             Assert.That(Allocations.Fewest(() => unconnected.Update(true, DefaultSize, default, RectangleAnchor.Center, null, ToggleLook.Switch, true, 1, false, false, null, null, null, out _, out _, out _, out _)), Is.EqualTo(0), "unconnected (null)");
             unconnected.Dispose();
