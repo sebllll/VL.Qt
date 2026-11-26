@@ -3,7 +3,7 @@
 
 Usage: python tools/check-source-rules.py [--root <repo>] [--warn] [--list]   (exit code 1 = findings, 0 = ok)
 
-Rules (names as in docs/plans/refactor/review/00_brief.md):
+Rules (names as in docs-internal/plans/refactor/review/00_brief.md):
   K1  no issue or pull request reference (`#455`, `PR #12`) in `src`: comments and messages explain the code, the history is in git.
   K3  no C# file with two top-level types (class, struct, interface, enum, record, delegate), besides the named exceptions below.
   K4  no comment line over 160 characters (the whole physical line counts, so does a trailing comment behind code).
