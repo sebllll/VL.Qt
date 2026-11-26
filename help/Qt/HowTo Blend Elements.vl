@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="8tGz6iMRaSfMkXaPuoSSEh" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Blend [Qt.Effects]&#xD;&#xA;- Layer: any element (here a Text) blended over the base&#xD;&#xA;- Mode: Multiply, Screen, Overlay, Add, Difference, ...&#xD;&#xA;- Opacity: strength of the layer, 0 = element only">
+          <Pad Id="8tGz6iMRaSfMkXaPuoSSEh" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Blend [Qt.Effects]&#xD;&#xA;- Layer: any element (here a Text) blended over the base&#xD;&#xA;- Blend Mode: Multiply, Screen, Overlay, Add, Difference, ...&#xD;&#xA;- Opacity: strength of the layer, 0 = element only">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

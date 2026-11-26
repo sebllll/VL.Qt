@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="4xhC4rt1ND5Osgq52q74mt" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="IStylable (Qt.Style): a self-made widget that reads the style of its surroundings&#xD;&#xA;- XYSlider (see its definition): frame, knob (Circle) and value text&#xD;&#xA;- Group, Row or Column calls Build with the style resolved at that position&#xD;&#xA;- Getters: ResolveState, GetColors, GetFrame, GetText&#xD;&#xA;- Pins of XYSlider: Bounds, Radius and the value Channel">
+          <Pad Id="4xhC4rt1ND5Osgq52q74mt" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="IStylable (Qt.Style): a self-made widget that reads the style of its surroundings&#xD;&#xA;- XYSlider (see its definition): frame, knob (Circle) and value text&#xD;&#xA;- Group, Row or Column calls Build with the style resolved at that position&#xD;&#xA;- Getters: ResolveState, Colors, Frame, Text&#xD;&#xA;- Pins of XYSlider: Bounds, Radius and the value Channel">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
