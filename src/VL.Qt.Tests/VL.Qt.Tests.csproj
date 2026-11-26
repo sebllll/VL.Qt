@@ -38,6 +38,7 @@
     <Compile Include="..\VL.Qt.Stride\TextureFormats.cs" Link="Stride\TextureFormats.cs" />
     <Compile Include="..\VL.Qt.Stride\LayerComposition.cs" Link="Stride\LayerComposition.cs" />
     <Compile Include="..\VL.Qt.Stride\TexturePixelMapping.cs" Link="Stride\TexturePixelMapping.cs" />
+    <Compile Include="..\VL.Qt.Stride\TextureState.cs" Link="Stride\TextureState.cs" />
   </ItemGroup>
 
   <!-- Drift checks (ProtocolDriftTests, ApiDriftTests): the headers of QtNative are read from the output directory. -->

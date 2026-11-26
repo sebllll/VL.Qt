@@ -1,6 +1,6 @@
 # QtTexture manual checks
 
-Three patches for `QtTexture` (VL.Qt.Stride) that a person looks at in vvvv. No test runs them: the SmokeTest covers the native texture path (`src/VL.Qt.SmokeTest`), these patches cover what only shows with Stride and a window.
+Three patches for `QtTexture` (VL.Qt.Stride) that a person looks at in vvvv. No test runs them: the SmokeTest covers the native texture path (`src/VL.Qt.SmokeTest`), `src/VL.Qt.Tests/Stride/` the pure parts of the Stride layer (pixel mapping, formats, texture bookkeeping), these patches cover what only shows with Stride and a window.
 
 Open a patch in vvvv with the repository as a source package (`tools/start-vvvv.ps1`), and read the text field at the top of the patch as well.
 

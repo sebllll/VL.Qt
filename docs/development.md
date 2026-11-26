@@ -59,7 +59,10 @@ dotnet test src/VL.Qt.Tests
 # Smoke tests: QtNative without vvvv (rendering, performance)
 dotnet run --project src/VL.Qt.SmokeTest -c Release -- --all
 
-# The QtTexture patches in src/VL.Qt.Stride/help/manual-checks/ are manual checks (README there): no test runs them
+# Stride layer: the pure parts (pixel mapping, texture formats, layer composition, the texture bookkeeping of SharedTextureScene)
+# are compiled into VL.Qt.Tests (src/VL.Qt.Tests/Stride/). The rest needs Stride's device and is a manual check: the three
+# QtTexture patches in src/VL.Qt.Stride/help/manual-checks/ (README there), which no test runs. VL.Qt.Audio is the same:
+# VideoAudioNode is a thin adapter over AudioTapPlayer (17 tests in VL.Qt.Audio.Tests), the adapter itself has no test.
 
 # Compile-check a patch with vvvvc (exit 0 = no build errors)
 tools/vvvvc.ps1 -File help/HelloWorld.vl
