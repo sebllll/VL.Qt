@@ -95,6 +95,8 @@ Instead of `QmlElement` with a `Properties` dictionary, a `.qml` file can become
 
 Experimental: the generated nodes can change like `QmlElement`, although vvvv shows no experimental mark on them (a node factory cannot set one, see [Limitations](#limitations-of-the-generated-nodes)).
 
+<img src="images/qml-node-factory.png" width="820" alt="Help patch 'HowTo Create QML Nodes from Files': the node Gauge generated from Gauge.qml with its pins, the Qt window with the bar and the QML source in VS Code">
+
 ### Which files become nodes
 
 - Only files whose name **starts with an uppercase letter**, as QML requires for component files. `main.qml`, `helpers.qml` and so on are ignored without a message.

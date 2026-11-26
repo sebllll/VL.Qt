@@ -40,6 +40,13 @@ The folders of QtNative: `app/` (process, pump, animation clock, log, exports he
 - **QtNative** applies the commands to Qt objects
 - Qt Quick renders the **scene** of the renderer: into a window of its own (native swap chain; on Windows on a D3D11 device shared across windows) or into a texture of Stride
 
+```
+patch ──► Element tree ──► Reconciler ──► CommandWriter ──► QtNative ──► Qt Quick ──► Qt window
+                              (diff)        (binary buffer)    (C++)     (scene graph)
+                                                                  │
+patch ◄── channels / outputs ◄── EventReader ◄─────── events ◄────┘
+```
+
 ## Timing and animation
 
 vvvv's `IFrameClock` is the single time source:

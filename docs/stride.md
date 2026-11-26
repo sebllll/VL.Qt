@@ -75,7 +75,7 @@ Use `QtRenderer` for a user interface or an overlay on top of a scene. Use `QtTe
 ## Coordinates
 
 - **Pixels:** 1 DIP = 1 pixel in `QtTexture` and `QtRenderer` (the device pixel ratio is 1), so `DIPTopLeft` and `PixelTopLeft` give the same pixels. The origin of the texture is the top left, y points down.
-- **Units:** lengths are in units of the `Space` pin, as in a Qt window: `DIPTopLeft` (default) has its origin at the top left and 1 unit = 100 DIP. All four spaces: [README](../README.md#first-patch) and the help patch `HowTo Choose a Space`.
+- **Units:** lengths are in units of the `Space` pin, as in a Qt window: `DIPTopLeft` (default) has its origin at the top left and 1 unit = 100 DIP. All four spaces: [Coordinates and layout](coordinates.md).
 - **Input positions** are texture pixels with the origin at the top left, whatever `Space` is.
 
 ## Input

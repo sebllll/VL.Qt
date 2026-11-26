@@ -124,6 +124,20 @@ Help patches: `HowTo Draw a Bezier Curve with Handles` (handles and modes), `How
 
 Numbers and method: [research/shapes-benchmark.md](research/shapes-benchmark.md). Design: [design/paths.md](design/paths.md).
 
+## Examples
+
+<img src="images/paths-path.png" width="820" alt="Path elements: a filled and stroked triangle, an open curve, and two rounded squares with a circular hole, one filled with the even-odd rule">
+
+*`HowTo Draw a Path`: fill and stroke, and a fill rule for a path with a hole.*
+
+<img src="images/paths-splines.png" width="820" alt="Spline (CatmullRom) with Alpha 0, 0.5 and 1 and Spline (BSpline) through the same five points">
+
+*`HowTo Draw Splines`: the same five points as `Spline (CatmullRom)` with three Alpha values and as `Spline (BSpline)`.*
+
+<img src="images/paths-polygon.png" width="820" alt="A star as Polygon with draggable corners, and the same star filled with the NonZero fill rule">
+
+*`HowTo Draw a Polygon`: draggable corners; the fill rule decides what is inside of a self-intersecting polygon.*
+
 ## Help patches
 
 `HowTo Draw a Line`, `HowTo Draw a Polyline`, `HowTo Draw a Polygon`, `HowTo Draw a Path`, `HowTo Build a Path`, `HowTo Draw a Bezier Curve with Handles`, `HowTo Draw Splines`. See [Help patches](help-patches.md).
