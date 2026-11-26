@@ -45,7 +45,7 @@
             <Pin Id="CzjAQL1jL64MQM24Q4mAdu" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="NInMuCjopOVLz50gFURrDA" Name="Output" Kind="OutputPin" />
             <Pin Id="SoG8GLaomdsL0kYHzd46Ei" Name="Size" Kind="InputPin" DefaultValue="3.2, 1.6" />
-            <Pin Id="EmDORm1t5EILpvYNvZ6I3D" Name="Transform" Kind="InputPin" />
+            <Pin Id="EmDORm1t5EILpvYNvZ6I3D" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="UmpQcWjvWIEQRCoHVNn6Kl" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="LXsK6MuS5MpOzrhzP0saS7" Name="Fill Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
             <Pin Id="Sc7yFfYSbjWN3CExVUlCWE" Name="Radius" Kind="InputPin" DefaultValue="0.3" />
@@ -70,14 +70,14 @@
             <Pin Id="VuH9qOCahdqOa6byvVIwdB" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="OY9qvgSRoR0NQYSWqf9idi" Name="Output" Kind="OutputPin" />
             <Pin Id="R4D6SRfA1t8Op2iQHTaWMp" Name="Size" Kind="InputPin" DefaultValue="3.2, 1.6" />
-            <Pin Id="NyKVaecNgZoLICiTa9ozbD" Name="Transform" Kind="InputPin" />
+            <Pin Id="NyKVaecNgZoLICiTa9ozbD" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="GDuUwWnin14Pv6kTxH4hq6" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="OWa51H92xrTNnBcj6uLyjR" Name="Text" Kind="InputPin" DefaultValue="FileWriter" />
-            <Pin Id="PfZ50ePtVwJNHi7MfT8aor" Name="Font Family" Kind="InputPin" />
+            <Pin Id="PfZ50ePtVwJNHi7MfT8aor" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="CJN9lI7wDJlO7t2TFInwOk" Name="Font Size" Kind="InputPin" DefaultValue="0.5" />
             <Pin Id="Mj8DMgu5slHNUKYgAz8v7E" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="D6ggoZrx2enQBfWyZKzn2T" Name="Italic" Kind="InputPin" IsHidden="true" />
-            <Pin Id="KTxV5pwHjeLOLCevN66k8e" Name="Color" Kind="InputPin" />
+            <Pin Id="KTxV5pwHjeLOLCevN66k8e" Name="Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="LquMJABLf9TMKLSRtGIye3" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="QWHtEWlxHKxLZXJZ9MGBiX" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" />
             <Pin Id="EUM0mIHbQUcNbganhrnvwz" Name="Wrap" Kind="InputPin" IsHidden="true" />
@@ -242,10 +242,10 @@
             <Pin Id="Az8U6Bzv2WGMWGgUpqu230" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="KRqwJheK2DDM0YvVq4Sd9i" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="GNUfL8rRM2YOKXUpDj5BCR" Name="Input" Kind="InputPin" />
-            <Pin Id="JdhDOdQiLohNsaU52WXnDi" Name="Space" Kind="InputPin" />
-            <Pin Id="VTv68dRVDByN4CJ848QsQf" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="JdhDOdQiLohNsaU52WXnDi" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VTv68dRVDByN4CJ848QsQf" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="Ng6EqDQ3c7pNvKBM9e9tqp" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="QGMh3vnY33EQEgxOV1lVOG" Name="Enabled" Kind="InputPin" />
+            <Pin Id="QGMh3vnY33EQEgxOV1lVOG" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="LVzNL3zed6hNDGi2SNAd2x" Name="Title" Kind="InputPin" DefaultValue="HowTo Write an Element to a File" />
             <Pin Id="EPhzYXsXkAQLpGU5WXrHVy" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="AZAeZqMxZG9NlBIjUWls91" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -257,7 +257,7 @@
             <Pin Id="NgCp3n7S7kfN5xEhP03Af5" Name="Window" Kind="InputPin" IsHidden="true" />
             <Pin Id="D6r833ZBSGdPW7I3bCN4JH" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="N6Dpkaf3liAN7vipda2EWk" Bounds="85,700,829,238" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- Writing is asynchronous: Is Done comes in a later frame, never in the frame of Write. It is also true when the write failed: then Success is false and the log says why.&#xA;- The format comes from the extension of File Path (png, jpg, bmp, ...). Quality (0..100) only counts for lossy formats like JPG.&#xA;- Missing folders are created, an existing file is overwritten. A relative File Path is relative to the patch.&#xA;- Premultiplied alpha is handled: transparent areas of the element stay transparent in a PNG.&#xA;- FileWriter (Element) is Snapshot and FileWriter in one node. The element has to be shown in a renderer, here the same Group goes to the Renderer.&#xA;- Scale: pixel size = size in DIP * Scale, independent of the screen's DPI scaling. The Group here is 320 x 160 DIP, so Scale 2 gives 640 x 320 pixels.&#xA;- FileWriter writes the Image of Snapshot: Write comes from Is Ready, so the file is written as soon as the snapshot is done.">
+          <Pad Id="N6Dpkaf3liAN7vipda2EWk" Bounds="85,700,829,290" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- Writing is asynchronous: Is Done comes in a later frame, never in the frame of Write. It is also true when the write failed: then Success is false and the log says why.&#xA;- The format comes from the extension of File Path (png, jpg, bmp, ...). Quality (0..100) only counts for lossy formats like JPG.&#xA;- Missing folders are created, an existing file is overwritten. A relative File Path is relative to the patch.&#xA;- Premultiplied alpha is handled: transparent areas of the element stay transparent in a PNG.&#xA;- FileWriter (Element) is Snapshot and FileWriter in one node. The element has to be shown in a renderer, here the same Group goes to the Renderer.&#xA;- Scale: pixel size = size in DIP * Scale, independent of the screen's DPI scaling. The Group here is 320 x 160 DIP, so Scale 2 gives 640 x 320 pixels.&#xA;- FileWriter writes the Image of Snapshot: Write comes from Is Ready, so the file is written as soon as the snapshot is done.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

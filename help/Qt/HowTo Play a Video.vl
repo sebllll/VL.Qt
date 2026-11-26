@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="SCki2fXud4LrxUlRMeJQht" Bounds="85,768,830,78" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Video plays a video file (FFmpeg backend) with its sound on the default audio device.&#xD;&#xA;- Play starts/pauses. Loop repeats; switched off while playing, the current run ends, then it stops.&#xD;&#xA;- Path is relative to this patch.">
+          <Pad Id="SCki2fXud4LrxUlRMeJQht" Bounds="85,768,830,95" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Video plays a video file (FFmpeg backend) with its sound on the default audio device.&#xD;&#xA;- Play starts/pauses. Loop repeats; switched off while playing, the current run ends, then it stops.&#xD;&#xA;- Path is relative to this patch.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -68,13 +68,13 @@
             <Pin Id="KYgfaK6xmkbQRyViISvBGY" Name="Anchor" Kind="InputPin" />
             <Pin Id="SfjwTST6vFfWkthv0mmAMN" Name="Path" Kind="InputPin" />
             <Pin Id="VqUPCsEKMJfYCD2hrHBLb4" Name="Output" Kind="OutputPin" />
-            <Pin Id="dxnr3qPbMPCzxryakd4ph3" Name="Play" Kind="InputPin" />
-            <Pin Id="IplH72aigtK4exVvjPpnpr" Name="Loop" Kind="InputPin" />
+            <Pin Id="dxnr3qPbMPCzxryakd4ph3" Name="Play" Kind="InputPin" IsHidden="true" />
+            <Pin Id="IplH72aigtK4exVvjPpnpr" Name="Loop" Kind="InputPin" IsHidden="true" />
             <Pin Id="VSHsNdMlJDvPbE0lNASK7D" Name="Keep Last Frame" Kind="InputPin" IsHidden="true" />
-            <Pin Id="4xb8dM8Q3jj0wyJ1UGUdFK" Name="Rate" Kind="InputPin" />
+            <Pin Id="4xb8dM8Q3jj0wyJ1UGUdFK" Name="Rate" Kind="InputPin" IsHidden="true" />
             <Pin Id="4hKJ5R1X4NNjkDmxKU0oZq" Name="Volume" Kind="InputPin" />
-            <Pin Id="leOB1l5Rxp0Li4TuiqJidZ" Name="Fill Mode" Kind="InputPin" />
-            <Pin Id="t5xvfjlUr0fY694xviBA7H" Name="Opacity" Kind="InputPin" />
+            <Pin Id="leOB1l5Rxp0Li4TuiqJidZ" Name="Fill Mode" Kind="InputPin" IsHidden="true" />
+            <Pin Id="t5xvfjlUr0fY694xviBA7H" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="IGfBlbulOCryOKlRAOomqk" Name="Position" Kind="OutputPin" />
             <Pin Id="pP9csF5SsVqmiOdf0Thdi5" Name="Duration" Kind="OutputPin" />
             <Pin Id="Gdsfwq6g5jLMA1VyjW07Np" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
@@ -96,9 +96,9 @@
             <Pin Id="IDNRAmt9VNnObT7tVOBi72" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="MOSWr4EbKctOE8bQ4o9abO" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="1RuLbnWnrIUcfsyIhssIiv" Name="Input" Kind="InputPin" />
-            <Pin Id="5PQtAQ3HI1JSltFT4AcoKn" Name="Space" Kind="InputPin" />
-            <Pin Id="dde6fxNN8AC7soTHq8BfQP" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="Cl4PZqpNhiF8cGTEZKi6Jm" Name="Enabled" Kind="InputPin" />
+            <Pin Id="5PQtAQ3HI1JSltFT4AcoKn" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="dde6fxNN8AC7soTHq8BfQP" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Cl4PZqpNhiF8cGTEZKi6Jm" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="TgdoaKmPYwZLTATfbFolOx" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="Ls8ANjBLWJmPwT157TktPu" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="Cs1BCJ8EiA6QVH4JKdcjGW" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />

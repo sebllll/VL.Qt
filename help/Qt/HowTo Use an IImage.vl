@@ -35,7 +35,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="XyMGrKlyedLdl8d1ksr4eH" Bounds="85,749,834,150" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- ToQtImage copies the pixels at once and uploads them to the GPU within the frame budget, the previous image stays visible until the new one is complete.&#xD;&#xA;- It uploads every time a new IImage arrives (or every frame for volatile images such as a camera), so do not feed it a changing image if it is not needed.&#xD;&#xA;- For files use LoadImage [Qt] or LoadImage (Async) [Qt] instead, see HowTo Draw an Image and HowTo Preload Images.&#xD;&#xA;- Stable 60 fps: load images in advance or asynchronously, never synchronously while the frame is running.">
+          <Pad Id="XyMGrKlyedLdl8d1ksr4eH" Bounds="85,749,834,183" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- ToQtImage copies the pixels at once and uploads them to the GPU within the frame budget, the previous image stays visible until the new one is complete.&#xD;&#xA;- It uploads every time a new IImage arrives (or every frame for volatile images such as a camera), so do not feed it a changing image if it is not needed.&#xD;&#xA;- For files use LoadImage [Qt] or LoadImage (Async) [Qt] instead, see HowTo Draw an Image and HowTo Preload Images.&#xD;&#xA;- Stable 60 fps: load images in advance or asynchronously, never synchronously while the frame is running.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -95,10 +95,10 @@
             <Pin Id="G1fOPg4RDnLLTzQbuf94Md" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="MVZAVbDmHFUMfHjzN7OdgD" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="UHMqrPrkERARGpO5iNtlor" Name="Input" Kind="InputPin" />
-            <Pin Id="uxtx5yv4MNUUmhFdmngwTA" Name="Space" Kind="InputPin" />
-            <Pin Id="n22YMrV5NQ8yKm80YUideO" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="uxtx5yv4MNUUmhFdmngwTA" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="n22YMrV5NQ8yKm80YUideO" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="NaF1pvyTRnjLaPkarAUj0C" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="i8fqnqRinTgrW2mSiicoSi" Name="Enabled" Kind="InputPin" />
+            <Pin Id="i8fqnqRinTgrW2mSiicoSi" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="puclwZZK1herSrhtXY3Emv" Name="Title" Kind="InputPin" />
             <Pin Id="DnWKxMr9odTNmqKsyAixWS" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="TQJc15KTbG6PkcgNftO3vB" Name="Perf" Kind="OutputPin" IsHidden="true" />

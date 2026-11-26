@@ -69,7 +69,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="MoveTo" />
             </p:NodeReference>
-            <Pin Id="yLJ1U5lCI7vuwLEfzWUeZ3" Name="Input" Kind="InputPin" />
+            <Pin Id="yLJ1U5lCI7vuwLEfzWUeZ3" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="SohO5WCgEFINpYVEFqydhD" Name="Point" Kind="InputPin" />
             <Pin Id="h3XDe0i9R5lHOgP8Gw92HH" Name="Output" Kind="OutputPin" />
           </Node>
@@ -162,7 +162,7 @@
             </p:NodeReference>
             <Pin Id="GN4b3uvmAidPqnmDUwY0ya" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="oJHPs5w6k5hwtenN40C1yJ" Name="Path" Kind="InputPin" />
-            <Pin Id="dVLuELx9jj0DH3sVzCK7tv" Name="Transform" Kind="InputPin" />
+            <Pin Id="dVLuELx9jj0DH3sVzCK7tv" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="yHAuObDxDxLP1UTWkYtTMP" Name="Fill Color" Kind="InputPin" />
             <Pin Id="tRNhXp8jhLFbRYl2NQKxc2" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="wUj6p7BP8SZAojOf01GpMF" Name="Stroke Width" Kind="InputPin" />
@@ -207,7 +207,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="MoveTo" />
             </p:NodeReference>
-            <Pin Id="qiQaXIYgFsgahTRf9FF0ua" Name="Input" Kind="InputPin" />
+            <Pin Id="qiQaXIYgFsgahTRf9FF0ua" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="exzyruWotwebOKvwtnPcWn" Name="Point" Kind="InputPin" />
             <Pin Id="N65tqhisf6QJhawmtZz7Kv" Name="Output" Kind="OutputPin" />
           </Node>
@@ -274,8 +274,8 @@
             </p:NodeReference>
             <Pin Id="c3BKKqu5T5sy5cnMWTGMFo" Name="Input" Kind="InputPin" />
             <Pin Id="ZT5pkfR8iTcwYNby8TvaaJ" Name="Radius" Kind="InputPin" />
-            <Pin Id="4NAXD0VoPJXVV1PRplGHaY" Name="X Axis Rotate" Kind="InputPin" />
-            <Pin Id="IPxF2mEz4HW260vmVueSL5" Name="Large Arc" Kind="InputPin" />
+            <Pin Id="4NAXD0VoPJXVV1PRplGHaY" Name="X Axis Rotate" Kind="InputPin" IsHidden="true" />
+            <Pin Id="IPxF2mEz4HW260vmVueSL5" Name="Large Arc" Kind="InputPin" IsHidden="true" />
             <Pin Id="uZY3jSx36ZncRGwFHlVwZV" Name="Sweep" Kind="InputPin" />
             <Pin Id="3dZQUiCqH6D9U670X5Buik" Name="Destination Point" Kind="InputPin" />
             <Pin Id="RKSFNiRyvCr3am4GzF6G5p" Name="Output" Kind="OutputPin" />
@@ -305,8 +305,8 @@
             </p:NodeReference>
             <Pin Id="7I1ru9kgwN8WCEbLgGyqCu" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="KwSuuOHCBf02K4EdAHLFiX" Name="Path" Kind="InputPin" />
-            <Pin Id="Mhm7MVghXHBj5nVYWvqtwq" Name="Transform" Kind="InputPin" />
-            <Pin Id="8eJNjzCJa5irC2bonHgZO7" Name="Fill Color" Kind="InputPin" />
+            <Pin Id="Mhm7MVghXHBj5nVYWvqtwq" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="8eJNjzCJa5irC2bonHgZO7" Name="Fill Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="LoZI7Gw0fNVywHyvuP3GQv" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="CqJnsPWHlLV8VKpv5AYmgi" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="YNCJKY1zno91ekgOCsgg0o" Name="Output" Kind="OutputPin" />
@@ -350,10 +350,10 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="AddRoundRect" />
             </p:NodeReference>
-            <Pin Id="w7kKdzYoPcC1zxnGk1W3gj" Name="Input" Kind="InputPin" />
+            <Pin Id="w7kKdzYoPcC1zxnGk1W3gj" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="uiYBdwYApaGetIoBSrG7tz" Name="Rectangle" Kind="InputPin" DefaultValue="5.2, 0.8, 2, 1.5" />
             <Pin Id="MuNicQIFsCwu4MGh27JEjy" Name="Radius" Kind="InputPin" />
-            <Pin Id="h3JRmHCbTFevOqE9uRxTgS" Name="Direction" Kind="InputPin" />
+            <Pin Id="h3JRmHCbTFevOqE9uRxTgS" Name="Direction" Kind="InputPin" IsHidden="true" />
             <Pin Id="zCXekOLIIkvfgwDGdgXjfC" Name="Output" Kind="OutputPin" />
           </Node>
           <Pad Id="mz7TTZ9K5s2T577kMtnYnb" Comment="Radius" Bounds="954,410,35,28" ShowValueBox="true" isIOBox="true" Value="0.4, 0.4">
@@ -371,10 +371,10 @@
             </p:NodeReference>
             <Pin Id="AXSa3lB0A028IdwTk7M94z" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="35ShUwvB7eMahepH9eDwZI" Name="Path" Kind="InputPin" />
-            <Pin Id="tqwxnI6GrGbDKeajyMsO0l" Name="Transform" Kind="InputPin" />
+            <Pin Id="tqwxnI6GrGbDKeajyMsO0l" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="SUsBSV0wjNOdY8DuA8ADSh" Name="Fill Color" Kind="InputPin" />
-            <Pin Id="26OLz2GYfVP7BWwcjcCiJ8" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="nSrJDoLuaELDmMyX3csccB" Name="Stroke Width" Kind="InputPin" />
+            <Pin Id="26OLz2GYfVP7BWwcjcCiJ8" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="nSrJDoLuaELDmMyX3csccB" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
             <Pin Id="MGzeXXv7E357WLuwZWM7Xd" Name="Output" Kind="OutputPin" />
             <Pin Id="gQqjRMPqJe99ILKl4kPy4t" Name="Cap" Kind="InputPin" IsHidden="true" />
             <Pin Id="hI7vilkaPczNNnpHaDczuI" Name="Join" Kind="InputPin" IsHidden="true" />
@@ -436,10 +436,10 @@
             <Pin Id="TslSIdPX5bMimr9iRYyQcX" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="2gsAIY8YoeGUNIsJbkytcH" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="yDYSksuMIfPyJpwK106vV0" Name="Input" Kind="InputPin" />
-            <Pin Id="QkIyut0lcvHTf1vZ8txcN5" Name="Space" Kind="InputPin" />
-            <Pin Id="jfYAnBJ7ck0zty9r4iJulI" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="QkIyut0lcvHTf1vZ8txcN5" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="jfYAnBJ7ck0zty9r4iJulI" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="O2m7rqpBFPLMYhlTR2lGpW" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="H3O1T6g0mtWwCKsxVHDCHp" Name="Enabled" Kind="InputPin" />
+            <Pin Id="H3O1T6g0mtWwCKsxVHDCHp" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="JlQQgTyccylcy0sPVucxMl" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="13UqQVfMUxSM2oPysdwrvg" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="SEGKqSdGlYnnkdaYKw9TfL" Name="Title" Kind="InputPin" />
@@ -456,7 +456,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="bZRCU7j50r2E1jNodLvcbK" Bounds="85,1069,830,217" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Every node takes the path so far at Input (unconnected = the empty path, so the first node starts a new path) and returns the longer path at Output. A path never changes: a node returns a new path when one of its inputs changes, so one path can feed several Path nodes.&#xD;&#xA;- Points are in units of the Renderer Space (1 unit = 100 DIP, origin top left), angles in cycles (1 = full turn), like Skia.&#xD;&#xA;- LineTo (Relative) counts from the last point: the offset 1.2, 0 leads from 0.5, 0.8 to 1.7, 0.8. Close joins the end of the contour with its start.&#xD;&#xA;- ArcTo (tangent) rounds the corner between the last point, Corner and Destination Point. ArcTo (SVG) is the SVG arc command: Radius, X Axis Rotate, Large Arc, Sweep, Destination Point. The oval form takes Bounds, Start Angle, Sweep Angle and Force Move To.&#xD;&#xA;- Add... nodes start a new contour. An unconnected Input starts a new path, so AddRoundRect alone is enough in column 3.&#xD;&#xA;- Skia: the nodes of Graphics.Skia.Paths.&#xD;&#xA;- Connect the Path node to Renderer [Qt] or a Group [Qt].">
+          <Pad Id="bZRCU7j50r2E1jNodLvcbK" Bounds="85,1069,830,265" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Every node takes the path so far at Input (unconnected = the empty path, so the first node starts a new path) and returns the longer path at Output. A path never changes: a node returns a new path when one of its inputs changes, so one path can feed several Path nodes.&#xD;&#xA;- Points are in units of the Renderer Space (1 unit = 100 DIP, origin top left), angles in cycles (1 = full turn), like Skia.&#xD;&#xA;- LineTo (Relative) counts from the last point: the offset 1.2, 0 leads from 0.5, 0.8 to 1.7, 0.8. Close joins the end of the contour with its start.&#xD;&#xA;- ArcTo (tangent) rounds the corner between the last point, Corner and Destination Point. ArcTo (SVG) is the SVG arc command: Radius, X Axis Rotate, Large Arc, Sweep, Destination Point. The oval form takes Bounds, Start Angle, Sweep Angle and Force Move To.&#xD;&#xA;- Add... nodes start a new contour. An unconnected Input starts a new path, so AddRoundRect alone is enough in column 3.&#xD;&#xA;- Skia: the nodes of Graphics.Skia.Paths.&#xD;&#xA;- Connect the Path node to Renderer [Qt] or a Group [Qt].">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

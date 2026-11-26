@@ -60,14 +60,14 @@
               <Choice Kind="ProcessAppFlag" Name="Button" />
             </p:NodeReference>
             <Pin Id="NAHm5z3eMf2OqO1xz6SFu2" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="T5vDiy95tPoMyC9pscXMHe" Name="Size" Kind="InputPin" />
+            <Pin Id="T5vDiy95tPoMyC9pscXMHe" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="JvM1yuAMNJFMteH0kDcHtX" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="A5iTOQMPSf1QJnUSuzqfdm" Name="Transform" Kind="InputPin" />
             <Pin Id="A8YkNfBrcoMLI4adUzXfu7" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="StMPGryTbkBP4jQlI9q2g1" Name="Text" Kind="InputPin" DefaultValue="Click me" />
             <Pin Id="NmAJ5v44t5mMzFIVaMCZZZ" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="C1COHwosx8dNaoRQ4isHQW" Name="Auto Repeat" Kind="InputPin" IsHidden="true" />
-            <Pin Id="PeqFyd5gGRnNOTUFKp8WFV" Name="On Click" Kind="InputPin" />
+            <Pin Id="PeqFyd5gGRnNOTUFKp8WFV" Name="On Click" Kind="InputPin" IsHidden="true" />
             <Pin Id="LQIpEXJ0pEeOtupSLWH5sO" Name="Output" Kind="OutputPin" />
             <Pin Id="VyhAPXW2KW6LJiawO27JoT" Name="Bang" Kind="OutputPin" />
             <Pin Id="TgEvyCEsjddLiePwQO2dYn" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -133,10 +133,10 @@
             <Pin Id="G8Gw2LkVoDyN0eDBH7E6CY" Name="Output" Kind="OutputPin" />
             <Pin Id="Aw0WnALEQf7O2wjvwYwybu" Name="Value" Kind="OutputPin" />
             <Pin Id="TYfeDAYlnKqMPtgg1WT3D0" Name="Has Changed" Kind="OutputPin" />
-            <Pin Id="JPg1QD5XR6CNpBeO2u0a3x" Name="Min" Kind="InputPin" />
-            <Pin Id="DxeA12ZHy0RNgYvqTnrKOc" Name="Max" Kind="InputPin" />
+            <Pin Id="JPg1QD5XR6CNpBeO2u0a3x" Name="Min" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DxeA12ZHy0RNgYvqTnrKOc" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="N16ULkeDJM3PKvbfFupedb" Name="Step" Kind="InputPin" IsHidden="true" />
-            <Pin Id="FHP8W0cEkZDOUC490CVU8J" Name="Orientation" Kind="InputPin" />
+            <Pin Id="FHP8W0cEkZDOUC490CVU8J" Name="Orientation" Kind="InputPin" IsHidden="true" />
             <Pin Id="LNiV23nTMAgLLBXLT9Uskp" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="VFL9i52bOXXPyFv337yqFr" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="GKRaP8dWZe7OwPYsTLkM8k" Name="Clip" Kind="InputPin" IsHidden="true" />
@@ -192,10 +192,10 @@
             <Pin Id="JnerQWvzNUqNUIi6RiRadb" Name="Input" Kind="InputPin" />
             <Pin Id="Q4n3HdH52lyLb9WvVQY2Md" Name="Size" Kind="InputPin" />
             <Pin Id="OvbLQka5qsgMVjBKFVYJdA" Name="Output" Kind="OutputPin" />
-            <Pin Id="Jf4M3UWAwYSMRbOqRl1TIa" Name="Space" Kind="InputPin" />
+            <Pin Id="Jf4M3UWAwYSMRbOqRl1TIa" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="NsJtREBCDxhNtjXodkH5qH" Name="Clear Color" Kind="InputPin" DefaultValue="0.16, 0.18, 0.26, 1" />
-            <Pin Id="LX1ZIOeDlRHODSNcoLFSH9" Name="Format" Kind="InputPin" />
-            <Pin Id="VlidnToxkkiL5lvhqpU2Az" Name="Enabled" Kind="InputPin" />
+            <Pin Id="LX1ZIOeDlRHODSNcoLFSH9" Name="Format" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VlidnToxkkiL5lvhqpU2Az" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="NEX4ChnfV2LLaQjcqcYlUk" Name="Input Notifications" Kind="InputPin" />
             <Pin Id="UmEmRh9FMR4O8dpbIKJIkp" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
@@ -366,7 +366,7 @@
             <Pin Id="JzFxnsV316LLe7k4rxDvpm" Name="Depth Buffer" Kind="OutputPin" IsHidden="true" />
           </Node>
           <Pad Id="SUU367W5afgQLbvAPfEEPj" SlotId="N1wCR75Zn1nO63A4lbzDec" Bounds="339,1195" />
-          <Pad Id="QFxMEGgaKoAPwvfFnrI8EX" Bounds="85,1230,900,200" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Coordinates: Input Notifications takes positions in texture pixels, origin top left, 1 DIP = 1 pixel (Space DIPTopLeft: 1 unit = 100 DIP).&#xD;&#xA;- ToTexturePixels expects the texture on Stride's unit quad (-0.5 ... 0.5, +Y up) placed by World: the Quad here uses Size Mode Size. Fullscreen: World = Scaling (2, 2, 1), View and Projection unconnected.&#xD;&#xA;- A position off the quad lies outside 0 ... Texture Size: the elements see the pointer leave.&#xD;&#xA;- Keyboard focus: a press inside the texture gives its scene the focus (a TextInput then gets the keys), a press outside releases it.&#xD;&#xA;- Wheel: horizontal positive = left, as in Qt.&#xD;&#xA;- The Projection comes from the Camera Component, which Stride updates while rendering: after a window resize it is one frame late.&#xD;&#xA;- Another mesh: raycast to UV in the patch and feed positions in texture pixels directly.&#xD;&#xA;- Windows only (Direct3D 11). QtTexture and ToTexturePixels are Experimental.">
+          <Pad Id="QFxMEGgaKoAPwvfFnrI8EX" Bounds="85,1230,900,244" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Coordinates: Input Notifications takes positions in texture pixels, origin top left, 1 DIP = 1 pixel (Space DIPTopLeft: 1 unit = 100 DIP).&#xD;&#xA;- ToTexturePixels expects the texture on Stride's unit quad (-0.5 ... 0.5, +Y up) placed by World: the Quad here uses Size Mode Size. Fullscreen: World = Scaling (2, 2, 1), View and Projection unconnected.&#xD;&#xA;- A position off the quad lies outside 0 ... Texture Size: the elements see the pointer leave.&#xD;&#xA;- Keyboard focus: a press inside the texture gives its scene the focus (a TextInput then gets the keys), a press outside releases it.&#xD;&#xA;- Wheel: horizontal positive = left, as in Qt.&#xD;&#xA;- The Projection comes from the Camera Component, which Stride updates while rendering: after a window resize it is one frame late.&#xD;&#xA;- Another mesh: raycast to UV in the patch and feed positions in texture pixels directly.&#xD;&#xA;- Windows only (Direct3D 11). QtTexture and ToTexturePixels are Experimental.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -415,7 +415,7 @@
               <Choice Kind="ProcessAppFlag" Name="Hover" />
             </p:NodeReference>
             <Pin Id="Vjhyf9EDyuVPNbZYbuUQCu" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="LWJHkDObteqNuJjjQ1Y3NQ" Name="Input" Kind="InputPin" />
+            <Pin Id="LWJHkDObteqNuJjjQ1Y3NQ" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="Q1lw4Nlccc5PtEARLv0w5Z" Name="Is Hovered" Kind="InputPin" />
             <Pin Id="KTHuxxg3fzIOcxTHFWH5X6" Name="Output" Kind="OutputPin" />
           </Node>

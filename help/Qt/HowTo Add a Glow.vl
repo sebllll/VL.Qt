@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="bnNxuY9KYPFuCJas2D88VW" Bounds="85,888,830,174" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Both light an element from its own alpha.&#xD;&#xA;- Glow is a blurred, tinted copy of the element behind it (or on top with Additive). Radius is how far it reaches, Spread makes it denser, Intensity above 1 glows brighter.&#xD;&#xA;- InnerShadow: the shadow falls inside the element, from the left and top edge with a positive Offset (like CSS inset).&#xD;&#xA;- Radius, Offset and the other lengths are in DIP, whatever the space of the renderer. The radius can be animated smoothly up to several hundred DIP; the cost hardly depends on it.&#xD;&#xA;- Both nodes grow the effect area by 1.5 x Radius, so the glow is not cut off at the element.&#xD;&#xA;- Glow and InnerShadow end a run of Blur, DropShadow, ColorAdjust, Colorize and Mask nodes: such a run is merged into one layer, a shader effect costs one of its own.">
+          <Pad Id="bnNxuY9KYPFuCJas2D88VW" Bounds="85,888,830,212" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Both light an element from its own alpha.&#xD;&#xA;- Glow is a blurred, tinted copy of the element behind it (or on top with Additive). Radius is how far it reaches, Spread makes it denser, Intensity above 1 glows brighter.&#xD;&#xA;- InnerShadow: the shadow falls inside the element, from the left and top edge with a positive Offset (like CSS inset).&#xD;&#xA;- Radius, Offset and the other lengths are in DIP, whatever the space of the renderer. The radius can be animated smoothly up to several hundred DIP; the cost hardly depends on it.&#xD;&#xA;- Both nodes grow the effect area by 1.5 x Radius, so the glow is not cut off at the element.&#xD;&#xA;- Glow and InnerShadow end a run of Blur, DropShadow, ColorAdjust, Colorize and Mask nodes: such a run is merged into one layer, a shader effect costs one of its own.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -53,7 +53,7 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="VeS8y9gWOzPTxu61XygtZN" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="n2c63YrIOlndQnOFAXJux4" Name="Input" Kind="InputPin" />
+            <Pin Id="n2c63YrIOlndQnOFAXJux4" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="YcXS9Xkp0E2GLaSHmewg6V" Name="Color" Kind="InputPin" DefaultValue="0.15, 0.78, 1, 1" />
             <Pin Id="rRKq8OqiUoIBiolu2VP3mK" Name="Radius" Kind="InputPin" />
             <Pin Id="22E2rt22PodSPOvflr6vV7" Name="Spread" Kind="InputPin" DefaultValue="0.15" />
@@ -71,10 +71,10 @@
             </p:NodeReference>
             <Pin Id="3ogh0vL0hiW2YExKhtRdD9" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="rVFNdeIRSrB4M6rANCrG4r" Name="Size" Kind="InputPin" />
-            <Pin Id="F342dmcHZjCKJjxjoB2DCd" Name="Transform" Kind="InputPin" />
+            <Pin Id="F342dmcHZjCKJjxjoB2DCd" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="JPzIAUILGGO4thchf5x3H6" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="ywhrCziXjxYtudgbEIQGBH" Name="Text" Kind="InputPin" DefaultValue="VL.Qt" />
-            <Pin Id="RyCHGD8jXeL1chBdqI5GuW" Name="Font Family" Kind="InputPin" />
+            <Pin Id="RyCHGD8jXeL1chBdqI5GuW" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="78NDmKKipSEJ9MuY2CFwku" Name="Font Size" Kind="InputPin" DefaultValue="1.1" />
             <Pin Id="Vf87YUs47LHBCU3KEAuANF" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="ifTLp0q2VoMF2NGjW2zRKQ" Name="Italic" Kind="InputPin" IsHidden="true" />
@@ -129,7 +129,7 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="1hk3ecTKGbSreTVn48n0KG" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="gxE9vTO3KhmpsJhwPChruE" Name="Input" Kind="InputPin" />
+            <Pin Id="gxE9vTO3KhmpsJhwPChruE" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="DVVBZrDfjX9bOwjUNgl5iV" Name="Color" Kind="InputPin" DefaultValue="0.25, 0.05, 0, 0.9" />
             <Pin Id="2fZMvbEbvAIjTilOJB1HIm" Name="Radius" Kind="InputPin" />
             <Pin Id="77AWapZlRUsvObx3tZhD1W" Name="Offset" Kind="InputPin" DefaultValue="5, 5" />
@@ -147,10 +147,10 @@
             </p:NodeReference>
             <Pin Id="2QPsPO1NCwEwT1P9UIUGp8" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="tPQCwgYiGz7bBUVeKHrcPT" Name="Size" Kind="InputPin" />
-            <Pin Id="nPpIkxPXoRnDmNCsO6kNxV" Name="Transform" Kind="InputPin" />
+            <Pin Id="nPpIkxPXoRnDmNCsO6kNxV" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="SbgtAqozau2znLvBANtt99" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="quf3RVkwVjWc1SRyxDYIKk" Name="Text" Kind="InputPin" DefaultValue="VL.Qt" />
-            <Pin Id="AeoTO1x8dubDRzygDV6dmj" Name="Font Family" Kind="InputPin" />
+            <Pin Id="AeoTO1x8dubDRzygDV6dmj" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="V3uk5TGZNW2BnZF866REwI" Name="Font Size" Kind="InputPin" DefaultValue="1.1" />
             <Pin Id="CCzuRrb3Sm5kt8JDrXWW3a" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="4AIG940xUl53uKmIfEPg6B" Name="Italic" Kind="InputPin" IsHidden="true" />
@@ -227,10 +227,10 @@
             <Pin Id="2SUXQIgxTKMowUVfD62ogp" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="5fMSgw7LpaCAeOuFUyc2h3" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="KrJ28pE5booECqy5oBSHGW" Name="Input" Kind="InputPin" />
-            <Pin Id="kTXfHaFj6SjmbLM57zdrif" Name="Space" Kind="InputPin" />
+            <Pin Id="kTXfHaFj6SjmbLM57zdrif" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="JeM5CTQ2IGdMAY7JdmK5EM" Name="Clear Color" Kind="InputPin" />
             <Pin Id="CkhnpGhi43PNKWGsyQssFX" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="KSCEftCqOl35I8KPNG4X8C" Name="Enabled" Kind="InputPin" />
+            <Pin Id="KSCEftCqOl35I8KPNG4X8C" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="C95OgEeU0z0F1MFBhlscCV" Name="Title" Kind="InputPin" />
             <Pin Id="AbSaXwdjeiIAV6f6u3v15A" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="xF5gK0DLJ5D3Za7BsGL1mZ" Name="Perf" Kind="OutputPin" IsHidden="true" />

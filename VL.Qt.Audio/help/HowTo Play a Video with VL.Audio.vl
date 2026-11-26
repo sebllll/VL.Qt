@@ -46,17 +46,17 @@
             </p:NodeReference>
             <Pin Id="LsgOIeYAgFqkTJGqQFATOb" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="GnKzyXbPSE9WtIpuOzKOYP" Name="Size" Kind="InputPin" />
-            <Pin Id="QjXh6ayHX8LY2gEnl01EOz" Name="Transform" Kind="InputPin" />
+            <Pin Id="QjXh6ayHX8LY2gEnl01EOz" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="ouPyogTurHIiKTZcwX7qpP" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="MPn5GTBaCs9Us6PEWVFhwO" Name="Path" Kind="InputPin" />
             <Pin Id="9shURU7Yqv48gyIrnXqX2f" Name="Output" Kind="OutputPin" />
-            <Pin Id="F9i8DYIM22nIcZbDjZV2gw" Name="Play" Kind="InputPin" />
-            <Pin Id="CoZqMXHoZnzRsSt6r45pQH" Name="Loop" Kind="InputPin" />
+            <Pin Id="F9i8DYIM22nIcZbDjZV2gw" Name="Play" Kind="InputPin" IsHidden="true" />
+            <Pin Id="CoZqMXHoZnzRsSt6r45pQH" Name="Loop" Kind="InputPin" IsHidden="true" />
             <Pin Id="kv9vgd0p8g9TIKzn57YAZ2" Name="Keep Last Frame" Kind="InputPin" IsHidden="true" />
             <Pin Id="RipEzEcfGzpS4CZmjj0e0N" Name="Rate" Kind="InputPin" IsHidden="true" />
             <Pin Id="Ied7MRsnKYnlqZsPpQLBbJ" Name="Volume" Kind="InputPin" />
             <Pin Id="BbGHKmrI2J9CTGP6HMWJga" Name="Audio Offset" Kind="InputPin" IsHidden="true" />
-            <Pin Id="cwxZzgpFG2JOJmeoAGrSkP" Name="Fill Mode" Kind="InputPin" />
+            <Pin Id="cwxZzgpFG2JOJmeoAGrSkP" Name="Fill Mode" Kind="InputPin" IsHidden="true" />
             <Pin Id="1uc8wpEPsUWHn4jcehSUiE" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="KOdpT4a73nPbTJt5glWnBB" Name="Audio" Kind="OutputPin" />
             <Pin Id="lOgQIKweTEL3YvSfnYTHdn" Name="Position" Kind="OutputPin" IsHidden="true" />
@@ -124,9 +124,9 @@
             <Pin Id="hTa757TyCvIyXSJK8hHtki" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="nUhnFBIhnuWZ9NZtOsptKr" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="KDF57HZGihOrGu8jKeGF8t" Name="Input" Kind="InputPin" />
-            <Pin Id="JqOIwDBEJNwd91ANGQqZF3" Name="Space" Kind="InputPin" />
-            <Pin Id="LtVtKIwlru62hcNmxC3sC0" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="aZA0Af1XjQhCmfhUdxZheW" Name="Enabled" Kind="InputPin" />
+            <Pin Id="JqOIwDBEJNwd91ANGQqZF3" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LtVtKIwlru62hcNmxC3sC0" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="aZA0Af1XjQhCmfhUdxZheW" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="OQQ86VIuACSFt67ilB42zd" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="DG582Ahs3VXSeNavS3uVXy" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="affhkWclgCtQRvkKRNGQua" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
@@ -142,7 +142,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="1lZWqM4vaWg7Gt2Tj22xHM" Bounds="85,680,830,141" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Same picture as Video [Qt], but the sound only comes out at Audio; Qt's own audio output stays off. Windows only.&#xD;&#xA;- The sound follows the picture. Target: below 5 ms internally, about one video frame end to end.&#xD;&#xA;- Strict frame accuracy cannot be guaranteed with Qt's player; Sync Error shows the measured offset in ms.&#xD;&#xA;- Audio Offset (ms, optional pin, default 0) calibrates display and audio device latency: positive = the sound comes later.&#xD;&#xA;- Rate other than 1 plays like tape: the pitch changes with the rate, and a rate change may glitch once.&#xD;&#xA;- Volume (0..1) scales the signal at Audio. Sync Error is NaN while the sound locks in (start, jump, pause).&#xD;&#xA;- Path is relative to this patch.">
+          <Pad Id="1lZWqM4vaWg7Gt2Tj22xHM" Bounds="85,680,830,172" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Same picture as Video [Qt], but the sound only comes out at Audio; Qt's own audio output stays off. Windows only.&#xD;&#xA;- The sound follows the picture. Target: below 5 ms internally, about one video frame end to end.&#xD;&#xA;- Strict frame accuracy cannot be guaranteed with Qt's player; Sync Error shows the measured offset in ms.&#xD;&#xA;- Audio Offset (ms, optional pin, default 0) calibrates display and audio device latency: positive = the sound comes later.&#xD;&#xA;- Rate other than 1 plays like tape: the pitch changes with the rate, and a rate change may glitch once.&#xD;&#xA;- Volume (0..1) scales the signal at Audio. Sync Error is NaN while the sound locks in (start, jump, pause).&#xD;&#xA;- Path is relative to this patch.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

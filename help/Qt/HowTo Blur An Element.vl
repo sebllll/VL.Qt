@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="ySq2JcV5oo8EyQUkt1Msgk" Bounds="85,809,834,194" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The blurs smear the element like a long exposure. The picture does not shift: the blur is centred on every pixel. Two passes keep long blurs clean.&#xD;&#xA;- Length is in DIP. ZoomBlur streaks along rays from Center, growing from nothing at Center to Length at the farthest corner. RadialBlur draws arcs around Center.&#xD;&#xA;- The effect area grows with the blur. RadialBlur cannot know how far the farthest point is from Center: give it room with Padding if the arcs are cut.&#xD;&#xA;- For a motion look, animate Length or Angle (for example with an LFO) and watch the Perf overlay of the Renderer: the blurs run at 60 fps on a Text in 1080p.">
+          <Pad Id="ySq2JcV5oo8EyQUkt1Msgk" Bounds="85,809,834,237" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The blurs smear the element like a long exposure. The picture does not shift: the blur is centred on every pixel. Two passes keep long blurs clean.&#xD;&#xA;- Length is in DIP. ZoomBlur streaks along rays from Center, growing from nothing at Center to Length at the farthest corner. RadialBlur draws arcs around Center.&#xD;&#xA;- The effect area grows with the blur. RadialBlur cannot know how far the farthest point is from Center: give it room with Padding if the arcs are cut.&#xD;&#xA;- For a motion look, animate Length or Angle (for example with an LFO) and watch the Perf overlay of the Renderer: the blurs run at 60 fps on a Text in 1080p.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -68,10 +68,10 @@
             </p:NodeReference>
             <Pin Id="ojiTrehpF2zqUgS9z2H0VJ" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="JCfvtGE9txRVEySqVkT61k" Name="Size" Kind="InputPin" />
-            <Pin Id="J5VlGYmce4pyujcB74UX0o" Name="Transform" Kind="InputPin" />
+            <Pin Id="J5VlGYmce4pyujcB74UX0o" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="K9jVtY1h6mHGlwyqHn8McE" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="VRuiRoYoO5zZ3TZ2iyDNU8" Name="Text" Kind="InputPin" DefaultValue="VL.Qt" />
-            <Pin Id="D7h5U94d2ox1tA5FkppOWt" Name="Font Family" Kind="InputPin" />
+            <Pin Id="D7h5U94d2ox1tA5FkppOWt" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="PL3StvPhhaaBWxwYOyyQ5K" Name="Font Size" Kind="InputPin" DefaultValue="1.1" />
             <Pin Id="0Hf7JrUohoqESTwQX0iYa5" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="7oCoaYgnObZOjnOAL008HU" Name="Italic" Kind="InputPin" IsHidden="true" />
@@ -155,7 +155,7 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="kwsqq3cmgaRRmdrnR4Pkk1" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="TzRe9wkTDkak98BLkHXcN0" Name="Input" Kind="InputPin" />
+            <Pin Id="TzRe9wkTDkak98BLkHXcN0" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="rCEoTNlZMDiRoMmHqdo6Ec" Name="Center" Kind="InputPin" DefaultValue="0.5, 0.5" />
             <Pin Id="SCrPg8WRU5yd5J3OSA5rak" Name="Angle" Kind="InputPin" />
             <Pin Id="iNwOYbi99hwRuC7rdyTxCG" Name="Padding" Kind="InputPin" IsHidden="true" />
@@ -187,10 +187,10 @@
             <Pin Id="wUGdYxfOzuaeEMolNV508z" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="s4iRqFLfGmrKF42xnfow03" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="qXrvO3qreZjJW7MO0gIcQM" Name="Input" Kind="InputPin" />
-            <Pin Id="0pTsJaI3PJsUyjR0pwLYbM" Name="Space" Kind="InputPin" />
+            <Pin Id="0pTsJaI3PJsUyjR0pwLYbM" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="nE7wtJF3olDA0XWrxXVote" Name="Clear Color" Kind="InputPin" />
             <Pin Id="Dalbqr7qSxoQKySGyHAIIy" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="iwdOwkwqoVlhAHVKdH2fk0" Name="Enabled" Kind="InputPin" />
+            <Pin Id="iwdOwkwqoVlhAHVKdH2fk0" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="8OJNwCD1jBdcQG531UfL9r" Name="Title" Kind="InputPin" />
             <Pin Id="741akbWeJgRKzjb3dRwCG1" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="z7sxo1xy8QXsKTP1RaECLp" Name="Perf" Kind="OutputPin" IsHidden="true" />

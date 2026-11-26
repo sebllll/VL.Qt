@@ -25,7 +25,7 @@
               <Pin Id="tnrWZ5qepeGf3I9Kvf5OiS" Name="Radius" Kind="InputPin" />
               <Pin Id="mq8ZCftUUiF0Ofh2KuEqPT" Name="Transform" Kind="InputPin" />
               <Pin Id="6sr4nu5VhPGuB5ihG2R8uD" Name="Anchor" Kind="InputPin" IsHidden="true" />
-              <Pin Id="ZBPYxv6mQhF2ZvbOvMbvjS" Name="Fill Color" Kind="InputPin" />
+              <Pin Id="ZBPYxv6mQhF2ZvbOvMbvjS" Name="Fill Color" Kind="InputPin" IsHidden="true" />
               <Pin Id="upLcQRIqxhGeXsLQXE7LoN" Name="Output" Kind="OutputPin" />
               <Pin Id="58DOZ6YfBtGua505ADxbLI" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
               <Pin Id="xvnJvz4x6sGExA20DcBOUA" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -43,11 +43,11 @@
                 <Choice Kind="ProcessAppFlag" Name="Drag" />
               </p:NodeReference>
               <Pin Id="wuChpUpoiOGBqTrcxTefeD" Name="Node Context" Kind="InputPin" IsHidden="true" />
-              <Pin Id="ALh3fWzh9vGbCkliUM0KtA" Name="Input" Kind="InputPin" />
-              <Pin Id="lc7aB0uJFjG2iyNsn00nkH" Name="Is Dragging" Kind="InputPin" />
-              <Pin Id="DQxWqwNcOGGLSsWc1SDaOD" Name="Translation" Kind="InputPin" />
-              <Pin Id="ewsGsy7rvnFWx17gA1jPaV" Name="Moves Element" Kind="InputPin" />
-              <Pin Id="jvuumlNhwcGMNpJb8KRe5G" Name="Axis" Kind="InputPin" />
+              <Pin Id="ALh3fWzh9vGbCkliUM0KtA" Name="Input" Kind="InputPin" IsHidden="true" />
+              <Pin Id="lc7aB0uJFjG2iyNsn00nkH" Name="Is Dragging" Kind="InputPin" IsHidden="true" />
+              <Pin Id="DQxWqwNcOGGLSsWc1SDaOD" Name="Translation" Kind="InputPin" IsHidden="true" />
+              <Pin Id="ewsGsy7rvnFWx17gA1jPaV" Name="Moves Element" Kind="InputPin" IsHidden="true" />
+              <Pin Id="jvuumlNhwcGMNpJb8KRe5G" Name="Axis" Kind="InputPin" IsHidden="true" />
               <Pin Id="whSh7jCcyeFqhkajqphbpS" Name="Output" Kind="OutputPin" />
               <Pin Id="A1QJk2DU4HG0iLgQDkJ3ZJ" Name="Min" Kind="InputPin" IsHidden="true" />
               <Pin Id="jjLEjmQJ9vGl3AbElsJoAD" Name="Max" Kind="InputPin" IsHidden="true" />
@@ -241,8 +241,8 @@
             </p:NodeReference>
             <Pin Id="udpWtOkY3WGlAnejt3PMjD" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="KO8cnw86sYGD5kOQjIWo9E" Name="Points" Kind="InputPin" />
-            <Pin Id="YOoQv1Mfp1F01k013hQTxE" Name="Closed" Kind="InputPin" />
-            <Pin Id="sXIgvGADwwFf5tKj3q7AtV" Name="Transform" Kind="InputPin" />
+            <Pin Id="YOoQv1Mfp1F01k013hQTxE" Name="Closed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="sXIgvGADwwFf5tKj3q7AtV" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="Ko7CzaKpzpFB7EDKxRJe9S" Name="Stroke Color" Kind="InputPin" DefaultValue="0.7, 0.7, 0.7, 1" />
             <Pin Id="rzXxLJdkM0GKU9hc2HG4LM" Name="Stroke Width" Kind="InputPin" DefaultValue="0.012" />
             <Pin Id="zn6howIPcdGwBTBuXYi8cS" Name="Output" Kind="OutputPin" />
@@ -270,11 +270,11 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Spline (CatmullRom)" />
             </p:NodeReference>
-            <Pin Id="cTpImgh9aMGaPzYdz8BltN" Name="Input" Kind="InputPin" />
+            <Pin Id="cTpImgh9aMGaPzYdz8BltN" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="nU10uZEtShF5lCpEiTatBM" Name="Points" Kind="InputPin" />
-            <Pin Id="IdJXmg1iTsFqixC19RDRTK" Name="Closed" Kind="InputPin" />
+            <Pin Id="IdJXmg1iTsFqixC19RDRTK" Name="Closed" Kind="InputPin" IsHidden="true" />
             <Pin Id="GeGMdRXuISGxn68Gv4fW5I" Name="Alpha" Kind="InputPin" DefaultValue="0" />
-            <Pin Id="Qldji7H651FcSQyTchROpT" Name="Tension" Kind="InputPin" />
+            <Pin Id="Qldji7H651FcSQyTchROpT" Name="Tension" Kind="InputPin" IsHidden="true" />
             <Pin Id="XkfLybxHQgGLSugX0mukVF" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="440,640,85,19" Id="4gL9WyKEuUGgRCXVbPrulL">
@@ -287,8 +287,8 @@
             </p:NodeReference>
             <Pin Id="M5YsAjAJvtG9B6HJzRoVqS" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="qeX0P31nCGGntoD6S9H0mQ" Name="Path" Kind="InputPin" />
-            <Pin Id="FIo58JnNX7FGa78AvNoFHO" Name="Transform" Kind="InputPin" />
-            <Pin Id="afrfv0dUkvFcCZAcA2n1wM" Name="Fill Color" Kind="InputPin" />
+            <Pin Id="FIo58JnNX7FGa78AvNoFHO" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="afrfv0dUkvFcCZAcA2n1wM" Name="Fill Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="sx7zVKb6BxFdcLxJCxj6oD" Name="Stroke Color" Kind="InputPin" DefaultValue="0.95, 0.3, 0.25, 1" />
             <Pin Id="9k2Zim34L4FUr7SXywdfBD" Name="Stroke Width" Kind="InputPin" DefaultValue="0.03" />
             <Pin Id="l8FEBXrLexGJUcG7n32EdV" Name="Output" Kind="OutputPin" />
@@ -317,11 +317,11 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Spline (CatmullRom)" />
             </p:NodeReference>
-            <Pin Id="JTJUxSAEiMGGyW6syyaYEO" Name="Input" Kind="InputPin" />
+            <Pin Id="JTJUxSAEiMGGyW6syyaYEO" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="KnQ8VugeCBGM2jPGedXETJ" Name="Points" Kind="InputPin" />
-            <Pin Id="LoaSV0IOBHGJ3BrQHqCWrD" Name="Closed" Kind="InputPin" />
+            <Pin Id="LoaSV0IOBHGJ3BrQHqCWrD" Name="Closed" Kind="InputPin" IsHidden="true" />
             <Pin Id="3pwMzPFwioFIkkl6gBPOdI" Name="Alpha" Kind="InputPin" DefaultValue="0.5" />
-            <Pin Id="Mz3cpeHFV0GyySmLWbj79P" Name="Tension" Kind="InputPin" />
+            <Pin Id="Mz3cpeHFV0GyySmLWbj79P" Name="Tension" Kind="InputPin" IsHidden="true" />
             <Pin Id="6CxPD7XWVWG2yHWDdzbS1M" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="610,640,85,19" Id="LKfJj9yXURGZg7cUU0wtsI">
@@ -334,8 +334,8 @@
             </p:NodeReference>
             <Pin Id="23M4NFSYLsGqYhrhF2XgWI" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="UvclBFZmkGGMVG7aTQavgC" Name="Path" Kind="InputPin" />
-            <Pin Id="MiNe3Hb41sFejxjm0aYV6G" Name="Transform" Kind="InputPin" />
-            <Pin Id="YvPQb93C9eF6H3taQKyfTJ" Name="Fill Color" Kind="InputPin" />
+            <Pin Id="MiNe3Hb41sFejxjm0aYV6G" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="YvPQb93C9eF6H3taQKyfTJ" Name="Fill Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="VlBAyFXHKpFaxaz6y2YrJQ" Name="Stroke Color" Kind="InputPin" DefaultValue="0.35, 0.85, 0.55, 1" />
             <Pin Id="vljPgFbe6yF2Z5iB5SowRM" Name="Stroke Width" Kind="InputPin" DefaultValue="0.03" />
             <Pin Id="JkX8bi5ILRGmD3VBzplUiB" Name="Output" Kind="OutputPin" />
@@ -364,11 +364,11 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Spline (CatmullRom)" />
             </p:NodeReference>
-            <Pin Id="il6jcoSnMmFj7H3WzVLYTR" Name="Input" Kind="InputPin" />
+            <Pin Id="il6jcoSnMmFj7H3WzVLYTR" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="91C8SsdWbnFEuBTVjwcedQ" Name="Points" Kind="InputPin" />
-            <Pin Id="ZcE0SCrzh9FqAVLsNntnRP" Name="Closed" Kind="InputPin" />
+            <Pin Id="ZcE0SCrzh9FqAVLsNntnRP" Name="Closed" Kind="InputPin" IsHidden="true" />
             <Pin Id="3R4ts2L7E0GyLBOTQuR5QJ" Name="Alpha" Kind="InputPin" DefaultValue="1" />
-            <Pin Id="8OHG81gpHuFUETOSoyeJHB" Name="Tension" Kind="InputPin" />
+            <Pin Id="8OHG81gpHuFUETOSoyeJHB" Name="Tension" Kind="InputPin" IsHidden="true" />
             <Pin Id="sw1N7z1ukwGkK9ltDrEUiV" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="780,640,85,19" Id="NyFGxjpAALG0OZ1sYkbbVK">
@@ -381,8 +381,8 @@
             </p:NodeReference>
             <Pin Id="ld0xDJnwpmGlK7LdLU0EiC" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Oo3CXs1ThRG7cigbDHG7uE" Name="Path" Kind="InputPin" />
-            <Pin Id="usbGnhqguBGX7zOqpcjmiB" Name="Transform" Kind="InputPin" />
-            <Pin Id="FywxyqI2e0FmXyNEdcKuKL" Name="Fill Color" Kind="InputPin" />
+            <Pin Id="usbGnhqguBGX7zOqpcjmiB" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FywxyqI2e0FmXyNEdcKuKL" Name="Fill Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="JIcBN6m5BMGLhlvL4vmEWL" Name="Stroke Color" Kind="InputPin" DefaultValue="0.35, 0.6, 1, 1" />
             <Pin Id="ZOL73BSg8DGng4zxPR2iYS" Name="Stroke Width" Kind="InputPin" DefaultValue="0.03" />
             <Pin Id="ZHnYrDS8alG1TRSKzBL1qS" Name="Output" Kind="OutputPin" />
@@ -411,9 +411,9 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Spline (BSpline)" />
             </p:NodeReference>
-            <Pin Id="rEsZeKLo9iFiT4bKewwfyL" Name="Input" Kind="InputPin" />
+            <Pin Id="rEsZeKLo9iFiT4bKewwfyL" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="KkDeaFMm07F4SkIYSIpO9N" Name="Points" Kind="InputPin" />
-            <Pin Id="UUn9M9fjqpG6C7sGblKcHP" Name="Closed" Kind="InputPin" />
+            <Pin Id="UUn9M9fjqpG6C7sGblKcHP" Name="Closed" Kind="InputPin" IsHidden="true" />
             <Pin Id="u582nLKqenGtqZeId0mrMM" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="950,640,85,19" Id="mZdMqHocm4FyaJyTWO7H6N">
@@ -426,8 +426,8 @@
             </p:NodeReference>
             <Pin Id="HqtJVaGwDGGAbkpGlUQR8R" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="tFh0kXaVcdGxobEVrwFZHC" Name="Path" Kind="InputPin" />
-            <Pin Id="GAcyOvDWHIG4aWFLc1d8wA" Name="Transform" Kind="InputPin" />
-            <Pin Id="El5Ru18MUhFurBelzmvNvB" Name="Fill Color" Kind="InputPin" />
+            <Pin Id="GAcyOvDWHIG4aWFLc1d8wA" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="El5Ru18MUhFurBelzmvNvB" Name="Fill Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="pruuNLPsaaGaFJEKt1UCTA" Name="Stroke Color" Kind="InputPin" DefaultValue="0.95, 0.8, 0.2, 1" />
             <Pin Id="pDg86jxwX7FcChv5uf7OOA" Name="Stroke Width" Kind="InputPin" DefaultValue="0.03" />
             <Pin Id="VDxAIPPVqrFcFhK7swIIBT" Name="Output" Kind="OutputPin" />
@@ -486,10 +486,10 @@
             <Pin Id="0MSj9RhiUfGFuquTZP1TpB" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="zOo9MDj5jCGXXUazoz7HNC" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="yPnkgBvw51FD5GPuArTRZH" Name="Input" Kind="InputPin" />
-            <Pin Id="yiEnUm885mGSOT56s24itA" Name="Space" Kind="InputPin" />
-            <Pin Id="bSZDq4oIUZGfDy5MUoBbIC" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="yiEnUm885mGSOT56s24itA" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="bSZDq4oIUZGfDy5MUoBbIC" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="02PHkvEgTKGIVSnfNpyXcD" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="BnadYGvbMqFfcrWYfWldtR" Name="Enabled" Kind="InputPin" />
+            <Pin Id="BnadYGvbMqFfcrWYfWldtR" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="belXQ6adW1FhfwiwBQfhRM" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="ZDIfV77scGGHJPCwx1MjBI" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="dO5heYoLggG6kXHquTqqJR" Name="Title" Kind="InputPin" />
@@ -506,7 +506,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="7JEeFEjdP7FXQ08fOykqIC" Bounds="85,880,1714,137" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- All curves use the same Points. They are Point nodes (circle with Drag) in a ForEach region, drag them in the Renderer. Drag two Points close together to see Alpha 0 overshoot.&#xA;- CatmullRom goes through every Point. BSpline takes the Points as a control polygon: the curve starts at the first and ends at the last Point (open, clamped) and only passes near the others.&#xA;- Alpha is the knot parametrization of CatmullRom: 0 uniform (every segment gets the same time, unevenly spaced points overshoot or loop), 0.5 centripetal (the default, no loops or cusps), 1 chordal (the time of a segment follows its length).&#xA;- Open ends have tangent 0 for every Alpha, like d3's curveCatmullRom. For Alpha 0 this differs from the classic end tangent (P2 - P1) / 2, but avoids a jump between Alpha 0 and a value just above it.&#xA;- Tension 1 turns CatmullRom into straight lines. Closed joins the last Point to the first with a smooth transition.&#xA;- Fewer than two Points leave the Input path unchanged. Both nodes add exact cubics to a QtPath; a path must fit one command to Qt (about 65 000 bytes, see HowTo Draw a Path).">
+          <Pad Id="7JEeFEjdP7FXQ08fOykqIC" Bounds="85,880,1714,167" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- All curves use the same Points. They are Point nodes (circle with Drag) in a ForEach region, drag them in the Renderer. Drag two Points close together to see Alpha 0 overshoot.&#xA;- CatmullRom goes through every Point. BSpline takes the Points as a control polygon: the curve starts at the first and ends at the last Point (open, clamped) and only passes near the others.&#xA;- Alpha is the knot parametrization of CatmullRom: 0 uniform (every segment gets the same time, unevenly spaced points overshoot or loop), 0.5 centripetal (the default, no loops or cusps), 1 chordal (the time of a segment follows its length).&#xA;- Open ends have tangent 0 for every Alpha, like d3's curveCatmullRom. For Alpha 0 this differs from the classic end tangent (P2 - P1) / 2, but avoids a jump between Alpha 0 and a value just above it.&#xA;- Tension 1 turns CatmullRom into straight lines. Closed joins the last Point to the first with a smooth transition.&#xA;- Fewer than two Points leave the Input path unchanged. Both nodes add exact cubics to a QtPath; a path must fit one command to Qt (about 65 000 bytes, see HowTo Draw a Path).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

@@ -43,11 +43,11 @@
                 <Choice Kind="ProcessAppFlag" Name="Drag" />
               </p:NodeReference>
               <Pin Id="iGiPPLLUGJGyAHiL9LRKBQ" Name="Node Context" Kind="InputPin" IsHidden="true" />
-              <Pin Id="Q59l0eibYgGoEGFLO4VlUA" Name="Input" Kind="InputPin" />
-              <Pin Id="Vj5DkmQ61zGRbKzkTYZwHN" Name="Is Dragging" Kind="InputPin" />
-              <Pin Id="uV0KQMq4TuGtUV01QkBAUC" Name="Translation" Kind="InputPin" />
-              <Pin Id="JRQq6XakDzFoUqdqF7sNRP" Name="Moves Element" Kind="InputPin" />
-              <Pin Id="8BoAB6GYkjF7qQ1VwX3jyC" Name="Axis" Kind="InputPin" />
+              <Pin Id="Q59l0eibYgGoEGFLO4VlUA" Name="Input" Kind="InputPin" IsHidden="true" />
+              <Pin Id="Vj5DkmQ61zGRbKzkTYZwHN" Name="Is Dragging" Kind="InputPin" IsHidden="true" />
+              <Pin Id="uV0KQMq4TuGtUV01QkBAUC" Name="Translation" Kind="InputPin" IsHidden="true" />
+              <Pin Id="JRQq6XakDzFoUqdqF7sNRP" Name="Moves Element" Kind="InputPin" IsHidden="true" />
+              <Pin Id="8BoAB6GYkjF7qQ1VwX3jyC" Name="Axis" Kind="InputPin" IsHidden="true" />
               <Pin Id="61ajsuhGBuGQInt51i6LvD" Name="Output" Kind="OutputPin" />
               <Pin Id="2xpFp69TF5Fma6DEwuDy1D" Name="Min" Kind="InputPin" IsHidden="true" />
               <Pin Id="h5jY2cAh5sF5k1DrRkVlUN" Name="Max" Kind="InputPin" IsHidden="true" />
@@ -375,7 +375,7 @@
                 <Pin Id="kqnd8HG9wpFTyPbXDGL2cB" Name="Node Context" Kind="InputPin" IsHidden="true" />
                 <Pin Id="uecqjDA3ofGqRdoGENQyTH" Name="From" Kind="InputPin" DefaultValue="0, 0" />
                 <Pin Id="78DZdmtY3fGb52dS5DMWEE" Name="To" Kind="InputPin" />
-                <Pin Id="oN8QS3eg9YGTsHEZbVFn7C" Name="Transform" Kind="InputPin" />
+                <Pin Id="oN8QS3eg9YGTsHEZbVFn7C" Name="Transform" Kind="InputPin" IsHidden="true" />
                 <Pin Id="yiCkJuahiGGmTLwyfYYVYI" Name="Stroke Color" Kind="InputPin" DefaultValue="0.6, 0.6, 0.6, 1" />
                 <Pin Id="CfTGL89TD1GnauWfJJc04G" Name="Stroke Width" Kind="InputPin" DefaultValue="0.015" />
                 <Pin Id="RnaezKwHAnFbCEL96Fbb6C" Name="Output" Kind="OutputPin" />
@@ -404,7 +404,7 @@
                 <Pin Id="mhzt7IHYgSGXAwOPWoQYPD" Name="Node Context" Kind="InputPin" IsHidden="true" />
                 <Pin Id="4nqZPq1eaFGDMjMC699U8Q" Name="From" Kind="InputPin" DefaultValue="0, 0" />
                 <Pin Id="lu1l6VZgiqFlVMURZACQxT" Name="To" Kind="InputPin" />
-                <Pin Id="4FcLLAON97FfVMzymcZgkG" Name="Transform" Kind="InputPin" />
+                <Pin Id="4FcLLAON97FfVMzymcZgkG" Name="Transform" Kind="InputPin" IsHidden="true" />
                 <Pin Id="UyD6ZaBUphFvMI5jxhmFVG" Name="Stroke Color" Kind="InputPin" DefaultValue="0.6, 0.6, 0.6, 1" />
                 <Pin Id="TPR1kZlqjkFlry0rALvEjL" Name="Stroke Width" Kind="InputPin" DefaultValue="0.015" />
                 <Pin Id="k8z52DrFSdG9ylxORAjDtM" Name="Output" Kind="OutputPin" />
@@ -475,7 +475,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Bezier (Handles)" />
             </p:NodeReference>
-            <Pin Id="Zp9jTCuZvJGeqZ7nDfa0BM" Name="Input" Kind="InputPin" />
+            <Pin Id="Zp9jTCuZvJGeqZ7nDfa0BM" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="EG64KunN1uFnH419aSt3qM" Name="Anchors" Kind="InputPin" />
             <Pin Id="3dmzs4vjp7FUciYMhBc1vL" Name="In Handles" Kind="InputPin" />
             <Pin Id="qgjRJ8BvnEG9CzIMbM8OzN" Name="Out Handles" Kind="InputPin" />
@@ -493,8 +493,8 @@
             </p:NodeReference>
             <Pin Id="HwDE3kPGzyGKWVcTkYwdqM" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="PSFZrbg1uWGN3Dmo0GAiAG" Name="Path" Kind="InputPin" />
-            <Pin Id="jyw9LVfR3fFsYYQGsi9sPL" Name="Transform" Kind="InputPin" />
-            <Pin Id="ZfWB6DvnQfF4IOiPBem97S" Name="Fill Color" Kind="InputPin" />
+            <Pin Id="jyw9LVfR3fFsYYQGsi9sPL" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="ZfWB6DvnQfF4IOiPBem97S" Name="Fill Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="UanXKO4uQMGXmQKPzrk2fU" Name="Stroke Color" Kind="InputPin" DefaultValue="0.35, 0.85, 0.55, 1" />
             <Pin Id="bohv9kDO2WGZFVe9joLdRO" Name="Stroke Width" Kind="InputPin" DefaultValue="0.04" />
             <Pin Id="lqs9Mp4uB9FKXFyR8Q4upF" Name="Output" Kind="OutputPin" />
@@ -598,10 +598,10 @@
             <Pin Id="nL1RYHQTLmGXcWGSkkYW5A" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="rkhdNkXGuzGEYJm8j0bEUF" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="7lTG0VeQsJGAvCuQvOGYrD" Name="Input" Kind="InputPin" />
-            <Pin Id="YhL6fhm3mdGiDCE5JkbhbA" Name="Space" Kind="InputPin" />
-            <Pin Id="CzXhMXYjziFwMjuGsamGtV" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="YhL6fhm3mdGiDCE5JkbhbA" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="CzXhMXYjziFwMjuGsamGtV" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="j9UfprmxuDGju9YPWcI84L" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="NJGgDUtZokFWrYN8ezlzbJ" Name="Enabled" Kind="InputPin" />
+            <Pin Id="NJGgDUtZokFWrYN8ezlzbJ" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="Av0E7DSR0DGfMYSv2A1gCQ" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="FugGzPwjRAGCQjpoGFzqEJ" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="gJYLwZgzGoFVZ4gqVyYJ5M" Name="Title" Kind="InputPin" />
@@ -618,7 +618,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="Qh3gsmHji9FEgyWW5KqD2C" Bounds="85,1380,1819,137" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The anchors and the ends of the handles are Point nodes (circle with Drag, defined in this patch) in two ForEach regions: drag them in the Renderer. The gray lines run from each anchor to its handle ends.&#xA;- Handles are relative to their anchor, in units: In/Out Handle = position of the handle end minus position of the anchor. Dragging an anchor leaves its handle ends where they are, so its handles change.&#xA;- Handle Modes is applied cyclically per anchor, an empty Spread means Free for all anchors. Change the entry or add entries to try Mirrored and Aligned.&#xA;- Mirrored ignores the In Handles, Aligned takes only their length. The In handle ends and lines always show the input, not the handles the curve really uses: with Mirrored or Aligned the curve follows the Out handles and the In handle is derived from them.&#xA;- Closed uses all four anchors with both handles. An open curve ignores the In handle of the first and the Out handle of the last anchor.&#xA;- The curve is one exact cubic per segment inside a QtPath, drawn with Path [Qt.Elements]. A path must fit one command to Qt (about 65 000 bytes), see HowTo Draw a Path.">
+          <Pad Id="Qh3gsmHji9FEgyWW5KqD2C" Bounds="85,1380,1819,167" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The anchors and the ends of the handles are Point nodes (circle with Drag, defined in this patch) in two ForEach regions: drag them in the Renderer. The gray lines run from each anchor to its handle ends.&#xA;- Handles are relative to their anchor, in units: In/Out Handle = position of the handle end minus position of the anchor. Dragging an anchor leaves its handle ends where they are, so its handles change.&#xA;- Handle Modes is applied cyclically per anchor, an empty Spread means Free for all anchors. Change the entry or add entries to try Mirrored and Aligned.&#xA;- Mirrored ignores the In Handles, Aligned takes only their length. The In handle ends and lines always show the input, not the handles the curve really uses: with Mirrored or Aligned the curve follows the Out handles and the In handle is derived from them.&#xA;- Closed uses all four anchors with both handles. An open curve ignores the In handle of the first and the Out handle of the last anchor.&#xA;- The curve is one exact cubic per segment inside a QtPath, drawn with Path [Qt.Elements]. A path must fit one command to Qt (about 65 000 bytes), see HowTo Draw a Path.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
