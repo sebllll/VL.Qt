@@ -56,7 +56,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="MoveTo" />
             </p:NodeReference>
-            <Pin Id="L337TSRwwWJHWu27oczLi6" Name="Input" Kind="InputPin" />
+            <Pin Id="L337TSRwwWJHWu27oczLi6" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="gaDEA2JmN35Ex9SfIfcp8L" Name="Point" Kind="InputPin" />
             <Pin Id="YhG50fOvql9IK2UQgswC05" Name="Output" Kind="OutputPin" />
           </Node>
@@ -133,9 +133,10 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="Path" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="tziN7P5ndDeozYOcKKUjOs" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="nDO2Ps1UYKfS83DzOE1qZA" Name="Path" Kind="InputPin" />
-            <Pin Id="YN4kEReO60aowxG79Hf9ri" Name="Transform" Kind="InputPin" />
+            <Pin Id="YN4kEReO60aowxG79Hf9ri" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="IvbmAgJxYTgUfFIHadIqws" Name="Fill Color" Kind="InputPin" />
             <Pin Id="P9Tsox80A2TEoRolGXzemh" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="BbLEsMZMetY0acvLOufhfi" Name="Stroke Width" Kind="InputPin" />
@@ -179,7 +180,7 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="MoveTo" />
             </p:NodeReference>
-            <Pin Id="2jD1PCO6b5jaNFHYKGzgXS" Name="Input" Kind="InputPin" />
+            <Pin Id="2jD1PCO6b5jaNFHYKGzgXS" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="ZTEbTuLNPJ3wtR6cUR0NZH" Name="Point" Kind="InputPin" />
             <Pin Id="vWokefI5yPQnqgJdepMlb9" Name="Output" Kind="OutputPin" />
           </Node>
@@ -237,8 +238,8 @@
             </p:NodeReference>
             <Pin Id="qB29rs9lU1kU9pqMgKFrXH" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Tr47pHsqveeIRbs4YBVb5e" Name="Path" Kind="InputPin" />
-            <Pin Id="nk6PCdkTQjasDzd6UjFYwc" Name="Transform" Kind="InputPin" />
-            <Pin Id="FZfft8C3WIfjgh228TQxPV" Name="Fill Color" Kind="InputPin" />
+            <Pin Id="nk6PCdkTQjasDzd6UjFYwc" Name="Transform" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FZfft8C3WIfjgh228TQxPV" Name="Fill Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="uoZGEbrgzqXGOazhbroOw1" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="qCrIPw1DhGKztK890jixIZ" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="5SpNaZsvBS5SjSUzyFJBWv" Name="Output" Kind="OutputPin" />
@@ -268,7 +269,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="700,335,65,19" Id="9UlVEuWyjw268EnlDz4TQz">
+          <Node Bounds="700,335,25,19" Id="9UlVEuWyjw268EnlDz4TQz">
             <p:NodeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Paths" NeedsToBeDirectParent="true">
@@ -276,9 +277,10 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="AddRect" />
             </p:NodeReference>
-            <Pin Id="QX5OwYJFKSeA8JGVyifKLO" Name="Input" Kind="InputPin" />
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
+            <Pin Id="QX5OwYJFKSeA8JGVyifKLO" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="H84lRYIfazXXPRF2HXRFm2" Name="Rectangle" Kind="InputPin" DefaultValue="0, 0, 1.6, 1.6" />
-            <Pin Id="JHSrxRTFlMiohCLUkMBz56" Name="Direction" Kind="InputPin" />
+            <Pin Id="JHSrxRTFlMiohCLUkMBz56" Name="Direction" Kind="InputPin" IsHidden="true" />
             <Pin Id="PinXYaCqSb6YBaZbCUiD0y" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="700,394,78,19" Id="UCfgwbwRSqrsGXL1Q6xSDL">
@@ -289,9 +291,10 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="AddCircle" />
             </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="1FCyjto9rez7HlWT9kdCPb" Name="Input" Kind="InputPin" />
             <Pin Id="DmUkrzxrjSeCOBCgVcGCrq" Name="Center" Kind="InputPin" DefaultValue="0.8, 0.8" />
-            <Pin Id="3GcA5nByVzzVBGwrnUHCqO" Name="Direction" Kind="InputPin" />
+            <Pin Id="3GcA5nByVzzVBGwrnUHCqO" Name="Direction" Kind="InputPin" IsHidden="true" />
             <Pin Id="eGGTzQX4iEZGssKUjTDcoU" Name="Radius" Kind="InputPin" DefaultValue="0.5" />
             <Pin Id="zmQnGYMOTOe1ulNWjHeO1A" Name="Output" Kind="OutputPin" />
           </Node>
@@ -326,8 +329,8 @@
             <Pin Id="6RdzgNZypVcf95DAqWtMwM" Name="Path" Kind="InputPin" />
             <Pin Id="WJKJs3vlPs692nPMCe0uxb" Name="Transform" Kind="InputPin" />
             <Pin Id="U0URR1zUwiustMz5c2m1RA" Name="Fill Color" Kind="InputPin" />
-            <Pin Id="AZhFqb2LnHd1yyOpwZtftM" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="TJGBiVQHedXxLOJKjVqseF" Name="Stroke Width" Kind="InputPin" />
+            <Pin Id="AZhFqb2LnHd1yyOpwZtftM" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TJGBiVQHedXxLOJKjVqseF" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
             <Pin Id="0AdIjIaOi6gzkcEv3hdDZX" Name="Output" Kind="OutputPin" />
             <Pin Id="11hnCwOgBuuv5RSJfQoIWE" Name="Cap" Kind="InputPin" IsHidden="true" />
             <Pin Id="S6GpL4XlHbNCrzv9sDPj6P" Name="Join" Kind="InputPin" IsHidden="true" />
@@ -355,7 +358,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="1000,316,65,19" Id="PiQ0dYu5Uze7e6cx5W2c6c">
+          <Node Bounds="1000,316,25,19" Id="PiQ0dYu5Uze7e6cx5W2c6c">
             <p:NodeReference LastCategoryFullName="Qt.Paths" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Paths" NeedsToBeDirectParent="true">
@@ -363,9 +366,9 @@
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="AddRect" />
             </p:NodeReference>
-            <Pin Id="8qFvEHicvljLBreraxcAqS" Name="Input" Kind="InputPin" />
+            <Pin Id="8qFvEHicvljLBreraxcAqS" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="T3TwP2W51YZilxgQtJrI7X" Name="Rectangle" Kind="InputPin" DefaultValue="0, 0, 1.6, 1.6" />
-            <Pin Id="chdXafw5tzVog0DatkJCdI" Name="Direction" Kind="InputPin" />
+            <Pin Id="chdXafw5tzVog0DatkJCdI" Name="Direction" Kind="InputPin" IsHidden="true" />
             <Pin Id="qWv8kXrFd8y2xP4LplOOyz" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="1000,375,78,19" Id="sUwnAmGlng4kOwkmNGgwM0">
@@ -378,7 +381,7 @@
             </p:NodeReference>
             <Pin Id="iPuVHPN4v7ws6hH9YcrKgb" Name="Input" Kind="InputPin" />
             <Pin Id="DojtJu7KWfEJ8Rr4oeKz1V" Name="Center" Kind="InputPin" DefaultValue="0.8, 0.8" />
-            <Pin Id="CzC6InWpZZyCAwA1mvbIeW" Name="Direction" Kind="InputPin" />
+            <Pin Id="CzC6InWpZZyCAwA1mvbIeW" Name="Direction" Kind="InputPin" IsHidden="true" />
             <Pin Id="nVQGZ2mWH2mu303IkAVKD5" Name="Radius" Kind="InputPin" DefaultValue="0.5" />
             <Pin Id="n67TwrwAZBYZ5AHaTROpZ7" Name="Output" Kind="OutputPin" />
           </Node>
@@ -418,8 +421,8 @@
             <Pin Id="d3AWk6FE6VoDegArfTRGwY" Name="Path" Kind="InputPin" />
             <Pin Id="iQgpcfjg9IrvWzqTzllTMh" Name="Transform" Kind="InputPin" />
             <Pin Id="U2MQEEaNlGFAkQpEuN4w8z" Name="Fill Color" Kind="InputPin" />
-            <Pin Id="MEYfr4jFm0hoRkUFj3WaWk" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="5QlHnQvmSfoVFQ4ir4Zplv" Name="Stroke Width" Kind="InputPin" />
+            <Pin Id="MEYfr4jFm0hoRkUFj3WaWk" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="5QlHnQvmSfoVFQ4ir4Zplv" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
             <Pin Id="GTWB6oI72DfybSBtuS7ivG" Name="Output" Kind="OutputPin" />
             <Pin Id="SQeFYpNWa0zwg8FgC3xrhe" Name="Cap" Kind="InputPin" IsHidden="true" />
             <Pin Id="BYaQDHWSHE9BQtkVdcwYhr" Name="Join" Kind="InputPin" IsHidden="true" />
@@ -477,10 +480,10 @@
             <Pin Id="aZzH5CPFyRZCEwJkFmpndL" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="HUx983LpWw9Uz4Heqsqnu9" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="y6brvMpRJEgQh0mdNXOeQy" Name="Input" Kind="InputPin" />
-            <Pin Id="EneR0eW74Z2UfgcaOJhTvP" Name="Space" Kind="InputPin" />
-            <Pin Id="I8Qfe6TrJwH4DAOZ7HDKKS" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="EneR0eW74Z2UfgcaOJhTvP" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="I8Qfe6TrJwH4DAOZ7HDKKS" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="QF8lXbyXIw6NUYlwmW3JDU" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="D4TgrKOyIveI3LGzl5bbM7" Name="Enabled" Kind="InputPin" />
+            <Pin Id="D4TgrKOyIveI3LGzl5bbM7" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="aDTSzu1U2ZETEAEd17jjOr" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="S25cbkef2q0SIrVVdpemjc" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="WbGzNZqKK05aO66OjUwONO" Name="Title" Kind="InputPin" />
@@ -497,7 +500,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="wKMnLdqsODdrfC1OWgr9Ps" Bounds="85,931,830,255" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Fill and Stroke are drawn together: the fill first, the stroke on top. Stroke Width 0 draws no stroke, a Fill with alpha 0 (the default) draws no fill. Trim only shortens the stroke, not the fill.&#xD;&#xA;- Fill Rule decides which areas count as inside: NonZero fills an area that contours wind around, EvenOdd counts the crossings. Both contours of the hole path run clockwise, so NonZero fills the circle too and EvenOdd leaves it out. With opposite directions (Dir CounterClockwise at AddCircle) NonZero makes a hole as well.&#xD;&#xA;- Transform acts around the origin of the parent space, like in Skia. The hole path is built at 0, 0 and moved by Transform (Translation).&#xD;&#xA;- Changing Trim costs far less than rebuilding the path.&#xD;&#xA;- Skia: the Path layer with its Fill and Stroke, and the nodes of Graphics.Skia.Paths.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+          <Pad Id="wKMnLdqsODdrfC1OWgr9Ps" Bounds="85,931,830,311" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Fill and Stroke are drawn together: the fill first, the stroke on top. Stroke Width 0 draws no stroke, a Fill with alpha 0 (the default) draws no fill. Trim only shortens the stroke, not the fill.&#xD;&#xA;- Fill Rule decides which areas count as inside: NonZero fills an area that contours wind around, EvenOdd counts the crossings. Both contours of the hole path run clockwise, so NonZero fills the circle too and EvenOdd leaves it out. With opposite directions (Dir CounterClockwise at AddCircle) NonZero makes a hole as well.&#xD;&#xA;- Transform acts around the origin of the parent space, like in Skia. The hole path is built at 0, 0 and moved by Transform (Translation).&#xD;&#xA;- Changing Trim costs far less than rebuilding the path.&#xD;&#xA;- Skia: the Path layer with its Fill and Stroke, and the nodes of Graphics.Skia.Paths.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

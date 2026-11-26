@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="gzENIk84NLOARvY33hp2nu" Bounds="85,834,830,94" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Radius is in units (1 unit = 100 DIP, origin top left). A Circle with Radius 0 is not drawn.&#xD;&#xA;- The position comes from Transform (Translation) and the circle is centered on it (Anchor Center). Inside Row/Column the position comes from the layout.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+          <Pad Id="gzENIk84NLOARvY33hp2nu" Bounds="85,834,830,115" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Radius is in units (1 unit = 100 DIP, origin top left). A Circle with Radius 0 is not drawn.&#xD;&#xA;- The position comes from Transform (Translation) and the circle is centered on it (Anchor Center). Inside Row/Column the position comes from the layout.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -85,12 +85,12 @@
             <Pin Id="JiROa6gduk17kCDmC60XTi" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="c6OLcBTgKuBGgiYnYIcyMk" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="iIt1A0FsfPbZxobCTEHxCV" Name="Output" Kind="OutputPin" />
-            <Pin Id="BYqGVioa3xwQCqjTmJIcCE" Name="Opacity" Kind="InputPin" />
+            <Pin Id="BYqGVioa3xwQCqjTmJIcCE" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="QxuR7kJdH0vODVQEgy4xJa" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="1nXM0GuPSuM6lvCEKDgrNo" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="C5x741teCavN4zRWCnuqSL" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="JgesDombpFjOIVMmw5JbOD" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="EPBmT69aG0VMgSnttvj0VG" Name="Interaction" Kind="InputPin" />
+            <Pin Id="EPBmT69aG0VMgSnttvj0VG" Name="Interaction" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="100,684,145,19" Id="gljP1HBHIcnlSN8isnpoLs">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
@@ -104,9 +104,9 @@
             <Pin Id="i06zYCPAkzhWdj4nH8q6U9" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="NiSIzCUTMIHLKtm0y7FLtx" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="gAnnBLmBDwyFInI9Z1LN8a" Name="Input" Kind="InputPin" />
-            <Pin Id="zFoHBwkbze6t08cdKLRC8S" Name="Space" Kind="InputPin" />
-            <Pin Id="OaV74jWjAyzK1WkZgcSx0s" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="TXYYyEKyE7GiiWLRMLDi22" Name="Enabled" Kind="InputPin" />
+            <Pin Id="zFoHBwkbze6t08cdKLRC8S" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="OaV74jWjAyzK1WkZgcSx0s" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TXYYyEKyE7GiiWLRMLDi22" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="U2mGtOOC2EgPcHmEUPutO6" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="u4FgiHgVxPU7qdR902LzFi" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="BHjxx4QUIQtkNo3HkAGUTR" Name="Title" Kind="InputPin" />

@@ -163,10 +163,10 @@
             </p:NodeReference>
             <Pin Id="6Taqpr5SoSPEGrSpeCTB3A" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="oE4GYtAEu65ktniszXwXbe" Name="Size" Kind="InputPin" DefaultValue="10, 6" />
-            <Pin Id="JjJeiAi6n5OPja9J0Mk997" Name="Transform" Kind="InputPin" />
+            <Pin Id="JjJeiAi6n5OPja9J0Mk997" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="T4CARQozoKNP7PWzOQyR6Z" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="5uOvg9NLA0DFeMUqTt7we5" Name="Text" Kind="InputPin" DefaultValue="text" />
-            <Pin Id="QN3cfN72o3vPcJc7UFHb1m" Name="Font Family" Kind="InputPin" />
+            <Pin Id="QN3cfN72o3vPcJc7UFHb1m" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="g3ySqpBji7Ye5t0DrYFbSj" Name="Font Size" Kind="InputPin" DefaultValue="2" />
             <Pin Id="KwjgD9PMNJ2LXdAQ97EEgK" Name="Weight" Kind="InputPin" IsHidden="true" />
             <Pin Id="P6f9paOzpokLyAEH9i2YiK" Name="Italic" Kind="InputPin" IsHidden="true" />
@@ -237,11 +237,11 @@
             <Pin Id="XyejhOES1pMNBjEy5Up1hK" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Rt45R8p772YgoOn8LuZyfz" Name="Input" Kind="InputPin" />
             <Pin Id="gSj4rlbqEGlmX1w2A3Taco" Name="Size" Kind="InputPin" DefaultValue="1000, 600" />
-            <Pin Id="TOmlHXn7doxOOAP5XR8NYM" Name="Space" Kind="InputPin" />
+            <Pin Id="TOmlHXn7doxOOAP5XR8NYM" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="qsLMkcPtJai5vgsnQkrpqE" Name="Clear Color" Kind="InputPin" DefaultValue="0, 0, 0, 0" />
             <Pin Id="NOHH9ejypr44ghQQEZdsqj" Name="Format" Kind="InputPin" />
             <Pin Id="D9MektQBYnhFH5LCPWGw0x" Name="Output" Kind="OutputPin" />
-            <Pin Id="Uyt9QIdGW5EP8uudOU1WXm" Name="Enabled" Kind="InputPin" />
+            <Pin Id="Uyt9QIdGW5EP8uudOU1WXm" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="AmrdJrUIUKvMPPU3b1ceA3" Name="Input Notifications" Kind="InputPin" IsHidden="true" />
             <Pin Id="RE5m8qo0BfhOy5ZFRKcmtc" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
@@ -415,9 +415,9 @@
             <Pin Id="BJb3zbBBTphO7VMr2ZkRUz" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="SyeVe18ky3sNxlHSZF44J6" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="3fUOXxcceIa2Nijsw4zgV5" Name="Input" Kind="InputPin" />
-            <Pin Id="LK39eatrffKNUVMk0vPIxv" Name="Space" Kind="InputPin" />
+            <Pin Id="LK39eatrffKNUVMk0vPIxv" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="p4nTLx84ZzwBhgR0CT7Lwv" Name="Clear Color" Kind="InputPin" DefaultValue="0.15, 0.5, 0.35, 1" />
-            <Pin Id="MlKo6F9R4NULqI38vK0AJZ" Name="Enabled" Kind="InputPin" />
+            <Pin Id="MlKo6F9R4NULqI38vK0AJZ" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="dXGVuvnuhdHf8O1AklndQu" Name="Title" Kind="InputPin" DefaultValue="Same scene in a Qt window" />
             <Pin Id="MukBWz4EW1aOcCOfXJHZfw" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="ShNUDFIMzVhPNmqaUl54Tr" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
@@ -458,7 +458,7 @@
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="CkRzmIcQuV0LWGvTWW5HlC" Bounds="85,905,840,179" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- QtTexture outputs premultiplied alpha. AlphaBlend expects straight alpha: it multiplies RGB by alpha a second time and makes half-transparent parts too dark. Where straight alpha is needed, unpremultiply the texture first (RGB divided by alpha).&#xD;&#xA;- Opaque colors look the same in both windows. Half-transparent ones differ: Stride blends in linear color space, a Qt window in gamma space.&#xD;&#xA;- Windows only (Direct3D 11). QtTexture is Experimental: pins and behavior may still change.">
+          <Pad Id="CkRzmIcQuV0LWGvTWW5HlC" Bounds="85,905,840,218" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- QtTexture outputs premultiplied alpha. AlphaBlend expects straight alpha: it multiplies RGB by alpha a second time and makes half-transparent parts too dark. Where straight alpha is needed, unpremultiply the texture first (RGB divided by alpha).&#xD;&#xA;- Opaque colors look the same in both windows. Half-transparent ones differ: Stride blends in linear color space, a Qt window in gamma space.&#xD;&#xA;- Windows only (Direct3D 11). QtTexture is Experimental: pins and behavior may still change.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

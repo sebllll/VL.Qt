@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="fapE9ZMaHA97FeR38SU6bM" Bounds="85,1279,839,262" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Blur an image by a different amount at every pixel, controlled by a grayscale mask. Grays in between blur proportionally. The mask is stretched over the picture.&#xD;&#xA;- Two passes: a Gaussian blur is separable. Pass 2 takes the result of pass 1. Both ShaderEffects run the same Fragment Code with the same radius, size and mask.&#xD;&#xA;- The shader always takes the same number of samples (the step between them grows with the radius), so the cost does not depend on the radius. size lets it turn the radius into texture coordinates.&#xD;&#xA;- Fragment Code is the text of shaders/blur_mask.frag next to this patch. One String pad feeds both passes; edit it live, errors show up at the Error pin of the ShaderEffect.&#xD;&#xA;- With a mask the blur is an approximation: the radius is read at the pixel that is drawn, in both passes. It is invisible for smooth masks, hard mask edges with a large radius can show a faint halo.&#xD;&#xA;- Radius 0 or a black mask returns the original pixel. Large radii are sampled coarsely, very fine detail then looks slightly stepped.&#xD;&#xA;- Every pass is a separate layer. Changing Radius or the mask re-renders both passes, the picture itself is rendered once.">
+          <Pad Id="fapE9ZMaHA97FeR38SU6bM" Bounds="85,1279,839,320" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Blur an image by a different amount at every pixel, controlled by a grayscale mask. Grays in between blur proportionally. The mask is stretched over the picture.&#xD;&#xA;- Two passes: a Gaussian blur is separable. Pass 2 takes the result of pass 1. Both ShaderEffects run the same Fragment Code with the same radius, size and mask.&#xD;&#xA;- The shader always takes the same number of samples (the step between them grows with the radius), so the cost does not depend on the radius. size lets it turn the radius into texture coordinates.&#xD;&#xA;- Fragment Code is the text of shaders/blur_mask.frag next to this patch. One String pad feeds both passes; edit it live, errors show up at the Error pin of the ShaderEffect.&#xD;&#xA;- With a mask the blur is an approximation: the radius is read at the pixel that is drawn, in both passes. It is invisible for smooth masks, hard mask edges with a large radius can show a faint halo.&#xD;&#xA;- Radius 0 or a black mask returns the original pixel. Large radii are sampled coarsely, very fine detail then looks slightly stepped.&#xD;&#xA;- Every pass is a separate layer. Changing Radius or the mask re-renders both passes, the picture itself is rendered once.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -94,7 +94,7 @@
             </p:NodeReference>
             <Pin Id="2zpHy4AVivUy0OEJ2WD5qU" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Suyk2j4CpGxT8jrYOLnGKp" Name="Size" Kind="InputPin" />
-            <Pin Id="hIQOcdc4mlYFUkh59RUBXS" Name="Transform" Kind="InputPin" />
+            <Pin Id="hIQOcdc4mlYFUkh59RUBXS" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="HlVptIFWKdcz1GKOqlhI97" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="jMXiOvRHO3QS3idA5ZGkFK" Name="Image" Kind="InputPin" />
             <Pin Id="ok8G9bO6CtkQ3yf1M3FtDc" Name="Fill Mode" Kind="InputPin" DefaultValue="Fit" />
@@ -257,7 +257,7 @@
             <Pin Id="yuWbhrFHkfnEzaEQ1Xadx8" Name="Input 4" Kind="StateInputPin" />
             <Pin Id="cp4G5JSL4LswJrREmiKA2r" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,860,125,19" Id="cvVhGE0eycXcWjvGqq06Vq">
+          <Node Bounds="100,860,65,19" Id="cvVhGE0eycXcWjvGqq06Vq">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
@@ -272,15 +272,15 @@
             <Pin Id="KesmiCjrdNMmJgcyMOeJ9d" Name="Input" Kind="InputPin" />
             <Pin Id="ExFd0sx0KbkMKkHttmJXHd" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="RC0DiSx7XluWeO5B4auy9D" Name="Fragment Code" Kind="InputPin" />
-            <Pin Id="oM7b0x2EXYsWPkZezha659" Name="Fragment Shader" Kind="InputPin" />
+            <Pin Id="oM7b0x2EXYsWPkZezha659" Name="Fragment Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="A0f5YyUgkvdCpq0JNJ8F36" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="dNsCWNp9DSgktKeWcUkWAB" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="KINZJkWiCkLbv7MPKejNjF" Name="Uniforms" Kind="InputPin" />
             <Pin Id="OgP7kjmWIxVqN4elLD4uNH" Name="Blending" Kind="InputPin" IsHidden="true" />
             <Pin Id="GtOCRz7WjThcCevs8cBOpQ" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
-            <Pin Id="TE3mmVnSs3BLc1jj9qRbV6" Name="Size" Kind="InputPin" />
+            <Pin Id="TE3mmVnSs3BLc1jj9qRbV6" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="pFpzVjBEQex0WOleJrFnbH" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="SswPreCOiC5Dxh7MBdj1CV" Name="Transform" Kind="InputPin" />
+            <Pin Id="SswPreCOiC5Dxh7MBdj1CV" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="U0IQX9ogyitKSDuAfy2Fp1" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="YQNhDYufBc1sbTIpV8ipei" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="NmFMMyPuOLlWvvTCmrgs1M" Name="Clip" Kind="InputPin" IsHidden="true" />
@@ -306,7 +306,7 @@
             <Pin Id="E1GBVlNgogRWs2YM7UlB6H" Name="Input" Kind="InputPin" />
             <Pin Id="Eg99XlIGa5iPTjrlkuo9o4" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="ZnRIuXoVORwMcucWSAdQjS" Name="Fragment Code" Kind="InputPin" />
-            <Pin Id="EHb8d6sZkRPLzLAVm2Wo4W" Name="Fragment Shader" Kind="InputPin" />
+            <Pin Id="EHb8d6sZkRPLzLAVm2Wo4W" Name="Fragment Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="hzsVSDBLKSshmqN9cDJVEO" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="CrSU5kFo5e7WlhnL60Yv4J" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="xjQNioCF9lM91eGDtaYnP6" Name="Uniforms" Kind="InputPin" />
@@ -314,9 +314,9 @@
             <Pin Id="fJUPk83hw6UvZVRzDD8AMV" Name="Mesh Resolution" Kind="InputPin" IsHidden="true">
               <p:DefaultValue r:IsNull="true" />
             </Pin>
-            <Pin Id="Mfs6i6QNwpxocGch2f4AXU" Name="Size" Kind="InputPin" />
+            <Pin Id="Mfs6i6QNwpxocGch2f4AXU" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="XeL12cn1OanyzDON12I33n" Name="Auto Size" Kind="InputPin" DefaultValue="True" IsHidden="true" />
-            <Pin Id="BEHVl2gV819LsNK9ShCxSG" Name="Transform" Kind="InputPin" />
+            <Pin Id="BEHVl2gV819LsNK9ShCxSG" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="JDKrUlYUTzv97piPrJ2v67" Name="Anchor" Kind="InputPin" DefaultValue="TopLeft" IsHidden="true" />
             <Pin Id="4ppEarDoepocMFllvtsP73" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="hr8A9J71dzfgPIhtZ56Haf" Name="Clip" Kind="InputPin" IsHidden="true" />
@@ -354,9 +354,9 @@
             <Pin Id="ChQLOmaFWN9fiupq1tu2Xo" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="u8hKr41cCfGkz5jKBHQoBI" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="U7I1ZcXybPlklyvCXlsx1Q" Name="Input" Kind="InputPin" />
-            <Pin Id="J3ysA1R2GfTycvqA03m8ux" Name="Space" Kind="InputPin" />
-            <Pin Id="JfD3KsCWsY9qgUcApLEMkC" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="3ovF06QM0Z6ucgKZptGfzm" Name="Enabled" Kind="InputPin" />
+            <Pin Id="J3ysA1R2GfTycvqA03m8ux" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="JfD3KsCWsY9qgUcApLEMkC" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="3ovF06QM0Z6ucgKZptGfzm" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="DcNIKcnB1k9ebQ9Czl1WbY" Name="Title" Kind="InputPin" />
             <Pin Id="Yib7KTNZgOcpYAjEV8WZCq" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="qrDBEy6gY83ja8GmlC1kAn" Name="Perf" Kind="OutputPin" IsHidden="true" />

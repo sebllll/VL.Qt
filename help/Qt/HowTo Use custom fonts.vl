@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="e8ijQKVUKFm3eU02pETRT8" Bounds="85,650,830,235" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- LoadFont registers the file for this app only, nothing is installed. LoadFont nodes with the same file share one registration.&#xD;&#xA;- Path is relative to this patch. The folder fonts/ next to the patch is copied next to the executable on export,&#xD;&#xA;  so the same Path works in the exported app. Keep the folder name and the relative Path.&#xD;&#xA;- License: ship only fonts whose license allows it. DejaVu Sans (here) is free (LICENSES/DejaVu-Fonts.txt); many desktop&#xD;&#xA;  fonts (Segoe UI, Arial, Helvetica ...) may not be shipped with an app.&#xD;&#xA;- A missing or unreadable file shows a warning at the node, Family stays empty and the default font is drawn.&#xD;&#xA;  In an exported app that warning is only visible with a logging provider (see HowTo Configure logging providers).&#xD;&#xA;- A family name that is neither installed nor loaded is logged once, Qt then uses a substitute font.">
+          <Pad Id="e8ijQKVUKFm3eU02pETRT8" Bounds="85,650,830,287" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- LoadFont registers the file for this app only, nothing is installed. LoadFont nodes with the same file share one registration.&#xD;&#xA;- Path is relative to this patch. The folder fonts/ next to the patch is copied next to the executable on export,&#xD;&#xA;  so the same Path works in the exported app. Keep the folder name and the relative Path.&#xD;&#xA;- License: ship only fonts whose license allows it. DejaVu Sans (here) is free (LICENSES/DejaVu-Fonts.txt); many desktop&#xD;&#xA;  fonts (Segoe UI, Arial, Helvetica ...) may not be shipped with an app.&#xD;&#xA;- A missing or unreadable file shows a warning at the node, Family stays empty and the default font is drawn.&#xD;&#xA;  In an exported app that warning is only visible with a logging provider (see HowTo Configure logging providers).&#xD;&#xA;- A family name that is neither installed nor loaded is logged once, Qt then uses a substitute font.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -88,11 +88,11 @@
             </p:NodeReference>
             <Pin Id="dPD2Ba5BER0rG1VeFKHRPa" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="J6t2WYiauERFkSiWkXOc7d" Name="Size" Kind="InputPin" />
-            <Pin Id="dz9h5L3fc7U9QvYkwEB0j3" Name="Transform" Kind="InputPin" />
+            <Pin Id="dz9h5L3fc7U9QvYkwEB0j3" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="OBOUjh6Uitd9pF0sJP69uf" Name="Text" Kind="InputPin" />
             <Pin Id="VIUiduxDWyxzkWbBSK0Wst" Name="Font Family" Kind="InputPin" />
             <Pin Id="gjgGKMPdgwdbxTjU2pvMq9" Name="Font Size" Kind="InputPin" />
-            <Pin Id="416rue9WzLe0qN36N99IT7" Name="Color" Kind="InputPin" />
+            <Pin Id="416rue9WzLe0qN36N99IT7" Name="Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="iNX6nVxNb6czWWIuHlYRQ3" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="240,560,85,19" Id="Bl9yrA0KwJDCAxF8CCYYe0">
@@ -102,9 +102,9 @@
             </p:NodeReference>
             <Pin Id="a0TyuypWFKmaJOq9zONFnT" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="MLHWjfeObvcnObUh8zxL7m" Name="Input" Kind="InputPin" />
-            <Pin Id="aGExJ8iG7XwflZpOwI6iqV" Name="Space" Kind="InputPin" />
-            <Pin Id="1iWwQK23Il3fnoSeDEsKu0" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="67Mi3FsLSfWIGG79FcvPZx" Name="Enabled" Kind="InputPin" />
+            <Pin Id="aGExJ8iG7XwflZpOwI6iqV" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="1iWwQK23Il3fnoSeDEsKu0" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="67Mi3FsLSfWIGG79FcvPZx" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="uK9CxfPF4SmV6AChDCDlU7" Name="Title" Kind="InputPin" />
             <Pin Id="CMLLSKpSqiu5fT3SMlrCvJ" Name="Error" Kind="OutputPin" />
           </Node>

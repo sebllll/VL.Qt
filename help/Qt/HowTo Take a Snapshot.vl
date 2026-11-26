@@ -35,7 +35,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="Ng20LP7PRdg2NDYP5UvvHQ" Bounds="85,1299,830,212" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Snapshot grabs an element (or a Group with its children) on Grab, e.g. for thumbnails, export or processing in Skia/OpenCV.&#xD;&#xA;- The element has to be shown in a renderer, otherwise the log says so. Here the same Group goes to the Qt Renderer and to Snapshot.&#xD;&#xA;- It is asynchronous: Is Ready comes one frame after Grab (never in the same frame), Image keeps the last finished snapshot until a new one is done.&#xD;&#xA;- The pixel size is independent of the screen's DPI scaling, so an export is the same on every screen.&#xD;&#xA;- Image is BGRA8 premultiplied and an own copy (not volatile). FromImage [Skia] turns it into a Skia image that DrawImage shows in a Skia Renderer.&#xD;&#xA;- It is no frame stream: use it for single images, not for every frame.&#xD;&#xA;- Stable 60 fps: load images in advance or asynchronously, never synchronously while the frame is running.&#xD;&#xA;- To save the Image as a file (PNG, JPG, ...) use FileWriter [Qt], no detour via Skia; FileWriter (Element) does Snapshot and writing in one node, see HowTo Write an Element to a File.">
+          <Pad Id="Ng20LP7PRdg2NDYP5UvvHQ" Bounds="85,1299,830,259" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Snapshot grabs an element (or a Group with its children) on Grab, e.g. for thumbnails, export or processing in Skia/OpenCV.&#xD;&#xA;- The element has to be shown in a renderer, otherwise the log says so. Here the same Group goes to the Qt Renderer and to Snapshot.&#xD;&#xA;- It is asynchronous: Is Ready comes one frame after Grab (never in the same frame), Image keeps the last finished snapshot until a new one is done.&#xD;&#xA;- The pixel size is independent of the screen's DPI scaling, so an export is the same on every screen.&#xD;&#xA;- Image is BGRA8 premultiplied and an own copy (not volatile). FromImage [Skia] turns it into a Skia image that DrawImage shows in a Skia Renderer.&#xD;&#xA;- It is no frame stream: use it for single images, not for every frame.&#xD;&#xA;- Stable 60 fps: load images in advance or asynchronously, never synchronously while the frame is running.&#xD;&#xA;- To save the Image as a file (PNG, JPG, ...) use FileWriter [Qt], no detour via Skia; FileWriter (Element) does Snapshot and writing in one node, see HowTo Write an Element to a File.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -69,7 +69,7 @@
             </p:NodeReference>
             <Pin Id="rLRKD6v8dOAieDHMkjXX42" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="8dzh2vLtHUaNce8zNbYEj8" Name="Output" Kind="OutputPin" />
-            <Pin Id="mQ9Ge9RYZ2JNM2ZzwGVkXl" Name="Size" Kind="InputPin" />
+            <Pin Id="mQ9Ge9RYZ2JNM2ZzwGVkXl" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="UhlD9niyBfsTTGYYGGtZL2" Name="Transform" Kind="InputPin" />
             <Pin Id="e3gT7hg4NboP64D5sX2SrW" Name="Anchor" Kind="InputPin" />
             <Pin Id="hKCBHKTihFCW8WVyElRltT" Name="Fill Color" Kind="InputPin" />
@@ -99,15 +99,15 @@
             </p:NodeReference>
             <Pin Id="BRvSWOQAxRNgOLJj9KCI4f" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="P3ieytMCTOvsIkRiwtHShq" Name="Output" Kind="OutputPin" />
-            <Pin Id="l12TmVyLChxPTy1iiQyivO" Name="Size" Kind="InputPin" />
-            <Pin Id="sxtSC2s9gbEudUZH7bVKpQ" Name="Transform" Kind="InputPin" />
+            <Pin Id="l12TmVyLChxPTy1iiQyivO" Name="Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="sxtSC2s9gbEudUZH7bVKpQ" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="yI9lFBRzs0F9NIUfoD3zzs" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="BmX8prQimEFBJSS3PzQueg" Name="Text" Kind="InputPin" />
-            <Pin Id="oSg0JEjoNGlM1rn1P6PggN" Name="Font Family" Kind="InputPin" />
-            <Pin Id="Awv9B20k6Iv3eQzdlqSHuZ" Name="Font Size" Kind="InputPin" />
+            <Pin Id="oSg0JEjoNGlM1rn1P6PggN" Name="Font Family" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Awv9B20k6Iv3eQzdlqSHuZ" Name="Font Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="o1Jxqc2vK7bBWZ1wh3wmXv" Name="Weight" Kind="InputPin" IsHidden="true" />
             <Pin Id="KeYu2D49PQ8kY9ceIUm0OR" Name="Italic" Kind="InputPin" IsHidden="true" />
-            <Pin Id="Uy2GOmn3seBsKPpwTucHDm" Name="Color" Kind="InputPin" />
+            <Pin Id="Uy2GOmn3seBsKPpwTucHDm" Name="Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="ZaZqOOkjnjXzPyj1KKH9BC" Name="Horizontal Alignment" Kind="InputPin" IsHidden="true" />
             <Pin Id="uDGnxWNjX5NWJR8xebjYKG" Name="Vertical Alignment" Kind="InputPin" IsHidden="true" />
             <Pin Id="jboQVyh2me7nQnEby2KJVw" Name="Wrap" Kind="InputPin" IsHidden="true" />
@@ -165,10 +165,10 @@
             <Pin Id="wOkP0PgswgsRNaePhEnxj4" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="6uKOjdj1PudbF17eMY6jIO" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="Xi19Vxtax3PVrudKB22hjM" Name="Input" Kind="InputPin" />
-            <Pin Id="iOboAcORExzf0i0fMNU58Z" Name="Space" Kind="InputPin" />
-            <Pin Id="NJOmQESidWqF1cMim6x9qt" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="iOboAcORExzf0i0fMNU58Z" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="NJOmQESidWqF1cMim6x9qt" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="NFiGJcxqmVZPHZsJJPmq3z" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="9ANP8felmKr5tU85mTOmS6" Name="Enabled" Kind="InputPin" />
+            <Pin Id="9ANP8felmKr5tU85mTOmS6" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="izVO2jTC5Jm4RcMXa0IpvN" Name="Title" Kind="InputPin" />
             <Pin Id="7eFaCx8tqmj5yL93SswJDh" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="uQJaU8bFnGEQcdWJWyFgYk" Name="Perf" Kind="OutputPin" IsHidden="true" />

@@ -25,7 +25,7 @@
               <Pin Id="KYI5jvgrg3amCoR48lqfjZ" Name="Radius" Kind="InputPin" />
               <Pin Id="XEJOOO428eg8Rb2vV1rLH5" Name="Transform" Kind="InputPin" />
               <Pin Id="VXyPiUBu21Rcauum9dMLKj" Name="Anchor" Kind="InputPin" IsHidden="true" />
-              <Pin Id="H4AZpsFGDih37pWw43qxor" Name="Fill Color" Kind="InputPin" />
+              <Pin Id="H4AZpsFGDih37pWw43qxor" Name="Fill Color" Kind="InputPin" IsHidden="true" />
               <Pin Id="7zXAXA7LWYcnTAnxfMHSu1" Name="Output" Kind="OutputPin" />
               <Pin Id="8ZPoBqJDTfU13lj6v5Pck4" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
               <Pin Id="PxTp77ezv34IYuKCgAQ4N8" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -43,11 +43,11 @@
                 <Choice Kind="ProcessAppFlag" Name="Drag" />
               </p:NodeReference>
               <Pin Id="5uFxn0jnZO8pQFLB9epM5S" Name="Node Context" Kind="InputPin" IsHidden="true" />
-              <Pin Id="rpi7bnZHLyrf4fuL4OQp3g" Name="Input" Kind="InputPin" />
-              <Pin Id="rsYlEwgd8r61HrV03Yp2Tn" Name="Is Dragging" Kind="InputPin" />
-              <Pin Id="dDv5R9ZBoZu3cLk25YrLxW" Name="Translation" Kind="InputPin" />
-              <Pin Id="bU3SS10SkTHATTqUv8CkX3" Name="Moves Element" Kind="InputPin" />
-              <Pin Id="j4iwy2SerFu004sgxardux" Name="Axis" Kind="InputPin" />
+              <Pin Id="rpi7bnZHLyrf4fuL4OQp3g" Name="Input" Kind="InputPin" IsHidden="true" />
+              <Pin Id="rsYlEwgd8r61HrV03Yp2Tn" Name="Is Dragging" Kind="InputPin" IsHidden="true" />
+              <Pin Id="dDv5R9ZBoZu3cLk25YrLxW" Name="Translation" Kind="InputPin" IsHidden="true" />
+              <Pin Id="bU3SS10SkTHATTqUv8CkX3" Name="Moves Element" Kind="InputPin" IsHidden="true" />
+              <Pin Id="j4iwy2SerFu004sgxardux" Name="Axis" Kind="InputPin" IsHidden="true" />
               <Pin Id="UwYxpQITWysviP3pTpfv5B" Name="Output" Kind="OutputPin" />
               <Pin Id="xVYC5EptpgyvDwVNlSaC3i" Name="Min" Kind="InputPin" IsHidden="true" />
               <Pin Id="2gB66aUMYyqlGF6mOHqffJ" Name="Max" Kind="InputPin" IsHidden="true" />
@@ -232,7 +232,7 @@
             <Pin Id="b8xSQ05IldtP1cFOhBMBj3" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="NkNskJqxSUzHO3HWiOdteY" Name="Points" Kind="InputPin" />
             <Pin Id="mZBaeXjaRIz7VPeuSchIm3" Name="Closed" Kind="InputPin" />
-            <Pin Id="4sKswtDgpQzOI8snPiUwpU" Name="Transform" Kind="InputPin" />
+            <Pin Id="4sKswtDgpQzOI8snPiUwpU" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="lOY9oeylhzE5OQMnS58Cox" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="18Y8AiiYHzW14eIKNgKj6C" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="p13R7RqqVzkKZHgohk9Izb" Name="Output" Kind="OutputPin" />
@@ -314,10 +314,10 @@
             <Pin Id="WpX826O40Oh0xou8ywqLo0" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="q4UQDYk8Bk6gJJg9BdyCFD" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="02GPSSDLDw8wKRbHSecQJ2" Name="Input" Kind="InputPin" />
-            <Pin Id="imsgHEFgG3BWw5v1XQJtsb" Name="Space" Kind="InputPin" />
-            <Pin Id="sUXXJN26Jjp2uAxk2SFSJA" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="imsgHEFgG3BWw5v1XQJtsb" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="sUXXJN26Jjp2uAxk2SFSJA" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="N0OKahWUnKjL7qZYdsNHI3" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="am0hBtILPoe7nRkVuOi6vy" Name="Enabled" Kind="InputPin" />
+            <Pin Id="am0hBtILPoe7nRkVuOi6vy" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="CBuht0blkW2D1SIIZOLpT4" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="kuQJo3gt1KoP7p9nXBSKCs" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="LnPS792VSkqqqNgneMuzF5" Name="Title" Kind="InputPin" />
@@ -329,7 +329,7 @@
             <Pin Id="Mj1Fcqki4D4Ouyzhfj8CTi" Name="Window" Kind="InputPin" IsHidden="true" />
             <Pin Id="FuU8pODsP8wLLJoWiQRpPs" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="d2k02BMV7nJZSg9OxipTJ1" Bounds="85,720,830,190" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The circles are Point nodes, defined in this patch (Circle, Drag and Translate): one Point in a ForEach over the start positions. Their Position outputs, the centres of the circles, are the Points of the Polyline, so dragging a circle reshapes the chain. Translation sets the start position, Radius the size of the circles.&#xD;&#xA;- Points are in units of the Renderer Space (1 unit = 100 DIP, origin top left), in the space of the parent. A Polyline needs a Stroke Width above 0 and at least two points.&#xD;&#xA;- Cap shapes the two ends of an open chain, so it has no effect while Closed is on. Join shapes the corners; Miter (default) turns into a Bevel at sharp angles, Miter Limit sets where.&#xD;&#xA;- Defaults follow Skia: Cap Flat, Join Miter.&#xD;&#xA;- Points that change every frame cost real time: stay below about 4000 points, or move the shape with Transform and Trim instead.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+          <Pad Id="d2k02BMV7nJZSg9OxipTJ1" Bounds="85,720,830,232" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The circles are Point nodes, defined in this patch (Circle, Drag and Translate): one Point in a ForEach over the start positions. Their Position outputs, the centres of the circles, are the Points of the Polyline, so dragging a circle reshapes the chain. Translation sets the start position, Radius the size of the circles.&#xD;&#xA;- Points are in units of the Renderer Space (1 unit = 100 DIP, origin top left), in the space of the parent. A Polyline needs a Stroke Width above 0 and at least two points.&#xD;&#xA;- Cap shapes the two ends of an open chain, so it has no effect while Closed is on. Join shapes the corners; Miter (default) turns into a Bevel at sharp angles, Miter Limit sets where.&#xD;&#xA;- Defaults follow Skia: Cap Flat, Join Miter.&#xD;&#xA;- Points that change every frame cost real time: stay below about 4000 points, or move the shape with Transform and Trim instead.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

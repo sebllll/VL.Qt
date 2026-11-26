@@ -139,10 +139,10 @@
                 <Pin Id="ZODEgWy7HAGYnVIdKTTcOY" Name="Input" Kind="InputPin" />
                 <Pin Id="VnQ73k8G7aouCG5jDPL2L6" Name="Size" Kind="InputPin" DefaultValue="1000, 300" />
                 <Pin Id="6Taqpr5SoSPEGrSpeCTB3A" Name="Output" Kind="OutputPin" />
-                <Pin Id="DF7ngHPgRGDQR4lh5sNIzi" Name="Space" Kind="InputPin" />
-                <Pin Id="EAguHBYg2aDP2kPabRkhmj" Name="Clear Color" Kind="InputPin" />
-                <Pin Id="GQ5E4iPvZPOLDMzL4NRXEf" Name="Format" Kind="InputPin" />
-                <Pin Id="QdbqQyeu6yULnAZ040hDi5" Name="Enabled" Kind="InputPin" />
+                <Pin Id="DF7ngHPgRGDQR4lh5sNIzi" Name="Space" Kind="InputPin" IsHidden="true" />
+                <Pin Id="EAguHBYg2aDP2kPabRkhmj" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+                <Pin Id="GQ5E4iPvZPOLDMzL4NRXEf" Name="Format" Kind="InputPin" IsHidden="true" />
+                <Pin Id="QdbqQyeu6yULnAZ040hDi5" Name="Enabled" Kind="InputPin" IsHidden="true" />
                 <Pin Id="UOW1ZQK10TmQApQNcZjXBn" Name="Input Notifications" Kind="InputPin" IsHidden="true" />
                 <Pin Id="Fatts76IimINF1rZdLaKnO" Name="Debug" Kind="InputPin" IsHidden="true" />
               </Node>
@@ -257,7 +257,7 @@
             <Pin Id="Rn9mGTEIXgSQd19UCYbcVn" Name="Count" Kind="InputPin" />
             <Pin Id="UV0lF6yzdkUPqzw4oBjgZs" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="BUkroTe82qpPk2n8aFqJZt" Bounds="85,850,840,179" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- All QtTextures of a frame render together at the start of Stride's draw, on a Qt render thread: every texture is ready in the same frame. With the hidden pin Render Threads at 0 on every QtTexture they render on the main thread, for diagnosis; a larger value renders heavy scenes on several threads.&#xD;&#xA;- Every QtTexture holds a texture of its Size in pixels: many large ones cost GPU memory.&#xD;&#xA;- QtTexture outputs premultiplied alpha. AlphaBlend expects straight alpha: it multiplies RGB by alpha a second time and makes half-transparent parts too dark. Where straight alpha is needed, unpremultiply the texture first (RGB divided by alpha).&#xD;&#xA;- Windows only (Direct3D 11). QtTexture is Experimental: pins and behavior may still change.">
+          <Pad Id="BUkroTe82qpPk2n8aFqJZt" Bounds="85,850,840,218" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- All QtTextures of a frame render together at the start of Stride's draw, on a Qt render thread: every texture is ready in the same frame. With the hidden pin Render Threads at 0 on every QtTexture they render on the main thread, for diagnosis; a larger value renders heavy scenes on several threads.&#xD;&#xA;- Every QtTexture holds a texture of its Size in pixels: many large ones cost GPU memory.&#xD;&#xA;- QtTexture outputs premultiplied alpha. AlphaBlend expects straight alpha: it multiplies RGB by alpha a second time and makes half-transparent parts too dark. Where straight alpha is needed, unpremultiply the texture first (RGB divided by alpha).&#xD;&#xA;- Windows only (Direct3D 11). QtTexture is Experimental: pins and behavior may still change.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

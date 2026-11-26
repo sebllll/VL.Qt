@@ -150,9 +150,9 @@
             <Pin Id="Trw9yLWcZnFvTPiCiZ1DqB" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="N1UXluYtzmFOPki8XAfKuH" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="Vk3kv1pLYdGFsEtuZAfJ3G" Name="Input" Kind="InputPin" />
-            <Pin Id="EXbXixau8FGlWaIpKFBNTP" Name="Space" Kind="InputPin" />
-            <Pin Id="vSn28L0g9SGxQXSKPqdpgD" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="S7h3pgsYNpFXHzUrA08oOT" Name="Enabled" Kind="InputPin" />
+            <Pin Id="EXbXixau8FGlWaIpKFBNTP" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="vSn28L0g9SGxQXSKPqdpgD" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="S7h3pgsYNpFXHzUrA08oOT" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="9PrbzesdLZGoIXSpzINlfR" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="6eHvx90wHpF85NnGF5RIYL" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="MPuWA4m8vfFQFgPZFKAvkL" Name="Title" Kind="InputPin" DefaultValue="HowTo Antialias Edges" />
@@ -178,7 +178,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="AxQG0busUoFTkmcScCw6sV" Bounds="85,590,830,180" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Qt Quick draws rectangles without edge antialiasing: with None, rotated edges and thin diagonal lines show stair steps. Switch the IOBox to X4 or X8 and watch the edges of both rectangles.&#xD;&#xA;- Cost (scene of 2000 rotated rectangles, 1280x720 window, Adreno X1-45): GPU time None 2.4 ms, X2 4.9 ms, X4 8.0 ms, X8 15.5 ms. A scene of a few shapes hardly notices it.&#xD;&#xA;- Effect layers (Blur, DropShadow, shader effects) and snapshots in the window follow the count of the window, so a higher count makes them more expensive too.&#xD;&#xA;- A change of the count replaces the window once on screen (tens of ms, new window handle); the scene and its state stay.&#xD;&#xA;- QtTexture [Stride] has the same pin (default None, Stride can antialias the final image itself); its layers stay single-sample.">
+          <Pad Id="AxQG0busUoFTkmcScCw6sV" Bounds="85,590,830,220" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Qt Quick draws rectangles without edge antialiasing: with None, rotated edges and thin diagonal lines show stair steps. Switch the IOBox to X4 or X8 and watch the edges of both rectangles.&#xD;&#xA;- Cost (scene of 2000 rotated rectangles, 1280x720 window, Adreno X1-45): GPU time None 2.4 ms, X2 4.9 ms, X4 8.0 ms, X8 15.5 ms. A scene of a few shapes hardly notices it.&#xD;&#xA;- Effect layers (Blur, DropShadow, shader effects) and snapshots in the window follow the count of the window, so a higher count makes them more expensive too.&#xD;&#xA;- A change of the count replaces the window once on screen (tens of ms, new window handle); the scene and its state stay.&#xD;&#xA;- QtTexture [Stride] has the same pin (default None, Stride can antialias the final image itself); its layers stay single-sample.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

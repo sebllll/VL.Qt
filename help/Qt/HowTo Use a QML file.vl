@@ -100,7 +100,7 @@
             <Pin Id="DvujFJTJ9cJLCDkOc5W6If" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="LfFhaD59jB2N9QbZZS2ETg" Name="File" Kind="InputPin" />
             <Pin Id="RKKY6c5rdXHNfgVwoEyLQj" Name="Properties" Kind="InputPin" />
-            <Pin Id="TLAg1TBSD9PP3GsAAGdFZR" Name="Size" Kind="InputPin" />
+            <Pin Id="TLAg1TBSD9PP3GsAAGdFZR" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="KA32VP2ZwbGQKxPsxlFpfU" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="KioJYfRJouiPWDFlIkcxFb" Name="Transform" Kind="InputPin" />
             <Pin Id="JDlhMBHBMeEMLNYrnMDJiL" Name="Anchor" Kind="InputPin" IsHidden="true" />
@@ -134,9 +134,9 @@
             <Pin Id="EnvxBj7ujpvQUcPCZ8RXmE" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="CkFxYnm68huMn4kYX8AjWa" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="H9bwDZbhfWtLCBhyv6jj7L" Name="Input" Kind="InputPin" />
-            <Pin Id="D0Kg3x7Z6svN1b0cJpFIwd" Name="Space" Kind="InputPin" />
-            <Pin Id="KYWNQR4RwVVOborjRtn1EY" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="SlDuntFkTfxLHiC8IVbzke" Name="Enabled" Kind="InputPin" />
+            <Pin Id="D0Kg3x7Z6svN1b0cJpFIwd" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KYWNQR4RwVVOborjRtn1EY" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="SlDuntFkTfxLHiC8IVbzke" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="E0iF0uktA0UMs2Sh2UzECu" Name="Title" Kind="InputPin" />
             <Pin Id="QdADxAadsMzNarWere0B9W" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="NbQHFNNyWfHOqiq7YtIt0D" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -147,7 +147,7 @@
             <Pin Id="TMm9Oa5pcHYLraAIW5xyAY" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="KieHt8raoOpOivTyF2qVmb" Name="Window" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="PjfStHrn77zMXPQhbxcFpR" Bounds="85,785,840,255" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The file is QmlElement Example.qml next to this patch: value (in), percent (changes back), signal milestone(percent).&#xD;&#xA;- Only what the root of the file declares (property ..., signal ...) comes back, not what Item inherits.&#xD;&#xA;- No echo: the value you set is not reported back. Changes QML makes afterwards (animation, bindings) are.&#xD;&#xA;- Auto Size takes width/height of the root (implicitWidth/Height, unless the file declares a size); off: Size sets them.&#xD;&#xA;- Saving the file, another *.qml or qmldir in its folder reloads it; the outputs start empty again. Subfolders and .js are not watched.&#xD;&#xA;- A key removed from Properties is not reset in QML. Errors (syntax, unknown name, wrong type, import of a non-LGPL module) show at the node and in the log.&#xD;&#xA;- QML animations follow the frame clock, a QML Timer runs on wall time.&#xD;&#xA;- Types both ways: float, int, bool, string, Color4, Vector2/3/4, RectangleF.">
+          <Pad Id="PjfStHrn77zMXPQhbxcFpR" Bounds="85,785,840,311" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The file is QmlElement Example.qml next to this patch: value (in), percent (changes back), signal milestone(percent).&#xD;&#xA;- Only what the root of the file declares (property ..., signal ...) comes back, not what Item inherits.&#xD;&#xA;- No echo: the value you set is not reported back. Changes QML makes afterwards (animation, bindings) are.&#xD;&#xA;- Auto Size takes width/height of the root (implicitWidth/Height, unless the file declares a size); off: Size sets them.&#xD;&#xA;- Saving the file, another *.qml or qmldir in its folder reloads it; the outputs start empty again. Subfolders and .js are not watched.&#xD;&#xA;- A key removed from Properties is not reset in QML. Errors (syntax, unknown name, wrong type, import of a non-LGPL module) show at the node and in the log.&#xD;&#xA;- QML animations follow the frame clock, a QML Timer runs on wall time.&#xD;&#xA;- Types both ways: float, int, bool, string, Color4, Vector2/3/4, RectangleF.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

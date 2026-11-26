@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="28J4W8Bzld2g0hyjgkG1Fi" Bounds="85,1059,830,126" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- LoadImage (Async) decodes in a worker and uploads over several frames, the frame never blocks. LoadImage [Qt] instead would block the frame while it loads.&#xD;&#xA;- Switching with Index is only a pointer change. Change Index while the window runs.&#xD;&#xA;- F5 (Debug overlay on the Renderer) shows the image resources: count, state and GPU memory.&#xD;&#xA;- Stable 60 fps: load images up front or async, never synchronously in the running frame.&#xD;&#xA;- Path is relative to this patch.">
+          <Pad Id="28J4W8Bzld2g0hyjgkG1Fi" Bounds="85,1059,830,154" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- LoadImage (Async) decodes in a worker and uploads over several frames, the frame never blocks. LoadImage [Qt] instead would block the frame while it loads.&#xD;&#xA;- Switching with Index is only a pointer change. Change Index while the window runs.&#xD;&#xA;- F5 (Debug overlay on the Renderer) shows the image resources: count, state and GPU memory.&#xD;&#xA;- Stable 60 fps: load images up front or async, never synchronously in the running frame.&#xD;&#xA;- Path is relative to this patch.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -148,7 +148,7 @@
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="83,880,145,19" Id="zC5T4uUhf7kvmlP7HVDctQ">
+          <Node Bounds="83,880,85,19" Id="zC5T4uUhf7kvmlP7HVDctQ">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -164,13 +164,13 @@
             <Pin Id="O88eb0ogET9D9XyYq6B0Fi" Name="Fill Mode" Kind="InputPin" DefaultValue="Fit" />
             <Pin Id="7FlaZ7Vt0SXjMpu3uDxYYM" Name="Output" Kind="OutputPin" />
             <Pin Id="RiXSml4O43nN8xnS0GvFM8" Name="Smooth" Kind="InputPin" IsHidden="true" />
-            <Pin Id="fGmzWkpAePcEJIukB4geqN" Name="Opacity" Kind="InputPin" />
+            <Pin Id="fGmzWkpAePcEJIukB4geqN" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="DIrkCWNhu5zNo3RXipClAB" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="fngAFTCloiADN5RpVI2XQW" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="UGxStxE6VzQOGlBZzI8z7A" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="A3T6tQ3BTeMM9CSAbDATci" Name="Debug" Kind="InputPin" IsHidden="true" />
-            <Pin Id="hX1ssrKrxqVqmCplppjs46" Name="Interaction" Kind="InputPin" />
-            <Pin Id="IWqz7DoKmPEQEB4iXcbFmA" Name="Effect" Kind="InputPin" />
+            <Pin Id="hX1ssrKrxqVqmCplppjs46" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="IWqz7DoKmPEQEB4iXcbFmA" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="83,970,85,19" Id="MqXXQ8agOMTNwncxvjcnqc">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
@@ -184,9 +184,9 @@
             <Pin Id="fKN7xVGkjwskHk7egyFWZY" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="9Zmti18c6EudM7Oyf5TNS0" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="5kOY2oNzN2m1ElKncz8Hky" Name="Input" Kind="InputPin" />
-            <Pin Id="whjpU05mc4J1WRcQ1uhyMD" Name="Space" Kind="InputPin" />
-            <Pin Id="J2OXtPAtLpByQxCGClbaNF" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="DpCWNX0D1lZEzgeiwBxfZC" Name="Enabled" Kind="InputPin" />
+            <Pin Id="whjpU05mc4J1WRcQ1uhyMD" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="J2OXtPAtLpByQxCGClbaNF" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DpCWNX0D1lZEzgeiwBxfZC" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="GGQccOif7UuXUGfdWG5yP8" Name="Title" Kind="InputPin" />
             <Pin Id="Yib2eNUS0hmi4Fs9Z6YkRY" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="U7oe1wNWqku5Nr50DjqG96" Name="Perf" Kind="OutputPin" IsHidden="true" />
