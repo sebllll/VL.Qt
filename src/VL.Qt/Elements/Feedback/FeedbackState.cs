@@ -5,16 +5,6 @@ using VL.Qt.Wire;
 
 namespace VL.Qt.Elements
 {
-    /// <summary>What a message of a feedback slot is (<see cref="FeedbackState.SetMessage"/>).</summary>
-    internal enum MessageKind
-    {
-        /// <summary>A warning shown at the element node.</summary>
-        Warning,
-
-        /// <summary>The failed Build of an <see cref="Styles.IStylable"/> child, shown at the parent's node.</summary>
-        BuildError,
-    }
-
     /// <summary>
     /// State of one feedback slot (one element instance of a spread output). Main thread only.
     /// Every section has one writer: the <see cref="Reconciliation.FeedbackRouter"/> writes what Qt reports (setters are internal), the node

@@ -146,15 +146,4 @@ namespace VL.Qt.Tests
             Assert.That(s.TryTake(S(9), out _), Is.False, "restored geometry = pin value");
         }
     }
-
-    internal static class ByteArrayExtensions
-    {
-        public static byte[] Concat(this byte[] a, byte[] b)
-        {
-            var r = new byte[a.Length + b.Length];
-            a.CopyTo(r, 0);
-            b.CopyTo(r, a.Length);
-            return r;
-        }
-    }
 }

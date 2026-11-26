@@ -9,15 +9,6 @@ using VL.Qt.Wire;
 namespace VL.Qt.Shaders
 {
     /// <summary>
-    /// One member of the uniform block, raw from QtNative. Type is the GLSL name as written by vlqt_shader_reflect
-    /// ("float", "vec4", "mat4", ..., "other" for anything else); ArrayLength 0 = no array.
-    /// </summary>
-    internal sealed record ReflectedUniform(string Name, string Type, int ArrayLength);
-
-    /// <summary>One combined image sampler, raw from QtNative.</summary>
-    internal sealed record ReflectedSampler(string Name, int Binding);
-
-    /// <summary>
     /// Result of vlqt_shader_reflect: raw facts of one stage. Pin rules (filter qt_*, source → Input,
     /// type mapping) are not applied here but in <see cref="ShaderPinModel"/>.
     /// </summary>

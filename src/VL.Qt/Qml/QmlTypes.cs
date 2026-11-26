@@ -7,36 +7,6 @@ using VL.Qt.Wire;
 namespace VL.Qt.Qml
 {
     /// <summary>
-    /// QML value types that get a pin. The wire form is <see cref="QmlValue"/> of the QmlElement, so every
-    /// kind maps to one CLR pin type and one <c>Protocol.ValueType</c> value type.
-    /// </summary>
-    internal enum QmlValueKind
-    {
-        /// <summary>QML <c>real</c> or <c>double</c> → float (wire f32).</summary>
-        Real,
-        /// <summary>QML <c>int</c> → int.</summary>
-        Int,
-        /// <summary>QML <c>bool</c> → bool.</summary>
-        Bool,
-        /// <summary>QML <c>string</c> → string.</summary>
-        String,
-        /// <summary>QML <c>color</c> → Stride Color4 (straight alpha).</summary>
-        Color,
-        /// <summary>QML <c>vector2d</c> → Stride Vector2.</summary>
-        Vector2D,
-        /// <summary>QML <c>vector3d</c> → Stride Vector3.</summary>
-        Vector3D,
-        /// <summary>QML <c>vector4d</c> → Stride Vector4.</summary>
-        Vector4D,
-        /// <summary>QML <c>rect</c> → Stride RectangleF (x, y, width, height).</summary>
-        Rect,
-        /// <summary>QML <c>point</c> → Stride Vector2 (x, y).</summary>
-        Point,
-        /// <summary>QML <c>size</c> → Stride Vector2 (width, height).</summary>
-        Size,
-    }
-
-    /// <summary>
     /// Pin model mapping of the QML node factory: QML type name → <see cref="QmlValueKind"/> → CLR pin type → wire value
     /// (<see cref="QmlValue"/>). Everything not listed here (<c>alias</c>, <c>var</c>, <c>list&lt;…&gt;</c>, <c>url</c>,
     /// <c>font</c>, enums, object types) gets no pin; the parser reports it as an info message.
@@ -142,16 +112,5 @@ namespace VL.Qt.Qml
             1 => QmlSignalShape.Values,
             _ => QmlSignalShape.Signals,
         };
-    }
-
-    /// <summary>What the output pin of a declared signal carries, see <see cref="QmlTypes.SignalPinType"/>.</summary>
-    internal enum QmlSignalShape
-    {
-        /// <summary>No arguments: bool, true in the frame the signal fired.</summary>
-        Bang,
-        /// <summary>One argument: Spread of its values, one per emission this frame.</summary>
-        Values,
-        /// <summary>Two or more arguments: Spread&lt;QmlSignal&gt;, one per emission this frame.</summary>
-        Signals,
     }
 }
