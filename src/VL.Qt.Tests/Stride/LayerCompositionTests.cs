@@ -3,7 +3,7 @@ using Stride.Core.Mathematics;
 using Stride.Graphics;
 using VL.Qt.Stride;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Stride
 {
     /// <summary>LayerComposition of QtRenderer, compiled in from VL.Qt.Stride: format decision and input mapping.</summary>
     public class LayerCompositionTests

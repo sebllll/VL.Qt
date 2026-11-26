@@ -2,7 +2,7 @@
 using Stride.Core.Mathematics;
 using VL.Qt.Stride;
 
-namespace VL.Qt.Tests
+namespace VL.Qt.Tests.Stride
 {
     /// <summary>TexturePixelMapping of ToTexturePixels, compiled in from VL.Qt.Stride: window position to texture pixel.</summary>
     public class TexturePixelMappingTests
@@ -91,6 +91,47 @@ namespace VL.Qt.Tests
 
             // Identity: the window is clip space and the unit quad covers its middle half.
             AssertPixel(identity.Map(new Vector2(100, 50), s_client), 50, 25);
+        }
+
+        [Test]
+        public void PositionsOutsideTheQuadMapOutsideTheTexture()
+        {
+            var mapping = Fullscreen();
+            Assert.That(mapping.Map(new Vector2(-100, 50), s_client).X, Is.LessThan(0));
+            Assert.That(mapping.Map(new Vector2(100, 200), s_client).Y, Is.GreaterThan(s_texture.Y));
+        }
+
+        [Test]
+        public void QuadMovedInWorldShiftsThePixels()
+        {
+            // The quad covers x = 0 ... 1 of clip space, the right half of the window.
+            var world = Matrix.Scaling(1, 2, 1) * Matrix.Translation(0.5f, 0, 0);
+            var mapping = new TexturePixelMapping(world, Matrix.Identity, Matrix.Identity, s_texture);
+            AssertPixel(mapping.Map(new Vector2(100, 50), s_client), 0, 25);
+            AssertPixel(mapping.Map(new Vector2(200, 100), s_client), 100, 50);
+        }
+
+        [Test]
+        public void NegativeScaleMirrorsTheTexture()
+        {
+            var mapping = new TexturePixelMapping(Matrix.Scaling(-2, 2, 1), Matrix.Identity, Matrix.Identity, s_texture);
+            AssertPixel(mapping.Map(new Vector2(0, 0), s_client), 100, 0);
+            AssertPixel(mapping.Map(new Vector2(200, 100), s_client), 0, 50);
+        }
+
+        [Test]
+        public void TextureSizeScalesThePixels()
+        {
+            var mapping = new TexturePixelMapping(Matrix.Scaling(2, 2, 1), Matrix.Identity, Matrix.Identity, new Vector2(1920, 1080));
+            Assert.That(mapping.TextureSize, Is.EqualTo(new Vector2(1920, 1080)));
+            AssertPixel(mapping.Map(new Vector2(200, 100), s_client), 1920, 1080);
+        }
+
+        [Test]
+        public void NonFiniteMatrixGivesMiss()
+        {
+            var mapping = new TexturePixelMapping(Matrix.Scaling(float.NaN, 1, 1), Matrix.Identity, Matrix.Identity, s_texture);
+            Assert.That(mapping.Map(new Vector2(100, 50), s_client), Is.EqualTo(TexturePixelMapping.Miss));
         }
     }
 }
