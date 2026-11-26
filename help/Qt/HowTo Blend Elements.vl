@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="8tGz6iMRaSfMkXaPuoSSEh" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Blend [Qt.Effects]&#xD;&#xA;- Layer: any element (here a Text) blended over the base&#xD;&#xA;- Mode: Multiply, Screen, Overlay, Add, Difference, ...&#xD;&#xA;- Opacity: strength of the layer, 0 = element only">
+          <Pad Id="8tGz6iMRaSfMkXaPuoSSEh" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Blend [Qt.Effects]&#xD;&#xA;- Layer: any element (here a Text) blended over the base&#xD;&#xA;- Blend Mode: Multiply, Screen, Overlay, Add, Difference, ...&#xD;&#xA;- Opacity: strength of the layer, 0 = element only">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="8ORukDTXYkPSrUzOZhHDlx" Bounds="85,769,830,142" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Blend works like the blend modes of an image editor. Modes: Normal, Multiply, Screen, Overlay, Add, Subtract, Difference, Darken, Lighten, Soft Light, Hard Light, Color Dodge, Color Burn.&#xD;&#xA;- The Layer sits on the size of the element, also behind a Blur, and is not drawn itself.&#xD;&#xA;- Blend is an effect: connect it to the Effect pin of the base element. The base is the element with the effects before Blend.&#xD;&#xA;- Where the base is transparent the layer shows unblended, so use an opaque base (here a Rectangle). Where the layer is transparent the base stays unchanged.&#xD;&#xA;- Blend is a shader effect: it ends a run of Blur/DropShadow/... nodes and costs a layer of its own.">
+          <Pad Id="8ORukDTXYkPSrUzOZhHDlx" Bounds="85,769,830,173" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Blend works like the blend modes of an image editor. Modes: Normal, Multiply, Screen, Overlay, Add, Subtract, Difference, Darken, Lighten, Soft Light, Hard Light, Color Dodge, Color Burn.&#xD;&#xA;- The Layer sits on the size of the element, also behind a Blur, and is not drawn itself.&#xD;&#xA;- Blend is an effect: connect it to the Effect pin of the base element. The base is the element with the effects before Blend.&#xD;&#xA;- Where the base is transparent the layer shows unblended, so use an opaque base (here a Rectangle). Where the layer is transparent the base stays unchanged.&#xD;&#xA;- Blend is a shader effect: it ends a run of Blur/DropShadow/... nodes and costs a layer of its own.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -62,12 +62,12 @@
             </p:NodeReference>
             <Pin Id="OeifwxWAiLpY0PeOJmNozO" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="KemvRLgraIlKrWfVjDfrpO" Name="Size" Kind="InputPin" DefaultValue="3, 2" />
-            <Pin Id="eOoqMdLCGQxslq4j5OuLMy" Name="Transform" Kind="InputPin" />
+            <Pin Id="eOoqMdLCGQxslq4j5OuLMy" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="tGu1FOHkGNMrznDrYyddLI" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="8pk9EasEnQS4hyKT4dwi3S" Name="Text" Kind="InputPin" DefaultValue="Blend" />
-            <Pin Id="QIWi4yVM5Gcq5y0Lt5ETRr" Name="Font Family" Kind="InputPin" />
+            <Pin Id="QIWi4yVM5Gcq5y0Lt5ETRr" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="skzT40HJfadgwGXpu7fWAB" Name="Font Size" Kind="InputPin" DefaultValue="1.4" />
-            <Pin Id="3IvcdtbHBnget6ABtUxtPH" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
+            <Pin Id="3IvcdtbHBnget6ABtUxtPH" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="EKcVk1Sndq4ocVRvguAmet" Name="Italic" Kind="InputPin" IsHidden="true" />
             <Pin Id="os5ZiJTeadEQY1Xqi8ekHX" Name="Color" Kind="InputPin" DefaultValue="0.3, 0.6, 1, 1" />
             <Pin Id="95IX5zFknr0qxQGzyB3oz0" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
@@ -96,11 +96,11 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="SzeP57Q2XZxlez2GaK2N7f" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="mWGexbVRoevqCJB8J82GAh" Name="Input" Kind="InputPin" />
+            <Pin Id="mWGexbVRoevqCJB8J82GAh" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="QAwJX3p9AUoCvoIR31Qmm2" Name="Layer" Kind="InputPin" />
             <Pin Id="QILboH7iHD3PAAu8wTQMoQ" Name="Layer Sampler" Kind="InputPin" IsHidden="true" />
-            <Pin Id="e4bpuW1LNrotiVP68O2EYG" Name="Mode" Kind="InputPin" DefaultValue="Multiply" />
-            <Pin Id="WmFD45c0EhJ9cuaUGI43Wz" Name="Opacity" Kind="InputPin" />
+            <Pin Id="e4bpuW1LNrotiVP68O2EYG" Name="Blend Mode" Kind="InputPin" DefaultValue="Multiply" />
+            <Pin Id="WmFD45c0EhJ9cuaUGI43Wz" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="lmtvlTd9djeJdbqzFI2iA7" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="100,520,65,19" Id="rKTvywBzaIgo3KpMexPaUY">
@@ -113,9 +113,9 @@
             </p:NodeReference>
             <Pin Id="gK2KUg51CjKGji1AZ3PnMM" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="aIZi2GpXlOikiFIQsENbYj" Name="Size" Kind="InputPin" DefaultValue="3, 2" />
-            <Pin Id="bdmGB9R09JXEfaJCTk6ylF" Name="Transform" Kind="InputPin" />
+            <Pin Id="bdmGB9R09JXEfaJCTk6ylF" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="ZWfILOe4bELIl42LSgFP1a" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="UdEDdwo7kMuROmNRVyQj09" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.55, 0.2, 1" />
+            <Pin Id="UdEDdwo7kMuROmNRVyQj09" Name="Fill Color" Kind="InputPin" DefaultValue="0.9, 0.55, 0.2, 1" />
             <Pin Id="ChTLaUEPRC0mPPrfdPtUcJ" Name="Radius" Kind="InputPin" IsHidden="true" />
             <Pin Id="ajAlZXNvdprc7ce100jgDF" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="Kl5Yrk9PPflCGTikEOIEZO" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -147,12 +147,12 @@
             </p:NodeReference>
             <Pin Id="4Yk766qLuQWi3udZIWh4XE" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="BXvyO4gjGqe9pbjPEJ7QIo" Name="Size" Kind="InputPin" DefaultValue="3, 2" />
-            <Pin Id="FCXAo0bh9aX0eLKvm1IVsW" Name="Transform" Kind="InputPin" />
+            <Pin Id="FCXAo0bh9aX0eLKvm1IVsW" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="zW2zmCzYlbtOMsmRRsRkqo" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="DtcGlo4KUesOZ3wTIchy5N" Name="Text" Kind="InputPin" DefaultValue="Blend" />
-            <Pin Id="kPPXR7Hu2VVs84aM5p4ElD" Name="Font Family" Kind="InputPin" />
+            <Pin Id="kPPXR7Hu2VVs84aM5p4ElD" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="escFfXbmNXdsATyNi9lPBH" Name="Font Size" Kind="InputPin" DefaultValue="1.4" />
-            <Pin Id="Yq82HOk9HuJzpKpQHoXcU4" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
+            <Pin Id="Yq82HOk9HuJzpKpQHoXcU4" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="vMrNcQHV1eVr6117Ya3Jrv" Name="Italic" Kind="InputPin" IsHidden="true" />
             <Pin Id="WmkQdCbYinfRLtmrkVwPWU" Name="Color" Kind="InputPin" DefaultValue="0.3, 0.6, 1, 1" />
             <Pin Id="jHAgisnQUNieKnZwPdYTJn" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
@@ -180,11 +180,11 @@
               <Choice Kind="ProcessAppFlag" Name="Blend" />
             </p:NodeReference>
             <Pin Id="P7gfxds9ubCrxBqQo9rS7c" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="8TOO6vsQ8gExRf6uIgfcbc" Name="Input" Kind="InputPin" />
+            <Pin Id="8TOO6vsQ8gExRf6uIgfcbc" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="riN8LfMXQzPsAwRtaUno3L" Name="Layer" Kind="InputPin" />
             <Pin Id="PXp01NTJot2L6jHQvNk4do" Name="Layer Sampler" Kind="InputPin" IsHidden="true" />
-            <Pin Id="EFi3wYRwhEKarbEauYkN0I" Name="Mode" Kind="InputPin" DefaultValue="Screen" />
-            <Pin Id="CQ04B2MSjhWanRhXJ8PHS3" Name="Opacity" Kind="InputPin" />
+            <Pin Id="EFi3wYRwhEKarbEauYkN0I" Name="Blend Mode" Kind="InputPin" DefaultValue="Screen" />
+            <Pin Id="CQ04B2MSjhWanRhXJ8PHS3" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="5IZ2s7Ce6iA6rWhVUUYCjF" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="420,520,65,19" Id="5xR41RuqNYXrqHYuKPLY3j">
@@ -197,9 +197,9 @@
             </p:NodeReference>
             <Pin Id="f6qsQ82Vbq6SaRMm5cgHys" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="Xkgmb8zK3fNcHJYuplO9g7" Name="Size" Kind="InputPin" DefaultValue="3, 2" />
-            <Pin Id="sPUbELLJoH6L6tjrzYE1bn" Name="Transform" Kind="InputPin" />
+            <Pin Id="sPUbELLJoH6L6tjrzYE1bn" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="SM8gJCUrT5bffbiaqmkfMI" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="cumehCNBUnIsz8CAfsMbrB" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.55, 0.2, 1" />
+            <Pin Id="cumehCNBUnIsz8CAfsMbrB" Name="Fill Color" Kind="InputPin" DefaultValue="0.9, 0.55, 0.2, 1" />
             <Pin Id="dZgEo6OrelpCq6LSIKKwVv" Name="Radius" Kind="InputPin" IsHidden="true" />
             <Pin Id="S5DdwnrsU6AWvaPR0hOal7" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="cNvazJEcSRlwZAdM7ADbPF" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -231,12 +231,12 @@
             </p:NodeReference>
             <Pin Id="Mq7fCjNiSAVTmxAmqFpR2y" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="BUh4oQ1ZoMBqFFkbzHwdhq" Name="Size" Kind="InputPin" DefaultValue="3, 2" />
-            <Pin Id="gdq4FnDuDHKuf3UJ5iTXqE" Name="Transform" Kind="InputPin" />
+            <Pin Id="gdq4FnDuDHKuf3UJ5iTXqE" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="7a1iZgvH5p6jdyMsGIDMl0" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="A4Zdz8rns0JAr7zSQRc23w" Name="Text" Kind="InputPin" DefaultValue="Blend" />
-            <Pin Id="9LdSAANTHV9Yz6Reu4OM4P" Name="Font Family" Kind="InputPin" />
+            <Pin Id="9LdSAANTHV9Yz6Reu4OM4P" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="WmbeJ1RTh8JKHetphjc6su" Name="Font Size" Kind="InputPin" DefaultValue="1.4" />
-            <Pin Id="XNLijsjSXQ0rvPBH0LUuzq" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
+            <Pin Id="XNLijsjSXQ0rvPBH0LUuzq" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="66VLiaTjcut6AvpkQYuck6" Name="Italic" Kind="InputPin" IsHidden="true" />
             <Pin Id="ErKXG7hdes7z1lnzzbKjKR" Name="Color" Kind="InputPin" DefaultValue="0.3, 0.6, 1, 1" />
             <Pin Id="zCt0OuwmB7LDkXXXZVbxsq" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
@@ -264,11 +264,11 @@
               <Choice Kind="ProcessAppFlag" Name="Blend" />
             </p:NodeReference>
             <Pin Id="3yuIXFowfbPOZKlWplEtcp" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="1BFJYY24NfA48YjwNHSh1i" Name="Input" Kind="InputPin" />
+            <Pin Id="1BFJYY24NfA48YjwNHSh1i" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="rsCmcHzK32hi3GG8RbcdsM" Name="Layer" Kind="InputPin" />
             <Pin Id="GzDmBizwjEXM10FJJY5ocl" Name="Layer Sampler" Kind="InputPin" IsHidden="true" />
-            <Pin Id="PjRZPUfaxfryNM8Vp9lV4a" Name="Mode" Kind="InputPin" DefaultValue="Difference" />
-            <Pin Id="4PaqSmYDda7wZM9UZLItWG" Name="Opacity" Kind="InputPin" />
+            <Pin Id="PjRZPUfaxfryNM8Vp9lV4a" Name="Blend Mode" Kind="InputPin" DefaultValue="Difference" />
+            <Pin Id="4PaqSmYDda7wZM9UZLItWG" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="eBfHsUI55BZ3fq5K9OXToi" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="740,520,65,19" Id="JkLcvou0COpTCoEHpRW4SM">
@@ -281,9 +281,9 @@
             </p:NodeReference>
             <Pin Id="fnxqbmxgAenbqLk0OZCIpj" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="fJcfr4HTI5jTc9FROXlAUR" Name="Size" Kind="InputPin" DefaultValue="3, 2" />
-            <Pin Id="q9N3T1Jzr5JxY00BemNTDq" Name="Transform" Kind="InputPin" />
+            <Pin Id="q9N3T1Jzr5JxY00BemNTDq" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="Tdj1mG00KHbAzkOPfmtGsm" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="VPKMdEhsrkXC4Uq8DPWllk" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.55, 0.2, 1" />
+            <Pin Id="VPKMdEhsrkXC4Uq8DPWllk" Name="Fill Color" Kind="InputPin" DefaultValue="0.9, 0.55, 0.2, 1" />
             <Pin Id="ocWmQunlfN6tLc5z8i8QNV" Name="Radius" Kind="InputPin" IsHidden="true" />
             <Pin Id="1R41RM1HPsBpV9uafI4Q0G" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="vppR2i5uE4LCllaqAQfCF6" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -336,10 +336,10 @@
             <Pin Id="A7ghq4N6YPjjHRSLVCsZ7c" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="K8ZoZJxEoJgpniU0P7XWZ9" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="Mot9ClVJTJXyr7LuGLVyE8" Name="Input" Kind="InputPin" />
-            <Pin Id="xN98cZ9KzmSFazli7gEE5c" Name="Space" Kind="InputPin" />
+            <Pin Id="xN98cZ9KzmSFazli7gEE5c" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="vGoCLWvCzLuj4tMUoH7xtS" Name="Clear Color" Kind="InputPin" DefaultValue="0.06, 0.07, 0.1, 1" />
             <Pin Id="PiiUWyaAdtRMmDLCQrV5cg" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="QYCdX4whSkKfNWCsujDxEx" Name="Enabled" Kind="InputPin" />
+            <Pin Id="QYCdX4whSkKfNWCsujDxEx" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="s7pWkfIiRvwKJO7gbYm0hs" Name="Title" Kind="InputPin" DefaultValue="HowTo Blend Elements" />
             <Pin Id="x486tyA2pq1xrdJr6zZ6K2" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="Ewa1dQKrc3DOITTCMfzakF" Name="Perf" Kind="OutputPin" IsHidden="true" />

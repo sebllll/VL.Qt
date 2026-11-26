@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="AaEeQRhuFUVyWxbFVDYwkZ" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Rectangle [Qt]&#xD;&#xA;- Size, Radius, Color&#xD;&#xA;- Stroke Color and Stroke Width&#xD;&#xA;- Anchor: Center or TopLeft&#xD;&#xA;- Position and rotation via Transform">
+          <Pad Id="AaEeQRhuFUVyWxbFVDYwkZ" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Rectangle [Qt]&#xD;&#xA;- Size, Radius, Fill Color&#xD;&#xA;- Stroke Color and Stroke Width&#xD;&#xA;- Anchor: Center or TopLeft&#xD;&#xA;- Position and rotation via Transform">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -67,18 +67,18 @@
             <Pin Id="Tf0XyEsKkTURITaWvKDu2I" Name="Size" Kind="InputPin" />
             <Pin Id="DZzfFtqNA9lOIFD1BsT3hC" Name="Transform" Kind="InputPin" />
             <Pin Id="wsyNWzC3p6hGHoqNiLWFp4" Name="Anchor" Kind="InputPin" DefaultValue="TopLeft" />
-            <Pin Id="5UCXKithrYwqguUDZMuo1M" Name="Color" Kind="InputPin" />
+            <Pin Id="5UCXKithrYwqguUDZMuo1M" Name="Fill Color" Kind="InputPin" />
             <Pin Id="pkPZka6ZbWJkDYiWDbMKZm" Name="Radius" Kind="InputPin" />
             <Pin Id="RrrXPlXFTnMTBGw2SLEVK0" Name="Stroke Color" Kind="InputPin" />
             <Pin Id="eu5PhSB5A7cTccYC44XHN0" Name="Stroke Width" Kind="InputPin" />
             <Pin Id="ArxHn0SY9q1W5QS8t2N1BN" Name="Output" Kind="OutputPin" />
-            <Pin Id="iWiErrGD8MwA47sUIcsWmm" Name="Opacity" Kind="InputPin" />
+            <Pin Id="iWiErrGD8MwA47sUIcsWmm" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="SjkRc3S9NRdN0msmmakEkV" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="mttSxen0rwkmG3hpVIgHJg" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="UhHqXnOxfGdOhUlg4L1FCL" Name="Clip" Kind="InputPin" DefaultValue="False" IsHidden="true" />
             <Pin Id="ViclazdWxTjNDbi2istUDt" Name="Debug" Kind="InputPin" />
-            <Pin Id="SIY9J8IPRPYLbh0NmLLisK" Name="Interaction" Kind="InputPin" />
-            <Pin Id="TgJXTNDDJesQFU2492XunQ" Name="Effect" Kind="InputPin" />
+            <Pin Id="SIY9J8IPRPYLbh0NmLLisK" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TgJXTNDDJesQFU2492XunQ" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="100,760,85,19" Id="WHfqg0jaSujZQ0XjUjPKcj">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
@@ -93,10 +93,10 @@
             <Pin Id="TtUzNAom8eFQIVkw6i98Lo" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="J77Q6y3UFyMLzgpIvy8mwt" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="QrSQJiiKoWjErfBGJYoPts" Name="Input" Kind="InputPin" />
-            <Pin Id="tlEfZCVQVetjzxkIgVcHQh" Name="Space" Kind="InputPin" />
-            <Pin Id="M42soAYK3rIl7FDsQeU0we" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="tlEfZCVQVetjzxkIgVcHQh" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="M42soAYK3rIl7FDsQeU0we" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="LcUEPzF6hYMOcKYDKKiD92" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="qRqNMCbkcBn49dSN6a1BaV" Name="Enabled" Kind="InputPin" />
+            <Pin Id="qRqNMCbkcBn49dSN6a1BaV" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="TgDkSILEcDLL0tiLeAUmqv" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="u0vnFAOTK847OaOXqAcTR3" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="EpZ6nNsahdQ26aboluWbRr" Name="Title" Kind="InputPin" />
@@ -164,18 +164,18 @@
             <Pin Id="rdhRZfAgFJyuwKJ42XVqlF" Name="Size" Kind="InputPin" />
             <Pin Id="jo0u2WxH61sHx8sI5VgQer" Name="Transform" Kind="InputPin" />
             <Pin Id="mYqLARYXg2OzjLSGQyvbe1" Name="Anchor" Kind="InputPin" DefaultValue="Center" />
-            <Pin Id="BcJi4IthZpnxohIlcE64X3" Name="Color" Kind="InputPin" DefaultValue="0.2, 0.7, 1, 0.7" />
-            <Pin Id="kz5imtNwJN047us0Ur81nO" Name="Radius" Kind="InputPin" />
-            <Pin Id="99xHcrQ8lKL6Kr5opBdbVA" Name="Stroke Color" Kind="InputPin" />
-            <Pin Id="vfvQv1bKIPscpLpdcKHQlL" Name="Stroke Width" Kind="InputPin" />
+            <Pin Id="BcJi4IthZpnxohIlcE64X3" Name="Fill Color" Kind="InputPin" DefaultValue="0.2, 0.7, 1, 0.7" />
+            <Pin Id="kz5imtNwJN047us0Ur81nO" Name="Radius" Kind="InputPin" IsHidden="true" />
+            <Pin Id="99xHcrQ8lKL6Kr5opBdbVA" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="vfvQv1bKIPscpLpdcKHQlL" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
             <Pin Id="W5p8Yd9ugMDp1IvsVTVIYO" Name="Output" Kind="OutputPin" />
-            <Pin Id="b2xRk9wLVCdsMMEdDuW0wT" Name="Opacity" Kind="InputPin" />
+            <Pin Id="b2xRk9wLVCdsMMEdDuW0wT" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="EdFfwPI5hrBMvKgB2gXcCQ" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="M9Nqf5dA57YnhQ97ZmpVDd" Name="Scene Bounds" Kind="OutputPin" />
             <Pin Id="PErPXBhl1KDM53Z27KFthb" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="FlGfRlTW70gNHB5a4kLAU9" Name="Debug" Kind="InputPin" DefaultValue="False" />
-            <Pin Id="K39qXgQ6AaOMhjtZCOlse6" Name="Interaction" Kind="InputPin" />
-            <Pin Id="Mh9Wo67l8Y7QcuuQEXHSKn" Name="Effect" Kind="InputPin" />
+            <Pin Id="K39qXgQ6AaOMhjtZCOlse6" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Mh9Wo67l8Y7QcuuQEXHSKn" Name="Effect" Kind="InputPin" IsHidden="true" />
           </Node>
           <Node Bounds="100,690,655,19" Id="TvcP1bu9ygwa9VqKRUzxOX">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
@@ -200,7 +200,7 @@
             <Pin Id="vQ93ftL4hJivc3W45mVrIv" Name="Debug" Kind="InputPin" DefaultValue="False" IsHidden="true" />
             <Pin Id="3vFebmloHD4fA7GX6wO3Xo" Name="Interaction" Kind="InputPin" IsHidden="true" />
             <Pin Id="Y8FsODAPXtukuddWJpBEpF" Name="Effect" Kind="InputPin" IsHidden="true" />
-            <Pin Id="cw1T84vJigH3Q8yRBoR5bQ" Name="Style" Kind="InputPin" />
+            <Pin Id="cw1T84vJigH3Q8yRBoR5bQ" Name="Style" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="VryotI6UOkZLBgs6VymRyD" Comment="Anchor" Bounds="142,370,93,15" ShowValueBox="true" isIOBox="true" Value="TopLeft">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
@@ -216,7 +216,7 @@
             </p:ValueBoxSettings>
           </Pad>
           <Pad Id="R9ShHMA0tzVQOwqBdRiNJx" Comment="Phase" Bounds="501,340,35,15" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="fIdqmY17U1Rufrfs2n0ByD" Bounds="85,814,830,94" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Size is width and height in units (1 unit = 100 DIP). A Rectangle with width or height 0 is not drawn.&#xD;&#xA;- Position, rotation and scale come only from Transform. The Anchor is the point of the rectangle that sits at the origin and the pivot of Transform: TopLeft (orange) puts the top left corner on the Translation, Center (default, blue) centers the rectangle on it.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+          <Pad Id="fIdqmY17U1Rufrfs2n0ByD" Bounds="85,814,830,115" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Size is width and height in units (1 unit = 100 DIP). A Rectangle with width or height 0 is not drawn.&#xD;&#xA;- Position, rotation and scale come only from Transform. The Anchor is the point of the rectangle that sits at the origin and the pivot of Transform: TopLeft (orange) puts the top left corner on the Translation, Center (default, blue) centers the rectangle on it.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

@@ -22,30 +22,33 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(PointerButtons Buttons, PointerDevices Devices);
 
-        readonly InteractionNode<Props> _node;
-        IChannel<bool>? _active;
-        IChannel<Vector2>? _position;
-        bool _lastActive;
-        Vector2 _lastPosition;
+        private readonly InteractionNodeCore<Props> _node;
+        private IChannel<bool>? _active;
+        private IChannel<Vector2>? _position;
+        private bool _lastActive;
+        private Vector2 _lastPosition;
 
         public PointNode(NodeContext nodeContext)
-            => _node = new InteractionNode<Props>(nodeContext, Create);
+            => _node = new InteractionNodeCore<Props>(nodeContext, Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal PointNode(Func<string, IDisposable> addWarning)
-            => _node = new InteractionNode<Props>(addWarning, Create);
+        internal PointNode(NodeErrors messages)
+            => _node = new InteractionNodeCore<Props>(messages, Create);
 
-        static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new PointInteraction(previous, slot, p.Buttons, p.Devices);
 
-        internal InteractionNode<Props> Core => _node;
+        internal InteractionNodeCore<Props> Core => _node;
 
         /// <summary>Adds a point handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
-        /// <param name="isActive">Optional channel: true while a point (mouse button, finger, pen) is down on the element, with Buttons None also while the mouse is over it, i.e. while Position is valid (written by Qt, author "Qt").</param>
-        /// <param name="position">Optional channel: position of the point local to the element, in units, written on change while active (author "Qt"). Keeps the last position after the release or when the mouse leaves.</param>
-        /// <param name="buttons">Mouse buttons that count. None: the mouse counts while it hovers the element (no press needed), touch and pen while down.</param>
+        /// <param name="isActive">Optional channel: true while a point (mouse button, finger, pen) is down on the element, with Buttons
+        /// None also while the mouse is over it, i.e. while Position is valid (written by Qt, author "Qt").</param>
+        /// <param name="position">Optional channel: position of the point local to the element, in units, written on change while active
+        /// (author "Qt"). Keeps the last position after the release or when the mouse leaves.</param>
+        /// <param name="buttons">Mouse buttons that count. None: the mouse counts while it hovers the element (no press needed), touch and
+        /// pen while down.</param>
         /// <param name="devices">Input devices that count.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]
         public Interaction Update(
             Interaction? input,
@@ -57,16 +60,9 @@ namespace VL.Qt.Nodes
             var output = _node.Describe(input, new Props(buttons, devices));
 
             // Pull: state of the last pump (1 frame latency); writes only on change.
-            var sink = _node.Sink;
-            if (isActive.IsValid())
-                InteractionNode<Props>.Write(isActive, ref _active, ref _lastActive, sink.IsActive());
-            else
-                _active = null;
-
-            if (position.IsValid())
-                InteractionNode<Props>.Write(position, ref _position, ref _lastPosition, sink.PointerPosition());
-            else
-                _position = null;
+            var feedback = _node.Feedback;
+            FeedbackChannels.WriteState(isActive, ref _active, ref _lastActive, feedback.IsActive());
+            FeedbackChannels.WriteState(position, ref _position, ref _lastPosition, feedback.PointerPosition());
 
             return output;
         }

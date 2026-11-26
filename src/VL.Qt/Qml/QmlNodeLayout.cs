@@ -4,66 +4,18 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging;
-using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Diagnostics;
-using VL.Lib.Mathematics;
-using VL.Qt.Elements;
-using VL.Qt.Shaders;
+using VL.Qt.NodeFactories;
 
 namespace VL.Qt.Qml
 {
     /// <summary>
-    /// Input pin of a declared, not readonly property. Sending rule (#107): the value is not sent while it equals
-    /// <see cref="QmlPropertyDecl.Default"/> and was never different; once it differs it is sent, and from then on on every
-    /// change (also back to the default). <see cref="AlwaysSend"/> (required property): sent from the first frame.
-    /// </summary>
-    /// <param name="Name">Pin name (unique on the node).</param>
-    /// <param name="Property">The declaration.</param>
-    internal sealed record QmlInputPin(string Name, QmlPropertyDecl Property)
-    {
-        /// <summary>True for a required property: always sent.</summary>
-        public bool AlwaysSend => Property.IsRequired;
-    }
-
-    /// <summary>
-    /// Output pin of a declared property: the last value QML changed (EV_QML_PROPERTY), <see cref="QmlPropertyDecl.Default"/>
-    /// until the first change and again after a reload. Same name as its input pin (the pin kind tells them apart).
-    /// </summary>
-    /// <param name="Name">Pin name, the same as the input pin of the property.</param>
-    /// <param name="Property">The declaration.</param>
-    /// <param name="IsVisible">Visible for a readonly or binding-initialised property, else an optional pin (hidden until shown).</param>
-    internal sealed record QmlOutputPin(string Name, QmlPropertyDecl Property, bool IsVisible);
-
-    /// <summary>Output pin of a declared signal, see <see cref="QmlTypes.SignalPinType"/>.</summary>
-    /// <param name="Name">Pin name (unique on the node).</param>
-    /// <param name="Signal">The declaration.</param>
-    /// <param name="Type">CLR type of the pin: bool, Spread&lt;T&gt; or Spread&lt;QmlSignal&gt;.</param>
-    internal sealed record QmlSignalPin(string Name, QmlSignalDecl Signal, Type Type)
-    {
-        /// <summary>Kind of the only argument of a <see cref="QmlSignalShape.Values"/> signal, null otherwise or if it has none.</summary>
-        public QmlValueKind? ArgumentKind => Signal.Shape == QmlSignalShape.Values ? Signal.Args[0].Kind : null;
-    }
-
-    /// <summary>
-    /// The exact pins of a generated QML node (#107), built once per node description from the parsed declarations. Both the
+    /// The exact pins of a generated QML node, built once per node description from the parsed declarations. Both the
     /// description (<see cref="InputDescriptions"/>, <see cref="OutputDescriptions"/>) and the instance
-    /// (<see cref="QmlNodeInstance"/>) take the order from here.
-    /// <para>Inputs, in this order:</para>
-    /// <list type="number">
-    /// <item>one pin per <see cref="PropertyInputs"/> (declaration order, inherited first), visible, type from <see cref="QmlTypes.ClrType"/>, default <see cref="QmlPropertyDecl.Default"/>;</item>
-    /// <item>Properties: Dictionary&lt;string, object&gt;, default null, optional (plan B for what has no pin);</item>
-    /// <item>Size (Vector2, 1, 1), Auto Size (bool, true, optional), Transform (Matrix, identity), Anchor (RectangleAnchor, TopLeft, optional),
-    /// Opacity (float, 1, optional), Clip (bool, optional), Debug (bool, optional), Interaction (optional), Effect (optional): exactly as QmlElement.</item>
-    /// </list>
-    /// <para>Outputs, in this order:</para>
-    /// <list type="number">
-    /// <item>Output (Element);</item>
-    /// <item>one pin per <see cref="PropertyOutputs"/> (declaration order), visibility <see cref="QmlOutputPin.IsVisible"/>;</item>
-    /// <item>one pin per <see cref="SignalOutputs"/> (declaration order), visible;</item>
-    /// <item>Measured Size (Vector2, optional), Scene Bounds (RectangleF, optional), Error (string).</item>
-    /// </list>
-    /// A property or signal whose pin name is taken (by a common pin or an earlier declaration) gets a number, "Size 2", with a warning.
+    /// (<see cref="QmlNodeInstance"/>) take the order from here; the common pins, in the order of QmlElement, come from
+    /// <see cref="QmlCommonPins"/>. A property or signal whose pin name is taken gets a number, "Size 2", with a warning.
+    /// The pins are listed under "Which declarations give which pins" in docs/user-qml.md.
     /// </summary>
     /// <param name="FilePath">Full path of the .qml file (the File input of the QmlElementNode underneath).</param>
     /// <param name="Declarations">What the parser found.</param>
@@ -81,68 +33,51 @@ namespace VL.Qt.Qml
         ImmutableArray<Message> Messages,
         string? Summary)
     {
-        /// <summary>Name of the optional dictionary input.</summary>
-        public const string PropertiesPinName = "Properties";
-
-        /// <summary>Pin names of the common inputs, in pin order (after the property inputs and Properties).</summary>
-        public static readonly ImmutableArray<string> CommonInputNames = ImmutableArray.Create(
-            "Size", "Auto Size", "Transform", "Anchor", "Opacity", "Clip", "Debug", "Interaction", "Effect");
-
-        /// <summary>Pin names a property or signal pin must not take: the common pins of both sides and Properties.</summary>
-        public static readonly ImmutableHashSet<string> ReservedPinNames = ImmutableHashSet.Create(
-            StringComparer.OrdinalIgnoreCase,
-            PropertiesPinName, "Size", "Auto Size", "Transform", "Anchor", "Opacity", "Clip", "Debug", "Interaction", "Effect",
-            "Output", "Measured Size", "Scene Bounds", "Error");
-
-        // Help texts like QmlElementNode.Update.
-        static readonly IVLPinDescription s_propertiesInput = new ShaderPinDescription(PropertiesPinName, typeof(Dictionary<string, object>), null,
-            "Plan B for properties of the QML root that get no pin (alias, var, list, object types): values by name, as at QmlElement. A pin of the node wins over an entry with the same name.",
-            isVisible: false);
-
-        static readonly IVLPinDescription[] s_commonInputs =
-        {
-            new ShaderPinDescription("Size", typeof(Vector2), new Vector2(1f, 1f), "Size of the element (width, height), only with Auto Size off: it sets width and height of the QML root. The position comes from Transform and Anchor."),
-            new ShaderPinDescription("Auto Size", typeof(bool), true, "On: the element takes the implicit size (implicitWidth, implicitHeight) of the QML root. Off: Size counts.", isVisible: false),
-            new ShaderPinDescription("Transform", typeof(Matrix), Matrix.Identity, "Position, rotation and scale; applied around the Anchor (like Skia)."),
-            new ShaderPinDescription("Anchor", typeof(RectangleAnchor), RectangleAnchor.TopLeft, "Point of the element that lies at the origin of its parent space; Transform rotates/scales around it.", isVisible: false),
-            new ShaderPinDescription("Opacity", typeof(float), 1f, "Opacity of the element. 0 = not drawn, but still takes its space and receives input.", isVisible: false),
-            new ShaderPinDescription("Clip", typeof(bool), false, "Clip children to the element's size.", isVisible: false),
-            new ShaderPinDescription("Debug", typeof(bool), false, "Debug overlay for this element only.", isVisible: false),
-            new ShaderPinDescription("Interaction", typeof(Interaction), null, "Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.", isVisible: false),
-            new ShaderPinDescription("Effect", typeof(Effect), null, "Chain of effect nodes (Blur, DropShadow, …), drawn as one effect layer on the element.", isVisible: false),
-        };
-
-        static readonly IVLPinDescription s_output = new ShaderPinDescription("Output", typeof(Element), null, null);
-
-        static readonly IVLPinDescription[] s_trailingOutputs =
-        {
-            new ShaderPinDescription("Measured Size", typeof(Vector2), Vector2.Zero, "Implicit size of the QML root reported by Qt, in units (last frame).", isVisible: false),
-            new ShaderPinDescription("Scene Bounds", typeof(RectangleF), RectangleF.Empty, "Bounds in window coordinates after layout and transform, in units (last frame).", isVisible: false),
-            new ShaderPinDescription("Error", typeof(string), string.Empty, "Compile, load and type errors of the QML file (with file and line), properties that could not be set; empty = OK."),
-        };
-
-        /// <summary>Input pin descriptions in pin order (see the type summary).</summary>
+        /// <summary>Input pin descriptions in pin order: the leading common pins, one per property, Properties, the trailing common pins.</summary>
         public List<IVLPinDescription> InputDescriptions()
         {
-            var inputs = new List<IVLPinDescription>(PropertyInputs.Length + 1 + s_commonInputs.Length);
+            var inputs = new List<IVLPinDescription>(QmlCommonPins.LeadingInputs.Length + PropertyInputs.Length + 1 + QmlCommonPins.TrailingInputs.Length);
+            foreach (var pin in QmlCommonPins.LeadingInputs)
+                inputs.Add(Describe(pin));
             foreach (var pin in PropertyInputs)
-                inputs.Add(new ShaderPinDescription(pin.Name, pin.Property.ClrType, pin.Property.Default, PinSummary(pin.Property)));
-            inputs.Add(s_propertiesInput);
-            inputs.AddRange(s_commonInputs);
+                inputs.Add(new FilePinDescription(pin.Name, pin.Property.ClrType, pin.Property.Default, PinSummary(pin.Property)));
+            inputs.Add(Describe(QmlCommonPins.Properties));
+            foreach (var pin in QmlCommonPins.TrailingInputs)
+                inputs.Add(Describe(pin));
             return inputs;
         }
 
-        /// <summary>Output pin descriptions in pin order (see the type summary).</summary>
+        /// <summary>Output pin descriptions in pin order: Output, one per property, one per signal, the trailing common pins.</summary>
         public List<IVLPinDescription> OutputDescriptions()
         {
-            var outputs = new List<IVLPinDescription>(1 + PropertyOutputs.Length + SignalOutputs.Length + s_trailingOutputs.Length) { s_output };
+            var outputs = new List<IVLPinDescription>(1 + PropertyOutputs.Length + SignalOutputs.Length + QmlCommonPins.TrailingOutputs.Length) { Describe(QmlCommonPins.Output) };
             foreach (var pin in PropertyOutputs)
-                outputs.Add(new ShaderPinDescription(pin.Name, pin.Property.ClrType, pin.Property.Default, PinSummary(pin.Property), pin.IsVisible));
+                outputs.Add(new FilePinDescription(pin.Name, pin.Property.ClrType, pin.Property.Default, PinSummary(pin.Property), pin.IsVisible));
             foreach (var pin in SignalOutputs)
-                outputs.Add(new ShaderPinDescription(pin.Name, pin.Type, null, SignalSummary(pin.Signal)));
-            outputs.AddRange(s_trailingOutputs);
+                outputs.Add(new FilePinDescription(pin.Name, pin.Type, null, SignalSummary(pin.Signal)));
+            foreach (var pin in QmlCommonPins.TrailingOutputs)
+                outputs.Add(Describe(pin));
             return outputs;
         }
+
+        /// <summary>True if a message is an error: the file does not read or parse, or its name exists twice.</summary>
+        public bool HasErrors => Messages.Any(static m => m.Type == MessageType.Error);
+
+        /// <summary>
+        /// The last good layout <paramref name="good"/> with the errors of the version <paramref name="failed"/> that does not read
+        /// or parse, and a note that the pins are the old ones (<see cref="LastGood{T}"/>).
+        /// </summary>
+        internal static QmlNodeLayout KeepPins(QmlNodeLayout good, QmlNodeLayout failed)
+        {
+            var messages = ImmutableArray.CreateBuilder<Message>(failed.Messages.Length + good.Messages.Length + 1);
+            messages.AddRange(failed.Messages.Where(static m => m.Type == MessageType.Error));
+            messages.Add(new Message(MessageType.Warning, LastGood<QmlNodeLayout>.KeptNote));
+            messages.AddRange(good.Messages);
+            return good with { Messages = messages.ToImmutable() };
+        }
+
+        private static IVLPinDescription Describe(QmlCommonPin pin)
+            => new FilePinDescription(pin.Name, pin.Type, pin.Default, pin.Summary.Length == 0 ? null : pin.Summary, pin.IsVisible);
 
         /// <summary>
         /// Reads and parses the file (siblings from its folder) and builds the layout. A file that cannot be read gives an
@@ -155,14 +90,14 @@ namespace VL.Qt.Qml
             try
             {
                 var dir = Path.GetDirectoryName(file.FilePath) ?? string.Empty;
-                declarations = QmlDeclarations.Parse(File.ReadAllText(file.FilePath), name => ReadSibling(dir, name));
+                declarations = QmlDeclarations.Parse(File.ReadAllText(file.FilePath), Path.GetFileNameWithoutExtension(file.FilePath), name => ReadSibling(dir, name));
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
                 declarations = QmlDeclarations.Empty;
                 readError = $"{file.FilePath} cannot be read: {e.Message}";
             }
-            var layout = Build(file.FilePath, declarations, file.DuplicateError ?? readError);
+            var layout = Build(file.FilePath, declarations, JoinErrors(file.DuplicateError, readError));
             foreach (var m in layout.Messages)
             {
                 if (m.Type == MessageType.Error)
@@ -172,6 +107,9 @@ namespace VL.Qt.Qml
             }
             return layout;
         }
+
+        private static string? JoinErrors(string? first, string? second)
+            => first != null && second != null ? first + "\n" + second : first ?? second;
 
         /// <summary>Content of &lt;dir&gt;/&lt;typeName&gt;.qml, null if there is none or it cannot be read.</summary>
         internal static string? ReadSibling(string dir, string typeName)
@@ -208,10 +146,10 @@ namespace VL.Qt.Qml
                 list.Add(m.ToString());
             }
 
-            var used = new HashSet<string>(ReservedPinNames, StringComparer.OrdinalIgnoreCase);
+            var used = new HashSet<string>(QmlCommonPins.ReservedNames, StringComparer.OrdinalIgnoreCase);
             string Unique(string qmlName, string what)
             {
-                var wanted = ShaderPinModel.PinName(qmlName);
+                var wanted = PinNames.FromIdentifier(qmlName);
                 var name = wanted;
                 for (var i = 2; !used.Add(name); i++)
                     name = $"{wanted} {i}";
@@ -249,10 +187,10 @@ namespace VL.Qt.Qml
                 messages.MoveToImmutable(), declarations.Head.Summary);
         }
 
-        static string PinSummary(QmlPropertyDecl property)
+        private static string PinSummary(QmlPropertyDecl property)
             => property.Summary ?? $"{(property.IsReadOnly ? "readonly " : string.Empty)}{property.QmlType} property '{property.Name}' of the QML root.";
 
-        static string SignalSummary(QmlSignalDecl signal)
+        private static string SignalSummary(QmlSignalDecl signal)
         {
             var help = signal.Shape switch
             {

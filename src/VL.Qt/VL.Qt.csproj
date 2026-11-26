@@ -5,6 +5,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
+    <!-- vlqt_app_init takes a function pointer (the log callback). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RootNamespace>VL.Qt</RootNamespace>
     <OutputPath>..\..\lib\net10.0\</OutputPath>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -33,7 +35,6 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="VL.Qt.Tests" />
-    <InternalsVisibleTo Include="VL.Qt.Probe" />
     <InternalsVisibleTo Include="VL.Qt.SmokeTest" />
     <InternalsVisibleTo Include="VL.Qt.Stride" />
     <InternalsVisibleTo Include="VL.Qt.Audio" />
@@ -47,14 +48,14 @@
     <PackageReference Include="System.Reactive" Version="$(SystemReactiveVersion)" ExcludeAssets="runtime" PrivateAssets="all" />
   </ItemGroup>
 
-  <!-- Repo: lib/net10.0/VL.Qt.dll + runtimes/<rid>/native; Native.cs resolves ../../runtimes (see package layout below). -->
+  <!-- Repo: lib/net10.0/VL.Qt.dll + runtimes/<rid>/native; Interop/QtNativeLibrary.cs resolves ../../runtimes (see package layout below). -->
 
   <!-- NuGet package (vvvv source-package layout). CI: download the native-<rid> artifacts into <repo>/runtimes/<rid>/native,
        then `dotnet pack -c Release -p:Version=...`. Layout: VL.Qt.vl, VL.Qt.HDE.vl (editor-only tooltip viewers), VL.Qt.vl.targets, lib/net10.0/VL.Qt.dll (the .vl references
        ./lib/net10.0/VL.Qt.dll; packman/dotnet only accept lib/<tfm>), help/, qt/<rid>/** (= repo runtimes/<rid>/native/**),
        buildTransitive/VL.Qt.targets, LICENSES/, LICENSES.md.
        The Qt tree must not go to runtimes/<rid>/native: NuGet treats every file there as a native asset and copies it flat
-       into an app referencing the package (NETSDK1152, many qmldir with the same name, #315). qt/<rid>/ is no NuGet asset
+       into an app referencing the package (NETSDK1152, many qmldir with the same name). qt/<rid>/ is no NuGet asset
        folder; buildTransitive/VL.Qt.targets copies it with its structure to runtimes/<rid>/native in the app output. -->
   <PropertyGroup>
     <PackageId>VL.Qt</PackageId>
@@ -84,9 +85,10 @@
     <None Include="nuget\README.md;nuget\icon.png" Pack="true" PackagePath="" Visible="false" />
     <None Include="$(RepoRoot)LICENSE" Pack="true" PackagePath="" Visible="false" />
     <None Include="buildTransitive\VL.Qt.targets;buildTransitive\VL.Qt.Shaders.targets" Pack="true" PackagePath="buildTransitive\" />
-    <!-- runtimes/<rid>/native/** -> qt/<rid>/** (see above); one line per RID (same RIDs as build.yml) -->
-    <None Include="$(RepoRoot)runtimes\win-x64\native\**" Pack="true" PackagePath="qt\win-x64\" Visible="false" />
-    <None Include="$(RepoRoot)runtimes\win-arm64\native\**" Pack="true" PackagePath="qt\win-arm64\" Visible="false" />
+    <!-- runtimes/<rid>/native/** -> qt/<rid>/** (see above); one line per RID (same RIDs as build.yml). vlqt_testkit
+         (the stand-in D3D11 device of the SmokeTest, Windows) lies there too and is never packed. -->
+    <None Include="$(RepoRoot)runtimes\win-x64\native\**" Exclude="$(RepoRoot)runtimes\win-x64\native\vlqt_testkit.*" Pack="true" PackagePath="qt\win-x64\" Visible="false" />
+    <None Include="$(RepoRoot)runtimes\win-arm64\native\**" Exclude="$(RepoRoot)runtimes\win-arm64\native\vlqt_testkit.*" Pack="true" PackagePath="qt\win-arm64\" Visible="false" />
     <None Include="$(RepoRoot)runtimes\linux-x64\native\**" Pack="true" PackagePath="qt\linux-x64\" Visible="false" />
     <None Include="$(RepoRoot)runtimes\linux-arm64\native\**" Pack="true" PackagePath="qt\linux-arm64\" Visible="false" />
   </ItemGroup>

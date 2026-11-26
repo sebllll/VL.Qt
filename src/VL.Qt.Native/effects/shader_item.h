@@ -1,0 +1,206 @@
+/* effects/shader_item.h - ShaderItem, the item of the Shader element (protocol.h "ShaderEffect") and of every pass of a
+ * SHADER link of the Effect chain (effects/effect_chain.h).
+ *
+ * A QQuickItem with a QSGGeometryNode and an own QSGMaterial instead of Qt's ShaderEffect: the uniforms of SET_UNIFORMS
+ * are mapped by name through the reflection of the shaders. Shaders are shader resource ids (shader_resource.h); the
+ * item holds an element reference on the shown id and on the one it waits for, and the last Ready shader keeps drawing
+ * while a new one fails or loads. Content problems are joined into vlqtError (one line each), which Elements::readError
+ * sends as EVENT_ERROR of the element.
+ *
+ * Threads: everything is collected on the GUI thread; updatePaintNode (GUI thread blocked) copies it into the material,
+ * the material shader reads only the material. No allocation per frame.
+ * Uniform block, samplers, automatic uniforms, chain pass, pipelines and the render loop it relies on:
+ * docs/design/effects.md, "Shader item" and "Shader link stages"; docs/design/render-loop.md, "Places that rely on the
+ * basic loop".
+ */
+#pragma once
+
+#include "protocol.h"
+
+#include <QtCore/QMetaObject>
+#include <QtCore/QPointer>
+#include <QtCore/QString>
+#include <QtQuick/QQuickItem>
+#include <rhi/qshader.h>
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+class QSGTexture;
+class QSGTextureProvider;
+
+namespace vlqt {
+
+// Uniform names VL.Qt sets itself: THE one list (the C# mirror is VL.Qt.Shaders.ReservedUniforms, ReservedUniformsDriftTests
+// compares the four arrays below). An entry of that name from C# is an error line; shader files get no pin for them.
+// - item: every ShaderEffect (qt_Matrix and qt_Opacity from the render state, source = Input); a table entry of that
+//   name is an error line;
+// - item automatic: written into the uniform block of every ShaderEffect whose shader declares them. C# sends no entry
+//   of that name (an error at the node); a raw table entry of that name wins over the automatic value (the SmokeTest
+//   passes of the glow and inner shadow pyramids set texelSize themselves);
+// - chain automatic: written by the effect chain into the passes of a SHADER link if the shader declares them;
+// - chain reserved: names of the blur pyramid textures (base, glow, shadow), no uniform of a shader link may have them.
+inline constexpr std::string_view kItemReservedUniforms[] = {"qt_Matrix", "qt_Opacity", "source"};
+inline constexpr std::string_view kItemAutomaticUniforms[] = {"texelSize", "dpr", "viewSize"};
+inline constexpr std::string_view kChainAutomaticUniforms[] = {"weight", "elementRect", "passIndex"};
+inline constexpr std::string_view kChainReservedUniforms[] = {"base", "glow", "shadow"};
+
+// A name of kItemReservedUniforms.
+bool isItemReservedUniform(std::string_view name);
+// A name of a SHADER link of the effect chain that C# must not set: the item names, the chain automatic ones and the chain reserved ones.
+bool isChainReservedUniform(std::string_view name);
+
+namespace res::image {
+class ImageContent;
+}
+namespace res::shader {
+class ShaderResource;
+}
+struct ImageTexture;
+
+class ShaderItem : public QQuickItem // not final: registered as QML type of the effect chain (qmlRegisterType derives)
+{
+    Q_OBJECT
+    Q_PROPERTY(QQuickItem* source READ source WRITE setSource NOTIFY sourceChanged)
+    Q_PROPERTY(QString vlqtError READ error NOTIFY errorChanged)
+
+public:
+    explicit ShaderItem(QQuickItem* parent = nullptr);
+    ~ShaderItem() override;
+
+    QQuickItem* source() const { return m_source; }
+    void setSource(QQuickItem* source);
+    const QString& error() const { return m_error; }
+
+    // FRAGMENT_SHADER / VERTEX_SHADER (stage VLQT_SHADER_STAGE_*): false + err for an unknown, released or non shader id.
+    bool setShader(int stage, uint64_t id, std::string& err);
+    void setBlending(bool on);
+    void setMeshResolution(int x, int y);
+    // Pass of an effect chain link (see the head comment): pass-through while not Ready.
+    void setChainPass(bool on);
+    // texelSize from the first of these samplers the fragment shader declares (none: source).
+    void setTexelSamplers(std::vector<QByteArray> names);
+    // Names of the table that are not reported as unknown when the shaders do not declare them.
+    void setOptionalUniforms(const std::vector<QByteArray>& names);
+    // The shown shaders declare a uniform or sampler of that name (false while passing through or not drawable).
+    bool declares(const QByteArray& name) const;
+    // A Ready fragment shader is shown (not the pass-through of a chain pass).
+    bool hasShader() const { return m_frag.content != nullptr; }
+
+    // SET_UNIFORMS (validated by the Scene): begin, one call per entry, end.
+    void beginUniforms(bool clear);
+    // value points at the wire value (layout like SET); ref = resolved element for REF (nullptr = none). Returns true if
+    // the entry is new or its value (or sampler state) differs from the stored one; endUniforms repaints only then.
+    bool setUniform(const char* name, int nameLen, quint16 valueType, const unsigned char* value, QQuickItem* ref);
+    void endUniforms();
+    // Layer mipmaps the samplers ask for, on the elements they read; also after the Groups got their proxy.
+    void refreshLayerRequests(bool force = false);
+    // The REF uniforms changed since the last call (structural change of the table, Elements::syncTextureGroups).
+    bool takeRefsChanged() { return std::exchange(m_refsChanged, false); }
+    template <class F>
+    void forEachRef(F&& f) const
+    {
+        for (const Uniform& u : m_uniforms)
+            if (u.type == VLQT_VALUE_TYPE_REF && u.ref)
+                f(u.ref.data());
+    }
+
+    // Once per pump after res::beginFrame: only the items whose shader or image changed (res::changedThisFrame)
+    // take new Ready / Failed shaders and images.
+    static void afterResourceFrame();
+
+signals:
+    void sourceChanged();
+    void errorChanged();
+    void rebuilt();                 // layout from new shaders or a new table (declares may differ)
+    void devicePixelRatioChanged(); // window or its device pixel ratio changed
+
+public slots:
+    void invalidateSceneGraph();
+
+protected:
+    QSGNode* updatePaintNode(QSGNode* old, UpdatePaintNodeData*) override;
+    void releaseResources() override;
+    void geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry) override;
+    void itemChange(ItemChange change, const ItemChangeData& data) override;
+
+private:
+    struct ShaderSlot
+    {
+        uint64_t want = 0, shown = 0; // element references held
+        std::shared_ptr<res::shader::ShaderResource> content; // last Ready content of shown, drawn even if want failed
+        bool failed = false; // want is Failed (bookkeeping only)
+    };
+    struct Uniform
+    {
+        QByteArray name;
+        quint16 type = 0;               // VLQT_VALUE_TYPE_*
+        float f[16] = {};               // f32, vec*, color (premultiplied), mat4
+        qint32 i[2] = {};               // i32, ivec2, bool (0/1)
+        QPointer<QQuickItem> ref;       // REF
+        uint64_t image = 0;             // U64 image resource id (element reference held)
+        bool badImage = false;          // U64 id that is no live image resource (error line)
+        std::shared_ptr<res::image::ImageContent> imageContent; // Ready content of image
+        std::shared_ptr<ImageTexture> imageTexture;              // its texture in window()
+    };
+    struct Write
+    {
+        int offset, size, uniform; // bytes into the block, uniform index
+    };
+    struct Sampler
+    {
+        int binding;
+        int uniform;  // index into m_uniforms, -1 = none
+        bool source;  // the Input
+        QByteArray name;
+    };
+
+    bool advance(ShaderSlot& slot);
+    void advanceAll();
+    void rebuild();          // layout + errors from shaders and table (GUI thread, on structural changes only)
+    void releaseUniform(Uniform& u);
+    void updateImplicitSize();
+    QSGTexture* samplerTexture(Sampler& s);
+    void watchProvider(QSGTextureProvider* p);
+    quint64 samplerState(const Sampler& s) const; // VLQT_VALUE_TYPE_SAMPLER entry of the sampler (present bit set), 0 = none
+    QQuickItem* samplerElement(const Sampler& s) const; // element whose layer the sampler reads (Group: its proxy), null for images
+
+    ShaderSlot m_frag, m_vert;
+    QPointer<QQuickItem> m_source;
+    QMetaObject::Connection m_sourceW, m_sourceH;
+    bool m_blending = true;
+    int m_meshX = 1, m_meshY = 1;
+
+    std::vector<Uniform> m_uniforms;
+    bool m_structureChanged = false;
+    bool m_uniformsChanged = false; // a setUniform since the last endUniforms changed something
+    std::vector<std::pair<QByteArray, quint64>> m_samplerStates; // SAMPLER entries by sampler2D name, bit 63 = present
+    std::vector<QPointer<QQuickItem>> m_layerItems; // elements this item holds a layer request on (layer mipmap)
+    std::vector<std::pair<QQuickItem*, bool>> m_layerNow; // refreshLayerRequests scratch: element, ORed mip (capacity survives)
+    bool m_layersDirty = false;
+    bool m_refsChanged = false;
+
+    // layout (rebuild)
+    std::vector<Write> m_writes;
+    std::vector<Sampler> m_samplers;
+    int m_ubufSize = 0, m_matrixOffset = -1, m_opacityOffset = -1;
+    int m_texelOffset = -1, m_dprOffset = -1, m_viewSizeOffset = -1; // auto uniforms (-1 = not declared)
+    int m_texelBinding = -1;                  // sampler binding texelSize is read from
+    std::vector<QByteArray> m_texelSamplers;  // setTexelSamplers
+    std::vector<QByteArray> m_optional;       // setOptionalUniforms
+    std::vector<QByteArray> m_declared;       // uniform and sampler names of the shown shaders (rebuild)
+    bool m_chain = false;
+    bool m_drawable = false;      // both shaders there and usable
+    bool m_shaderChanged = true;  // material needs the new shader pair
+    bool m_geometryChanged = true;
+    QString m_error;
+
+    std::vector<QPointer<QSGTextureProvider>> m_watched; // providers with a connection to this item
+    QShader m_vs, m_fs; // shader pair of the layout (rebuild)
+};
+
+} // namespace vlqt

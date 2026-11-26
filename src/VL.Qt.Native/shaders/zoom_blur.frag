@@ -3,7 +3,7 @@
 // Box blur between uv scaled by 1 - k/2 and 1 + k/2 around center (centred on the pixel, the picture does not shift).
 // Lengths in DIP, texelSize in pixels.
 // Uniform block (std140): qt_Matrix 0, qt_Opacity 64, center 72, blurLength 80, texelSize 88, dpr 96, passIndex 100.
-// Not named `length`: the GLSL translation renames a member called like a GLSL builtin, the GL backend would not set it (#77).
+// Not named `length`: the GLSL translation renames a member called like a GLSL builtin, the GL backend would not set it.
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
@@ -33,6 +33,10 @@ int sampleCount(float len)
 // Bilinear sample of the premultiplied source, done by hand: the layers are sampled nearest (not smooth), and a nearest
 // sample every pixel or less would hit some texels twice and skip others, which shows as hatching. Outside the item it is
 // transparent.
+// textureLod, not texture: the source has no mipmaps, so both read level 0, but texture needs screen-space gradients, and in
+// a loop with a per-pixel count the HLSL compiler then unrolls the loop to maxSamples copies. That unrolled shader needs so
+// much stack that WARP's ARM64 shader JIT (d3d10warp 10.0.26100) addresses the spill wrongly and crashes; with textureLod the
+// loop stays a loop. Keep it so even once WARP is fixed: the unrolled form is also far larger on every backend.
 vec4 fetch(vec2 uv)
 {
     if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0)
@@ -41,8 +45,8 @@ vec4 fetch(vec2 uv)
     vec2 i = floor(p);
     vec2 f = p - i;
     vec2 c = (i + 0.5) * texelSize;
-    return mix(mix(texture(source, c), texture(source, c + vec2(texelSize.x, 0.0)), f.x),
-               mix(texture(source, c + vec2(0.0, texelSize.y)), texture(source, c + texelSize), f.x), f.y);
+    return mix(mix(textureLod(source, c, 0.0), textureLod(source, c + vec2(texelSize.x, 0.0), 0.0), f.x),
+               mix(textureLod(source, c + vec2(0.0, texelSize.y), 0.0), textureLod(source, c + texelSize, 0.0), f.x), f.y);
 }
 
 float dist(vec2 v) { return sqrt(dot(v, v)); }

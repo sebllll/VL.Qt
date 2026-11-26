@@ -4,28 +4,28 @@ using NUnit.Framework;
 namespace VL.Qt.Audio.Tests
 {
     /// <summary>
-    /// The sync loop of Video (VL.Audio) against a simulated tap and a simulated audio device (#22): the device pulls
+    /// The sync loop of Video (VL.Audio) against a simulated tap and a simulated audio device: the device pulls
     /// buffers on its own clock (drift against the tap clock, callback jitter), each output frame leaves the speaker at a
     /// known time, and the error is that time minus the true due time of the source frame it carries minus the target delay.
     /// </summary>
     [TestFixture]
     public sealed class AudioTapPlayerTests
     {
-        const int sampleRate = 48_000;
-        const int bufferSize = 512;
-        const long latencyNs = 20_000_000;
-        const double toleranceNs = 5e6;
+        private const int sampleRate = 48_000;
+        private const int bufferSize = 512;
+        private const long latencyNs = 20_000_000;
+        private const double toleranceNs = 5e6;
 
         // Pulls buffers like an audio device and measures every frame that leaves.
-        sealed class Device
+        private sealed class Device
         {
-            readonly AudioTapPlayer _player;
-            readonly SimulatedTap _tap;
-            readonly double _framesPerSecond;
-            readonly double _pullJitterNs;
-            readonly Random _random = new(3);
-            readonly long _startNs;
-            long _buffer;
+            private readonly AudioTapPlayer _player;
+            private readonly SimulatedTap _tap;
+            private readonly double _framesPerSecond;
+            private readonly double _pullJitterNs;
+            private readonly Random _random = new(3);
+            private readonly long _startNs;
+            private long _buffer;
 
             public Device(double drift, double pullJitterNs = 1e6, double emitJitterNs = 1.5e6, int seed = 1)
             {
@@ -47,7 +47,7 @@ namespace VL.Qt.Audio.Tests
             public long NowNs => (long)LeaveNs(0) - latencyNs;
 
             // When frame j of the next buffer leaves the speaker (device clock, drifting against the tap clock).
-            double LeaveNs(int j) => _startNs + latencyNs + (_buffer * bufferSize + j) * 1e9 / _framesPerSecond;
+            private double LeaveNs(int j) => _startNs + latencyNs + (_buffer * bufferSize + j) * 1e9 / _framesPerSecond;
 
             /// <summary>Pulls one buffer without measuring (allocation test).</summary>
             public void Pull()

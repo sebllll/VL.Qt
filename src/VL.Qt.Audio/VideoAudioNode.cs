@@ -5,67 +5,78 @@ using Stride.Core.Mathematics;
 using VL.Audio;
 using VL.Core;
 using VL.Core.Import;
+using VL.Lang;
 using VL.Lib.Mathematics;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Images;
 using VL.Qt.Nodes;
 using Path = VL.Lib.IO.Path;
-
-[assembly: ImportAsIs]
 
 namespace VL.Qt.Audio
 {
     /// <summary>
-    /// Video from a file whose sound goes to VL.Audio instead of Qt's own output (#22). Same picture and pins as Video
+    /// Video from a file whose sound goes to VL.Audio instead of Qt's own output. Same picture and pins as Video
     /// [Qt.Elements]; the sound comes out at Audio, one signal per channel, synchronized to the picture. Connect Output to
-    /// Renderer [Qt] or a Group and Audio to AudioOut. Windows only.
+    /// Renderer [Qt] or a Group and Audio to AudioOut. Windows only. Experimental until the end-to-end latency has been
+    /// checked in vvvv on Windows x64.
     /// </summary>
     [ProcessNode(Name = "Video (VL.Audio)", Category = Categories.Elements)]
+    [Smell(SymbolSmell.Experimental)]
     public sealed class VideoAudioNode : IDisposable
     {
-        readonly ElementNode<Video, VideoNode.Props> _node;
-        readonly VideoAudioSignal _signal;
-        readonly ResourceClient _client;
-        readonly NodeErrors _errors;
-        ImageResource? _tap;
-        int _tapSampleRate;
-        int _failedSampleRate; // a refused rate is not retried every frame
+        private readonly ElementNodeCore<Video, VideoNode.Props> _node;
+        private readonly VideoAudioSignal _signal;
+        private readonly ResourceClient _client;
+        private readonly NodeErrors _errors;
+        private QtResource? _tap;
+        private int _tapSampleRate;
+        // A sample rate QtNative refused (not retried every frame); 0 = none (the engine never reports a valid rate of 0).
+        private int _failedSampleRate;
 
-        public VideoAudioNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext)
+        public VideoAudioNode(NodeContext nodeContext)
         {
-            _node = new ElementNode<Video, VideoNode.Props>(nodeContext, VideoNode.Create);
+            _node = new ElementNodeCore<Video, VideoNode.Props>(nodeContext, VideoNode.Create);
             _client = ResourceClient.ForApp(nodeContext.AppHost);
             _errors = new NodeErrors(nodeContext);
             _signal = new VideoAudioSignal(NativeAudioTapReader.Instance);
         }
 
-        /// <summary>Describes the video and returns its sound. A new description is only created when an input changes.</summary>
+        /// <summary>Describes the video and returns its sound.</summary>
         /// <param name="size">Size of the element (width, height). The position comes from Transform and Anchor. Size 0 = not drawn.</param>
-        /// <param name="transform">Position, rotation and scale; applied around the Anchor (like Skia). Inside Row/Column the layout places the element and Transform is only visual.</param>
-        /// <param name="anchor">Point of the element that lies at the origin of its parent space (default TopLeft: the top-left corner; Center: the element is centered on it), resolved against the actual size; Transform rotates/scales around it. Inside Row/Column only the pivot of Transform.</param>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='transform']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='anchor']"/>
         /// <param name="path">Video file (H.264 MP4 and what FFmpeg decodes). Empty = nothing; errors are logged, nothing is shown.</param>
         /// <param name="play">Plays while true, pauses at the current frame while false.</param>
         /// <param name="loop">Restarts at the end; otherwise playback stops at the end. The sound continues across the restart without a gap.</param>
         /// <param name="keepLastFrame">When playback ends (Loop off), the last frame stays visible; otherwise the element is cleared.</param>
-        /// <param name="rate">Playback speed (1 = normal). Values below 0.01 are clamped (no reverse playback). The sound follows like tape: its pitch changes with the rate; a change of the rate may glitch once.</param>
+        /// <param name="rate">Playback speed (1 = normal). Values below 0.01 are clamped (no reverse playback). The sound follows like
+        /// tape: its pitch changes with the rate; a change of the rate may glitch once.</param>
         /// <param name="volume">Volume of the sound at Audio, 0..1 (linear, clamped).</param>
-        /// <param name="audioOffset">Delay of the sound against the picture in ms (positive: the sound comes later). Calibrates the latency of display and audio device that VL.Qt cannot know. The sound cannot come earlier than VL.Audio's output latency (buffer + driver) allows; smaller values play as early as possible.</param>
-        /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill).</param>
-        /// <param name="opacity">Opacity of the element. 0 = not drawn (costs no render time), but still takes its space in Row/Column and still receives input (invisible hit areas).</param>
-        /// <param name="clip">Clip children to the element's size.</param>
-        /// <param name="debug">Debug overlay for this element only (not its children; the Renderer's Debug shows all). Does not affect layout or hit-testing.</param>
-        /// <param name="interaction">Chain of interaction nodes (Hover, Click, …). Without interaction the element is transparent for input.</param>
-        /// <param name="effect">Chain of effect nodes (Blur, DropShadow, ColorAdjust, Colorize, Mask), drawn as one effect layer on the element. Without effect the element has no layer.</param>
-        /// <param name="audio">The sound of the video, one signal per channel (stereo), at the sample rate of the VL.Audio engine. Silent without a file, without an audio track and while paused.</param>
+        /// <param name="audioOffset">Delay of the sound against the picture in ms (positive: the sound comes later). Calibrates the latency
+        /// of display and audio device that VL.Qt cannot know. The sound cannot come earlier than VL.Audio's output latency (buffer +
+        /// driver) allows; smaller values play as early as possible.</param>
+        /// <param name="fillMode">How the video fills Size: Stretch, Fit (keep aspect), Crop (keep aspect, fill). Tile is not supported by
+        /// a video: it is drawn as Stretch and the node shows a warning.</param>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='opacity']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='clip']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='debug']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='interaction']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='effect']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='enabled']"/>
+        /// <param name="audio">The sound of the video, one signal per channel (stereo), at the sample rate of the VL.Audio engine. Silent
+        /// without a file, without an audio track and while paused.</param>
         /// <param name="position">Playback position in seconds (0 until loaded; last frame).</param>
         /// <param name="duration">Duration of the media in seconds (0 until loaded or without a file; last frame).</param>
-        /// <param name="syncError">Measured offset of the sound against the frame at Qt's video sink in ms (Audio Offset and VL.Audio's output latency included, display latency not; positive: the sound is late). NaN while the sound is not locked yet (start, after a jump, pause or underrun). Diagnostics.</param>
+        /// <param name="syncError">Measured offset of the sound against the frame at Qt's video sink in ms (Audio Offset and VL.Audio's
+        /// output latency included, display latency not; positive: the sound is late). NaN while the sound is not locked yet (start, after
+        /// a jump, pause or underrun). Diagnostics.</param>
         /// <param name="measuredSize">Natural size of the video, in units (0, 0 until the first frame; last frame).</param>
-        /// <param name="sceneBounds">Bounds in window coordinates after layout and transform, in units (last frame).</param>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/param[@name='sceneBounds']"/>
+        /// <include file="../VL.Qt/Nodes/CommonPins.xml" path="docs/set[@name='element']/returns"/>
         /// <returns>The video element.</returns>
-        // Pin defaults: see RectangleNode (text form, typeof(T) defaults are ignored by vvvvc).
         [return: Pin(Name = "Output")]
-        public Element Update(
+        public IElement Update(
             [DefaultValue("1.6, 0.9")] Vector2 size,
             Matrix transform,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(RectangleAnchor), nameof(RectangleAnchor.TopLeft))] RectangleAnchor anchor,
@@ -76,12 +87,13 @@ namespace VL.Qt.Audio
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float rate,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float volume,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(0f)] float audioOffset,
-            [DefaultValue(typeof(VideoFillMode), nameof(VideoFillMode.Fit))] VideoFillMode fillMode,
+            [DefaultValue(typeof(FillMode), nameof(FillMode.Fit))] FillMode fillMode,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(1f)] float opacity,
             [Pin(Visibility = PinVisibility.Optional)] bool clip,
             [Pin(Visibility = PinVisibility.Optional)] bool debug,
             [Pin(Visibility = PinVisibility.Optional)] Interaction? interaction,
             [Pin(Visibility = PinVisibility.Optional)] Effect? effect,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool enabled,
             out IReadOnlyList<AudioSignal> audio,
             out float position,
             out float duration,
@@ -97,11 +109,11 @@ namespace VL.Qt.Audio
             // Volume goes to the signal; Qt's own output is off while a tap is set. Without a tap (refused) the element is
             // muted, so the sound never comes out of two places.
             var element = _node.Describe(
-                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect),
-                new VideoNode.Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, _tap is null ? 0f : 1f, fillMode, _tap?.Id ?? 0));
-            _node.ReadOutputs(out measuredSize, out sceneBounds);
-            position = _node.Sink.MediaPosition();
-            duration = _node.Sink.MediaDuration();
+                new CommonInputs(size, transform, anchor, opacity, clip, debug, interaction, effect, enabled),
+                new VideoNode.Props(path?.Value ?? string.Empty, play, loop, keepLastFrame, rate, _tap is null ? 0f : 1f, VideoNode.ResolveFillMode(fillMode, _node.Messages), _tap?.Id ?? 0),
+                out measuredSize, out sceneBounds);
+            position = _node.Feedback.MediaPosition();
+            duration = _node.Feedback.MediaDuration();
             audio = _signal.Outputs;
             syncError = _signal.SyncErrorMs;
             return element;
@@ -110,12 +122,16 @@ namespace VL.Qt.Audio
         // A tap in the engine's sample rate: created on the first Update, replaced when the rate changes. The element
         // switches straight to the new id (Qt never plays in between); the old tap is released after that switch
         // (ResourceClient releases in the next pump, after the commands are applied).
-        void UpdateTap()
+        private void UpdateTap()
         {
             var sampleRate = _signal.EngineSampleRate;
+            // The engine is not running (no driver yet, or stopped): no tap, and the node never asks QtNative for 0 Hz. The
+            // tap of a running engine stays until its rate changes.
+            if (sampleRate <= 0)
+                return;
             if ((_tap is not null && sampleRate == _tapSampleRate) || sampleRate == _failedSampleRate)
                 return;
-            ImageResource tap;
+            QtResource tap;
             try
             {
                 tap = _client.CreateAudioTap(VideoAudioSignal.Channels, sampleRate);

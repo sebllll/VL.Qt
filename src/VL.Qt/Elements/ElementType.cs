@@ -1,26 +1,27 @@
-﻿namespace VL.Qt.Elements
+﻿using VL.Qt.Wire;
+namespace VL.Qt.Elements
 {
     /// <summary>
     /// Element kinds. Values are the CREATE type ids of the command protocol
-    /// (<see cref="Protocol.Type"/>); the compiler keeps both in sync. Group maps to <see cref="Item"/>.
+    /// (<see cref="Protocol.ElementType"/>); the compiler keeps both in sync. <see cref="Item"/> is the protocol's Group.
     /// </summary>
-    public enum ElementType : ushort
+    internal enum ElementType : ushort
     {
-        Item = Protocol.Type.Item,
-        Rectangle = Protocol.Type.Rectangle,
-        Text = Protocol.Type.Text,
-        Image = Protocol.Type.Image,
-        Row = Protocol.Type.Row,
-        Column = Protocol.Type.Column,
-        Video = Protocol.Type.Video,
-        Button = Protocol.Type.Button,
-        SpinBox = Protocol.Type.SpinBox,
-        CheckBox = Protocol.Type.CheckBox,
-        Switch = Protocol.Type.Switch,
-        Slider = Protocol.Type.Slider,
-        TextField = Protocol.Type.TextField,
-        ShaderEffect = Protocol.Type.ShaderEffect,
-        Qml = Protocol.Type.Qml,
-        Shape = Protocol.Type.Shape,
+        Item = Protocol.ElementType.Group,
+        Rectangle = Protocol.ElementType.Rectangle,
+        Text = Protocol.ElementType.Text,
+        Image = Protocol.ElementType.Image,
+        Row = Protocol.ElementType.Row,
+        Column = Protocol.ElementType.Column,
+        Video = Protocol.ElementType.Video,
+        Button = Protocol.ElementType.Button,
+        SpinBox = Protocol.ElementType.SpinBox,
+        CheckBox = Protocol.ElementType.CheckBox,
+        Switch = Protocol.ElementType.Switch,
+        Slider = Protocol.ElementType.Slider,
+        TextField = Protocol.ElementType.TextField,
+        Shader = Protocol.ElementType.Shader,
+        Qml = Protocol.ElementType.Qml,
+        Shape = Protocol.ElementType.Shape,
     }
 }

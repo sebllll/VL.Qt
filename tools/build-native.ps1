@@ -1,7 +1,8 @@
-# Builds QtNative and deploys Qt into runtimes/<rid>/native (windeployqt runs as CMake target vlqt_deploy).
+# Builds QtNative and deploys Qt into runtimes/<rid>/native (windeployqt runs as CMake target vlqt_deploy), with
+# vlqt_testkit.dll (the SmokeTest's stand-in D3D11 device) next to vlqt.dll; packing leaves the testkit out.
 # Usage: tools/build-native.ps1 [-Rid win-arm64|win-x64 (default: host)] [-QtDir C:\Qt\6.12.0\msvc2022_arm64] [-ForceDeploy]
 # Configures CMake directly (same settings as the dev-<rid> preset) so CI can point at any Qt location.
-# windeployqt re-runs when vlqt.dll or qml/deploy.qml changed, when the deployed qml/QtQuick/Effects, qml/QtQuick/Shapes,
+# windeployqt re-runs when vlqt.dll or a .qml file under qml/ changed, when the deployed qml/QtQuick/Effects, qml/QtQuick/Shapes,
 # qml/QtMultimedia or qml/QtQuick/Controls/Basic is missing, or with -ForceDeploy.
 param(
     [ValidateSet('win-arm64', 'win-x64')] [string]$Rid,
@@ -35,7 +36,7 @@ $src = (Resolve-Path "$PSScriptRoot\..\src\VL.Qt.Native").Path
 $bin = Join-Path (Resolve-Path "$PSScriptRoot\..").Path "build\$Rid"
 $prefix = $QtDir.Replace('\', '/')
 $outDir = Join-Path (Resolve-Path "$PSScriptRoot\..").Path "runtimes\$Rid\native"
-# Deleting the stamp makes Ninja re-run windeployqt even if vlqt.dll and deploy.qml are unchanged.
+# Deleting the stamp makes Ninja re-run windeployqt even if vlqt.dll and the qml/ files are unchanged.
 $stamp = "$bin\windeployqt.stamp"
 if ((Test-Path $stamp) -and ($ForceDeploy -or -not (Test-Path "$outDir\qml\QtQuick\Effects\qmldir") -or -not (Test-Path "$outDir\qml\QtQuick\Shapes\qmldir") -or -not (Test-Path "$outDir\qml\QtMultimedia\qmldir") -or -not (Test-Path "$outDir\qml\QtQuick\Controls\Basic\qmldir"))) {
     Remove-Item $stamp
@@ -50,7 +51,7 @@ $ErrorActionPreference = 'Stop'
 if ($LASTEXITCODE) { throw "native build failed ($LASTEXITCODE)" }
 
 $out = Resolve-Path $outDir
-# Modules imported by qml/deploy.qml must arrive with content (an empty folder means windeployqt missed them).
+# Modules imported by the qml/ files must arrive with content (an empty folder means windeployqt missed them).
 foreach ($m in 'QtQuick', 'QtQuick\Effects', 'QtQuick\Shapes', 'QtMultimedia', 'QtQuick\Controls', 'QtQuick\Controls\Basic', 'QtQuick\Templates') {
     if (-not (Test-Path "$out\qml\$m\qmldir")) { throw "deploy incomplete: qml\$m\qmldir missing" }
 }
@@ -58,5 +59,6 @@ foreach ($m in 'QtQuick', 'QtQuick\Effects', 'QtQuick\Shapes', 'QtMultimedia', '
 foreach ($f in 'plugins\multimedia\ffmpegmediaplugin.dll', 'avcodec-*.dll', 'avformat-*.dll', 'avutil-*.dll', 'swresample-*.dll', 'swscale-*.dll') {
     if (-not (Test-Path "$out\$f")) { throw "deploy incomplete: $f missing (Qt Multimedia installed? tools/setup-qt.ps1)" }
 }
+if (-not (Test-Path "$out\vlqt_testkit.dll")) { throw "vlqt_testkit.dll missing next to vlqt.dll (CMake option VLQT_BUILD_TESTKIT)" }
 $mb = [math]::Round((Get-ChildItem $out -Recurse -File | Measure-Object Length -Sum).Sum / 1MB, 1)
 Write-Host "Deployed to $out ($mb MB)"

@@ -1,64 +1,68 @@
-﻿using System;
+﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
+using VL.Qt.Interop;
+using VL.Qt.Wire;
 using VL.Qt;
 
 /// <summary>
-/// #116 task 5.4 (perf): main-thread time per QtTexture and frame time of offscreen scenes rendered on a Qt render thread
-/// (default) or on the main thread (<c>VLQT_OFFSCREEN_THREAD=0</c>), and "same frame" in every frame. Opt-in, not part
-/// of --all (about a minute): <c>--only qttextureperf</c>, run alone because the thread count is fixed at the first scene.
+/// Perf: main-thread time per QtTexture and frame time of offscreen scenes rendered on a Qt render thread
+/// (default) or on the main thread (Render Threads 0, <c>VLQT_SMOKE_RENDERTHREADS=0</c>), and "same frame" in every frame. Opt-in (about a minute),
+/// run it alone with <c>--filter TestCategory=qttextureperf</c> because the thread count is fixed at the first scene.
 /// A frame imitates vvvv + Stride: apply the changes (Update), render_batch (draw start), 6 ms of Stride CPU work, then
 /// a GPU read of scene 0's texture on the test device (Stride's draw: Map waits for the GPU). A marker rectangle carries the
 /// frame number; after the read every scene's texture must show this frame's marker (same frame, 100 % of the frames).
 /// After the measured frames, snapshots of scene 0's marker every 10th frame (snapshots under load) must finish with a
 /// marker of a frame since their request while same frame still holds.
-/// The process measures the threaded mode (thread count = VLQT_OFFSCREEN_THREAD, default 1) and then starts itself with
-/// VLQT_OFFSCREEN_THREAD=0 for the main thread numbers (reference, no time limit). With VLQT_OFFSCREEN_THREAD=0 it
+/// The process measures the threaded mode (thread count = RenderThreads, default 1) and then starts itself with
+/// VLQT_SMOKE_RENDERTHREADS=0 for the main thread numbers (reference, no time limit). With RenderThreads 0 it
 /// measures only the main thread. Limit (threaded, hardware adapter): median render_batch time per QtTexture of the heavy
 /// scenes below 0.5 ms (PerfLimits factor applies); a software adapter (WARP, CI runners) waits for the submission on the
 /// main thread by design, so there the limit is logged and skipped.
 /// </summary>
-static class QtTexturePerfTest
+[TestFixture, NonParallelizable]
+public static class QtTexturePerfTest
 {
-    const int B8G8R8A8Typeless = 90;
-    const int B8G8R8A8Unorm = 87;
-    const int W = 1280, H = 720;
-    const double MainThreadLimitMs = 0.5;
+    private const int B8G8R8A8Typeless = 90;
+    private const int B8G8R8A8Unorm = 87;
+    private const int W = 1280, H = 720;
+    private const double MainThreadLimitMs = 0.5;
     // Marker rectangle (id 1) at (0, 0): its red channel is the frame number.
-    const int MarkerSize = 32;
+    private const int MarkerSize = 32;
 
     // A scene: rounded rectangles + texts, 1280x720.
-    readonly record struct Config(string Name, int Scenes, int Rects, int Texts)
+    private readonly record struct Config(string Name, int Scenes, int Rects, int Texts)
     {
         public bool Heavy => Rects >= 1000;
     }
 
-    public static void Run(Action<bool, string> check, Action<int> pump)
+    /// <summary>Median main-thread time per QtTexture in both thread modes (about a minute, own process).</summary>
+    [Test, Explicit("about a minute"), Category("qttextureperf"), Category("own-process")]
+    public static void QtTexturePerf() => Scenario.RunLocal(s => OwnProcess.Run(s, new[] { "qttextureperf" }));
+
+    internal static void Run(Scenario s)
     {
         if (!OperatingSystem.IsWindows())
         {
-            Console.WriteLine("INFO qttextureperf: Windows only (Direct3D 11), skipped");
+            s.Info("qttextureperf: Windows only (Direct3D 11), skipped");
             return;
         }
-        int threads = 1;
-        var env = Environment.GetEnvironmentVariable("VLQT_OFFSCREEN_THREAD");
-        if (!string.IsNullOrEmpty(env) && int.TryParse(env, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n >= 0)
-            threads = n;
-        int rc = Native.vlqt_offscreen_set_threaded(threads);
-        check(rc == 0, $"qttextureperf: set_threaded({threads}) before the first scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+        int threads = SmokeParameters.RenderThreads ?? 1;
+        var rc = Native.vlqt_offscreen_set_render_threads(threads);
+        s.Check(rc == 0, $"qttextureperf: set_render_threads({threads}) before the first scene ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         if (rc != 0)
             return;
 
-        bool ok = Native.vlqt_test_d3d11_create_device(0, out var device, out var context) == 0;
-        check(ok, "qttextureperf: test device on QtNative's adapter");
+        bool ok = NativeTest.CreateDevice(0, out var device, out var context) == 0;
+        s.Check(ok, "qttextureperf: test device on QtNative's adapter");
         if (!ok)
             return;
         bool software = IsSoftwareAdapter(device, out var adapterName);
         string mode = threads == 0 ? "main thread" : $"{threads} render thread(s)";
-        Console.WriteLine($"INFO qttextureperf: {mode}, adapter \"{adapterName}\"{(software ? " (software)" : "")}, {RuntimeInformation.ProcessArchitecture}, {Environment.ProcessorCount} cores");
+        s.Info($"qttextureperf: {mode}, adapter \"{adapterName}\"{(software ? " (software)" : "")}, {RuntimeInformation.ProcessArchitecture}, {Environment.ProcessorCount} cores");
         // Software adapter: shorter matrix, the scenes render in software.
         var configs = software
             ? new[] { new Config("1 heavy", 1, 2000, 80), new Config("8 light", 8, 100, 4) }
@@ -66,22 +70,22 @@ static class QtTexturePerfTest
         int warmup = software ? 10 : 30, frames = software ? 60 : 200;
         foreach (var config in configs)
         {
-            var main = Measure(device, context, config, threads, warmup, frames, check, pump);
+            var main = Measure(device, context, config, threads, warmup, frames, s);
             if (threads == 0 || !config.Heavy)
                 continue;
             if (software)
-                Console.WriteLine($"INFO qttextureperf: {config.Name}: software adapter, main-thread limit skipped (median {main:F3} ms per QtTexture)");
+                s.Info($"qttextureperf: {config.Name}: software adapter, main-thread limit skipped (median {main:F3} ms per QtTexture)");
             else
-                PerfLimits.Below(check, main, MainThreadLimitMs, $"qttextureperf: {config.Name}, {mode}: median main-thread time per QtTexture {main:F3} ms < {MainThreadLimitMs} ms");
+                PerfLimits.Below(s, main, MainThreadLimitMs, $"qttextureperf: {config.Name}, {mode}: median main-thread time per QtTexture {main:F3} ms < {MainThreadLimitMs} ms");
         }
-        Native.vlqt_test_d3d11_release_device(device, context);
+        NativeTest.vlqt_test_d3d11_release_device(device, context);
 
         if (threads != 0)
-            RunMainThreadChild(check);
+            RunMainThreadChild(s);
     }
 
     // The thread count cannot change after the first scene: the main thread numbers come from a second process.
-    static void RunMainThreadChild(Action<bool, string> check)
+    private static void RunMainThreadChild(Scenario s)
     {
         var host = Environment.ProcessPath;
         if (host == null)
@@ -93,58 +97,58 @@ static class QtTexturePerfTest
             psi.ArgumentList.Add(cmdline[0]);
         foreach (var a in cmdline.Skip(1))
             psi.ArgumentList.Add(a);
-        psi.Environment["VLQT_OFFSCREEN_THREAD"] = "0";
+        psi.Environment["VLQT_SMOKE_RENDERTHREADS"] = "0";
         Console.Out.Flush();
         using var child = Process.Start(psi);
         if (child == null)
         {
-            check(false, "qttextureperf: start the main thread run");
+            s.Check(false, "qttextureperf: start the main thread run");
             return;
         }
         child.WaitForExit();
-        check(child.ExitCode == 0, $"qttextureperf: main thread run (VLQT_OFFSCREEN_THREAD=0), exit code {child.ExitCode}");
+        s.Check(child.ExitCode == 0, $"qttextureperf: main thread run (RenderThreads 0), exit code {child.ExitCode}");
     }
 
     // Returns the median main-thread time of render_batch per QtTexture (ms).
-    static double Measure(IntPtr device, IntPtr context, Config config, int threads, int warmup, int frames, Action<bool, string> check, Action<int> pump)
+    private static double Measure(IntPtr device, IntPtr context, Config config, int threads, int warmup, int frames, Scenario s)
     {
         int count = config.Scenes, rects = config.Rects, texts = config.Texts;
         string mode = threads == 0 ? "main" : $"thread{threads}";
-        var scenes = new IntPtr[count];
+        var scenes = new SceneHandle[count];
         var textures = new IntPtr[count];
         var cmd = new CommandWriter();
         for (int k = 0; k < count; k++)
         {
             scenes[k] = Native.vlqt_offscreen_create(W, H);
-            cmd.Reset();
+            cmd.Clear();
             cmd.ClearColor(0, 0, 0, 0);
             // id 1: marker (frame number in red); 2..: rounded rectangles; then texts.
-            cmd.Create(1, Protocol.Type.Rectangle);
+            cmd.Create(1, Protocol.ElementType.Rectangle);
             cmd.SetPlace(1, 0, 0, MarkerSize, MarkerSize);
             cmd.Reparent(1, 0, 0);
             for (int i = 0; i < rects; i++)
             {
                 uint id = (uint)(2 + i);
-                cmd.Create(id, Protocol.Type.Rectangle);
+                cmd.Create(id, Protocol.ElementType.Rectangle);
                 cmd.SetPlace(id, 40 + (i * 37) % (W - 80), 40 + (i * 53) % (H - 80), 30, 20);
-                cmd.SetF32(id, Protocol.Prop.Radius, 6);
-                cmd.SetColor(id, Protocol.Prop.Color, (i % 7) / 7f, (i % 5) / 5f, (i % 3) / 3f, 0.8f);
+                cmd.SetF32(id, Protocol.PropertyId.Radius, 6);
+                cmd.SetColor(id, Protocol.PropertyId.Color, (i % 7) / 7f, (i % 5) / 5f, (i % 3) / 3f, 0.8f);
                 cmd.Reparent(id, 0, (uint)(1 + i));
             }
             for (int i = 0; i < texts; i++)
             {
                 uint id = (uint)(2 + rects + i);
-                cmd.Create(id, Protocol.Type.Text);
+                cmd.Create(id, Protocol.ElementType.Text);
                 cmd.SetPlace(id, (i * 97) % (W - 200), (i * 31) % (H - 30), 200, 30);
-                cmd.SetString(id, Protocol.Prop.Text, $"Text {i}");
-                cmd.SetF32(id, Protocol.Prop.FontSize, 16);
+                cmd.SetString(id, Protocol.PropertyId.Text, $"Text {i}");
+                cmd.SetF32(id, Protocol.PropertyId.FontSize, 16);
                 cmd.Reparent(id, 0, (uint)(1 + rects + i));
             }
-            check(Native.Apply(scenes[k], cmd.EndFrame()) == 0, $"qttextureperf {config.Name}: apply scene {k}");
-            Native.vlqt_test_d3d11_create_shared_texture(device, W, H, B8G8R8A8Typeless, out textures[k], out var handle);
-            int rc = Native.vlqt_offscreen_bind(scenes[k], device, handle, W, H, B8G8R8A8Unorm, 1, out _);
-            Native.vlqt_test_close_handle(handle);
-            check(rc == 0, $"qttextureperf {config.Name}: bind scene {k} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            s.Check(Native.Apply(scenes[k], cmd.EndFrame()) == 0, $"qttextureperf {config.Name}: apply scene {k}");
+            NativeTest.vlqt_test_d3d11_create_shared_texture(device, W, H, B8G8R8A8Typeless, out textures[k], out var handle);
+            var rc = Native.vlqt_offscreen_bind(scenes[k], device, handle, W, H, B8G8R8A8Unorm, 1, out _);
+            NativeTest.vlqt_test_close_handle(handle);
+            s.Check(rc == 0, $"qttextureperf {config.Name}: bind scene {k} ({rc}) {(rc != 0 ? Native.LastError() : "")}");
         }
 
         var apply = new List<double>();
@@ -162,23 +166,23 @@ static class QtTexturePerfTest
         var snapLatency = new List<int>();
         var snapPixels = new byte[MarkerSize * MarkerSize * 4];
         int snapMisses = 0, snapRequested = 0, snapBad = 0, snapRequestFrame = -1;
-        check(Native.vlqt_res_create(Protocol.ResKind.Snapshot, out var snap) == 0, $"qttextureperf {mode} {config.Name}: snapshot resource");
+        s.Check(Native.vlqt_res_create(Protocol.ResourceKind.Snapshot, out var snap) == 0, $"qttextureperf {mode} {config.Name}: snapshot resource");
         var snapErrors = new List<string>();
         // Records the pending snapshot if it has finished (Ready or Failed) by frame f, and checks its pixels.
         void SnapshotDone(int f)
         {
             int state = Native.vlqt_res_wait(snap, 0);
-            if (state is not (Protocol.ResState.Ready or Protocol.ResState.Failed))
+            if (state is not (Protocol.ResourceState.Ready or Protocol.ResourceState.Failed))
                 return;
             snapLatency.Add(f - snapRequestFrame);
-            int got = Native.ResReadSnapshot(snap, snapPixels, out var desc);
+            int got = NativeCalls.ReadSnapshot(snap, snapPixels, out var desc);
             int r = snapPixels[(MarkerSize / 2 * MarkerSize + MarkerSize / 2) * 4 + 2], a = snapPixels[(MarkerSize / 2 * MarkerSize + MarkerSize / 2) * 4 + 3];
             bool markerSince = Enumerable.Range(snapRequestFrame, f - snapRequestFrame + 1).Any(g => r == g % 251 + 1);
-            if (state != Protocol.ResState.Ready || got != snapPixels.Length || desc.width != MarkerSize || desc.height != MarkerSize || a != 255 || !markerSince)
+            if (state != Protocol.ResourceState.Ready || got != snapPixels.Length || desc.width != MarkerSize || desc.height != MarkerSize || a != 255 || !markerSince)
             {
                 snapBad++;
                 if (snapErrors.Count < 3)
-                    snapErrors.Add($"frame {snapRequestFrame}->{f}: state {state}, {got} bytes {desc.width}x{desc.height}, red {r} alpha {a} {(state == Protocol.ResState.Failed ? QtTextureTest.SnapshotError(snap) : "")}");
+                    snapErrors.Add($"frame {snapRequestFrame}->{f}: state {state}, {got} bytes {desc.width}x{desc.height}, red {r} alpha {a} {(state == Protocol.ResourceState.Failed ? QtTextureTest.SnapshotError(snap) : "")}");
             }
             snapRequestFrame = -1;
         }
@@ -188,7 +192,7 @@ static class QtTexturePerfTest
         {
             bool snapPhase = f >= warmup + frames;
             // The host's pump (before the frame's Update) closes the perf samples: those of the previous frame.
-            pump(1);
+            s.Pump(1);
             if (snapRequestFrame >= 0)
                 SnapshotDone(f);
             var t0 = Stopwatch.GetTimestamp();
@@ -196,18 +200,18 @@ static class QtTexturePerfTest
             byte marker = (byte)(f % 251 + 1);
             for (int k = 0; k < count; k++)
             {
-                cmd.Reset();
-                cmd.SetColor(1, Protocol.Prop.Color, marker / 255f, 0, 0, 1);
+                cmd.Clear();
+                cmd.SetColor(1, Protocol.PropertyId.Color, marker / 255f, 0, 0, 1);
                 for (int i = 0; i < Math.Min(50, rects); i++)
                 {
                     uint id = (uint)(2 + (f * 50 + i) % rects);
-                    cmd.SetColor(id, Protocol.Prop.Color, ((f + i) % 11) / 11f, (i % 5) / 5f, (f % 3) / 3f, 0.8f);
+                    cmd.SetColor(id, Protocol.PropertyId.Color, ((f + i) % 11) / 11f, (i % 5) / 5f, (f % 3) / 3f, 0.8f);
                 }
                 for (int i = 0; i < Math.Min(10, texts); i++)
-                    cmd.SetString((uint)(2 + rects + (f + i) % texts), Protocol.Prop.Text, $"Frame {f} #{i}");
+                    cmd.SetString((uint)(2 + rects + (f + i) % texts), Protocol.PropertyId.Text, $"Frame {f} #{i}");
                 Native.Apply(scenes[k], cmd.EndFrame());
             }
-            if (snapPhase && f < end && f % 10 == 0 && snapRequestFrame < 0 && Native.vlqt_res_snapshot(snap, scenes[0], 1, 1) == 0)
+            if (snapPhase && f < end && f % 10 == 0 && snapRequestFrame < 0 && Native.vlqt_snapshot_start(snap, scenes[0], 1, 1) == 0)
             {
                 snapRequestFrame = f;
                 snapRequested++;
@@ -222,12 +226,12 @@ static class QtTexturePerfTest
             while (sw.Elapsed.TotalMilliseconds < 6) { }
             var t3 = Stopwatch.GetTimestamp();
             // Stride's draw reads scene 0's texture; Map waits for the GPU (and so for Qt's write signal).
-            Native.TestReadTexture(textures[0], pixels, out _, out _, out _);
+            NativeCalls.ReadTexture(textures[0], pixels, out _, out _, out _);
             var t4 = Stopwatch.GetTimestamp();
             for (int k = 0; k < count; k++)
             {
                 if (k > 0)
-                    Native.TestReadTexture(textures[k], pixels, out _, out _, out _);
+                    NativeCalls.ReadTexture(textures[k], pixels, out _, out _, out _);
                 int red = pixels[(8 * W + 8) * 4 + 2]; // BGRA
                 if (red == marker)
                     continue;
@@ -251,7 +255,7 @@ static class QtTexturePerfTest
             }
         }
         // Perf sample of scene 0 (what PerfStats shows): with a render thread the last frames finished before the poll.
-        string perf = Native.vlqt_window_get_perf_sample(scenes[0], out var p) == 0 ? $"; scene 0 perf sample: sync {p.sync:F2}, render {p.render:F2} ms" : "";
+        string perf = Native.vlqt_scene_get_perf_sample(scenes[0], out var p) == 0 ? $"; scene 0 perf sample: sync {p.sync:F2}, render {p.render:F2} ms" : "";
         double perTexture = Median(batch) / count;
         Console.WriteLine(
             $"INFO qttextureperf {mode} {config.Name} ({rects} rects + {texts} texts): main-thread render_batch {Median(batch):F3} ms/frame (p95 {P95(batch):F3}) = {perTexture:F3} ms per QtTexture; "
@@ -260,34 +264,34 @@ static class QtTexturePerfTest
         Console.WriteLine(
             $"INFO qttextureperf {mode} {config.Name}: snapshots under load: {snapLatency.Count} of {snapRequested} finished, latency {(snapLatency.Count > 0 ? $"{snapLatency.Min()}-{snapLatency.Max()}" : "-")} frames; "
             + $"main-thread render_batch meanwhile {(snapBatch.Count > 0 ? Median(snapBatch) : 0):F3} ms/frame (p95 {(snapBatch.Count > 0 ? P95(snapBatch) : 0):F3})");
-        check(snapRequested >= 3 && snapLatency.Count == snapRequested && snapBad == 0,
+        s.Check(snapRequested >= 3 && snapLatency.Count == snapRequested && snapBad == 0,
             $"qttextureperf {mode} {config.Name}: snapshots under load finish with a marker since the request ({snapLatency.Count} of {snapRequested}, {snapBad} bad) {string.Join("; ", snapErrors)}");
-        check(snapMisses == 0, $"qttextureperf {mode} {config.Name}: same frame while snapshots run ({snapMisses} misses)");
+        s.Check(snapMisses == 0, $"qttextureperf {mode} {config.Name}: same frame while snapshots run ({snapMisses} misses)");
         Native.vlqt_res_release(snap);
-        check(renderFailures == 0, $"qttextureperf {mode} {config.Name}: render_batch rendered every scene in every frame ({renderFailures} frames short) {(renderFailures > 0 ? Native.LastError() : "")}");
-        check(misses == 0, $"qttextureperf {mode} {config.Name}: every texture holds the frame's marker in every frame ({misses} misses, same frame)");
+        s.Check(renderFailures == 0, $"qttextureperf {mode} {config.Name}: render_batch rendered every scene in every frame ({renderFailures} frames short) {(renderFailures > 0 ? Native.LastError() : "")}");
+        s.Check(misses == 0, $"qttextureperf {mode} {config.Name}: every texture holds the frame's marker in every frame ({misses} misses, same frame)");
 
         for (int k = 0; k < count; k++)
         {
             Native.vlqt_offscreen_unbind(scenes[k]);
-            Native.vlqt_window_destroy(scenes[k]);
-            Native.vlqt_test_com_release(textures[k]);
+            Native.vlqt_scene_destroy(scenes[k]);
+            NativeTest.vlqt_test_com_release(textures[k]);
         }
         return perTexture;
     }
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    delegate int GetAdapterFn(IntPtr self, out IntPtr adapter);
+    private delegate int GetAdapterFn(IntPtr self, out IntPtr adapter);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    delegate int GetDescFn(IntPtr self, IntPtr desc);
+    private delegate int GetDescFn(IntPtr self, IntPtr desc);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    delegate uint ReleaseFn(IntPtr self);
+    private delegate uint ReleaseFn(IntPtr self);
 
-    static T VTable<T>(IntPtr obj, int index) where T : Delegate
+    private static T VTable<T>(IntPtr obj, int index) where T : Delegate
         => Marshal.GetDelegateForFunctionPointer<T>(Marshal.ReadIntPtr(Marshal.ReadIntPtr(obj), index * IntPtr.Size));
 
     // True if device runs on a software adapter (WARP, vendor Microsoft 0x1414); name = adapter description.
-    static bool IsSoftwareAdapter(IntPtr device, out string name)
+    private static bool IsSoftwareAdapter(IntPtr device, out string name)
     {
         name = "unknown";
         var iidDxgiDevice = new Guid("54ec77fa-1377-44e6-8c32-88fd5f44c84c");
@@ -313,7 +317,7 @@ static class QtTexturePerfTest
         }
     }
 
-    static double Ms(long a, long b) => (b - a) * 1000.0 / Stopwatch.Frequency;
-    static double Median(List<double> v) => v.OrderBy(x => x).ElementAt(v.Count / 2);
-    static double P95(List<double> v) => v.OrderBy(x => x).ElementAt((int)(v.Count * 0.95));
+    private static double Ms(long a, long b) => (b - a) * 1000.0 / Stopwatch.Frequency;
+    private static double Median(List<double> v) => v.OrderBy(x => x).ElementAt(v.Count / 2);
+    private static double P95(List<double> v) => v.OrderBy(x => x).ElementAt((int)(v.Count * 0.95));
 }

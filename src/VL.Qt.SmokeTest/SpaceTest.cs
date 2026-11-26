@@ -1,38 +1,41 @@
 ﻿using System;
+using NUnit.Framework;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Lib.Reactive;
+using VL.Qt.Reconciliation;
 using VL.Qt;
 using VL.Qt.Elements;
+using VL.Qt.Interop;
 using VL.Qt.Nodes;
+using VL.Qt.Wire;
 using Color = System.Drawing.Color;
 using RectangleF = Stride.Core.Mathematics.RectangleF;
 using QtRect = VL.Qt.Elements.Rectangle;
+using static Pixels;
 
-// Space (#143): one scene, four spaces, through WindowRenderer (SceneCore → SET_SPACE + SpaceMapping lengths → real QtNative).
+// Space: one scene, four spaces, through WindowScene (Scene → SET_SPACE + SpaceMapping lengths → real QtNative).
 // A red rectangle of 1 x 1 unit at (0, 0) and a blue one (0.5 x 0.5 at (1, 0)) as the reference. Expectations in DIP
 // (logical pixels), per space, derived here from the Space description alone:
 //   DIPTopLeft    origin top left, 100 DIP per unit            DIP      origin = centre, 100 DIP per unit
 //   Normalized    origin = centre, height -1 … 1 (H / 2 DIP)   PixelTopLeft origin top left, 100 device pixels per unit
 // Window 800 x 600, then resized to 400 x 300: origin and the Normalized scale follow. Per space and size: the pixels of
-// the grab (<outDir>/143_space_*.png), the Scene Bounds of both rectangles in units (round trip through QtNative), the
+// the grab (<OutDir>/143_space_*.png), the Scene Bounds of both rectangles in units (round trip through QtNative), the
 // position of a synthetic click in units (Point node, local to the rectangle). At the end a resync (invalid command before a
 // Space change) must restore origin and scale. The device pixel ratio is read from the scene; another one needs its own run:
-// $env:QT_SCALE_FACTOR=1.5; dotnet run --project src/VL.Qt.SmokeTest -c Release -- --only space (DIP: 150 device pixels).
-static class SpaceTest
+// $env:QT_SCALE_FACTOR=1.5; dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=space (DIP: 150 device pixels).
+[TestFixture, NonParallelizable]
+public static class SpaceTest
 {
-    sealed class NoMessage : IDisposable { public void Dispose() { } }
+    private static readonly Color4 Bg = new(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
+    private const float Eps = 2e-3f;
 
-    static readonly Color4 Bg = new(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
-    const float Eps = 2e-3f;
-
-    static bool Near(Color c, int r, int g, int b) => Math.Abs(c.R - r) < 8 && Math.Abs(c.G - g) < 8 && Math.Abs(c.B - b) < 8;
 
     /// <summary>Origin (DIP) and DIP per unit of a space for a scene of w x h DIP.</summary>
-    static (Vector2 Origin, float Unit) Layout(Space space, float w, float h, float dpr) => space switch
+    private static (Vector2 Origin, float Unit) Layout(Space space, float w, float h, float dpr) => space switch
     {
         Space.Normalized => (new Vector2(w / 2, h / 2), h / 2),
         Space.DIP => (new Vector2(w / 2, h / 2), 100f),
@@ -40,19 +43,24 @@ static class SpaceTest
         _ => (Vector2.Zero, 100f / dpr),
     };
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    /// <summary>Coordinate spaces.</summary>
+    [Test, Category("space")]
+    public static void SpaceScenes() => Scenario.Run(s => Run(s));
+
+    private static void Run(Scenario s)
     {
-        var scene = new SceneRegistry();
-        var r = new WindowRenderer(scene, "VL.Qt space test", new RectangleF(100, 100, 800, 600));
-        check(r.Window != IntPtr.Zero, "143: window created " + r.Error);
-        if (r.Window == IntPtr.Zero)
+        var scene = new OccurrenceRegistry();
+        var interactions = new InteractionRegistry();
+        var r = new WindowScene(scene, interactions, "VL.Qt space test", new RectangleF(100, 100, 800, 600));
+        s.Check(r.Window != SceneHandle.Null, "window created " + r.Error);
+        if (r.Window == SceneHandle.Null)
             return;
 
-        using var point = new PointNode(_ => new NoMessage());
+        using var point = new PointNode(new NodeLog().Errors);
         var active = Channel.Create(false);
         var position = Channel.Create(Vector2.Zero);
-        var redSink = new ElementSink();
-        var blueSink = new ElementSink();
+        var redFeedback = new ElementFeedback();
+        var blueFeedback = new ElementFeedback();
         Interaction? interaction = null;
         Element? root = null;
         var space = Space.DIPTopLeft;
@@ -68,8 +76,8 @@ static class SpaceTest
                 {
                     Children =
                     [
-                        new QtRect { Size = new Vector2(1, 1), Fill = new Color4(1, 0, 0, 1), Sink = new SinkSlot(redSink, 0), Interaction = i },
-                        new QtRect { Size = new Vector2(0.5f, 0.5f), Transform = Matrix.Translation(1, 0, 0), Fill = new Color4(0, 0, 1, 1), Sink = new SinkSlot(blueSink, 0) },
+                        new QtRect { Size = new Vector2(1, 1), Fill = new Color4(1, 0, 0, 1), Feedback = new FeedbackSlot(redFeedback, 0), Interaction = i },
+                        new QtRect { Size = new Vector2(0.5f, 0.5f), Transform = Matrix.Translation(1, 0, 0), Fill = new Color4(0, 0, 1, 1), Feedback = new FeedbackSlot(blueFeedback, 0) },
                     ],
                 };
             }
@@ -82,32 +90,32 @@ static class SpaceTest
             {
                 r.Update(Root(), space, Bg, true, true, "VL.Qt space test");
                 r.ApplyCommands();
-                pump(3);
+                s.Pump(3);
                 r.AfterEvents();
             }
         }
 
         (float W, float H, float Dpr) Metrics()
         {
-            Native.vlqt_window_get_scene_metrics(r.Window, out var m);
+            Native.vlqt_scene_get_metrics(r.Window, out var m);
             return (m.width, m.height, m.dpr);
         }
 
-        void Mouse(int type, float x, float y) => Native.vlqt_test_send_mouse(r.Window, type, x, y);
+        void Mouse(int type, float x, float y) => NativeTest.vlqt_test_send_mouse(r.Window, type, x, y);
 
         // Pixel at a DIP position of a w x h scene (the grab is in device pixels).
         static Color At(Bitmap a, float x, float y, float w, float h)
             => a.GetPixel(Math.Clamp((int)(x * a.Width / w), 0, a.Width - 1), Math.Clamp((int)(y * a.Height / h), 0, a.Height - 1));
 
-        void CheckScene(Space s, string size)
+        void CheckScene(Space sp, string size)
         {
             Frame();
             var (w, h, dpr) = Metrics();
-            var (o, k) = Layout(s, w, h, dpr);
-            var tag = $"143: {s} {size} (dpr {dpr:F2}, {k:F1} DIP/unit)";
+            var (o, k) = Layout(sp, w, h, dpr);
+            var tag = $"{sp} {size} (dpr {dpr:F2}, {k:F1} DIP/unit)";
 
             // Pixels: red 1 x 1 unit at the origin, blue 0.5 x 0.5 right of it, nothing around.
-            using (var a = grab(r.Window, Path.Combine(outDir, $"143_space_{s}_{size}.png")))
+            using (var a = s.Grab(r.Window, $"143_space_{sp}_{size}.png"))
             {
                 var failed = new List<string>();
                 void Expect(string what, float x, float y, int cr, int cg, int cb)
@@ -134,73 +142,73 @@ static class SpaceTest
                 Empty("right of blue", x1 + k / 2 + 3, y0 + k / 4);
                 Empty("below blue", x1 + k / 4, y0 + k / 2 + 3);
                 Empty("right of red, below blue", x1 + 3, y0 + k * 0.75f);
-                check(failed.Count == 0, $"{tag}: pixels{(failed.Count > 0 ? ": " + string.Join("; ", failed) : "")}");
+                s.Check(failed.Count == 0, $"{tag}: pixels{(failed.Count > 0 ? ": " + string.Join("; ", failed) : "")}");
             }
 
             // Scene Bounds in units, independent of the space.
-            var rb = redSink.SceneBounds();
-            var bb = blueSink.SceneBounds();
+            var rb = redFeedback.SceneBounds();
+            var bb = blueFeedback.SceneBounds();
             bool Close(RectangleF q, float x, float y, float qw, float qh)
                 => Math.Abs(q.X - x) < Eps && Math.Abs(q.Y - y) < Eps && Math.Abs(q.Width - qw) < Eps && Math.Abs(q.Height - qh) < Eps;
-            check(Close(rb, 0, 0, 1, 1) && Close(bb, 1, 0, 0.5f, 0.5f), $"{tag}: Scene Bounds in units (red {rb}, blue {bb})");
+            s.Check(Close(rb, 0, 0, 1, 1) && Close(bb, 1, 0, 0.5f, 0.5f), $"{tag}: Scene Bounds in units (red {rb}, blue {bb})");
 
             // Click at (0.3, 0.7) units of the red rectangle: Position in units, local to the rectangle.
             var px = o.X + 0.3f * k;
             var py = o.Y + 0.7f * k;
             if (px < w && py < h)
             {
-                Mouse(Protocol.Mouse.Move, px, py);
-                Mouse(Protocol.Mouse.Press, px, py);
+                Mouse(TestProtocol.Mouse.Move, px, py);
+                Mouse(TestProtocol.Mouse.Press, px, py);
                 Frame();
-                check(active.Value && Math.Abs(position.Value.X - 0.3f) < Eps && Math.Abs(position.Value.Y - 0.7f) < Eps,
+                s.Check(active.Value && Math.Abs(position.Value.X - 0.3f) < Eps && Math.Abs(position.Value.Y - 0.7f) < Eps,
                     $"{tag}: click at ({px:F0}, {py:F0}) DIP is (0.3, 0.7) units (active {active.Value}, {position.Value})");
-                Mouse(Protocol.Mouse.Release, px, py);
-                Mouse(Protocol.Mouse.Move, w - 1, h - 1);
+                Mouse(TestProtocol.Mouse.Release, px, py);
+                Mouse(TestProtocol.Mouse.Move, w - 1, h - 1);
                 Frame();
-                check(!active.Value, $"{tag}: released");
+                s.Check(!active.Value, $"{tag}: released");
             }
         }
 
         Frame();
         var (w0, h0, dpr0) = Metrics();
-        Console.WriteLine($"INFO 143: scene {w0} x {h0} DIP, device pixel ratio {dpr0:F2} (another dpr needs another run, QT_SCALE_FACTOR)");
-        check(w0 == 800 && h0 == 600, $"143: scene 800 x 600 DIP ({w0} x {h0})");
+        s.Info($"scene {w0} x {h0} DIP, device pixel ratio {dpr0:F2} (another dpr needs another run, QT_SCALE_FACTOR)");
+        s.Check(w0 == 800 && h0 == 600, $"scene 800 x 600 DIP ({w0} x {h0})");
 
         // 1) Every space at 800 x 600; each change of the Space pin only moves the origin (lengths stay for DIP ↔ DIPTopLeft).
         var all = new[] { Space.DIPTopLeft, Space.DIP, Space.Normalized, Space.PixelTopLeft };
-        foreach (var s in all)
+        foreach (var sp in all)
         {
-            space = s;
-            CheckScene(s, "800x600");
+            space = sp;
+            CheckScene(sp, "800x600");
         }
 
         // 2) Resize to 400 x 300 (back through the spaces): origin and Normalized scale follow the scene size.
         Native.vlqt_window_resize(r.Window, 400, 300);
-        pump(10);
+        s.Pump(10);
         var (w1, h1, _) = Metrics();
-        check(w1 == 400 && h1 == 300, $"143: window resized to 400 x 300 DIP ({w1} x {h1})");
-        foreach (var s in new[] { Space.PixelTopLeft, Space.Normalized, Space.DIP, Space.DIPTopLeft })
+        s.Check(w1 == 400 && h1 == 300, $"window resized to 400 x 300 DIP ({w1} x {h1})");
+        foreach (var sp in new[] { Space.PixelTopLeft, Space.Normalized, Space.DIP, Space.DIPTopLeft })
         {
-            space = s;
-            CheckScene(s, "400x300");
+            space = sp;
+            CheckScene(sp, "400x300");
         }
 
-        // 3) Resync (#76): the invalid command comes before the SET_SPACE of the same frame (DIPTopLeft → DIP: same scale, other origin), QtNative drops
+        // 3) Resync: the invalid command comes before the SET_SPACE of the same frame (DIPTopLeft → DIP: same scale, other origin), QtNative drops
         //    the rest of the batch; the rebuild must send the Space again, else the origin stays where DIPTopLeft put it.
         space = Space.DIPTopLeft;
         Frame();
         uint redId = r.Reconciler.Root!.Children[0].Id;
-        r.Commands.SetF32(redId, Protocol.Prop.Color, 1f); // wrong value type for a color property → -7
+        r.Commands.SetF32(redId, Protocol.PropertyId.Color, 1f); // wrong value type for a color property → -7
         space = Space.DIP;
         r.Update(Root(), space, Bg, true, true, "VL.Qt space test");
         r.ApplyCommands();
-        pump(3);
+        s.Pump(3);
         r.AfterEvents();
-        check(r.Resyncs == 1 && r.Reconciler.Root is null, $"143: resync after the invalid command ({r.Resyncs})");
+        s.Check(r.Resyncs == 1 && r.Reconciler.Root is null, $"resync after the invalid command ({r.Resyncs})");
         CheckScene(Space.DIP, "400x300_resync");
-        check(r.Error.Length == 0, "143: rebuild without an error: " + r.Error);
+        s.Check(r.Error.Length == 0, "rebuild without an error: " + r.Error);
 
         r.Dispose();
-        pump(2);
+        s.Pump(2);
     }
 }

@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="DwtJfBV7tnlOHZdOUSILaq" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Window Settings [Qt]: icon of the Renderer window (title bar, taskbar, Alt-Tab)&#xD;&#xA;- Output to the Window pin of Renderer [Qt]&#xD;&#xA;- Icon: .ico, .png, .svg or anything Qt reads, relative to this patch&#xD;&#xA;- Title, Borderless, Fullscreen, Bounds: optional pins, win over Renderer [Qt]">
+          <Pad Id="DwtJfBV7tnlOHZdOUSILaq" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="WindowSettings [Qt]: icon of the Renderer window (title bar, taskbar, Alt-Tab)&#xD;&#xA;- Output to the Window pin of Renderer [Qt]&#xD;&#xA;- Icon: .ico, .png, .svg or anything Qt reads, relative to this patch&#xD;&#xA;- Bounds: optional, initial position and size, wins over the Bounds pin of Renderer [Qt] (Title, Borderless and Fullscreen are pins of Renderer [Qt])">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="luRThQEyxFfVIYOjcxmKcE" Bounds="85,465,830,142" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Without Window Settings the window shows the built-in default icon; no value (or an empty path) shows it again. Changes apply live, without recreating the window.&#xD;&#xA;- A file that cannot be loaded keeps the default icon and shows a warning at Renderer [Qt] (Error output).&#xD;&#xA;- Bounds in Window Settings only apply when the window is created; Save Bounds and Client Bounds stay on Renderer [Qt].&#xD;&#xA;- Exported apps: the default icon is built in and needs no file next to the exe. The icon of the .exe file itself is set in the vvvv export settings.&#xD;&#xA;- Linux (Wayland): the compositor takes the icon from the app id and the .desktop file, not from the window.">
+          <Pad Id="luRThQEyxFfVIYOjcxmKcE" Bounds="85,465,830,173" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Without WindowSettings the window shows the built-in default icon; no value (or an empty path) shows it again. Changes apply live, without recreating the window.&#xD;&#xA;- A file that cannot be loaded keeps the default icon and shows a warning at Renderer [Qt].&#xD;&#xA;- Bounds in Window Settings only apply when the window is created; Save Bounds and Client Bounds stay on Renderer [Qt].&#xD;&#xA;- Exported apps: the default icon is built in and needs no file next to the exe. The icon of the .exe file itself is set in the vvvv export settings.&#xD;&#xA;- Linux (Wayland): the compositor takes the icon from the app id and the .desktop file, not from the window.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -55,13 +55,10 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="9ZXKPbOoT7w9iTjhheW0nm" Name="Icon" Kind="InputPin" />
-            <Pin Id="7tW0z1OeryW93mel38zj7v" Name="Title" Kind="InputPin" IsHidden="true" />
-            <Pin Id="7U5wqBOKheF94gxEk4BbTR" Name="Borderless" Kind="InputPin" IsHidden="true" />
-            <Pin Id="SnsIkG2VzxFJek7wqy5yP0" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
             <Pin Id="MPzliTWPhEcsDFTL87jfo8" Name="Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="uqo7oy4fj6KxugPNYasxkS" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,280,65,19" Id="IFl7OjCZhKzx3FpVRyeU1V">
+          <Node Bounds="100,280,45,19" Id="IFl7OjCZhKzx3FpVRyeU1V">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -71,9 +68,9 @@
             </p:NodeReference>
             <Pin Id="ZB9UQz3mWBYlY1FtGiKjd4" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="fz0R6G6Cua7GPq3XOaPTSA" Name="Size" Kind="InputPin" DefaultValue="3, 2" />
-            <Pin Id="pXbnQ63TNBtBqPfKCXoK8e" Name="Transform" Kind="InputPin" />
+            <Pin Id="pXbnQ63TNBtBqPfKCXoK8e" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="xVh2B5925olAmgQlw3SGL2" Name="Anchor" Kind="InputPin" DefaultValue="TopLeft" IsHidden="true" />
-            <Pin Id="kWS6B53kSjLKO7OdwvRdGM" Name="Color" Kind="InputPin" DefaultValue="0.12, 0.43, 0.9, 1" />
+            <Pin Id="kWS6B53kSjLKO7OdwvRdGM" Name="Fill Color" Kind="InputPin" DefaultValue="0.12, 0.43, 0.9, 1" />
             <Pin Id="d0YXeQGWb3gGQU7TzTqHXT" Name="Radius" Kind="InputPin" IsHidden="true" />
             <Pin Id="bfXuy9VJtb2X2EIzqgHG6X" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="VvGKPydt0Rc2b0oNwksbSf" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -98,10 +95,10 @@
             <Pin Id="BhtMCavnhgmwWgaBF2AmG6" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="SV8lBOBp2Kk73g3viLIjNC" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="kkIUc6xuLZvW9DoALH0BFG" Name="Input" Kind="InputPin" />
-            <Pin Id="sDCU1wHuX5AyjkqLfvGP5i" Name="Space" Kind="InputPin" />
-            <Pin Id="mMBInTjKL1Odc6fss81CX7" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="sDCU1wHuX5AyjkqLfvGP5i" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="mMBInTjKL1Odc6fss81CX7" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="BeJqIbGWUGwPS5mhwsQKRy" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="H52CJKWj8Vg9mVkn5hf9nH" Name="Enabled" Kind="InputPin" />
+            <Pin Id="H52CJKWj8Vg9mVkn5hf9nH" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="V4oP1b7DSkMxxEfGx2qHkb" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="Cc8GOtCoKE4efsGv0FVz6j" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="B4jnxnB93Moq9eegMlYD7g" Name="Title" Kind="InputPin" />

@@ -17,6 +17,9 @@ help/Qt/output/
 # CodeAlta (tasks, plans, scratch)
 .alta/
 
+# Maintainer-only working material (plans, review reports); public-check.yml fails if it is tracked
+docs-internal/
+
 # Python
 __pycache__/
-tests/profiling/assets/gen/
+tools/profiling/assets/

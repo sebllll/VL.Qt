@@ -10,12 +10,21 @@ namespace VL.Qt.Stride
 {
     /// <summary>
     /// The Stride side of a QtTexture: the shared texture and the native pointers and formats QtNative and QtRenderer need
-    /// (docs/decisions/render-texture.md; the format mapping is in <see cref="TextureFormats"/>). All D3D11 work on the texture
-    /// itself (open, fences, render) is in QtNative.
+    /// (docs/design/stride-output.md; the format mapping is in <see cref="TextureFormats"/>). All D3D11 work on the texture
+    /// itself (open, fences, render) is in the native layer (QtNative).
     /// </summary>
     [SupportedOSPlatform("windows")]
     internal static class StrideInterop
     {
+        /// <summary>Returns the VL.Qt count of Stride's <paramref name="samples"/> (by name: the two enums do not promise the same numbers).</summary>
+        public static MultisampleCount ToQtSamples(StrideMultisampleCount samples) => samples switch
+        {
+            StrideMultisampleCount.X2 => MultisampleCount.X2,
+            StrideMultisampleCount.X4 => MultisampleCount.X4,
+            StrideMultisampleCount.X8 => MultisampleCount.X8,
+            _ => MultisampleCount.None,
+        };
+
         /// <summary>
         /// Returns the largest width and height of a Texture2D at the device's feature level (D3D11 limits per level;
         /// the QtNative bind accepts up to 16384).

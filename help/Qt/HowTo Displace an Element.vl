@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="CdXl2JvMta5xOQlunYx5Z7" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Displace [Qt.Effects]&#xD;&#xA;- Map: any element (here a ShaderEffect) as displacement map&#xD;&#xA;- Map: red moves the pixels in x, green in y, 0.5 = no shift&#xD;&#xA;- Displacement: largest shift in units">
+          <Pad Id="CdXl2JvMta5xOQlunYx5Z7" Bounds="85,85,520,78" ShowValueBox="true" isIOBox="true" Value="Displace [Qt.Effects]&#xD;&#xA;- Map: any element (here a ShaderEffect) as displacement map&#xD;&#xA;- Map: red moves the pixels in x, green in y, 0.5 = no shift&#xD;&#xA;- Displacement: largest shift in DIP">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="40mPKGcVkIMbl8iyOzpN2H" Bounds="85,1002,846,213" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Displace shifts the pixels of an element by a displacement map, which is itself an element. The alpha of the map scales the shift; a map value of 0 or 1 moves the pixels by Displacement.&#xD;&#xA;- The map is stretched over the element, also behind a Blur (outside the element the edge of the map continues). It is not drawn itself and does not count for layout.&#xD;&#xA;- Without a Map the chain passes on unchanged.&#xD;&#xA;- Size the map element like the element it displaces, the position does not matter.&#xD;&#xA;- The map can be animated like any element (a ShaderEffect with a Time uniform, a Video, ...).">
+          <Pad Id="40mPKGcVkIMbl8iyOzpN2H" Bounds="85,1002,846,260" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Displace shifts the pixels of an element by a displacement map, which is itself an element. The alpha of the map scales the shift; a map value of 0 or 1 moves the pixels by Displacement.&#xD;&#xA;- The map is stretched over the element, also behind a Blur (outside the element the edge of the map continues). It is not drawn itself and does not count for layout.&#xD;&#xA;- Without a Map the chain passes on unchanged.&#xD;&#xA;- Size the map element like the element it displaces, the position does not matter.&#xD;&#xA;- The map can be animated like any element (a ShaderEffect with a Time uniform, a Video, ...).">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -43,27 +43,29 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="305,561,125,19" Id="KubJEyBJWcVSnLrzGv37Ox">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+          <Node Bounds="305,561,45,19" Id="KubJEyBJWcVSnLrzGv37Ox">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
             <Pin Id="9TDMRD9l3R5leIbpKZFcoq" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="qFUKS5jUMA48AQDGwEpiux" Name="Input" Kind="InputPin" />
+            <Pin Id="qFUKS5jUMA48AQDGwEpiux" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="LZC7HHcPSaKQB1bhK5magp" Name="Input Sampler" Kind="InputPin" IsHidden="true" />
             <Pin Id="nDpjAhiV7zHDKzckyqZQic" Name="Fragment Code" Kind="InputPin" />
-            <Pin Id="8ezj1sAOyjOvS1lHZVYSsp" Name="Fragment Shader" Kind="InputPin" />
+            <Pin Id="8ezj1sAOyjOvS1lHZVYSsp" Name="Fragment Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="Tfvh4SjHzCFp2fp6zYEGVC" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="lubdPzMRQgdCuIt8MBAlkG" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
-            <Pin Id="HdJWZRFK5WYoMwrffYZzIO" Name="Uniforms" Kind="InputPin" />
+            <Pin Id="HdJWZRFK5WYoMwrffYZzIO" Name="Uniforms" Kind="InputPin" IsHidden="true" />
             <Pin Id="ffxNFdJCTOEt0sftL4b0K9" Name="Blending" Kind="InputPin" IsHidden="true" />
             <Pin Id="Ukqxu8SdnpC2MNfvddqsHc" Name="Mesh Resolution" Kind="InputPin" IsHidden="true" />
             <Pin Id="CwaWLXqE9IsvzOUduL74hS" Name="Size" Kind="InputPin" />
             <Pin Id="fayUI33VjnAsUK8XO8c5Rx" Name="Auto Size" Kind="InputPin" IsHidden="true" />
-            <Pin Id="C3f4NMp2ouPDPsQXbEGERW" Name="Transform" Kind="InputPin" />
+            <Pin Id="C3f4NMp2ouPDPsQXbEGERW" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="WsIy2auJe1BDl8AbWZ7uPY" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="fPHxQ2MoYA0fdyqaRpnWHQ" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="VMvAgG8iL6UxA4sYh8wT3w" Name="Clip" Kind="InputPin" IsHidden="true" />
@@ -85,10 +87,10 @@
             </p:NodeReference>
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="4ZxkjPiOZrPYAkEsZxFp3G" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="ocOPjdb5LEhlLQpGcDhGhS" Name="Input" Kind="InputPin" />
+            <Pin Id="ocOPjdb5LEhlLQpGcDhGhS" Name="Input" Kind="InputPin" IsHidden="true" />
             <Pin Id="6v9Ph8WzcpsRTWtxconmav" Name="Map" Kind="InputPin" />
             <Pin Id="TfHv1p459lMMBeZ8H8SJIb" Name="Map Sampler" Kind="InputPin" IsHidden="true" />
-            <Pin Id="M3SYwVBMbLHjgb1VkSCGNo" Name="Displacement" Kind="InputPin" DefaultValue="0.2" />
+            <Pin Id="M3SYwVBMbLHjgb1VkSCGNo" Name="Displacement" Kind="InputPin" DefaultValue="20" />
             <Pin Id="hrLSPfmhcskyt9ShezHqZ6" Name="Output" Kind="OutputPin" />
           </Node>
           <Node Bounds="120,839,185,19" Id="xj7SmnI3CkK9KncGX79Yqe">
@@ -101,12 +103,12 @@
             </p:NodeReference>
             <Pin Id="iIQjaONNknZh9VnF7uBvei" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="vgVWqW46aLiLhVkE7eetq5" Name="Size" Kind="InputPin" />
-            <Pin Id="JPbfLlZV4JaXMNYsijzQYH" Name="Transform" Kind="InputPin" />
+            <Pin Id="JPbfLlZV4JaXMNYsijzQYH" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="qATNj2wZry9JMAIzpnSwsk" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="w0pjY65Zsq4X5evksiO09n" Name="Text" Kind="InputPin" DefaultValue="VL.Qt" />
-            <Pin Id="rOySfVUs76CXuGjCTpg0JF" Name="Font Family" Kind="InputPin" />
+            <Pin Id="rOySfVUs76CXuGjCTpg0JF" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="gDQQMASPgtgWH2CprvYcyN" Name="Font Size" Kind="InputPin" DefaultValue="1.1" />
-            <Pin Id="gA9bGYQUD14y6b6QZft2II" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
+            <Pin Id="gA9bGYQUD14y6b6QZft2II" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="0tPBSQ2Q3F3Ndjnna1buKi" Name="Italic" Kind="InputPin" IsHidden="true" />
             <Pin Id="CIymScRGgqhK2oBkneICzV" Name="Color" Kind="InputPin" DefaultValue="0.95, 0.93, 0.9, 1" />
             <Pin Id="wBFwkuNq8LKX3BtVEx1hJA" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
@@ -135,7 +137,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="RCzxX3IIbPJx0B5WCOTm3S" Comment="Displacement" Bounds="292,660,35,15" ShowValueBox="true" isIOBox="true" Value="0.12">
+          <Pad Id="RCzxX3IIbPJx0B5WCOTm3S" Comment="Displacement" Bounds="292,660,35,15" ShowValueBox="true" isIOBox="true" Value="12">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
@@ -166,10 +168,10 @@
             <Pin Id="DbJcHAbjAXXdiTNLeZJJA8" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="tbCfFeTbv7fRVQyhGvzyms" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="iNFoKX68Bm5BYoDcuAgojb" Name="Input" Kind="InputPin" />
-            <Pin Id="NjxXcrG8UxnjOXP2pqcXI5" Name="Space" Kind="InputPin" />
+            <Pin Id="NjxXcrG8UxnjOXP2pqcXI5" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="FTGYFbbUJJN9SchozUffTD" Name="Clear Color" Kind="InputPin" />
             <Pin Id="IaEuWlQt59rLWimP2S0FZV" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="ARiX47Ga75TFJiVx3boaKM" Name="Enabled" Kind="InputPin" />
+            <Pin Id="ARiX47Ga75TFJiVx3boaKM" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="Tuquy5S6YbfieM3KbhMAxi" Name="Title" Kind="InputPin" />
             <Pin Id="92aMPn8Me4n6UPfUUx2i69" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="xphDVp3mK1mDhfNvNZOKPv" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -192,15 +194,15 @@
             </p:TypeAnnotation>
           </Pad>
           <Node Bounds="240,770,34,19" Id="CeW3IjEebvFPKLqThHid3C">
-            <p:NodeReference LastCategoryFullName="Qt.Effects.MultiEffect" LastDependency="VL.Qt.vl">
+            <p:NodeReference LastCategoryFullName="Qt.Effects" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Blur" />
             </p:NodeReference>
             <Pin Id="SD4BnQmuIYhLxwnOVioBjB" Name="Input" Kind="InputPin" />
             <Pin Id="HTPjdfUj9NrMRABbsnbisS" Name="Amount" Kind="InputPin" DefaultValue="0.17" />
             <Pin Id="K8llOLguGxlNd8qzHr40n1" Name="Output" Kind="OutputPin" />
-            <Pin Id="NXR8mcEnHZcOGRor4bG1Zs" Name="Max" Kind="InputPin" IsHidden="true" />
-            <Pin Id="VmYK2pMHNyJPSkT6lUqeNq" Name="Multiplier" Kind="InputPin" IsHidden="true" />
+            <Pin Id="NXR8mcEnHZcOGRor4bG1Zs" Name="Max Radius" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VmYK2pMHNyJPSkT6lUqeNq" Name="Radius Multiplier" Kind="InputPin" IsHidden="true" />
             <Pin Id="KRWrwwSdhEVNOZdKCfVP8q" Name="Auto Padding" Kind="InputPin" IsHidden="true" />
             <Pin Id="PKCpspAa9wlLic7kJsXFWP" Name="Padding" Kind="InputPin" IsHidden="true" />
           </Node>
@@ -220,11 +222,11 @@
               <Choice Kind="ProcessAppFlag" Name="Image" />
             </p:NodeReference>
             <Pin Id="Cntybh7Gzq2LLIyeqJytlS" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="LRMElAtsUBGQY3JVF9DDwO" Name="Size" Kind="InputPin" />
-            <Pin Id="IdwY1UCArbwQN6QuFO344p" Name="Transform" Kind="InputPin" />
+            <Pin Id="LRMElAtsUBGQY3JVF9DDwO" Name="Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="IdwY1UCArbwQN6QuFO344p" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="MUxroaWSPtUQSDqoDOM6Xu" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="BzK84aSBcYxOMyr6b09AOq" Name="Image" Kind="InputPin" />
-            <Pin Id="TnVSpnyqlOgNxvkfAcdnDc" Name="Fill Mode" Kind="InputPin" />
+            <Pin Id="TnVSpnyqlOgNxvkfAcdnDc" Name="Fill Mode" Kind="InputPin" IsHidden="true" />
             <Pin Id="QGYQEd6HixYNJyEx3Yz5dm" Name="Output" Kind="OutputPin" />
             <Pin Id="STsGfOvEKuwLbYJCEjAcmO" Name="Smooth" Kind="InputPin" IsHidden="true" />
             <Pin Id="ScrCg3z8WnULTILre10GZY" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -236,13 +238,13 @@
             <Pin Id="PEGnpfYidvlM2Tf7cXROpl" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
           <Node Bounds="128,341,66,19" Id="TLVpHEey4FpN7eJqX9zorN">
-            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.vl">
+            <p:NodeReference LastCategoryFullName="Qt.Images" LastDependency="VL.Qt.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LoadImage" />
             </p:NodeReference>
             <Pin Id="Q3jW4m0Ea3sLqStTPxpJeT" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="EfdVRq6VZSROIhygmo6DbX" Name="Path" Kind="InputPin" DefaultValue="assets\qt-help-blur-source.png" />
-            <Pin Id="Eq8hVjfiGH2N1ffUGfTqrt" Name="Mipmaps" Kind="InputPin" />
+            <Pin Id="Eq8hVjfiGH2N1ffUGfTqrt" Name="Mipmaps" Kind="InputPin" IsHidden="true" />
             <Pin Id="Kixo8kHDooZPXM6yW5WMdo" Name="Image" Kind="OutputPin" />
             <Pin Id="IaoA5PaXc4DQAW90WfW3Ty" Name="Error" Kind="OutputPin" />
           </Node>

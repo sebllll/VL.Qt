@@ -1,4 +1,4 @@
-// VL.Qt base style (#292): CheckBox. Frame = background (padding area), box = Track (like the Slider
+// VL.Qt base style: CheckBox. Frame = background (padding area), box = Track (like the Slider
 // groove and the Switch track), check mark = Indicator (like the handle and the knob).
 // Values from the attached VlStyle (see Button.qml). No label by default (spacing 0, box centred in larger bounds).
 import QtQuick

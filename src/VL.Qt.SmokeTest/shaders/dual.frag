@@ -1,5 +1,5 @@
 #version 440
-// SmokeTest fixture (shader-effect, #437): two samplers. Output = mix(source, overlay, amount), premultiplied.
+// SmokeTest fixture (shader-effect): two samplers. Output = mix(source, overlay, amount), premultiplied.
 // Bake: qsb --glsl "100 es,120,150" --hlsl 50 --msl 12 -o dual.frag.qsb dual.frag
 // Uniform block (std140): qt_Matrix 0, qt_Opacity 64, amount 68.
 layout(location = 0) in vec2 qt_TexCoord0;

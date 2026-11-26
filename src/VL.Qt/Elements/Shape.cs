@@ -1,5 +1,6 @@
 ﻿using Stride.Core.Mathematics;
 using VL.Lib.Collections;
+using VL.Qt.Nodes;
 using VL.Qt.Paths;
 
 namespace VL.Qt.Elements
@@ -9,12 +10,13 @@ namespace VL.Qt.Elements
     /// (with <see cref="Closed"/>) or <see cref="Path"/>; a set <see cref="Path"/> wins. Points and lengths are in units
     /// in the parent space, <see cref="Element.Transform"/> acts around the origin.
     /// </summary>
-    public sealed class Shape : Element
+    internal sealed class Shape : Element
     {
         public Shape() : base(ElementType.Shape) { }
+        internal Shape(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Shape, common, feedback) { }
 
-        Spread<Vector2> _points = Spread<Vector2>.Empty;
-        Spread<float> _dash = Spread<float>.Empty;
+        private Spread<Vector2> _points = Spread<Vector2>.Empty;
+        private Spread<float> _dash = Spread<float>.Empty;
 
         /// <summary>Vertices of the polyline or polygon in units; ignored when <see cref="Path"/> is set.</summary>
         public Spread<Vector2> Points { get => _points; init => _points = value ?? Spread<Vector2>.Empty; }

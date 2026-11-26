@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="udvuEJm6OnGFpb18v6tPji" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Sampler [Qt.Elements.Uniform]&#xD;&#xA;- Filter: Linear (smooth) or Point (hard pixels)&#xD;&#xA;- Mip Filter&#xD;&#xA;- Address U / V: Clamp, Wrap, Mirror&#xD;&#xA;- Here: the shader zooms 6x into the Text, switch Filter">
+          <Pad Id="udvuEJm6OnGFpb18v6tPji" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Sampler [Qt.Elements.Shaders]&#xD;&#xA;- Filter: Linear (smooth) or Point (hard pixels)&#xD;&#xA;- Mip Filter&#xD;&#xA;- Address U / V: Clamp, Wrap, Mirror&#xD;&#xA;- Here: the shader zooms 6x into the Text, switch Filter">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="o7JtDLNF0Ta71FHnhUffoH" Bounds="85,959,832,214" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A Sampler says how a shader reads a texture. Address U / V decide what lies outside 0..1. With Filter Point the magnified pixels stay hard, with Linear they are smooth.&#xD;&#xA;- Connect it to the Sampler pin of a texture input: Input Sampler of a ShaderEffect, the Sampler pin of the Texture and Image uniform nodes, the image pins of shader nodes, Layer Sampler of Blend, Map Sampler of Displace.&#xD;&#xA;- Without a Sampler an element is read as its layer is: Nearest, Clamp, no mipmaps. A connected Sampler sets all of its fields (defaults: Linear, Clamp, None).&#xD;&#xA;- Mip Filter other than None renders the sampled element's layer with mipmaps (+33 % memory, a mip pass per frame): needed to minify without aliasing. An image needs mipmaps from LoadImage.&#xD;&#xA;- Changing a Sampler at runtime rebuilds nothing. Layer format (16 bit float) and anisotropy are not available: Qt cannot resolve its MSAA layers into float textures and QSGTexture has no anisotropy.">
+          <Pad Id="o7JtDLNF0Ta71FHnhUffoH" Bounds="85,959,832,261" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- A Sampler says how a shader reads a texture. Address U / V decide what lies outside 0..1. With Filter Point the magnified pixels stay hard, with Linear they are smooth.&#xD;&#xA;- Connect it to the Sampler pin of a texture input: Input Sampler of a ShaderEffect, the Sampler pin of the Texture and Image uniform nodes, the image pins of shader nodes, Layer Sampler of Blend, Map Sampler of Displace.&#xD;&#xA;- Without a Sampler an element is read as its layer is: Nearest, Clamp, no mipmaps. A connected Sampler sets all of its fields (defaults: Linear, Clamp, None).&#xD;&#xA;- Mip Filter other than None renders the sampled element's layer with mipmaps (+33 % memory, a mip pass per frame): needed to minify without aliasing. An image needs mipmaps from LoadImage.&#xD;&#xA;- Changing a Sampler at runtime rebuilds nothing. Layer format (16 bit float) and anisotropy are not available: Qt cannot resolve its MSAA layers into float textures and QSGTexture has no anisotropy.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -52,13 +52,13 @@
               <Choice Kind="ProcessAppFlag" Name="Text" />
             </p:NodeReference>
             <Pin Id="roFjums2ppW6d0hn1RLHSu" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="6dpR8bK94b8T6usb5Mlw2l" Name="Size" Kind="InputPin" />
-            <Pin Id="Qu1CfZqYSQG7wOYNprdBMX" Name="Transform" Kind="InputPin" />
+            <Pin Id="6dpR8bK94b8T6usb5Mlw2l" Name="Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Qu1CfZqYSQG7wOYNprdBMX" Name="Transform" Kind="InputPin" IsHidden="true" />
             <Pin Id="adTQtkC4Uf6vvrTujR3LHB" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="DqpJ7nKb3vc0FuJIDRFXFD" Name="Text" Kind="InputPin" DefaultValue="Sampler" />
-            <Pin Id="RJb3PmEqVl3b0DV0AZcEst" Name="Font Family" Kind="InputPin" />
+            <Pin Id="RJb3PmEqVl3b0DV0AZcEst" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="RcOI7YGGLHQMjX35FtonJG" Name="Font Size" Kind="InputPin" DefaultValue="0.08" />
-            <Pin Id="FnyMJjZXfTrk0BxZV2Rt05" Name="Weight" Kind="InputPin" DefaultValue="Bold" />
+            <Pin Id="FnyMJjZXfTrk0BxZV2Rt05" Name="Weight" Kind="InputPin" DefaultValue="700" />
             <Pin Id="cGcxEIT3qWlN72EehtPGK7" Name="Italic" Kind="InputPin" IsHidden="true" />
             <Pin Id="Zkq8oV6ZZrkxhORMKxy7oe" Name="Color" Kind="InputPin" DefaultValue="0.95, 0.93, 0.9, 1" />
             <Pin Id="6fbb32MuVzKiQmNKAFqHJt" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
@@ -72,16 +72,18 @@
             <Pin Id="hV3qO9ISFmZjnORctqUDbn" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="O1d1WfE1ChqNnB0Io3CcEn" Name="Debug" Kind="InputPin" IsHidden="true" />
             <Pin Id="egURftnyVUXarGon29BkKI" Name="Interaction" Kind="InputPin" IsHidden="true" />
-            <Pin Id="kv4BI9Eif4glXD97LHFyZA" Name="Effect" Kind="InputPin" />
+            <Pin Id="kv4BI9Eif4glXD97LHFyZA" Name="Effect" Kind="InputPin" IsHidden="true" />
             <Pin Id="5Bh9v4nrektOQFea1BWEcY" Name="Output" Kind="OutputPin" />
             <Pin Id="A3VExvlPQtBAGepAtiSb2x" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="1IRupwNjNhzJCMAW95OEAg" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
           <Node Bounds="100,780,145,19" Id="MTrFuAhTkCyRsBfrGC3Qp5">
-            <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
-                <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
+                  <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+                </p:OuterCategoryReference>
               </CategoryReference>
               <Choice Kind="ProcessAppFlag" Name="ShaderEffect" />
             </p:NodeReference>
@@ -89,15 +91,15 @@
             <Pin Id="yG0VKN9NOIqykZ1sGUZFOX" Name="Input" Kind="InputPin" />
             <Pin Id="imd38d1LlI1aByyHLHMx5s" Name="Input Sampler" Kind="InputPin" />
             <Pin Id="iVhDiAGqj4jzGMd4nqrmHl" Name="Fragment Code" Kind="InputPin" />
-            <Pin Id="w5t7Ks6SJtLPhEcnRycpEY" Name="Fragment Shader" Kind="InputPin" />
+            <Pin Id="w5t7Ks6SJtLPhEcnRycpEY" Name="Fragment Shader" Kind="InputPin" IsHidden="true" />
             <Pin Id="7MCT6t3Qnm7sTuq1dqqZEc" Name="Vertex Code" Kind="InputPin" IsHidden="true" />
             <Pin Id="aGOILPpEv1RGHT1hK4P7qk" Name="Vertex Shader" Kind="InputPin" IsHidden="true" />
-            <Pin Id="fSt11ctJF8z1Gq4wOrtWDA" Name="Uniforms" Kind="InputPin" />
+            <Pin Id="fSt11ctJF8z1Gq4wOrtWDA" Name="Uniforms" Kind="InputPin" IsHidden="true" />
             <Pin Id="IjtGBAs1jNOpAQQpavT8gU" Name="Blending" Kind="InputPin" DefaultValue="True" />
             <Pin Id="MMG1bkcslC11i3Ed9U9UQm" Name="Mesh Resolution" Kind="InputPin" IsHidden="true">
               <p:DefaultValue r:IsNull="true" />
             </Pin>
-            <Pin Id="tlyWXfC44hRt8w7BbHzdrL" Name="Size" Kind="InputPin" />
+            <Pin Id="tlyWXfC44hRt8w7BbHzdrL" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="MOnfXfAHPGHwHsEhtPXcRa" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="rY5RO4wI8z3zXHPzP3SfZT" Name="Transform" Kind="InputPin" />
             <Pin Id="QM1obeXNOK02BktqatX90r" Name="Anchor" Kind="InputPin" IsHidden="true" />
@@ -112,9 +114,9 @@
             <Pin Id="zoCaxvuJeYXWh9OO7LS2U3" Name="Error" Kind="OutputPin" />
           </Node>
           <Node Bounds="310,466,200,19" Id="y6qYhP6s7MNN4fMhvh4t03">
-            <p:NodeReference LastCategoryFullName="Qt.Elements.Uniform" LastDependency="VL.Qt.dll">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Shaders" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-              <CategoryReference Kind="Category" Name="Uniform" NeedsToBeDirectParent="true">
+              <CategoryReference Kind="Category" Name="Shaders" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
                   <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
                 </p:OuterCategoryReference>
@@ -140,10 +142,10 @@
             <Pin Id="L71K6I0Wt2SXQgtsevL86J" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="ZbtuNyQC78jm5H51cVF4A1" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="TcA3TqW8unjqzidCiS86VW" Name="Input" Kind="InputPin" />
-            <Pin Id="X168r3y1y0bAxy1rC2pvMZ" Name="Space" Kind="InputPin" />
+            <Pin Id="X168r3y1y0bAxy1rC2pvMZ" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="fntU7IYdiehiga2VMOG0Kr" Name="Clear Color" Kind="InputPin" />
             <Pin Id="JyUvFw3Z3EQOiKfpwUyHzH" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="vddMlTJA5nMROcyDs6Mhbz" Name="Enabled" Kind="InputPin" />
+            <Pin Id="vddMlTJA5nMROcyDs6Mhbz" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="Lv3h3QbtWRCl8OJIJ0rfvS" Name="Title" Kind="InputPin" />
             <Pin Id="BWbeGkhDz8O7E2HoMwqulS" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="PjBmXGnUpcsYiSbluij6Se" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -176,12 +178,12 @@
             </p:TypeAnnotation>
           </Pad>
           <Pad Id="KxzKbrx5tk1PnZtXad2Nr3" Comment="Filter" Bounds="312,411,58,15" ShowValueBox="true" isIOBox="true">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="SamplerFilter" />
             </p:TypeAnnotation>
           </Pad>
           <Pad Id="VpsAhvIBM65NaEkLMAA8JW" Comment="Address " Bounds="456,411,59,15" ShowValueBox="true" isIOBox="true" Value="Clamp">
-            <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+            <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
               <Choice Kind="TypeFlag" Name="SamplerAddress" />
             </p:TypeAnnotation>
           </Pad>

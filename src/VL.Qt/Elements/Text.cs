@@ -1,63 +1,24 @@
 ﻿using Stride.Core.Mathematics;
+using VL.Qt.Nodes;
 
 namespace VL.Qt.Elements
 {
-    /// <summary>Font weight. Values are QFont::Weight.</summary>
-    public enum FontWeight
-    {
-        Thin = 100,
-        ExtraLight = 200,
-        Light = 300,
-        Normal = 400,
-        Medium = 500,
-        DemiBold = 600,
-        Bold = 700,
-        ExtraBold = 800,
-        Black = 900,
-    }
-
-    /// <summary>Values are Qt Text.WrapMode.</summary>
-    public enum TextWrap
-    {
-        NoWrap = 0,
-        WordWrap = 1,
-        WrapAnywhere = 3,
-        /// <summary>Word wrap, falls back to anywhere if a word does not fit.</summary>
-        Wrap = 4,
-    }
-
-    /// <summary>Values are Qt::TextElideMode.</summary>
-    public enum TextElide
-    {
-        Left = 0,
-        Right = 1,
-        Middle = 2,
-        None = 3,
-    }
-
-    /// <summary>Font size fitting (Qt Text.fontSizeMode). Values are Qt's.</summary>
-    public enum TextAutofit
-    {
-        Fixed = 0,
-        HorizontalFit = 1,
-        VerticalFit = 2,
-        Fit = 3,
-    }
-
     /// <summary>Plain text, one style per element (Qt Text). Lengths in units.</summary>
-    public sealed class Text : Element
+    internal sealed class Text : Element
     {
         /// <summary>12 DIP: Qt's Windows default font (Segoe UI 9 pt at 96 dpi).</summary>
         public const float DefaultFontSize = 0.12f;
 
         public Text() : base(ElementType.Text) { }
+        internal Text(in CommonInputs common, FeedbackSlot feedback) : base(ElementType.Text, common, feedback) { }
 
         public string Content { get; init; } = string.Empty;
         /// <summary>Empty = Qt/system default family.</summary>
         public string FontFamily { get; init; } = string.Empty;
         /// <summary>Font pixel size in units.</summary>
         public float FontSize { get; init; } = DefaultFontSize;
-        public FontWeight Weight { get; init; } = FontWeight.Normal;
+        /// <summary>Font weight 1..1000 (CSS and Qt scale, 400 = Normal, 700 = Bold).</summary>
+        public int Weight { get; init; } = 400;
         public bool Italic { get; init; }
         public Color4 Color { get; init; } = Color4.Black;
         public TextHorizontalAlignment HAlign { get; init; } = TextHorizontalAlignment.Left;

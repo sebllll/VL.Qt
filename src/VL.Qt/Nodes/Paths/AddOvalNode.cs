@@ -1,18 +1,21 @@
-﻿using Stride.Core.Mathematics;
+﻿using System;
+using System.ComponentModel;
+using Stride.Core.Mathematics;
 using VL.Core;
 using VL.Core.Import;
 using VL.Qt.Paths;
 
-namespace VL.Qt.Nodes.Paths
+namespace VL.Qt.Nodes
 {
     /// <summary>Adds a closed oval as a new contour (Skia AddOval).</summary>
     [ProcessNode(Name = "AddOval", Category = Categories.Paths)]
     public sealed class AddOvalNode
     {
-        QtPath? _input;
-        RectangleF _bounds;
-        PathDirection _direction;
-        QtPath? _output;
+        internal readonly record struct Props(RectangleF Bounds, PathDirection Direction);
+
+        private static readonly Func<QtPath?, Props, QtPath> s_create = static (input, p) => ArcGeometry.AddOval(input ?? QtPath.Empty, p.Bounds, p.Direction == PathDirection.Clockwise);
+
+        private ChainMemo<QtPath, Props> _memo;
 
         /// <summary>Returns the path with an oval that starts at the right middle of its bounds.</summary>
         /// <param name="input">The path to extend. Nothing = the empty path.</param>
@@ -20,17 +23,7 @@ namespace VL.Qt.Nodes.Paths
         /// <param name="direction">The direction in which the contour runs.</param>
         /// <returns>The path with the contour added; the same instance as long as the inputs do not change.</returns>
         [return: Pin(Name = "Output")]
-        public QtPath Update(QtPath? input, RectangleF bounds = default, PathDirection direction = PathDirection.Clockwise)
-        {
-            input ??= QtPath.Empty;
-            if (_output == null || !ReferenceEquals(input, _input) || bounds != _bounds || direction != _direction)
-            {
-                _input = input;
-                _bounds = bounds;
-                _direction = direction;
-                _output = ArcGeometry.AddOval(input, bounds, direction == PathDirection.Clockwise);
-            }
-            return _output;
-        }
+        public QtPath Update(QtPath? input, [DefaultValue("0, 0, 1, 1")] RectangleF bounds, PathDirection direction)
+            => _memo.Get(input, new Props(bounds, direction), s_create);
     }
 }

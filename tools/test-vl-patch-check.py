@@ -1,4 +1,4 @@
-"""Regression test for tools/vl-patch-check.py and tools/vl_pin_catalog.py.
+"""Regression test for tools/vl-patch-check.py and tools/vl_node_api.py.
 
 Usage: python tools/test-vl-patch-check.py   (exit code 0 = ok)
 
@@ -10,9 +10,9 @@ Writes small fixture patches (UTF-8 with BOM, CRLF, like vvvv) to a temporary fo
   - a hidden pin with a non-default value: error, --fix makes it visible without other byte changes;
   - a linked pin the node no longer has (renamed): error;
   - default-iobox hint, --accept into the baseline (reasons kept) and a stale entry;
-  - QtTexture of VL.Qt.Stride (src/VL.Qt.Stride/*Node.cs): pins in the catalog, no false missing-pin, IOBox on Interaction-like
+  - QtTexture of VL.Qt.Stride (node-api.txt): pins in the catalog, no false missing-pin, IOBox on Interaction-like
     rules and hidden pins work like for the other nodes; the default run (no argument) includes VL.Qt.Stride/help/*.vl;
-  - Video (VL.Audio) of VL.Qt.Audio (src/VL.Qt.Audio/*Node.cs): pins in the catalog (also with the name in parentheses),
+  - Video (VL.Audio) of VL.Qt.Audio (node-api.txt): pins in the catalog (also with the name in parentheses),
     a hidden Audio Offset with a non-default value is an error; the default run includes VL.Qt.Audio/help/*.vl.
 """
 import json, os, subprocess, sys, tempfile
@@ -20,7 +20,12 @@ import json, os, subprocess, sys, tempfile
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 CHECK = os.path.join(TOOLS, 'vl-patch-check.py')
 sys.path.insert(0, TOOLS)
-import vl_pin_catalog as pc  # noqa: E402
+import vl_node_api as pc  # noqa: E402
+import importlib.util  # noqa: E402
+
+_spec = importlib.util.spec_from_file_location('vl_patch_check', CHECK)
+checker = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(checker)
 
 FAILED = []
 
@@ -76,11 +81,13 @@ def test_catalog():
     vsync = pc.find_pin(renderer, 'V Sync')
     expect(vsync is not None and vsync['create'] and vsync['optional'] and vsync['default'] == 'True',
            'catalog: V Sync is an optional create pin of Renderer, default True')
-    expect(pc.find_pin(renderer, 'Bounds')['written_by_node'], 'catalog: Renderer Bounds is written by the node')
+    expect(('Renderer', 'Bounds') in checker.WRITTEN_BY_NODE and pc.find_pin(renderer, 'Bounds') is not None,
+           'catalog: Renderer Bounds is a pin the node writes itself')
     expect(pc.find_pin(renderer, 'Node Context') is None, 'catalog: the hidden NodeContext is skipped')
     rect = catalog['Rectangle']
-    expect(pc.find_pin(rect, 'Interaction')['forbid_iobox'], 'catalog: Interaction is a forbidden-IOBox pin')
-    expect(pc.find_pin(rect, 'Anchor')['default'] == 'TopLeft', 'catalog: Anchor default from [DefaultValue(typeof, nameof)]')
+    expect('Interaction' in checker.FORBIDDEN_IOBOX and pc.find_pin(rect, 'Interaction')['direction'] == 'in',
+           'catalog: Interaction is a forbidden-IOBox input pin')
+    expect(pc.find_pin(rect, 'Anchor')['default'] == 'TopLeft', 'catalog: Anchor enum default')
     expect(pc.find_pin(rect, 'Output')['direction'] == 'out', 'catalog: return pin Output')
     expect(pc.find_pin(catalog['Column'], 'Input 3')['group'], 'catalog: Input 3 belongs to the pin group Input')
     expect('Column (Spectral)' in catalog, 'catalog: node names with parentheses')
@@ -92,22 +99,23 @@ def test_catalog():
 def test_stride_catalog():
     catalog = pc.load_catalog()
     tex = catalog.get('QtTexture')
-    expect(tex is not None and tex['category'] == 'Qt' and tex['source'] == 'src/VL.Qt.Stride/QtTextureNode.cs',
-           'stride: QtTexture is read from src/VL.Qt.Stride, category Qt')
+    expect(tex is not None and tex['category'] == 'Stride.Textures.Source' and tex['csharp'] == 'VL.Qt.Stride.QtTextureNode',
+           'stride: QtTexture is read from VL.Qt.Stride, category Stride.Textures.Source')
     if tex is None:
         return
-    expect(pc.find_pin(tex, 'Size')['default'] == '1920, 1080', 'stride: Size default from [DefaultValue(typeof(Int2), ...)]')
-    expect(pc.find_pin(tex, 'Format')['default'] == 'B8G8R8A8_UNorm_SRgb', 'stride: Format default from nameof(PixelFormat...)')
+    expect(pc.find_pin(tex, 'Size')['default'] == '1920, 1080', 'stride: Size default')
+    expect(pc.find_pin(tex, 'Format')['default'] == 'B8G8R8A8_UNorm_SRgb', 'stride: Format default')
     expect(pc.find_pin(tex, 'Enabled')['default'] == 'True' and pc.find_pin(tex, 'Debug')['optional'],
            'stride: Enabled default and optional Debug')
-    expect(all(pc.find_pin(tex, n)['direction'] == 'out' for n in ('Output', 'Error', 'Perf')), 'stride: out pins')
+    expect(pc.find_pin(tex, 'Output')['direction'] == 'out' and pc.find_pin(tex, 'Error') is None and pc.find_pin(tex, 'Perf') is None,
+           'stride: Output is the only out pin (Error and Perf are gone)')
     expect(pc.find_pin(tex, 'Node Context') is None, 'stride: the hidden NodeContext is skipped')
 
 
 def test_stride_patch(tmp):
-    canvas = (node('T', 'QtTexture', 'Qt', [('TInput', 'Input', 'InputPin', ''), ('TSize', 'Size', 'InputPin', ''),
-                                            ('TFormat', 'Format', 'InputPin', ''), ('TEnabled', 'Enabled', 'InputPin', ' IsHidden="true"'),
-                                            ('TOutput', 'Output', 'OutputPin', ''), ('TError', 'Error', 'OutputPin', '')])
+    canvas = (node('T', 'QtTexture', 'Stride.Textures.Source', [('TInput', 'Input', 'InputPin', ''), ('TSize', 'Size', 'InputPin', ''),
+                                                                ('TFormat', 'Format', 'InputPin', ''), ('TEnabled', 'Enabled', 'InputPin', ' IsHidden="true"'),
+                                                                ('TOutput', 'Output', 'OutputPin', '')])
               + pad('PSize', '1280, 720', 'Size') + pad('PFormat', 'B8G8R8A8_UNorm_SRgb', 'Format') + pad('POut', None, 'Output'))
     links = [('PSize', 'TSize'), ('PFormat', 'TFormat'), ('TOutput', 'POut')]
     path = os.path.join(tmp, 'stride.vl')
@@ -126,8 +134,8 @@ def test_stride_patch(tmp):
 
 def test_audio_catalog():
     video = pc.load_catalog().get('Video (VL.Audio)')
-    expect(video is not None and video['category'] == 'Qt.Elements' and video['source'] == 'src/VL.Qt.Audio/VideoAudioNode.cs',
-           'audio: Video (VL.Audio) is read from src/VL.Qt.Audio, category Qt.Elements')
+    expect(video is not None and video['category'] == 'Qt.Elements' and video['csharp'] == 'VL.Qt.Audio.VideoAudioNode',
+           'audio: Video (VL.Audio) is read from VL.Qt.Audio, category Qt.Elements')
     if video is None:
         return
     offset = pc.find_pin(video, 'Audio Offset')
@@ -149,51 +157,40 @@ def test_audio_patch(tmp):
     expect(not lines_with(out, 'missing-pin') and not lines_with(out, 'PVolume'), 'audio: Volume IOBox with a non-default value is fine, no false missing-pin')
 
 
-ARC_TO_SOURCE = '''
-namespace Test
-{
-    [ProcessNode(Name = "ArcTo", Category = "Qt.Paths")]
-    public sealed class ArcToTangentNode
-    {
-        public ArcToTangentNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext) { }
-        public QtPath Update(QtPath input, Vector2 through, Vector2 target, float radius = 10f) => input;
-    }
-
-    [ProcessNode(Name = "ArcTo", Category = "Qt.Paths")]
-    public sealed class ArcToOvalNode
-    {
-        public ArcToOvalNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext) { }
-        public QtPath Update(QtPath input, Vector2 target, float rx = 10f, float ry = 10f, bool largeArc = false) => input;
-    }
-
-    [ProcessNode(Name = "Other", Category = "Qt.Paths")]
-    public sealed class OtherNode
-    {
-        public OtherNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext) { }
-        public QtPath Update(QtPath input, float length = 1f) => input;
-    }
-}
-'''
+# Two nodes named ArcTo in one category (overloads) and one single node, as lines of node-api.txt (sorted by type).
+ARC_TO_API = """VL.Qt | Test.ArcToOvalNode | attr ProcessNode(Name = "ArcTo", Category = "Qt.Paths")
+VL.Qt | Test.ArcToOvalNode | ctor | pin Node Context | in VL.Core.NodeContext | (nodeContext)
+VL.Qt | Test.ArcToOvalNode | method Update | pin Input | in VL.Qt.Paths.QtPath | (input)
+VL.Qt | Test.ArcToOvalNode | method Update | pin Large Arc | in bool | (largeArc)
+VL.Qt | Test.ArcToOvalNode | method Update | pin Output | out VL.Qt.Paths.QtPath | Pin(Name = "Output") | (return)
+VL.Qt | Test.ArcToOvalNode | method Update | pin Rx | in float = 10 | (rx)
+VL.Qt | Test.ArcToOvalNode | method Update | pin Ry | in float = 10 | (ry)
+VL.Qt | Test.ArcToOvalNode | method Update | pin Target | in Stride.Core.Mathematics.Vector2 | (target)
+VL.Qt | Test.ArcToTangentNode | attr ProcessNode(Name = "ArcTo", Category = "Qt.Paths")
+VL.Qt | Test.ArcToTangentNode | ctor | pin Node Context | in VL.Core.NodeContext | Pin(Visibility = PinVisibility.Hidden) | (nodeContext)
+VL.Qt | Test.ArcToTangentNode | method Update | pin Input | in VL.Qt.Paths.QtPath | (input)
+VL.Qt | Test.ArcToTangentNode | method Update | pin Output | out VL.Qt.Paths.QtPath | Pin(Name = "Output") | (return)
+VL.Qt | Test.ArcToTangentNode | method Update | pin Radius | in float = 10 | (radius)
+VL.Qt | Test.ArcToTangentNode | method Update | pin Target | in Stride.Core.Mathematics.Vector2 | (target)
+VL.Qt | Test.ArcToTangentNode | method Update | pin Through | in Stride.Core.Mathematics.Vector2 | (through)
+VL.Qt | Test.OtherNode | attr ProcessNode(Name = "Other", Category = "Qt.Paths")
+VL.Qt | Test.OtherNode | method Update | pin Input | in VL.Qt.Paths.QtPath | (input)
+VL.Qt | Test.OtherNode | method Update | pin Length | in float = 1 | (length)
+"""
 
 
 def test_overloads(tmp):
-    root = os.path.join(tmp, 'overloads')
-    os.makedirs(os.path.join(root, 'src', 'VL.Qt', 'Nodes', 'Test'))
-    open(os.path.join(root, 'src', 'VL.Qt', 'Nodes', 'Test', 'ArcToNode.cs'), 'w', encoding='utf-8').write(ARC_TO_SOURCE)
-    catalog = pc.load_catalog(root)
+    api_file = os.path.join(tmp, 'overloads-api.txt')
+    open(api_file, 'w', encoding='utf-8').write(ARC_TO_API)
+    catalog = pc.load_catalog(api_file)
     arc = catalog['ArcTo']
     forms = pc.all_forms(arc)
     expect(len(forms) == 2 and len(pc.all_forms(catalog['Other'])) == 1, 'overloads: two nodes of the same name are both kept, others stay single')
-    expect([f['csharp'] for f in forms] == ['ArcToTangentNode', 'ArcToOvalNode'], 'overloads: the forms keep their order')
+    expect([f['csharp'] for f in forms] == ['Test.ArcToOvalNode', 'Test.ArcToTangentNode'], 'overloads: the forms keep their order')
     expect(pc.resolve_overload(catalog['Other'], ['Input', 'Bogus']) is catalog['Other'], 'overloads: a single node is returned as it is')
-    expect(pc.resolve_overload(arc, ['Input', 'Rx', 'Ry'])['csharp'] == 'ArcToOvalNode', 'overloads: most matching pin names wins')
+    expect(pc.resolve_overload(arc, ['Input', 'Rx', 'Ry'])['csharp'] == 'Test.ArcToOvalNode', 'overloads: most matching pin names wins')
     tie = pc.resolve_overload(arc, ['Input', 'Radius', 'Rx'])
     expect(all(pc.find_pin(tie, n) is not None for n in ('Radius', 'Rx', 'Large Arc', 'Through', 'Output')), 'overloads: a tie gives the union of the pins')
-
-    import importlib.util
-    spec = importlib.util.spec_from_file_location('vl_patch_check', CHECK)
-    checker = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(checker)
 
     def missing(pin_names):
         pins = [(f'A{i}', n, 'OutputPin' if n == 'Output' else 'InputPin', '') for i, n in enumerate(pin_names)]
@@ -212,10 +209,6 @@ def test_overloads(tmp):
 def test_default_run():
     code, out = run()
     expect(code == 0, 'default run: exit code 0')
-    import importlib.util
-    spec = importlib.util.spec_from_file_location('vl_patch_check', CHECK)
-    checker = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(checker)
     n = len(checker.expand([]))
     expect('VL.Qt.Stride/help/*.vl' in checker.DEFAULT_PATCHES and f'{n} patch(es)' in out,
            f'default run: VL.Qt.Stride/help/*.vl is one of the default patterns ({n} patches checked)')

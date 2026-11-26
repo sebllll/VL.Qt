@@ -1,0 +1,195 @@
+# Renamed VL.Qt nodes and pins and moved categories, for the patches of this repository.
+# python tools/vl-patch-migrate.py applies the rows to every patch (help/, VL.Qt.vl, VL.Qt.Stride, VL.Qt.Audio, tests/,
+# src/); --check lists what would change. A patch is derived from this file: never rename by hand in a .vl file.
+#
+# One row per line, five fields separated by "|":   step | kind | scope | old | new
+#   step   the task that adds the rows (W4-17). The rows of one step are applied together, so swaps work; the steps
+#          in the order of this file. Keep the rows of a step together and append a new step at the end.
+#   kind   node      rename a node.   scope: its category, or * for any category
+#          pin       rename a pin.    scope: Category/Node, Node, or * for every VL.Qt node
+#          category  move a category. scope: * moves the category with its subcategories, nodes and types;
+#                                     a node or type name moves only that one, which must be in exactly that category
+#   old    the name before the step; new: the name after it. Scope names the node as it is called before the step.
+#          Pins in vvvv spelling (Fill Color) or as the C# parameter (fillColor -> Fill Color, the rule of
+#          tools/vl_node_api.py). The new names must be in src/VL.Qt.Tests/Api/node-api.txt after all steps.
+#
+# Never change or remove a row once it is merged: the script reads from each node which steps it has seen, by the
+# names the rows give. On a merge conflict, keep the rows of both sides (the side merged first comes first), take
+# either side of each conflicting patch and run the script again.
+#
+# Example, the swap of a setter and a getter in one step:
+#   W4-20 | pin | Qt.Elements/Rectangle | Radius     | Set Radius
+#   W4-20 | pin | Qt.Elements/Rectangle | Get Radius | Radius
+
+# W4-16: [assembly: ImportAsIs(Namespace = "VL.Qt", Category = "Qt")] puts the types of VL.Qt.* under Qt.*; the three
+# enums of VL.Qt.Nodes move to VL.Qt.Elements, QtImage and QtImageState to VL.Qt.Images (some patches name them under Qt).
+W4-16 | category | *             | VL.Qt       | Qt
+W4-16 | category | BlendMode     | VL.Qt.Nodes | Qt.Elements
+W4-16 | category | LabelPosition | VL.Qt.Nodes | Qt.Elements
+W4-16 | category | ToggleLook    | VL.Qt.Nodes | Qt.Elements
+W4-16 | category | QtImage       | VL.Qt       | Qt.Images
+W4-16 | category | QtImage       | Qt          | Qt.Images
+W4-16 | category | QtImageState  | VL.Qt       | Qt.Images
+W4-16 | category | QtImageState  | Qt          | Qt.Images
+
+# W4-17: categories by what the user looks for. The five nodes of Qt.Effects.MultiEffect join Qt.Effects, one row each
+# (a * row into the parent category would also claim Qt.Effects.MultiEffect.MultiEffect, and the versions of a node
+# could no longer be told apart); the image and file nodes of the root go to Qt.Images; ShaderEffect, Sampler and the
+# uniform nodes (subcategory Uniform) to Qt.Elements.Shaders, QmlElement to Qt.Elements.Qml; QtTexture and
+# ToTexturePixels to the Stride categories of their tasks.
+W4-17 | category | Blur                 | Qt.Effects.MultiEffect | Qt.Effects
+W4-17 | category | ColorAdjust          | Qt.Effects.MultiEffect | Qt.Effects
+W4-17 | category | Colorize             | Qt.Effects.MultiEffect | Qt.Effects
+W4-17 | category | DropShadow           | Qt.Effects.MultiEffect | Qt.Effects
+W4-17 | category | Mask                 | Qt.Effects.MultiEffect | Qt.Effects
+W4-17 | category | LoadImage            | Qt                     | Qt.Images
+W4-17 | category | ToQtImage            | Qt                     | Qt.Images
+W4-17 | category | VideoSourceToQtImage | Qt                     | Qt.Images
+W4-17 | category | Snapshot             | Qt                     | Qt.Images
+W4-17 | category | FileWriter           | Qt                     | Qt.Images
+W4-17 | category | ShaderEffect         | Qt.Elements            | Qt.Elements.Shaders
+W4-17 | category | QmlElement           | Qt.Elements            | Qt.Elements.Qml
+W4-17 | category | *                    | Qt.Elements.Uniform    | Qt.Elements.Shaders.Uniform
+W4-17 | category | Sampler              | Qt.Elements.Uniform    | Qt.Elements.Shaders
+W4-17 | category | QtTexture            | Qt                     | Stride.Textures.Source
+W4-17 | category | ToTexturePixels      | Qt                     | Stride.Input
+
+# W4-95: the click channel of Button is an input like Channel at the other widgets: "On Click", directly after Anchor (the
+# position is the order of the C# parameters; patches reach the pin by its name).
+W4-95 | pin | Qt.Widgets/Button | Is Clicked | On Click
+
+# W4-97: the three Spectral containers call their input Input like the non-spectral ones and Skia; Labeled's first pin is
+# Input (was Element). The new order of the pins needs no row: a patch reaches a pin by its name.
+W4-97 | pin | Qt.Elements/Group (Spectral)  | Children | Input
+W4-97 | pin | Qt.Elements/Row (Spectral)    | Children | Input
+W4-97 | pin | Qt.Elements/Column (Spectral) | Children | Input
+W4-97 | pin | Qt.Elements/Labeled           | Element  | Input
+
+# W4-98: the catalog names. The fill color of the four shapes is Fill Color; the widgets after VL.ImGui (Input (String),
+# Slider (Float)); TouchPoints without a space; the main input of Snapshot and FileWriter (Element) is Input; the output
+# of VideoSourceToQtImage is Image like at ToQtImage and LoadImage.
+W4-98 | pin  | Rectangle                        | Color   | Fill Color
+W4-98 | pin  | Circle                           | Color   | Fill Color
+W4-98 | pin  | Polygon                          | Fill    | Fill Color
+W4-98 | pin  | Path                             | Fill    | Fill Color
+W4-98 | node | Qt.Widgets                        | TextInput    | Input (String)
+W4-98 | node | Qt.Widgets                        | Slider       | Slider (Float)
+W4-98 | node | Qt.Interaction                    | Touch Points | TouchPoints
+W4-98 | pin  | Snapshot                         | Element | Input
+W4-98 | pin  | FileWriter (Element)             | Element | Input
+W4-98 | pin  | VideoSourceToQtImage             | Output  | Image
+
+# W4-122: the style nodes follow the vvvv convention (a record property reads as Radius, writes as SetRadius). The setters (the
+# five bundles and the 20 single setters) become Set<Name> and their pin State becomes States (a set of states) in step a; the
+# getters Get<Name> take the plain name in step b, after the setters have left the names (a swap in one step cannot tell a
+# setter Frame from a getter Frame). The six bundles are process nodes now (Nodes/Style); the getters keep State.
+W4-122a | node | Qt.Style | Colors | SetColors
+W4-122a | node | Qt.Style.Frame | Frame | SetFrame
+W4-122a | node | Qt.Style.Frame | Color | SetColor
+W4-122a | node | Qt.Style.Frame | BorderColor | SetBorderColor
+W4-122a | node | Qt.Style.Frame | Radius | SetRadius
+W4-122a | node | Qt.Style.Frame | BorderWidth | SetBorderWidth
+W4-122a | node | Qt.Style.Frame | PaddingX | SetPaddingX
+W4-122a | node | Qt.Style.Frame | PaddingY | SetPaddingY
+W4-122a | node | Qt.Style.Frame | MinWidth | SetMinWidth
+W4-122a | node | Qt.Style.Frame | MinHeight | SetMinHeight
+W4-122a | node | Qt.Style.Text | Text | SetText
+W4-122a | node | Qt.Style.Text | Color | SetColor
+W4-122a | node | Qt.Style.Text | FontFamily | SetFontFamily
+W4-122a | node | Qt.Style.Text | FontSize | SetFontSize
+W4-122a | node | Qt.Style.Text | FontWeight | SetFontWeight
+W4-122a | node | Qt.Style.Indicator | Indicator | SetIndicator
+W4-122a | node | Qt.Style.Indicator | Color | SetColor
+W4-122a | node | Qt.Style.Indicator | Size | SetSize
+W4-122a | node | Qt.Style.Indicator | Radius | SetRadius
+W4-122a | node | Qt.Style.Indicator | BorderWidth | SetBorderWidth
+W4-122a | node | Qt.Style.Track | Track | SetTrack
+W4-122a | node | Qt.Style.Track | Color | SetColor
+W4-122a | node | Qt.Style.Track | FillColor | SetFillColor
+W4-122a | node | Qt.Style.Track | Thickness | SetThickness
+W4-122a | node | Qt.Style.Track | Radius | SetRadius
+W4-122a | pin | Qt.Style/Colors | State | States
+W4-122a | pin | Qt.Style.Frame/Frame | State | States
+W4-122a | pin | Qt.Style.Frame/Color | State | States
+W4-122a | pin | Qt.Style.Frame/BorderColor | State | States
+W4-122a | pin | Qt.Style.Frame/Radius | State | States
+W4-122a | pin | Qt.Style.Frame/BorderWidth | State | States
+W4-122a | pin | Qt.Style.Frame/PaddingX | State | States
+W4-122a | pin | Qt.Style.Frame/PaddingY | State | States
+W4-122a | pin | Qt.Style.Frame/MinWidth | State | States
+W4-122a | pin | Qt.Style.Frame/MinHeight | State | States
+W4-122a | pin | Qt.Style.Text/Text | State | States
+W4-122a | pin | Qt.Style.Text/Color | State | States
+W4-122a | pin | Qt.Style.Text/FontFamily | State | States
+W4-122a | pin | Qt.Style.Text/FontSize | State | States
+W4-122a | pin | Qt.Style.Text/FontWeight | State | States
+W4-122a | pin | Qt.Style.Indicator/Indicator | State | States
+W4-122a | pin | Qt.Style.Indicator/Color | State | States
+W4-122a | pin | Qt.Style.Indicator/Size | State | States
+W4-122a | pin | Qt.Style.Indicator/Radius | State | States
+W4-122a | pin | Qt.Style.Indicator/BorderWidth | State | States
+W4-122a | pin | Qt.Style.Track/Track | State | States
+W4-122a | pin | Qt.Style.Track/Color | State | States
+W4-122a | pin | Qt.Style.Track/FillColor | State | States
+W4-122a | pin | Qt.Style.Track/Thickness | State | States
+W4-122a | pin | Qt.Style.Track/Radius | State | States
+
+W4-122b | node | Qt.Style | GetColors | Colors
+# HowTo Patch a Stylable Widget refers to GetFrame and GetText by the category Qt.Style (resolved by name, see the patch).
+W4-122b | node | Qt.Style | GetFrame | Frame
+W4-122b | node | Qt.Style | GetText | Text
+W4-122b | node | Qt.Style.Frame | GetFrame | Frame
+W4-122b | node | Qt.Style.Frame | GetColor | Color
+W4-122b | node | Qt.Style.Frame | GetBorderColor | BorderColor
+W4-122b | node | Qt.Style.Frame | GetRadius | Radius
+W4-122b | node | Qt.Style.Frame | GetBorderWidth | BorderWidth
+W4-122b | node | Qt.Style.Frame | GetPaddingX | PaddingX
+W4-122b | node | Qt.Style.Frame | GetPaddingY | PaddingY
+W4-122b | node | Qt.Style.Frame | GetMinWidth | MinWidth
+W4-122b | node | Qt.Style.Frame | GetMinHeight | MinHeight
+W4-122b | node | Qt.Style.Text | GetText | Text
+W4-122b | node | Qt.Style.Text | GetColor | Color
+W4-122b | node | Qt.Style.Text | GetFontFamily | FontFamily
+W4-122b | node | Qt.Style.Text | GetFontSize | FontSize
+W4-122b | node | Qt.Style.Text | GetFontWeight | FontWeight
+W4-122b | node | Qt.Style.Indicator | GetIndicator | Indicator
+W4-122b | node | Qt.Style.Indicator | GetColor | Color
+W4-122b | node | Qt.Style.Indicator | GetSize | Size
+W4-122b | node | Qt.Style.Indicator | GetRadius | Radius
+W4-122b | node | Qt.Style.Indicator | GetBorderWidth | BorderWidth
+W4-122b | node | Qt.Style.Track | GetTrack | Track
+W4-122b | node | Qt.Style.Track | GetColor | Color
+W4-122b | node | Qt.Style.Track | GetFillColor | FillColor
+W4-122b | node | Qt.Style.Track | GetThickness | Thickness
+W4-122b | node | Qt.Style.Track | GetRadius | Radius
+
+# W4-103: effect pins after VL.Skia (A4): the blur radius says what it is, DropShadow's softness is not a second "Blur",
+# and the blend pin is Skia's "Blend Mode".
+W4-103 | pin | Qt.Effects/Blur       | Max        | Max Radius
+W4-103 | pin | Qt.Effects/Blur       | Multiplier | Radius Multiplier
+W4-103 | pin | Qt.Effects/DropShadow | Blur       | Blur Amount
+W4-103 | pin | Qt.Effects/Blend      | Mode       | Blend Mode
+
+# W4-107: one vocabulary for event and state pins. "Has Changed" (Skia's word) is the user-changed-the-value event of the
+# four value widgets; Button keeps Bang. "On ..." for events, "Is ..." for states; Drag's offset since the press is
+# Translation like Pinch's (Delta stays per-frame motion on Wheel); Min/Max like the widgets and ImGui.
+W4-107 | pin | Slider (Float)  | Bang                  | Has Changed
+W4-107 | pin | Toggle          | Bang                  | Has Changed
+W4-107 | pin | Input (Int)     | Bang                  | Has Changed
+W4-107 | pin | Input (String)  | Bang                  | Has Changed
+W4-107 | pin | Click           | Is Clicked            | On Click
+W4-107 | pin | Click           | Long Pressed          | On Long Press
+W4-107 | pin | Drag            | Delta                 | Translation
+W4-107 | pin | Drag            | Minimum               | Min
+W4-107 | pin | Drag            | Maximum               | Max
+W4-107 | pin | Pinch           | Is Active             | Is Pinching
+W4-107 | pin | Pinch           | Minimum Point Count   | Min Point Count
+W4-107 | pin | Pinch           | Maximum Point Count   | Max Point Count
+# W4-109: one name for one meaning on the path builders (C12 b, A7): Direction (Skia's AddOval/AddRect spelling) on all
+# four shape nodes, End Point (Skia's QuadTo spelling) on both CubicTo nodes, Closed as on Spline/Bezier/Polyline.
+# AddCircle keeps Skia's pin order Center, Direction, Radius (D18: Skia's AddCircle has this order).
+W4-109 | pin | AddCircle          | Dir      | Direction
+W4-109 | pin | AddRoundRect      | Dir      | Direction
+W4-109 | pin | CubicTo           | EndPoint | End Point
+W4-109 | pin | CubicTo (Relative)| EndPoint | End Point
+W4-109 | pin | AddPoly           | Close    | Closed

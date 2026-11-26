@@ -1,4 +1,4 @@
-# CPU profiling baseline with Ultra (issue #557). Contract and scenarios: tests/profiling/README.md.
+# CPU profiling baseline with Ultra (issue #557). Contract and scenarios: tools/profiling/README.md.
 # Usage: tools/profile.ps1 [-Scenario <Name[]>|all] [-Out <dir>] [-WarmUp 10] [-Duration 30] [-NoBuild] [-DryRun]
 #   Scenario names: Idle, Elements500, Elements2000, Typo, Images, Video, Effects (default: all).
 #   Out defaults to %LOCALAPPDATA%\VL.Qt\profiling\<yyMMdd_HHmm>_<rid>\ (outside the repo, profiles are tens of MB).
@@ -118,7 +118,7 @@ if (-not (Test-Path "$repo\runtimes\$rid\native\vlqt.dll")) {
     Write-Warning "runtimes\$rid\native\vlqt.dll missing: the exported program cannot run (tools/build-native.ps1 -Rid $rid)"
 }
 
-$patchDir = "$repo\tests\profiling"
+$patchDir = "$repo\tools\profiling"
 & "$patchDir\make-assets.ps1"
 $entries = foreach ($n in $names) {
     $def = $scenarioDefs[$n]

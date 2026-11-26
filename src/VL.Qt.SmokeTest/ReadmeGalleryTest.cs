@@ -2,22 +2,35 @@
 using System.Drawing;
 using System.IO;
 using Stride.Core.Mathematics;
+using NUnit.Framework;
 using VL.Qt;
+using VL.Qt.Interop;
 using VL.Qt.Styles;
+using VL.Qt.Wire;
+using static Pixels;
 
-// README pictures of the other sections (not a test of behaviour): styles, layout, images and the basic effects, rendered
-// with raw commands and copied to docs/images/ like ReadmeImagesTest. Dark ground 0x16, one window per picture in DIP;
-// the grab is scaled to the target width on Windows. Checks only that the picture is not empty.
+// Pictures of the other README sections: styles, layout, images and the basic effects, rendered with raw commands and
+// compared with src/VL.Qt.SmokeTest/references/ like ReadmeImagesTest (WARP, own process). Dark ground 0x16, one window per
+// picture in DIP; the grab is scaled to the target width. Text uses the bundled DejaVu Sans.
 //   styles.png         the same widgets in the base style and in a light style (Style pin on a Group in the patch)
 //   layout.png         Column (centered), Row (bottom aligned) and nested Row/Column with spacing and padding
 //   images.png         one image in the four fill modes Stretch, PreserveAspectFit, PreserveAspectCrop, Tile
 //   effects-basic.png  Blur, DropShadow, ColorAdjust, Colorize and Mask on the same element
-static class ReadmeGalleryTest
+[TestFixture, NonParallelizable]
+public static class ReadmeGalleryTest
 {
-    const float Bg = 0x16 / 255f;
+    /// <summary>Style, layout, image and effect pictures against the references (WARP, own process).</summary>
+    [Test, Category("readme-gallery"), Category("image-compare"), Category("own-process")]
+    public static void ReadmeGallery() => Scenario.RunLocal(s => ImageCompare.Run(s, new[] { "readme-gallery" }));
 
-    static Color4 C(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
-    static StateValues<Color4> Colors(uint normal, uint hovered, uint pressed, uint disabled, uint @checked = 0)
+    /// <summary>Writes the README pictures into docs/images on the normal renderer (not the references).</summary>
+    [Test, Explicit("writes docs/images"), Category("readme-docs"), Category("own-process")]
+    public static void ReadmeGalleryDocs() => Scenario.RunLocal(s => ImageCompare.RunDocs(s, new[] { "readme-gallery" }));
+
+    private const float Bg = 0x16 / 255f;
+
+    private static Color4 C(uint rgb) => new(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
+    private static StateValues<Color4> Colors(uint normal, uint hovered, uint pressed, uint disabled, uint @checked = 0)
     {
         var v = default(StateValues<Color4>).With(StyleStates.Normal, C(normal)).With(StyleStates.Hovered, C(hovered))
             .With(StyleStates.Pressed, C(pressed)).With(StyleStates.Disabled, C(disabled));
@@ -25,7 +38,7 @@ static class ReadmeGalleryTest
     }
 
     // The base style with light colors: dimensions, fonts and states stay.
-    static Style Light()
+    private static Style Light()
     {
         var b = BaseStyle.Default;
         return b with
@@ -45,13 +58,13 @@ static class ReadmeGalleryTest
         };
     }
 
-    public static void Run(string outDir, Action<bool, string> check, Action<int> pump, Func<IntPtr, string, Bitmap> grab)
+    internal static void Run(Scenario s)
     {
-        Program.NeedsRhi(check, "the effects are ShaderEffects");
-        Directory.CreateDirectory(outDir);
-        var imagesDir = ReadmeImagesTest.FindUp("docs", "images");
-        check(imagesDir != null, $"readme-gallery: docs/images found ({imagesDir})");
-        if (imagesDir == null) return;
+        Action<bool, string> gpu = (ok, what) => s.NeedsRhi(ok, what, "the effects are ShaderEffects");
+        Directory.CreateDirectory(s.OutDir);
+        var family = ImageCompare.LoadFont(s);
+        var baseStyle = ImageCompare.WithFont(BaseStyle.Default, family);
+        var lightStyle = ImageCompare.WithFont(Light(), family);
 
         var cmd = new CommandWriter();
         uint next = 1, order = 0;
@@ -59,26 +72,27 @@ static class ReadmeGalleryTest
         uint Rect(float x, float y, float w, float h, uint rgb, float radius = 0, uint parent = 0)
         {
             var id = next++;
-            cmd.Create(id, Protocol.Type.Rectangle);
+            cmd.Create(id, Protocol.ElementType.Rectangle);
             cmd.SetPlace(id, x, y, w, h);
             var c = C(rgb);
-            cmd.SetColor(id, Protocol.Prop.Color, c.R, c.G, c.B, 1);
-            if (radius > 0) cmd.SetF32(id, Protocol.Prop.Radius, radius);
+            cmd.SetColor(id, Protocol.PropertyId.Color, c.R, c.G, c.B, 1);
+            if (radius > 0) cmd.SetF32(id, Protocol.PropertyId.Radius, radius);
             cmd.Reparent(id, parent, order++);
             return id;
         }
         uint Label(string text, float x, float y, float w, float h, float size, uint rgb, int weight = 400, int align = 1, bool reparent = true, uint parent = 0)
         {
             var id = next++;
-            cmd.Create(id, Protocol.Type.Text);
+            cmd.Create(id, Protocol.ElementType.Text);
             cmd.SetPlace(id, x, y, w, h);
-            cmd.SetString(id, Protocol.Prop.Text, text);
-            cmd.SetF32(id, Protocol.Prop.FontSize, size);
-            cmd.SetI32(id, Protocol.Prop.FontWeight, weight);
-            cmd.SetI32(id, Protocol.Prop.HorizontalAlignment, align);
-            cmd.SetI32(id, Protocol.Prop.VerticalAlignment, 128);
+            cmd.SetString(id, Protocol.PropertyId.Text, text);
+            cmd.SetString(id, Protocol.PropertyId.FontFamily, family);
+            cmd.SetF32(id, Protocol.PropertyId.FontSize, size);
+            cmd.SetI32(id, Protocol.PropertyId.FontWeight, weight);
+            cmd.SetI32(id, Protocol.PropertyId.HorizontalAlignment, align);
+            cmd.SetI32(id, Protocol.PropertyId.VerticalAlignment, 128);
             var c = C(rgb);
-            cmd.SetColor(id, Protocol.Prop.Color, c.R, c.G, c.B, 1);
+            cmd.SetColor(id, Protocol.PropertyId.Color, c.R, c.G, c.B, 1);
             if (reparent) cmd.Reparent(id, parent, order++);
             return id;
         }
@@ -86,40 +100,39 @@ static class ReadmeGalleryTest
         {
             var id = next++;
             cmd.Create(id, type);
-            cmd.SetBool(id, Protocol.Prop.AutoSize, false);
+            cmd.SetBool(id, Protocol.PropertyId.AutoSize, false);
             cmd.SetPlace(id, x, y, w, h);
-            cmd.SetF32(id, Protocol.Prop.Spacing, spacing);
-            cmd.SetF32(id, Protocol.Prop.Padding, padding);
-            if (align != 0) cmd.SetI32(id, Protocol.Prop.ChildAlignment, align);
+            cmd.SetF32(id, Protocol.PropertyId.Spacing, spacing);
+            cmd.SetF32(id, Protocol.PropertyId.Padding, padding);
+            if (align != 0) cmd.SetI32(id, Protocol.PropertyId.ChildAlignment, align);
             cmd.Reparent(id, parent, order++);
             return id;
         }
 
         void Render(string name, int width, float winW, float winH, Action build)
         {
-            cmd.Reset();
+            cmd.Clear();
             next = 1;
             order = 0;
-            var w = Native.vlqt_window_create((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme gallery");
-            check(w != IntPtr.Zero, $"readme-gallery {name}: window_create");
+            var w = NativeCalls.CreateCompareWindow((int)MathF.Round(winW), (int)MathF.Round(winH), "VL.Qt readme gallery");
+            s.Check(w != SceneHandle.Null, $"readme-gallery {name}: window_create");
             Native.vlqt_window_show(w);
-            pump(4);
+            s.Pump(4);
             cmd.ClearColor(Bg, Bg, Bg, 1);
             build();
             var rc = Native.Apply(w, cmd.EndFrame());
-            check(rc == 0, $"readme-gallery {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
-            cmd.Reset();
-            pump(10);
-            var grabPath = Path.Combine(outDir, $"readme-gallery_{name}.png");
-            using (var a = grab(w, grabPath))
+            s.Check(rc == 0, $"readme-gallery {name}: apply ({rc}) {(rc != 0 ? Native.LastError() : "")}");
+            cmd.Clear();
+            s.Pump(10);
+            var grabPath = Path.Combine(s.OutDir, $"readme-gallery_{name}.png");
+            using (var a = s.Grab(w, grabPath))
             {
-                var ink = ReadmeImagesTest.Ink(a);
-                check(ink > 0.02, $"readme-gallery {name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
+                var ink = ImageCompare.Ink(a);
+                s.Check(ink > 0.02, $"readme-gallery {name}: picture not empty (ink {ink:P1}, {a.Width} x {a.Height})");
             }
-            var target = ReadmeImagesTest.Save(grabPath, Path.Combine(imagesDir!, name + ".png"), width);
-            Console.WriteLine($"INFO readme-gallery: {target} ({new FileInfo(target).Length / 1024} KB)");
-            Native.vlqt_window_destroy(w);
-            pump(1);
+            ImageCompare.Check(s, "readme-gallery_" + name, grabPath, width);
+            Native.vlqt_scene_destroy(w);
+            s.Pump(1);
         }
 
         // --- styles.png: the same panel twice
@@ -131,35 +144,35 @@ static class ReadmeGalleryTest
             {
                 var id = next++;
                 cmd.Create(id, type);
-                if (style == null) BaseStyle.Write(cmd, id); else StyleWriter.Write(cmd, id, style, null);
+                StyleWriter.Write(cmd, id, style ?? baseStyle, null);
                 cmd.SetPlace(id, ox + x, y, w, h);
-                if (!enabled) cmd.SetBool(id, Protocol.Prop.Enabled, false);
+                if (!enabled) cmd.SetBool(id, Protocol.PropertyId.Enabled, false);
                 cmd.Reparent(id, 0, order++);
                 return id;
             }
-            var b = Add(Protocol.Type.Button, 20, 50);
-            cmd.SetString(b, Protocol.Prop.Text, "Button");
-            b = Add(Protocol.Type.Button, 110, 50, enabled: false);
-            cmd.SetString(b, Protocol.Prop.Text, "Disabled");
-            var c = Add(Protocol.Type.CheckBox, 215, 52);
-            cmd.SetBool(c, Protocol.Prop.Value, true);
-            c = Add(Protocol.Type.Switch, 255, 50);
-            cmd.SetBool(c, Protocol.Prop.Value, true);
-            c = Add(Protocol.Type.Switch, 320, 50);
-            cmd.SetBool(c, Protocol.Prop.Value, false);
-            var s = Add(Protocol.Type.Slider, 20, 110, 360, 30);
-            cmd.SetF32(s, Protocol.Prop.Value, 0.35f);
-            var t = Add(Protocol.Type.TextField, 20, 170);
-            cmd.SetString(t, Protocol.Prop.Value, "Some text");
-            var n = Add(Protocol.Type.SpinBox, 250, 170);
-            cmd.SetI32(n, Protocol.Prop.Value, 42);
-            cmd.SetI32(n, Protocol.Prop.Minimum, 0);
-            cmd.SetI32(n, Protocol.Prop.Maximum, 100);
+            var b = Add(Protocol.ElementType.Button, 20, 50);
+            cmd.SetString(b, Protocol.PropertyId.Text, "Button");
+            b = Add(Protocol.ElementType.Button, 110, 50, enabled: false);
+            cmd.SetString(b, Protocol.PropertyId.Text, "Disabled");
+            var c = Add(Protocol.ElementType.CheckBox, 215, 52);
+            cmd.SetBool(c, Protocol.PropertyId.Value, true);
+            c = Add(Protocol.ElementType.Switch, 255, 50);
+            cmd.SetBool(c, Protocol.PropertyId.Value, true);
+            c = Add(Protocol.ElementType.Switch, 320, 50);
+            cmd.SetBool(c, Protocol.PropertyId.Value, false);
+            var slider = Add(Protocol.ElementType.Slider, 20, 110, 360, 30);
+            cmd.SetF32(slider, Protocol.PropertyId.Value, 0.35f);
+            var t = Add(Protocol.ElementType.TextField, 20, 170);
+            cmd.SetString(t, Protocol.PropertyId.Value, "Some text");
+            var n = Add(Protocol.ElementType.SpinBox, 250, 170);
+            cmd.SetI32(n, Protocol.PropertyId.Value, 42);
+            cmd.SetI32(n, Protocol.PropertyId.Minimum, 0);
+            cmd.SetI32(n, Protocol.PropertyId.Maximum, 100);
         }
         Render("styles", 820, 820, 250, () =>
         {
             Panel(0, "VLQt (base style)", null, 0x1E2128, 0xE0E0E0);
-            Panel(420, "Light style", Light(), 0xF6F6F6, 0x202020);
+            Panel(420, "Light style", lightStyle, 0xF6F6F6, 0x202020);
         });
 
         // --- layout.png
@@ -171,19 +184,19 @@ static class ReadmeGalleryTest
                 Rect(i * 280, 0, panelW, 250, 0x1E2128, 10);
             // Column, children centered
             Label("Column", 14, 8, 232, 26, 15, 0x8591A8);
-            var col = Container(Protocol.Type.Column, 0, 40, panelW, 200, 10, 14, 0x4);
+            var col = Container(Protocol.ElementType.Column, 0, 40, panelW, 200, 10, 14, 0x4);
             foreach (var (w, rgb) in new[] { (120f, orange), (180f, cyan), (80f, pink) })
                 Rect(0, 0, w, 44, rgb, 6, col);
             // Row, children at the bottom
             Label("Row", 294, 8, 232, 26, 15, 0x8591A8);
-            var row = Container(Protocol.Type.Row, 280, 40, panelW, 200, 10, 14, 0x40);
+            var row = Container(Protocol.ElementType.Row, 280, 40, panelW, 200, 10, 14, 0x40);
             foreach (var (h, rgb) in new[] { (60f, orange), (120f, cyan), (90f, pink), (150f, green) })
                 Rect(0, 0, 44, h, rgb, 6, row);
             // Nested: Column with a Text, a Row and a Text
             Label("Nested", 574, 8, 232, 26, 15, 0x8591A8);
-            var outer = Container(Protocol.Type.Column, 560, 40, panelW, 200, 8, 14, 0);
+            var outer = Container(Protocol.ElementType.Column, 560, 40, panelW, 200, 8, 14, 0);
             Label("Title", 0, 0, 200, 34, 24, 0xF0EDE6, 700, 1, true, outer);
-            var inner = Container(Protocol.Type.Row, 0, 0, 232, 60, 8, 0, 0, outer);
+            var inner = Container(Protocol.ElementType.Row, 0, 0, 232, 60, 8, 0, 0, outer);
             foreach (var rgb in new[] { orange, cyan, pink, green })
                 Rect(0, 0, 50, 50, rgb, 25, inner);
             Label("Spacing and Padding", 0, 0, 232, 40, 13, 0x8591A8, 400, 1, true, outer);
@@ -191,10 +204,10 @@ static class ReadmeGalleryTest
 
         // --- images.png
         var asset = ImageTest.FindAsset();
-        check(asset != null, "readme-gallery: stripes asset found");
+        s.Check(asset != null, "readme-gallery: stripes asset found");
         if (asset != null)
         {
-            var stripes = ImageTest.Load(asset, check, "stripes");
+            var stripes = ImageTest.Load(asset, s.Check, "stripes");
             Render("images", 820, 810, 230, () =>
             {
                 var modes = new[] { ("Stretch", 0), ("PreserveAspectFit", 1), ("PreserveAspectCrop", 2), ("Tile", 3) };
@@ -203,11 +216,11 @@ static class ReadmeGalleryTest
                     var x = i * 200;
                     Rect(x, 0, 190, 230, 0x1E2128, 10);
                     var id = next++;
-                    cmd.Create(id, Protocol.Type.Image);
+                    cmd.Create(id, Protocol.ElementType.Image);
                     cmd.SetPlace(id, x + 20, 20, 150, 150);
-                    cmd.SetU64(id, Protocol.Prop.Image, stripes);
-                    if (modes[i].Item2 != 0) cmd.SetI32(id, Protocol.Prop.FillMode, modes[i].Item2);
-                    cmd.SetBool(id, Protocol.Prop.Smooth, false);
+                    cmd.SetU64(id, Protocol.PropertyId.Image, stripes);
+                    if (modes[i].Item2 != 0) cmd.SetI32(id, Protocol.PropertyId.FillMode, modes[i].Item2);
+                    cmd.SetBool(id, Protocol.PropertyId.Smooth, false);
                     cmd.Reparent(id, 0, order++);
                     Label(modes[i].Item1, x + 10, 185, 170, 30, 14, 0x8591A8, 400, 4);
                 }
@@ -217,27 +230,27 @@ static class ReadmeGalleryTest
         // --- effects-basic.png: 3 x 2 cells of 410 x 230
         static void Blur(CommandWriter c)
         {
-            c.EffectBool(Protocol.Prop.EffectBlurEnabled, true);
-            c.EffectF32(Protocol.Prop.EffectBlur, 0.3f);
-            c.EffectI32(Protocol.Prop.EffectBlurMax, 24);
+            c.MultiEffectBool(Protocol.MultiEffectKey.BlurEnabled, true);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Blur, 0.3f);
+            c.MultiEffectI32(Protocol.MultiEffectKey.BlurMax, 24);
         }
         static void Shadow(CommandWriter c)
         {
-            c.EffectBool(Protocol.Prop.EffectShadowEnabled, true);
-            c.EffectColor(Protocol.Prop.EffectShadowColor, 0, 0, 0, 0.9f);
-            c.EffectF32(Protocol.Prop.EffectShadowHorizontalOffset, 10);
-            c.EffectF32(Protocol.Prop.EffectShadowVerticalOffset, 12);
-            c.EffectF32(Protocol.Prop.EffectShadowBlur, 0.45f);
+            c.MultiEffectBool(Protocol.MultiEffectKey.ShadowEnabled, true);
+            c.MultiEffectColor(Protocol.MultiEffectKey.ShadowColor, 0, 0, 0, 0.9f);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowHorizontalOffset, 10);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowVerticalOffset, 12);
+            c.MultiEffectF32(Protocol.MultiEffectKey.ShadowBlur, 0.45f);
         }
         static void Adjust(CommandWriter c)
         {
-            c.EffectF32(Protocol.Prop.EffectSaturation, -1);
-            c.EffectF32(Protocol.Prop.EffectContrast, 0.25f);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Saturation, -1);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Contrast, 0.25f);
         }
         static void Colorize(CommandWriter c)
         {
-            c.EffectF32(Protocol.Prop.EffectColorization, 0.75f);
-            c.EffectColor(Protocol.Prop.EffectColorizationColor, 0.2f, 0.45f, 1, 1);
+            c.MultiEffectF32(Protocol.MultiEffectKey.Colorization, 0.75f);
+            c.MultiEffectColor(Protocol.MultiEffectKey.ColorizationColor, 0.2f, 0.45f, 1, 1);
         }
         Render("effects-basic", 820, 1230, 460, () =>
         {
@@ -251,10 +264,10 @@ static class ReadmeGalleryTest
                 {
                     var masked = Rect(ox + 55, oy + 45, 300, 110, cyan, 12);
                     var mask = Label("VL.Qt", ox + 55, oy + 45, 300, 110, 90, 0xFFFFFF, 700, 4, reparent: false);
-                    cmd.Chain(masked, c => c.EffectRef(Protocol.Prop.EffectMaskSource, mask));
+                    cmd.Chain(masked, c => c.MultiEffectRef(Protocol.MultiEffectKey.MaskSource, mask));
                     continue;
                 }
-                var target = Container(Protocol.Type.Row, ox + 75, oy + 55, 260, 100, 10, 0, 0);
+                var target = Container(Protocol.ElementType.Row, ox + 75, oy + 55, 260, 100, 10, 0, 0);
                 foreach (var rgb in new[] { orange, cyan, pink })
                     Rect(0, 0, 80, 80, rgb, 14, target);
                 switch (i)

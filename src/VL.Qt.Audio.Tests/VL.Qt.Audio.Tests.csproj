@@ -20,6 +20,8 @@
   <!-- Test host needs the real assemblies at runtime (the references of VL.Qt and VL.Qt.Audio are compile-only). -->
   <ItemGroup>
     <PackageReference Include="VL.Core" Version="$(VvvvVersion)" />
+    <!-- VideoAudioNodePinTests reflects over VideoAudioNode, whose signature uses VL.Audio types. -->
+    <PackageReference Include="VL.Audio" Version="$(VlAudioVersion)" />
     <ProjectReference Include="..\VL.Qt\VL.Qt.csproj" />
     <ProjectReference Include="..\VL.Qt.Audio\VL.Qt.Audio.csproj" />
   </ItemGroup>

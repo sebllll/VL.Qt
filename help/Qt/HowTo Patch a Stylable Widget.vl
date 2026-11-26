@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="4xhC4rt1ND5Osgq52q74mt" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="IStylable (Qt.Style): a self-made widget that reads the style of its surroundings&#xD;&#xA;- XYSlider (see its definition): frame, knob (Circle) and value text&#xD;&#xA;- Group, Row or Column calls Build with the style resolved at that position&#xD;&#xA;- Getters: ResolveState, GetColors, GetFrame, GetText&#xD;&#xA;- Pins of XYSlider: Bounds, Radius and the value Channel">
+          <Pad Id="4xhC4rt1ND5Osgq52q74mt" Bounds="85,85,520,110" ShowValueBox="true" isIOBox="true" Value="IStylable (Qt.Style): a self-made widget that reads the style of its surroundings&#xD;&#xA;- XYSlider (see its definition): frame, knob (Circle) and value text&#xD;&#xA;- Group, Row or Column calls Build with the style resolved at that position&#xD;&#xA;- Getters: ResolveState, Colors, Frame, Text&#xD;&#xA;- Pins of XYSlider: Bounds, Radius and the value Channel">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="FKsR01Qzh371EkTIbAUe20" Bounds="85,1175,830,174" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The container calls Build with the style resolved at its position (base style, then every Group on the way) and shows the returned element.&#xD;&#xA;- Build runs every frame, after the patch was updated. Element nodes inside return the same element while nothing changes, so the scene stays untouched.&#xD;&#xA;- The getters return resolved values, also without a Style: then they come from the base style.&#xD;&#xA;- The slider sits in two Groups with different presets (Dark, Light). The Style pin of the Group is all it takes: the slider has no Style pin of its own. Hover and drag it to see the state colors change like the built-in Button.&#xD;&#xA;- The left slider is bound to a Channel, the Value IOBox shows the value you drag. The Button next to each slider is the built-in one for comparison.">
+          <Pad Id="FKsR01Qzh371EkTIbAUe20" Bounds="85,1175,830,212" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- The container calls Build with the style resolved at its position (base style, then every Group on the way) and shows the returned element.&#xD;&#xA;- Build runs every frame, after the patch was updated. Element nodes inside return the same element while nothing changes, so the scene stays untouched.&#xD;&#xA;- The getters return resolved values, also without a Style: then they come from the base style.&#xD;&#xA;- The slider sits in two Groups with different presets (Dark, Light). The Style pin of the Group is all it takes: the slider has no Style pin of its own. Hover and drag it to see the state colors change like the built-in Button.&#xD;&#xA;- The left slider is bound to a Channel, the Value IOBox shows the value you drag. The Button next to each slider is the built-in one for comparison.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -74,14 +74,14 @@
               <Choice Kind="ProcessAppFlag" Name="Button" />
             </p:NodeReference>
             <Pin Id="lUy0SyYBBjWXy6Pem8f8fd" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="b9Y3vbPOEH2ZmKz5BAIfWl" Name="Size" Kind="InputPin" />
+            <Pin Id="b9Y3vbPOEH2ZmKz5BAIfWl" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="FAzXJYMzQGneAEWEtxm8Zm" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="ddwGMSrC4yZtlqDab3A3S9" Name="Transform" Kind="InputPin" />
             <Pin Id="vgDAtjysNrntdv0NUYLmMV" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="BMX3Ks64ZkfJc2PWB2L8ki" Name="Text" Kind="InputPin" DefaultValue="Button" />
             <Pin Id="BqvTGNSdXWW8rrrwBLuCrP" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="eYRwpqXdxaylu99scSl2fP" Name="Auto Repeat" Kind="InputPin" IsHidden="true" />
-            <Pin Id="gYpjl0peTknLoeTdeiC0ci" Name="Is Clicked" Kind="InputPin" />
+            <Pin Id="gYpjl0peTknLoeTdeiC0ci" Name="On Click" Kind="InputPin" IsHidden="true" />
             <Pin Id="Yl1Nr2jv2I3WiN4yXXb9ax" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="9pdOwFYj2VY0OZKwU9Xd4h" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="zLIl9zG84oM5lyptGOzka1" Name="Debug" Kind="InputPin" IsHidden="true" />
@@ -156,14 +156,14 @@
               <Choice Kind="ProcessAppFlag" Name="Button" />
             </p:NodeReference>
             <Pin Id="xANWVhwVVn9UD2JfWuZfYT" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="lZqdDN9zU7w5TDlrYS9mlS" Name="Size" Kind="InputPin" />
+            <Pin Id="lZqdDN9zU7w5TDlrYS9mlS" Name="Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="50a3OWgvTVSwUJmIX9I7BN" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="0TmKbHHAR4SNZexhr12P7o" Name="Transform" Kind="InputPin" />
             <Pin Id="ECRou26heGINVqd8t8iVe5" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="QTTfLeSPBSm61UVrzfusmq" Name="Text" Kind="InputPin" DefaultValue="Button" />
             <Pin Id="8jAhrNevIakvpqKhlySrs2" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="35YRQg30Ahaaeb8UW7wyij" Name="Auto Repeat" Kind="InputPin" IsHidden="true" />
-            <Pin Id="maLpf5ov1K0JXWGYxu9aK6" Name="Is Clicked" Kind="InputPin" />
+            <Pin Id="maLpf5ov1K0JXWGYxu9aK6" Name="On Click" Kind="InputPin" IsHidden="true" />
             <Pin Id="IhgnAKfCfTgihRFmMvaNPv" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="G3nWgQa0p8dXs52eexADCG" Name="Clip" Kind="InputPin" IsHidden="true" />
             <Pin Id="jLGZ5PFUWunqSssNL8jluy" Name="Debug" Kind="InputPin" IsHidden="true" />
@@ -244,9 +244,9 @@
             <Pin Id="McVncm0ETwwjFwPP21dFFu" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="PhS7cBJHO5jRjnhfmrmBbx" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="gDZI3NKuEVHO6Dc4TNosCl" Name="Input" Kind="InputPin" />
-            <Pin Id="Bld6m6N7tmyi6Ku4Fa7zzz" Name="Space" Kind="InputPin" />
+            <Pin Id="Bld6m6N7tmyi6Ku4Fa7zzz" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="5zvqJDqfFDXZWYHYskxewP" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="73wj3IsZKzgeWighxYkVGD" Name="Enabled" Kind="InputPin" />
+            <Pin Id="73wj3IsZKzgeWighxYkVGD" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="kYAXWbDivr3nNxuzHa0ENQ" Name="Title" Kind="InputPin" />
             <Pin Id="9YoOBGlz5JTwyaQZFdmZOI" Name="Borderless" Kind="InputPin" IsHidden="true" />
             <Pin Id="xwo5AtPDxTQ9GyfNNt4mnq" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
@@ -392,7 +392,7 @@
                   </p:NodeReference>
                   <Pin Id="IiuJhZMxW2HP1NQZMC33rE" Name="Node Context" Kind="InputPin" IsHidden="true" />
                   <Pin Id="K5valLTsWmPLPguPobI8e2" Name="Initial Value" Kind="InputPin" IsHidden="true" />
-                  <Pin Id="HAfWE32kyVDONdIfZULoYy" Name="Value" Kind="InputPin" />
+                  <Pin Id="HAfWE32kyVDONdIfZULoYy" Name="Value" Kind="InputPin" IsHidden="true" />
                   <Pin Id="FUJ9a5LrRwpNooLEA5GZd5" Name="Output" Kind="StateOutputPin" />
                   <Pin Id="OzlTlY5kcK2NFkJdko4scd" Name="Value" Kind="OutputPin" />
                   <Pin Id="C4tIDOcBPaOLQtufx0gsqY" Name="Author" Kind="InputPin" IsHidden="true" />
@@ -405,7 +405,7 @@
                   </p:NodeReference>
                   <Pin Id="PiBRe7JUndcNwa60F4rsmv" Name="Node Context" Kind="InputPin" IsHidden="true" />
                   <Pin Id="FRyCy55ZrvULRe3bFRisie" Name="Initial Value" Kind="InputPin" IsHidden="true" />
-                  <Pin Id="VffAJynR4rTM5xzBkGBQNx" Name="Value" Kind="InputPin" />
+                  <Pin Id="VffAJynR4rTM5xzBkGBQNx" Name="Value" Kind="InputPin" IsHidden="true" />
                   <Pin Id="UtnIXJ2YV0ZLK1jpOCCWah" Name="Output" Kind="StateOutputPin" />
                   <Pin Id="E822KvEpE8ZMEpr4C4dkvF" Name="Value" Kind="OutputPin" />
                   <Pin Id="Di67ZECdAkdQFA6rxFnwE6" Name="Author" Kind="InputPin" IsHidden="true" />
@@ -428,12 +428,12 @@
                     <Choice Kind="ProcessAppFlag" Name="Click" />
                   </p:NodeReference>
                   <Pin Id="Np3nCu5rcSBNuvQco3zAcB" Name="Node Context" Kind="InputPin" IsHidden="true" />
-                  <Pin Id="Q0ube9KVyt6MpdC9KudkoD" Name="Input" Kind="InputPin" />
+                  <Pin Id="Q0ube9KVyt6MpdC9KudkoD" Name="Input" Kind="InputPin" IsHidden="true" />
                   <Pin Id="PxPEB3xLdfyMoKbQ24dXxx" Name="Is Pressed" Kind="InputPin" />
-                  <Pin Id="B60XFuQ1xI1MKOVdh55amR" Name="Is Clicked" Kind="InputPin" />
+                  <Pin Id="B60XFuQ1xI1MKOVdh55amR" Name="On Click" Kind="InputPin" IsHidden="true" />
                   <Pin Id="PAel8NSZD1tPOaJEf0B5PV" Name="Output" Kind="OutputPin" />
                   <Pin Id="Ve8socEiEnWPtyhYJOu1ga" Name="Tap Count" Kind="InputPin" IsHidden="true" />
-                  <Pin Id="QQON0LmqcCtNeIP04atzue" Name="Long Pressed" Kind="InputPin" IsHidden="true" />
+                  <Pin Id="QQON0LmqcCtNeIP04atzue" Name="On Long Press" Kind="InputPin" IsHidden="true" />
                   <Pin Id="QIBYkcjZGZ5OI7u6Pn2xvw" Name="Buttons" Kind="InputPin" IsHidden="true" />
                   <Pin Id="J7MtcM43NuqPKqlbQxA9p7" Name="Devices" Kind="InputPin" IsHidden="true" />
                 </Node>
@@ -446,7 +446,7 @@
                     <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
                   </p:ValueBoxSettings>
                 </Pad>
-                <Node Bounds="427,380,85,19" Id="JHIU27RxZh7PtzBbXZ2cOW">
+                <Node Bounds="427,380,45,19" Id="JHIU27RxZh7PtzBbXZ2cOW">
                   <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
                     <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                     <Choice Kind="OperationCallFlag" Name="ResolveState" />
@@ -454,14 +454,14 @@
                   <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                   <Pin Id="VQGRI1VisSfMxye2U6ZYJ2" Name="Is Hovered" Kind="InputPin" />
                   <Pin Id="RTHpRhQksllMUImptYmtXK" Name="Is Pressed" Kind="InputPin" />
-                  <Pin Id="OiCrzOV6yvYQVenTTvLkoN" Name="Is Disabled" Kind="InputPin" />
-                  <Pin Id="OdSPmgZcr1RPE0s3BWtYzx" Name="Is Checked" Kind="InputPin" />
+                  <Pin Id="OiCrzOV6yvYQVenTTvLkoN" Name="Is Disabled" Kind="InputPin" IsHidden="true" />
+                  <Pin Id="OdSPmgZcr1RPE0s3BWtYzx" Name="Is Checked" Kind="InputPin" IsHidden="true" />
                   <Pin Id="BvXGxyUoOpoO0dc7KIyC7D" Name="Result" Kind="OutputPin" />
                 </Node>
                 <Node Bounds="95,480,105,19" Id="LNw9BaNweECMPbNA3yU4B7">
                   <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
                     <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-                    <Choice Kind="OperationCallFlag" Name="GetColors" />
+                    <Choice Kind="OperationCallFlag" Name="Colors" />
                   </p:NodeReference>
                   <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                   <Pin Id="EpdTkpCP2zNMlZapQgzNU1" Name="Input" Kind="InputPin" />
@@ -476,7 +476,7 @@
                 <Node Bounds="329,480,105,19" Id="JQWNVwNyG6dP5VdXiFfSWs">
                   <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
                     <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-                    <Choice Kind="OperationCallFlag" Name="GetFrame" />
+                    <Choice Kind="OperationCallFlag" Name="Frame" />
                   </p:NodeReference>
                   <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                   <Pin Id="NkSc1xFWEF8QGVewKYCY0j" Name="Input" Kind="InputPin" />
@@ -491,7 +491,7 @@
                 <Node Bounds="1304,650,52,19" Id="VZ3PW5lj5eAMB0vZWaj4zn">
                   <p:NodeReference LastCategoryFullName="Qt.Style" LastDependency="VL.Qt.dll">
                     <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
-                    <Choice Kind="OperationCallFlag" Name="GetText" />
+                    <Choice Kind="OperationCallFlag" Name="Text" />
                   </p:NodeReference>
                   <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
                   <Pin Id="GQVylKP2DIRLSvSuqXIsxo" Name="Input" Kind="InputPin" />
@@ -542,18 +542,18 @@
                   <Pin Id="CEb7xvsnJC8OknGXcJDp1i" Name="Size" Kind="InputPin" />
                   <Pin Id="E4ZzAzUMWH4MyjZGSTSOsV" Name="Transform" Kind="InputPin" />
                   <Pin Id="Vn8Ambv0uQ8NpbSGp1f5IX" Name="Anchor" Kind="InputPin" />
-                  <Pin Id="I1VHWe4aJZsNqqtGLnTNaB" Name="Color" Kind="InputPin" />
+                  <Pin Id="I1VHWe4aJZsNqqtGLnTNaB" Name="Fill Color" Kind="InputPin" />
                   <Pin Id="Hleb59FQDiKONoEq6xsLzQ" Name="Radius" Kind="InputPin" />
                   <Pin Id="RAQrlEfaZSgP3HZRnpXtnM" Name="Stroke Color" Kind="InputPin" />
                   <Pin Id="P6nyJKzXylRLmGdow7Z7dc" Name="Stroke Width" Kind="InputPin" />
-                  <Pin Id="RjGmXQdYsb9OqDEdwLaH6Q" Name="Opacity" Kind="InputPin" />
+                  <Pin Id="RjGmXQdYsb9OqDEdwLaH6Q" Name="Opacity" Kind="InputPin" IsHidden="true" />
                   <Pin Id="JVFyNtzxVwQMS7M9fPtquV" Name="Clip" Kind="InputPin" IsHidden="true" />
                   <Pin Id="VJNCgdiafAWN09npfvJt6e" Name="Debug" Kind="InputPin" />
                   <Pin Id="UN1yrf7wtjFMJm7N7x6mFB" Name="Interaction" Kind="InputPin" />
                   <Pin Id="IefrnR97S5UN4DjefEHMsI" Name="Output" Kind="OutputPin" />
                   <Pin Id="LAPCzoH1ceNMWwtI1i7D36" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
                   <Pin Id="TsOPjMiQZWuMEvX51duro6" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
-                  <Pin Id="PxSMsbGeszvPpoTowEDs1F" Name="Effect" Kind="InputPin" />
+                  <Pin Id="PxSMsbGeszvPpoTowEDs1F" Name="Effect" Kind="InputPin" IsHidden="true" />
                 </Node>
                 <Node Bounds="1052,1285,833,19" Id="BqpN4cFwH3RN1LIwjWcWvg">
                   <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
@@ -566,28 +566,28 @@
                   <Pin Id="RTqoCENdHRsQabGUuULf44" Name="Node Context" Kind="InputPin" IsHidden="true" />
                   <Pin Id="BJIPy1CWpHeMyWnBgFBBEX" Name="Size" Kind="InputPin" />
                   <Pin Id="AS4b9ml4H0CMEfWy3tLXlp" Name="Transform" Kind="InputPin" />
-                  <Pin Id="P0kTDzaz7m9PVqnMzh8C9E" Name="Anchor" Kind="InputPin" />
+                  <Pin Id="P0kTDzaz7m9PVqnMzh8C9E" Name="Anchor" Kind="InputPin" IsHidden="true" />
                   <Pin Id="KTPN9Xei8PGMV115xew8w8" Name="Text" Kind="InputPin" />
-                  <Pin Id="TOfkY4FzjpPPKLJoaaiSB2" Name="Font Family" Kind="InputPin" />
+                  <Pin Id="TOfkY4FzjpPPKLJoaaiSB2" Name="Font Family" Kind="InputPin" IsHidden="true" />
                   <Pin Id="BQBDYeqkDpRLs65uvio6Cw" Name="Font Size" Kind="InputPin" />
-                  <Pin Id="MBs6K5OSvP3Mzzj8z15E4g" Name="Weight" Kind="InputPin" />
-                  <Pin Id="Rd6LTQkmsVtM8cRk4T5Z64" Name="Italic" Kind="InputPin" />
+                  <Pin Id="MBs6K5OSvP3Mzzj8z15E4g" Name="Weight" Kind="InputPin" IsHidden="true" />
+                  <Pin Id="Rd6LTQkmsVtM8cRk4T5Z64" Name="Italic" Kind="InputPin" IsHidden="true" />
                   <Pin Id="VmyjqcbfQTwP69Ixrwr4Fp" Name="Color" Kind="InputPin" />
                   <Pin Id="CmJwo2t9S1BLuuetCsqglx" Name="Horizontal Alignment" Kind="InputPin" DefaultValue="Center" />
                   <Pin Id="BzsH1F5dRh3OZWVR6Crbwi" Name="Vertical Alignment" Kind="InputPin" DefaultValue="Center" />
-                  <Pin Id="NTyANZ5FygwLeHf3u2DzBK" Name="Wrap" Kind="InputPin" />
+                  <Pin Id="NTyANZ5FygwLeHf3u2DzBK" Name="Wrap" Kind="InputPin" IsHidden="true" />
                   <Pin Id="EVMKViz95lnOgbqPf8Vuv6" Name="Elide" Kind="InputPin" IsHidden="true" />
                   <Pin Id="LCQNmMVgB7rLe4XJZWKSDm" Name="Line Height" Kind="InputPin" IsHidden="true" />
                   <Pin Id="JWyrZM2KKX4P4SKbGYHRT7" Name="Letter Spacing" Kind="InputPin" IsHidden="true" />
                   <Pin Id="SeX7V1pkS7lPAlHsYes9wC" Name="Autofit" Kind="InputPin" IsHidden="true" />
-                  <Pin Id="RLWEULemUjrLXeDLfLHiZk" Name="Opacity" Kind="InputPin" />
+                  <Pin Id="RLWEULemUjrLXeDLfLHiZk" Name="Opacity" Kind="InputPin" IsHidden="true" />
                   <Pin Id="QxKiPU6QXbHNz0LAtrJaKH" Name="Clip" Kind="InputPin" IsHidden="true" />
                   <Pin Id="Q41ZHGh2CvCNtNFJAW2q0U" Name="Debug" Kind="InputPin" />
-                  <Pin Id="Msfwu4P0z8gPK9TyNRvJoL" Name="Interaction" Kind="InputPin" />
+                  <Pin Id="Msfwu4P0z8gPK9TyNRvJoL" Name="Interaction" Kind="InputPin" IsHidden="true" />
                   <Pin Id="HaemoKBrsp4PLWTunAaQM3" Name="Output" Kind="OutputPin" />
                   <Pin Id="UYI8aRNC6iFQNnTssb0z5E" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
                   <Pin Id="E9ZO8OBkdGuLI4kIXDimRR" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
-                  <Pin Id="QCfTvTFOFnFOZkqsD5DzoR" Name="Effect" Kind="InputPin" />
+                  <Pin Id="QCfTvTFOFnFOZkqsD5DzoR" Name="Effect" Kind="InputPin" IsHidden="true" />
                 </Node>
                 <Node Bounds="100,1335,1433,19" Id="NLBSZs3ZbOUMYOiR55q5DM">
                   <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
@@ -610,7 +610,7 @@
                   <Pin Id="JhobK6RzkSfNQ0t8G8vu15" Name="Debug" Kind="InputPin" IsHidden="true" />
                   <Pin Id="BC1PLXBNx7sLaT6NHKikbX" Name="Interaction" Kind="InputPin" IsHidden="true" />
                   <Pin Id="L6LvcAF6X5aLwyQEY1Puz7" Name="Effect" Kind="InputPin" IsHidden="true" />
-                  <Pin Id="CSnktmGVsBcL2kmDrUOXo0" Name="Style" Kind="InputPin" />
+                  <Pin Id="CSnktmGVsBcL2kmDrUOXo0" Name="Style" Kind="InputPin" IsHidden="true" />
                   <Pin Id="HcLGuGIpKM4PKf8Bu6XMoh" Name="Output" Kind="OutputPin" />
                   <Pin Id="IY1OuNBbojXMz8Cd46cbGL" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
                   <Pin Id="SRGLnX6thqHQMWgYQJXW4W" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
@@ -665,7 +665,7 @@
                   </p:NodeReference>
                   <Pin Id="VJnBmzD6KVIPiasegCBkwn" Name="Node Context" Kind="InputPin" IsHidden="true" />
                   <Pin Id="F5mQVYZLmuRNkEWOTSBRUk" Name="Initial Value" Kind="InputPin" IsHidden="true" />
-                  <Pin Id="QlanY7usBPIQAFOIEunwCl" Name="Value" Kind="InputPin" />
+                  <Pin Id="QlanY7usBPIQAFOIEunwCl" Name="Value" Kind="InputPin" IsHidden="true" />
                   <Pin Id="D6tPaT9kQXsN1yQEe2fcBn" Name="Output" Kind="StateOutputPin" />
                   <Pin Id="LWIwFDJpXPiPDV2MKuizws" Name="Value" Kind="OutputPin" />
                   <Pin Id="HfWhgiqAXhKP6nFL4I6BNt" Name="Author" Kind="InputPin" IsHidden="true" />
@@ -679,24 +679,24 @@
                   <Pin Id="DngUjwPdKV9Ltf6WqcbPv4" Name="Radius" Kind="InputPin" />
                   <Pin Id="AAJPHk3w44tMREN8YMjJuY" Name="Transform" Kind="InputPin" />
                   <Pin Id="AvWHHM5Mco6NYTWq1Ac52s" Name="Anchor" Kind="InputPin" DefaultValue="Center" />
-                  <Pin Id="VnscdiVsOEnOri0uBpsr8C" Name="Color" Kind="InputPin" />
-                  <Pin Id="Oho7ikhfXuuPjDv4tmOOlf" Name="Stroke Color" Kind="InputPin" />
-                  <Pin Id="GkeKklPcyU6MJNO14RUnky" Name="Stroke Width" Kind="InputPin" />
-                  <Pin Id="E1rTQTSDEIgOBGgmA1msfH" Name="Opacity" Kind="InputPin" />
+                  <Pin Id="VnscdiVsOEnOri0uBpsr8C" Name="Fill Color" Kind="InputPin" />
+                  <Pin Id="Oho7ikhfXuuPjDv4tmOOlf" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
+                  <Pin Id="GkeKklPcyU6MJNO14RUnky" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
+                  <Pin Id="E1rTQTSDEIgOBGgmA1msfH" Name="Opacity" Kind="InputPin" IsHidden="true" />
                   <Pin Id="B2qEuOaNAeGPGXrYOGs6Hg" Name="Clip" Kind="InputPin" IsHidden="true" />
                   <Pin Id="PgB4UOS7cqpNcQmwJGi9Rx" Name="Debug" Kind="InputPin" />
-                  <Pin Id="EbWzToAKG6zPNy0rBDI1Ca" Name="Interaction" Kind="InputPin" />
+                  <Pin Id="EbWzToAKG6zPNy0rBDI1Ca" Name="Interaction" Kind="InputPin" IsHidden="true" />
                   <Pin Id="Kd2TzHzdvxNMWeLoRqmyeF" Name="Output" Kind="OutputPin" />
                   <Pin Id="NXM8GSHC8HKLrHVgX75ExQ" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
                   <Pin Id="SSQn0B3kMFyLMXiO731vAd" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
-                  <Pin Id="VOGYQcFblsYNxZwJe2XQwM" Name="Effect" Kind="InputPin" />
+                  <Pin Id="VOGYQcFblsYNxZwJe2XQwM" Name="Effect" Kind="InputPin" IsHidden="true" />
                 </Node>
                 <ControlPoint Id="MGlHwDiXkybPLRmucWlUQz" Bounds="331,450" />
                 <ControlPoint Id="GAKFadhEzyLPCdJeD4YK2y" Bounds="197,544" />
                 <ControlPoint Id="GKk2yX4lsnsMPIlRv9LF3Z" Bounds="177,645" />
                 <ControlPoint Id="DXf2q5b6IktOg84vQej7z3" Bounds="222,643" />
                 <Pad Id="UIPNpUJt91XPfZkrt9Wlum" Comment="Buttons" Bounds="342,861,68,15" ShowValueBox="true" isIOBox="true" Value="Left">
-                  <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+                  <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
                     <Choice Kind="TypeFlag" Name="PointerButtons" />
                   </p:TypeAnnotation>
                 </Pad>
@@ -787,7 +787,7 @@
                   <Pin Id="HCnvILqc2fMNqH9ivNZuKa" Name="Padding Char" Kind="InputPin" DefaultValue="0" />
                 </Node>
                 <Pad Id="AjZSrhSjKWrLBYfBk2ZBmy" Comment="Vertical Alignment" Bounds="1606,1191,63,15" ShowValueBox="true" isIOBox="true" Value="Top">
-                  <p:TypeAnnotation LastCategoryFullName="VL.Qt.Elements" LastDependency="VL.Qt.vl">
+                  <p:TypeAnnotation LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.vl">
                     <Choice Kind="TypeFlag" Name="VerticalAlignment" />
                   </p:TypeAnnotation>
                 </Pad>
@@ -820,7 +820,7 @@
                   </p:NodeReference>
                   <Pin Id="F2PtdsnyOk6OzLTaeFta1T" Name="Node Context" Kind="InputPin" IsHidden="true" />
                   <Pin Id="RvIGxZOV3hWOhOC1lG6GjV" Name="Initial Value" Kind="InputPin" IsHidden="true" />
-                  <Pin Id="S0gsAewdzhnLuvyYhkVKvl" Name="Value" Kind="InputPin" />
+                  <Pin Id="S0gsAewdzhnLuvyYhkVKvl" Name="Value" Kind="InputPin" IsHidden="true" />
                   <Pin Id="KCeGmB9fme1M4B6CginNCR" Name="Output" Kind="StateOutputPin" />
                   <Pin Id="VgHkbLFVGyTN9KeL921oXn" Name="Value" Kind="OutputPin" />
                   <Pin Id="NJDQexRrXocMkZ9UIiB1sS" Name="Author" Kind="InputPin" IsHidden="true" />

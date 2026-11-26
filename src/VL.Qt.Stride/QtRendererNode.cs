@@ -10,9 +10,11 @@ using Stride.Input;
 using Stride.Rendering;
 using VL.Core;
 using VL.Core.Import;
+using VL.Lang;
 using VL.Lib.IO.Notifications;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Nodes;
 using VL.Stride;
 using VL.Stride.Input;
 
@@ -22,69 +24,103 @@ namespace VL.Qt.Stride
     /// Draws the element tree at Input as a layer into the Stride render target it is drawn into (the window, a render
     /// texture), sized to the viewport, like SkiaRenderer. Into a window or a typeless 8-bit render texture it blends like a
     /// Qt window (gamma space, premultiplied); into other targets it blends like QtTexture (linear light). Takes the window's
-    /// mouse, touch and keyboard input. Belongs after the 3D scene, not inside it.
+    /// mouse, touch and keyboard input. Draws into one render target. Belongs after the 3D scene, not inside it.
     /// </summary>
     [ProcessNode(Name = "QtRenderer", Category = "Stride.Rendering", FragmentSelection = FragmentSelection.Explicit)]
     [Smell(SymbolSmell.Experimental)]
     [SupportedOSPlatform("windows")]
     public sealed class QtRendererNode : RendererBase
     {
-        readonly SharedTextureScene _scene;
-        readonly ILogger _logger;
-        readonly ViewportOffset _offset = new();
-        IInputSource? _inputSource;
+        private readonly NodeContext _nodeContext;
+        // Created in the first Update, so the scene gets the executor of that Update's Render Threads.
+        private SharedTextureScene? _scene;
+        private readonly ILogger _logger;
+        private const string OneTargetHint = "QtRenderer draws into one target per frame; use one QtRenderer per window";
+        private readonly ViewportOffset _offset = new();
+        private IInputSource? _inputSource;
         // Size of the last draw's viewport (the scene renders at it from the next Update on); none before the first draw.
-        Int2 _drawSize;
-        bool _drawn;
+        private Int2 _drawSize;
+        // Frame of the last draw (Time.FrameCount, -1 before the first one) and the value Update saw last: they differ if a
+        // draw happened since that Update. One target per frame: a second, different target in a frame is not drawn.
+        private int _lastDrawFrame = -1, _lastDrawFrameSeen = -1;
+        private bool _conflict;
         // The target of the last draw: the Stride texture (for Destroyed), its native resource (a swap chain reuses the
         // Stride texture for a new back buffer), the composition decided for it and the UNorm view on it (Direct, if the
         // target's own view is not UNorm).
-        Texture? _target;
-        IntPtr _targetResource;
-        LayerComposition _composition = LayerComposition.Fallback(PixelFormat.B8G8R8A8_UNorm_SRgb);
-        Texture? _view;
-        string _hint = "", _loggedHint = "";
+        private Texture? _target;
+        private IntPtr _targetResource;
+        private LayerComposition _composition = LayerComposition.Fallback(PixelFormat.B8G8R8A8_UNorm_SRgb);
+        private Texture? _view;
+        // Set in the draw, shown at the node (and logged once per text) in Update.
+        private string _hint = "";
+        private NodeMessage? _hintMessage, _conflictMessage;
 
         /// <param name="nodeContext">Injected by vvvv.</param>
         [Fragment]
-        public QtRendererNode([Pin(Visibility = PinVisibility.Hidden)] NodeContext nodeContext)
+        public QtRendererNode(NodeContext nodeContext)
         {
-            _scene = new SharedTextureScene(nodeContext);
+            _nodeContext = nodeContext;
             _logger = nodeContext.GetLogger();
         }
 
         /// <summary>Renders the element tree in the next draw of the layer.</summary>
-        /// <param name="error">Last error (texture, binding, apply, poll or render in QtNative), empty if ok; otherwise the hint when the target has no UNorm view and the layer blends like QtTexture.</param>
         /// <param name="input">Root element (null = empty scene).</param>
         /// <param name="space">Coordinate space of the elements: origin and size of one unit, see <see cref="Space"/>.</param>
         /// <param name="clearColor">Background of the layer (straight alpha, premultiplied here). Alpha 0 shows the target through it.</param>
-        /// <param name="enabled">False freezes the layer: no updates of Input, Space or Clear Color, nothing renders and no input reaches the scene; it keeps drawing the last content.</param>
+        /// <param name="enabled">False freezes the layer: no updates of Input, Space or Clear Color, nothing renders and no input reaches
+        /// the scene; it keeps drawing the last content.</param>
         /// <param name="debug">Debug overlay for all elements of the scene (same as the Debug pin of Renderer [Qt]).</param>
+        /// <param name="renderThreads">Number of Qt render threads that render the QtTextures and QtRenderers of the process (0 ... 16; 0
+        /// renders them on the main thread, for diagnosis). The largest value of all these nodes counts. A scene keeps the thread it got
+        /// when it was created: a larger value adds threads at once, a smaller value and 0 apply to scenes created afterwards.</param>
         /// <returns>The layer: connect it where a Stride renderer goes, e.g. after the scene of a window.</returns>
         [Fragment]
         [return: Pin(Name = "Output")]
         public IGraphicsRendererBase Update(
-            out string error,
-            Element? input,
+            IElement? input,
             [DefaultValue(typeof(Space), nameof(Space.DIPTopLeft))] Space space,
             [DefaultValue("0, 0, 0, 0")] Color4 clearColor,
             [DefaultValue(true)] bool enabled,
-            [Pin(Visibility = PinVisibility.Optional), DefaultValue(false)] bool debug)
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(false)] bool debug,
+            [Pin(Name = "Render Threads", Visibility = PinVisibility.Optional), DefaultValue(1)] int renderThreads)
         {
-            // Size and format come from the last draw: before it nothing renders (render-texture.md, "Timing").
-            if (_drawn)
-                _scene.Update(input, _drawSize, _composition.CoreFormat, space, clearColor, true, enabled, debug, MultisampleCount.None);
-            error = _scene.Error.Length > 0 ? _scene.Error : _hint;
+            if (_scene is null)
+                _scene = new SharedTextureScene(_nodeContext, renderThreads);
+            else
+                _scene.SetRenderThreads(renderThreads);
+            // Size and format come from the last draw: before it nothing renders (docs/design/stride-output.md, "Frame timing"). A layer that
+            // was not drawn since the last Update (disconnected) freezes: nothing renders for nobody.
+            var drawnLastFrame = _lastDrawFrame != _lastDrawFrameSeen;
+            _lastDrawFrameSeen = _lastDrawFrame;
+            if (_lastDrawFrame >= 0)
+                _scene.Update(input, _drawSize, _composition.CoreFormat, space, clearColor, true, enabled && drawnLastFrame, debug, MultisampleCount.None);
+            _hintMessage ??= new NodeMessage(_scene.Messages, "Blend", MessageSeverity.Warning);
+            _conflictMessage ??= new NodeMessage(_scene.Messages, "Target", MessageSeverity.Warning);
+            _hintMessage.Set(_hint);
+            _conflictMessage.Set(_conflict ? OneTargetHint : null);
+            // Seen again in the next draw if the second target is still there.
+            _conflict = false;
             return this;
         }
 
         protected override void DrawCore(RenderDrawContext context)
         {
+            // Drawn before the first Update: no scene yet.
+            if (_scene is null)
+                return;
             var commandList = context.CommandList;
-            SubscribeInput(context);
+            var target = commandList.RenderTarget;
+            var frame = context.RenderContext.Time.FrameCount;
+            // One state for one target: a second, different target in the same frame would rebuild the view and the input
+            // subscription on every draw and show the scene stretched to it.
+            if (target is not null && frame == _lastDrawFrame && target != _target)
+            {
+                _conflict = true;
+                return;
+            }
+            SubscribeInput(context, _scene);
 
             // Destroyed: the back buffer is resized or the target disposed; its view goes with it.
-            var target = commandList.RenderTarget;
             if (target != _target)
             {
                 _target?.Destroyed -= OnTargetDestroyed;
@@ -99,7 +135,7 @@ namespace VL.Qt.Stride
 
             var viewport = context.RenderContext.ViewportState.Viewport0;
             _drawSize = LayerComposition.TextureSize(viewport.Width, viewport.Height);
-            _drawn = true;
+            _lastDrawFrame = frame;
             _offset.Set(new Vector2(viewport.X, viewport.Y));
 
             var resource = StrideInterop.GetNativeResource(target, out var resourceFormat);
@@ -127,7 +163,7 @@ namespace VL.Qt.Stride
 
         // Direct needs a UNorm view on the target's resource: the target itself if its view is UNorm, else a view of our own.
         // If Stride cannot create one (e.g. a format the device does not support for a multisampled view), fallback.
-        void ChooseComposition(Texture target, PixelFormat resourceFormat)
+        private void ChooseComposition(Texture target, PixelFormat resourceFormat)
         {
             var composition = LayerComposition.Choose(resourceFormat, target.ViewFormat);
             if (composition.Direct && composition.ViewFormat != target.ViewFormat)
@@ -151,29 +187,23 @@ namespace VL.Qt.Stride
             }
             _composition = composition;
             _hint = composition.Hint(resourceFormat);
-            if (_hint != _loggedHint)
-            {
-                _loggedHint = _hint;
-                if (_hint.Length > 0)
-                    _logger.LogInformation("{Hint}", _hint);
-            }
         }
 
         // Like SkiaRenderer: the window input source of the render context; a new source re-subscribes.
-        void SubscribeInput(RenderDrawContext context)
+        private void SubscribeInput(RenderDrawContext context, SharedTextureScene scene)
         {
             var inputSource = context.RenderContext.GetWindowInputSource();
             if (inputSource == _inputSource)
                 return;
             _inputSource = inputSource;
             var inputManager = inputSource is null ? null : context.RenderContext.Services.GetService<InputManager>();
-            _scene.Input.Subscribe(inputManager is null ? null
+            scene.Input.Subscribe(inputManager is null ? null
                 : inputManager.GetNotifications(inputSource, sender: this).Select(n => n.Transform(_offset)));
         }
 
-        void OnTargetDestroyed(object? sender, EventArgs e) => ReleaseView();
+        private void OnTargetDestroyed(object? sender, EventArgs e) => ReleaseView();
 
-        void ReleaseView()
+        private void ReleaseView()
         {
             _targetResource = IntPtr.Zero;
             _view?.Dispose();
@@ -185,16 +215,18 @@ namespace VL.Qt.Stride
             _target?.Destroyed -= OnTargetDestroyed;
             _target = null;
             ReleaseView();
-            _scene.Dispose();
+            _hintMessage?.Dispose();
+            _conflictMessage?.Dispose();
+            _scene?.Dispose();
             base.Destroy();
         }
 
         // Window positions to texture pixels: minus the origin of the last draw's viewport. Read on the thread the input
         // arrives on, set in the draw.
-        sealed class ViewportOffset : INotificationSpaceTransformer
+        private sealed class ViewportOffset : INotificationSpaceTransformer
         {
-            Vector2 _origin;
-            readonly object syncRoot = new();
+            private Vector2 _origin;
+            private readonly object syncRoot = new();
 
             public void Set(Vector2 origin)
             {

@@ -5,7 +5,7 @@ using Stride.Graphics;
 namespace VL.Qt.Stride
 {
     /// <summary>
-    /// How QtRenderer composes its scene into a render target (render-texture.md, "Stride layer"): Direct draws a UNorm
+    /// How QtRenderer composes its scene into a render target (docs/design/stride-output.md, "QtRenderer: the layer"): Direct draws a UNorm
     /// texture (gamma-space values, as a Qt window) through a UNorm view of the target's resource, Fallback draws a texture in
     /// the target's view format (linear values, as QtTexture). Both blend premultiplied (One, InvSrcAlpha).
     /// </summary>
@@ -40,11 +40,12 @@ namespace VL.Qt.Stride
             return new LayerComposition(false, core, viewFormat);
         }
 
-        /// <summary>Returns the hint for a fallback (shown at Error, logged once per change), empty for Direct.</summary>
+        /// <summary>Returns the hint for a fallback (shown at the node, logged once per change), empty for Direct.</summary>
         public string Hint(PixelFormat resourceFormat) => Direct ? ""
             : $"QtRenderer draws into a target without a UNorm view (resource {resourceFormat}, view {ViewFormat}): half-transparent colours blend in linear light as with QtTexture. Draw it into a window or a typeless 8-bit render texture to blend like a Qt window.";
 
-        /// <summary>Returns the size of the scene's texture for a viewport of <paramref name="width"/> x <paramref name="height"/> pixels (rounded, at least 1x1).</summary>
+        /// <summary>Returns the size of the scene's texture for a viewport of <paramref name="width"/> x <paramref name="height"/> pixels
+        /// (rounded, at least 1x1).</summary>
         public static Int2 TextureSize(float width, float height)
             => new(Math.Max(1, (int)MathF.Round(width)), Math.Max(1, (int)MathF.Round(height)));
 

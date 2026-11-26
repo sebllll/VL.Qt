@@ -7,35 +7,38 @@ using VL.Core.Import;
 using VL.Lib.Collections;
 using VL.Model;
 using VL.Qt.Elements;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Nodes
 {
     /// <summary>
     /// Linear motion blur: smears the element along a line, centred on each pixel (the picture does not shift). Two passes of
     /// the same shader keep long blurs clean.
-    /// Connect Output to the Effect pin of an element, or chain it with other effect nodes (data flow order: the node at the
-    /// Effect pin acts last). A shader effect ends a run of Blur/DropShadow/... nodes and costs a layer of its own.
+    /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/para"/>
     /// </summary>
     [ProcessNode(Name = "DirectionalBlur", Category = Categories.Effects)]
     public sealed class DirectionalBlurNode : IDisposable
     {
         internal readonly record struct Props(float Angle, float Length);
 
-        static readonly string[] s_shaders = { "directional_blur" };
+        private static readonly ShaderEffectSource[] s_shaders = { ShaderEffectSource.Builtin("directional_blur") };
 
-        static readonly Func<Effect?, ImmutableArray<ulong>, Props, Effect> s_create = static (previous, ids, p) =>
+        private static readonly Func<Effect?, ImmutableArray<ulong>, Props, ShaderEffect> s_create = static (previous, ids, p) =>
         {
             var length = Math.Max(p.Length, 0f);
+            // Reach of the blur on each side of a pixel along the line: half of the blur line of pass 1, plus the
+            // half-length of pass 2, which blurs by length / 64 (the sample spacing of pass 1, see directional_blur.frag).
+            // length / 64 is a full spacing, so the sum is slightly more than the reach of length / 2 + length / 128: a margin.
             var half = length / 2 + length / 64;
-            var a = MathF.PI / 180f * p.Angle;
+            var a = 2 * MathF.PI * p.Angle;
             var padX = half * MathF.Abs(MathF.Cos(a));
             var padY = half * MathF.Abs(MathF.Sin(a));
-            return new BuiltinShaderLinkEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
-                new[] { Uniform.Float("angle", p.Angle), Uniform.Length("blurLength", length) }.ToSpread(),
+            return new ShaderEffect(previous, Protocol.EffectTemplate.TwoPass, ids,
+                new[] { Uniform.Float("angle", p.Angle), Uniform.Float("blurLength", length) }.ToSpread(),
                 new RectangleF(padX, padY, padX, padY));
         };
 
-        readonly BuiltinShaderLink<Props> _link;
+        private readonly ShaderEffectBuilder<Props> _link;
 
         public DirectionalBlurNode(NodeContext nodeContext)
             : this(ResourceClient.ForApp(nodeContext.AppHost), new NodeErrors(nodeContext))
@@ -43,20 +46,23 @@ namespace VL.Qt.Nodes
         }
 
         internal DirectionalBlurNode(ResourceClient? client, NodeErrors? errors = null)
-            => _link = new BuiltinShaderLink<Props>(client, s_shaders, s_create, errors);
+            => _link = new ShaderEffectBuilder<Props>(client, s_shaders, s_create, errors);
 
-        internal BuiltinShaderLink<Props> Core => _link;
+        internal ShaderEffectBuilder<Props> Core => _link;
 
         /// <summary>Adds the effect to the effect chain.</summary>
         /// <param name="input">Effect chain to extend: this effect works on what the effect nodes before it made of the element.</param>
-        /// <param name="angle">Direction of the blur in degrees: 0 = horizontal, increases clockwise on screen.</param>
-        /// <param name="length">Length of the blur line in units of the renderer's space (total, 0 = no blur).</param>
+        /// <param name="angle">Direction of the blur in cycles (1 = full turn): 0 = horizontal, 0.25 = vertical, increases clockwise on screen.</param>
+        /// <param name="length">Length of the blur line in DIP (total, 0 = no blur).</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/param[@name='apply']"/>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='effect']/returns"/>
         [return: Pin(Name = "Output")]
         public Effect? Update(
             Effect? input,
             float angle,
-            [DefaultValue(0.1f)] float length)
-            => _link.Describe(input, new Props(angle, length));
+            [DefaultValue(10f)] float length,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(true)] bool apply)
+            => apply ? _link.Describe(input, new Props(angle, length)) : input;
 
         public void Dispose() => _link.Dispose();
     }

@@ -2,18 +2,19 @@
 using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
-using VL.Qt.Nodes.Paths;
+using VL.Qt.Nodes;
 using VL.Qt.Paths;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Tests.Paths
 {
     public class AddNodeTests
     {
-        const byte M = Protocol.Verb.Move, L = Protocol.Verb.Line, C = Protocol.Verb.Cubic, Z = Protocol.Verb.Close;
+        private const byte M = Protocol.Verb.Move, L = Protocol.Verb.Line, C = Protocol.Verb.Cubic, Z = Protocol.Verb.Close;
 
-        static byte[] Verbs(QtPath path) => path.Flatten().Verbs.ToArray();
+        private static byte[] Verbs(QtPath path) => path.Flatten().Verbs.ToArray();
 
-        static void AssertBounds(QtPath path, float x, float y, float w, float h, float tolerance = 1e-4f)
+        private static void AssertBounds(QtPath path, float x, float y, float w, float h, float tolerance = 1e-4f)
         {
             var b = path.Bounds;
             Assert.That(b.X, Is.EqualTo(x).Within(tolerance));
@@ -25,7 +26,7 @@ namespace VL.Qt.Tests.Paths
         [Test]
         public void AddRect_MoveThreeLinesClose()
         {
-            var path = new AddRectNode().Update(QtPath.Empty, new RectangleF(1, 2, 3, 4));
+            var path = new AddRectNode().Update(QtPath.Empty, new RectangleF(1, 2, 3, 4), PathDirection.Clockwise);
             Assert.That(Verbs(path), Is.EqualTo(new[] { M, L, L, L, Z }));
             Assert.That(path.Flatten().Points, Is.EqualTo(new[] { 1f, 2f, 4f, 2f, 4f, 6f, 1f, 6f }));
             AssertBounds(path, 1, 2, 3, 4);
@@ -42,14 +43,14 @@ namespace VL.Qt.Tests.Paths
         public void AddRect_ExtendsInput_AsNewContour()
         {
             var input = QtPath.Empty.MoveTo(0, 0).LineTo(1, 1);
-            var path = new AddRectNode().Update(input, new RectangleF(0, 0, 1, 1));
+            var path = new AddRectNode().Update(input, new RectangleF(0, 0, 1, 1), PathDirection.Clockwise);
             Assert.That(Verbs(path), Is.EqualTo(new[] { M, L, M, L, L, L, Z }));
         }
 
         [Test]
         public void AddOval_MoveFourCubicsClose_BoundsAreTheRectangle()
         {
-            var path = new AddOvalNode().Update(QtPath.Empty, new RectangleF(-1, -2, 4, 2));
+            var path = new AddOvalNode().Update(QtPath.Empty, new RectangleF(-1, -2, 4, 2), PathDirection.Clockwise);
             Assert.That(Verbs(path), Is.EqualTo(new[] { M, C, C, C, C, Z }));
             AssertBounds(path, -1, -2, 4, 2);
             // Starts at the right middle.
@@ -75,22 +76,22 @@ namespace VL.Qt.Tests.Paths
         [Test]
         public void AddCircle_DefaultRadiusIsHalf()
         {
-            var path = new AddCircleNode().Update(QtPath.Empty);
+            var path = new AddCircleNode().Update(QtPath.Empty, default, PathDirection.Clockwise, 0.5f);
             AssertBounds(path, -0.5f, -0.5f, 1, 1);
         }
 
         [Test]
         public void AddRoundRect_FourCornersWithLines_BoundsAreTheRectangle()
         {
-            var path = new AddRoundRectNode().Update(QtPath.Empty, new RectangleF(0, 0, 10, 6), new Vector2(2, 1));
-            Assert.That(Verbs(path), Is.EqualTo(new[] { M, L, C, L, C, L, C, L, C, Z }));
+            var path = new AddRoundRectNode().Update(QtPath.Empty, new RectangleF(0, 0, 10, 6), new Vector2(2, 1), PathDirection.Clockwise);
+            Assert.That(Verbs(path), Is.EqualTo(new[] { M, C, L, C, L, C, L, C, L, Z }));
             AssertBounds(path, 0, 0, 10, 6);
         }
 
         [Test]
         public void AddRoundRect_ZeroRadius_IsPlainRectangle()
         {
-            var path = new AddRoundRectNode().Update(QtPath.Empty, new RectangleF(0, 0, 10, 6), Vector2.Zero);
+            var path = new AddRoundRectNode().Update(QtPath.Empty, new RectangleF(0, 0, 10, 6), Vector2.Zero, PathDirection.Clockwise);
             Assert.That(Verbs(path), Is.EqualTo(new[] { M, L, L, L, Z }));
             AssertBounds(path, 0, 0, 10, 6);
         }
@@ -117,7 +118,7 @@ namespace VL.Qt.Tests.Paths
         public void AddArc_FullCycle_IsTheOval()
         {
             var path = new AddArcNode().Update(QtPath.Empty, new RectangleF(0, 0, 2, 2), 0, 1);
-            Assert.That(path.ContentEquals(new AddOvalNode().Update(QtPath.Empty, new RectangleF(0, 0, 2, 2))), Is.True);
+            Assert.That(path.ContentEquals(new AddOvalNode().Update(QtPath.Empty, new RectangleF(0, 0, 2, 2), PathDirection.Clockwise)), Is.True);
         }
 
         [Test]
@@ -201,17 +202,33 @@ namespace VL.Qt.Tests.Paths
         }
 
         [Test]
+        public void AddPath_WithoutMove_Extend_CloseReturnsToTheStartOfTheInputContour()
+        {
+            // The appended part has no Move: its Close goes back to the contour of the input, not to (0, 0).
+            var input = QtPath.Empty.MoveTo(10, 10);
+            var other = QtPath.Empty.LineTo(5, 0).LineTo(5, 5).Close();
+            var path = new AddPathNode().Update(input, other, PathAddMode.Extend);
+            Assert.That(path.LastPoint.X, Is.EqualTo(10f));
+            Assert.That(path.LastPoint.Y, Is.EqualTo(10f));
+
+            // A relative node after it starts there.
+            var next = new LineToRelativeNode().Update(path, new Vector2(1, 2));
+            Assert.That(next.LastPoint.X, Is.EqualTo(11f));
+            Assert.That(next.LastPoint.Y, Is.EqualTo(12f));
+        }
+
+        [Test]
         public void AddPath_EmptyOrNullOther_ReturnsInput()
         {
             var input = QtPath.Empty.MoveTo(1, 1);
-            Assert.That(new AddPathNode().Update(input, null), Is.SameAs(input));
-            Assert.That(new AddPathNode().Update(input, QtPath.Empty), Is.SameAs(input));
+            Assert.That(new AddPathNode().Update(input, null, PathAddMode.Append), Is.SameAs(input));
+            Assert.That(new AddPathNode().Update(input, QtPath.Empty, PathAddMode.Append), Is.SameAs(input));
         }
 
         [Test]
         public void AddPath_ChainedLastPoint_FollowsOther()
         {
-            var path = new AddPathNode().Update(QtPath.Empty.MoveTo(0, 0), QtPath.Empty.MoveTo(5, 5).LineTo(6, 7));
+            var path = new AddPathNode().Update(QtPath.Empty.MoveTo(0, 0), QtPath.Empty.MoveTo(5, 5).LineTo(6, 7), PathAddMode.Append);
             Assert.That(path.LastPoint, Is.EqualTo(new Vector2(6, 7)));
         }
 
@@ -272,6 +289,15 @@ namespace VL.Qt.Tests.Paths
             var node = new AddPolyNode();
             var a = node.Update(QtPath.Empty, Spread.Create(new Vector2(0, 0), new Vector2(1, 1)), true);
             var again = node.Update(QtPath.Empty, Spread.Create(new Vector2(0, 0), new Vector2(1, 1)), true);
+            Assert.That(again, Is.SameAs(a));
+        }
+
+        [Test]
+        public void AddPoly_NaNInNewSpread_SameInstance()
+        {
+            var node = new AddPolyNode();
+            var a = node.Update(QtPath.Empty, Spread.Create(new Vector2(0, 0), new Vector2(float.NaN, 1)), true);
+            var again = node.Update(QtPath.Empty, Spread.Create(new Vector2(0, 0), new Vector2(float.NaN, 1)), true);
             Assert.That(again, Is.SameAs(a));
         }
 

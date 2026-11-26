@@ -21,39 +21,42 @@ namespace VL.Qt.Nodes
     {
         internal readonly record struct Props(PointerButtons Buttons, PointerDevices Devices);
 
-        readonly InteractionNode<Props> _node;
-        IChannel<bool>? _pressed;
-        IChannel<int>? _tapCount;
-        bool _lastPressed;
-        int _lastTapCount;
+        private readonly InteractionNodeCore<Props> _node;
+        private IChannel<bool>? _pressed;
+        private IChannel<int>? _tapCount;
+        private bool _lastPressed;
+        private int _lastTapCount;
 
         public ClickNode(NodeContext nodeContext)
-            => _node = new InteractionNode<Props>(nodeContext, Create);
+            => _node = new InteractionNodeCore<Props>(nodeContext, Create);
 
-        /// <summary>For tests: warnings go to <paramref name="addWarning"/> instead of a NodeContext.</summary>
-        internal ClickNode(Func<string, IDisposable> addWarning)
-            => _node = new InteractionNode<Props>(addWarning, Create);
+        internal ClickNode(NodeErrors messages)
+            => _node = new InteractionNodeCore<Props>(messages, Create);
 
-        static readonly Func<Interaction?, Props, SinkSlot, Interaction> Create
+        private static readonly Func<Interaction?, Props, FeedbackSlot, Interaction> Create
             = static (previous, p, slot) => new ClickInteraction(previous, slot, p.Buttons, p.Devices);
 
-        internal InteractionNode<Props> Core => _node;
+        internal InteractionNodeCore<Props> Core => _node;
 
         /// <summary>Adds a click (tap) handler to the interaction chain.</summary>
         /// <param name="input">Interaction chain to extend (other interaction nodes); the order does not matter.</param>
         /// <param name="isPressed">Optional channel: true while the element is pressed (written by Qt, author "Qt").</param>
-        /// <param name="isClicked">Optional channel: receives one value per click, i.e. a release inside the element (author "Qt").</param>
-        /// <param name="tapCount">Optional channel: number of quick successive clicks of the last click (1 = single click, 2 = double click, 3 = triple click, ...). A click after a pause (longer than the double click interval) starts again at 1. Written on change; keeps its value until the next click (never written as 0). For a total number of clicks, count the values of Is Clicked. Only reported while connected.</param>
-        /// <param name="longPressed">Optional channel: receives one value when the press is held long enough (Qt's long press time).</param>
+        /// <param name="onClick">Optional channel: receives one value per click, i.e. a release inside the element (author "Qt").</param>
+        /// <param name="tapCount">Optional channel: number of quick successive clicks of the last click (1 = single click, 2 = double
+        /// click, 3 = triple click, ...). A click after a pause (longer than the double click interval) starts again at 1. Written on
+        /// change; keeps its value until the next click (never written as 0). For a total number of clicks, count the values of On Click.
+        /// Only reported while connected.</param>
+        /// <param name="onLongPress">Optional channel: receives one value when the press is held long enough (Qt's long press time).</param>
         /// <param name="buttons">Mouse buttons that count. None reacts to touch and pen only.</param>
         /// <param name="devices">Input devices that count.</param>
+        /// <include file="../CommonPins.xml" path="docs/set[@name='interaction']/returns"/>
         [return: Pin(Name = "Output")]
         public Interaction Update(
             Interaction? input,
             [DefaultValue(null)] IChannel<bool>? isPressed,
-            [DefaultValue(null)] IChannel<Unit>? isClicked,
+            [DefaultValue(null)] IChannel<Unit>? onClick,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(null)] IChannel<int>? tapCount,
-            [Pin(Visibility = PinVisibility.Optional), DefaultValue(null)] IChannel<Unit>? longPressed,
+            [Pin(Visibility = PinVisibility.Optional), DefaultValue(null)] IChannel<Unit>? onLongPress,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(PointerButtons), nameof(PointerButtons.Left))] PointerButtons buttons,
             [Pin(Visibility = PinVisibility.Optional), DefaultValue(typeof(PointerDevices), nameof(PointerDevices.All))] PointerDevices devices)
         {
@@ -61,22 +64,18 @@ namespace VL.Qt.Nodes
 
             // Pull: state of the last pump (1 frame latency). Events (clicks, long presses) are taken every frame, also
             // without a channel, so they do not pile up; states are written only on change.
-            var sink = _node.Sink;
-            if (isPressed.IsValid())
-                InteractionNode<Props>.Write(isPressed, ref _pressed, ref _lastPressed, sink.IsPressed());
-            else
-                _pressed = null;
+            var feedback = _node.Feedback;
+            FeedbackChannels.WriteState(isPressed, ref _pressed, ref _lastPressed, feedback.IsPressed());
+            FeedbackChannels.WriteEvents(onClick, feedback.TakeClicks());
+            FeedbackChannels.WriteEvents(onLongPress, feedback.TakeLongPresses());
 
-            InteractionNode<Props>.WriteEvents(isClicked, sink.TakeClicks());
-            InteractionNode<Props>.WriteEvents(longPressed, sink.TakeLongPresses());
-
-            // 0 = no tap yet for this sink (new node, new handler, released handle): not written, the channel keeps
-            // the count of the last click until the next one (#320).
-            int count = sink.TapCount();
-            if (!tapCount.IsValid())
+            // 0 = no tap yet for this feedback (new node, new handler, released handle): not written, the channel keeps
+            // the count of the last click until the next one.
+            int count = feedback.TapCount();
+            if (count > 0)
+                FeedbackChannels.WriteState(tapCount, ref _tapCount, ref _lastTapCount, count);
+            else if (!tapCount.IsValid())
                 _tapCount = null;
-            else if (count > 0)
-                InteractionNode<Props>.Write(tapCount, ref _tapCount, ref _lastTapCount, count);
 
             return output;
         }

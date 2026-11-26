@@ -62,7 +62,7 @@
             <Pin Id="GnaCCvY3S0APAIXBq7SiQK" Name="Size" Kind="InputPin" DefaultValue="3.4, 2.4" />
             <Pin Id="Hk6gZ3Id6iyQV77KVVPrBk" Name="Transform" Kind="InputPin" />
             <Pin Id="KvXLQHeg21YMlpuK6brFMu" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="N0hwVwa0a8VPy1F3Qk0Ukj" Name="Color" Kind="InputPin" DefaultValue="1, 0, 0, 0.5" />
+            <Pin Id="N0hwVwa0a8VPy1F3Qk0Ukj" Name="Fill Color" Kind="InputPin" DefaultValue="1, 0, 0, 0.5" />
             <Pin Id="KTuuVYzvKlxPfQ6hlZroTS" Name="Output" Kind="OutputPin" />
             <Pin Id="J08YeFEAQciNJlAdEaeKUx" Name="Radius" Kind="InputPin" IsHidden="true" />
             <Pin Id="TMzwh1ZTGTDOyrBxMJUOuu" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
@@ -106,7 +106,7 @@
             <Pin Id="QtD9p6EfdlTLWB0jtahPOu" Name="Size" Kind="InputPin" DefaultValue="3.4, 2.4" />
             <Pin Id="VLPFhOU7jR3NFqmk3xyjlk" Name="Transform" Kind="InputPin" />
             <Pin Id="PNfx4pl94XLOSYWGWhF6JJ" Name="Anchor" Kind="InputPin" IsHidden="true" />
-            <Pin Id="LPh7irIVvIrQLlEWcNDp81" Name="Color" Kind="InputPin" DefaultValue="0, 0, 1, 0.5" />
+            <Pin Id="LPh7irIVvIrQLlEWcNDp81" Name="Fill Color" Kind="InputPin" DefaultValue="0, 0, 1, 0.5" />
             <Pin Id="MmSF8DwpTI5OQ8Z1BOOpAD" Name="Output" Kind="OutputPin" />
             <Pin Id="Ie3s7QII1izL1c2m75u75G" Name="Radius" Kind="InputPin" IsHidden="true" />
             <Pin Id="OVVyqwKOwHlLcCIaDHz8Yd" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
@@ -151,7 +151,7 @@
             <Pin Id="VQmBdDOtOh4N2I2x0fMQAO" Name="Transform" Kind="InputPin" />
             <Pin Id="Q37eRwNihf6LH9tpUn2R4l" Name="Anchor" Kind="InputPin" IsHidden="true" />
             <Pin Id="GfQC0GpNVa8MhfZqiT7Sy8" Name="Text" Kind="InputPin" DefaultValue="Qt in a Stride scene" />
-            <Pin Id="EFUAl3wUpcgMHdsYLNthaH" Name="Font Family" Kind="InputPin" />
+            <Pin Id="EFUAl3wUpcgMHdsYLNthaH" Name="Font Family" Kind="InputPin" IsHidden="true" />
             <Pin Id="EKpp2AliBpYMnXsH4Fd7IH" Name="Font Size" Kind="InputPin" DefaultValue="0.4" />
             <Pin Id="DqWi9tw56zsOtryH54ahkQ" Name="Weight" Kind="InputPin" IsHidden="true" />
             <Pin Id="S6YETHCqKKFOj2CMJwnqXP" Name="Italic" Kind="InputPin" IsHidden="true" />
@@ -202,7 +202,7 @@
             <Pin Id="Mbf0eab4yV9Ob7uFafDcdn" Name="Text" Kind="InputPin" DefaultValue="Click me" />
             <Pin Id="DMsECarbojYNCffnWVO7em" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="JFgjiCvyR1PLxxcvr9wkcA" Name="Auto Repeat" Kind="InputPin" IsHidden="true" />
-            <Pin Id="BR3sNWZ3a3xN5QSLx38gaa" Name="Is Clicked" Kind="InputPin" />
+            <Pin Id="BR3sNWZ3a3xN5QSLx38gaa" Name="On Click" Kind="InputPin" IsHidden="true" />
             <Pin Id="LZybSTXhyi3MiZi2pE4oSx" Name="Output" Kind="OutputPin" />
             <Pin Id="OqVPky90CT8LKdGXz1wS5k" Name="Bang" Kind="OutputPin" />
             <Pin Id="BYKzEBwTXdYNji6O3xDI5A" Name="Opacity" Kind="InputPin" IsHidden="true" />
@@ -252,7 +252,7 @@
               <CategoryReference Kind="Category" Name="Widgets" NeedsToBeDirectParent="true">
                 <p:OuterCategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
               </CategoryReference>
-              <Choice Kind="ProcessAppFlag" Name="Slider" />
+              <Choice Kind="ProcessAppFlag" Name="Slider (Float)" />
             </p:NodeReference>
             <Pin Id="AsWBu3dhlT5PryVQ87jOtm" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="EQnbYcen1seOLhdiJUR6Kf" Name="Size" Kind="InputPin" DefaultValue="3.5, 0.4" />
@@ -262,11 +262,11 @@
             <Pin Id="TIZOPsAbDDVNgiZVmJ1QZs" Name="Channel" Kind="InputPin" />
             <Pin Id="DdWLCZcMMkZOHHVYvoIhzE" Name="Output" Kind="OutputPin" />
             <Pin Id="KvsXX891CNzNl0QRhhDWg2" Name="Value" Kind="OutputPin" />
-            <Pin Id="JAxnIDAKMulLhjarFy7ZaJ" Name="Bang" Kind="OutputPin" />
-            <Pin Id="OMWSeRxUv0rQWD1uFaFlAc" Name="Min" Kind="InputPin" />
-            <Pin Id="IE1BtlNXMDfO3cUTjckppO" Name="Max" Kind="InputPin" />
+            <Pin Id="JAxnIDAKMulLhjarFy7ZaJ" Name="Has Changed" Kind="OutputPin" />
+            <Pin Id="OMWSeRxUv0rQWD1uFaFlAc" Name="Min" Kind="InputPin" IsHidden="true" />
+            <Pin Id="IE1BtlNXMDfO3cUTjckppO" Name="Max" Kind="InputPin" IsHidden="true" />
             <Pin Id="A7EvCJIyMVzQXnrf9SRYyZ" Name="Step" Kind="InputPin" IsHidden="true" />
-            <Pin Id="UnAi3LpUZGcPYNtWv9KJqO" Name="Orientation" Kind="InputPin" />
+            <Pin Id="UnAi3LpUZGcPYNtWv9KJqO" Name="Orientation" Kind="InputPin" IsHidden="true" />
             <Pin Id="K5sDsYQCSCUMkZJFeTUXkc" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="KQMH6l6hANmMk1W39ppP8t" Name="Opacity" Kind="InputPin" IsHidden="true" />
             <Pin Id="KLIUmd8tRDYM18B6YewemE" Name="Clip" Kind="InputPin" IsHidden="true" />
@@ -315,7 +315,7 @@
             <Pin Id="OE0Faw5frhLPKGaMxkT2Ww" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="BZqWOGI8hm0PolZ3ECWHr5" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="100,525,85,19" Id="C6Up3R0RiH1NEKumkQXpNs">
+          <Node Bounds="100,525,25,19" Id="C6Up3R0RiH1NEKumkQXpNs">
             <p:NodeReference LastCategoryFullName="Stride.Rendering" LastDependency="VL.Qt.Stride.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="QtRenderer" />
@@ -323,11 +323,10 @@
             <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">High</p:HelpFocus>
             <Pin Id="FBImcl016FyNv7Kg1TEwJi" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="GkS0md7EieKMRfhlADMGCU" Name="Input" Kind="InputPin" />
-            <Pin Id="MmrZhU9MrYVLwYCg8yzmwz" Name="Space" Kind="InputPin" />
-            <Pin Id="MtPThEYGGClOO8gYUhom4l" Name="Clear Color" Kind="InputPin" />
+            <Pin Id="MmrZhU9MrYVLwYCg8yzmwz" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="MtPThEYGGClOO8gYUhom4l" Name="Clear Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="JV7hBhvJW0KO5RkfyS6UKg" Name="Output" Kind="OutputPin" />
-            <Pin Id="OTBWpsrwqPLMX20OpgaWVr" Name="Error" Kind="OutputPin" />
-            <Pin Id="VKp7IyKMxg9M4IsjNi8FyM" Name="Enabled" Kind="InputPin" />
+            <Pin Id="VKp7IyKMxg9M4IsjNi8FyM" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="FE9N5UoygbLL2gQ4PETDko" Name="Debug" Kind="InputPin" IsHidden="true" />
           </Node>
           <Pad Id="LgOv5uGbfujMNGX2NE5Pwq" Bounds="210,527,420,30" ShowValueBox="true" isIOBox="true" Value="The layer takes its size from the viewport.&#xD;&#xA;Space DIPTopLeft: 1 unit = 100 DIP, origin top left.">
@@ -481,7 +480,7 @@
             <Pin Id="RnZyzVuQfBONYuMew6vXgh" Name="Back Buffer" Kind="OutputPin" IsHidden="true" />
             <Pin Id="VsW6eqX9Ae9ObBjNOYOx4H" Name="Depth Buffer" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="ORoPcaf4d3LPzpdjJ2f0iV" Bounds="85,850,840,179" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Looks like a Qt window: gamma-space blending with premultiplied alpha, half-transparent parts included.&#xD;&#xA;- Draw it after the 3D scene (RenderEntity, Render Stage AfterScene) on the window or on a typeless 8-bit render texture: only there the layer can blend like a Qt window.&#xD;&#xA;- Other targets (e.g. a float or an SRgb render texture) blend in linear light like QtTexture, the colors then differ from a Qt window. Error shows a hint in that case.&#xD;&#xA;- No texture output: use QtTexture [Qt] where the patch needs the texture.&#xD;&#xA;- Size comes from the viewport. Space: only DIPTopLeft is implemented, other values behave like it.&#xD;&#xA;- Windows only (Direct3D 11). QtRenderer is Experimental: pins and behavior may still change.">
+          <Pad Id="ORoPcaf4d3LPzpdjJ2f0iV" Bounds="85,850,840,218" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Looks like a Qt window: gamma-space blending with premultiplied alpha, half-transparent parts included.&#xD;&#xA;- Draw it after the 3D scene (RenderEntity, Render Stage AfterScene) on the window or on a typeless 8-bit render texture: only there the layer can blend like a Qt window.&#xD;&#xA;- Other targets (e.g. a float or an SRgb render texture) blend in linear light like QtTexture, the colors then differ from a Qt window. The node shows a warning in that case.&#xD;&#xA;- No texture output: use QtTexture [Stride] where the patch needs the texture.&#xD;&#xA;- Size comes from the viewport. Space: only DIPTopLeft is implemented, other values behave like it.&#xD;&#xA;- Windows only (Direct3D 11). QtRenderer is Experimental: pins and behavior may still change.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -502,10 +501,10 @@
             <Pin Id="HGnShcPAG3pQNCZEdOiPXc" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="EndakgtguHOMPEFx2mop4i" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="Rdj8jQktaZ8MsO64srY1vK" Name="Input" Kind="InputPin" />
-            <Pin Id="Mxp4pybtqeQOnMIYFwK08n" Name="Space" Kind="InputPin" />
+            <Pin Id="Mxp4pybtqeQOnMIYFwK08n" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="FuGRWVGtiN6MFxJJeALuNF" Name="Clear Color" Kind="InputPin" />
-            <Pin Id="JgPqrCKfIpWNQJcH9G5PJ1" Name="Enabled" Kind="InputPin" />
-            <Pin Id="TbOkc8qG83RPiJSogq3q0O" Name="Title" Kind="InputPin" />
+            <Pin Id="JgPqrCKfIpWNQJcH9G5PJ1" Name="Enabled" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TbOkc8qG83RPiJSogq3q0O" Name="Title" Kind="InputPin" IsHidden="true" />
             <Pin Id="SMNzHVpEHhkPHqajdmLqep" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="TIshi0d7L4QPZhaSFbjdOa" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="D4VxMJqUrd1MNi3nbDEdaY" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />

@@ -1,4 +1,6 @@
 ﻿using System;
+using VL.Qt.Interop;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Audio.Tests
 {
@@ -9,14 +11,14 @@ namespace VL.Qt.Audio.Tests
     /// index (channel 0 = index * <see cref="Scale"/>), so a test can tell which frame left the speaker when.
     /// Allocation free after construction, like the real reader.
     /// </summary>
-    sealed class SimulatedTap : IAudioTapReader
+    internal sealed class SimulatedTap : IAudioTapReader
     {
         public const ulong Id = 7;
         public const float Scale = 1e-5f;
-        const int bufferFrames = 1115;
-        const int videoPeriodUs = 33_333;
+        private const int bufferFrames = 1115;
+        private const int videoPeriodUs = 33_333;
 
-        struct Chunk
+        private struct Chunk
         {
             public long EmitNs;
             public long FirstIndex;
@@ -28,7 +30,7 @@ namespace VL.Qt.Audio.Tests
         }
 
         // A piece of the true schedule: frame i of it is due at StartNs + (i - FirstIndex) / (rate * sample rate).
-        struct Schedule
+        private struct Schedule
         {
             public long FirstIndex;
             public double StartNs;
@@ -37,15 +39,15 @@ namespace VL.Qt.Audio.Tests
             public uint Discontinuity;
         }
 
-        readonly Chunk[] _chunks = new Chunk[512];
-        readonly Schedule[] _schedules = new Schedule[64];
-        readonly Random _random;
-        readonly double _emitJitterNs;
-        int _head, _count, _scheduleCount;
-        long _nextIndex = 1000;
-        int _chunkInSchedule;
-        double _nextJitterNs;
-        bool _producing = true;
+        private readonly Chunk[] _chunks = new Chunk[512];
+        private readonly Schedule[] _schedules = new Schedule[64];
+        private readonly Random _random;
+        private readonly double _emitJitterNs;
+        private int _head, _count, _scheduleCount;
+        private long _nextIndex = 1000;
+        private int _chunkInSchedule;
+        private double _nextJitterNs;
+        private bool _producing = true;
 
         public SimulatedTap(int sampleRate, double emitJitterNs, int seed, long startNs)
         {
@@ -105,9 +107,9 @@ namespace VL.Qt.Audio.Tests
 
         public void Pause() => _producing = false;
 
-        double StepNs(double rate) => 1e9 / (SampleRate * rate);
+        private double StepNs(double rate) => 1e9 / (SampleRate * rate);
 
-        double Jitter() => (_random.NextDouble() * 2 - 1) * _emitJitterNs;
+        private double Jitter() => (_random.NextDouble() * 2 - 1) * _emitJitterNs;
 
         /// <summary>Emits every buffer whose (jittered) emit time is not after nowNs.</summary>
         public void Advance(long nowNs)
@@ -170,7 +172,7 @@ namespace VL.Qt.Audio.Tests
         public int Drop(ulong tapId, int maxFrames, int channels, out Native.vlqt_audio_tap_state state)
             => Move(tapId, Span<float>.Empty, maxFrames, channels, out state, drop: true);
 
-        int Move(ulong tapId, Span<float> dst, int maxFrames, int channels, out Native.vlqt_audio_tap_state state, bool drop = false)
+        private int Move(ulong tapId, Span<float> dst, int maxFrames, int channels, out Native.vlqt_audio_tap_state state, bool drop = false)
         {
             state = default;
             if (tapId != Id)
@@ -228,7 +230,7 @@ namespace VL.Qt.Audio.Tests
         }
 
         // The reader flushes: frames of a segment older than the newest buffered one are dropped.
-        void FlushOldSegments()
+        private void FlushOldSegments()
         {
             if (_count == 0)
                 return;
@@ -242,7 +244,7 @@ namespace VL.Qt.Audio.Tests
 
         // The last video frame at the sink: frames every 33.3 ms of media time from the start of each loop pass, shown when
         // their media time is due.
-        void FillVideo(ref Native.vlqt_audio_tap_state state)
+        private void FillVideo(ref Native.vlqt_audio_tap_state state)
         {
             ref readonly var s = ref _schedules[_scheduleCount - 1];
             var mediaNowUs = s.MediaUs + (NowNsValue - s.StartNs) * s.Rate / 1e3;

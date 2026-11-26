@@ -1,6 +1,6 @@
 # Sanitizer stress run (img08, #365): resource-stress scenario of the SmokeTest against a libvlqt.so built with
 # AddressSanitizer / ThreadSanitizer (presets linux-x64-asan / linux-x64-tsan). Finds races, use-after-free and leaks in
-# QtNative's resource manager that the normal tests do not reach. Build: tools/build-native.sh --sanitize (docs/development.md).
+# QtNative's resource manager that the normal tests do not reach. Build: tools/build-native.sh --sanitize (docs/contributing/development.md).
 #
 # When: NOT part of every PR. Trigger it by hand (Actions > sanitizers > Run workflow, inputs seconds/seed) before a
 # release or after changes to src/VL.Qt.Native/resources*, threading or lifecycle code. The pull_request trigger only
@@ -8,8 +8,8 @@
 # Cost: 2 jobs (asan, tsan) on ubuntu-24.04 x64, about 15-25 min each with a Qt cache hit (QtNative built twice: normal for the
 # Qt bundle + sanitized; TSan runs 5-15x slower). timeout 40 min. Only x64 (arm64 sanitizer runs are done locally).
 # Reproduce locally (WSL/Linux, Qt + .NET installed, see tools/setup-wsl.sh):
-#   tools/test-linux.sh --sanitize asan --software -- --only resource-stress --stress-seconds 60 [--stress-seed <n>]
-# The seed of a run is logged ("repeat with --stress-seed N") and is in the uploaded smoke.out on failure.
+#   VLQT_SMOKE_STRESSSECONDS=60 [VLQT_SMOKE_STRESSSEED=<n>] tools/test-linux.sh --sanitize asan --software --only resource-stress
+# The seed of a run is logged ("repeat with VLQT_SMOKE_STRESSSEED=N") and is in the uploaded smoke.out on failure.
 name: sanitizers
 
 on:
@@ -79,9 +79,11 @@ jobs:
       # sanitizer finding (ASan error, QtNative leak, TSan report outside suppressions) or SmokeTest failure.
       - name: Stress (${{ matrix.san }}, software backend)
         run: |
-          args=(--only resource-stress --stress-seconds "$STRESS_SECONDS")
-          [ -z "$STRESS_SEED" ] || args+=(--stress-seed "$STRESS_SEED")
-          tools/test-linux.sh --rid linux-x64 --sanitize ${{ matrix.san }} --software -- "${args[@]}"
+          # NUnit SmokeTest: the run settings are the environment VLQT_SMOKE_<NAME> (Framework/SmokeParameters.cs);
+          # --only is the TestCategory filter (scenario resource-stress).
+          export VLQT_SMOKE_STRESSSECONDS="$STRESS_SECONDS"
+          [ -z "$STRESS_SEED" ] || export VLQT_SMOKE_STRESSSEED="$STRESS_SEED"
+          tools/test-linux.sh --rid linux-x64 --sanitize ${{ matrix.san }} --software --only resource-stress
 
       - name: Sanitizer reports + logs
         if: failure()

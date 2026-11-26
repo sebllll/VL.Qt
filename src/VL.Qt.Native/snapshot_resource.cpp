@@ -1,7 +1,10 @@
+// Private Qt API: QWindowPrivate::visible (grab of an offscreen scene), QQuickShaderEffectSource (frame grab of a Group);
+// check on Qt updates (list: elements/elements.h).
 #include "snapshot_resource.h"
 
-#include "commands.h"
-#include "offscreen.h"
+#include "app/exports.h"
+#include "scene/scene.h"
+#include "offscreen/offscreen.h"
 #include "protocol.h"
 #include "vlqt.h"
 
@@ -13,8 +16,8 @@
 #include <QtQuick/QQuickItemGrabResult>
 #include <QtQuick/QQuickWindow>
 #include <QtQuick/QSGRendererInterface>
-#include <QtGui/private/qwindow_p.h> // grab of an offscreen scene (#128)
-#include <QtQuick/private/qquickshadereffectsource_p.h> // frame grab of a Group (#475)
+#include <QtGui/private/qwindow_p.h> // grab of an offscreen scene
+#include <QtQuick/private/qquickshadereffectsource_p.h> // frame grab of a Group
 
 #include <algorithm>
 #include <chrono>
@@ -25,27 +28,20 @@
 #include <utility>
 #include <vector>
 
-namespace vlqt::res::snap {
+namespace vlqt::res::snapshot {
 
 namespace {
-
-Q_LOGGING_CATEGORY(lcSnap, "VL.Qt.Resources")
 
 constexpr int maxSide = 16384;          // pixels per side; more is a wrong scale
 constexpr int64_t timeoutMs = 10000;    // no ready within this time: Failed (the window does not render)
 constexpr int64_t abandonMs = 60000;    // a given up grab Qt still holds is deleted after this time
-
-int64_t steadyMs()
-{
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-}
 
 int64_t steadyUs()
 {
     return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
-// Deliveries of the last statsWindowUs for the overlay (#548): a ring of fixed size, oldest overwritten, nothing allocated.
+// Deliveries of the last statsWindowUs for the overlay: a ring of fixed size, oldest overwritten, nothing allocated.
 constexpr int64_t statsWindowUs = 10'000'000;
 constexpr int statsCap = 256;
 struct Delivery
@@ -65,26 +61,21 @@ void recordDelivery(int64_t startUs)
     s_deliveryCount = std::min(s_deliveryCount + 1, statsCap);
 }
 
-QByteArray idText(uint64_t id)
-{
-    return '#' + QByteArray::number(uint32_t(id & 0xffffffffu)) + '.' + QByteArray::number(uint32_t(id >> 32));
-}
-
 class SnapshotKind final : public Kind
 {
 public:
     const char* name() const override { return "snapshot"; }
     // Never queued: snapshots come through beginExternal / finishExternal.
-    std::string decode(Work&) override { return "snapshot: no decode"; }
-    int64_t upload(Work&, int64_t, bool& done, std::string&) override
+    std::string decode(Content&) override { return "snapshot: no decode"; }
+    int64_t upload(Content&, int64_t, UploadStatus& status, std::string&) override
     {
-        done = true;
+        status = UploadStatus::Done;
         return 0;
     }
-    void destroy(Work& work) override { static_cast<SnapshotWork&>(work).image = QImage(); }
-    Info info(const Work& work) const override
+    void destroy(Content& work) override { static_cast<SnapshotContent&>(work).image = QImage(); }
+    Info info(const Content& work) const override
     {
-        const QImage& img = static_cast<const SnapshotWork&>(work).image;
+        const QImage& img = static_cast<const SnapshotContent&>(work).image;
         return {uint32_t(img.width()), uint32_t(img.height()), 9u};
     }
 };
@@ -99,8 +90,17 @@ struct Grab
     ~Grab()
     {
         QObject::disconnect(connection);
-        if (frameSource) // after ready or given up: the grab no longer renders it
+        releaseFrameSource();
+    }
+
+    // The hidden ShaderEffectSource renders its Group into an offscreen texture every frame while it lives: it goes as
+    // soon as the grab no longer counts (given up, superseded, released) or is done. A grab Qt still holds then never
+    // completes (as for a destroyed item) and is dropped at abandonMs.
+    void releaseFrameSource()
+    {
+        if (frameSource)
             frameSource->deleteLater();
+        frameSource.clear();
     }
 
     QMetaObject::Connection connection;
@@ -109,20 +109,21 @@ struct Grab
     QPointer<QQuickItem> item;
     QPointer<QQuickItem> frameSource; // hidden ShaderEffectSource over the frame of a Group (frameTarget), or null
     QPointer<QQuickWindow> window;
-    bool offscreen = false; // window is an offscreen scene (#128): never exposed, renders only while bound
+    bool offscreen = false; // window is an offscreen scene: never exposed, renders only while bound
     QSize size;
     int64_t startMs = 0;
-    int64_t startUs = 0; // for the duration in the overlay (#548)
+    int64_t startUs = 0; // for the duration in the overlay
     bool current = true; // its result counts (false: superseded, released or given up)
     bool done = false;   // ready came; deleted at the next endFrame
 };
 
 std::vector<std::unique_ptr<Grab>> s_grabs;
 
-// The grab of an id ends without content: Failed with RES_EV_ERROR (nothing if the id was released).
+// The grab of an id ends without content: Failed with RESOURCE_EVENT_ERROR (nothing if the id was released).
 void failGrab(Grab& g, const std::string& error)
 {
     g.current = false;
+    g.releaseFrameSource();
     finishExternal(g.id, nullptr, 0, error);
 }
 
@@ -144,14 +145,14 @@ void onReady(Grab& g)
         // The request was divided by the window's device pixel ratio (start); where no integer size times the ratio
         // hits the wanted pixel size exactly (e.g. odd sizes at 1.5), Qt's result is off by about one pixel and is
         // scaled to the exact size of the contract (DIP * scale, independent of the DPR).
-        qCDebug(lcSnap, "%s: snapshot is %dx%d, scaled to the requested %dx%d", idText(g.id).constData(), img.width(),
+        qCDebug(lcRes, "%s: snapshot is %dx%d, scaled to the requested %dx%d", idText(g.id).constData(), img.width(),
             img.height(), g.size.width(), g.size.height());
         img = img.scaled(g.size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
-    auto work = std::make_shared<SnapshotWork>();
+    auto work = std::make_shared<SnapshotContent>();
     const int64_t bytes = int64_t(img.width()) * img.height() * 4;
     work->image = std::move(img);
-    qCDebug(lcSnap, "%s: snapshot %dx%d after %lld ms", idText(g.id).constData(), work->image.width(),
+    qCDebug(lcRes, "%s: snapshot %dx%d after %lld ms", idText(g.id).constData(), work->image.width(),
         work->image.height(), (long long)(steadyMs() - g.startMs));
     recordDelivery(g.startUs);
     finishExternal(g.id, std::move(work), bytes, {});
@@ -186,7 +187,7 @@ QQuickItem* target(Scene& scene, unsigned elementId, QRectF& frame, std::string&
         xf = it->second.xf.get();
     }
     if (item)
-        frame = xf ? itemFrame(*xf, item) : QRectF(0, 0, item->width(), item->height());
+        frame = xf ? itemBounds(*xf, item) : QRectF(0, 0, item->width(), item->height());
     if (!item) {
         error = "snapshot: element " + std::to_string(elementId) + " has no item";
         return nullptr;
@@ -199,9 +200,9 @@ QQuickItem* target(Scene& scene, unsigned elementId, QRectF& frame, std::string&
 }
 
 // grabToImage always renders (0, 0, width, height) of the item. The frame of an auto-sized Group may start left of /
-// above its origin (#469, "Group frame" in protocol.h), so such a grab goes through a hidden ShaderEffectSource whose
+// above its origin ("Group frame" in protocol.h), so such a grab goes through a hidden ShaderEffectSource whose
 // sourceRect is the frame: it renders the element without its own transform (like grabToImage), its texture has the
-// requested pixel size, and grabToImage of the source draws exactly that texture (#475). Hidden: Qt keeps a hidden
+// requested pixel size, and grabToImage of the source draws exactly that texture. Hidden: Qt keeps a hidden
 // item in the scene graph while a grab references it and renders it only into the grab. Parent = the window's content
 // item, never the Group (the source would be part of its own texture) or another element (frame, layout).
 QQuickItem* frameTarget(Scene& scene, QQuickItem* item, const QRectF& frame, QSize pixels)
@@ -219,7 +220,7 @@ QQuickItem* frameTarget(Scene& scene, QQuickItem* item, const QRectF& frame, QSi
 }
 
 // grabToImage of source. QQuickItemGrabResult refuses an item whose window is not visible, which the window of an
-// offscreen scene never is (QQuickRenderControl, no native window; render-texture.md). The check is only in Qt's
+// offscreen scene never is (QQuickRenderControl, no native window; docs/design/render-thread.md). The check is only in Qt's
 // create: the grab itself runs in the scene's next render (render_batch). So the offscreen window counts as visible for
 // this one call, set in QWindowPrivate without show() (show would create a native window). Private API: check on Qt
 // updates; removed when Qt grabs items of a render control window without a visible render window.
@@ -248,17 +249,19 @@ namespace {
 // (longest edge <= maxEdgePx, never above 1 pixel per DIP). The arguments are checked by the callers.
 int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int maxEdgePx)
 {
-    const int rc = beginExternal(id, VLQT_RES_KIND_SNAPSHOT);
+    const int rc = beginExternal(id, VLQT_RESOURCE_KIND_SNAPSHOT);
     if (rc != okRc)
         return rc;
     for (auto& g : s_grabs) // only the newest grab of the id counts
-        if (g->id == id)
+        if (g->id == id) {
             g->current = false;
+            g->releaseFrameSource();
+        }
 
     std::string error;
     QRectF frame;
     QQuickItem* item = target(scene, elementId, frame, error);
-    // An offscreen scene (QtTexture) has no native window and is never exposed; it renders in render_batch (#128).
+    // An offscreen scene (QtTexture) has no native window and is never exposed; it renders in render_batch.
     const bool offscreenScene = offscreen::isScene(scene.window);
     QSize size;
     if (item) {
@@ -314,7 +317,7 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
     if (!s_softwareWarned && scene.window->rendererInterface()
         && scene.window->rendererInterface()->graphicsApi() == QSGRendererInterface::Software) {
         s_softwareWarned = true;
-        qCWarning(lcSnap, "snapshot: Qt Quick software backend, snapshots have no alpha (transparent areas are opaque black)");
+        qCWarning(lcRes, "snapshot: Qt Quick software backend, snapshots have no alpha (transparent areas are opaque black)");
     }
 
     auto g = std::make_unique<Grab>();
@@ -330,7 +333,7 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
     Grab* raw = g.get();
     raw->connection = QObject::connect(result.data(), &QQuickItemGrabResult::ready, result.data(), [raw] { onReady(*raw); });
     s_grabs.push_back(std::move(g));
-    qCDebug(lcSnap, "%s: snapshot of element %u started (%dx%d)", idText(id).constData(), elementId, size.width(),
+    qCDebug(lcRes, "%s: snapshot of element %u started (%dx%d)", idText(id).constData(), elementId, size.width(),
         size.height());
     return okRc;
 }
@@ -340,7 +343,7 @@ int startImpl(uint64_t id, Scene& scene, unsigned elementId, double scale, int m
 int start(uint64_t id, Scene& scene, unsigned elementId, float scale)
 {
     if (!(scale > 0.0f) || !std::isfinite(scale)) {
-        qCWarning(lcSnap, "snapshot: %s: scale %g rejected (must be > 0)", idText(id).constData(), double(scale));
+        qCWarning(lcRes, "snapshot: %s: scale %g rejected (must be > 0)", idText(id).constData(), double(scale));
         return badValueRc;
     }
     return startImpl(id, scene, elementId, double(scale), 0);
@@ -349,39 +352,41 @@ int start(uint64_t id, Scene& scene, unsigned elementId, float scale)
 int startFit(uint64_t id, Scene& scene, unsigned elementId, int maxEdgePx)
 {
     if (maxEdgePx <= 0) {
-        qCWarning(lcSnap, "snapshot_fit: %s: maxEdgePx %d rejected (must be > 0)", idText(id).constData(), maxEdgePx);
+        qCWarning(lcRes, "snapshot_fit: %s: maxEdgePx %d rejected (must be > 0)", idText(id).constData(), maxEdgePx);
         return badValueRc;
     }
     return startImpl(id, scene, elementId, 1.0, maxEdgePx);
 }
 
-int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out)
+int readPixels(uint64_t id, void* dst, int cap, vlqt_pixel_desc* out, int* written, int* required)
 {
+    if (const int rc = beginBuffer(dst, cap, written, required); rc != okRc)
+        return rc;
     const int k = kindOfId(id, "read_pixels");
     if (k < 0)
         return k;
-    if (k != VLQT_RES_KIND_SNAPSHOT) {
-        qCWarning(lcSnap, "read_pixels: %s is not a snapshot resource", idText(id).constData());
+    if (k != VLQT_RESOURCE_KIND_SNAPSHOT) {
+        qCWarning(lcRes, "read_pixels: %s is not a snapshot resource", idText(id).constData());
         return badValueRc;
     }
-    const auto work = std::static_pointer_cast<SnapshotWork>(readyWork(id, VLQT_RES_KIND_SNAPSHOT));
+    const auto work = std::static_pointer_cast<SnapshotContent>(readyContent(id, VLQT_RESOURCE_KIND_SNAPSHOT));
     if (!work || work->image.isNull())
-        return badValueRc; // no finished snapshot yet (or Failed)
+        return noDataRc; // no finished snapshot yet (or Failed)
     const QImage& img = work->image;
     const int rowBytes = img.width() * 4;
-    const int64_t required = int64_t(rowBytes) * img.height();
+    const int64_t size = int64_t(rowBytes) * img.height();
     if (out)
         *out = {img.width(), img.height(), rowBytes, 9, 1};
-    if (!dst || cap < required)
-        return -int(required);
+    if (const int rc = bufferFits(size, cap, written, required); rc != okRc)
+        return rc;
     auto* d = static_cast<unsigned char*>(dst);
     if (img.bytesPerLine() == rowBytes) {
-        std::memcpy(d, img.constBits(), size_t(required));
+        std::memcpy(d, img.constBits(), size_t(size));
     } else {
         for (int y = 0; y < img.height(); y++)
             std::memcpy(d + size_t(y) * rowBytes, img.constScanLine(y), size_t(rowBytes));
     }
-    return int(required);
+    return okRc;
 }
 
 void stats(Stats& out)
@@ -416,7 +421,8 @@ void endFrame()
             continue;
         if (g.current && kindOfId(g.id, nullptr) < 0) { // released during the grab: result dropped
             g.current = false;
-            qCDebug(lcSnap, "%s: snapshot dropped (released during the grab)", idText(g.id).constData());
+            g.releaseFrameSource();
+            qCDebug(lcRes, "%s: snapshot dropped (released during the grab)", idText(g.id).constData());
         }
         if (!g.window || !g.item) { // Qt never finishes it: delete now
             if (g.current)
@@ -442,8 +448,8 @@ void endFrame()
 void shutdown()
 {
     if (!s_grabs.empty())
-        qCInfo(lcSnap, "shutdown: %d snapshot grab(s) dropped", int(s_grabs.size()));
+        qCInfo(lcRes, "shutdown: %d snapshot grab(s) dropped", int(s_grabs.size()));
     s_grabs.clear();
 }
 
-} // namespace vlqt::res::snap
+} // namespace vlqt::res::snapshot

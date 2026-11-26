@@ -2,8 +2,8 @@
 // @category Qt.Effects.Examples
 // @chainonly
 // @passes 2
-// @padding angle 3.75
-// @summary Radial (rotational) blur: arcs around Center, a box blur over a rotation of Angle degrees (centred, the
+// @padding angle 600
+// @summary Radial (rotational) blur: arcs around Center, a box blur over a rotation of Angle cycles (centred, the
 //   picture does not turn).
 //   Template: copy into a qtshaders/ folder next to your patch, rename, change.
 
@@ -11,7 +11,7 @@
 // The file name is the node name (ExampleRadialBlur.frag -> node "ExampleRadialBlur" in Qt.Effects). Chain only: the file makes only that
 // effect chain node, no element node. It is kept equal to the built-in one by a unit test, so change a copy.
 // Padding: the built-in node has its own Padding pin; a shader file cannot add a pin, so the padding grows with Angle here:
-// 3.75 DIP per degree = 30 DIP (the built-in default) at the default 8 degrees. The arcs need about half the angle in
+// 600 DIP per cycle = 30 DIP (the built-in default) at the default 0.05 cycles. The arcs need about half the angle in
 // radians times the distance of the farthest point from Center, so 30 DIP fit a distance of about 430 DIP; raise the
 // factor for a larger element.
 //
@@ -35,8 +35,8 @@ layout(std140, binding = 0) uniform buf {
     // @default 0.5, 0.5
     vec2 center;
 
-    // @summary Total rotation of the blur in degrees, clockwise on screen. 0 = no blur.
-    // @default 8
+    // @summary Total rotation of the blur in cycles (1 = full turn), clockwise on screen. 0 = no blur.
+    // @default 0.05
     // @min 0
     float angle;
 
@@ -65,6 +65,8 @@ int sampleCount(float len)
 // Bilinear sample of the premultiplied source, done by hand: the layers are sampled nearest (not smooth), and a nearest
 // sample every pixel or less would hit some texels twice and skip others, which shows as hatching. Outside the item it is
 // transparent.
+// textureLod, not texture: the source has no mipmaps, so both read the same, but with texture the shader compiler copies the
+// loop maxSamples times, and that large shader crashes the Windows ARM64 software renderer (WARP).
 vec4 fetch(vec2 uv)
 {
     if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0)
@@ -73,15 +75,15 @@ vec4 fetch(vec2 uv)
     vec2 i = floor(p);
     vec2 f = p - i;
     vec2 c = (i + 0.5) * texelSize;
-    return mix(mix(texture(source, c), texture(source, c + vec2(texelSize.x, 0.0)), f.x),
-               mix(texture(source, c + vec2(0.0, texelSize.y)), texture(source, c + texelSize), f.x), f.y);
+    return mix(mix(textureLod(source, c, 0.0), textureLod(source, c + vec2(texelSize.x, 0.0), 0.0), f.x),
+               mix(textureLod(source, c + vec2(0.0, texelSize.y), 0.0), textureLod(source, c + texelSize, 0.0), f.x), f.y);
 }
 
 void main()
 {
     vec2 uv = qt_TexCoord0;
     vec2 qd = (uv - center) / texelSize;  // offset from center in pixels: rotate there, so the arcs stay round on any aspect
-    float rad = radians(abs(angle)) / (passIndex >= 0.5 ? float(maxSamples) : 1.0);
+    float rad = 6.28318530718 * abs(angle) / (passIndex >= 0.5 ? float(maxSamples) : 1.0);
     float arc = sqrt(dot(qd, qd)) * rad;  // arc length at this pixel in pixels
     if (arc < 0.1) {
         fragColor = fetch(uv) * qt_Opacity;

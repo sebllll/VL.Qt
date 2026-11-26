@@ -16,7 +16,7 @@
 
 ## Geometry space
 
-- Points are in the parent space, in units of the scene `Space` (like Skia's path layers); `0, 0` is the origin of the parent, not a corner of the shape.
+- Points are in the parent space, in units of the `Space` of the renderer (like Skia's path layers); `0, 0` is the origin of the parent, not a corner of the shape.
 - `Transform` applies around the origin of the parent, not around the center of the shape. To rotate or scale a shape around its own center, build the points around `0, 0` and move them with `Transform` (translation).
 - There is no `Anchor` and no `Size` pin. The size of the element is the extent of its geometry (`max(0, maxX)` by `max(0, maxY)` of the points). Row, Column and the tooltip preview use it; coordinates to the left of or above the origin do not enlarge it.
 
@@ -54,15 +54,15 @@ The optional pins (`Cap`, `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Trim St
 |---|---|
 | `MoveTo`, `LineTo` | `Point` |
 | `QuadTo` | `Control Point`, `End Point` |
-| `CubicTo` | `Control Point 1`, `Control Point 2`, `EndPoint` |
+| `CubicTo` | `Control Point 1`, `Control Point 2`, `End Point` |
 | `Close` | none |
 | `ArcTo` (tangent) | `Corner`, `Destination Point`, `Corner Radius` |
 | `ArcTo` (oval) | `Bounds`, `Start Angle`, `Sweep Angle`, `Force Move To` |
 | `ArcTo` (SVG) | `Radius`, `X Axis Rotate`, `Large Arc`, `Sweep`, `Destination Point` |
-| `AddRect`, `AddRoundRect`, `AddOval`, `AddCircle`, `AddArc`, `AddPoly`, `AddPath` | the shape (`Rectangle`, `Radius`, `Bounds`, `Center`, `Points`, `Other`, …) and, as in Skia, `Direction` (`PathDirection`) or `Mode` (`PathAddMode`) |
+| `AddRect`, `AddRoundRect`, `AddOval`, `AddCircle`, `AddArc`, `AddPoly`, `AddPath` | the shape (`Rectangle`, `Radius`, `Bounds`, `Center`, `Points`, `Other`, …) and, `Direction` (`PathDirection`) or `Mode` (`PathAddMode`) |
 
 - `MoveTo`, `LineTo`, `QuadTo` and `CubicTo` have a `(Relative)` variant that takes its points relative to the current point; of `ArcTo` only the SVG form has one. `Close` and the `Add…` nodes have none (as in Skia).
-- `AddPath` appends another path; `AddPoly` takes a `Spread<Vector2>` and an optional close.
+- `AddPath` appends another path; `AddPoly` takes a `Spread<Vector2>` and an optional `Closed`.
 
 **Skia correspondence.** The nodes in `Qt.Paths` have the names and pins of `Skia.Paths`, so Skia patches carry over. Differences:
 
@@ -70,9 +70,13 @@ The optional pins (`Cap`, `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Trim St
 - There is no `ConicTo`; Qt has no conics.
 - `PathDirection` and `PathAddMode` replace `SKPathDirection` and `SKPathAddMode`.
 - Angles are in cycles (1 is a full turn), as on Skia's nodes.
+- `AddRoundRect` follows Skia's rules: radii that do not fit are scaled together by one factor (`min(w / 2rx, h / 2ry)`), so a very large radius gives semicircular ends, and the contour starts on the left edge below the top left corner. A radius of zero or less in one direction gives a plain rectangle (Skia adds nothing for a negative radius). The pins default to `Rectangle` `0, 0, 1, 1` and `Radius` `0.1, 0.1`.
+- `AddArc` with a sweep of one cycle or more starts the closed oval at the start angle when that is a multiple of a quarter cycle (as Skia). For other start angles Skia adds only a point; here the full turn from the start angle is added as an open arc.
+- `ArcTo` (SVG, relative) and the tangent form start at the last point of the input path. A path without a `MoveTo` that is added with `AddPath (Extend)` continues the contour of the input, so a `Close` in it returns to that contour's start.
+- `Spline (CatmullRom)`: `Tension` is clamped to 0..1 and `Alpha` to 0..1; a NaN counts as the default (`Tension` 0, `Alpha` 0.5).
 - Queries and operations (`Op`, `Simplify`, sampling) are not part of `Qt.Paths`.
 
-**Limits.** A path that does not fit one command to QtNative (about 7270 line segments) is not drawn; `Path` shows a warning. Arcs and ovals become cubics and count as such.
+**Limits.** The number of segments is not limited by the protocol; the cost is the limit (see [Limits](#limits) of the point shapes). Arcs and ovals become cubics and count as such.
 
 Help patches: `HowTo Build a Path` (the builder nodes), `HowTo Draw a Path` (the element).
 
@@ -107,18 +111,32 @@ Three nodes in `Qt.Paths` create curves from spreads of points. Like the builder
 
 **Few points.** With fewer than two points (anchors) all three return `Input` unchanged. An open spline with two points is a straight line.
 
-**Limits.** The limit of the `Path` element (about 7270 line segments) applies to the result: every span is one cubic, and a closed curve counts its closing segment.
+**Limits.** Every span is one cubic and a closed curve counts its closing segment; the cost of the `Path` element grows with that number of segments.
 
 Help patches: `HowTo Draw a Bezier Curve with Handles` (handles and modes), `HowTo Draw Splines` (Catmull-Rom with `Alpha` 0, 0.5 and 1, and B-spline, with the control polygon).
 
 ## Limits
 
-- **At most 8190 points per element.** More points are cut off at the 8190th, and the node shows a warning. The limit comes from the size of one command to QtNative.
-- **About 4000 points** for a polyline whose points change every frame. Above that the frame time grows steeply (measured on a loaded arm64 notebook: 1.3 ms at 2000 points, 5.3 ms at 4000, 16 ms at 8190). Static shapes and shapes that only move through `Transform` use the full 8190 points at no cost.
+- **No limit on the number of points**: a command carries up to 64 MB, so every point is drawn. The practical limit is the cost of changing points (next two points).
+- **About 4000 points** for a polyline whose points change every frame. Above that the frame time grows steeply (measured on a loaded arm64 notebook: 1.3 ms at 2000 points, 5.3 ms at 4000, 16 ms at 8190). Static shapes and shapes that only move through `Transform` can have many more points at no cost per frame.
 - Prefer `Transform`, `Trim` and `Opacity` to changing points for animation; animated trim costs 2.5 ms at 8190 points, 0.3 ms at 100.
 - Many small shapes are fine: 100 polylines of 100 points, each rotated every frame, take 0.3 ms.
 
-Numbers and method: [research/02_shapes-spike.md](research/02_shapes-spike.md). Design: [decisions/paths.md](decisions/paths.md).
+Numbers and method: [research/shapes-benchmark.md](research/shapes-benchmark.md). Design: [design/paths.md](design/paths.md).
+
+## Examples
+
+<img src="images/paths-path.png" width="820" alt="Path elements: a filled and stroked triangle, an open curve, and two rounded squares with a circular hole, one filled with the even-odd rule">
+
+*`HowTo Draw a Path`: fill and stroke, and a fill rule for a path with a hole.*
+
+<img src="images/paths-splines.png" width="820" alt="Spline (CatmullRom) with Alpha 0, 0.5 and 1 and Spline (BSpline) through the same five points">
+
+*`HowTo Draw Splines`: the same five points as `Spline (CatmullRom)` with three Alpha values and as `Spline (BSpline)`.*
+
+<img src="images/paths-polygon.png" width="820" alt="A star as Polygon with draggable corners, and the same star filled with the NonZero fill rule">
+
+*`HowTo Draw a Polygon`: draggable corners; the fill rule decides what is inside of a self-intersecting polygon.*
 
 ## Help patches
 

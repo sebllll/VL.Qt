@@ -2,25 +2,31 @@
 using System.Threading;
 using System.Threading.Tasks;
 using VL.Lib.Basics.Imaging;
+using VL.Qt.Interop;
 
 namespace VL.Qt
 {
     /// <summary>
-    /// Writes images to files on a worker thread for the FileWriter nodes (#157). One write runs at a time per instance;
+    /// Writes images to files on a worker thread for the FileWriter nodes. One write runs at a time per instance;
     /// a Start while one runs replaces the waiting one (the newest wins, at most one waits). Start and Poll are called on
     /// the main thread, the write delegate runs on a worker thread.
     /// </summary>
     internal sealed class ImageFileWriter : IDisposable
     {
-        readonly Func<IImage, string, int, string> _write;
-        readonly object _syncRoot = new();
-        // Idle = no write runs or waits; the tests wait on it.
-        readonly ManualResetEventSlim _idle = new(true);
-        Job? _pending;
-        bool _running, _finished, _disposed;
-        string _error = string.Empty;
+        /// <summary>Error logged when Write is hit without a File Path.</summary>
+        internal const string NoPathError = "File Path is empty";
+        /// <summary>Error logged when Write is hit without an Image.</summary>
+        internal const string NoImageError = "Image is empty";
 
-        sealed record Job(IImage Image, string Path, int Quality);
+        private readonly Func<IImage, string, int, string> _write;
+        private readonly object _syncRoot = new();
+        // Idle = no write runs or waits (see WaitUntilIdle).
+        private readonly ManualResetEventSlim _idle = new(true);
+        private Job? _pending;
+        private bool _running, _finished, _disposed;
+        private string _error = string.Empty;
+
+        private sealed record Job(IImage Image, string Path, int Quality);
 
         /// <param name="write">Writes the image to the path with the quality and returns the error, empty on success; worker thread.</param>
         internal ImageFileWriter(Func<IImage, string, int, string> write)
@@ -28,7 +34,7 @@ namespace VL.Qt
             _write = write ?? throw new ArgumentNullException(nameof(write));
         }
 
-        /// <summary>A writer that encodes through QtNative (vlqt_image_write).</summary>
+        /// <summary>A writer that encodes through QtNative (vlqt_image_write_file).</summary>
         public static ImageFileWriter CreateNative() => new(WriteNative);
 
         /// <summary>True while a write runs or waits.</summary>
@@ -49,7 +55,7 @@ namespace VL.Qt
         {
             ArgumentNullException.ThrowIfNull(image);
             ArgumentNullException.ThrowIfNull(path);
-            var job = new Job(image.IsVolatile ? CopiedImage.Of(image) : image, path, quality);
+            var job = new Job(image.IsVolatile ? ByteArrayImage.CopyOf(image) : image, path, quality);
             lock (_syncRoot)
             {
                 if (_disposed)
@@ -93,10 +99,10 @@ namespace VL.Qt
             }
         }
 
-        /// <summary>For tests: waits until no write runs or waits any more; false on timeout.</summary>
-        internal bool WaitIdle(TimeSpan timeout) => _idle.Wait(timeout);
+        /// <summary>Waits until no write runs or waits any more; false on timeout.</summary>
+        internal bool WaitUntilIdle(TimeSpan timeout) => _idle.Wait(timeout);
 
-        void Run(Job? job)
+        private void Run(Job? job)
         {
             while (job is not null)
             {
@@ -129,12 +135,12 @@ namespace VL.Qt
             }
         }
 
-        static string WriteNative(IImage image, string path, int quality)
+        private static string WriteNative(IImage image, string path, int quality)
         {
             try
             {
                 var info = image.Info;
-                var format = ResourceClient.ToQtNativeFormat(info.Format);
+                var format = PixelFormats.ToQtNative(info.Format);
                 if (format == 0)
                     return $"Pixel format {info.Format} is not supported";
                 // QtNative resolves a relative path against its own working directory, which is not the patch's.
@@ -148,8 +154,8 @@ namespace VL.Qt
                     format = format,
                     premultiplied = info.IsPremultipliedAlpha ? 1 : 0,
                 };
-                var rc = Native.ImageWrite(in desc, data.Bytes.Span, fullPath, quality, out var error);
-                if (rc == 0)
+                var rc = Native.ImageWriteFile(in desc, data.Bytes.Span, fullPath, quality, out var error);
+                if (rc == Native.Result.Ok)
                     return string.Empty;
                 return error.Length > 0 ? error : $"Writing '{fullPath}' failed ({rc})";
             }
@@ -157,32 +163,6 @@ namespace VL.Qt
             {
                 return e.Message;
             }
-        }
-
-        /// <summary>Own copy of the pixels of a volatile image, valid after the source was reused.</summary>
-        sealed class CopiedImage : IImage, IImageData
-        {
-            readonly byte[] _bytes;
-
-            CopiedImage(ImageInfo info, int scanSize, byte[] bytes)
-            {
-                Info = info;
-                ScanSize = scanSize;
-                _bytes = bytes;
-            }
-
-            public static CopiedImage Of(IImage source)
-            {
-                using var data = source.GetData();
-                return new CopiedImage(source.Info, data.ScanSize, data.Bytes.ToArray());
-            }
-
-            public ImageInfo Info { get; }
-            public bool IsVolatile => false;
-            public IImageData GetData() => this;
-            public ReadOnlyMemory<byte> Bytes => _bytes;
-            public int ScanSize { get; }
-            public void Dispose() { }
         }
     }
 }

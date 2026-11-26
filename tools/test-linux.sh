@@ -2,20 +2,24 @@
 # Builds and runs all Linux tests in one go (L4a): QtNative + Qt bundle, SmokeTest, dotnet test (VL.Qt.Tests).
 # Usage: tools/test-linux.sh [--rid linux-x64|linux-arm64] [--qt-dir <dir>] [--platform offscreen|wayland|xcb|auto]
 #                            [--software] [--skip-native] [--no-smoke] [--no-unit] [--out <dir>] [--sanitize asan|tsan]
-#                            [-- <SmokeTest args>]
+#                            [--only <scenario,...>] [-- <extra args for dotnet test>]
 # auto = QT_QPA_PLATFORM unset, QtNative decides (WSLg: xcb + d3d12, like an exported patch, #216).
 # Default RID from the host architecture (uname -m), default platform offscreen (headless, CPU rendering via llvmpipe:
-# VLQT_GPU=software, the GPU rule does not apply to these functional tests). SmokeTest args e.g. --perf-warn-only.
+# VLQT_GPU=software, the GPU rule does not apply to these functional tests). 
+# The SmokeTest is an NUnit project: `dotnet test` on its assembly. --only a,b = filter TestCategory=a|TestCategory=b (the scenario
+# names). Run settings go in the environment VLQT_SMOKE_<NAME> (PERFWARNONLY=1, STRESSSECONDS, STRESSSEED, TEARINGARGS, ...,
+# see src/VL.Qt.SmokeTest/Framework/SmokeParameters.cs); args after -- go to dotnet test (e.g. --filter, --logger).
+# Results in <out>/smoke: smoke.trx, checks.tsv, smoke.log, grabs/ (tools/smoke-summary.py prints the failures).
 # offscreen default: QT_QUICK_BACKEND=rhi (OpenGL via GLX, needs an X server, WSLg has one).
 # --software: Qt Quick software backend, no X server/xvfb needed (CI, GPU-less systems); MultiEffect/video pixel checks SKIP.
 # .NET: dotnet from PATH or ~/.dotnet (tools/setup-wsl.sh). Exit 0 = everything green.
-# Window scenarios in a real window (WSLg): tools/test-linux.sh --platform xcb --no-unit -- --only geometry,renderer,visibility,borderless,fullscreen
+# Window scenarios in a real window (WSLg): tools/test-linux.sh --platform xcb --no-unit --only geometry,renderer,visibility,borderless,fullscreen
 #   Without --software the effect pixel checks run on OpenGL (llvmpipe offscreen, d3d12 with xcb); the CI runs --software.
-#   Hang at exit with the d3d12 driver: the SmokeTest is stopped VLQT_EXIT_GRACE seconds (30) after its last line; VLQT_GPU=software avoids it.
+#   Hang at exit with the d3d12 driver: the test host is stopped VLQT_EXIT_GRACE seconds (30) after smoke.trx is written; VLQT_GPU=software avoids it.
 # --sanitize asan|tsan (#365): additionally builds QtNative with ASan/TSan (build/<rid>-<san>, runtimes/ untouched),
 #   swaps it into a copy of the SmokeTest output and runs the SmokeTest with the sanitizer runtime per LD_PRELOAD
 #   (dotnet is not instrumented). Reports in <out>/<san>.<pid>, suppressions tools/sanitizers/. No dotnet test.
-#   e.g. tools/test-linux.sh --sanitize tsan -- --only resources,image-resource
+#   e.g. tools/test-linux.sh --sanitize tsan --only resources,image-resource
 set -euo pipefail
 
 case "$(uname -m)" in aarch64|arm64) RID='linux-arm64' ;; *) RID='linux-x64' ;; esac
@@ -25,8 +29,12 @@ SOFTWARE=0
 SKIP_NATIVE=0
 SMOKE=1
 UNIT=1
+# Timing limits (Perf category of the unit tests, SmokeTest PerfLimits) only warn in the gate; a measurement that runs
+# alone on a quiet machine sets VLQT_PERF_WARN_ONLY=0. VLQT_PERF_FACTOR scales every limit.
+export VLQT_PERF_WARN_ONLY="${VLQT_PERF_WARN_ONLY:-1}"
 OUT=''
 SMOKE_ARGS=()
+ONLY=''
 SANITIZE=''
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -39,6 +47,7 @@ while [ $# -gt 0 ]; do
         --no-unit) UNIT=0; shift ;;
         --out) OUT="$2"; shift 2 ;;
         --sanitize) SANITIZE="$2"; shift 2 ;;
+        --only) ONLY="$2"; shift 2 ;;
         --) shift; SMOKE_ARGS=("$@"); break ;;
         -h|--help) sed -n '2,18p' "$0"; exit 0 ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
@@ -48,7 +57,7 @@ case "$RID" in linux-x64|linux-arm64) ;; *) echo "unsupported rid: $RID" >&2; ex
 case "$SANITIZE" in
     '') ;;
     # dotnet test does not load the sanitized QtNative copy; perf limits only warn (TSan 5-15x slower, ASan ~2x)
-    asan|tsan) UNIT=0; SMOKE_ARGS=(--perf-warn-only "${SMOKE_ARGS[@]}") ;;
+    asan|tsan) UNIT=0; export VLQT_SMOKE_PERFWARNONLY=1 ;;
     *) echo "unsupported sanitizer: $SANITIZE (supported: asan, tsan)" >&2; exit 2 ;;
 esac
 
@@ -132,6 +141,16 @@ if [ "$SMOKE" = 1 ]; then
     SMOKE_EXE="$(find "$ART/bin/VL.Qt.SmokeTest" -name VL.Qt.SmokeTest.dll -path '*release*' | head -1)"
     [ -n "$SMOKE_EXE" ] || { echo "SmokeTest build output not found under $ART/bin" >&2; exit 1; }
     SMOKE_DIR="$(dirname "$SMOKE_EXE")"
+    # dotnet test runs the built assembly (a copy of it with the sanitized QtNative, too).
+    TEST_ARGS=(--logger "trx;LogFileName=smoke.trx" --results-directory "$OUT/smoke")
+    if [ -n "$ONLY" ]; then
+        filter=''
+        IFS=', ' read -ra names <<< "$ONLY"
+        for n in "${names[@]}"; do [ -z "$n" ] || filter="${filter:+$filter|}TestCategory=$n"; done
+        TEST_ARGS+=(--filter "$filter")
+    fi
+    rm -rf "$OUT/smoke"; mkdir -p "$OUT/smoke"
+    export VLQT_SMOKE_SMOKEDIR="$OUT/smoke"
     RUN=()
     if [ -n "$SANITIZE" ]; then
         # Copy of the SmokeTest output with the sanitized QtNative next to the normal Qt bundle (RUNPATH $ORIGIN).
@@ -156,19 +175,21 @@ if [ "$SMOKE" = 1 ]; then
     fi
     set +e
     # timeout: guards against hangs (VLQT_SMOKE_TIMEOUT seconds in total)
-    (cd "$SMOKE_DIR" && exec timeout -k 10 "${VLQT_SMOKE_TIMEOUT:-600}" "${RUN[@]}" dotnet VL.Qt.SmokeTest.dll "$OUT/smoke" "${SMOKE_ARGS[@]}") > "$OUT/smoke.out" 2>&1 &
+    (cd "$SMOKE_DIR" && exec timeout -k 10 "${VLQT_SMOKE_TIMEOUT:-600}" "${RUN[@]}" dotnet test VL.Qt.SmokeTest.dll --nologo "${TEST_ARGS[@]}" "${SMOKE_ARGS[@]}") > "$OUT/smoke.out" 2>&1 &
     smoke_pid=$!
     # Known issue (L2d): with Mesa's d3d12 driver under WSLg (Qualcomm arm64, VLQT_GPU != software) the process hangs at
-    # exit after the last check. When the result line "SMOKE OK|FAILED" is in the log but the process is still there
-    # after VLQT_EXIT_GRACE seconds (30), stop it and take the result from the log instead of waiting for the timeout.
+    # exit after the last check. When smoke.trx is written (at the end of the run) but the process is still there after
+    # VLQT_EXIT_GRACE seconds (30), stop it and take the result from the trx instead of waiting for the timeout.
     final_at=0
     hung=0
     while kill -0 "$smoke_pid" 2>/dev/null; do
-        if [ "$final_at" = 0 ] && grep -qE '^SMOKE (OK|FAILED)' "$OUT/smoke.out"; then final_at=$((SECONDS + 1)); fi
+        if [ "$final_at" = 0 ] && [ -s "$OUT/smoke/smoke.trx" ]; then final_at=$((SECONDS + 1)); fi
         if [ "$final_at" != 0 ] && [ $((SECONDS + 1 - final_at)) -ge "${VLQT_EXIT_GRACE:-30}" ]; then
             hung=1
+            pkill -TERM -P "$smoke_pid" 2>/dev/null
             kill -TERM "$smoke_pid" 2>/dev/null
             sleep 5
+            pkill -KILL -P "$smoke_pid" 2>/dev/null
             kill -KILL "$smoke_pid" 2>/dev/null
             break
         fi
@@ -176,11 +197,16 @@ if [ "$SMOKE" = 1 ]; then
     done
     wait "$smoke_pid" 2>/dev/null
     rc=$?
+    # the trx is the second witness: failed tests, or no test executed at all (a filter that matches nothing exits 0)
+    python3 "$ROOT/tools/smoke-summary.py" "$OUT/smoke" > "$OUT/smoke-summary.txt"
+    sum_rc=$?
     if [ "$hung" = 1 ]; then
-        echo "WARN SmokeTest finished but did not exit (hang at exit, known with the d3d12 driver under WSLg); result taken from the log. Workaround: VLQT_GPU=software" >&2
-        if grep -qE '^SMOKE OK' "$OUT/smoke.out"; then rc=0; else rc=1; fi
+        echo "WARN SmokeTest finished but did not exit (hang at exit, known with the d3d12 driver under WSLg); result taken from smoke.trx. Workaround: VLQT_GPU=software" >&2
+        rc=$sum_rc
     elif [ "$rc" = 124 ] || [ "$rc" = 137 ]; then
         echo "WARN SmokeTest hung and was stopped after ${VLQT_SMOKE_TIMEOUT:-600} s. Under WSLg try VLQT_GPU=software (d3d12 driver hang)." >&2
+    elif [ "$rc" = 0 ] && [ "$sum_rc" != 0 ]; then
+        rc=$sum_rc
     fi
     set -e
     if [ -n "$SANITIZE" ]; then
@@ -200,22 +226,29 @@ if [ "$SMOKE" = 1 ]; then
                 python3 "$SUPP/lsan-filter.py" "${sym[@]}" > "$OUT/lsan-QtNative.txt" && san_fail=0
                 head -1 "$OUT/lsan-QtNative.txt"
                 # LSan sets exit 1 on any leak; only keep it when a QtNative leak or a smoke failure remains.
-                [ "$san_fail" = 1 ] || [ "$rc" != 1 ] || [ "$(tail -1 "$OUT/smoke.out")" != 'SMOKE OK' ] || rc=0
+                [ "$san_fail" = 1 ] || [ "$rc" != 1 ] || [ "$sum_rc" != 0 ] || rc=0
             fi
             [ "$san_fail" = 0 ] || [ "$rc" != 0 ] || rc=99
         else
             echo "$SANITIZE: no reports"
         fi
     fi
-    grep -E '^(FAIL|WARN|SKIP|DRIFT)' "$OUT/smoke.out" || true
+    cat "$OUT/smoke-summary.txt"
+    grep -hE '^(WARN|SKIP|DRIFT)' "$OUT/smoke.out" | head -20 || true
     # active backend/driver (first occurrence each)
-    grep -m1 -E 'Loading backend|Creating QRhi with backend' "$OUT/smoke.out" || true
-    grep -m1 -E 'GL_RENDERER|Graphics API|vlqt.gpu' "$OUT/smoke.out" || true
-    tail -1 "$OUT/smoke.out"
-    [ "$rc" = 0 ] || { echo "SmokeTest exit $rc (full log: $OUT/smoke.out)"; fail=1; }
+    grep -m1 -hE 'Loading backend|Creating QRhi with backend' "$OUT/smoke/smoke.log" "$OUT/smoke.out" 2>/dev/null | head -1 || true
+    grep -m1 -hE 'GL_RENDERER|Graphics API|vlqt.gpu' "$OUT/smoke/smoke.log" "$OUT/smoke.out" 2>/dev/null | head -1 || true
+    [ "$rc" = 0 ] || { echo "SmokeTest exit $rc (full log: $OUT/smoke.out, TRX: $OUT/smoke/smoke.trx)"; fail=1; }
 fi
 
 if [ "$UNIT" = 1 ]; then
+    # source rules of the closing check (P14, K1/K3/K4): the same step as in tools/build.ps1 -Test
+    step "source rules (tools/check-source-rules.py)"
+    if command -v python3 >/dev/null 2>&1; then
+        python3 -I "$ROOT/tools/check-source-rules.py" --root "$ROOT" || { echo "source rules failed"; fail=1; }
+    else
+        echo "python3 not found, source rules skipped" >&2
+    fi
     step "dotnet test VL.Qt.Tests"
     set +e
     # console logger at normal verbosity: names + messages of failed tests in unit.out; TRX next to it (#429)

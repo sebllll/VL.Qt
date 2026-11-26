@@ -125,7 +125,7 @@
             <Pin Id="WVDxcomyrSHe1ngzmu0GKl" Name="Size" Kind="InputPin" DefaultValue="1.2, 1.2" />
             <Pin Id="xe9O66XGrHJ33AaRpSJbaC" Name="Transform" Kind="InputPin" />
             <Pin Id="1hRzq46pRs3Q2gDBUO3ZGp" Name="Anchor" Kind="InputPin" DefaultValue="Center" />
-            <Pin Id="QQOs5mp9yXulLajRBx283k" Name="Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
+            <Pin Id="QQOs5mp9yXulLajRBx283k" Name="Fill Color" Kind="InputPin" DefaultValue="0.9, 0.35, 0.1, 1" />
             <Pin Id="Vm3Honv9e0Vjjgw79CTYLm" Name="Radius" Kind="InputPin" DefaultValue="0.3" />
             <Pin Id="R1J6XpmPU4LiojOFHwVOro" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
             <Pin Id="gG3MDHuvxFTnl0IVvB4Ley" Name="Stroke Width" Kind="InputPin" IsHidden="true" />
@@ -151,10 +151,10 @@
             <Pin Id="HBWeIU4JsqvgWG6ipzq7hM" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="bmNqMSgWyIll6DSh7gsFjp" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="PYmui1vn7TFBoLxDS6SSok" Name="Input" Kind="InputPin" />
-            <Pin Id="qgZYpPo78X6Mi5UiMLOgeZ" Name="Space" Kind="InputPin" />
+            <Pin Id="qgZYpPo78X6Mi5UiMLOgeZ" Name="Space" Kind="InputPin" IsHidden="true" />
             <Pin Id="MJ3NbEmMhdxvJkD1TXWKVa" Name="Clear Color" Kind="InputPin" />
             <Pin Id="fkcIo4zzMVBSqXcHauwuy1" Name="Clear" Kind="InputPin" />
-            <Pin Id="lXzBAWtu0I8UJTekInrJd2" Name="Enabled" Kind="InputPin" />
+            <Pin Id="lXzBAWtu0I8UJTekInrJd2" Name="Enabled" Kind="InputPin" IsHidden="true" />
             <Pin Id="0OKNOvDByfQKqQZ2KouAwf" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="dW4C5fkSSUDweNfWIwZZab" Name="Perf" Kind="OutputPin" IsHidden="true" />
             <Pin Id="wezppzg6ciUEwMqZya0qAk" Name="Title" Kind="InputPin" />
@@ -166,7 +166,7 @@
             <Pin Id="FwWbT0gMBH1OP1qc5VJJH4" Name="Window" Kind="InputPin" IsHidden="true" />
             <Pin Id="F3HnjnlEdVpLFFLUGOgGTk" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="rCh5u5zjYWswCidNyjoLQV" Bounds="85,810,830,274" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Clear is an optional pin of Renderer [Qt] and QtTexture: show it with the pin context menu. Off: the window or texture keeps the previous frame and the new frame is drawn over it.&#xD;&#xA;- The alpha of Clear Color is the fade strength while Clear is off: every frame the color is drawn over the previous one (premultiplied: out = color * alpha + previous * (1 - alpha)), then the elements. Alpha 1 gives the result of Clear on, alpha 0 draws no fade and keeps everything.&#xD;&#xA;- For a fade of a region or with a gradient, set the alpha of Clear Color to 0 and draw an own semi-transparent Rectangle (or a gradient) first.&#xD;&#xA;- Limits: the fade goes toward the Clear Color, not toward transparency (for that use alpha 0 and own elements). The fade speed depends on the frame rate. 8-bit targets round while fading: a faint residue of the old content stays and never disappears completely.&#xD;&#xA;- While Clear is off Qt renders every frame, also when nothing changed, so a fade goes on. Cost: one full-size texture and one extra pass, only while Clear is off.&#xD;&#xA;- Switching Clear on again, resizing the window and changing the Size of a QtTexture clear the content once.">
+          <Pad Id="rCh5u5zjYWswCidNyjoLQV" Bounds="85,810,830,334" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Clear is an optional pin of Renderer [Qt] and QtTexture: show it with the pin context menu. Off: the window or texture keeps the previous frame and the new frame is drawn over it.&#xD;&#xA;- The alpha of Clear Color is the fade strength while Clear is off: every frame the color is drawn over the previous one (premultiplied: out = color * alpha + previous * (1 - alpha)), then the elements. Alpha 1 gives the result of Clear on, alpha 0 draws no fade and keeps everything.&#xD;&#xA;- For a fade of a region or with a gradient, set the alpha of Clear Color to 0 and draw an own semi-transparent Rectangle (or a gradient) first.&#xD;&#xA;- Limits: the fade goes toward the Clear Color, not toward transparency (for that use alpha 0 and own elements). The fade speed depends on the frame rate. 8-bit targets round while fading: a faint residue of the old content stays and never disappears completely.&#xD;&#xA;- While Clear is off Qt renders every frame, also when nothing changed, so a fade goes on. Cost: one full-size texture and one extra pass, only while Clear is off.&#xD;&#xA;- Switching Clear on again, resizing the window and changing the Size of a QtTexture clear the content once.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

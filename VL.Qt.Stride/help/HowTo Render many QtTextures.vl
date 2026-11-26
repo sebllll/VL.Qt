@@ -27,7 +27,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="37KeCeu9WHuFd9JZHg1zCk" Bounds="85,85,640,103" ShowValueBox="true" isIOBox="true" Value="QtTexture [Qt] in a ForEach region:&#xD;&#xA;- one Qt scene and one Stride Texture per slice&#xD;&#xA;- Count: the QtTextures are created and disposed with the spread&#xD;&#xA;- FullscreenQuadRenderer with AlphaBlendPremultiplied draws each texture&#xD;&#xA;- every square rotates with its own LFO, Hue and height from a RandomSpread">
+          <Pad Id="37KeCeu9WHuFd9JZHg1zCk" Bounds="85,85,640,103" ShowValueBox="true" isIOBox="true" Value="QtTexture [Stride] in a ForEach region:&#xD;&#xA;- one Qt scene and one Stride Texture per slice&#xD;&#xA;- Count: the QtTextures are created and disposed with the spread&#xD;&#xA;- FullscreenQuadRenderer with AlphaBlendPremultiplied draws each texture&#xD;&#xA;- every square rotates with its own LFO, Hue and height from a RandomSpread">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -116,7 +116,7 @@
                 <Pin Id="X2xDOzgaYJbtleq7afl9AF" Name="Size" Kind="InputPin" DefaultValue="1.2, 1.2" />
                 <Pin Id="G04xYBsxdT5MZNDmEGC0AI" Name="Transform" Kind="InputPin" />
                 <Pin Id="gLjPpAYbng7Cw4rxRorOFP" Name="Anchor" Kind="InputPin" DefaultValue="Center" />
-                <Pin Id="O41cq5XS9LqE0AC8DHee8J" Name="Color" Kind="InputPin" DefaultValue="1, 0.55, 0.1, 1" />
+                <Pin Id="O41cq5XS9LqE0AC8DHee8J" Name="Fill Color" Kind="InputPin" DefaultValue="1, 0.55, 0.1, 1" />
                 <Pin Id="5wQ4IojE3gTxXIzmbwA24c" Name="Output" Kind="OutputPin" />
                 <Pin Id="JrvpzVOgFwPOQFPPtWRAtQ" Name="Radius" Kind="InputPin" IsHidden="true" />
                 <Pin Id="CdFCGQ9cf7OOZg2227PmhS" Name="Stroke Color" Kind="InputPin" IsHidden="true" />
@@ -130,7 +130,7 @@
                 <Pin Id="TbAkoxdYgkeMvP82YfZrJu" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
               </Node>
               <Node Bounds="120,580,105,19" Id="dHtzCmWIWO2vAeF73b1qKN">
-                <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.Stride.dll">
+                <p:NodeReference LastCategoryFullName="Stride.Textures.Source" LastDependency="VL.Qt.Stride.dll">
                   <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                   <Choice Kind="ProcessAppFlag" Name="QtTexture" />
                 </p:NodeReference>
@@ -139,14 +139,12 @@
                 <Pin Id="ZODEgWy7HAGYnVIdKTTcOY" Name="Input" Kind="InputPin" />
                 <Pin Id="VnQ73k8G7aouCG5jDPL2L6" Name="Size" Kind="InputPin" DefaultValue="1000, 300" />
                 <Pin Id="6Taqpr5SoSPEGrSpeCTB3A" Name="Output" Kind="OutputPin" />
-                <Pin Id="DF7ngHPgRGDQR4lh5sNIzi" Name="Space" Kind="InputPin" />
-                <Pin Id="EAguHBYg2aDP2kPabRkhmj" Name="Clear Color" Kind="InputPin" />
-                <Pin Id="GQ5E4iPvZPOLDMzL4NRXEf" Name="Format" Kind="InputPin" />
-                <Pin Id="QdbqQyeu6yULnAZ040hDi5" Name="Enabled" Kind="InputPin" />
+                <Pin Id="DF7ngHPgRGDQR4lh5sNIzi" Name="Space" Kind="InputPin" IsHidden="true" />
+                <Pin Id="EAguHBYg2aDP2kPabRkhmj" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+                <Pin Id="GQ5E4iPvZPOLDMzL4NRXEf" Name="Format" Kind="InputPin" IsHidden="true" />
+                <Pin Id="QdbqQyeu6yULnAZ040hDi5" Name="Enabled" Kind="InputPin" IsHidden="true" />
                 <Pin Id="UOW1ZQK10TmQApQNcZjXBn" Name="Input Notifications" Kind="InputPin" IsHidden="true" />
                 <Pin Id="Fatts76IimINF1rZdLaKnO" Name="Debug" Kind="InputPin" IsHidden="true" />
-                <Pin Id="OeFCkYns5R2NhApPo0lgl6" Name="Error" Kind="OutputPin" />
-                <Pin Id="JBiX8HuiyIlNFhVyYHVqtb" Name="Perf" Kind="OutputPin" IsHidden="true" />
               </Node>
               <Node Bounds="180,620,127,19" Id="oE4GYtAEu65ktniszXwXbe">
                 <p:NodeReference LastCategoryFullName="Stride.API.Graphics.BlendStateDescription" LastDependency="VL.Stride.vl">
@@ -259,7 +257,7 @@
             <Pin Id="Rn9mGTEIXgSQd19UCYbcVn" Name="Count" Kind="InputPin" />
             <Pin Id="UV0lF6yzdkUPqzw4oBjgZs" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="BUkroTe82qpPk2n8aFqJZt" Bounds="85,850,840,179" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- All QtTextures of a frame render together at the start of Stride's draw, on a Qt render thread: every texture is ready in the same frame. With the environment variable VLQT_OFFSCREEN_THREAD=0 (set before vvvv starts) they render on the main thread, for diagnosis.&#xD;&#xA;- Every QtTexture holds a texture of its Size in pixels: many large ones cost GPU memory.&#xD;&#xA;- QtTexture outputs premultiplied alpha. AlphaBlend expects straight alpha: it multiplies RGB by alpha a second time and makes half-transparent parts too dark. Where straight alpha is needed, unpremultiply the texture first (RGB divided by alpha).&#xD;&#xA;- Windows only (Direct3D 11). QtTexture is Experimental: pins and behavior may still change.">
+          <Pad Id="BUkroTe82qpPk2n8aFqJZt" Bounds="85,850,840,218" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- All QtTextures of a frame render together at the start of Stride's draw, on a Qt render thread: every texture is ready in the same frame. With the hidden pin Render Threads at 0 on every QtTexture they render on the main thread, for diagnosis; a larger value renders heavy scenes on several threads.&#xD;&#xA;- Every QtTexture holds a texture of its Size in pixels: many large ones cost GPU memory.&#xD;&#xA;- QtTexture outputs premultiplied alpha. AlphaBlend expects straight alpha: it multiplies RGB by alpha a second time and makes half-transparent parts too dark. Where straight alpha is needed, unpremultiply the texture first (RGB divided by alpha).&#xD;&#xA;- Windows only (Direct3D 11). QtTexture is Experimental: pins and behavior may still change.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
