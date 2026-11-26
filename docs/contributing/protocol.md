@@ -1,6 +1,6 @@
 # Command protocol: semantics
 
-What the commands, events and values of the command buffer mean. The wire format (header, field order, sizes, alignment, constants) is in [`protocol.h`](../src/VL.Qt.Native/protocol.h), mirrored by hand in [`Protocol.cs`](../src/VL.Qt/Wire/Protocol.cs); the drift tests compare constants and layouts, never prose. This page is for contributors who change QtNative or the reconciler. For why the layers are cut this way see [architecture.md](architecture.md) and [design/reconciler.md](design/reconciler.md); for the elements see [design/element-model.md](design/element-model.md).
+What the commands, events and values of the command buffer mean. The wire format (header, field order, sizes, alignment, constants) is in [`protocol.h`](../../src/VL.Qt.Native/protocol.h), mirrored by hand in [`Protocol.cs`](../../src/VL.Qt/Wire/Protocol.cs); the drift tests compare constants and layouts, never prose. This page is for contributors who change QtNative or the reconciler. For why the layers are cut this way see [architecture.md](architecture.md) and [design/reconciler.md](../design/reconciler.md); for the elements see [design/element-model.md](../design/element-model.md).
 
 Error codes (`-2` bad length, `-4` unknown object, `-6` unknown property, `-7` bad value, `-8` invalid) are `VLQT_ERR_*` of `vlqt.h`. A command that fails stops the apply; commands before it stay applied, and the C# side resyncs with `RESET`.
 
@@ -14,7 +14,7 @@ Error codes (`-2` bad length, `-4` unknown object, `-6` unknown property, `-7` b
 
 ## Window state
 
-- `SET_CLEAR`: `1` clears every frame to the clear color (the default), `0` keeps the previous frame and draws the new one over it (a previous-frame layer in the scene, in windows and offscreen scenes alike). The first frame after switching to `0` and after a resize starts from the clear color. See [design/clear-and-msaa.md](design/clear-and-msaa.md).
+- `SET_CLEAR`: `1` clears every frame to the clear color (the default), `0` keeps the previous frame and draws the new one over it (a previous-frame layer in the scene, in windows and offscreen scenes alike). The first frame after switching to `0` and after a resize starts from the clear color. See [design/clear-and-msaa.md](../design/clear-and-msaa.md).
 - `SET_SPACE`: the `vlqt_space` of the scene, in the enum order of `VL.Qt.Space`; the default is `DIP_TOP_LEFT`, an unknown value is `-7`. QtNative only moves the origin: the window root sits at the top left of the scene (`DIP_TOP_LEFT`, `PIXEL_TOP_LEFT`) or at its centre (`NORMALIZED`, `DIP`; it follows resizes). The scale (units to logical pixels) is C#'s: every length arrives in logical pixels. Values that leave QtNative are in the root's coordinates (`EVENT_SCENE_BOUNDS` is mapped from the scene into the root). Size and dpr of the scene come from `vlqt_scene_get_metrics` (`vlqt.h`).
 
 ## Geometry
@@ -65,19 +65,19 @@ Defaults that QtNative sets, where they differ from Qt's: `MINIMUM` of a SpinBox
 
 `FILL_MODE` values are the order of `VL.Qt.Elements.FillMode`. Image takes all four, centered like QML Image. Video takes `STRETCH`, `FIT` and `CROP`; `TILE` is `-7`, so the Video node sends `STRETCH` for a Tile pin value and warns.
 
-`IMAGE` is a `u64` image resource id, 0 = none; a new id keeps the old image until it is Ready ([design/resources.md](design/resources.md)).
+`IMAGE` is a `u64` image resource id, 0 = none; a new id keeps the old image until it is Ready ([design/resources.md](../design/resources.md)).
 
 ## Values
 
 - A value is encoded like `SET` in every command that carries one. A value type the property does not take is `-7`.
 - `COLOR` has straight alpha on the wire. For shader uniforms QtNative premultiplies it, like QML; `VEC4` is not premultiplied.
 - `MAT4` is row-major like Stride; QtNative transposes it for uniforms.
-- A path is valid only when `pointCount` equals the points its verbs take. Verbs: `Move` 1 point, `Line` 1, `Quad` 2 (control, end), `Cubic` 3 (control 1, control 2, end), `Close` 0. See [design/paths.md](design/paths.md).
+- A path is valid only when `pointCount` equals the points its verbs take. Verbs: `Move` 1 point, `Line` 1, `Quad` 2 (control, end), `Cubic` 3 (control 1, control 2, end), `Close` 0. See [design/paths.md](../design/paths.md).
 - `U64` is a resource id (`IMAGE`, shader ids, audio tap) or, in a uniform, an image resource.
 
 ## Input handlers
 
-Input handlers are objects of their own in the same id space (types from 32). The events they produce are listed under [Events](#events); the design is in [design/events-and-interaction.md](design/events-and-interaction.md).
+Input handlers are objects of their own in the same id space (types from 32). The events they produce are listed under [Events](#events); the design is in [design/events-and-interaction.md](../design/events-and-interaction.md).
 
 - `CREATE` reserves the id and remembers type and properties; the QML handler is created by the `REPARENT`.
 - `REPARENT` (handler, parent, index) attaches the handler to the element item `parent`; the root `0` and another handler are not valid parents, and `index` is ignored. A second `REPARENT` of an attached handler is `-8`; the host re-attaches by `DESTROY` and `CREATE`.
@@ -138,7 +138,7 @@ SpinBox (`i32`), CheckBox and Switch (`bool`), Slider (`f32`) and TextField (`st
 
 ## SET_STYLE
 
-The resolved style of a widget, on Controls types (10..15) only; other types are `-6`. QtNative keeps a table of field by state per element and exposes it to the VL.Qt base style through the attached object `VlStyle`. There is no inheritance to children: C# resolves ([styles.md](styles.md)).
+The resolved style of a widget, on Controls types (10..15) only; other types are `-6`. QtNative keeps a table of field by state per element and exposes it to the VL.Qt base style through the attached object `VlStyle`. There is no inheritance to children: C# resolves ([styles.md](../styles.md)).
 
 - Without `STYLE_SET_CLEAR` the entries are laid over the table (diff); with it the table is emptied first (full send).
 - An unset (field, state) falls back to (field, `NORMAL`), then to 0, transparent or `""` (the Qt default font family). The base style values live only in C#.
@@ -148,11 +148,11 @@ The resolved style of a widget, on Controls types (10..15) only; other types are
 
 ## ShaderEffect
 
-An own `QQuickItem` with a `QSGMaterialShader` (not the QML ShaderEffect). Uniforms are mapped by name through the reflection of the shaders: the members of the uniform block (std140 offsets) and the `sampler2D` bindings. See [effects-and-shaders.md](effects-and-shaders.md) for the nodes.
+An own `QQuickItem` with a `QSGMaterialShader` (not the QML ShaderEffect). Uniforms are mapped by name through the reflection of the shaders: the members of the uniform block (std140 offsets) and the `sampler2D` bindings. See [effects-and-shaders.md](../effects-and-shaders.md) for the nodes.
 
 ### Shaders
 
-- Shaders are resources (`VLQT_RESOURCE_KIND_SHADER`, `vlqt_shader_load`): window independent, loaded in a worker (never in the frame), ids with generation like images, element references through acquire and release ([design/resources.md](design/resources.md)).
+- Shaders are resources (`VLQT_RESOURCE_KIND_SHADER`, `vlqt_shader_load`): window independent, loaded in a worker (never in the frame), ids with generation like images, element references through acquire and release ([design/resources.md](../design/resources.md)).
 - Path `builtin:<name>` is a shader shipped with VL.Qt: `<QtNative dir>/shaders/<name>.frag.qsb` (stage FRAGMENT) or `<name>.vert.qsb` (stage VERTEX); in the package `qt/<rid>/shaders/`, in an app `runtimes/<rid>/native/shaders/` next to `qml/`. The sources are in `src/VL.Qt.Native/shaders/`; the build bakes them with `qsb` (build time only, `qsb` is not shipped). Any other path is a file.
 - Failed with `RESOURCE_EVENT_ERROR`: not a `.qsb`, the stage of the `.qsb` is not the requested one, no variant for the backend of the process device, or a missing file. `RESOURCE_EVENT_INFO` of a shader is all 0 (no upload; each item builds its pipeline itself).
 - `vlqt_shader_load_source` takes full Qt GLSL (Vulkan-style GLSL 440 as `qsb` takes it, no preamble added), copied at the call and baked by `QShaderBaker` in the worker, only for the shader language of the process backend (plus the reflection). Bakes are cached per (stage, backend, hash of the source) in the process, so going back to an earlier text is Ready without a bake. The same checks as for a `.qsb` follow the bake. A bake error ends in Failed with the compiler message (glslang, with line numbers of the source), one line per problem.
@@ -188,7 +188,7 @@ How a `sampler2D` reads its texture. An entry of `SET_UNIFORMS` or of a SHADER l
 
 ## Effect chain
 
-The `Effect` pin of an element is a chain of links. `SET_EFFECT_CHAIN` sends the whole chain (always a full send, no diff) in application order: the first link applies first to the element (the start of the chain in vvvv, `Previous == null`), the last one (the link at the `Effect` pin) last, like Stride TextureFX. See [effects-and-shaders.md](effects-and-shaders.md).
+The `Effect` pin of an element is a chain of links. `SET_EFFECT_CHAIN` sends the whole chain (always a full send, no diff) in application order: the first link applies first to the element (the start of the chain in vvvv, `Previous == null`), the last one (the link at the `Effect` pin) last, like Stride TextureFX. See [effects-and-shaders.md](../effects-and-shaders.md).
 
 - `linkCount 0` = no chain: the layer is removed. Otherwise QtNative sets `layer.enabled` and one `layer.effect` on the element's own item; the links are an item tree inside that effect item (intermediate stages hidden, each its own layer = texture provider, the last draws). Size, `TRANSFORM`, implicit size, Row and Column layout and hit test stay those of the item.
 - Root `0` and input handlers are `-6`, an unknown id `-4`, an unknown link kind `-7`, lengths that do not add up `-2`. `SET` of an `EFFECT_*` key (block 832) is `-6`: the ids are only keys of `MULTI` entries.
@@ -228,7 +228,7 @@ A mask applies per `MULTI` run. The mask element is an element object of its own
 
 ## QmlElement
 
-`VLQT_ELEMENT_TYPE_QML` loads a user `.qml` file into the element tree; see [user-qml.md](user-qml.md) and [design/user-qml.md](design/user-qml.md). The element is an item that holds the instance of the file's root, which must be a `QQuickItem` (else `EVENT_ERROR`).
+`VLQT_ELEMENT_TYPE_QML` loads a user `.qml` file into the element tree; see [user-qml.md](../user-qml.md) and [design/user-qml.md](../design/user-qml.md). The element is an item that holds the instance of the file's root, which must be a `QQuickItem` (else `EVENT_ERROR`).
 
 - `QML_SOURCE`: absolute file path, empty = nothing loaded. It is compiled from a `file:` URL, so relative imports resolve.
 - `QML_RELOAD`: `i32` counter, initially 0. A new value clears the engine's component cache for the URL and rebuilds the instance, re-applying every property set so far. The C# side bumps it when the file or its neighbours change.
@@ -241,7 +241,7 @@ A mask applies per `MULTI` run. The mask element is an element object of its own
 
 ## Resources
 
-Resources are window independent and have their own status queue (`vlqt_res_poll`). Ids are `u64`, assigned by QtNative: index (low 32 bits) and generation (high 32 bits). See [design/resources.md](design/resources.md).
+Resources are window independent and have their own status queue (`vlqt_res_poll`). Ids are `u64`, assigned by QtNative: index (low 32 bits) and generation (high 32 bits). See [design/resources.md](../design/resources.md).
 
 - States: Pending, Decoding, Uploading, Ready or Failed, then Released; Released is never sent, because the host released the id before. No record comes after `vlqt_res_release`.
 - `RESOURCE_EVENT_ERROR` (Failed) is sent before its `STATE`. `RESOURCE_EVENT_INFO` (width, height, format, uploaded bytes) is sent before `STATE Ready` and after each replacement. `RESOURCE_EVENT_WARNING`: at most one per resource.
@@ -264,7 +264,7 @@ Input that is not premultiplied is premultiplied in the worker; `row_bytes > wid
 
 ### Audio tap
 
-`VLQT_RESOURCE_KIND_AUDIO_TAP` (`resources/audio_tap.h`) delivers the sound of a Video element as interleaved float samples for VL.Audio ([video-audio.md](video-audio.md)). The contract between QtNative and C#:
+`VLQT_RESOURCE_KIND_AUDIO_TAP` (`resources/audio_tap.h`) delivers the sound of a Video element as interleaved float samples for VL.Audio ([video-audio.md](../video-audio.md)). The contract between QtNative and C#:
 
 - **Lifetime.** C# creates the resource (`vlqt_res_create`) and fixes its format once with `vlqt_audio_tap_init` (channels 1..`VLQT_AUDIO_TAP_MAX_CHANNELS`, sample rate `MIN` to `MAX`, always float). It goes Pending, Decoding, Ready at once (external content: no worker, no upload); `RESOURCE_EVENT_INFO` has width = channels, height = sample rate, format 0, bytes = ring size. The format never changes: a new VL.Audio sample rate means a new tap; C# sets the new id on the Video and releases the old one. A tap is freed like any resource (host release and no element reference); a read of a freed id returns `VLQT_ERR_UNKNOWN_ID` (`-9`) and never touches freed memory. At most 64 taps live at once; init refuses more (`VLQT_ERR_BAD_ARGUMENT`).
 - **`VLQT_PROPERTY_AUDIO_TAP` (Video).** A tap id other than 0 attaches a `QAudioBufferOutput` in the tap's format to the element's `QMediaPlayer` and sets the player's `audioOutput` to null: Qt's own sound is off and the player runs on the system clock (with an output, even at volume 0, Qt syncs the picture to the audio device with about 200 ms start offset and seconds of slewing). There is no separate flag: a tap always means Qt is silent, and 0 restores the `AudioOutput`. C# swaps from one tap to the next without a 0 in between, so Qt never plays a burst. The tap hangs on the player of the item, never on the `QQuickWindow` (the window is replaced on an MSAA change; items move with it). The element holds an element reference on the tap.
@@ -276,7 +276,7 @@ Input that is not premultiplied is premultiplied in the worker; `row_bytes > wid
 
 ## Pointer and key input of offscreen scenes
 
-`vlqt_offscreen_send_pointer` and `vlqt_offscreen_send_key` (`vlqt.h`) are not part of the command buffer; their constants (`vlqt_pointer`, `vlqt_pointer_device`, `vlqt_key_event`) sit in `protocol.h` for the mirror. `POINTER_LEAVE` ends hover and ignores x and y; `POINTER_CANCEL` is for touch and pen when the system cancelled the point (`TouchCancel`). A pen is delivered as a stylus, as in a window on Windows. See [design/offscreen-input.md](design/offscreen-input.md).
+`vlqt_offscreen_send_pointer` and `vlqt_offscreen_send_key` (`vlqt.h`) are not part of the command buffer; their constants (`vlqt_pointer`, `vlqt_pointer_device`, `vlqt_key_event`) sit in `protocol.h` for the mirror. `POINTER_LEAVE` ends hover and ignores x and y; `POINTER_CANCEL` is for touch and pen when the system cancelled the point (`TouchCancel`). A pen is delivered as a stylus, as in a window on Windows. See [design/offscreen-input.md](../design/offscreen-input.md).
 
 ## Change the protocol
 

@@ -2,11 +2,11 @@
 
 A repeatable CPU baseline: the same test patches, exported the same way and recorded with the sampling profiler [Ultra](https://github.com/xoofx/ultra) (managed + native + kernel stacks, via ETW). Use it to spot performance regressions (compare a new run with an earlier one) and to compare VL.Qt with other renderers, such as VL.Skia, on the same scenario.
 
-For the overlays and the in-app numbers see [Diagnostics](diagnostics.md).
+For the overlays and the in-app numbers see [Diagnostics](../diagnostics.md).
 
 ## Scenarios
 
-The scenarios live in `tools/profiling/`, one patch each, window 1280×720 DIP, time-based deterministic animation. Details: [tools/profiling/README.md](../tools/profiling/README.md).
+The scenarios live in `tools/profiling/`, one patch each, window 1280×720 DIP, time-based deterministic animation. Details: [tools/profiling/README.md](../../tools/profiling/README.md).
 
 | Scenario | Patch | Content |
 |---|---|---|
@@ -62,7 +62,7 @@ The SmokeTest (`src/VL.Qt.SmokeTest`, NUnit) drives QtNative without vvvv and ha
 
 Timing checks of the SmokeTest tell a busy machine from a regression: a check that reads peaks or long frames prints `SKIP ... host too loaded` instead of failing when the loop of the test itself stalled. Such a SKIP is not a pass: repeat the run on a quieter machine. `tools/perf-baseline.ps1` runs the perf scenarios several times and compares medians with a stored baseline.
 
-The numbers of these scenarios, with machine, Qt version and date, are in [research/](research/): [poll measurements](research/poll-measurements.md) (a static scene polls in 0.0001 ms at 2000 elements), [render texture measurements](research/render-texture-measurements.md) (a render thread cuts the main-thread time per `QtTexture` from 0.7 to 2.8 ms to under 0.35 ms; more threads only help several heavy scenes and cost CPU) and [pump spikes](research/pump-spikes.md).
+The numbers of these scenarios, with machine, Qt version and date, are in [research/](../research): [poll measurements](../research/poll-measurements.md) (a static scene polls in 0.0001 ms at 2000 elements), [render texture measurements](../research/render-texture-measurements.md) (a render thread cuts the main-thread time per `QtTexture` from 0.7 to 2.8 ms to under 0.35 ms; more threads only help several heavy scenes and cost CPU) and [pump spikes](../research/pump-spikes.md).
 
 ### Tearing test pattern
 

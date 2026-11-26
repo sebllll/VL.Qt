@@ -1,6 +1,6 @@
 # Deployment
 
-How QtNative and the Qt runtime are licensed, packaged and found at run time. Code and files: `src/VL.Qt/VL.Qt.csproj` (package layout), `src/VL.Qt/Interop/QtNativeLibrary.cs` (loader), `VL.Qt.vl.targets` and `src/VL.Qt/buildTransitive/VL.Qt.targets` (export), `.github/workflows/build.yml` (the CI), `tools/check-licenses.*` and `tools/trim-deploy.ps1`. The layer itself is described in [native-boundary.md](native-boundary.md). Build steps are in [../development.md](../development.md), export steps in [../export.md](../export.md) and [../linux.md](../linux.md), licence texts in [../../LICENSES.md](../../LICENSES.md).
+How QtNative and the Qt runtime are licensed, packaged and found at run time. Code and files: `src/VL.Qt/VL.Qt.csproj` (package layout), `src/VL.Qt/Interop/QtNativeLibrary.cs` (loader), `VL.Qt.vl.targets` and `src/VL.Qt/buildTransitive/VL.Qt.targets` (export), `.github/workflows/build.yml` (the CI), `tools/check-licenses.*` and `tools/trim-deploy.ps1`. The layer itself is described in [native-boundary.md](native-boundary.md). Build steps are in [../development.md](../contributing/development.md), export steps in [../export.md](../export.md) and [../linux.md](../linux.md), licence texts in [../../LICENSES.md](../../LICENSES.md).
 
 ## Context
 

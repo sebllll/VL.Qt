@@ -1,6 +1,6 @@
 # Poll measurements (research, 2026-11-08)
 
-What the poll of a scene (`vlqt_scene_poll`) costs for static scenes, before and after two changes: measuring only elements whose geometry changed, and skipping `Scene::polish` when nothing changed. The page [Profiling](../profiling.md) states the conclusion; the numbers are here.
+What the poll of a scene (`vlqt_scene_poll`) costs for static scenes, before and after two changes: measuring only elements whose geometry changed, and skipping `Scene::polish` when nothing changed. The page [Profiling](../contributing/profiling.md) states the conclusion; the numbers are here.
 
 ## Machine and versions
 

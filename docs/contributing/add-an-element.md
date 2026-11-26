@@ -2,7 +2,7 @@
 
 This page follows one small element, `Rectangle`, through every layer, in the order the work goes. `Circle` is a second node on the same element and shows how a node reuses one. Follow it with your own element in place of `Rectangle`.
 
-The conventions of an element node (pin order, `Props`, `Create`) are in [Architecture, Adding an element node](../architecture.md#adding-an-element-node); this page does not repeat them. The meaning of the commands is in [protocol.md](../protocol.md), the reasons are in the notes [element-model](../design/element-model.md), [reconciler](../design/reconciler.md), [reconciler-identity](../design/reconciler-identity.md) and [events-and-interaction](../design/events-and-interaction.md). The words (element, feedback, item) are in the [glossary](../glossary.md).
+The conventions of an element node (pin order, `Props`, `Create`) are in [Architecture, Adding an element node](architecture.md#adding-an-element-node); this page does not repeat them. The meaning of the commands is in [protocol.md](protocol.md), the reasons are in the notes [element-model](../design/element-model.md), [reconciler](../design/reconciler.md), [reconciler-identity](../design/reconciler-identity.md) and [events-and-interaction](../design/events-and-interaction.md). The words (element, feedback, item) are in the [glossary](../glossary.md).
 
 How the pieces connect for one element:
 
@@ -20,13 +20,13 @@ flowchart LR
 Type and property ids are the contract between C# and QtNative. `protocol.h` is the source, `Protocol.cs` its hand-written mirror.
 
 - The type id is one line in `enum vlqt_element_type`: `VLQT_ELEMENT_TYPE_RECTANGLE = 3` ([protocol.h:123](../../src/VL.Qt.Native/protocol.h#L123)). Take the next free number; removed numbers stay unused (the comment above the enum lists them).
-- The property ids are a block of the enum `vlqt_property`: `VLQT_PROPERTY_COLOR = 256` to `VLQT_PROPERTY_BORDER_WIDTH = 259` ([protocol.h:161](../../src/VL.Qt.Native/protocol.h#L161)). Common properties are `1..255` and need nothing from you. Type-specific ones sit in a block of their own; the block list is in the comment above the enum, and one id may serve several types (`COLOR` is also Text's). Take a free block, add it to that comment and to the table in [protocol.md](../protocol.md#property-blocks).
-- Describe the meaning of the properties in [protocol.md](../protocol.md), not in the header; the header gets the value type in a comment where it is not obvious.
+- The property ids are a block of the enum `vlqt_property`: `VLQT_PROPERTY_COLOR = 256` to `VLQT_PROPERTY_BORDER_WIDTH = 259` ([protocol.h:161](../../src/VL.Qt.Native/protocol.h#L161)). Common properties are `1..255` and need nothing from you. Type-specific ones sit in a block of their own; the block list is in the comment above the enum, and one id may serve several types (`COLOR` is also Text's). Take a free block, add it to that comment and to the table in [protocol.md](protocol.md#property-blocks).
+- Describe the meaning of the properties in [protocol.md](protocol.md), not in the header; the header gets the value type in a comment where it is not obvious.
 - Mirror both in `Protocol.cs` by the naming rule in the head of `protocol.h`: `Protocol.ElementType.Rectangle` ([Protocol.cs:120](../../src/VL.Qt/Wire/Protocol.cs#L120)) and `Protocol.PropertyId.Color` ([Protocol.cs:180](../../src/VL.Qt/Wire/Protocol.cs#L180)).
 - Bump the ABI version on both sides: `VLQT_ABI_VERSION` ([protocol.h:60](../../src/VL.Qt.Native/protocol.h#L60)) and `Protocol.AbiVersion` ([Protocol.cs:14](../../src/VL.Qt/Wire/Protocol.cs#L14)). `QtApp` refuses a `vlqt.dll` with another number.
 - Check header and mirror: `dotnet test src/VL.Qt.Tests --filter "FullyQualifiedName~DriftTests|FullyQualifiedName~NativeLayoutTests"` (`ProtocolDriftTests` compares names and values, [ProtocolDriftTests.cs](../../src/VL.Qt.Tests/Wire/ProtocolDriftTests.cs)). `ProtocolNamesTests` fails when two names share a value.
 
-A new element needs no new command: `CREATE` takes the type id and `SET` takes the property ids. The steps of a protocol change in general are in [development.md](../development.md#typical-workflows).
+A new element needs no new command: `CREATE` takes the type id and `SET` takes the property ids. The steps of a protocol change in general are in [development.md](development.md#typical-workflows).
 
 ## 2 The element record
 
@@ -78,7 +78,7 @@ What the reconciler does with the diff (positions, creation, reuse, several plac
 
 ## 4 The node
 
-The node is a public `[ProcessNode]` class in `src/VL.Qt/Nodes/Elements/` that holds an `ElementNodeCore` ([RectangleNode.cs](../../src/VL.Qt/Nodes/Elements/RectangleNode.cs)). The pins, `Props`, `Create`, the order of the pins and the docs follow [Architecture, Adding an element node](../architecture.md#adding-an-element-node) and the node rules in [AGENTS.md](../../AGENTS.md). In short:
+The node is a public `[ProcessNode]` class in `src/VL.Qt/Nodes/Elements/` that holds an `ElementNodeCore` ([RectangleNode.cs](../../src/VL.Qt/Nodes/Elements/RectangleNode.cs)). The pins, `Props`, `Create`, the order of the pins and the docs follow [Architecture, Adding an element node](architecture.md#adding-an-element-node) and the node rules in [AGENTS.md](../../AGENTS.md). In short:
 
 ```csharp
 [ProcessNode(Name = "Rectangle", Category = Categories.Elements)]
@@ -137,7 +137,7 @@ After a change here, rebuild QtNative (`tools/build-native.ps1`) and restart vvv
 
 ## 6 Back to the node: feedback
 
-Everything that goes from QtNative to the node is feedback: the measured size and the scene bounds that every element has, errors, and the events of the elements that have them (`Button` clicks, `Slider` values; the list is in [protocol.md](../protocol.md#events)).
+Everything that goes from QtNative to the node is feedback: the measured size and the scene bounds that every element has, errors, and the events of the elements that have them (`Button` clicks, `Slider` values; the list is in [protocol.md](protocol.md#events)).
 
 - The reconciler binds the id of the item to the feedback slot of the node (`ICommandSink.Bind`, [ICommandSink.cs:21](../../src/VL.Qt/Wire/ICommandSink.cs#L21)). A `FeedbackSlot` ([FeedbackSlot.cs](../../src/VL.Qt/Elements/Feedback/FeedbackSlot.cs)) points into the `ElementFeedback` of the node ([ElementFeedback.cs](../../src/VL.Qt/Elements/Feedback/ElementFeedback.cs)). The record carries the slot in its constructor, so the same node always receives the same feedback.
 - QtNative collects the events after each frame. For every bound item `measureGeometry` ([measure.cpp:82](../../src/VL.Qt.Native/scene/measure.cpp#L82)) pushes `EVENT_MEASURED` and `EVENT_SCENE_BOUNDS` when the values changed. Errors of an item are pushed as `EVENT_ERROR` ([measure.cpp:235](../../src/VL.Qt.Native/scene/measure.cpp#L235)).
@@ -156,9 +156,9 @@ An element with a new kind of event adds the event id to `protocol.h` and `Proto
 | The item renders what the properties say | `src/VL.Qt.SmokeTest/<Name>Test.cs` | `RectangleTest.Rectangle` ([RectangleTest.cs:18](../../src/VL.Qt.SmokeTest/RectangleTest.cs#L18)) |
 | The node API is the intended one | `src/VL.Qt.Tests/Api/node-api.txt` | regenerate, see below |
 
-- A SmokeTest scenario is an NUnit test with a `Category` (one scenario, one category). It creates a window, writes commands with `CommandWriter`, applies them, pumps and checks pixels of a grab (`s.Grab`, `Near(Px(...))`); the grab goes to `build/smoke/`, look at it. Run one with `tools/build.ps1 -Test -Only rectangle` or `dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=rectangle`; more in [development.md](../development.md#build-and-test-step-by-step).
+- A SmokeTest scenario is an NUnit test with a `Category` (one scenario, one category). It creates a window, writes commands with `CommandWriter`, applies them, pumps and checks pixels of a grab (`s.Grab`, `Near(Px(...))`); the grab goes to `build/smoke/`, look at it. Run one with `tools/build.ps1 -Test -Only rectangle` or `dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=rectangle`; more in [development.md](development.md#build-and-test-step-by-step).
 - The node-API snapshot lists every public type with its pins. After a C# change that adds a node or a pin, run `VLQT_UPDATE_SNAPSHOT=1 dotnet test src/VL.Qt.Tests --filter FullyQualifiedName~NodeApiSnapshotTests` and commit `src/VL.Qt.Tests/Api/node-api.txt`. `tools/vl-patch-check.py` reads the pins from that file, so regenerate it before checking patches.
-- The help patch is `help/Qt/HowTo <Verb> a <Name>.vl` ([HowTo Draw a Rectangle.vl](../../help/Qt/HowTo%20Draw%20a%20Rectangle.vl)). The rules (text scheme, layout, IOBoxes) are in [help-patches.md](../help-patches.md) and [AGENTS.md](../../AGENTS.md). Add its line to [help/Help.xml](../../help/Help.xml) in the same change and list it in [help-patches.md](../help-patches.md).
+- The help patch is `help/Qt/HowTo <Verb> a <Name>.vl` ([HowTo Draw a Rectangle.vl](../../help/Qt/HowTo%20Draw%20a%20Rectangle.vl)). The rules (text scheme, layout, IOBoxes) are in [help-patches.md](help-patches.md) and [AGENTS.md](../../AGENTS.md). Add its line to [help/Help.xml](../../help/Help.xml) in the same change and list it in [help-patches.md](../help-patches.md).
 - Check the patch: `python tools/vl-patch-check.py "help/Qt/HowTo Draw a Rectangle.vl"`, then `tools/vvvvc.ps1 -File "help/Qt/HowTo Draw a Rectangle.vl"` (run `dotnet build src/VL.Qt -c Release` first). A patch written by hand gets the label `manual-check` until someone has looked at it in vvvv.
 - The command traces in `src/VL.Qt.SmokeTest/traces/` are bound to the wire format. A new element changes none of them; after a change to an existing id, re-record them with `tools/record-traces.ps1`.
 - The full run: `tools/build.ps1 -Test`.
@@ -168,5 +168,5 @@ An element with a new kind of event adds the event id to `protocol.h` and `Proto
 - The help patch is the first documentation of an element: its feature field says what the node does.
 - A property or behavior that a user must know (units, limits, what is not sent) goes into the user page of the family: [shapes.md](../shapes.md) for the shape nodes, [images.md](../images.md), [styles.md](../styles.md), [effects-and-shaders.md](../effects-and-shaders.md), [user-qml.md](../user-qml.md). A basic element such as the Rectangle has no page of its own and needs none.
 - The element list in the [README](../../README.md) names the node when it is new to the user.
-- [protocol.md](../protocol.md) gets the meaning of the new properties and the row of the block; [glossary.md](../glossary.md) gets a word only if it is new to the project.
+- [protocol.md](protocol.md) gets the meaning of the new properties and the row of the block; [glossary.md](../glossary.md) gets a word only if it is new to the project.
 - A change to a rule of the element model goes into the design note it belongs to, with the decision, not into this page.

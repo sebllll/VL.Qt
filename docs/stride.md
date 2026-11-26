@@ -2,7 +2,7 @@
 
 The companion package `VL.Qt.Stride` brings a Qt scene into a [Stride](https://www.stride3d.net) scene of vvvv gamma. Two nodes do it: `QtTexture` outputs the scene as a Stride `Texture`, `QtRenderer` draws it as a layer into a render target. A third node, `ToTexturePixels`, maps window input onto a texture. **Windows only (Direct3D 11) and experimental**: the nodes carry the experimental smell and their pins may still change. Why it is built this way: [Stride output](design/stride-output.md).
 
-Add `VL.Qt.Stride` to the dependencies of your patch. It pulls in `VL.Qt` with the same version; Stride comes with vvvv. Both packages are built and released together from this repository, see [development.md](development.md#packages).
+Add `VL.Qt.Stride` to the dependencies of your patch. It pulls in `VL.Qt` with the same version; Stride comes with vvvv. Both packages are built and released together from this repository, see [development.md](contributing/development.md#packages).
 
 ## QtTexture or QtRenderer?
 

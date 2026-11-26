@@ -1,19 +1,25 @@
 # Exporting an app
 
-Export a patch with vvvvc via the helper script (builds into `build/vvvvc` by default):
-
-```powershell
-tools/vvvvc.ps1 -File help/HelloWorld.vl -Out build/export
-```
+Export a patch with the application exporter of vvvv (quad menu, Application). The export settings (output type, target framework, runtime identifier, asset behavior) are saved in a `.props` file next to the patch.
 
 - The export bundles the Qt runtime next to the executable, only for the runtime identifier (RID) of the exported app.
 - Export settings live in the `*.props` files next to the patches (`help/*.props`).
 - A `qtshaders/` folder next to the exported patch is copied along (see [Effects and shaders](effects-and-shaders.md#shader-nodes-from-files)).
 - A `fonts/` folder next to the exported patch is copied along as well (see [Fonts](#fonts)).
 - vvvvc exports self-contained by default (the .NET runtime is part of the export folder); `--self-contained false` makes a smaller framework-dependent export that needs the .NET 10 runtime on the target.
-- A `.props` next to the patch wins over the command-line arguments `--rid` and `--output-type`. Patches without one (all of `help/Qt/`) get them from the command line, e.g. for Linux arm64: `tools/vvvvc.ps1 -File "help/Qt/HowTo Draw a Rectangle.vl" -Out build/export-linux-arm64 --rid linux-arm64 --output-type Exe --asset-behavior RelativeToOutput`.
+- A `.props` next to the patch wins over the command-line arguments `--rid` and `--output-type` of vvvvc (see below).
 - For a Linux export (console app with a Qt-owned window, needs a `KeepAppAlive` in the patch) see [Linux](linux.md).
 - VL.Qt reports problems (a missing font file in `fonts/`, a Qt error, a font family that is not found) only through the vvvv logger. An exported app shows them only when it has a logging provider, so add one while testing the export (help patch `HowTo Configure logging providers`, see also [Diagnostics](diagnostics.md#logging-and-errors)).
+
+## From the repository
+
+Contributors working with the repository sources export without the dialog. `tools/vvvvc.ps1` runs vvvv's command-line compiler (builds into `build/vvvvc` by default):
+
+```powershell
+tools/vvvvc.ps1 -File help/HelloWorld.vl -Out build/export
+```
+
+A `.props` next to the patch wins over the command-line arguments `--rid` and `--output-type`. Patches without one (all of `help/Qt/`) get them from the command line, e.g. for Linux arm64: `tools/vvvvc.ps1 -File "help/Qt/HowTo Draw a Rectangle.vl" -Out build/export-linux-arm64 --rid linux-arm64 --output-type Exe --asset-behavior RelativeToOutput`.
 
 ## Fonts
 

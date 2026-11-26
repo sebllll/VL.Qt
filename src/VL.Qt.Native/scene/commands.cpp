@@ -73,7 +73,7 @@ EffectValue readEffectValue(quint16 vt, const unsigned char* vp)
 // ---------------------------------------------------------------------------------------------
 // The op table: one row per opcode of protocol.h. apply checks the payload length of a command against its row, takes
 // the id (and property) for the structured error from it and calls its decoder. A new command adds its opcode to
-// protocol.h and Protocol.cs, one row here and its decoder (docs/architecture.md "Adding a command").
+// protocol.h and Protocol.cs, one row here and its decoder (docs/contributing/architecture.md "Adding a command").
 
 struct Scene::Op {
     quint16 op;

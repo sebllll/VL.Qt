@@ -1,10 +1,10 @@
-﻿using System.Text;
+﻿﻿using System.Text;
 using VL.Qt.Interop;
 
 namespace VL.Qt.Wire
 {
     /// <summary>
-    /// Mirror of src/VL.Qt.Native/protocol.h (the wire format, the single source of truth); what the values mean: docs/protocol.md.
+    /// Mirror of src/VL.Qt.Native/protocol.h (the wire format, the single source of truth); what the values mean: docs/contributing/protocol.md.
     /// VLQT_&lt;GROUP&gt;_&lt;UPPER_SNAKE&gt; maps to Protocol.&lt;Group&gt;.&lt;PascalCase&gt;, plain defines to Protocol.&lt;PascalCase&gt;.
     /// The unit test ProtocolDriftTests fails on any mismatch in name or value.
     /// </summary>
@@ -162,7 +162,7 @@ namespace VL.Qt.Wire
 
         /// <summary>
         /// Property ids of SET (u16): 1..255 common to all items, the blocks from 256 per element type (block table:
-        /// docs/protocol.md). 832 is <see cref="MultiEffectKey"/>, not settable by SET.
+        /// docs/contributing/protocol.md). 832 is <see cref="MultiEffectKey"/>, not settable by SET.
         /// </summary>
         internal static class PropertyId
         {
@@ -348,7 +348,7 @@ namespace VL.Qt.Wire
             public const ushort Shader = 2;
         }
 
-        /// <summary>Pass templates of a shader link (u16); the passes: docs/protocol.md.</summary>
+        /// <summary>Pass templates of a shader link (u16); the passes: docs/contributing/protocol.md.</summary>
         internal static class EffectTemplate
         {
             /// <summary>One pass of the shader over the input; shader ids [fragment].</summary>
@@ -373,7 +373,7 @@ namespace VL.Qt.Wire
             public const ushort Clear = 1;
         }
 
-        /// <summary>Style states (u8 of a SET_STYLE entry); rank and fallback: docs/protocol.md.</summary>
+        /// <summary>Style states (u8 of a SET_STYLE entry); rank and fallback: docs/contributing/protocol.md.</summary>
         internal static class StyleState
         {
             public const byte Normal = 0;
@@ -408,7 +408,7 @@ namespace VL.Qt.Wire
             public const ushort TrackRadius = 129;
         }
 
-        /// <summary>Event ids of the poll buffer (u16). Payloads: protocol.h; meaning: docs/protocol.md.</summary>
+        /// <summary>Event ids of the poll buffer (u16). Payloads: protocol.h; meaning: docs/contributing/protocol.md.</summary>
         internal static class EventId
         {
             public const ushort Measured = 1;
@@ -519,7 +519,7 @@ namespace VL.Qt.Wire
             public const int AudioTap = 5;
         }
 
-        /// <summary>Audio tap (docs/protocol.md): flags of <see cref="Native.vlqt_audio_tap_state.flags"/> and the limits of vlqt_audio_tap_init.</summary>
+        /// <summary>Audio tap (docs/contributing/protocol.md): flags of <see cref="Native.vlqt_audio_tap_state.flags"/> and the init limits.</summary>
         internal static class AudioTap
         {
             /// <summary>A Video element (player) writes into the tap.</summary>

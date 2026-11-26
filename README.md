@@ -40,7 +40,7 @@ Qt Quick for [vvvv gamma](https://visualprogramming.net), the visual live-progra
 | [**Shaders**](docs/effects-and-shaders.md#shaders) | ShaderEffect with GLSL in a string pin; every `.frag` file in a `qtshaders/` folder becomes a node with one pin per uniform |
 | [**Stride**](docs/stride.md) | `QtTexture` renders an element tree into a Stride `Texture` on the GPU, `QtRenderer` draws it as a layer (package `VL.Qt.Stride`, Windows only, experimental) |
 | [**QML**](docs/user-qml.md) | QmlElement loads your own `.qml` file; every `.qml` file in a `qml/` folder becomes a node (experimental) |
-| [**Animation**](docs/architecture.md#timing-and-animation) | driven by vvvv's `IFrameClock`, so scrubbing and pausing are deterministic |
+| [**Animation**](docs/contributing/architecture.md#timing-and-animation) | driven by vvvv's `IFrameClock`, so scrubbing and pausing are deterministic |
 | [**Window**](docs/help-patches.md#window-and-diagnostics) | WindowSettings node (Icon, Bounds), Title, Borderless, Fullscreen, Save Bounds, VSync on by default |
 | [**Export**](docs/export.md) | standalone apps with the vvvv exporter or `tools/vvvvc.ps1`; [Linux](docs/linux.md) as a console export with its own Qt window |
 | [**Tooltips**](docs/tooltips.md) | hovering a link with `Element` or `QtImage` in the vvvv editor shows a preview image |
@@ -54,7 +54,7 @@ VL.Qt is on [nuget.org](https://www.nuget.org/packages/VL.Qt/). In vvvv, open th
 
 - `VL.Qt.Stride` (Windows only, depends on `VL.Qt`, same version): the nodes `QtTexture` and `QtRenderer` for Stride, see [Qt in Stride](docs/stride.md).
 - `VL.Qt.Audio` (Windows only, depends on `VL.Qt` of the same version and on `VL.Audio`): the node `Video (VL.Audio)`, see [Video sound through VL.Audio](docs/video-audio.md). `Video` of VL.Qt is unchanged and plays through Qt's own audio output.
-- The packages are also attached to the [GitHub releases](https://github.com/sebllll/VL.Qt/releases). To build them yourself, see [Development](docs/development.md).
+- The packages are also attached to the [GitHub releases](https://github.com/sebllll/VL.Qt/releases). To build them yourself, see [Development](docs/contributing/development.md).
 
 ## First patch
 
@@ -98,7 +98,7 @@ The two do not mix in one process: Qt allows one application object per process,
 ## Contributing
 
 Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and the Contributor License Agreement, and [CONTRIBUTORS.md](CONTRIBUTORS.md) for the people who contributed.
-To build from source, run the tests or add an element, start at [Development](docs/development.md) and the [documentation index](docs/README.md); coding agents also read [AGENTS.md](AGENTS.md).
+To build from source, run the tests or add an element, start at [Development](docs/contributing/development.md) and the [documentation index](docs/README.md); coding agents also read [AGENTS.md](AGENTS.md).
 
 ## License
 

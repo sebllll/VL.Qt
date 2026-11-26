@@ -93,7 +93,7 @@ QString pathKey(const QFileInfo& file)
 // Unload hook. At process exit (reserved != null) the CLR is already gone when Qt's static destructors log, and
 // vlqt.dll detaches before Qt6Core (it depends on it): cut the managed callback, the message handler stays (the DLL
 // stays mapped). FreeLibrary (reserved == null) also removes the message handler, which would point into unmapped code.
-// Unloading QtNative is not supported otherwise (docs/architecture.md, Lifetime).
+// Unloading QtNative is not supported otherwise (docs/contributing/architecture.md, Lifetime).
 BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID reserved)
 {
     if (reason == DLL_PROCESS_DETACH)

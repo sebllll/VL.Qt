@@ -1,7 +1,7 @@
 # Profiling (Ultra) – Testpatches und Ablauf
 
 Baseline der CPU-Zeit pro Frame (C#-Nodes, P/Invoke, `vlqt.dll`, Qt Scenegraph/RHI, Render-Thread), Issue #557.
-Beschreibung, Auswertung und Vergleich der Läufe: [docs/profiling.md](../../docs/profiling.md).
+Beschreibung, Auswertung und Vergleich der Läufe: [docs/contributing/profiling.md](../../docs/profiling.md).
 
 ## Szenarien (Vertrag)
 

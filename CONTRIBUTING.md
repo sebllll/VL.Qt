@@ -4,7 +4,7 @@ Thank you for your interest in VL.Qt. Bug reports, ideas and pull requests are w
 
 ## Build and test
 
-Prerequisites, first build, scripts and tests are described in [docs/development.md](docs/development.md). The conventions for code, help patches, encoding and tests, written for people and coding agents alike, are in [AGENTS.md](AGENTS.md). A change is done when the affected help patch, the unit tests and the SmokeTest pass.
+Prerequisites, first build, scripts and tests are described in [docs/contributing/development.md](docs/contributing/development.md). The conventions for code, help patches, encoding and tests, written for people and coding agents alike, are in [AGENTS.md](AGENTS.md). A change is done when the affected help patch, the unit tests and the SmokeTest pass.
 
 ## Branches and pull requests
 
@@ -28,6 +28,4 @@ Contributions are licensed under the [MIT License](LICENSE). Before your first p
 
 If your pull request is merged, your GitHub name is added to [CONTRIBUTORS.md](CONTRIBUTORS.md). To stay out of the list, write "no CONTRIBUTORS listing" in the pull request.
 
-## The contributors list (maintainers)
-
-The list is [CONTRIBUTORS.md on the branch `cla-signatures`](https://github.com/sebllll/VL.Qt/blob/cla-signatures/CONTRIBUTORS.md); `CONTRIBUTORS.md` in `develop` only links to it, because `develop` and `main` take changes only through pull requests. The workflow `.github/workflows/contributors.yml` writes it with `tools/update-contributors.py` after every push to `develop` or `main`. It lists the signers of the CLA (`signatures/cla.json` on the branch `cla-signatures`) who have at least one merged pull request. Opt-outs are one GitHub login per line in `signatures/optout.txt` on the same branch (lines starting with `#` are comments); a maintainer adds a login there when a pull request contains "no CONTRIBUTORS listing" and then runs the workflow by hand. Do not edit the list by hand.
+Maintainer topics (CI, release, repository settings, the contributors list) are in [docs/maintaining/](docs/maintaining/release.md).
