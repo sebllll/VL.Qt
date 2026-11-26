@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="udvuEJm6OnGFpb18v6tPji" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Sampler [Qt.Elements.Uniform]&#xD;&#xA;- Filter: Linear (smooth) or Point (hard pixels)&#xD;&#xA;- Mip Filter&#xD;&#xA;- Address U / V: Clamp, Wrap, Mirror&#xD;&#xA;- Here: the shader zooms 6x into the Text, switch Filter">
+          <Pad Id="udvuEJm6OnGFpb18v6tPji" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Sampler [Qt.Elements.Shaders]&#xD;&#xA;- Filter: Linear (smooth) or Point (hard pixels)&#xD;&#xA;- Mip Filter&#xD;&#xA;- Address U / V: Clamp, Wrap, Mirror&#xD;&#xA;- Here: the shader zooms 6x into the Text, switch Filter">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

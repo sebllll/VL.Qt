@@ -27,7 +27,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="37KeCeu9WHuFd9JZHg1zCk" Bounds="85,85,640,103" ShowValueBox="true" isIOBox="true" Value="QtTexture [Qt] in a ForEach region:&#xD;&#xA;- one Qt scene and one Stride Texture per slice&#xD;&#xA;- Count: the QtTextures are created and disposed with the spread&#xD;&#xA;- FullscreenQuadRenderer with AlphaBlendPremultiplied draws each texture&#xD;&#xA;- every square rotates with its own LFO, Hue and height from a RandomSpread">
+          <Pad Id="37KeCeu9WHuFd9JZHg1zCk" Bounds="85,85,640,103" ShowValueBox="true" isIOBox="true" Value="QtTexture [Stride] in a ForEach region:&#xD;&#xA;- one Qt scene and one Stride Texture per slice&#xD;&#xA;- Count: the QtTextures are created and disposed with the spread&#xD;&#xA;- FullscreenQuadRenderer with AlphaBlendPremultiplied draws each texture&#xD;&#xA;- every square rotates with its own LFO, Hue and height from a RandomSpread">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

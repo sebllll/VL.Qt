@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="fJBd0Kh8oOOL8dKLzdocJ2" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Control parts of a Style, shown at Slider and Toggle&#xD;&#xA;- Indicator: Slider handle, Switch knob, Checkbox check mark&#xD;&#xA;- Track: Slider groove, Switch lane; Track Fill is its filled part&#xD;&#xA;- Colors: colors of these parts; Indicator, Track: size and radius&#xD;&#xA;- Not per control type: separate Groups, or Style at the widget">
+          <Pad Id="fJBd0Kh8oOOL8dKLzdocJ2" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Control parts of a Style, shown at Slider and Toggle&#xD;&#xA;- Indicator: Slider handle, Switch knob, Checkbox check mark&#xD;&#xA;- Track: Slider groove, Switch lane; Track Fill is its filled part&#xD;&#xA;- SetColors: colors of these parts; SetIndicator, SetTrack: size and radius&#xD;&#xA;- Not per control type: separate Groups, or Style at the widget">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

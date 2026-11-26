@@ -27,7 +27,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="37KeCeu9WHuFd9JZHg1zCk" Bounds="85,85,640,103" ShowValueBox="true" isIOBox="true" Value="QtTexture [Qt] over a 3D scene:&#xD;&#xA;- half-transparent Rectangles (Color alpha 0.5) and a Text, Clear Color transparent&#xD;&#xA;- Output is premultiplied alpha: Blend State AlphaBlendPremultiplied&#xD;&#xA;- Format: B8G8R8A8_UNorm_SRgb (default), the UNorm formats or R16G16B16A16_Float&#xD;&#xA;- Renderer [Qt]: the same scene in a Qt window, to compare the colors">
+          <Pad Id="37KeCeu9WHuFd9JZHg1zCk" Bounds="85,85,640,103" ShowValueBox="true" isIOBox="true" Value="QtTexture [Stride] over a 3D scene:&#xD;&#xA;- half-transparent Rectangles (Color alpha 0.5) and a Text, Clear Color transparent&#xD;&#xA;- Output is premultiplied alpha: Blend State AlphaBlendPremultiplied&#xD;&#xA;- Format: B8G8R8A8_UNorm_SRgb (default), the UNorm formats or R16G16B16A16_Float&#xD;&#xA;- Renderer [Qt]: the same scene in a Qt window, to compare the colors">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

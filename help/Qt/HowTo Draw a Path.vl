@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="GHYASrVQ6JRUQT7k0KThoj" Bounds="100,261,290,59" ShowValueBox="true" isIOBox="true" Value="1  Fill and Stroke: a triangle with Fill, Stroke Color, Stroke Width and Join Round.">
+          <Pad Id="GHYASrVQ6JRUQT7k0KThoj" Bounds="100,261,290,59" ShowValueBox="true" isIOBox="true" Value="1  Fill and Stroke: a triangle with Fill Color, Stroke Color, Stroke Width and Join Round.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -500,7 +500,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="wKMnLdqsODdrfC1OWgr9Ps" Bounds="85,931,830,311" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Fill and Stroke are drawn together: the fill first, the stroke on top. Stroke Width 0 draws no stroke, a Fill with alpha 0 (the default) draws no fill. Trim only shortens the stroke, not the fill.&#xD;&#xA;- Fill Rule decides which areas count as inside: NonZero fills an area that contours wind around, EvenOdd counts the crossings. Both contours of the hole path run clockwise, so NonZero fills the circle too and EvenOdd leaves it out. With opposite directions (Dir CounterClockwise at AddCircle) NonZero makes a hole as well.&#xD;&#xA;- Transform acts around the origin of the parent space, like in Skia. The hole path is built at 0, 0 and moved by Transform (Translation).&#xD;&#xA;- Changing Trim costs far less than rebuilding the path.&#xD;&#xA;- Skia: the Path layer with its Fill and Stroke, and the nodes of Graphics.Skia.Paths.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
+          <Pad Id="wKMnLdqsODdrfC1OWgr9Ps" Bounds="85,931,830,311" ShowValueBox="true" isIOBox="true" Value="Notes:&#xD;&#xA;- Fill and Stroke are drawn together: the fill first, the stroke on top. Stroke Width 0 draws no stroke, a Fill with alpha 0 (the default) draws no fill. Trim only shortens the stroke, not the fill.&#xD;&#xA;- Fill Rule decides which areas count as inside: NonZero fills an area that contours wind around, EvenOdd counts the crossings. Both contours of the hole path run clockwise, so NonZero fills the circle too and EvenOdd leaves it out. With opposite directions (Direction CounterClockwise at AddCircle) NonZero makes a hole as well.&#xD;&#xA;- Transform acts around the origin of the parent space, like in Skia. The hole path is built at 0, 0 and moved by Transform (Translation).&#xD;&#xA;- Changing Trim costs far less than rebuilding the path.&#xD;&#xA;- Skia: the Path layer with its Fill and Stroke, and the nodes of Graphics.Skia.Paths.&#xD;&#xA;- Connect it to Renderer [Qt] or a Group [Qt].">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

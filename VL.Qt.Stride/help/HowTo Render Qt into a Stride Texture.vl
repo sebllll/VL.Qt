@@ -27,7 +27,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="OJjcIYfBk02QBBkIFR9ZGX" Bounds="85,85,640,122" ShowValueBox="true" isIOBox="true" Value="QtTexture [Qt]&#xD;&#xA;- Input: any Qt element tree (here Rectangles, Text, Group)&#xD;&#xA;- Size in pixels (1 DIP = 1 pixel), Clear Color transparent by default&#xD;&#xA;- Output: a Stride Texture, rendered on the GPU in the same frame&#xD;&#xA;- Here: FullscreenQuadRenderer with AlphaBlend draws it over a 3D scene">
+          <Pad Id="OJjcIYfBk02QBBkIFR9ZGX" Bounds="85,85,640,122" ShowValueBox="true" isIOBox="true" Value="QtTexture [Stride]&#xD;&#xA;- Input: any Qt element tree (here Rectangles, Text, Group)&#xD;&#xA;- Size in pixels (1 DIP = 1 pixel), Clear Color transparent by default&#xD;&#xA;- Output: a Stride Texture, rendered on the GPU in the same frame&#xD;&#xA;- Here: FullscreenQuadRenderer with AlphaBlend draws it over a 3D scene">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

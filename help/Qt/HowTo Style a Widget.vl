@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="VE6OkQFa6gWC44Hk1Yp6qd" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Style [Qt.Style] at the Style pin of a widget&#xD;&#xA;- Style nodes are chained, each adds to the style before it&#xD;&#xA;- Colors (Frame, Text), Frame (Radius), Text (Font Size)&#xD;&#xA;- Colors State: Normal, Hovered or Pressed&#xD;&#xA;- Radius (Qt.Style.Frame): one field only, quick override">
+          <Pad Id="VE6OkQFa6gWC44Hk1Yp6qd" Bounds="85,85,520,94" ShowValueBox="true" isIOBox="true" Value="Style [Qt.Style] at the Style pin of a widget&#xD;&#xA;- Style nodes are chained, each adds to the style before it&#xD;&#xA;- SetColors (Frame, Text), SetFrame (Radius), SetText (Font Size)&#xD;&#xA;- SetColors States: Normal, Hovered or Pressed&#xD;&#xA;- SetRadius (Qt.Style.Frame): one field only, quick override">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -220,7 +220,7 @@
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="G4Pr8EgkxwCUQf9uclhVbA" Bounds="102,307,240,34" ShowValueBox="true" isIOBox="true" Value="Colors sets frame and text color, Frame the corner radius, Text the font size.">
+          <Pad Id="G4Pr8EgkxwCUQf9uclhVbA" Bounds="102,307,240,34" ShowValueBox="true" isIOBox="true" Value="SetColors sets frame and text color, SetFrame the corner radius, SetText the font size.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -298,7 +298,7 @@
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="BLHJjqJikQCzanwVMCWODk" Bounds="572,307,260,46" ShowValueBox="true" isIOBox="true" Value="One Colors per state: its State pin limits the frame color to Normal, Hovered or Pressed. Hover and click the button.">
+          <Pad Id="BLHJjqJikQCzanwVMCWODk" Bounds="572,307,260,46" ShowValueBox="true" isIOBox="true" Value="One SetColors per state: its States pin limits the frame color to Normal, Hovered or Pressed. Hover and click the button.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -328,7 +328,7 @@
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="bX21xZ5qNc9i5WS3YQ0wLS" Bounds="1042,307,250,52" ShowValueBox="true" isIOBox="true" Value="Quick override: Radius (Qt.Style.Frame) sets one field only. Everything else comes from the base style.">
+          <Pad Id="bX21xZ5qNc9i5WS3YQ0wLS" Bounds="1042,307,250,52" ShowValueBox="true" isIOBox="true" Value="Quick override: SetRadius (Qt.Style.Frame) sets one field only. Everything else comes from the base style.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
