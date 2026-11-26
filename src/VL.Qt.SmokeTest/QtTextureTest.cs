@@ -176,6 +176,9 @@ public static partial class QtTextureTest
         const int w = 64, h = 48;
         const string red = "255,0,0,255";
         IntPtr QtDevice() => NativeTest.vlqt_test_device_info(SceneHandle.Null, out var d, out _) == 0 ? d : IntPtr.Zero;
+        // A new QtNative device shows in its generation, not its address: the old device can be released before the new
+        // one is created (device lost on the D3D12 singleton of the CI runner, the move back after Pump) and its address reused.
+        uint Gen() => NativeTest.vlqt_test_device_generation();
         string Err(int rc) => rc < 0 ? Native.LastError() : "";
 
         if (!check(NativeTest.CreateDevice(0, out var hw, out var hwCtx) == 0, "adapter: create device on QtNative's adapter"))
@@ -197,18 +200,18 @@ public static partial class QtTextureTest
 
         // (i) A WARP texture: QtNative moves its device to WARP while nothing renders on it (no on-screen window has
         // rendered, no scene bound; so with -Only qttexture), else ADAPTER_MISMATCH.
-        var qtBefore = QtDevice();
+        var genBefore = Gen();
         int rc = (int)Native.vlqt_offscreen_bind(a, warp, warpHandle, w, h, B8G8R8A8Unorm, 1, out _);
         if (rc == (int)Native.Result.Ok)
         {
-            var qtWarp = QtDevice();
-            check(qtWarp != IntPtr.Zero && qtWarp != qtBefore, $"adapter: bind to WARP moved QtNative's device ({qtBefore:X} -> {qtWarp:X})");
+            var genWarp = Gen();
+            check(QtDevice() != IntPtr.Zero && genWarp != genBefore, $"adapter: bind to WARP moved QtNative's device (generation {genBefore} -> {genWarp})");
             rc = Native.OffscreenRenderBatch(warpCtx, new[] { a }, 0);
             check(rc == 1 && Centre(warpTex, w, h) == red, $"adapter: scene renders on WARP (rc {rc}, centre {Centre(warpTex, w, h)}) {Err(rc)}");
             Native.vlqt_offscreen_unbind(a);
             s.Pump(2); // releases the retired device
             rc = (int)Native.vlqt_offscreen_bind(a, hw, hwHandle, w, h, B8G8R8A8Unorm, 1, out _);
-            check(rc == 0 && QtDevice() != qtWarp, $"adapter: bind to the first adapter moves back ({rc}) {Err(rc)}");
+            check(rc == 0 && Gen() != genWarp, $"adapter: bind to the first adapter moves back ({rc}, generation {genWarp} -> {Gen()}) {Err(rc)}");
             s.Pump(2);
         }
         else
@@ -222,10 +225,10 @@ public static partial class QtTextureTest
         check(rc == 1 && Centre(hwTex, w, h) == red, $"adapter: A renders on QtNative's adapter (rc {rc}, centre {Centre(hwTex, w, h)}) {Err(rc)}");
 
         // A bound: a second scene on WARP must not move the device under it.
-        var qtBound = QtDevice();
+        var genBound = Gen();
         rc = (int)Native.vlqt_offscreen_bind(b, warp, warpHandle, w, h, B8G8R8A8Unorm, 1, out _);
         check(rc == (int)Native.Result.AdapterMismatch && Native.vlqt_offscreen_is_bound(b) == 0 && Native.vlqt_offscreen_is_bound(a) == 1
-              && QtDevice() == qtBound, $"adapter: B on WARP while A is bound = ADAPTER_MISMATCH, A stays bound ({rc})");
+              && Gen() == genBound, $"adapter: B on WARP while A is bound = ADAPTER_MISMATCH, A stays bound ({rc})");
 
         // (ii) Device loss of QtNative's device while A is bound.
         rc = (int)NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.Remove);
@@ -239,7 +242,7 @@ public static partial class QtTextureTest
             while (Native.vlqt_offscreen_is_bound(a) != 0 && sw.ElapsedMilliseconds < 5000)
                 s.Pump(1);
             check(Native.vlqt_offscreen_is_bound(a) == 0, "device lost: A unbound by the rebuild");
-            check(QtDevice() != qtBound && QtDevice() != IntPtr.Zero, $"device lost: new QtNative device ({qtBound:X} -> {QtDevice():X})");
+            check(Gen() != genBound && QtDevice() != IntPtr.Zero, $"device lost: new QtNative device (generation {genBound} -> {Gen()}, {QtDevice():X})");
             // A new (zeroed) texture: the red must come from a render on the new device, with the scene's elements kept.
             NativeTest.vlqt_test_d3d11_create_shared_texture(hw, w, h, B8G8R8A8Typeless, out var fresh, out var freshHandle);
             rc = (int)Native.vlqt_offscreen_bind(a, hw, freshHandle, w, h, B8G8R8A8Unorm, 1, out _);

@@ -225,6 +225,7 @@ public static class DeviceLostTest
 
         for (int round = 1; round <= 2; round++)
         {
+            var gen = NativeTest.vlqt_test_device_generation();
             var rc = NativeTest.vlqt_test_device_lost(TestProtocol.DeviceLost.Remove);
             s.Check(rc == 0, $"round {round}: vlqt_test_device_lost(REMOVE) = {rc} (needs VLQT_TEST_D3D11ON12=1)");
             if (rc != 0)
@@ -234,9 +235,9 @@ public static class DeviceLostTest
             infos.Clear();
             IntPtr upload = IntPtr.Zero, da = IntPtr.Zero, db = IntPtr.Zero;
             int pumps = 0;
-            // The new device may get the old one's address: without ID3D12DeviceFactory (CI, Windows Server 2022) the
-            // old device is released before the new one is created. Then the INFO records of the rebuild tell instead.
-            bool Moved() => upload != IntPtr.Zero && (upload != dev || infos.Count > 0) && da == upload && db == upload;
+            // The new device shows in the generation, not the address: without ID3D12DeviceFactory (CI, Windows Server
+            // 2022) the old device is released before the new one is created, and the new one may get its address.
+            bool Moved() => upload != IntPtr.Zero && NativeTest.vlqt_test_device_generation() != gen && da == upload && db == upload;
             while (sw.ElapsedMilliseconds < TimeoutMs)
             {
                 Pump();
@@ -248,7 +249,7 @@ public static class DeviceLostTest
                     break;
             }
             var moved = sw.Elapsed.TotalMilliseconds;
-            s.Check(Moved(), $"round {round}: new device {upload:X} (old {dev:X}{(upload == dev ? ", address reused" : "")}) in upload QRhi and both windows ({da:X}, {db:X})");
+            s.Check(Moved(), $"round {round}: new device {upload:X} (generation {gen} -> {NativeTest.vlqt_test_device_generation()}) in upload QRhi and both windows ({da:X}, {db:X})");
             bool visible = false;
             while (sw.ElapsedMilliseconds < TimeoutMs && !visible)
             {
@@ -279,7 +280,6 @@ public static class DeviceLostTest
             s.Check(snapAfter.AsSpan().SequenceEqual(snapBefore) && desc2.width == snapDesc.width && desc2.height == snapDesc.height,
                 $"round {round}: snapshot pixels unchanged ({snapAfter.Length} bytes)");
             s.Info($"round {round}: windows on the new device after {moved:F1} ms ({pumps} pumps), rect + images visible after {visibleMs:F1} ms, resources Ready after {sw.Elapsed.TotalMilliseconds:F1} ms");
-            dev = upload;
         }
 
         // Round 3: the creation after the loss fails once. The windows fall back to devices of their own (kept until their

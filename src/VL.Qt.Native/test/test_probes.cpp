@@ -217,6 +217,16 @@ VLQT_API unsigned long long vlqt_test_device_luid(void)
     return luid;
 }
 
+VLQT_API unsigned vlqt_test_device_generation(void)
+{
+    unsigned generation = 0;
+    guardedGui("vlqt_test_device_generation", [&]() -> int {
+        generation = vlqt::device::generation();
+        return VLQT_OK;
+    });
+    return generation;
+}
+
 VLQT_API int vlqt_test_device_lost(int mode)
 {
     return guardedGui("vlqt_test_device_lost", [&]() -> int {

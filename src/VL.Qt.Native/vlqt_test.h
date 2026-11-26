@@ -116,6 +116,10 @@ VLQT_API int   vlqt_test_device_info(vlqt_scene* window, void** device, void** r
 /* LUID of the adapter of the shared device (LowPart | HighPart << 32), 0 if there is none yet (never creates it), on
  * Linux and for another graphics API. For vlqt_test_d3d11_create_device of the testkit (testkit/testkit.h). */
 VLQT_API unsigned long long vlqt_test_device_luid(void);
+/* Generation of the shared device (device.h): changes with every new shared device, 0 = none created yet (and on Linux).
+ * Tells a new device apart from the old one; its address cannot: the new device may get the address of the released old
+ * one. */
+VLQT_API unsigned vlqt_test_device_generation(void);
 /* Makes the shared graphics device lost, mode = vlqt_device_lost. Returns at once; QtNative notices the loss in the
  * next pump and rebuilds device, windows and resources (device.h). 0, VLQT_ERR_UNSUPPORTED not possible (no shared
  * device, REMOVE or REMOVE_FAIL_ONCE without VLQT_TEST_D3D11ON12=1, HANG, not D3D11), VLQT_ERR_BAD_ARGUMENT unknown mode. */

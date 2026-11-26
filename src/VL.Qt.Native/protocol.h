@@ -57,7 +57,7 @@
 
 /* One number for the command protocol (this file) and the C ABI (vlqt.h, vlqt_test.h): vlqt_app_get_abi_version() returns it.
  * Bump it on EVERY change to a constant, a struct layout or an exported signature (also additions); mirror it in Protocol.cs. */
-#define VLQT_ABI_VERSION 26
+#define VLQT_ABI_VERSION 27
 #define VLQT_COMMAND_ALIGN 4
 #define VLQT_HEADER_SIZE 8 /* command, poll record and resource record: u16 op/event, u16 flags (0), u32 len */
 #define VLQT_MAX_COMMAND_PAYLOAD 67108864 /* cap of payloadLen (64 MB) */
