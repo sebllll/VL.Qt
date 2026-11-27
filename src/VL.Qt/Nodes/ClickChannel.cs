@@ -12,7 +12,6 @@ namespace VL.Qt.Nodes
     /// </summary>
     internal static class ClickChannel
     {
-        /// <summary>Writes <paramref name="count"/> events into <paramref name="channel"/>, if it is connected.</summary>
         /// <summary>
         /// Takes the clicks (Qt <c>clicked</c>) the <paramref name="feedback"/> received since the last call, writes them
         /// into <paramref name="channel"/> and returns their number. Call once per Update.

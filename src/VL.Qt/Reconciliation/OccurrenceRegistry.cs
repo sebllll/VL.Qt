@@ -55,7 +55,7 @@ namespace VL.Qt.Reconciliation
         private readonly Dictionary<OccurrenceKey, Entry> _entries = new();
         private readonly Stack<List<ItemMirror>> _lists = new();
 
-        /// <summary>Number of elements currently shown or waiting as placeholders (tests).</summary>
+        /// <summary>Number of elements currently shown or waiting as placeholders.</summary>
         public int Count => _entries.Count;
 
         /// <summary>Primary occurrence of <paramref name="key"/> or null; <paramref name="owner"/> = the owner renderer's reconciler.</summary>

@@ -43,7 +43,7 @@ namespace VL.Qt
 
         /// <param name="client">Creates and releases the shader resources, may be null: then <see cref="Id"/> stays 0 and
         /// <see cref="Error"/> reports it.</param>
-        /// <param name="stage"><see cref="Protocol.ShaderStage"/>.</param>
+        /// <param name="stage"><see cref="Wire.Protocol.ShaderStage"/>.</param>
         /// <param name="label">Prefix of the error text, e.g. "Fragment shader".</param>
         public ShaderSlot(ResourceClient? client, int stage, string label)
         {

@@ -6,9 +6,9 @@
 
 | Node | Draws | Element pins | Optional pins |
 |---|---|---|---|
-| `Line` | a straight line between two points | `From`, `To`, `Stroke Color`, `Stroke Width`, `Transform`, `Opacity` | `Cap`, `Dash`, `Dash Offset`, `Trim Start`, `Trim End`, `Trim Offset` |
-| `Polyline` | a stroked chain of points, open or closed | `Points`, `Closed`, `Stroke Color`, `Stroke Width`, `Transform`, `Opacity` | `Cap`, `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Trim Start`, `Trim End`, `Trim Offset` |
-| `Polygon` | a closed, filled outline with an optional stroke | `Points`, `Fill`, `Stroke Color`, `Stroke Width`, `Transform`, `Opacity` | `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Fill Rule` |
+| `Line` | a straight line between two points | `From`, `To`, `Stroke Color`, `Stroke Width`, `Transform` | `Cap`, `Dash`, `Dash Offset`, `Trim Start`, `Trim End`, `Trim Offset`, `Opacity` |
+| `Polyline` | a stroked chain of points, open or closed | `Points`, `Closed`, `Stroke Color`, `Stroke Width`, `Transform` | `Cap`, `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Trim Start`, `Trim End`, `Trim Offset`, `Opacity` |
+| `Polygon` | a closed, filled outline with an optional stroke | `Points`, `Fill Color`, `Stroke Color`, `Stroke Width`, `Transform` | `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Fill Rule`, `Opacity` |
 
 - The common pins (`Clip`, `Debug`, `Interaction`, `Effect`) and the outputs (`Output`, measured size, scene bounds) are the same as on `Rectangle` and `Circle`.
 - `Line` is a two-point `Polyline`; `Polygon` is always closed.
@@ -43,7 +43,7 @@ Defaults follow Skia, so Skia patches keep their look:
 |---|---|---|
 | `Path` | the path to draw | none (draws nothing) |
 | `Transform` | as on the other shapes | identity |
-| `Fill` | fill color of the enclosed area | transparent |
+| `Fill Color` | fill color of the enclosed area | transparent |
 | `Stroke Color`, `Stroke Width` | as on `Line` | white, 0.05 |
 
 The optional pins (`Cap`, `Join`, `Miter Limit`, `Dash`, `Dash Offset`, `Trim Start`, `Trim End`, `Trim Offset`, `Fill Rule`, `Opacity`, …) work as described under [Stroke and fill](#stroke-and-fill).
