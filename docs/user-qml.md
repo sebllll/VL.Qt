@@ -137,7 +137,7 @@ The types and their vvvv counterparts are those of [Value types](#value-types): 
 
 The input and the output of one property have **the same name** ("Accent Color" in and out), vvvv tells them apart by their kind. The output starts with the declared default, shows the last value QML changed, and goes back to the default after a reload of the file. A signal output is false/empty in every frame without an emission.
 
-Not given a pin: `property alias`, `var`, a `list<…>` of another type than the table above (a list of lists, `list<Item>`), object types (`Item`, `Rectangle`, …) and value types without a counterpart (`url`, `font`, `date`, …). The node lists them in one **info message** (the dot at the node), with their lines. Use the `Properties` pin for them, see below.
+Not given a pin: `property alias`, `var`, a `list<…>` of another type than the table above (a list of lists, `list<Item>`), object types (`Item`, `Rectangle`, …) and value types without a counterpart (`url`, `font`, `date`, …). The node lists them in one **info message** (the dot at the node), with their lines. Use the `Properties` pin for them, see below. A declaration you mark as internal gets no pin and no message either, see [Internal declarations](#internal-declarations).
 
 ### Defaults, and when a value is sent
 
@@ -176,6 +176,29 @@ Item {
 
 This file gives a node `Gauge` with the inputs `Value` (0.25) and `Accent Color` (tomato), the outputs `Percent` (visible, it is readonly), `Milestone` (`Spread<int>`) and `Tapped` (`bool`), and the common pins.
 
+### Internal declarations
+
+State of the component that the patch should not see (computed layout values, parsed data, an animated copy of an input) stays out of the pins when it is marked **internal**:
+
+- a line `// @internal` in the comment block directly above a root `property`, `readonly property` or `signal`, or
+- a name that starts with `_` (`property real _gap`).
+
+An internal declaration gets no input, no output and no info message; the rest of its comment block is not pin help. It stays a normal declaration for QML. A redeclaration of an inherited property as internal removes the inherited pin. Only `//` lines count, not `/* */`.
+
+```qml
+Item {
+    property real amount: 10
+    // @internal
+    // The amount that glides to Amount.
+    property real shownAmount: amount
+    Behavior on shownAmount { NumberAnimation { duration: 700 } }
+    // Layout helper, no pin either.
+    readonly property real _top: 34
+}
+```
+
+This gives the pin `Amount` only (and the common pins). `TrendCard.qml` in `help/Qt/qml/` marks its layout values, its sorted points and its animated amount like this; a child object (`QtObject { id: priv }`) works too, the parser does not read it.
+
 ### Head tags
 
 `//` comment lines **before the root object** (also between the `import` lines) can carry tags for the node. A tag takes the rest of its line; the comment lines **directly** below it without a tag are appended to it (joined with spaces, at `@tags` as further entries); a blank line, an empty `//` line or code ends it. A tag with an empty value counts as not given. An unknown tag (`@foo`) gives a warning at the node. Comments after the root object starts are not read as tags.
@@ -195,7 +218,7 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 ### Hot reload of generated nodes
 
 - Saving the `.qml` file (or a sibling `.qml` of the same folder that it inherits from) reloads the running instance, exactly as at `QmlElement` (see [Hot reload](#hot-reload), with the same limits).
-- The **pins** change only when the **declarations** change: a new, removed, renamed or retyped property or signal, a changed literal default, comment text above a declaration, a head tag. Editing the body of a component (colours, animations, layout inside the root) reloads the QML but does not rebuild the node in the patch.
+- The **pins** change only when the **declarations** change: a new, removed, renamed or retyped property or signal, a changed literal default, comment text above a declaration, a head tag. Internal declarations do not count (marking or unmarking one does). Editing the body of a component (colours, animations, layout inside the root) reloads the QML but does not rebuild the node in the patch.
 - When the pins are rebuilt, vvvv keeps the links on pins that still have the same name.
 
 ### Errors

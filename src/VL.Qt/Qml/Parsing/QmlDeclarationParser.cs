@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using static VL.Qt.Qml.QmlLexer;
 
 namespace VL.Qt.Qml
@@ -15,6 +16,8 @@ namespace VL.Qt.Qml
     /// </summary>
     internal static class QmlDeclarationParser
     {
+        private static readonly Regex s_internalTag = new(@"^@internal(\s|$)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
         // ---- entry points --------------------------------------------------------------------------------------------------
 
         public static QmlFileHead ParseHead(string source)
@@ -151,16 +154,24 @@ namespace VL.Qt.Qml
         }
 
         // The "//" lines directly above a declaration (no blank line, no code in between); an empty "//" ends the block.
-        private static string? SummaryAbove(Dictionary<int, string> ownLine, int line)
+        // A line "@internal" in the block marks the declaration as internal (no pins); the rest of the block is then no summary.
+        private static string? SummaryAbove(Dictionary<int, string> ownLine, int line, out bool tagged)
         {
+            tagged = false;
             List<string>? lines = null;
             for (var l = line - 1; ownLine.TryGetValue(l, out var text) && text.Length > 0; l--)
+            {
+                tagged |= s_internalTag.IsMatch(text);
                 (lines ??= new List<string>()).Add(text);
-            if (lines == null)
+            }
+            if (lines == null || tagged)
                 return null;
             lines.Reverse();
             return string.Join(' ', lines);
         }
+
+        // Internal declarations are dropped here: no pin, no message, and (since they never reach the lists) not in the signature.
+        private static bool IsInternal(bool tagged, string name) => tagged || name.StartsWith('_');
 
         // Returns the index after the member that starts at s (the first token of a statement inside the root object), -1 on error.
         private static int ScanMember(List<Token> t, int s, Stack<(char Open, int Line)> stack, out string? error, out int errorLine)
@@ -254,9 +265,9 @@ namespace VL.Qt.Qml
             }
 
             if (k < e && t[k].IsIdent("property"))
-                ReadProperty(t, s, k, e, flags, SummaryAbove(ownLine, line), properties, messages);
+                ReadProperty(t, s, k, e, flags, SummaryAbove(ownLine, line, out var tagged), tagged, properties, messages);
             else if (t[s].IsIdent("signal") && s + 1 < e && t[s + 1].Kind == TokenKind.Ident && !(s + 2 < e && t[s + 2].IsPunct(':')))
-                ReadSignal(t, s, e, SummaryAbove(ownLine, line), signals);
+                ReadSignal(t, s, e, SummaryAbove(ownLine, line, out var tagged), tagged, signals);
             else if (t[s].Kind == TokenKind.Ident && s + 1 < e && t[s + 1].IsPunct(':') && inherited.Contains(t[s].Text))
                 Reassign(t, s, e, properties);
         }
@@ -275,6 +286,7 @@ namespace VL.Qt.Qml
             int e,
             QmlPropertyFlags flags,
             string? summary,
+            bool tagged,
             List<QmlPropertyDecl> properties,
             List<QmlParseMessage> messages)
         {
@@ -321,6 +333,13 @@ namespace VL.Qt.Qml
             }
             var name = t[m++].Text;
 
+            if (IsInternal(tagged, name))
+            {
+                // Like a type without a pin: an inherited pin of the same name is gone.
+                properties.RemoveAll(p => p.Name == name);
+                return;
+            }
+
             if (!QmlTypes.TryMap(type, out var kind))
             {
                 // The inherited pin of the same name is gone: the property is now of a type that gets no pin.
@@ -360,9 +379,15 @@ namespace VL.Qt.Qml
             properties[index] = properties[index] with { Initializer = initializer, Default = value };
         }
 
-        private static void ReadSignal(List<Token> t, int s, int e, string? summary, List<QmlSignalDecl> signals)
+        private static void ReadSignal(List<Token> t, int s, int e, string? summary, bool tagged, List<QmlSignalDecl> signals)
         {
             var name = t[s + 1].Text;
+            if (IsInternal(tagged, name))
+            {
+                signals.RemoveAll(x => x.Name == name);
+                return;
+            }
+
             var args = ImmutableArray.CreateBuilder<QmlSignalArg>();
             var m = s + 2;
             if (m < e && t[m].IsPunct('('))

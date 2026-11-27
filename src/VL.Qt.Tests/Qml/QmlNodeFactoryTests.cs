@@ -403,6 +403,35 @@ namespace VL.Qt.Tests.Qml
             Assert.That(layout.OutputDescriptions().Single(o => o.Name == "Picked").Type, Is.EqualTo(typeof(Spread<Spread<string>>)));
         }
 
+        [Test]
+        public void ParsedFile_WithInternalDeclarations_GivesNoPinsAndNoMessageForThem()
+        {
+            var declarations = QmlDeclarations.Parse("""
+                Item {
+                    property real value: 1
+                    // @internal
+                    property real shownAmount
+                    // @internal
+                    readonly property real chartTop: 2
+                    // @internal
+                    readonly property var points
+                    readonly property real _labelY
+                    // @internal
+                    signal tick(real t)
+                    signal _quiet
+                    signal done
+                }
+                """, "Card", _ => null);
+            var layout = QmlNodeLayout.Build("Card.qml", declarations);
+
+            Assert.That(layout.Messages, Is.Empty);
+            var names = layout.InputDescriptions().Select(i => i.Name).Concat(layout.OutputDescriptions().Select(o => o.Name)).ToList();
+            Assert.That(names, Does.Contain("Value"));
+            foreach (var hidden in new[] { "Shown Amount", "Chart Top", "Points", "Label Y", "Tick", "Quiet" })
+                Assert.That(names, Does.Not.Contain(hidden), hidden);
+            Assert.That(layout.OutputDescriptions().Select(o => o.Name), Does.Contain("Value").And.Contain("Done"));
+        }
+
         private sealed class FakeFactory : IVLNodeDescriptionFactory
         {
             public string Identifier => "Test";
