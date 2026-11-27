@@ -154,29 +154,6 @@ Not given a pin: `property alias`, `var`, a `list<…>` of another type than the
 - The common pins are those of `QmlElement`, in its order: the inputs `Auto Size`, `Size`, `Transform`, `Anchor`, then the pins of the properties (where `QmlElement` has `File`), `Properties` (optional) and `Opacity`, `Clip`, `Debug`, `Interaction`, `Effect`, `Enabled`; the outputs `Output`, the property and signal outputs, `Measured Size`, `Scene Bounds`. They are defined once in `QmlCommonPins.cs`, and a test compares that table with `QmlElement`.
 - The `//` **comment lines directly above a declaration** are the help of its pins (several lines are joined with spaces; no blank line or code in between, and an empty `//` line ends the block). Without a comment the help only says the QML type and name.
 
-### Internal declarations
-
-State of the component that the patch should not see (computed layout values, parsed data, an animated copy of an input) stays out of the pins when it is marked **internal**:
-
-- a line `// @internal` in the comment block directly above a root `property`, `readonly property` or `signal`, or
-- a name that starts with `_` (`property real _gap`).
-
-An internal declaration gets no input, no output and no info message; the rest of its comment block is not pin help. It stays a normal declaration for QML, and editing it does not rebuild the node. A redeclaration of an inherited property as internal removes the inherited pin. Only `//` lines count, not `/* */`.
-
-```qml
-Item {
-    property real amount: 10
-    // @internal
-    // The amount that glides to Amount.
-    property real shownAmount: amount
-    Behavior on shownAmount { NumberAnimation { duration: 700 } }
-    // Layout helper, no pin either.
-    readonly property real _top: 34
-}
-```
-
-This gives the pin `Amount` only (and the common pins). `TrendCard.qml` in `help/Qt/qml/` marks its layout values, its sorted points and its animated amount like this; a child object (`QtObject { id: priv }`) works too, the parser does not read it.
-
 ```qml
 // @category Qt.Elements.Examples
 // @summary A round gauge with a needle and a milestone signal.
@@ -198,6 +175,29 @@ Item {
 ```
 
 This file gives a node `Gauge` with the inputs `Value` (0.25) and `Accent Color` (tomato), the outputs `Percent` (visible, it is readonly), `Milestone` (`Spread<int>`) and `Tapped` (`bool`), and the common pins.
+
+### Internal declarations
+
+State of the component that the patch should not see (computed layout values, parsed data, an animated copy of an input) stays out of the pins when it is marked **internal**:
+
+- a line `// @internal` in the comment block directly above a root `property`, `readonly property` or `signal`, or
+- a name that starts with `_` (`property real _gap`).
+
+An internal declaration gets no input, no output and no info message; the rest of its comment block is not pin help. It stays a normal declaration for QML. A redeclaration of an inherited property as internal removes the inherited pin. Only `//` lines count, not `/* */`.
+
+```qml
+Item {
+    property real amount: 10
+    // @internal
+    // The amount that glides to Amount.
+    property real shownAmount: amount
+    Behavior on shownAmount { NumberAnimation { duration: 700 } }
+    // Layout helper, no pin either.
+    readonly property real _top: 34
+}
+```
+
+This gives the pin `Amount` only (and the common pins). `TrendCard.qml` in `help/Qt/qml/` marks its layout values, its sorted points and its animated amount like this; a child object (`QtObject { id: priv }`) works too, the parser does not read it.
 
 ### Head tags
 
