@@ -51,34 +51,36 @@ Item {
     implicitWidth: 260
     implicitHeight: 276
 
-    // Internal state. It sits in a child object so that it does not become pins of the node.
-    QtObject {
-        id: priv
+    // Internal state. The tag keeps a declaration out of the pins of the node.
 
-        // Layout of the chart part, in DIP from the top of the card.
-        readonly property real chartTop: 34
-        readonly property real fillBottom: 124
-        readonly property real labelY: 142
+    // @internal
+    // Layout of the chart part, in DIP from the top of the card.
+    readonly property real chartTop: 34
+    // @internal
+    readonly property real fillBottom: 124
+    // @internal
+    readonly property real labelY: 142
 
-        // The points of the curve, sorted by X.
-        readonly property var sortedPoints: {
-            const all = []
-            for (let i = 0; i < root.points.length; ++i)
-                all.push({ x: root.points[i].x, y: root.points[i].y })
-            all.sort((a, b) => a.x - b.x)
-            return all
-        }
+    // @internal
+    // The points of the curve, sorted by X.
+    readonly property var sortedPoints: {
+        const all = []
+        for (let i = 0; i < root.points.length; ++i)
+            all.push({ x: root.points[i].x, y: root.points[i].y })
+        all.sort((a, b) => a.x - b.x)
+        return all
+    }
 
-        // The amount shown right now; it glides to Amount on the frame clock of the renderer.
-        property real shownAmount: root.amount
-        Behavior on shownAmount {
-            NumberAnimation { duration: 700; easing.type: Easing.OutCubic }
-        }
+    // @internal
+    // The amount shown right now; it glides to Amount on the frame clock of the renderer.
+    property real shownAmount: root.amount
+    Behavior on shownAmount {
+        NumberAnimation { duration: 700; easing.type: Easing.OutCubic }
     }
 
     // Catmull-Rom spline through the points, written as SVG cubic segments.
     function curve(w, closed) {
-        const pts = priv.sortedPoints
+        const pts = root.sortedPoints
         if (pts.length < 2 || w <= 0)
             return ""
         let lo = pts[0].y, hi = pts[0].y
@@ -91,8 +93,8 @@ Item {
             hi = root.range.y
         }
         const range = hi - lo > 0 ? hi - lo : 1
-        const top = priv.chartTop
-        const bottom = priv.fillBottom - 14
+        const top = root.chartTop
+        const bottom = root.fillBottom - 14
         const first = pts[0].x
         const span = pts[pts.length - 1].x - first
         const xy = []
@@ -115,7 +117,7 @@ Item {
             d += " C " + c1x + " " + c1y + " " + c2x + " " + c2y + " " + p2[0] + " " + p2[1]
         }
         if (closed)
-            d += " L " + w + " " + priv.fillBottom + " L 0 " + priv.fillBottom + " Z"
+            d += " L " + w + " " + root.fillBottom + " L 0 " + root.fillBottom + " Z"
         return d
     }
 
@@ -136,8 +138,8 @@ Item {
             strokeColor: "transparent"
             strokeWidth: 0
             fillGradient: LinearGradient {
-                x1: 0; y1: priv.chartTop
-                x2: 0; y2: priv.fillBottom
+                x1: 0; y1: root.chartTop
+                x2: 0; y2: root.fillBottom
                 GradientStop { position: 0.0; color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.95) }
                 GradientStop { position: 0.55; color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.45) }
                 GradientStop { position: 1.0; color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.0) }
@@ -168,7 +170,7 @@ Item {
                 ? (root.width - 2 * pad) / (root.labels.length - 1) : 0
 
             x: root.labels.length > 1 ? pad + index * stepX : root.width / 2
-            y: priv.labelY
+            y: root.labelY
 
             Rectangle {
                 visible: tick.current
@@ -221,7 +223,7 @@ Item {
             anchors.left: captionText.left
             anchors.top: captionText.bottom
             anchors.topMargin: 2
-            text: root.prefix + Number(priv.shownAmount).toLocaleString(Qt.locale(root.localeName), "f", Math.max(0, root.decimals))
+            text: root.prefix + Number(root.shownAmount).toLocaleString(Qt.locale(root.localeName), "f", Math.max(0, root.decimals))
             color: root.textColor
             font.pixelSize: 30
             font.weight: Font.Light
