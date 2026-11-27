@@ -88,6 +88,7 @@ See [Effects and shaders](effects-and-shaders.md).
 
 - `HowTo Use a QML file` — `QmlElement` with the sample `QmlElement Example.qml`: properties in by name, changed properties and signals out, hot reload on save
 - `HowTo Create QML Nodes from Files` — `qml/` folder next to the patch: one node per `.qml` file (`Gauge`, `TrendCard`, `ProfileCard`), properties as pins, `list<…>` properties as Spread pins, signals as outputs; `ProfileCard` shows aliases, a `url` (Path), a `font` (Font node), a `date` and an enum
+- `HowTo Interact with QML` — mouse and keyboard input in a `.qml` file: `Stepper` (`qml/Stepper.qml`) is a bar set by click or drag, with a visible focus, Left and Right keys and `Committed` on Enter or release; `Value` and `Committed` come back as outputs; the renderer keeps F2, F5 to F7, F11 and Alt+Enter
 
 See [QML files as elements](user-qml.md).
 

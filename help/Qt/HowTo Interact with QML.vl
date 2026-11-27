@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Document xmlns:p="property" xmlns:r="reflection" Id="Qp3NssscXtBlJfiLeDakJH" LanguageVersion="2026.8.0-0435-gdc1b31244d" Version="0.128">
+  <NugetDependency Id="wTwrg6t1K7s0d1spLuV2oa" Location="VL.CoreLib" />
+  <DocumentDependency Id="nhXdQJ7HxpPZr5M91vqrSU" Location="../../VL.Qt.vl" />
+  <Patch Id="Iu31wEADab43GgeK8zNnHB">
+    <Canvas Id="8q1HJ8tfhbP7V6xa56g67P" DefaultCategory="Main" BordersChecked="false" CanvasType="FullCategory" />
+    <!--
+
+    ************************ Application ************************
+
+-->
+    <Node Name="Application" Bounds="100,100" Id="N3OqX6uSbiAYiakYGB5F7D">
+      <p:NodeReference>
+        <Choice Kind="ContainerDefinition" Name="Process" />
+        <CategoryReference Kind="Category" Name="Primitive" />
+      </p:NodeReference>
+      <Patch Id="7v48FWWh9UfMJoP04RqYD4">
+        <Canvas Id="gir2yyUZbH5ep4pztM2DGQ" CanvasType="Group">
+          <Pad Id="flzpw05Zv98PUdrLSfjhPM" Bounds="85,16,520,52" ShowValueBox="true" isIOBox="true" Value="How To Interact with QML">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">25</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="qCPxidbNx1pw3zcj683JOP" Bounds="85,85,640,98" ShowValueBox="true" isIOBox="true" Value="Stepper [Qt] (generated from qml/Stepper.qml)&#xA;- Mouse: press or drag on the bar sets Value, releasing fires Committed&#xA;- Keyboard: a click gives the focus (white frame), Left and Right change Value, Enter fires Committed&#xA;- Value (out) and Committed (out) report back to the patch&#xA;- MouseArea, Keys and focus in the file work as in any Qt Quick scene">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Node Bounds="120,250,80,19" Id="Y89oRNXQnQD20oujBqbIE6">
+            <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="OperationCallFlag" Name="TransformSRT" />
+              <CategoryReference Kind="Category" Name="Transform" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="2D" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+            </p:NodeReference>
+            <Pin Id="kLM1cJygfTs1vkkv3YkSfQ" Name="Input" Kind="InputPin" />
+            <Pin Id="Pk8qUagsqoFwzbE3IkfqFY" Name="Scaling" Kind="InputPin" DefaultValue="2, 2" />
+            <Pin Id="Q1DTbtwAzhzMJhVDHwJ2fE" Name="Rotation" Kind="InputPin" />
+            <Pin Id="HCMOoQA2MOXd88eNwvOBmn" Name="Translation" Kind="InputPin" DefaultValue="1.5, 1.5" />
+            <Pin Id="J7Qp6vR1Sz1F4yWw8crM32" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="100,300,65,19" Id="UCmhVvoIb3aEbjmpdtDYJY">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Qml" LastDependency="VL.Qt.Qml">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessNode" Name="Stepper" />
+            </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
+            <Pin Id="ZrtUWHEIjodqmSgkaWD33A" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="nmtTdqawKM9oy232u8pyM4" Name="Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="s7YMIqoTsjqmmeGFvldzfM" Name="Transform" Kind="InputPin" />
+            <Pin Id="0qjegOCJalCkpjZnUXfSzq" Name="Anchor" Kind="InputPin" IsHidden="true" />
+            <Pin Id="VMZugy2WpUfbkfHEdtnw9X" Name="Value" Kind="InputPin" />
+            <Pin Id="qnCxtJydJjRcv6sFSsY0gd" Name="Step" Kind="InputPin" />
+            <Pin Id="gjenia7E9a7lHFYTBtrpFI" Name="Properties" Kind="InputPin" IsHidden="true" />
+            <Pin Id="gcZFYSE4l3k3N75kT564LH" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="TSYA4OnnGTeLpF2Zm6DI2I" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="d3djmXcZDWjrJOMoqyDGuD" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="xTLWo2gYyUiA16bgOiMV4z" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="48ZoMpnZUmyGvpxRXWCxyd" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="apg8daKUzhRsWyAgRjZpsi" Name="Output" Kind="OutputPin" />
+            <Pin Id="wkPTojzCBqUZn4dEYnY75o" Name="Value" Kind="OutputPin" />
+            <Pin Id="364GsiADyO5UDg5hbk1vbt" Name="Step" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="mCHOmJ6sJfN65YsrhP7Snh" Name="Committed" Kind="OutputPin" />
+            <Pin Id="2n2fbjCfcuEeexfJcT29dW" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="6k5fAzJlw7tnpf7yGxEgjH" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="NXAGPW9rKMKy0ipatVW7CZ" Name="Enabled" Kind="InputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="5ZDf0tJKJ6Th2dGsa983Fn" Bounds="176,296,360,40" ShowValueBox="true" isIOBox="true" Value="Press or drag on the bar sets Value. A click also gives the bar the keyboard focus, a white frame shows it.&#xA;Stepper is generated from qml/Stepper.qml next to this patch.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="5HuwgQo0SzgXITxvbOr2OH" Comment="Value" Bounds="124,350,60,15" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="98kqVYfPSQYSmYtwGh1nYD" Comment="Committed" Bounds="144,380,60,40" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="wOjevXY3BKgqWmRXacRujx" Bounds="216,386,360,20" ShowValueBox="true" isIOBox="true" Value="Committed: Value at the moment of Enter or of the mouse release">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="s1T4WNe22FHbOm98qyA3Iw" Comment="Title" Bounds="182,460,220,17" ShowValueBox="true" isIOBox="true" Value="HowTo Interact with QML">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="100,495,85,19" Id="2uZnd5gWv1oJ6Zqdj7jOGX">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessAppFlag" Name="Renderer" />
+            </p:NodeReference>
+            <Pin Id="kJ6lkpND7efdHInCJMy8az" Name="Node Context" Kind="InputPin" IsHidden="true" />
+            <Pin Id="WsbOewwuPaoHChd2tKKleK" Name="Bounds" Kind="InputPin" DefaultValue="2186, 205, 786, 432" IsHidden="true" />
+            <Pin Id="oWRvBdgtO0eZ3uiIfCHRcK" Name="V Sync" Kind="InputPin" IsHidden="true" />
+            <Pin Id="8W4cITUsSweBSYgzSy1LMa" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
+            <Pin Id="GcpqGdltHra5KWgvuEjEea" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
+            <Pin Id="lMf8FPcOWBOHYVgLbjuV8l" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
+            <Pin Id="IopYLF0zeYugEIUWJSNtKn" Name="Input" Kind="InputPin" />
+            <Pin Id="iXxcDkTCLYZmKNa8hWCV14" Name="Space" Kind="InputPin" IsHidden="true" />
+            <Pin Id="dATmZle8RezzMdU8GF7zoL" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="fH2iQYxztW6Zxw2eOXGcW5" Name="Clear" Kind="InputPin" IsHidden="true" />
+            <Pin Id="nQfiAXsFtuqFyY6Z1GkzzS" Name="Enabled" Kind="InputPin" IsHidden="true" />
+            <Pin Id="loaCgf1Hb47ewmRxOEAN0c" Name="Title" Kind="InputPin" />
+            <Pin Id="YiR5TYii7h1RL6WJO9PWAa" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="ZLzR4ue2gSztEKfi4bKyQb" Name="Perf" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="AMxwNG2qPnlwyFJdz5UwBq" Name="Client Bounds" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="Q0SpRVvRemUZ8zu8qeylTP" Name="Borderless" Kind="InputPin" IsHidden="true" />
+            <Pin Id="FUUiFSTfxsoiDjv5fDes1o" Name="Fullscreen" Kind="InputPin" IsHidden="true" />
+            <Pin Id="1CShqdzaZErf4hNp7hphD4" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="Tl0simwjuTqVEWZrU2n8lW" Name="Window" Kind="InputPin" IsHidden="true" />
+            <Pin Id="yejBJQCP5L1X6J4qsVWL5y" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LXn9E9fr0A48GfwYrT2ZKv" Name="Enable Keyboard Shortcuts" Kind="InputPin" />
+          </Node>
+          <Pad Id="vImqF1iHXDyLj7c5OPZ7Dx" Bounds="216,488,420,34" ShowValueBox="true" isIOBox="true" Value="Enable Keyboard Shortcuts (default on): the Renderer keeps F2, F5 to F7, F11 and Alt+Enter. Off: they reach the QML.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="KW1jPTWYg3d3mVAbqvQaFC" Bounds="85,545,840,150" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The mouse is grabbed while a button is down, so dragging outside the bar still sets Value (clamped to 0..1). A press that no input item of the file takes goes on to the Interaction handlers of the element and to the elements below.&#xA;- Focus: a press on an item that calls forceActiveFocus gives it the keys. The element counts as one widget, a press elsewhere on it keeps the focus, a click outside the element gives the focus back and the frame goes.&#xA;- Left and Right change Value by Step, Enter and Return fire Committed. Keys the file does not handle go on to the parents; Esc reaches the file like any other key.&#xA;- Value (in) sends only when it changes, so the patch and the mouse do not fight over the bar. Value (out) shows the last value QML set.&#xA;- The Renderer keeps F2, F5, F6, F7 (diagnostics), F11 and Alt+Enter (fullscreen) while Enable Keyboard Shortcuts is on; switch it off and all of them reach the file.&#xA;- Hot reload during a press ends the press: the release clicks nothing. Setting the focus from the patch is not possible.">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+        </Canvas>
+        <Link Id="5AXD33P5Xb9PSschNwXHHX" Ids="J7Qp6vR1Sz1F4yWw8crM32,s7YMIqoTsjqmmeGFvldzfM" />
+        <Link Id="AFxrO4MNETsEVMJkU8KlY2" Ids="apg8daKUzhRsWyAgRjZpsi,IopYLF0zeYugEIUWJSNtKn" />
+        <Link Id="TAednq9JmXCPwqVxlzSO4e" Ids="wkPTojzCBqUZn4dEYnY75o,5HuwgQo0SzgXITxvbOr2OH" />
+        <Link Id="ziMskN8JK3ZZkKc06cz6P2" Ids="mCHOmJ6sJfN65YsrhP7Snh,98kqVYfPSQYSmYtwGh1nYD" />
+        <Link Id="ADZv3gfKK9cNB6gPxvdVr4" Ids="s1T4WNe22FHbOm98qyA3Iw,loaCgf1Hb47ewmRxOEAN0c" />
+        <Patch Id="AmevxoijOlH6Vr6G5tQ62G" Name="Create" />
+        <Patch Id="KiCWnFHqzs2bhapVDY7ZEa" Name="Update" />
+        <ProcessDefinition Id="n14fWYXFeoYyvrxjODRBV1">
+          <Fragment Id="oUJO9PVJY8IttFHYSE0Tvi" Patch="AmevxoijOlH6Vr6G5tQ62G" Enabled="true" />
+          <Fragment Id="js8Fdk8U82nYaDSNKn31ll" Patch="KiCWnFHqzs2bhapVDY7ZEa" Enabled="true" />
+        </ProcessDefinition>
+      </Patch>
+    </Node>
+  </Patch>
+</Document>
