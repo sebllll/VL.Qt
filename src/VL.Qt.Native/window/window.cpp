@@ -282,11 +282,10 @@ void replaceWindow(SceneHandle* w, const QSurfaceFormat& f)
     vlqt::device::attach(nw);
     w->scene->moveToWindow(nw);
     const int overlay = w->perf->overlay();
-    const bool keys = w->perf->keysEnabled();
     w->perf.reset();
     w->perf = std::make_unique<PerfMonitor>(nw, w->engine.get());
     w->perf->setScene(w->scene.get());
-    w->perf->setKeysEnabled(keys);
+    w->perf->setKeysEnabled(w->keys);
     if (overlay & (PerfMonitor::Meter | PerfMonitor::Stats))
         w->perf->setOverlay(overlay);
     for (QWindow* t : QGuiApplication::topLevelWindows())

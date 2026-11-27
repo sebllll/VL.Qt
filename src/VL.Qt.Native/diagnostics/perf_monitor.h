@@ -84,7 +84,6 @@ public:
     // The diagnostic keys (F2, F5, Shift+F5, F6, F7): on = the event filter swallows them, off = it is removed and the
     // keys reach the scene (Renderer [Qt] Enable Keyboard Shortcuts). On by default; the overlay itself is unchanged.
     void setKeysEnabled(bool on);
-    bool keysEnabled() const { return m_keys; }
 
     // test hook: busy-waits ms inside the given QtPhase of the next rendered frame (vlqt_test_perf_spike). A one-shot
     // connection to a frame signal, so a monitor with nothing injected has no test code in its frame path.

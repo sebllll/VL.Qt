@@ -220,7 +220,8 @@ VLQT_API int vlqt_window_set_keys(vlqt_scene* p, int on)
 {
     // An offscreen scene has no keyboard focus; its perf monitor keeps the filter, which never sees a key.
     return withWindow(p, "vlqt_window_set_keys", VLQT_OK, [&](SceneHandle& w) -> int {
-        w.perf->setKeysEnabled(on != 0);
+        w.keys = on != 0;
+        w.perf->setKeysEnabled(w.keys);
         return 0;
     });
 }

@@ -333,7 +333,8 @@ VLQT_API int   vlqt_window_set_icon(vlqt_scene* window, const char* utf8Path);
  *   BORDERLESS  Qt::FramelessWindowHint; the client area stays where it is.
  *   FULLSCREEN  fullscreen on the screen with the largest share of the window; off restores the geometry from
  *               before. BORDERLESS changes while fullscreen take effect on leaving fullscreen.
- *               F11 / Alt+Enter in the window toggle this bit (like VL.Skia). No effect on eglfs (always fullscreen).
+ *               F11 / Alt+Enter in the window toggle this bit (like VL.Skia) while vlqt_window_set_keys is on. No
+ *               effect on eglfs (always fullscreen).
  * EVENT_WINDOW_GEOMETRY reports the resulting state (VLQT_WINDOW_STATE_FULLSCREEN). vlqt_window_get_mode = requested
  * modes (>= 0), VLQT_ERR_NULL_HANDLE. Both do nothing on an offscreen scene (get: 0). */
 VLQT_API int   vlqt_window_set_mode(vlqt_scene* window, unsigned int mask, unsigned int value);
@@ -350,9 +351,10 @@ VLQT_API int   vlqt_window_set_samples(vlqt_scene* window, int requested);
 /* Sample count of the window: of its swap chain once it has one, else the count it will be created with. 0 on an
  * offscreen scene, VLQT_ERR_NULL_HANDLE. */
 VLQT_API int   vlqt_window_get_samples(vlqt_scene* window);
-/* The diagnostic keys of the window (Renderer [Qt] Enable Keyboard Shortcuts): on != 0 (default) = F2 (perfmeter), F5 and
- * Shift+F5 (stats), F6 (freeze), F7 (host segments) are taken by QtNative and never reach the scene; 0 = none of them is
- * taken, the keys reach the scene, and an open overlay stays as it is. Kept when the window is replaced by
+/* The keys of the window (Renderer [Qt] Enable Keyboard Shortcuts): on != 0 (default) = F2 (perfmeter), F5 and Shift+F5
+ * (stats), F6 (freeze), F7 (host segments), F11 and Alt+Enter (fullscreen, vlqt_window_set_mode) are taken by QtNative
+ * and never reach the scene; 0 = none of them is taken, the keys reach the scene, and an open overlay and the fullscreen
+ * state stay as they are. Kept when the window is replaced by
  * vlqt_window_set_samples. 0, VLQT_ERR_NULL_HANDLE; a no-op on an offscreen scene (it gets no keyboard focus). Main
  * thread. */
 VLQT_API int   vlqt_window_set_keys(vlqt_scene* window, int on);

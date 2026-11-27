@@ -68,6 +68,7 @@ struct SceneHandle {
     QPointer<SceneChangeCounter> changes; // child of window
     std::unique_ptr<test::TestInput> testInput; // test hook: synthetic input state, created by test/test_input.cpp
     unsigned mode = 0;                          // vlqt_window_set_mode: requested vlqt_window_mode bits
+    bool keys = true;                           // vlqt_window_set_keys: diagnostic and fullscreen keys taken
     std::optional<FullscreenRestore> fullscreenRestore; // set while fullscreen
 };
 
