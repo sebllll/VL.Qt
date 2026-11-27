@@ -214,7 +214,7 @@ enum vlqt_property {
     VLQT_PROPERTY_BLENDING = 898,         /* bool, premultiplied alpha blending (default true) */
     VLQT_PROPERTY_MESH_RESOLUTION = 899,  /* ivec2, grid subdivisions x, y >= 1 (default 1, 1) */
     /* 928.. QmlElement */
-    VLQT_PROPERTY_QML_SOURCE = 928,       /* string, absolute path of the .qml file, empty = nothing loaded */
+    VLQT_PROPERTY_QML_SOURCE = 928,       /* string, absolute path of the .qml file, empty = nothing loaded; a new path forgets the property values */
     VLQT_PROPERTY_QML_RELOAD = 929,       /* i32 counter, a new value reloads the same file */
     /* 960.. Shape: lengths in logical pixels, dash and offset in stroke-width units */
     VLQT_PROPERTY_SHAPE_POINTS = 960,       /* f32 array, x,y pairs */

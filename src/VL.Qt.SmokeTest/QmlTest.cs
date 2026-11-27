@@ -401,6 +401,17 @@ public static class QmlTest
         CheckApply("SET QML_SOURCE a good file");
         Flat(Frames(2));
         s.Check(Err(HE) == "", $"a good file clears the error ('{Err(HE)}')");
+        // Another file forgets the values of the old one: fill and progress are not applied to QmlTypes.qml, which has neither.
+        SetProps(E, p => { p.Color("fill", 0, 0, 1, 1); p.F32("progress", 0.5f); });
+        CheckApply("SET fill + progress on QmlTest.qml");
+        cmd.SetString(E, Protocol.PropertyId.QmlSource, qmlTypes);
+        CheckApply("SET QML_SOURCE another file");
+        Flat(Frames(2));
+        s.Check(Err(HE) == "", $"a new file gets none of the values of the old one ('{Err(HE)}')");
+        SetProps(E, p => p.F32("r", 0.75f));
+        CheckApply("SET r on QmlTypes.qml");
+        recs = Poll();
+        s.Check(Props(recs, HE, "rOut") is [float r75] && r75 == 0.75f && Err(HE) == "", $"... and takes its own values ({S(recs)}, '{Err(HE)}')");
         cmd.SetString(E, Protocol.PropertyId.QmlSource, "");
         CheckApply("SET QML_SOURCE empty");
         Flat(Frames(2));
