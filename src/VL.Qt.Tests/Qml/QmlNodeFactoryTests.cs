@@ -4,7 +4,9 @@ using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
+using Stride.Core.Mathematics;
 using VL.Core;
+using VL.Lib.Collections;
 using VL.Qt.NodeFactories;
 using VL.Qt.Qml;
 using VL.Qt.Tests.Support;
@@ -353,6 +355,52 @@ namespace VL.Qt.Tests.Qml
             var warning = layout.Messages.Single();
             Assert.That(warning.Type, Is.EqualTo(VL.Core.Diagnostics.MessageType.Warning));
             Assert.That(warning.Text, Does.Contain("'size'").And.Contain("Size 2"));
+        }
+
+        [Test]
+        public void Layout_ListProperties_AreSpreadPins_ReadonlyOnlyAnOutput()
+        {
+            var layout = QmlNodeLayout.Build("Plot.qml", Declare(
+                new[]
+                {
+                    Prop("values", QmlValueKind.RealList, init: QmlInitializer.Literal, value: (new[] { 1f, 2f }).ToSpread()),
+                    Prop("points", QmlValueKind.PointList),
+                    Prop("names", QmlValueKind.StringList, QmlPropertyFlags.ReadOnly),
+                },
+                new[] { new QmlSignalDecl("picked", ImmutableArray.Create(new QmlSignalArg("items", "list<int>", QmlValueKind.IntList)), null, 5) }));
+
+            var inputs = layout.InputDescriptions();
+            Assert.That(inputs.Select(i => i.Name), Is.EqualTo(new[]
+            {
+                "Auto Size", "Size", "Transform", "Anchor", "Values", "Points", "Properties",
+                "Opacity", "Clip", "Debug", "Interaction", "Effect", "Enabled",
+            }));
+            Assert.That(inputs[4].Type, Is.EqualTo(typeof(Spread<float>)));
+            Assert.That(inputs[4].DefaultValue, Is.EqualTo((new[] { 1f, 2f }).ToSpread()));
+            Assert.That(inputs[5].Type, Is.EqualTo(typeof(Spread<Vector2>)));
+            Assert.That(inputs[5].DefaultValue, Is.InstanceOf<Spread<Vector2>>().And.Empty);
+
+            var outputs = layout.OutputDescriptions();
+            Assert.That(outputs.Select(o => o.Name), Is.EqualTo(new[] { "Output", "Values", "Points", "Names", "Picked", "Measured Size", "Scene Bounds" }));
+            Assert.That(outputs.Single(o => o.Name == "Names").Type, Is.EqualTo(typeof(Spread<string>)));
+            Assert.That(outputs.Single(o => o.Name == "Picked").Type, Is.EqualTo(typeof(Spread<Spread<int>>)));
+            Assert.That(layout.Messages, Is.Empty);
+        }
+
+        [Test]
+        public void ParsedListFile_GivesSpreadPinsWithTheLiteralAsDefault()
+        {
+            var declarations = QmlDeclarations.Parse(
+                "Item {\n property list<real> values: [1, 2]\n readonly property list<point> points\n signal picked(list<string> names)\n}", "Plot", _ => null);
+            var layout = QmlNodeLayout.Build("Plot.qml", declarations);
+
+            Assert.That(declarations.Messages, Is.Empty);
+            var input = layout.InputDescriptions().Single(i => i.Name == "Values");
+            Assert.That(input.Type, Is.EqualTo(typeof(Spread<float>)));
+            Assert.That(input.DefaultValue, Is.EqualTo((new[] { 1f, 2f }).ToSpread()));
+            Assert.That(layout.InputDescriptions().Any(i => i.Name == "Points"), Is.False);
+            Assert.That(layout.OutputDescriptions().Single(o => o.Name == "Points").Type, Is.EqualTo(typeof(Spread<Vector2>)));
+            Assert.That(layout.OutputDescriptions().Single(o => o.Name == "Picked").Type, Is.EqualTo(typeof(Spread<Spread<string>>)));
         }
 
         private sealed class FakeFactory : IVLNodeDescriptionFactory

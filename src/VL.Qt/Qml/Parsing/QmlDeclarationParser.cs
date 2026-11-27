@@ -289,12 +289,19 @@ namespace VL.Qt.Qml
             string type;
             if (t[m].Text == "list" && m + 1 < e && t[m + 1].IsPunct('<'))
             {
+                // The brackets nest: list<list<int>> is one type (without a pin, but not a broken declaration).
                 var sb = new StringBuilder("list");
+                var depth = 0;
                 m++;
-                while (m < e && !t[m].IsPunct('>'))
+                do
+                {
+                    if (t[m].IsPunct('<'))
+                        depth++;
+                    else if (t[m].IsPunct('>'))
+                        depth--;
                     sb.Append(t[m++].Text);
-                sb.Append('>');
-                m++;
+                }
+                while (m < e && depth > 0);
                 type = sb.ToString();
             }
             else

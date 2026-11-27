@@ -57,6 +57,10 @@ namespace VL.Qt.Tests.Support
         public virtual void QmlPropertyVec4(ReadOnlySpan<char> name, float x, float y, float z, float w) { }
         public virtual void QmlPropertyRect(ReadOnlySpan<char> name, float x, float y, float width, float height) { }
         public virtual void QmlPropertyString(ReadOnlySpan<char> name, ReadOnlySpan<char> value) { }
+        public virtual void QmlPropertyListF32(ReadOnlySpan<char> name, ushort elementType, ReadOnlySpan<float> values) { }
+        public virtual void QmlPropertyListI32(ReadOnlySpan<char> name, ReadOnlySpan<int> values) { }
+        public virtual void QmlPropertyListBool(ReadOnlySpan<char> name, ReadOnlySpan<bool> values) { }
+        public virtual void QmlPropertyListString(ReadOnlySpan<char> name, ReadOnlySpan<string> values) { }
         public virtual void EndQmlProperties() { }
         public virtual void BeginEffectChain(uint id) { }
         public virtual void BeginMultiLink() { }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
@@ -96,6 +97,7 @@ namespace VL.Qt.Qml
                 Vector3 v => $"{F(v.X)},{F(v.Y)},{F(v.Z)}",
                 Vector4 v => $"{F(v.X)},{F(v.Y)},{F(v.Z)},{F(v.W)}",
                 RectangleF r => $"{F(r.X)},{F(r.Y)},{F(r.Width)},{F(r.Height)}",
+                IEnumerable items => "[" + string.Join(";", items.Cast<object>().Select(Format)) + "]",
                 _ => Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty,
             };
         }

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Stride.Core.Mathematics;
+using VL.Lib.Collections;
 using static VL.Qt.Qml.QmlLexer;
 
 namespace VL.Qt.Qml
@@ -19,6 +20,8 @@ namespace VL.Qt.Qml
         private static bool TryEvaluate(QmlValueKind kind, List<Token> t, int s, int e, out object value)
         {
             value = QmlTypes.TypeDefault(kind);
+            if (QmlTypes.IsList(kind))
+                return TryEvaluateList(kind, t, s, e, out value);
             double d;
             double[] a;
             string fn;
@@ -111,6 +114,66 @@ namespace VL.Qt.Qml
 
             static bool Finite(double[] values) => values.All(static x => float.IsFinite((float)x));
         }
+
+        // [ element, element, ... ] over the whole range s..e (a trailing comma is allowed, [] is the empty list); every element
+        // is a literal of the element kind. One element that is not readable makes the whole list unreadable.
+        private static bool TryEvaluateList(QmlValueKind kind, List<Token> t, int s, int e, out object value)
+        {
+            value = QmlTypes.TypeDefault(kind);
+            if (e - s < 2 || !t[s].IsPunct('[') || !t[e - 1].IsPunct(']'))
+                return false;
+
+            var element = QmlTypes.ElementKind(kind);
+            var items = new List<object>();
+            var depth = 0;
+            var from = s + 1;
+            for (var j = s; j < e; j++)
+            {
+                if (t[j].Kind == TokenKind.Punct)
+                {
+                    var c = t[j].Text[0];
+                    if (c is '(' or '[' or '{')
+                        depth++;
+                    else if (c is ')' or ']' or '}')
+                        depth--;
+                    // The first bracket must close at the end: `[1] + [2]` is an expression.
+                    if (depth == 0 && j < e - 1)
+                        return false;
+                }
+                if (depth == 1 && t[j].IsPunct(',') || depth == 0 && j == e - 1)
+                {
+                    // `[]` and `[1, 2,]`: nothing between the brackets or after the last comma.
+                    if (j == from && j == e - 1)
+                    {
+                        from = j + 1;
+                        continue;
+                    }
+                    if (!TryEvaluate(element, t, from, j, out var item))
+                        return false;
+                    items.Add(item);
+                    from = j + 1;
+                }
+            }
+            if (depth != 0)
+                return false;
+
+            value = element switch
+            {
+                QmlValueKind.Real => Build<float>(items),
+                QmlValueKind.Int => Build<int>(items),
+                QmlValueKind.Bool => Build<bool>(items),
+                QmlValueKind.String => Build<string>(items),
+                QmlValueKind.Color => Build<Color4>(items),
+                QmlValueKind.Vector2D or QmlValueKind.Point or QmlValueKind.Size => Build<Vector2>(items),
+                QmlValueKind.Vector3D => Build<Vector3>(items),
+                QmlValueKind.Vector4D => Build<Vector4>(items),
+                QmlValueKind.Rect => Build<RectangleF>(items),
+                _ => throw new ArgumentOutOfRangeException(nameof(kind)),
+            };
+            return true;
+        }
+
+        private static Spread<T> Build<T>(List<object> items) => items.Count == 0 ? Spread<T>.Empty : items.Cast<T>().ToSpread();
 
         // [+|-] number
         private static bool TryNumber(List<Token> t, int s, int e, out double value)

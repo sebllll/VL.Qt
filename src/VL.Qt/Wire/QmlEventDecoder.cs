@@ -9,8 +9,9 @@ namespace VL.Qt.Wire
 {
     /// <summary>
     /// Decoding of the two QML events of QtNative (protocol.h "QmlElement"). Values come boxed as float, int, bool, string,
-    /// Color4 (straight alpha), Vector2/3/4 or RectangleF, in the units of QML (no unit conversion). The events are sent on
-    /// change only, so allocating the name and the box is fine.
+    /// Color4 (straight alpha), Vector2/3/4 or RectangleF, in the units of QML (no unit conversion); a list comes as a
+    /// Spread of one of these (Spread&lt;float&gt;, Spread&lt;Vector2&gt;, ...). The events are sent on change only, so
+    /// allocating the name, the box and the spread is fine.
     /// </summary>
     internal static class QmlEventDecoder
     {
@@ -77,7 +78,8 @@ namespace VL.Qt.Wire
 
         /// <summary>
         /// Reads a value encoded like SET (f32, i32, bool as u8, string as u32 length + UTF-8, color and rect 4 x f32, vec2/3/4
-        /// 2/3/4 x f32). <paramref name="size"/> is the number of bytes read, without padding.
+        /// 2/3/4 x f32, list as in protocol.h: u16 element type, u16 0, u32 count, elements). <paramref name="size"/> is the number
+        /// of bytes read, without padding.
         /// </summary>
         internal static bool TryReadValue(ReadOnlySpan<byte> p, ushort type, out object value, out int size)
         {
@@ -132,9 +134,85 @@ namespace VL.Qt.Wire
                     value = new Vector4(F(p, 0), F(p, 4), F(p, 8), F(p, 12));
                     size = 16;
                     return true;
+                case Protocol.ValueType.List:
+                    return TryReadList(p, out value, out size);
                 default:
                     return false;
             }
+        }
+
+        /// <summary>
+        /// A list value: false for a short payload, more than <see cref="Protocol.ListValueMaxCount"/> elements, an element type
+        /// that is not a plain value type (also a nested list) or elements that do not fit into the payload.
+        /// </summary>
+        private static bool TryReadList(ReadOnlySpan<byte> p, out object value, out int size)
+        {
+            value = null!;
+            size = 0;
+            if (p.Length < Protocol.ListValueHeaderSize)
+                return false;
+            ushort elementType = BinaryPrimitives.ReadUInt16LittleEndian(p);
+            uint count = BinaryPrimitives.ReadUInt32LittleEndian(p.Slice(4));
+            if (count > Protocol.ListValueMaxCount)
+                return false;
+            var body = p.Slice(Protocol.ListValueHeaderSize);
+            int n = (int)count;
+            bool ok;
+            int bodySize;
+            switch (elementType)
+            {
+                case Protocol.ValueType.F32: ok = TryReadFixed(body, n, 4, static e => F(e, 0), out value, out bodySize); break;
+                case Protocol.ValueType.I32: ok = TryReadFixed(body, n, 4, static e => BinaryPrimitives.ReadInt32LittleEndian(e), out value, out bodySize); break;
+                case Protocol.ValueType.Bool: ok = TryReadFixed(body, n, 1, static e => e[0] != 0, out value, out bodySize); break;
+                case Protocol.ValueType.Color: ok = TryReadFixed(body, n, 16, static e => new Color4(F(e, 0), F(e, 4), F(e, 8), F(e, 12)), out value, out bodySize); break;
+                case Protocol.ValueType.Rectf: ok = TryReadFixed(body, n, 16, static e => new RectangleF(F(e, 0), F(e, 4), F(e, 8), F(e, 12)), out value, out bodySize); break;
+                case Protocol.ValueType.Vec2: ok = TryReadFixed(body, n, 8, static e => new Vector2(F(e, 0), F(e, 4)), out value, out bodySize); break;
+                case Protocol.ValueType.Vec3: ok = TryReadFixed(body, n, 12, static e => new Vector3(F(e, 0), F(e, 4), F(e, 8)), out value, out bodySize); break;
+                case Protocol.ValueType.Vec4: ok = TryReadFixed(body, n, 16, static e => new Vector4(F(e, 0), F(e, 4), F(e, 8), F(e, 12)), out value, out bodySize); break;
+                case Protocol.ValueType.String: ok = TryReadStrings(body, n, out value, out bodySize); break;
+                default: return false;
+            }
+            if (!ok)
+                return false;
+            size = Protocol.ListValueHeaderSize + bodySize;
+            return true;
+        }
+
+        private delegate T ReadElement<T>(ReadOnlySpan<byte> element);
+
+        private static bool TryReadFixed<T>(ReadOnlySpan<byte> body, int count, int elementSize, ReadElement<T> read, out object value, out int size)
+        {
+            value = null!;
+            size = count * elementSize;
+            if (size > body.Length)
+                return false;
+            var builder = new SpreadBuilder<T>(count);
+            for (int i = 0; i < count; i++)
+                builder.Add(read(body.Slice(i * elementSize)));
+            value = builder.ToSpread();
+            return true;
+        }
+
+        // Each element is u32 length + UTF-8, padded to 4 (the last one too).
+        private static bool TryReadStrings(ReadOnlySpan<byte> body, int count, out object value, out int size)
+        {
+            value = null!;
+            size = 0;
+            var builder = new SpreadBuilder<string>(count);
+            for (int i = 0; i < count; i++)
+            {
+                if (body.Length - size < 4)
+                    return false;
+                uint length = BinaryPrimitives.ReadUInt32LittleEndian(body.Slice(size));
+                if (length > (uint)(body.Length - size - 4))
+                    return false;
+                builder.Add(Encoding.UTF8.GetString(body.Slice(size + 4, (int)length)));
+                size += Align(4 + (int)length);
+                if (size > body.Length)
+                    return false;
+            }
+            value = builder.ToSpread();
+            return true;
         }
 
         private static float F(ReadOnlySpan<byte> p, int offset) => BinaryPrimitives.ReadSingleLittleEndian(p.Slice(offset));

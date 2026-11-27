@@ -215,6 +215,8 @@ namespace VL.Qt.Qml
             private readonly ValuePin<T> _pin;
             private readonly bool _alwaysSend;
             private readonly T _default;
+            private readonly T _typeDefault;
+            private readonly IEqualityComparer<T> _comparer;
             private T _last;
 
             public InputSlot(QmlInputPin pin)
@@ -222,6 +224,11 @@ namespace VL.Qt.Qml
                 PropertyName = pin.Property.Name;
                 _alwaysSend = pin.AlwaysSend;
                 _default = QmlTypes.TryCoerce(pin.Property.Kind, pin.Property.Default, out var d) ? (T)d : default!;
+                _typeDefault = (T)QmlTypes.TypeDefault(pin.Property.Kind);
+                // A spread is the same when its elements are, not only when it is the same instance.
+                _comparer = pin.Property.IsList
+                    ? (IEqualityComparer<T>)Activator.CreateInstance(typeof(SpreadComparer<>).MakeGenericType(typeof(T).GetGenericArguments()[0]))!
+                    : EqualityComparer<T>.Default;
                 _last = _default;
                 _pin = new ValuePin<T>(_default);
             }
@@ -231,21 +238,40 @@ namespace VL.Qt.Qml
             public override bool Poll()
             {
                 var value = _pin.Value;
-                // A pin that gets no value (null string) counts as the empty string, which QML knows.
-                if (value is null && typeof(T) == typeof(string))
-                    value = (T)(object)string.Empty;
+                // A pin that gets no value (null string or spread) counts as the empty one, which QML knows.
+                if (value is null)
+                    value = _typeDefault;
                 if (!IsSent)
                 {
-                    if (!_alwaysSend && EqualityComparer<T>.Default.Equals(value, _default))
+                    if (!_alwaysSend && _comparer.Equals(value, _default))
                         return false;
                     IsSent = true;
                 }
-                else if (EqualityComparer<T>.Default.Equals(value, _last))
+                else if (_comparer.Equals(value, _last))
                     return false;
                 _last = value;
                 Boxed = value;
                 return true;
             }
+        }
+
+        /// <summary>Equality of spreads by their elements; the same instance is equal without a walk.</summary>
+        private sealed class SpreadComparer<TItem> : IEqualityComparer<Spread<TItem>>
+        {
+            public bool Equals(Spread<TItem>? x, Spread<TItem>? y)
+            {
+                if (ReferenceEquals(x, y))
+                    return true;
+                if (x is null || y is null || x.Count != y.Count)
+                    return false;
+                var comparer = EqualityComparer<TItem>.Default;
+                for (var i = 0; i < x.Count; i++)
+                    if (!comparer.Equals(x[i], y[i]))
+                        return false;
+                return true;
+            }
+
+            public int GetHashCode(Spread<TItem> obj) => obj.Count;
         }
 
         /// <summary>Output pin of a property: the last value QML changed, else the declared default.</summary>

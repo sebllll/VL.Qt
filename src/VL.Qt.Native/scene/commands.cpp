@@ -3,6 +3,7 @@
 #include "effects/shader_item.h"
 #include "elements/group_item.h"
 #include "user_qml/qml_item.h"
+#include "user_qml/qml_wire.h"
 #include "scene/scene.h"
 #include "style/vl_style.h"
 #include "wire.h"
@@ -245,6 +246,10 @@ int Scene::opSet(WireReader& r, std::string& err)
     const int fixed = valueSize(v.type);
     if (fixed < 0) {
         err = "unknown value type " + std::to_string(v.type);
+        return ApplyBadValue;
+    }
+    if (v.type == VLQT_VALUE_TYPE_LIST) {
+        err = "value type " + std::to_string(v.type) + " (list) only goes into SET_QML_PROPERTIES";
         return ApplyBadValue;
     }
     // Variable length: the fixed part holds the counts (64 bit, a u32 count must not overflow the comparison). A value
@@ -546,9 +551,10 @@ int Scene::opSetUniforms(WireReader& r, std::string& err)
 
 int Scene::opSetQmlProperties(WireReader& r, std::string& err)
 {
-    // Wire format: protocol.h head comment (entries like SET_UNIFORMS; a STRING value is u32 length + UTF-8). The command is
-    // validated as a whole first; content problems (unknown name, failed conversion, unsupported value type) do not fail
-    // the apply: they are error lines of the element (QmlItem::error, EVENT_ERROR).
+    // Wire format: protocol.h head comment (entries like SET_UNIFORMS; a STRING value is u32 length + UTF-8, a LIST value is
+    // checked with the entry, readListLength). The command is validated as a whole first; content problems (unknown name,
+    // failed conversion, unsupported value type) do not fail the apply: they are error lines of the element (QmlItem::error,
+    // EVENT_ERROR).
     const quint32 id = r.u32();
     const int count = r.u16();
     r.u16(); // flags, reserved
@@ -563,6 +569,7 @@ int Scene::opSetQmlProperties(WireReader& r, std::string& err)
     NamedEntryRules rules;
     rules.noun = "QML property";
     rules.string = true;
+    rules.list = true;
     entryScratch.clear();
     for (int i = 0; i < count; ++i) {
         NamedEntry e;
@@ -609,6 +616,7 @@ int Scene::opSetQmlProperties(WireReader& r, std::string& err)
             v.copy(f, 16);
             item->setRootProperty(name, QVector4D(f[0], f[1], f[2], f[3]));
             break;
+        case VLQT_VALUE_TYPE_LIST: item->setRootProperty(name, listFromWire(v)); break; // checked by readNamedEntry
         default:
             item->rejectRootProperty(QString::fromUtf8(name), QStringLiteral("value type %1 is not supported for QML properties").arg(e.type));
             break;

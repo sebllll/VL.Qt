@@ -46,6 +46,56 @@ namespace VL.Qt.Tests.Reconciliation
         }
 
         [Test]
+        public void Lists_EachElementType()
+        {
+            var cmds = Write(Props(
+                ("f", new[] { 1f, 2.5f }.ToSpread()),
+                ("i", new[] { -1, 7 }.ToSpread()),
+                ("b", new[] { true, false, true }.ToSpread()),
+                ("s", new[] { "a", "hä" }.ToSpread()),
+                ("c", new[] { new Color4(1, 0.5f, 0.25f, 0.75f) }.ToSpread()),
+                ("v2", new[] { new Vector2(1, 2), new Vector2(3, 4) }.ToSpread()),
+                ("v3", new[] { new Vector3(1, 2, 3) }.ToSpread()),
+                ("v4", new[] { new Vector4(1, 2, 3, 4) }.ToSpread()),
+                ("r", new[] { new RectangleF(10, 20, 30, 40) }.ToSpread()),
+                ("e", Spread<int>.Empty)), null, out int sent);
+            Assert.That(sent, Is.EqualTo(10));
+            Assert.That(cmds, Is.EqualTo(new[]
+            {
+                "QML 7 0 f=list<" + Protocol.ValueType.F32 + ">(1,2.5) i=list<" + Protocol.ValueType.I32 + ">(-1,7) b=list<" + Protocol.ValueType.Bool + ">(1,0,1)"
+                + " s=list<" + Protocol.ValueType.String + ">(a,hä) c=list<" + Protocol.ValueType.Color + ">(1,0.5,0.25,0.75)"
+                + " v2=list<" + Protocol.ValueType.Vec2 + ">(1,2,3,4) v3=list<" + Protocol.ValueType.Vec3 + ">(1,2,3) v4=list<" + Protocol.ValueType.Vec4 + ">(1,2,3,4)"
+                + " r=list<" + Protocol.ValueType.Rectf + ">(10,20,30,40) e=list<" + Protocol.ValueType.I32 + ">()",
+            }));
+        }
+
+        [Test]
+        public void List_SameContentOtherInstance_IsNotSentAgain()
+        {
+            var p = Props(("l", new[] { 1f, 2f }.ToSpread()), ("v", new[] { new Vector2(1, 2) }.ToSpread()));
+            Assert.That(Write(Props(("l", new[] { 1f, 2f }.ToSpread()), ("v", new[] { new Vector2(1, 2) }.ToSpread())), p, out int sent), Is.Empty);
+            Assert.That(sent, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void List_Changed_IsSent()
+        {
+            var p = Props(("l", new[] { 1f, 2f }.ToSpread()), ("o", 1));
+            var cmds = Write(Props(("l", new[] { 1f, 2f, 3f }.ToSpread()), ("o", 1)), p, out int sent);
+            Assert.That(cmds, Is.EqualTo(new[] { "QML 7 0 l=list<" + Protocol.ValueType.F32 + ">(1,2,3)" }));
+            Assert.That(sent, Is.EqualTo(1));
+            Assert.That(Write(Props(("l", new[] { 1f, 2f }.ToSpread()), ("o", 1)), Props(("l", new[] { 1, 2 }.ToSpread()), ("o", 1)), out _),
+                Has.Length.EqualTo(1), "same numbers, other element type");
+        }
+
+        [Test]
+        public void ListElementsOfNullString_AreEmpty()
+        {
+            var cmds = Write(Props(("s", new[] { "a", null!, "" }.ToSpread())), null, out _);
+            Assert.That(cmds, Is.EqualTo(new[] { "QML 7 0 s=list<" + Protocol.ValueType.String + ">(a,,)" }));
+        }
+
+        [Test]
         public void Unchanged_SendsNothing()
         {
             var p = Props(("a", 1f), ("s", "x"));

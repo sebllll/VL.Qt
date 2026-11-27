@@ -47,6 +47,10 @@ namespace VL.Qt.Tests.Support
 
         public static byte[] Bool(bool v) => new[] { (byte)(v ? 1 : 0) };
 
+        /// <summary>LIST value: u16 element type, u16 0, u32 count, then the encoded elements back to back (a string element padded to 4).</summary>
+        public static byte[] List(ushort elementType, int count, params byte[][] elements)
+            => U16(elementType).Concat(U16(0)).Concat(I32(count)).Concat(elements.SelectMany(e => e)).ToArray();
+
         public static byte[] Pad(byte[] b) => b.Concat(new byte[(4 - b.Length % 4) % 4]).ToArray();
 
         private static byte[] U16(int v) => new[] { (byte)(v & 0xFF), (byte)(v >> 8) };

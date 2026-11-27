@@ -162,6 +162,56 @@ namespace VL.Qt.Tests.Qml
         }
 
         [Test]
+        public void Send_Spread_NotWhileDefault_SameContentNewInstanceIsNotSentAgain_ChangeIsSent()
+        {
+            var instance = Create(new[] { Prop("points", QmlValueKind.Vector2DList), Prop("names", QmlValueKind.StringList) });
+            Assert.That(Names(Frame(instance)), Is.Empty, "nothing at the default (the empty list)");
+            Set(instance, 0, Spread<Vector2>.Empty);
+            Assert.That(Names(Frame(instance)), Is.Empty, "an empty spread is the default");
+            Set(instance, 0, null);
+            Assert.That(Names(Frame(instance)), Is.Empty, "no spread counts as the empty one");
+
+            Set(instance, 0, new[] { new Vector2(1, 2), new Vector2(3, 4) }.ToSpread());
+            var first = Frame(instance);
+            Assert.That(Names(first), Is.EqualTo(new[] { "points" }));
+            Assert.That(first.Properties.TryGetValue("points", out var v), Is.True);
+            Assert.That(v.ValueType, Is.EqualTo(Protocol.ValueType.List));
+            Assert.That(v.Integer, Is.EqualTo((int)Protocol.ValueType.Vec2));
+
+            Set(instance, 0, new[] { new Vector2(1, 2), new Vector2(3, 4) }.ToSpread());
+            Assert.That(Frame(instance), Is.SameAs(first), "a new spread with the same elements changes nothing");
+            Assert.That(Frame(instance).Properties, Is.SameAs(first.Properties));
+
+            Set(instance, 0, new[] { new Vector2(1, 2), new Vector2(3, 5) }.ToSpread());
+            var second = Frame(instance);
+            Assert.That(second, Is.Not.SameAs(first));
+            Assert.That(second.Properties.TryGetValue("points", out var w) && w != v, Is.True, "another element: sent");
+
+            Set(instance, 0, Spread<Vector2>.Empty);
+            var third = Frame(instance);
+            Assert.That(third.Properties.TryGetValue("points", out var e) && e.ValueType == Protocol.ValueType.List, Is.True, "back to the empty list: sent, it was different once");
+            Assert.That(QmlValue.TryConvert(Spread<Vector2>.Empty, out var empty) && e == empty, Is.True);
+
+            Set(instance, 1, new[] { "a", "b" }.ToSpread());
+            Set(instance, 1, new[] { "a", "b" }.ToSpread());
+            Assert.That(Names(Frame(instance)), Is.EqualTo(new[] { "names", "points" }));
+        }
+
+        [Test]
+        public void Send_Spread_FromPropertiesDictionary()
+        {
+            var instance = Create();
+            var d = new Dictionary<string, object> { ["l"] = new[] { 1f, 2f }.ToSpread(), ["tooLong"] = new float[Protocol.ListValueMaxCount + 1].ToSpread() };
+            Set(instance, 0, d);
+            var first = Frame(instance);
+            Assert.That(Names(first), Is.EqualTo(new[] { "l" }), "a list of more than the max is left out");
+            d["l"] = new[] { 1f, 2f }.ToSpread();
+            Assert.That(Frame(instance), Is.SameAs(first), "same elements in another spread instance");
+            d["l"] = new[] { 1f, 2f, 3f }.ToSpread();
+            Assert.That(Frame(instance), Is.Not.SameAs(first));
+        }
+
+        [Test]
         public void Send_KeyIsTheQmlName_NotThePinName()
         {
             var instance = Create(new[] { Prop("accentColor", QmlValueKind.Color) });

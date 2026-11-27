@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Elements;
@@ -8,13 +9,30 @@ namespace VL.Qt.Qml
 {
     /// <summary>
     /// Pin model mapping of the QML node factory: QML type name → <see cref="QmlValueKind"/> → CLR pin type → wire value
-    /// (<see cref="QmlValue"/>). Everything not listed here (<c>alias</c>, <c>var</c>, <c>list&lt;…&gt;</c>, <c>url</c>,
-    /// <c>font</c>, enums, object types) gets no pin; the parser reports it as an info message.
+    /// (<see cref="QmlValue"/>). A <c>list&lt;T&gt;</c> of a type listed here gets a list kind (<see cref="ListKind"/>) and a Spread pin.
+    /// Everything else (<c>alias</c>, <c>var</c>, lists of other types, <c>url</c>, <c>font</c>, enums, object types) gets no pin;
+    /// the parser reports it as an info message.
     /// </summary>
     internal static class QmlTypes
     {
         /// <summary>Returns true if <paramref name="qmlType"/> (as written in the declaration, e.g. "real") gets a pin.</summary>
         public static bool TryMap(string? qmlType, out QmlValueKind kind)
+        {
+            // list<T> of a type with a pin; a list of lists or of an unsupported type gets none.
+            if (qmlType is { Length: > 6 } && qmlType.StartsWith("list<", StringComparison.Ordinal) && qmlType.EndsWith('>'))
+            {
+                if (TryMapElement(qmlType.AsSpan(5, qmlType.Length - 6).Trim().ToString(), out var element))
+                {
+                    kind = ListKind(element);
+                    return true;
+                }
+                kind = default;
+                return false;
+            }
+            return TryMapElement(qmlType, out kind);
+        }
+
+        private static bool TryMapElement(string? qmlType, out QmlValueKind kind)
         {
             switch (qmlType)
             {
@@ -46,12 +64,34 @@ namespace VL.Qt.Qml
             QmlValueKind.Vector3D => typeof(Vector3),
             QmlValueKind.Vector4D => typeof(Vector4),
             QmlValueKind.Rect => typeof(RectangleF),
+            QmlValueKind.RealList => typeof(Spread<float>),
+            QmlValueKind.IntList => typeof(Spread<int>),
+            QmlValueKind.BoolList => typeof(Spread<bool>),
+            QmlValueKind.StringList => typeof(Spread<string>),
+            QmlValueKind.ColorList => typeof(Spread<Color4>),
+            QmlValueKind.Vector2DList or QmlValueKind.PointList or QmlValueKind.SizeList => typeof(Spread<Vector2>),
+            QmlValueKind.Vector3DList => typeof(Spread<Vector3>),
+            QmlValueKind.Vector4DList => typeof(Spread<Vector4>),
+            QmlValueKind.RectList => typeof(Spread<RectangleF>),
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
 
+        /// <summary>Returns true if <paramref name="kind"/> is a <c>list&lt;T&gt;</c> kind.</summary>
+        public static bool IsList(QmlValueKind kind) => kind >= QmlValueKind.RealList;
+
+        /// <summary>The kind of the elements of a list kind (<see cref="QmlValueKind.PointList"/> → <see cref="QmlValueKind.Point"/>).</summary>
+        public static QmlValueKind ElementKind(QmlValueKind list) => IsList(list)
+            ? list - QmlValueKind.RealList + QmlValueKind.Real
+            : throw new ArgumentOutOfRangeException(nameof(list));
+
+        /// <summary>The list kind of an element kind (<see cref="QmlValueKind.Point"/> → <see cref="QmlValueKind.PointList"/>).</summary>
+        public static QmlValueKind ListKind(QmlValueKind element) => !IsList(element)
+            ? element - QmlValueKind.Real + QmlValueKind.RealList
+            : throw new ArgumentOutOfRangeException(nameof(element));
+
         /// <summary>
         /// The value QML gives a property of this kind without initializer, used as pin default when the file has no literal:
-        /// 0, false, "", transparent (0, 0, 0, 0), zero vectors, point and size, empty rect.
+        /// 0, false, "", transparent (0, 0, 0, 0), zero vectors, point and size, empty rect, the empty spread for a list.
         /// </summary>
         public static object TypeDefault(QmlValueKind kind) => kind switch
         {
@@ -64,6 +104,15 @@ namespace VL.Qt.Qml
             QmlValueKind.Vector3D => Vector3.Zero,
             QmlValueKind.Vector4D => Vector4.Zero,
             QmlValueKind.Rect => RectangleF.Empty,
+            QmlValueKind.RealList => Spread<float>.Empty,
+            QmlValueKind.IntList => Spread<int>.Empty,
+            QmlValueKind.BoolList => Spread<bool>.Empty,
+            QmlValueKind.StringList => Spread<string>.Empty,
+            QmlValueKind.ColorList => Spread<Color4>.Empty,
+            QmlValueKind.Vector2DList or QmlValueKind.PointList or QmlValueKind.SizeList => Spread<Vector2>.Empty,
+            QmlValueKind.Vector3DList => Spread<Vector3>.Empty,
+            QmlValueKind.Vector4DList => Spread<Vector4>.Empty,
+            QmlValueKind.RectList => Spread<RectangleF>.Empty,
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
 
@@ -74,6 +123,9 @@ namespace VL.Qt.Qml
         /// </summary>
         public static bool TryCoerce(QmlValueKind kind, object? value, out object result)
         {
+            if (IsList(kind))
+                return TryCoerceList(kind, value, out result);
+
             switch (kind, value)
             {
                 case (QmlValueKind.Real, float f): result = f; return true;
@@ -89,6 +141,32 @@ namespace VL.Qt.Qml
                 case (QmlValueKind.Vector4D, Vector4 v): result = v; return true;
                 case (QmlValueKind.Rect, RectangleF r): result = r; return true;
                 default: result = TypeDefault(kind); return false;
+            }
+        }
+
+        // A list kind takes the Spread<T> of the decoder (T = CLR element type of the wire): an empty spread fits every list kind,
+        // Spread<int> and Spread<float> convert element by element like the scalars, the rest has to be of the pin type.
+        private static bool TryCoerceList(QmlValueKind kind, object? value, out object result)
+        {
+            if (value is not null && value.GetType() == ClrType(kind))
+            {
+                result = value;
+                return true;
+            }
+            switch (kind, value)
+            {
+                case (_, ISpread { Count: 0 }):
+                    result = TypeDefault(kind);
+                    return true;
+                case (QmlValueKind.RealList, Spread<int> ints):
+                    result = ints.Select(static i => (float)i).ToSpread();
+                    return true;
+                case (QmlValueKind.IntList, Spread<float> floats) when floats.All(static f => float.IsFinite(f)):
+                    result = floats.Select(static f => (int)MathF.Round(f)).ToSpread();
+                    return true;
+                default:
+                    result = TypeDefault(kind);
+                    return false;
             }
         }
 

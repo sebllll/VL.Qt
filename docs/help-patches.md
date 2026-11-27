@@ -87,7 +87,7 @@ See [Effects and shaders](effects-and-shaders.md).
 ## QML
 
 - `HowTo Use a QML file` — `QmlElement` with the sample `QmlElement Example.qml`: properties in by name, changed properties and signals out, hot reload on save
-- `HowTo Create QML Nodes from Files` — `qml/` folder next to the patch: one node per `.qml` file, properties as pins, signals as outputs
+- `HowTo Create QML Nodes from Files` — `qml/` folder next to the patch: one node per `.qml` file (`Gauge`, `TrendCard`), properties as pins, `list<…>` properties as Spread pins, signals as outputs
 
 See [QML files as elements](user-qml.md).
 

@@ -1,0 +1,130 @@
+﻿using System;
+using System.Linq;
+using NUnit.Framework;
+using Stride.Core.Mathematics;
+using VL.Lib.Collections;
+using VL.Qt.Qml;
+
+namespace VL.Qt.Tests.Qml
+{
+    /// <summary>The kinds of the QML node factory: list kinds and their element kinds, pin types and defaults.</summary>
+    [TestFixture]
+    internal sealed class QmlTypesTests
+    {
+        private static readonly QmlValueKind[] s_elementKinds = Enum.GetValues<QmlValueKind>().Where(k => !QmlTypes.IsList(k)).ToArray();
+
+        [Test]
+        public void EveryElementKindHasOneListKind()
+        {
+            var lists = Enum.GetValues<QmlValueKind>().Where(QmlTypes.IsList).ToArray();
+            Assert.That(lists, Has.Length.EqualTo(s_elementKinds.Length));
+            foreach (var element in s_elementKinds)
+            {
+                var list = QmlTypes.ListKind(element);
+                Assert.That(QmlTypes.IsList(list), $"{element} -> {list}");
+                Assert.That(list.ToString(), Is.EqualTo(element + "List"));
+                Assert.That(QmlTypes.ElementKind(list), Is.EqualTo(element));
+            }
+        }
+
+        [Test]
+        public void ListPinIsSpreadOfTheElementPin()
+        {
+            foreach (var element in s_elementKinds)
+            {
+                var list = QmlTypes.ListKind(element);
+                Assert.That(QmlTypes.ClrType(list), Is.EqualTo(typeof(Spread<>).MakeGenericType(QmlTypes.ClrType(element))), list.ToString());
+                Assert.That(QmlTypes.TypeDefault(list), Is.InstanceOf(QmlTypes.ClrType(list)).And.Empty, list.ToString());
+            }
+            Assert.That(QmlTypes.ClrType(QmlValueKind.PointList), Is.EqualTo(typeof(Spread<Vector2>)));
+        }
+
+        [TestCase("list<real>", QmlValueKind.RealList)]
+        [TestCase("list<double>", QmlValueKind.RealList)]
+        [TestCase("list<int>", QmlValueKind.IntList)]
+        [TestCase("list<bool>", QmlValueKind.BoolList)]
+        [TestCase("list<string>", QmlValueKind.StringList)]
+        [TestCase("list<color>", QmlValueKind.ColorList)]
+        [TestCase("list<vector2d>", QmlValueKind.Vector2DList)]
+        [TestCase("list<vector3d>", QmlValueKind.Vector3DList)]
+        [TestCase("list<vector4d>", QmlValueKind.Vector4DList)]
+        [TestCase("list<rect>", QmlValueKind.RectList)]
+        [TestCase("list<point>", QmlValueKind.PointList)]
+        [TestCase("list<size>", QmlValueKind.SizeList)]
+        [TestCase("list< real >", QmlValueKind.RealList)]
+        public void TryMap_ListOfASupportedType(string type, QmlValueKind expected)
+        {
+            Assert.That(QmlTypes.TryMap(type, out var kind), Is.True);
+            Assert.That(kind, Is.EqualTo(expected));
+        }
+
+        [TestCase("list<Item>")]
+        [TestCase("list<var>")]
+        [TestCase("list<url>")]
+        [TestCase("list<list<int>>")]
+        [TestCase("list<>")]
+        [TestCase("list<")]
+        [TestCase("list<int")]
+        [TestCase("list")]
+        [TestCase("List<int>")]
+        [TestCase("mylist<int>")]
+        [TestCase(null)]
+        public void TryMap_ListOfAnythingElse_HasNoPin(string? type)
+        {
+            Assert.That(QmlTypes.TryMap(type, out _), Is.False);
+        }
+
+        [Test]
+        public void TryCoerce_List_TakesItsOwnSpread_AndAnEmptyOne()
+        {
+            var points = (new[] { new Vector2(1, 2) }).ToSpread();
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.PointList, points, out var r), Is.True);
+            Assert.That(r, Is.SameAs(points));
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.SizeList, points, out r), Is.True, "point and size share the spread");
+            Assert.That(r, Is.SameAs(points));
+
+            foreach (var kind in Enum.GetValues<QmlValueKind>().Where(QmlTypes.IsList))
+            {
+                Assert.That(QmlTypes.TryCoerce(kind, Spread<string>.Empty, out r), Is.True, kind.ToString());
+                Assert.That(r, Is.InstanceOf(QmlTypes.ClrType(kind)).And.Empty, kind.ToString());
+                Assert.That(QmlTypes.TryCoerce(kind, (Array.Empty<bool>()).ToSpread(), out r), Is.True, kind.ToString());
+            }
+        }
+
+        [Test]
+        public void TryCoerce_List_ConvertsIntAndFloatLikeTheScalars()
+        {
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.RealList, (new[] { 1, -2 }).ToSpread(), out var r), Is.True);
+            Assert.That(r, Is.EqualTo((new[] { 1f, -2f }).ToSpread()));
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.IntList, (new[] { 1f, 2.6f }).ToSpread(), out r), Is.True);
+            Assert.That(r, Is.EqualTo((new[] { 1, 3 }).ToSpread()));
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.IntList, (new[] { 1f, float.NaN }).ToSpread(), out r), Is.False);
+            Assert.That(r, Is.Empty);
+        }
+
+        [Test]
+        public void TryCoerce_List_RefusesWhatDoesNotFit()
+        {
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.StringList, (new[] { 1f }).ToSpread(), out var r), Is.False);
+            Assert.That(r, Is.InstanceOf<Spread<string>>().And.Empty);
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.RealList, (new[] { Vector2.One }).ToSpread(), out _), Is.False);
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.RealList, 1f, out _), Is.False, "a scalar is no list");
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.RealList, null, out _), Is.False);
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.Real, (new[] { 1f }).ToSpread(), out _), Is.False, "a list is no scalar");
+        }
+
+        [Test]
+        public void SignalPinType_OfAListArgument_IsASpreadOfSpreads()
+        {
+            Assert.That(QmlTypes.SignalPinType(QmlSignalShape.Values, QmlValueKind.RealList), Is.EqualTo(typeof(Spread<Spread<float>>)));
+            Assert.That(QmlTypes.SignalPinType(QmlSignalShape.Values, QmlValueKind.PointList), Is.EqualTo(typeof(Spread<Spread<Vector2>>)));
+        }
+
+        [Test]
+        public void ElementAndListKindRefuseTheWrongSide()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => QmlTypes.ElementKind(QmlValueKind.Real));
+            Assert.Throws<ArgumentOutOfRangeException>(() => QmlTypes.ListKind(QmlValueKind.RealList));
+        }
+    }
+}

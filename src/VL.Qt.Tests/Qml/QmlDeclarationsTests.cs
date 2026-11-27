@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using Stride.Core.Mathematics;
+using VL.Lib.Collections;
 using VL.Qt.Qml;
 
 namespace VL.Qt.Tests.Qml
@@ -87,18 +88,22 @@ namespace VL.Qt.Tests.Qml
             var d = Parse(File.ReadAllText(Path.Combine(RepoRoot(), "src", "VL.Qt.SmokeTest", "assets", "QmlTypes.qml")));
 
             Assert.That(d.Messages, Is.Empty);
-            Assert.That(d.Properties, Has.Length.EqualTo(22));
+            Assert.That(d.Properties, Has.Length.EqualTo(46));
             var kinds = new Dictionary<string, QmlValueKind>
             {
                 ["r"] = QmlValueKind.Real, ["i"] = QmlValueKind.Int, ["b"] = QmlValueKind.Bool, ["s"] = QmlValueKind.String,
                 ["c"] = QmlValueKind.Color, ["v2"] = QmlValueKind.Vector2D, ["v3"] = QmlValueKind.Vector3D, ["v4"] = QmlValueKind.Vector4D,
                 ["box"] = QmlValueKind.Rect, ["pt"] = QmlValueKind.Point, ["sz"] = QmlValueKind.Size,
+                ["rl"] = QmlValueKind.RealList, ["dl"] = QmlValueKind.RealList, ["il"] = QmlValueKind.IntList, ["bl"] = QmlValueKind.BoolList,
+                ["sl"] = QmlValueKind.StringList, ["cl"] = QmlValueKind.ColorList, ["ptl"] = QmlValueKind.PointList, ["szl"] = QmlValueKind.SizeList,
+                ["v2l"] = QmlValueKind.Vector2DList, ["v3l"] = QmlValueKind.Vector3DList, ["v4l"] = QmlValueKind.Vector4DList, ["boxl"] = QmlValueKind.RectList,
             };
             foreach (var (name, kind) in kinds)
             {
                 var input = Prop(d, name);
                 Assert.That(input.Kind, Is.EqualTo(kind), name);
-                Assert.That(input.Initializer, Is.EqualTo(QmlInitializer.Literal), name);
+                // A list in the file has no initializer: its pin default is the empty spread.
+                Assert.That(input.Initializer, Is.EqualTo(QmlTypes.IsList(kind) ? QmlInitializer.None : QmlInitializer.Literal), name);
                 var output = Prop(d, name + "Out");
                 Assert.That(output.Kind, Is.EqualTo(kind), name + "Out");
                 Assert.That(output.Initializer, Is.EqualTo(QmlInitializer.Binding), name + "Out");
@@ -113,8 +118,13 @@ namespace VL.Qt.Tests.Qml
             Assert.That(Prop(d, "sz").Default, Is.EqualTo(Vector2.Zero));
             Assert.That(Prop(d, "b").Default, Is.EqualTo(false));
             Assert.That(Prop(d, "s").Default, Is.EqualTo(string.Empty));
-            Assert.That(d.Signals.Select(x => x.Name), Is.EqualTo(new[] { "located" }));
+            foreach (var (name, kind) in kinds.Where(k => QmlTypes.IsList(k.Value)))
+                Assert.That(Prop(d, name).Default, Is.InstanceOf(QmlTypes.ClrType(kind)).And.Empty, name);
+            Assert.That(d.Signals.Select(x => x.Name), Is.EqualTo(new[] { "located", "measured", "tagged", "placed" }));
             Assert.That(d.Signals[0].Args, Is.EqualTo(new[] { new QmlSignalArg("p", "point", QmlValueKind.Point) }));
+            Assert.That(d.Signals[1].Args, Is.EqualTo(new[] { new QmlSignalArg("values", "list<real>", QmlValueKind.RealList) }));
+            Assert.That(d.Signals[2].Args, Is.EqualTo(new[] { new QmlSignalArg("names", "list<string>", QmlValueKind.StringList) }));
+            Assert.That(d.Signals[3].Args, Is.EqualTo(new[] { new QmlSignalArg("points", "list<point>", QmlValueKind.PointList) }));
         }
 
         // ---- literals ---------------------------------------------------------------------------------------------------------
@@ -223,6 +233,185 @@ namespace VL.Qt.Tests.Qml
                 Assert.That(p.Initializer, Is.EqualTo(QmlInitializer.Binding), name);
                 Assert.That(p.Default, Is.EqualTo(QmlTypes.TypeDefault(p.Kind)), name);
             }
+        }
+
+        // ---- list values ------------------------------------------------------------------------------------------------------
+
+        [Test]
+        public void ListTypes_GetTheListKindOfTheirElements()
+        {
+            var d = Parse("""
+                Item {
+                    property list<real> a
+                    property list<double> b
+                    property list<int> c
+                    property list<bool> e
+                    property list<string> f
+                    property list<color> g
+                    property list<vector2d> h
+                    property list<vector3d> i
+                    property list<vector4d> j
+                    property list<rect> k
+                    property list<point> l
+                    property list<size> m
+                    property list< real > spaced
+                    readonly property list<int> ro
+                }
+                """);
+
+            Assert.That(d.Messages, Is.Empty);
+            var expected = new[]
+            {
+                QmlValueKind.RealList, QmlValueKind.RealList, QmlValueKind.IntList, QmlValueKind.BoolList, QmlValueKind.StringList,
+                QmlValueKind.ColorList, QmlValueKind.Vector2DList, QmlValueKind.Vector3DList, QmlValueKind.Vector4DList, QmlValueKind.RectList,
+                QmlValueKind.PointList, QmlValueKind.SizeList, QmlValueKind.RealList, QmlValueKind.IntList,
+            };
+            Assert.That(d.Properties.Select(p => p.Kind), Is.EqualTo(expected));
+            Assert.That(d.Properties.All(p => p.IsList && p.Initializer == QmlInitializer.None), Is.True);
+            Assert.That(d.Properties.All(p => ((System.Collections.IEnumerable)p.Default).Cast<object>().Count() == 0), Is.True);
+            Assert.That(Prop(d, "a").ClrType, Is.EqualTo(typeof(Spread<float>)));
+            Assert.That(Prop(d, "ro").IsReadOnly, Is.True);
+        }
+
+        [Test]
+        public void ListTypes_WithoutPin_GiveOneInfoEach()
+        {
+            var d = Parse("""
+                Item {
+                    property list<Item> kids
+                    property list<var> any
+                    property list<list<int>> nested
+                    property list<url> urls
+                    property list<> none
+                    property list<int> fine
+                }
+                """);
+
+            Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "fine" }));
+            Assert.That(d.Messages, Has.Length.EqualTo(5));
+            Assert.That(d.Messages.All(m => m.Severity == QmlMessageSeverity.Info), Is.True);
+        }
+
+        [Test]
+        public void ListLiterals_AreRecognisedPerKind()
+        {
+            var d = Parse("""
+                Item {
+                    property list<real> a: [1, -2.5, 3e1]
+                    property list<int> b: [1, 2, 0x10,]
+                    property list<bool> c: [true, false]
+                    property list<string> d: ["a", 'b\n', ""]
+                    property list<color> e: ["red", "#00f", Qt.rgba(0, 0.5, 1, 0.25), Qt.rgb(1, 0, 0)]
+                    property list<vector2d> f: [Qt.vector2d(1, 2), Qt.vector2d(3, 4)]
+                    property list<point> g: [Qt.point(0, 1), Qt.point(1, 2)]
+                    property list<size> h: [Qt.size(10, 20)]
+                    property list<vector3d> i: [Qt.vector3d(1, 2, 3)]
+                    property list<vector4d> j: [Qt.vector4d(1, 2, 3, 4)]
+                    property list<rect> k: [Qt.rect(1, 2, 3, 4), Qt.rect(5, 6, 7, 8)]
+                    property list<real> empty: []
+                    property list<real> multi: [
+                        1,
+                        2
+                    ]
+                    property list<double> d2: [0.5]
+                }
+                """);
+
+            Assert.That(d.Messages, Is.Empty);
+            Assert.That(d.Properties.All(p => p.Initializer == QmlInitializer.Literal), Is.True);
+            Assert.That(Prop(d, "a").Default, Is.EqualTo((new[] { 1f, -2.5f, 30f }).ToSpread()));
+            Assert.That(Prop(d, "b").Default, Is.EqualTo((new[] { 1, 2, 16 }).ToSpread()));
+            Assert.That(Prop(d, "c").Default, Is.EqualTo((new[] { true, false }).ToSpread()));
+            Assert.That(Prop(d, "d").Default, Is.EqualTo((new[] { "a", "b\n", "" }).ToSpread()));
+            var colors = (Spread<Color4>)Prop(d, "e").Default;
+            Assert.That(colors.Count, Is.EqualTo(4));
+            AssertColor(new Color4(1f, 0f, 0f, 1f), colors[0]);
+            AssertColor(new Color4(0f, 0f, 1f, 1f), colors[1]);
+            AssertColor(new Color4(0f, 0.5f, 1f, 0.25f), colors[2]);
+            AssertColor(new Color4(1f, 0f, 0f, 1f), colors[3]);
+            Assert.That(Prop(d, "f").Default, Is.EqualTo((new[] { new Vector2(1, 2), new Vector2(3, 4) }).ToSpread()));
+            Assert.That(Prop(d, "g").Default, Is.EqualTo((new[] { new Vector2(0, 1), new Vector2(1, 2) }).ToSpread()));
+            Assert.That(Prop(d, "h").Default, Is.EqualTo((new[] { new Vector2(10, 20) }).ToSpread()));
+            Assert.That(Prop(d, "i").Default, Is.EqualTo((new[] { new Vector3(1, 2, 3) }).ToSpread()));
+            Assert.That(Prop(d, "j").Default, Is.EqualTo((new[] { new Vector4(1, 2, 3, 4) }).ToSpread()));
+            Assert.That(Prop(d, "k").Default, Is.EqualTo((new[] { new RectangleF(1, 2, 3, 4), new RectangleF(5, 6, 7, 8) }).ToSpread()));
+            Assert.That(Prop(d, "empty").Default, Is.Empty);
+            Assert.That(Prop(d, "multi").Default, Is.EqualTo((new[] { 1f, 2f }).ToSpread()));
+            Assert.That(Prop(d, "d2").Default, Is.EqualTo((new[] { 0.5f }).ToSpread()));
+        }
+
+        [Test]
+        public void ListLiterals_ThatAreNotReadable_AreABindingWithTheEmptySpread()
+        {
+            var d = Parse("""
+                Item {
+                    property list<real> ref: [1, other.width]
+                    property list<real> sum: [1] + [2]
+                    property list<real> call: Array.from([1, 2])
+                    property list<real> hole: [1,,2]
+                    property list<real> lead: [,1]
+                    property list<real> text: ["a"]
+                    property list<int> fraction: [1, 2.5]
+                    property list<point> wrong: [Qt.size(1, 2)]
+                    property list<color> unknown: ["notacolour"]
+                    property list<real> scalar: 1
+                    property list<real> object: { }
+                    property list<real> nested: [[1], [2]]
+                    property list<real> tail: [1, 2] [3]
+                }
+                """);
+
+            Assert.That(d.HasErrors, Is.False);
+            foreach (var p in d.Properties)
+            {
+                Assert.That(p.Initializer, Is.EqualTo(QmlInitializer.Binding), p.Name);
+                Assert.That(p.Default, Is.EqualTo(QmlTypes.TypeDefault(p.Kind)).And.Empty, p.Name);
+            }
+        }
+
+        [Test]
+        public void ListLiterals_InASibling_AreReassignedLikeScalars()
+        {
+            var d = Parse("""
+                import QtQuick
+                Base {
+                    values: [4, 5]
+                }
+                """, new Dictionary<string, string> { ["Base"] = "Item { property list<int> values: [1]; property list<int> other }" });
+
+            Assert.That(Prop(d, "values").Default, Is.EqualTo((new[] { 4, 5 }).ToSpread()));
+            Assert.That(Prop(d, "values").Initializer, Is.EqualTo(QmlInitializer.Literal));
+            Assert.That(Prop(d, "other").Default, Is.Empty);
+        }
+
+        [Test]
+        public void ListSignalArguments_AreTyped()
+        {
+            var d = Parse("""
+                Item {
+                    signal one(list<real> values)
+                    signal two(list<point> points, int count)
+                    signal named(items: list<string>)
+                    signal untyped(list<Item> kids)
+                }
+                """);
+
+            Assert.That(d.Signals[0].Args, Is.EqualTo(new[] { new QmlSignalArg("values", "list<real>", QmlValueKind.RealList) }));
+            Assert.That(d.Signals[0].Shape, Is.EqualTo(QmlSignalShape.Values));
+            Assert.That(d.Signals[1].Args, Is.EqualTo(new[] { new QmlSignalArg("points", "list<point>", QmlValueKind.PointList), new QmlSignalArg("count", "int", QmlValueKind.Int) }));
+            Assert.That(d.Signals[2].Args, Is.EqualTo(new[] { new QmlSignalArg("items", "list<string>", QmlValueKind.StringList) }));
+            Assert.That(d.Signals[3].Args, Is.EqualTo(new[] { new QmlSignalArg("kids", "list<Item>", null) }));
+        }
+
+        [Test]
+        public void Signature_ChangesWithAListDefault_ButNotWithItsSpacing()
+        {
+            string Sig(string literal) => Parse("Item { property list<real> a: " + literal + " }").Signature;
+
+            Assert.That(Sig("[1, 2]"), Is.EqualTo(Sig("[ 1,2 ]")));
+            Assert.That(Sig("[1, 2]"), Is.Not.EqualTo(Sig("[1, 3]")));
+            Assert.That(Sig("[1, 2]"), Is.Not.EqualTo(Sig("[1, 2, 3]")));
+            Assert.That(Sig("[1, 2]"), Is.Not.EqualTo(Sig("[]")));
         }
 
         // ---- structure --------------------------------------------------------------------------------------------------------
@@ -334,7 +523,7 @@ namespace VL.Qt.Tests.Qml
             Assert.That(d.Signals[3].Shape, Is.EqualTo(QmlSignalShape.Signals));
             Assert.That(d.Signals[3].Args, Is.EqualTo(new[] { new QmlSignalArg("x", "real", QmlValueKind.Real), new QmlSignalArg("label", "string", QmlValueKind.String) }));
             Assert.That(d.Signals[4].Args, Is.EqualTo(new[] { new QmlSignalArg("a", "int", QmlValueKind.Int), new QmlSignalArg("b", "color", QmlValueKind.Color) }));
-            Assert.That(d.Signals[5].Args, Is.EqualTo(new[] { new QmlSignalArg("payload", "var", null), new QmlSignalArg("items", "list<int>", null) }));
+            Assert.That(d.Signals[5].Args, Is.EqualTo(new[] { new QmlSignalArg("payload", "var", null), new QmlSignalArg("items", "list<int>", QmlValueKind.IntList) }));
         }
 
         [Test]
