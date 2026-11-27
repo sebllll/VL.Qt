@@ -175,6 +175,19 @@ namespace VL.Qt.Tests.Qml
             Assert.That(claim.Message, Does.Contain("cannot be written"));
         }
 
+        [Test]
+        public void Claim_ReadOnlyFile_StaysUnchangedAndLeavesNoTemporaryFile()
+        {
+            WriteSlotFile("Doc", "Gauge.Mode = 1");
+            File.SetAttributes(SlotFile("Doc"), FileAttributes.ReadOnly);
+            var before = File.ReadAllText(SlotFile("Doc"));
+            var pool = Pool(4);
+
+            Assert.That(pool.Claim(QmlFile("Doc"), Decl("Card", "Status", ("Online", 0))).Slot, Is.Null);
+            Assert.That(File.ReadAllText(SlotFile("Doc")), Is.EqualTo(before));
+            Assert.That(File.Exists(SlotFile("Doc") + ".tmp"), Is.False);
+        }
+
         // --- collisions ---
 
         [Test]
