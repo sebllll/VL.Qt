@@ -24,6 +24,7 @@ For vvvv users. The user pages carry a contributor note only as a closing "for c
 | [tooltips.md](tooltips.md) | Preview images for `Element` and `QtImage` links in the vvvv editor. |
 | [diagnostics.md](diagnostics.md) | Performance overlays (F2/F5), the `Debug` overlay, logging and errors, GPU device loss. |
 | [versioning.md](versioning.md) | Version numbers, what counts as the API, obsolete and experimental nodes. |
+| [releases/0.10.1.md](releases/0.10.1.md) | Release notes of 0.10.1: bugfixes, no change for patches. |
 | [releases/0.10.0.md](releases/0.10.0.md) | Release notes of 0.10.0: what changed and what a patch saved with 0.9.x needs. |
 | [glossary.md](glossary.md) | The words of VL.Qt and of the Qt behind it (element, scene, renderer, layer, pump, QRhi ...), one sentence each. |
 
