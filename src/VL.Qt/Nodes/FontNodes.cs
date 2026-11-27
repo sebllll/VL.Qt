@@ -20,6 +20,7 @@ namespace VL.Qt.Nodes
         /// Thin, 200 ExtraLight, 300 Light, 400 Normal, 500 Medium, 600 DemiBold, 700 Bold, 800 ExtraBold, 900 Black.</param>
         /// <param name="italic">Italic style.</param>
         /// <returns>The font.</returns>
+        [return: Pin(Name = "Output")]
         public static Font Font(
             [DefaultValue("")] string family,
             [DefaultValue(0.12f)] float size,

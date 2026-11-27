@@ -834,7 +834,7 @@ VL.Qt | VL.Qt.Nodes.FontNodes | attr SkipCategory
 VL.Qt | VL.Qt.Nodes.FontNodes | method Font | order Family, Size, Weight, Italic, Output
 VL.Qt | VL.Qt.Nodes.FontNodes | method Font | pin Family | in string = "" | (family)
 VL.Qt | VL.Qt.Nodes.FontNodes | method Font | pin Italic | in bool | (italic)
-VL.Qt | VL.Qt.Nodes.FontNodes | method Font | pin Output | out VL.Qt.Elements.Font | (return)
+VL.Qt | VL.Qt.Nodes.FontNodes | method Font | pin Output | out VL.Qt.Elements.Font | Pin(Name = "Output") | (return)
 VL.Qt | VL.Qt.Nodes.FontNodes | method Font | pin Size | in float = 0.12 | (size)
 VL.Qt | VL.Qt.Nodes.FontNodes | method Font | pin Weight | in int = 400 | (weight)
 VL.Qt | VL.Qt.Nodes.FontNodes | method Font | static VL.Qt.Elements.Font
