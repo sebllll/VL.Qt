@@ -122,6 +122,8 @@ void installWindowFilters(SceneHandle* w, QQuickWindow* win)
     w->closeFilter = new CloseFilter(win);
     win->installEventFilter(w->closeFilter);
     w->gate = new RenderGate(win);
+    // The lengths C# sent were scaled with the metrics it read; a render after a resize it has not seen would draw them wrong.
+    w->gate->setHold([w] { return w->scene && w->scene->metricsStale(); });
     win->installEventFilter(w->gate);
     w->changes = new SceneChangeCounter(win);
     vlqt::device::lockFrames(win); // windows only: a scene's render thread locks itself (offscreen/offscreen_render.cpp)

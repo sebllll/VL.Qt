@@ -5,6 +5,8 @@
 
 #include <QtCore/QObject>
 
+#include <functional>
+#include <utility>
 #include <vector>
 
 class QQuickWindow;
@@ -27,6 +29,10 @@ public:
 
     // Qt rendered this window in the last pump (and so polished its items). Valid until the next pump starts.
     bool rendered() const { return m_rendered; }
+
+    // The render of this window waits inside a pump while hold returns true (the scene's size or dpr changed after C#
+    // read it: window/window.cpp). It stays pending and renders in the pump after C# has read the new values.
+    void setHold(std::function<bool()> hold) { m_hold = std::move(hold); }
 
     // all = every window may render; else only the given gates (the windows of the pumping app).
     static void beginPump(bool all, RenderGate* const* active, int count);
@@ -51,6 +57,8 @@ private:
     QQuickWindow* m_window;
     bool m_pending = false, m_rendered = false, m_everRendered = false;
     bool m_blocked = false; // this pump belongs to another app
+    std::function<bool()> m_hold;
+    bool holds() const { return m_hold && m_hold(); }
     static inline bool s_inPump = false;
     static inline bool s_delivering = false; // vlqt_app_deliver_input
     static inline std::vector<RenderGate*> s_gates;

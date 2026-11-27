@@ -252,6 +252,7 @@ VLQT_API int vlqt_scene_get_metrics(vlqt_scene* p, vlqt_scene_metrics* out)
         out->width = float(root->width());
         out->height = float(root->height());
         out->dpr = w.isOffscreen() ? 1.f : float(w.window->effectiveDevicePixelRatio());
+        w.scene->noteMetricsRead(out->height, out->dpr);
         return VLQT_OK;
     });
 }
