@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Document xmlns:p="property" xmlns:r="reflection" Id="dxjDNjVHfOWcfDeXqrPWdN" LanguageVersion="2026.8.0-0399-g91d5a57ede" Version="0.128">
+<Document xmlns:p="property" xmlns:r="reflection" Id="dxjDNjVHfOWcfDeXqrPWdN" LanguageVersion="2026.8.0-0435-gdc1b31244d" Version="0.128">
   <NugetDependency Id="Q3n20h5oDDQHJaeVMp9pQh" Location="VL.CoreLib" />
   <DocumentDependency Id="hdjDjHoTpx5O1XjmynG8Yi" Location="../../VL.Qt.vl" />
   <Patch Id="4FJak9DZvRuMirev7nN1FN">
@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="qCqmbHalnV6jTNS8q7SERE" Bounds="85,85,597,130" ShowValueBox="true" isIOBox="true" Value="QML nodes from qml/*.qml: Gauge, TrendCard&#xA;- Folder qml next to this patch: one node per file (Gauge.qml gives the node Gauge, TrendCard.qml gives TrendCard)&#xA;- property = input pin, its literal value = the default (Value, Accent, Label)&#xA;- list&lt;T&gt; property = Spread pin, a literal array = the default (Points, Labels of TrendCard)&#xA;- readonly property = output (Percent), signal(int) = Spread (Milestone), signal = bang (Full)&#xA;- // lines above a declaration = pin help; @summary, @category, @tags in the file head">
+          <Pad Id="qCqmbHalnV6jTNS8q7SERE" Bounds="85,85,892,150" ShowValueBox="true" isIOBox="true" Value="QML nodes from qml/*.qml: Gauge, TrendCard, ProfileCard&#xA;- Folder qml next to this patch: one node per file (Gauge.qml gives the node Gauge, TrendCard.qml gives TrendCard)&#xA;- property = input pin, its literal value = the default (Value, Accent, Label)&#xA;- list&lt;T&gt; property = Spread pin, a literal array = the default (Points, Labels of TrendCard)&#xA;- readonly property = output (Percent), signal(int) = Spread (Milestone), signal = bang (Full)&#xA;- property alias of a child = pin of its type; url = Path, font = Font node, date = DateTime, enum = int (ProfileCard)&#xA;- // lines above a declaration = pin help; @summary, @category, @tags in the file head">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="527,240,45,19" Id="srSHSYgLUNPjsiXJZomsAp">
+          <Node Bounds="527,345,45,19" Id="srSHSYgLUNPjsiXJZomsAp">
             <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LFO" />
@@ -49,17 +49,17 @@
             <Pin Id="hlTiJKUMSUQoAcra6TDbQF" Name="On New Cycle" Kind="OutputPin" />
             <Pin Id="dZIlOTon3mEqHAW4P2S24e" Name="Cycles" Kind="OutputPin" />
           </Node>
-          <Pad Id="7wrTD11BxzWPHkODNeurjd" Comment="Accent" Bounds="142,370,136,15" ShowValueBox="true" isIOBox="true" Value="0.2, 0.8, 0.7, 1">
+          <Pad Id="7wrTD11BxzWPHkODNeurjd" Comment="Accent" Bounds="142,475,136,15" ShowValueBox="true" isIOBox="true" Value="0.2, 0.8, 0.7, 1">
             <p:TypeAnnotation LastCategoryFullName="Color" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="RGBA" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="tMehSvSan7yvcVXoPGAGor" Comment="Label" Bounds="162,400,43,15" ShowValueBox="true" isIOBox="true" Value="CPU">
+          <Pad Id="tMehSvSan7yvcVXoPGAGor" Comment="Label" Bounds="162,505,43,15" ShowValueBox="true" isIOBox="true" Value="CPU">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="100,285,80,19" Id="2AcLC8dGzUeBpYYQtYV53N">
+          <Node Bounds="100,390,80,19" Id="2AcLC8dGzUeBpYYQtYV53N">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -73,7 +73,7 @@
             <Pin Id="czvnSWnX3AfqV6l0PYUFYj" Name="Translation" Kind="InputPin" DefaultValue="0.5, 0.5" />
             <Pin Id="uBxrLAbPJHAK1YCeBdkiO2" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,440,65,19" Id="Lq3UuNyR7K76DaIUfyDrDA">
+          <Node Bounds="100,545,65,19" Id="Lq3UuNyR7K76DaIUfyDrDA">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Qml" LastDependency="VL.Qt.Qml">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessNode" Name="Gauge" />
@@ -103,7 +103,7 @@
             <Pin Id="ISVrECKvvaRLWLaidggaCK" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
             <Pin Id="U4la6psffGvQUNuooMuXpH" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="KyHrrO3BAPH67JQ0TDZTQk" Bounds="176,433,302,47" ShowValueBox="true" isIOBox="true" Value="Gauge is generated from qml/Gauge.qml next to this patch. Middle click on it opens the file.">
+          <Pad Id="KyHrrO3BAPH67JQ0TDZTQk" Bounds="176,538,302,47" ShowValueBox="true" isIOBox="true" Value="Gauge is generated from qml/Gauge.qml next to this patch. Middle click on it opens the file.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -112,21 +112,21 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="TRQT81Svt5TPnwcD8RfB6y" Comment="Full" Bounds="162,491,35,35" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="OG5OglC77JqTDaGM4pFvFU" Comment="Milestone" Bounds="142,551,60,40" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="FhXjbQJ5QGJ8pf91KcCVUA" Comment="Percent" Bounds="122,601,35,15" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="szLjIgE25en7P9csXmhURG" Comment="Title" Bounds="182,780,220,17" ShowValueBox="true" isIOBox="true" Value="HowTo Create QML Nodes from Files">
+          <Pad Id="TRQT81Svt5TPnwcD8RfB6y" Comment="Full" Bounds="162,596,35,35" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="OG5OglC77JqTDaGM4pFvFU" Comment="Milestone" Bounds="142,656,60,40" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="FhXjbQJ5QGJ8pf91KcCVUA" Comment="Percent" Bounds="122,706,35,15" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="szLjIgE25en7P9csXmhURG" Comment="Title" Bounds="182,1020,220,17" ShowValueBox="true" isIOBox="true" Value="HowTo Create QML Nodes from Files">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="100,815,85,19" Id="OqkoJ5W1g25yeP1LXxckal">
+          <Node Bounds="100,1055,85,19" Id="OqkoJ5W1g25yeP1LXxckal">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
             </p:NodeReference>
             <Pin Id="WQJCYNEk1381OAIGXgLsRq" Name="Node Context" Kind="InputPin" IsHidden="true" />
-            <Pin Id="p3rYadCbCbKU35GsaO7N8G" Name="Bounds" Kind="InputPin" DefaultValue="1798, 126, 786, 432" IsHidden="true" />
+            <Pin Id="p3rYadCbCbKU35GsaO7N8G" Name="Bounds" Kind="InputPin" DefaultValue="2186, 205, 786, 432" IsHidden="true" />
             <Pin Id="UiBoHftQYHUHgwnBt0yBOS" Name="V Sync" Kind="InputPin" IsHidden="true" />
             <Pin Id="527TltrTTlBTf930qyipU5" Name="Bound To Document" Kind="InputPin" IsHidden="true" />
             <Pin Id="6uUo5KO5AoLaO0xB7PNAZV" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
@@ -147,7 +147,7 @@
             <Pin Id="JNicHlODj1BLf5IyxzgTBd" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
             <Pin Id="C7e1BzDrV4kP0WE3rmdDk4" Name="Enable Keyboard Shortcuts" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="orztv7n95UUMR6Vmi83jZo" Bounds="85,870,1049,353" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The nodes appear when the qml folder exists next to the saved patch, or in the qml folder of a package; subfolders count. Only files whose name starts with an uppercase letter become nodes (QML's rule for components): main.qml or helpers are skipped. Middle click on the node opens the file.&#xA;- Pins come only from the declarations of the root object: property (input, plus an optional output with the last value QML changed), readonly property (output), signal (output). Types: real, int, bool, string, color, vector2d/3d/4d, point, size, rect, and list&lt;…&gt; of these (Spread pins). The other pins are those of QmlElement (see HowTo Use a QML file).&#xA;- A pin sends nothing until its value differs from the declared default: a binding or an initial value in the file stays in charge until you really set the pin.&#xA;- Save the .qml and the running element reloads. The pins change only when the declarations change (a new, renamed or retyped property or signal, a default, the comment above it, a head tag); links on pins with the same name stay.&#xA;- A list&lt;T&gt; property is a Spread pin: list&lt;point&gt; and list&lt;size&gt; take a Spread of Vector2 (Points of TrendCard: X is the time, Y the value), list&lt;string&gt; a Spread of String (Labels). A literal array in the file is the default, otherwise the default is an empty Spread; the pin sends once its content differs from it. At most 65536 elements.&#xA;- alias, var, object properties and lists of other types (lists of lists, of objects) get no pin (info at the node). Set them through the hidden Properties pin, the dictionary of QmlElement (plan B).&#xA;- A file that does not parse still gives a node: parser messages show at the node, QML errors at the node and in the log.&#xA;- Full and Milestone 100 stay silent here: the LFO ramp falls back to 0 before the animated bar (Behavior, 400 ms) reaches 100 %. Set Value to 1 and they fire. Signals report what QML emits, nothing is lost on the way.&#xA;- Export: the qml folder next to the exported patch is copied next to the exe.&#xA;- Experimental, like QmlElement.">
+          <Pad Id="orztv7n95UUMR6Vmi83jZo" Bounds="85,1110,1049,400" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The nodes appear when the qml folder exists next to the saved patch, or in the qml folder of a package; subfolders count. Only files whose name starts with an uppercase letter become nodes (QML's rule for components): main.qml or helpers are skipped. Middle click on the node opens the file.&#xA;- Pins come only from the declarations of the root object: property (input, plus an optional output with the last value QML changed), readonly property (output), signal (output). Types: real, int, bool, string, color, vector2d/3d/4d, point, size, rect, url (Path), date (DateTime), font (Font, size in units like Text), and list&lt;…&gt; of these but font (Spread pins). The other pins are those of QmlElement (see HowTo Use a QML file).&#xA;- A pin sends nothing until its value differs from the declared default: a binding or an initial value in the file stays in charge until you really set the pin.&#xA;- Save the .qml and the running element reloads. The pins change only when the declarations change (a new, renamed or retyped property or signal, a default, the comment above it, a head tag); links on pins with the same name stay.&#xA;- A list&lt;T&gt; property is a Spread pin: list&lt;point&gt; and list&lt;size&gt; take a Spread of Vector2 (Points of TrendCard: X is the time, Y the value), list&lt;string&gt; a Spread of String (Labels). A literal array in the file is the default, otherwise the default is an empty Spread; the pin sends once its content differs from it. At most 65536 elements.&#xA;- property alias name: id.prop gets the pin of the target's type: a property a child declares, a known property of a built-in type (Text text and color, Rectangle color and radius, Image source, size, position, opacity, scale and visible of every Item), or a root property of a component of the same folder. An enum of the root gives no pin of its own; a property of its type or with one of its values (ProfileCard.Online) is an int pin whose help lists the values.&#xA;- An alias the parser cannot resolve (of a whole object, of border.color), var, object properties and lists of other types (lists of lists, of objects) get no pin (info at the node). Set them through the hidden Properties pin, the dictionary of QmlElement (plan B).&#xA;- A file that does not parse still gives a node: parser messages show at the node, QML errors at the node and in the log.&#xA;- Full and Milestone 100 stay silent here: the LFO ramp falls back to 0 before the animated bar (Behavior, 400 ms) reaches 100 %. Set Value to 1 and they fire. Signals report what QML emits, nothing is lost on the way.&#xA;- Export: the qml folder next to the exported patch is copied next to the exe.&#xA;- Experimental, like QmlElement.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -156,7 +156,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="720,135,80,19" Id="941Y7MvaWeGaZAXKDgUm9I">
+          <Node Bounds="650,300,80,19" Id="941Y7MvaWeGaZAXKDgUm9I">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -170,7 +170,7 @@
             <Pin Id="fk7wEMw9peGtwlFRbTWXyR" Name="Translation" Kind="InputPin" DefaultValue="0.5, 1.5" />
             <Pin Id="bVAv2cwhmzFIryJzKlTi0Q" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="720,710,305,19" Id="QfG1Z2RrNLG9hwBh78G0WA">
+          <Node Bounds="650,860,305,19" Id="QfG1Z2RrNLG9hwBh78G0WA">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Qml" LastDependency="VL.Qt.Qml">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessNode" Name="TrendCard" />
@@ -221,7 +221,7 @@
             <Pin Id="hYMZ0GrKRgGLLuWpti9yxG" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="Z9E0PqjQmoF5DCgZC7pLQU" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Node Bounds="100,740,625,19" Id="FxqVuZQjc9Fx9xb2qwvHQJ">
+          <Node Bounds="100,980,1105,19" Id="FxqVuZQjc9Fx9xb2qwvHQJ">
             <p:NodeReference LastCategoryFullName="Qt.Elements" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <CategoryReference Kind="Category" Name="Elements" NeedsToBeDirectParent="true">
@@ -232,6 +232,7 @@
             <Pin Id="W0hnkYBq75FZtrdGiLgUcJ" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="2S9WLF9bATGbBcA9tTsIuR" Name="Input" Kind="InputPin" />
             <Pin Id="g8qEfoixnqGZvhu2TqdHMH" Name="Input 2" Kind="InputPin" />
+            <Pin Id="OibZtX2HBK7xCTSHOZRDYx" Name="Input 3" Kind="InputPin" />
             <Pin Id="w0esQ3d6BEGRMiuZZGTPpA" Name="Output" Kind="OutputPin" />
             <Pin Id="Sn5M9lAlqmFkhH8jStyskK" Name="Auto Size" Kind="InputPin" IsHidden="true" />
             <Pin Id="xXOPliB2zvFYrXM0YK34PS" Name="Size" Kind="InputPin" IsHidden="true" />
@@ -247,7 +248,7 @@
             <Pin Id="rax9Qj3QqFG7gNzvvydHYG" Name="Style" Kind="InputPin" IsHidden="true" />
             <Pin Id="LAK5nw87O4FpUNCkd1Bi5I" Name="Enabled" Kind="InputPin" IsHidden="true" />
           </Node>
-          <Pad Id="ImfuwKEJ8iGfO4Yb2oahwR" Comment="Labels" Bounds="782,471,70,95" ShowValueBox="true" isIOBox="true">
+          <Pad Id="ImfuwKEJ8iGfO4Yb2oahwR" Comment="Labels" Bounds="712,621,70,95" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Collections" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Spread" />
               <p:TypeArguments>
@@ -264,17 +265,17 @@
               <Item>24:00</Item>
             </p:Value>
           </Pad>
-          <Pad Id="RP61HgM8MyFYq3KdtkDsXK" Comment="Highlight" Bounds="802,580,35,15" ShowValueBox="true" isIOBox="true">
+          <Pad Id="RP61HgM8MyFYq3KdtkDsXK" Comment="Highlight" Bounds="732,730,35,15" ShowValueBox="true" isIOBox="true">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Integer32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="nKxhvwEbbwG0o6hx2w3wLJ" Comment="Caption" Bounds="822,611,70,15" ShowValueBox="true" isIOBox="true" Value="Visitors">
+          <Pad Id="nKxhvwEbbwG0o6hx2w3wLJ" Comment="Caption" Bounds="752,761,70,15" ShowValueBox="true" isIOBox="true" Value="Visitors">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="sbzMMJfWW6FJ7WOqWY9S1Q" Bounds="743,746,402,81" ShowValueBox="true" isIOBox="true" Value="TrendCard is generated from qml/TrendCard.qml. Points is a Spread of Vector2 (X = time, Y = value), Labels a Spread of String: both are list properties in the QML file.">
+          <Pad Id="sbzMMJfWW6FJ7WOqWY9S1Q" Bounds="673,896,423,64" ShowValueBox="true" isIOBox="true" Value="TrendCard is generated from qml/TrendCard.qml. Points is a Spread of Vector2 (X = time, Y = value), Labels a Spread of String: both are list properties in the QML file.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -283,7 +284,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="527,352,25,19" Id="CdzHmAfLucpPB4CLVTIjDb">
+          <Node Bounds="527,457,25,19" Id="CdzHmAfLucpPB4CLVTIjDb">
             <p:NodeReference LastCategoryFullName="Math" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="*" />
@@ -292,7 +293,7 @@
             <Pin Id="GFtewnX4iH2NhuCxuZNhXh" Name="Input 2" Kind="InputPin" DefaultValue="5" />
             <Pin Id="MSdY93Xp61HMtUBxrf7o1R" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="527,391,52,19" Id="Qp1thRPxakhPnZRdxaONx3">
+          <Node Bounds="527,496,52,19" Id="Qp1thRPxakhPnZRdxaONx3">
             <p:NodeReference LastCategoryFullName="System.Conversion" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="ToInt32" />
@@ -300,7 +301,7 @@
             <Pin Id="PXFKFp7fcc7Ohq4NTDBznR" Name="Input" Kind="InputPin" />
             <Pin Id="Ls7LyIf2LUILso68BNzIh2" Name="Result" Kind="OutputPin" />
           </Node>
-          <Node Bounds="740,245,85,19" Id="TvxxgjYO0VrLMsQXHlPoRc">
+          <Node Bounds="670,395,85,19" Id="TvxxgjYO0VrLMsQXHlPoRc">
             <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="LinearSpread" />
@@ -313,7 +314,7 @@
             <Pin Id="Ox7V27JrNd0MmrMewHXpAd" Name="Count" Kind="InputPin" DefaultValue="0" />
             <Pin Id="BFVwCxD5GzVN1RLNy6zfnc" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="781,275,85,19" Id="ASEAEfqtafLPhVcX1oCLOC">
+          <Node Bounds="711,425,85,19" Id="ASEAEfqtafLPhVcX1oCLOC">
             <p:NodeReference LastCategoryFullName="Collections.Spread" LastDependency="VL.CoreLib.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="RandomSpread" />
@@ -325,12 +326,12 @@
             <Pin Id="Q0t7uU0yeO3NknyOtwRp4I" Name="Count" Kind="InputPin" />
             <Pin Id="EjZxhLKGCrDNCRPCnfBJVL" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="GRseHZ3tqINM87LADqvSpC" Comment="Count" Bounds="822,215,35,15" ShowValueBox="true" isIOBox="true" Value="10">
+          <Pad Id="GRseHZ3tqINM87LADqvSpC" Comment="Count" Bounds="752,365,35,15" ShowValueBox="true" isIOBox="true" Value="10">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Integer32" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="728,307,89,88" Id="LD5mWAskgTNN6v9FdrboNR">
+          <Node Bounds="658,457,89,88" Id="LD5mWAskgTNN6v9FdrboNR">
             <p:NodeReference LastCategoryFullName="Primitive" LastDependency="Builtin">
               <Choice Kind="StatefulRegion" Name="Region (Stateful)" Fixed="true" />
               <CategoryReference Kind="Category" Name="Primitive" />
@@ -341,7 +342,7 @@
               <Patch Id="Hq3Cb0TtaooMaCj4q5HS1I" Name="Create" ManuallySortedPins="true" />
               <Patch Id="GIec50dx33OLVNmabDjRRq" Name="Update" ManuallySortedPins="true" />
               <Patch Id="TB2bOWiRHJoNAP2iFVFdqE" Name="Dispose" ManuallySortedPins="true" />
-              <Node Bounds="740,330,46,19" Id="FoF3wVa8c2pLXhMCfV8zj5">
+              <Node Bounds="670,480,46,19" Id="FoF3wVa8c2pLXhMCfV8zj5">
                 <p:NodeReference LastCategoryFullName="2D.Vector2" LastDependency="VL.CoreLib.vl">
                   <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                   <CategoryReference Kind="Vector2Type" Name="Vector2" NeedsToBeDirectParent="true" />
@@ -351,7 +352,7 @@
                 <Pin Id="GhqIljyjh9TP3e8s1dOioD" Name="Y" Kind="InputPin" />
                 <Pin Id="OhUBsHCM3AQQYA9WGZ6XQV" Name="Output" Kind="StateOutputPin" />
               </Node>
-              <Node Bounds="740,356,65,19" Id="S2V6KxhAL8gMxT0IAhVNno">
+              <Node Bounds="670,506,65,19" Id="S2V6KxhAL8gMxT0IAhVNno">
                 <p:NodeReference LastCategoryFullName="Animation" LastDependency="VL.CoreLib.vl">
                   <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
                   <Choice Kind="ProcessAppFlag" Name="Damper (2D)" />
@@ -371,29 +372,107 @@
                 <Pin Id="Kh0SzwObepSLguxMLxt0NZ" Name="Force New Func" Kind="InputPin" IsHidden="true" />
               </Node>
             </Patch>
-            <ControlPoint Id="VdAnVsWsXXcM5Bjbcrc3Zz" Bounds="742,313" Alignment="Top" />
-            <ControlPoint Id="CN175N46Ky1NVpVZl8o1KO" Bounds="783,313" Alignment="Top" />
-            <ControlPoint Id="SnQdMo01ZX9N0LlF48CdUI" Bounds="742,389" Alignment="Bottom" />
+            <ControlPoint Id="VdAnVsWsXXcM5Bjbcrc3Zz" Bounds="672,463" Alignment="Top" />
+            <ControlPoint Id="CN175N46Ky1NVpVZl8o1KO" Bounds="713,463" Alignment="Top" />
+            <ControlPoint Id="SnQdMo01ZX9N0LlF48CdUI" Bounds="672,539" Alignment="Bottom" />
           </Node>
-          <Pad Id="RtAfuc0IXWbOv1r9wUNSlm" Comment="Range" Bounds="762,420,35,28" ShowValueBox="true" isIOBox="true" Value="1, 1">
+          <Pad Id="RtAfuc0IXWbOv1r9wUNSlm" Comment="Range" Bounds="692,570,35,28" ShowValueBox="true" isIOBox="true" Value="1, 1">
             <p:TypeAnnotation LastCategoryFullName="2D" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="Sxq0mdCQVjAOfjSMjlzekx" Comment="Amount" Bounds="842,635,53,15" ShowValueBox="true" isIOBox="true" Value="129.94">
+          <Pad Id="Sxq0mdCQVjAOfjSMjlzekx" Comment="Amount" Bounds="772,785,53,15" ShowValueBox="true" isIOBox="true" Value="129.94">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="UmSpeAmhvyfOdTHHB9kw0D" Comment="Prefix" Bounds="862,665,35,15" ShowValueBox="true" isIOBox="true" Value="€">
+          <Pad Id="UmSpeAmhvyfOdTHHB9kw0D" Comment="Prefix" Bounds="792,815,35,15" ShowValueBox="true" isIOBox="true" Value="€">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <ControlPoint Id="TQN3dpvp8hYPdXXRw0oFJO" Bounds="122,347" />
-          <Pad Id="ArremljQwtPO0PKH2fkSrN" Comment="Decimals" Bounds="882,695,35,15" ShowValueBox="true" isIOBox="true" Value="2">
+          <ControlPoint Id="TQN3dpvp8hYPdXXRw0oFJO" Bounds="122,452" />
+          <Pad Id="ArremljQwtPO0PKH2fkSrN" Comment="Decimals" Bounds="812,845,35,15" ShowValueBox="true" isIOBox="true" Value="2">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Integer32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="1200,585,80,19" Id="piyu9KhfiorCVY4zTvGN2T">
+            <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="OperationCallFlag" Name="TransformSRT" />
+              <CategoryReference Kind="Category" Name="Transform" NeedsToBeDirectParent="true">
+                <p:OuterCategoryReference Kind="Category" Name="2D" NeedsToBeDirectParent="true" />
+              </CategoryReference>
+            </p:NodeReference>
+            <Pin Id="F4Fs41na7DJlcOI2qqkrty" Name="Input" Kind="InputPin" />
+            <Pin Id="93oDjEKRJbHWBamUqx4YAL" Name="Scaling" Kind="InputPin" />
+            <Pin Id="4FwiyZI0EI2Ag9XpjYAm0K" Name="Rotation" Kind="InputPin" />
+            <Pin Id="fUEP1hIk1xkX6w8Bfpa7cY" Name="Translation" Kind="InputPin" DefaultValue="3.4, 1.5" />
+            <Pin Id="8loMLVtlQP9xbbeXsGlZMC" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Node Bounds="1270,685,65,19" Id="GKPVcrPPZuMEfQRZgIojWB">
+            <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <CategoryReference Kind="Category" Name="Qt" NeedsToBeDirectParent="true" />
+              <Choice Kind="OperationCallFlag" Name="Font" />
+            </p:NodeReference>
+            <Pin Id="uu61IS599pFyyQYXoFIpzC" Name="Family" Kind="InputPin" />
+            <Pin Id="PpS2xJ51aU9pdy2dAUoA0Q" Name="Size" Kind="InputPin" DefaultValue="0.22" />
+            <Pin Id="lRdegaTlJAMA3sfaRWIptp" Name="Weight" Kind="InputPin" DefaultValue="800" />
+            <Pin Id="TCYwNR6KUa200bkbTxgnzY" Name="Italic" Kind="InputPin" />
+            <Pin Id="fdjUZkObWDeGBwd0cnTt10" Name="Output" Kind="OutputPin" />
+          </Node>
+          <Pad Id="ULU7VGp5M7GG4nRGPGCO4K" Comment="Status" Bounds="1342,755,35,15" ShowValueBox="true" isIOBox="true" Value="1">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Integer32" />
+            </p:TypeAnnotation>
+          </Pad>
+          <Node Bounds="1200,795,145,19" Id="BvvIpXoKgL0uvvoMruNePL">
+            <p:NodeReference LastCategoryFullName="Qt.Elements.Qml" LastDependency="VL.Qt.Qml">
+              <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
+              <Choice Kind="ProcessNode" Name="ProfileCard" />
+            </p:NodeReference>
+            <p:HelpFocus p:Assembly="VL.Lang" p:Type="VL.Model.HelpPriority">Low</p:HelpFocus>
+            <Pin Id="cqPFjjMaOpwMNvCQYj7dSf" Name="Auto Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="3FfVkJsLRJlmUecjFTqxQk" Name="Size" Kind="InputPin" IsHidden="true" />
+            <Pin Id="v3MMullWZwV3ZwUFHfqx2Q" Name="Transform" Kind="InputPin" />
+            <Pin Id="WoZaHboIOWTavOQRtJntCb" Name="Anchor" Kind="InputPin" IsHidden="true" />
+            <Pin Id="95RR7P1jkwBI4JZxsFGRUs" Name="Name" Kind="InputPin" />
+            <Pin Id="WyT5yJgCLXsjYgk8gkxngt" Name="Background" Kind="InputPin" />
+            <Pin Id="M0ar8ZpgPiLoytUjWvlNbW" Name="Name Font" Kind="InputPin" />
+            <Pin Id="E6EixrbghwZrpU3Wrg2Hs6" Name="Photo" Kind="InputPin" />
+            <Pin Id="2V6HZtsKvAg4mZr2zeUIpJ" Name="Since" Kind="InputPin" />
+            <Pin Id="vra1DwLkdaoggmFq21rf07" Name="Status" Kind="InputPin" />
+            <Pin Id="c4EgadLAfIVRBfJWZDJ3hr" Name="Properties" Kind="InputPin" IsHidden="true" />
+            <Pin Id="r042ySw7hdVVhlo3CDE32w" Name="Opacity" Kind="InputPin" IsHidden="true" />
+            <Pin Id="7L8i7rWja8LxObJwqcntWq" Name="Clip" Kind="InputPin" IsHidden="true" />
+            <Pin Id="KUE7Rm606BERvSVzAqoXXg" Name="Debug" Kind="InputPin" IsHidden="true" />
+            <Pin Id="LJsSbT5Ig7dgVVxXiAdmxW" Name="Interaction" Kind="InputPin" IsHidden="true" />
+            <Pin Id="DiF0HvwTLftPtqu9MQspmN" Name="Effect" Kind="InputPin" IsHidden="true" />
+            <Pin Id="1Eo18hnt9Gba2iJhmIHPcO" Name="Enabled" Kind="InputPin" IsHidden="true" />
+            <Pin Id="PPcO13QifmEpv7qe4qFmMk" Name="Output" Kind="OutputPin" />
+            <Pin Id="1B9p1CFBUqcVj1iYrA5t7u" Name="Name" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="BSGkIRxyM65jfrafq5PpXM" Name="Background" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="ATSolmoXy9PLfWCcjWOY9F" Name="Name Font" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="7nFrodudkfVyzWOezh2PzQ" Name="Photo" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="CG9m4gIuA1H5jSZc9VzTPA" Name="Since" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="kIHdmHg1WwycUeK9knpJb3" Name="Status" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="wer4DvA1D21TxwRpMDCJuc" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
+            <Pin Id="NNeZlyYLiQ8dZlNBRhe2lQ" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
+          </Node>
+          <Pad Id="fspXyFv2d8gAo2zEKt21uX" Bounds="1223,851,481,99" ShowValueBox="true" isIOBox="true" Value="ProfileCard is generated from qml/ProfileCard.qml. Name and Background are aliases of its children (a Text and a Rectangle), Photo is a Path (its default is relative to the file), Name Font takes the Font node, Since a DateTime, Status the number of an enum value (Offline 0, Away 1, Online 2).">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
+              <Choice Kind="TypeFlag" Name="String" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:fontsize p:Type="Int32">9</p:fontsize>
+              <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="RrO2Y65mM9zLq2tOeKpx0v" Comment="Photo" Bounds="1295,725,140,15" ShowValueBox="true" isIOBox="true" Value="assets\qt-help-preload-3.png">
+            <p:TypeAnnotation LastCategoryFullName="IO" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Path" />
             </p:TypeAnnotation>
           </Pad>
         </Canvas>
@@ -435,6 +514,11 @@
         <Link Id="LFOgR6I62LcLIi2u7JEFrr" Ids="Sxq0mdCQVjAOfjSMjlzekx,johbuJCiurG77XwHC4agYC" />
         <Link Id="MZB0IWZO5YsM0aDIIII7G7" Ids="UmSpeAmhvyfOdTHHB9kw0D,vJlt9ZkUmtGYiNZTqQmyRI" />
         <Link Id="IulB552Km1oMTy95NY7oUX" Ids="ArremljQwtPO0PKH2fkSrN,hW5hdN4PCgFEjIBIR1NflJ" />
+        <Link Id="C8sro23gALoSKCDysdRLmh" Ids="8loMLVtlQP9xbbeXsGlZMC,v3MMullWZwV3ZwUFHfqx2Q" />
+        <Link Id="YGR8GFEo74koKGLdb6c0dW" Ids="fdjUZkObWDeGBwd0cnTt10,M0ar8ZpgPiLoytUjWvlNbW" />
+        <Link Id="WBNPQxaJD3eAoOrDE5aiGX" Ids="ULU7VGp5M7GG4nRGPGCO4K,vra1DwLkdaoggmFq21rf07" />
+        <Link Id="kPEWe3DyVBq6UTqwtdKfRi" Ids="PPcO13QifmEpv7qe4qFmMk,OibZtX2HBK7xCTSHOZRDYx" />
+        <Link Id="II5FmITjHIkOoDLqcbPo76" Ids="RrO2Y65mM9zLq2tOeKpx0v,E6EixrbghwZrpU3Wrg2Hs6" />
       </Patch>
     </Node>
   </Patch>

@@ -580,6 +580,10 @@ Item {
                     Add(owner, $"{key} | attr {attribute}");
 
                 var parameters = method.GetParameters().Select(_reader.GetParameter).ToDictionary(p => p.SequenceNumber);
+                // vvvv's name of a return pin without [return: Pin(Name = …)]: Output for a static method with a parameter "input" (the
+                // fluent form, SetRadius of the style nodes), Result for every other method (Sampler, the uniform nodes, ResolveState).
+                var hasInput = parameters.Values.Any(p => p.SequenceNumber > 0 && !p.Name.IsNil && _reader.GetString(p.Name) == "input");
+                var returnPinName = isStatic.Length > 0 && hasInput ? "Output" : "Result";
                 var order = new List<string>();
                 for (var i = 0; i < signature.ParameterTypes.Length; i++)
                 {
@@ -604,7 +608,7 @@ Item {
                 {
                     var found = parameters.TryGetValue(0, out var returnParameter);
                     var attributes = found ? Attributes(returnParameter.GetCustomAttributes()).ToList() : new List<string>();
-                    var pinName = found ? PinName(returnParameter, "Output") : "Output";
+                    var pinName = found ? PinName(returnParameter, returnPinName) : returnPinName;
                     var tail = attributes.Count > 0 ? " | " + string.Join(", ", attributes) : "";
                     Add(owner, $"{key} | pin {pinName} | out {signature.ReturnType}{tail} | (return)");
                     order.Add(pinName);
