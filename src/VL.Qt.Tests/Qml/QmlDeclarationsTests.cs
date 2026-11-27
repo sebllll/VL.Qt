@@ -604,6 +604,165 @@ namespace VL.Qt.Tests.Qml
             Assert.That(d.Messages[0].ToString(), Does.Not.Contain("line"));
         }
 
+        // ---- internal declarations --------------------------------------------------------------------------------------------
+
+        [Test]
+        public void InternalTag_ExcludesPropertyReadonlyPropertyAndSignal_WithoutAMessage()
+        {
+            var d = Parse("""
+                Item {
+                    // @internal
+                    property real shown: 1
+                    // @internal
+                    readonly property real chartTop: 2
+                    // @internal
+                    signal tick(real t)
+                    // @internal
+                    property var points
+                    // @internal
+                    property list<real> hidden: [1, 2]
+                    // Out: stays.
+                    readonly property real kept: 3
+                    signal done
+                }
+                """);
+
+            Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "kept" }));
+            Assert.That(d.Signals.Select(s => s.Name), Is.EqualTo(new[] { "done" }));
+            Assert.That(d.Messages, Is.Empty, "an internal 'var' property gives no info either");
+        }
+
+        [Test]
+        public void UnderscorePrefix_IsInternal()
+        {
+            var d = Parse("""
+                Item {
+                    property real _shown: 1
+                    readonly property real _top
+                    property var _data
+                    signal _tick
+                    signal _tock(real t)
+                    property real fine_name: 1
+                    property real fine
+                }
+                """);
+
+            Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "fine_name", "fine" }));
+            Assert.That(d.Signals, Is.Empty);
+            Assert.That(d.Messages, Is.Empty);
+        }
+
+        [Test]
+        public void InternalTag_InAMultiLineBlock_CountsAndTheRestIsNoSummary()
+        {
+            var d = Parse("""
+                Item {
+                    // Animated value of the bar.
+                    // @internal
+                    // Not a pin help.
+                    property real shown
+                    // @internal because it is derived (the tag may be followed by text)
+                    property real derived
+                    // @internalize
+                    property real a
+                    //@internal
+                    property real tightTag
+                    ///    @internal
+                    property real tripleSlash
+                    // Plain help: mentions @internal in the middle.
+                    property real b
+                }
+                """);
+
+            Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "a", "b" }), "only a line that starts with the tag counts");
+            Assert.That(Prop(d, "a").Summary, Is.EqualTo("@internalize"));
+            Assert.That(Prop(d, "b").Summary, Does.Contain("@internal in the middle"));
+        }
+
+        [Test]
+        public void InternalTag_NotDirectlyAbove_DoesNotLeak()
+        {
+            var d = Parse("""
+                Item {
+                    // @internal
+                    property real tagged
+
+                    property real afterBlank
+                    // @internal
+
+                    property real blankBetween
+                    // @internal
+                    property real second
+                    property real third
+                    // @internal
+                    signal hidden
+                    signal shown
+                    // @internal
+                    //
+                    property real afterEmptyComment
+                    Item {
+                        // @internal
+                        property real nested
+                    }
+                    property real last
+                }
+                """);
+
+            Assert.That(d.Properties.Select(p => p.Name),
+                Is.EqualTo(new[] { "afterBlank", "blankBetween", "third", "afterEmptyComment", "last" }));
+            Assert.That(d.Signals.Select(s => s.Name), Is.EqualTo(new[] { "shown" }));
+        }
+
+        [Test]
+        public void InternalDeclaration_OfAnUnsupportedType_GivesNoInfo_ButBrokenSyntaxStillWarns()
+        {
+            var d = Parse("""
+                Item {
+                    // @internal
+                    property alias inner: child.text
+                    // @internal
+                    property
+                    property var shown
+                }
+                """);
+
+            Assert.That(d.Messages.Select(m => (m.Severity, m.Text)), Is.EqualTo(new[]
+            {
+                (QmlMessageSeverity.Warning, "incomplete property declaration is skipped"),
+                (QmlMessageSeverity.Info, "property 'shown' (var)"),
+            }));
+        }
+
+        [Test]
+        public void InternalDeclarations_OfASibling_AreNotInherited_AndAnInternalRedeclarationDropsAnInheritedPin()
+        {
+            var siblings = new Dictionary<string, string>
+            {
+                ["Base"] = "Item {\n // @internal\n property real hidden\n property real _hidden2\n property real pinned: 1\n property real both: 2\n signal _quiet\n}",
+            };
+            var d = Parse("Base {\n // @internal\n property real both\n hidden: 5\n}", siblings);
+
+            Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "pinned" }));
+            Assert.That(d.Signals, Is.Empty);
+            Assert.That(d.Messages, Is.Empty);
+        }
+
+        [Test]
+        public void Signature_IgnoresInternalDeclarations_ButNotTheirTagging()
+        {
+            const string plain = "Item {\n property real a: 1\n signal done\n}";
+            var baseline = Parse(plain).Signature;
+
+            // Adding, editing, moving and removing internal declarations leaves the signature alone.
+            Assert.That(Parse("Item {\n property real a: 1\n // @internal\n readonly property real top: 1\n signal done\n}").Signature, Is.EqualTo(baseline));
+            Assert.That(Parse("Item {\n property real a: 1\n // @internal\n readonly property real top: 99\n // @internal\n signal tick(real t)\n signal done\n}").Signature, Is.EqualTo(baseline));
+            Assert.That(Parse("Item {\n property real _x: 1\n property real a: 1\n signal _y(int q)\n property var _data\n signal done\n}").Signature, Is.EqualTo(baseline));
+            Assert.That(Parse("Item {\n // Help of the internal one.\n // @internal\n property real top\n property real a: 1\n signal done\n}").Signature, Is.EqualTo(baseline));
+
+            // Taking the tag away makes it a pin: the signature changes.
+            Assert.That(Parse("Item {\n property real a: 1\n property real top: 1\n signal done\n}").Signature, Is.Not.EqualTo(baseline));
+        }
+
         // ---- head -------------------------------------------------------------------------------------------------------------
 
         [Test]
