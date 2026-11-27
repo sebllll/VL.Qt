@@ -15,6 +15,7 @@ QML is used inside VL.Qt for the control style and the effects, one `QQmlEngine`
 - **Only what the root declares comes back.** A `QmlWatcher` reports each `property` and `signal` that the root of the file declares, not what `Item` already has. It is connected before the bindings of the file run, so what QML derives from the initial values is reported.
 - **No echo of the value just set.** Only the value the patch has set is suppressed; a later change by QML (a `Behavior`, an animation, a binding) or a property that depends on it comes back. Because of this the patch can set a property and read it back without a feedback loop.
 - **Auto Size** takes `width` and `height` of the root, which are `implicitWidth` and `implicitHeight` unless the file sets an explicit size on its root.
+- **Input inside the file is part of the API** (issue #422), so that widgets can be written in QML. QtNative has no input routing of its own: it sends ordinary Qt events to the window, and the handlers of the `Interaction` pin are ordinary Qt handlers at the element ([input.md](input.md)), so a `MouseArea` in the file follows the same grab rules as they do. Two rules of the `FocusRelease` filter (`window/focus_release.h`) are fitted to widgets: a user QML element is one focus owner (a press inside it keeps the focus), and Esc releases the focus only in the built-in TextField and SpinBox (`discardEdit`, `elements/type_controls.cpp`); every other item gets Esc as a key. SmokeTest `qml-input`.
 - **Hot reload watches the folder of the file** (the file, `*.qml`, `qmldir`), not subfolders, `.js` files or images. On a change `QML_RELOAD` clears the component cache and rebuilds the instance. A new element of a file that changed on disk since the last compile reads the file again too (QtNative keeps size and modification time per engine), because a node rebuilt after a declaration change must not show the old version.
 
 ### Node factory
@@ -87,6 +88,8 @@ The rule "no JavaScript for logic" applies to the QML of the built-in elements o
 - **A native probe for the pins:** needs a running engine at node-browser time and loads user code; the parser needs neither.
 - **Animations that run free on wall time:** rejected; they follow the vvvv clock through the driver.
 - **An import filter for non-LGPL modules:** rejected; not shipping the modules is the simplest guarantee.
+- **Input only through the `Interaction` pin, QML input without guarantees:** rejected; it works through Qt's own delivery anyway, and without it a widget would have to be rebuilt from `Interaction` nodes and properties.
+- **Esc releases the focus in every element:** rejected; a keyboard-driven widget needs Esc itself. Discarding an edit belongs to the text inputs.
 
 ## Open questions
 

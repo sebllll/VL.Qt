@@ -32,7 +32,8 @@ A handler sends only changes against what its feedback got last (`HandlerSent`);
 
 - **Exclusive grab** (Tap, Drag): the topmost handler takes the press; those below get nothing. This is what makes the topmost element with a `Click` node take the click while `Hover` reaches all.
 - **Passive grab** (Point, Touch Points, Pinch): the handler sees the press and leaves it to others, so Tap, Point, Drag and Pinch at one item keep working together.
-- **Occlusion** (Touch Points, on by default): a press that an element on top already grabs exclusively (a Tap or Drag handler, a Button) is not taken. Exclusive grabs of handlers at the same item do not count.
+- **Occlusion** (Touch Points, on by default): a press that an element on top already grabs exclusively (a Tap or Drag handler, a Button, a `MouseArea` of user QML) is not taken. Exclusive grabs of handlers at the same item do not count.
+- **Input of the elements themselves** (Button and the value inputs, a `MouseArea` or handler inside user QML) takes part in the same delivery: the items of a user QML file are children of the element's item and lie above its handlers, so a `MouseArea` there takes the press before a Tap handler of the element. The SmokeTest scenario `qml-input` covers it.
 - **Text** with at least one handler hit-tests against its painted text rectangle (`TextMask` as `containmentMask`), not the item rectangle. Line- or glyph-exact testing is not done.
 
 ### Drag

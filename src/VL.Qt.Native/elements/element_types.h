@@ -149,4 +149,9 @@ TypeDef shaderType();     // type_shader.cpp
 TypeDef qmlType();        // type_qml.cpp
 TypeDef shapeType();      // type_shape.cpp
 
+/* Esc in the value inputs TextField and SpinBox (type_controls.cpp), called by the FocusRelease filter for the element
+ * that holds the focus: discards the running edit and returns true, the filter then releases the focus. Returns false
+ * for every other item, which receives Esc like any key. */
+bool discardEdit(QQuickItem* owner);
+
 } // namespace vlqt
