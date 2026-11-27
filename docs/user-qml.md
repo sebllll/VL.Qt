@@ -34,10 +34,21 @@ The same types go both ways:
 | `Vector2`, `Vector3`, `Vector4` | `vector2d`, `vector3d`, `vector4d` |
 | `Vector2` | `point` (x, y), `size` (width, height) |
 | `RectangleF` | `rect` |
+| `Spread<float>`, `Spread<int>`, `Spread<bool>`, `Spread<string>`, `Spread<Color4>`, `Spread<Vector2>`, `Spread<Vector3>`, `Spread<Vector4>`, `Spread<RectangleF>` | `list<real>` (also `list<double>`), `list<int>`, `list<bool>`, `list<string>`, `list<color>`, `list<vector2d>` (also `list<point>`, `list<size>`), `list<vector3d>`, `list<vector4d>`, `list<rect>` |
 
 - A value of another type, or `null`, is not sent: the node shows an error line and ignores the value.
 - Qt converts to the type of the QML property. A `float` set on an `int` property works, a string that is no number for a `real` property does not: error line, value ignored.
-- Back to the patch the same types arrive (integers outside the `int` range are clamped, a `url` arrives as a `string`, a `rect` as `RectangleF`, a `point` as `Vector2(x, y)`, a `size` as `Vector2(width, height)`). A signal argument of any other QML type (a list, an object) arrives as its string form. A property of such a type is not reported: the node shows one line for it.
+- Back to the patch the same types arrive (integers outside the `int` range are clamped, a `url` arrives as a `string`, a `rect` as `RectangleF`, a `point` as `Vector2(x, y)`, a `size` as `Vector2(width, height)`). A signal argument of any other QML type (an object, a list of objects) arrives as its string form. A property of such a type is not reported: the node shows one line for it.
+
+### Lists
+
+A `Spread` in the `Properties` dictionary goes to a QML property that is a `list<T>` or a `var`; a list property or a list argument of a signal comes back as a `Spread`:
+
+- The elements of the spread are of one of the types of the table above and there are at most **65536** of them; otherwise the node shows an error line naming the property and the value is not sent.
+- Qt converts the elements to the type of the property: a `Spread<Vector2>` fills a `list<point>`, a `list<size>` or a `list<vector2d>`, a `Spread<int>` a `list<real>`. An empty spread fits every list property. A `var` property gets a JavaScript array.
+- Back to the patch, a list whose elements all have one type arrives as a `Spread` of it (`int` and `real` mixed give a `Spread<float>`; an empty list keeps the type its property declares). A list without a common element type, such as `[1, "a"]` in a `var`, arrives as a string in JSON form.
+- A list of lists or of objects has no pin type. A signal argument of such a type arrives as its string form.
+- Two spreads are equal when their elements are, so a pin that gets the same content again sends nothing.
 
 ## What comes back
 
@@ -92,7 +103,7 @@ A QML **`Timer`** runs on wall time, it does not follow the frame clock. Use ani
 
 ## Nodes from QML files
 
-Instead of `QmlElement` with a `Properties` dictionary, a `.qml` file can become **a node of its own** with named pins, like the shader nodes from `qtshaders/`. Put the file in a folder named `qml/` next to the saved patch, or in the `qml/` folder of a package (subfolders count), and the node appears in the node browser, category `Qt.Elements.Qml`. Middle click on the node (or right click > Definition > Open) opens the `.qml` in your default editor. Help patch: `HowTo Create QML Nodes from Files` (example files in `help/Qt/qml/`). Decisions in [design/user-qml.md](design/user-qml.md).
+Instead of `QmlElement` with a `Properties` dictionary, a `.qml` file can become **a node of its own** with named pins, like the shader nodes from `qtshaders/`. Put the file in a folder named `qml/` next to the saved patch, or in the `qml/` folder of a package (subfolders count), and the node appears in the node browser, category `Qt.Elements.Qml`. Middle click on the node (or right click > Definition > Open) opens the `.qml` in your default editor. Help patch: `HowTo Create QML Nodes from Files` (example files `Gauge.qml` and `TrendCard.qml` in `help/Qt/qml/`; `TrendCard` takes its curve as a `list<point>` and its labels as a `list<string>`, both `Spread` pins). Decisions in [design/user-qml.md](design/user-qml.md).
 
 Experimental: the generated nodes can change like `QmlElement`, although vvvv shows no experimental mark on them (a node factory cannot set one, see [Limitations](#limitations-of-the-generated-nodes)).
 
@@ -112,25 +123,27 @@ Only the declarations of the **root object** count (nested objects and functions
 | Declaration | Input pin | Output pin |
 |---|---|---|
 | `property <type> name` | yes | the last value QML changed (optional pin) |
+| `property list<type> name` | yes, a `Spread` | the same, a `Spread` |
+| `readonly property list<type> name` | no | yes, a `Spread`, **visible** |
 | `property <type> name: <binding>` | yes | same, but **visible** |
 | `readonly property <type> name: …` | no | yes, **visible** |
 | `required property <type> name` | yes, always sent | optional |
 | `default property <type> name` | like `property` | like `property` |
 | `signal name` / `signal name()` | no | `bool`: true in the frame it fired |
-| `signal name(type a)` | no | `Spread<T>`: the values of the emissions of this frame |
+| `signal name(type a)` | no | `Spread<T>`: the values of the emissions of this frame (a `list<…>` argument gives a `Spread<Spread<T>>`) |
 | `signal name(type a, type b, …)` | no | `Spread<QmlSignal>`: one entry per emission, `Name` and `Arguments` |
 
-The types and their vvvv counterparts are those of [Value types](#value-types): `real`/`double` → `float`, `int`, `bool`, `string`, `color` → `Color4`, `vector2d/3d/4d` → `Vector2/3/4`, `point` and `size` → `Vector2`, `rect` → `RectangleF`. A signal argument of a type without a pin type (`var`, a list, an object) makes the pin a `Spread<object>`, the value arrives as its string form (or whatever supported type it has). Both argument spellings work: `signal moved(real x, real y)` and `signal moved(x: real, y: real)`; an argument without a name is called `arg1`, `arg2`, …
+The types and their vvvv counterparts are those of [Value types](#value-types): `real`/`double` → `float`, `int`, `bool`, `string`, `color` → `Color4`, `vector2d/3d/4d` → `Vector2/3/4`, `point` and `size` → `Vector2`, `rect` → `RectangleF`, and a `list<…>` of these → a `Spread` of the type ([Lists](#lists); `list<point>` and `list<size>` give a `Spread<Vector2>`). A signal argument of a type without a pin type (`var`, a list of other types, an object) makes the pin a `Spread<object>`, the value arrives as its string form (or whatever supported type it has). Both argument spellings work: `signal moved(real x, real y)` and `signal moved(x: real, y: real)`; an argument without a name is called `arg1`, `arg2`, …
 
 The input and the output of one property have **the same name** ("Accent Color" in and out), vvvv tells them apart by their kind. The output starts with the declared default, shows the last value QML changed, and goes back to the default after a reload of the file. A signal output is false/empty in every frame without an emission.
 
-Not given a pin: `property alias`, `var`, `list<…>`, object types (`Item`, `Rectangle`, …) and value types without a counterpart (`url`, `font`, `date`, …). The node lists them in one **info message** (the dot at the node), with their lines. Use the `Properties` pin for them, see below.
+Not given a pin: `property alias`, `var`, a `list<…>` of another type than the table above (a list of lists, `list<Item>`), object types (`Item`, `Rectangle`, …) and value types without a counterpart (`url`, `font`, `date`, …). The node lists them in one **info message** (the dot at the node), with their lines. Use the `Properties` pin for them, see below.
 
 ### Defaults, and when a value is sent
 
-- A **literal initializer** is the default of the pin: numbers (also hex and with a sign; an `int` needs a whole number, a `real` takes an integer too), `true`/`false`, strings (`"…"` or `'…'`), colours as `"#rgb"` / `"#rrggbb"` / `"#aarrggbb"` or a colour name, and `Qt.rgba`, `Qt.rgb`, `Qt.vector2d/3d/4d`, `Qt.point`, `Qt.size`, `Qt.rect` with numeric literal arguments. Colour names (`"tomato"`, case does not matter) come from Stride's colour table, with the `grey` spellings of the `gray` names, `transparent` and `rebeccapurple` added; an unknown name or hex form is not a literal. `Qt.rgba`/`Qt.rgb` take 0 to 1 per channel, a value outside that range makes it a binding.
-- A **binding** (`property real half: width / 2`), any other expression (also a literal of another type), or **no initializer** gives the default of the type (0, `false`, empty string, transparent black, …).
-- **Binding rule:** the patch sends a value only **after it differs from the declared default**; from then on every change is sent, also back to the default. Until then the pin is silent, so a binding or an initial value in the file stays alive and is not overwritten by the pin's default. Consequence: a pin that still shows its default does not "hold" that value in QML, it leaves the file in charge.
+- A **literal initializer** is the default of the pin: numbers (also hex and with a sign; an `int` needs a whole number, a `real` takes an integer too), `true`/`false`, strings (`"…"` or `'…'`), colours as `"#rgb"` / `"#rrggbb"` / `"#aarrggbb"` or a colour name, and `Qt.rgba`, `Qt.rgb`, `Qt.vector2d/3d/4d`, `Qt.point`, `Qt.size`, `Qt.rect` with numeric literal arguments. A **list** takes an array literal of such literals as its default (`[1, 2, 3]`, `["a", "b"]`, `[Qt.point(0, 1), Qt.point(1, 2)]`; line breaks and a trailing comma are fine, `[]` is the empty list). One element that is not a literal of the element type makes the whole initializer a binding. Colour names (`"tomato"`, case does not matter) come from Stride's colour table, with the `grey` spellings of the `gray` names, `transparent` and `rebeccapurple` added; an unknown name or hex form is not a literal. `Qt.rgba`/`Qt.rgb` take 0 to 1 per channel, a value outside that range makes it a binding.
+- A **binding** (`property real half: width / 2`), any other expression (also a literal of another type), or **no initializer** gives the default of the type (0, `false`, empty string, transparent black, an empty `Spread` for a list, …).
+- **Binding rule:** the patch sends a value only **after it differs from the declared default** (a list: after its elements differ, not its instance); from then on every change is sent, also back to the default. Until then the pin is silent, so a binding or an initial value in the file stays alive and is not overwritten by the pin's default. Consequence: a pin that still shows its default does not "hold" that value in QML, it leaves the file in charge.
 - A value is never "reset": setting a pin back to the default sends the default, it does not restore a binding.
 - A `required property` is sent from the first frame on: QtNative creates the root with the values of that frame as initial properties, so the file loads and the value is there from its first evaluation.
 
@@ -177,7 +190,7 @@ A change of `@category` or `@tags` moves the node: vvvv builds the node list aga
 
 ### The Properties pin (plan B)
 
-The generated node still has the optional `Properties` input (`Dictionary<string, object>`, hidden until you show it), the same as at `QmlElement`, for what gets no pin: an `alias`, a `var`, a list or object property. A pin of the node wins over a dictionary entry of the same name once the pin differs from its default. There is no `Properties` or `Signals` **output**, the typed pins replace them. Values of properties that get no pin do not come back to the patch.
+The generated node still has the optional `Properties` input (`Dictionary<string, object>`, hidden until you show it), the same as at `QmlElement`, for what gets no pin: an `alias`, a `var`, a list of another type or an object property. A pin of the node wins over a dictionary entry of the same name once the pin differs from its default. There is no `Properties` or `Signals` **output**, the typed pins replace them. Values of properties that get no pin do not come back to the patch.
 
 ### Hot reload of generated nodes
 
@@ -195,7 +208,7 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 ### Limitations of the generated nodes
 
 - **No experimental mark:** `QmlElement` carries `SymbolSmell.Experimental`, but vvvv's node building API has no smell for factory nodes. The generated nodes are experimental all the same.
-- **No pin** for `alias`, `var`, `list<…>`, object types and value types such as `url` or `font` (info message at the node, use `Properties`).
+- **No pin** for `alias`, `var`, lists of lists or of objects, object types and value types such as `url` or `font` (info message at the node, use `Properties`). A list has at most 65536 elements.
 - Only the **root object** is read, and only a sibling file of the same folder as root type (not an import from another folder or module).
 - The `qml/` folder is searched next to saved documents and in packages, not elsewhere. **Export:** the `qml/` folder next to the exported document is copied with its structure next to the exe (like `qtshaders/` and `fonts/`), where the node factory of the exported app finds it. The `qml/` folders of other documents and packages are not copied.
 - A node always represents one file: there is no `File` pin.
@@ -206,7 +219,7 @@ VL.Qt ships only the LGPL modules of Qt (see [QtNative deployment](design/deploy
 
 ## Out of scope
 
-- Pins for what has no type in the table of [Value types](#value-types) (`alias`, `var`, lists, objects): the `Properties` dictionary stays the interface for those, also at the generated nodes.
+- Pins for what has no type in the table of [Value types](#value-types) (`alias`, `var`, lists of lists or of objects, objects): the `Properties` dictionary stays the interface for those, also at the generated nodes.
 - C# objects or models handed to QML as context properties (the idea of Qt Bridge for C#, see [qt-bridge.md](design/qt-bridge.md)).
 - Calling QML functions from the patch.
 - Pointer input inside the QML file (`MouseArea`, handlers) is not part of the design; use the `Interaction` pin on the element. Use signals and properties to carry results back.
