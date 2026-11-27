@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
@@ -20,6 +21,8 @@ internal static class QtHost
     // Separate from s_syncRoot: the log callback takes that one on the Qt thread while EnsureStarted waits for the init.
     private static readonly object s_startLock = new();
     private static readonly StringBuilder s_log = new();
+    // Seconds since the process started, in front of every log line: a stalled pump shows as a gap between two lines.
+    private static readonly Stopwatch s_logClock = Stopwatch.StartNew();
     private static BlockingCollection<Action>? s_queue;
     private static Thread? s_thread;
     private static double s_time;
@@ -74,7 +77,7 @@ internal static class QtHost
     {
         try
         {
-            var line = $"[{level}] {Marshal.PtrToStringUTF8((IntPtr)category)}: {Marshal.PtrToStringUTF8((IntPtr)message)}";
+            var line = $"{s_logClock.Elapsed.TotalSeconds,9:F3} [{level}] {Marshal.PtrToStringUTF8((IntPtr)category)}: {Marshal.PtrToStringUTF8((IntPtr)message)}";
             lock (s_syncRoot)
                 s_log.AppendLine(line);
             if (line.Contains("qt.scenegraph.general: Loading backend software"))

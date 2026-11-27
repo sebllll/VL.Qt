@@ -61,7 +61,9 @@ enum vlqt_test_resource_kind {
 
 /* Sends a QMouseEvent (VLQT_MOUSE_MOVE with the buttons held, PRESS/RELEASE = left button, *_RIGHT = right button) or a
  * QEvent::Leave (VLQT_MOUSE_LEAVE, x/y ignored) to the window via QCoreApplication::sendEvent; x/y in window logical
- * pixels. Delivered synchronously, no processEvents needed. 0, VLQT_ERR_BAD_ARGUMENT unknown type. */
+ * pixels. Delivered synchronously, no processEvents needed. The events come from a test mouse (QPointingDevice,
+ * registered once), not from the system's core pointer, so the real cursor cannot cancel a held press. 0,
+ * VLQT_ERR_BAD_ARGUMENT unknown type. */
 VLQT_API int   vlqt_test_send_mouse(vlqt_scene* window, int type, float x, float y);
 /* Synthetic touch input. type = vlqt_touch for touch point id, x/y in window logical pixels. QtNative keeps the active
  * points per window and sends the complete QTouchEvent (TouchBegin/Update/End, every active point with its state,

@@ -294,11 +294,18 @@ public static class DeviceLostTest
             sw.Restart();
             Poll();
             infos.Clear();
-            double noneMs = -1;
+            double noneMs = -1, longestPump = 0, longestPumpAt = 0;
             IntPtr upload = IntPtr.Zero;
             while (sw.ElapsedMilliseconds < TimeoutMs)
             {
+                var pumpAt = sw.Elapsed.TotalMilliseconds;
                 Pump();
+                // A pump that blocks (the retry's, under load) shows here, not as a late retry.
+                if (sw.Elapsed.TotalMilliseconds - pumpAt > longestPump)
+                {
+                    longestPump = sw.Elapsed.TotalMilliseconds - pumpAt;
+                    longestPumpAt = pumpAt;
+                }
                 NativeTest.vlqt_test_device_info(SceneHandle.Null, out upload, out _);
                 if (upload == IntPtr.Zero)
                 {
@@ -312,7 +319,7 @@ public static class DeviceLostTest
             var retryMs = sw.Elapsed.TotalMilliseconds;
             s.Check(noneMs >= 0, $"round 3: no shared device after the failed creation ({noneMs:F0} ms)");
             // The retry comes about 1 s after the failed creation; a pump or two later on a slow runner.
-            s.Check(upload != IntPtr.Zero && retryMs < 2500, $"round 3: shared device created again after {retryMs:F0} ms ({upload:X})");
+            s.Check(upload != IntPtr.Zero && retryMs < 2500, $"round 3: shared device created again after {retryMs:F0} ms ({upload:X}; longest pump {longestPump:F0} ms from {longestPumpAt:F0} ms)");
 
             IntPtr da = Device(a), db = Device(b);
             while (sw.ElapsedMilliseconds < retryMs + TimeoutMs && (da == IntPtr.Zero || db == IntPtr.Zero))
