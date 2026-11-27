@@ -269,7 +269,10 @@ VLQT_API int       vlqt_scene_get_apply_error(vlqt_scene* scene, vlqt_apply_erro
  * docs/design/events-and-interaction.md, "The way back: feedback". */
 VLQT_API int       vlqt_scene_poll(vlqt_scene* scene, unsigned char* out, int cap, int* written, int* required);
 /* Size and device pixel ratio (vlqt_scene_metrics). Live values, cheap enough for every frame. Main thread. 0,
- * VLQT_ERR_NULL_HANDLE, VLQT_ERR_BAD_ARGUMENT null out. */
+ * VLQT_ERR_NULL_HANDLE, VLQT_ERR_BAD_ARGUMENT null out. A window in the space Normalized (scale follows the height) or
+ * PixelTopLeft (follows the dpr) does not render a pump in which its size or dpr changed after the last call: the lengths
+ * of the client were scaled with the old values. The render comes in the pump after the client has called this again;
+ * a client that never calls it is not held. */
 VLQT_API int       vlqt_scene_get_metrics(vlqt_scene* scene, vlqt_scene_metrics* out);
 /* Number of frames in which the scene changed since it was created (item/reconciler/video update(), polish, resize):
  * not every pump, and not the render a grab (vlqt_snapshot_start / _fit) triggers by itself, so a static scene keeps

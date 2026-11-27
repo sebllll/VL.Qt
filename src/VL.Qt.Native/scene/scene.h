@@ -69,6 +69,12 @@ public:
     quint32 space() const { return sceneSpace; }
     /* Root position from the space and the root size: top left, or the centre of the scene (follows resizes). */
     void updateRootOrigin();
+    /* What C# scaled the lengths with: the root height and the window's device pixel ratio at the last
+     * vlqt_scene_get_metrics (window scenes). The scale of Normalized follows the height, the one of PixelTopLeft the dpr. */
+    void noteMetricsRead(float height, float dpr);
+    /* Returns true if the scene is in a space whose scale follows the size or dpr, C# has read the metrics before, and
+     * the size or dpr changed since: a render now would draw the old lengths in the new size (RenderGate holds it). */
+    bool metricsStale() const;
 
     QQuickWindow* window;
     QQmlEngine* engine;
@@ -125,6 +131,8 @@ private:
     DebugOverlay* debug = nullptr; // child of contentItem, deleted in ~Scene
     ClearState clearState; // Clear pin, clear colour and the previous-frame layer of Clear off
     quint32 sceneSpace = VLQT_SPACE_DIP_TOP_LEFT; // Space pin state
+    bool metricsRead = false;                     // noteMetricsRead was called
+    float readHeight = 0, readDpr = 1;
     std::vector<QQuickItem*> retired; // destroyed former effect sources, deleted after the next frame
     std::vector<NamedEntry> entryScratch; // the checked entries of the SET_UNIFORMS / SET_QML_PROPERTIES being applied
 };
