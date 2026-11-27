@@ -250,7 +250,7 @@ namespace VL.Qt.Wire
             public const ushort Blending = 898;
             /// <summary>ivec2, Shader: grid subdivisions x, y &gt;= 1 (default 1, 1).</summary>
             public const ushort MeshResolution = 899;
-            /// <summary>string, QmlElement: absolute path of the .qml file, empty = nothing loaded.</summary>
+            /// <summary>string, QmlElement: absolute path of the .qml file, empty = nothing loaded; a new path forgets the property values.</summary>
             public const ushort QmlSource = 928;
             /// <summary>i32, QmlElement: counter, a new value reloads the same file.</summary>
             public const ushort QmlReload = 929;

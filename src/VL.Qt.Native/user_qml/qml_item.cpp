@@ -105,6 +105,12 @@ void QmlItem::setSource(QQmlEngine* engine, const QString& path)
 {
     if (engine == m_engine && path == m_path)
         return;
+    // The values belong to the old file: the patch sends all values for the new one after QML_SOURCE (protocol.h), and a
+    // name the new file does not declare would otherwise be applied again at every build ("the root has no such property").
+    if (path != m_path) {
+        m_values.clear();
+        m_order.clear();
+    }
     m_engine = engine;
     m_path = path;
     m_buildPending = true;

@@ -74,7 +74,7 @@ dotnet test src/VL.Qt.SmokeTest -c Release --filter TestCategory=rectangle
 tools/vvvvc.ps1 -File help/HelloWorld.vl
 ```
 
-`tools/build.ps1 -Test` writes the SmokeTest log and the grabbed PNGs to `build/smoke/`; exit code 0 means every step passed. Look at the PNGs when you change rendering. Rebuild QtNative (`tools/build-native.ps1` or `tools/build.ps1`) whenever you touch `src/VL.Qt.Native/`; `-SkipNative` is for C#-only changes.
+`tools/build.ps1 -Test` writes the SmokeTest log and the grabbed PNGs to `build/smoke/`; exit code 0 means every step passed. The next run deletes `build/smoke/`, so a failing run is also copied to `build/smoke-failed/<time>` (the last five stay) and the log of an intermittent failure survives the reruns. Every line of `smoke.log` starts with the seconds since the process started: a stalled pump shows as a gap. Look at the PNGs when you change rendering. Rebuild QtNative (`tools/build-native.ps1` or `tools/build.ps1`) whenever you touch `src/VL.Qt.Native/`; `-SkipNative` is for C#-only changes.
 
 The SmokeTest also has scenarios that measure (poll cost, `QtTexture` render threads, pump spikes, tearing); how to run and read them is in [Profiling](profiling.md#smoketest-measurement-scenarios). Options of a run (stress duration, update of the reference images, perf limits) are NUnit run settings or environment variables `VLQT_SMOKE_<NAME>`, listed in `src/VL.Qt.SmokeTest/Framework/SmokeParameters.cs`. The drift checks are unit tests (`ProtocolDriftTests`, `NativeLayoutTests`, `ApiDriftTests`), see [Change the protocol](#typical-workflows).
 

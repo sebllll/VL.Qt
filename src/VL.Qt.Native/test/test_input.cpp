@@ -94,13 +94,17 @@ const QPointingDevice* testTouchDevice()
     return s_device;
 }
 
-// One mouse for vlqt_test_queue_mouse, registered once like the touchscreen.
+// One mouse for every synthetic mouse and wheel input (vlqt_test_send_mouse / _send_wheel / _queue_mouse), registered
+// once like the touchscreen. Not Qt's "core pointer": QGuiApplication builds every real (OS) mouse event on that device
+// and so updates its point (position; grabs at a release) before the window's SystemInputFilter can drop the event; a
+// moving real cursor then cancelled a synthetic press that was held for a long press or an auto repeat.
 const QPointingDevice* testMouseDevice()
 {
     static QPointer<QPointingDevice> s_device;
     if (!s_device) {
         s_device = new QPointingDevice(QStringLiteral("vlqt test mouse"), testMouseSystemId, QInputDevice::DeviceType::Mouse,
-            QPointingDevice::PointerType::Generic, QInputDevice::Capability::Position | QInputDevice::Capability::Hover, 1, 3,
+            QPointingDevice::PointerType::Generic,
+            QInputDevice::Capability::Position | QInputDevice::Capability::Hover | QInputDevice::Capability::Scroll, 1, 3,
             QString(), QPointingDeviceUniqueId(), QCoreApplication::instance());
         QWindowSystemInterface::registerInputDevice(s_device);
     }
@@ -160,7 +164,7 @@ VLQT_API int vlqt_test_send_mouse(vlqt_scene* p, int type, float x, float y)
         }
         in.buttons = buttons;
         const QPointF local(x, y);
-        QMouseEvent ev(t, local, local, window->mapToGlobal(local), button, buttons, Qt::NoModifier, source);
+        QMouseEvent ev(t, local, local, window->mapToGlobal(local), button, buttons, Qt::NoModifier, source, testMouseDevice());
         if (!in.clock.isValid())
             in.clock.start();
         ev.setTimestamp(quint64(in.clock.elapsed()) + 1); // monotonic (TapHandler compares timestamps)
@@ -176,7 +180,7 @@ VLQT_API int vlqt_test_send_wheel(vlqt_scene* p, float x, float y, int dx, int d
         vlqt::test::TestInput& in = inputOf(h);
         const QPointF local(x, y);
         QWheelEvent ev(local, window->mapToGlobal(local), QPoint(), QPoint(dx, dy), in.buttons, Qt::NoModifier,
-            Qt::NoScrollPhase, false);
+            Qt::NoScrollPhase, false, Qt::MouseEventNotSynthesized, testMouseDevice());
         if (!in.clock.isValid())
             in.clock.start();
         ev.setTimestamp(quint64(in.clock.elapsed()) + 1);

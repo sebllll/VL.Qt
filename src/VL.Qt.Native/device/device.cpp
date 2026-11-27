@@ -241,11 +241,13 @@ void retryIfDue()
     t.start();
     if (!createDevice())
         return;
+    const double createMs = t.nsecsElapsed() / 1e6;
     // The listeners run blocking render-thread jobs that take the context lock (device.h, lock order).
     releaseFrameLocks();
     const int moved = handOver();
-    qCInfo(lcDevice, "shared device created again in %.1f ms: generation %u, %d window(s) handed over to device %p",
-        t.nsecsElapsed() / 1e6, s_generation, moved, static_cast<void*>(s_dev.Get()));
+    qCInfo(lcDevice, "shared device created again in %.1f ms (device %.1f ms, hand-over %.1f ms): generation %u, %d "
+        "window(s) handed over to device %p", t.nsecsElapsed() / 1e6, createMs, t.nsecsElapsed() / 1e6 - createMs,
+        s_generation, moved, static_cast<void*>(s_dev.Get()));
 }
 
 // Remaining references after the last own Release point to a leak (an object of the old device still alive).

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
@@ -323,12 +324,15 @@ public static class VideoTest
             Apply();
             Run(50);
         }
-        static (int handles, int threads, long priv) Usage()
+        // Threads: only those outside the Windows and .NET thread pools count (ThreadCensus). A Video's own threads (FFmpeg's
+        // decoder threads, Qt's player threads, the GPU driver's) start in their own modules and end with each destroy; the pool
+        // workers left by earlier scenarios start and retire during the cycles at any time.
+        static (int handles, Dictionary<string, int> threads, long priv) Usage()
         {
             GC.Collect();
             GC.WaitForPendingFinalizers();
             using var p = Process.GetCurrentProcess();
-            return (p.HandleCount, p.Threads.Count, p.PrivateMemorySize64);
+            return (p.HandleCount, ThreadCensus.Take(), p.PrivateMemorySize64);
         }
         for (uint i = 0; i < 3; i++) Cycle(100 + i); // warm-up: plugins, decoders, caches
         Run(300);
@@ -337,10 +341,12 @@ public static class VideoTest
         for (uint i = 0; i < Cycles; i++) Cycle(200 + i);
         Run(500);
         var u1 = Usage();
+        int threads0 = ThreadCensus.OutsidePools(u0.threads), threads1 = ThreadCensus.OutsidePools(u1.threads);
         s.Info($"leak check over {Cycles} cycles (create, play, file change, destroy): handles {u0.handles} -> {u1.handles}, " +
-            $"threads {u0.threads} -> {u1.threads}, private {u0.priv / 1048576.0:F1} -> {u1.priv / 1048576.0:F1} MB");
+            $"threads outside the thread pools {threads0} -> {threads1} (all {u0.threads.Values.Sum()} -> {u1.threads.Values.Sum()}; " +
+            $"by start module: {ThreadCensus.Diff(u0.threads, u1.threads)}), private {u0.priv / 1048576.0:F1} -> {u1.priv / 1048576.0:F1} MB");
         s.Check(u1.handles - u0.handles < 40, $"no handle leak ({u0.handles} -> {u1.handles})");
-        s.Check(u1.threads - u0.threads <= 3, $"no thread leak ({u0.threads} -> {u1.threads})");
+        s.Check(threads1 - threads0 <= 3, $"no thread leak outside the thread pools ({threads0} -> {threads1}; {ThreadCensus.Diff(u0.threads, u1.threads)})");
         s.Check(u1.priv - u0.priv < 40L << 20, $"no memory leak ({(u1.priv - u0.priv) / 1048576.0:F1} MB)");
 
         Native.vlqt_scene_destroy(w);
