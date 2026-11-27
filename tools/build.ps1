@@ -2,7 +2,8 @@
 # Usage: tools/build.ps1 [-Rid win-arm64|win-x64] [-Configuration Release|Debug] [-SkipNative] [-ForceDeploy]
 #                        [-Test] [-Only <scenario,...>] [-SmokeTimeout <s>] [-Patch <doc.vl>]
 #   -Test   unit tests (VL.Qt.Tests, VL.Qt.Audio.Tests) + SmokeTest via `dotnet test src/VL.Qt.SmokeTest` (build/smoke/: smoke.trx,
-#           checks.tsv, smoke.log, grabs/); -Only a,b = NUnit filter TestCategory=a|TestCategory=b (the scenario names).
+#           checks.tsv, smoke.log, grabs/; a failing run is also copied to build/smoke-failed/<time>, the last five are kept);
+#           -Only a,b = NUnit filter TestCategory=a|TestCategory=b (the scenario names).
 #           The QtTexture thread modes, device-lost etc. are own-process tests inside the run (no separate steps).
 #   -SmokeTimeout  seconds: hang timeout of the test host and ScenarioTimeoutSeconds of the SmokeTest (default 600)
 #   -Patch  compile-checks a patch with vvvvc (tools/vvvvc.ps1), e.g. -Patch "help/Qt/HowTo Draw a Rectangle.vl"
@@ -157,6 +158,16 @@ if ($Test)
             foreach ($l in $bad) { Write-Host ('FAIL check: ' + ($l -replace "`t", ' | ')) -ForegroundColor Red }
         }
         if ($counters) { Write-Host ('{0} passed, {1} failed, {2} not executed of {3} tests; trx + grabs + logs: {4}' -f $counters.passed, $counters.failed, $counters.notExecuted, $counters.total, $out) }
+        # The next run deletes build/smoke: a failing run's logs (the evidence of an intermittent failure) go to
+        # build/smoke-failed/<time>, the last five are kept.
+        if ($exit -or -not $counters -or [int]$counters.failed -gt 0)
+        {
+            $kept = Join-Path "$repo\build\smoke-failed" (Get-Date -Format 'yyMMdd-HHmmss')
+            New-Item -ItemType Directory -Force "$repo\build\smoke-failed" | Out-Null
+            Copy-Item $out $kept -Recurse
+            Get-ChildItem "$repo\build\smoke-failed" -Directory | Sort-Object Name -Descending | Select-Object -Skip 5 | Remove-Item -Recurse -Force
+            Write-Host "logs of the failing run kept in $kept"
+        }
         if ($exit) { throw "dotnet test exit $exit, see $out\dotnet-test.log" }
         # an unknown -Only name selects nothing, and dotnet test would still exit 0
         if (-not $counters -or ([int]$counters.executed + $warned) -eq 0) { throw "no SmokeTest ran (filter: $Only), see $out\dotnet-test.log" }
