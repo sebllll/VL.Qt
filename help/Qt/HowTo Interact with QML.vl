@@ -34,7 +34,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Node Bounds="120,250,80,19" Id="Y89oRNXQnQD20oujBqbIE6">
+          <Node Bounds="100,200,80,19" Id="Y89oRNXQnQD20oujBqbIE6">
             <p:NodeReference LastCategoryFullName="2D.Transform" LastDependency="CoreLibBasics.vl">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="OperationCallFlag" Name="TransformSRT" />
@@ -48,7 +48,7 @@
             <Pin Id="HCMOoQA2MOXd88eNwvOBmn" Name="Translation" Kind="InputPin" DefaultValue="1.5, 1.5" />
             <Pin Id="J7Qp6vR1Sz1F4yWw8crM32" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="100,300,65,19" Id="UCmhVvoIb3aEbjmpdtDYJY">
+          <Node Bounds="100,300,51,19" Id="UCmhVvoIb3aEbjmpdtDYJY">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Qml" LastDependency="VL.Qt.Qml">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessNode" Name="Stepper" />
@@ -83,9 +83,9 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="5HuwgQo0SzgXITxvbOr2OH" Comment="Value" Bounds="124,350,60,15" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="98kqVYfPSQYSmYtwGh1nYD" Comment="Committed" Bounds="144,380,60,40" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="wOjevXY3BKgqWmRXacRujx" Bounds="216,386,360,20" ShowValueBox="true" isIOBox="true" Value="Committed: Value at the moment of Enter or of the mouse release">
+          <Pad Id="5HuwgQo0SzgXITxvbOr2OH" Comment="Value" Bounds="125,350,60,15" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="98kqVYfPSQYSmYtwGh1nYD" Comment="Committed" Bounds="148,390,60,40" ShowValueBox="true" isIOBox="true" />
+          <Pad Id="wOjevXY3BKgqWmRXacRujx" Bounds="300,389,360,20" ShowValueBox="true" isIOBox="true" Value="Committed: Value at the moment of Enter or of the mouse release">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -99,7 +99,7 @@
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
           </Pad>
-          <Node Bounds="100,495,85,19" Id="2uZnd5gWv1oJ6Zqdj7jOGX">
+          <Node Bounds="100,600,105,19" Id="2uZnd5gWv1oJ6Zqdj7jOGX">
             <p:NodeReference LastCategoryFullName="Qt" LastDependency="VL.Qt.dll">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessAppFlag" Name="Renderer" />
@@ -111,10 +111,10 @@
             <Pin Id="GcpqGdltHra5KWgvuEjEea" Name="Dialog If Document Changed" Kind="InputPin" IsHidden="true" />
             <Pin Id="lMf8FPcOWBOHYVgLbjuV8l" Name="Save Bounds" Kind="InputPin" IsHidden="true" />
             <Pin Id="IopYLF0zeYugEIUWJSNtKn" Name="Input" Kind="InputPin" />
-            <Pin Id="iXxcDkTCLYZmKNa8hWCV14" Name="Space" Kind="InputPin" IsHidden="true" />
-            <Pin Id="dATmZle8RezzMdU8GF7zoL" Name="Clear Color" Kind="InputPin" IsHidden="true" />
+            <Pin Id="iXxcDkTCLYZmKNa8hWCV14" Name="Space" Kind="InputPin" />
+            <Pin Id="dATmZle8RezzMdU8GF7zoL" Name="Clear Color" Kind="InputPin" />
             <Pin Id="fH2iQYxztW6Zxw2eOXGcW5" Name="Clear" Kind="InputPin" IsHidden="true" />
-            <Pin Id="nQfiAXsFtuqFyY6Z1GkzzS" Name="Enabled" Kind="InputPin" IsHidden="true" />
+            <Pin Id="nQfiAXsFtuqFyY6Z1GkzzS" Name="Enabled" Kind="InputPin" />
             <Pin Id="loaCgf1Hb47ewmRxOEAN0c" Name="Title" Kind="InputPin" />
             <Pin Id="YiR5TYii7h1RL6WJO9PWAa" Name="Is Visible" Kind="OutputPin" IsHidden="true" />
             <Pin Id="ZLzR4ue2gSztEKfi4bKyQb" Name="Perf" Kind="OutputPin" IsHidden="true" />
@@ -126,7 +126,7 @@
             <Pin Id="yejBJQCP5L1X6J4qsVWL5y" Name="Multisample Count" Kind="InputPin" IsHidden="true" />
             <Pin Id="LXn9E9fr0A48GfwYrT2ZKv" Name="Enable Keyboard Shortcuts" Kind="InputPin" />
           </Node>
-          <Pad Id="vImqF1iHXDyLj7c5OPZ7Dx" Bounds="216,488,420,34" ShowValueBox="true" isIOBox="true" Value="Enable Keyboard Shortcuts (default on): the Renderer keeps F2, F5 to F7, F11 and Alt+Enter. Off: they reach the QML.">
+          <Pad Id="vImqF1iHXDyLj7c5OPZ7Dx" Bounds="249,580,420,34" ShowValueBox="true" isIOBox="true" Value="Enable Keyboard Shortcuts (default on): the Renderer keeps F2, F5 to F7, F11 and Alt+Enter. Off: they reach the QML.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -135,13 +135,21 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="KW1jPTWYg3d3mVAbqvQaFC" Bounds="85,545,840,150" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The mouse is grabbed while a button is down, so dragging outside the bar still sets Value (clamped to 0..1). A press that no input item of the file takes goes on to the Interaction handlers of the element and to the elements below.&#xA;- Focus: a press on an item that calls forceActiveFocus gives it the keys. The element counts as one widget, a press elsewhere on it keeps the focus, a click outside the element gives the focus back and the frame goes.&#xA;- Left and Right change Value by Step, Enter and Return fire Committed. Keys the file does not handle go on to the parents; Esc reaches the file like any other key.&#xA;- Value (in) sends only when it changes, so the patch and the mouse do not fight over the bar. Value (out) shows the last value QML set.&#xA;- The Renderer keeps F2, F5, F6, F7 (diagnostics), F11 and Alt+Enter (fullscreen) while Enable Keyboard Shortcuts is on; switch it off and all of them reach the file.&#xA;- Hot reload during a press ends the press: the release clicks nothing. Setting the focus from the patch is not possible.">
+          <Pad Id="KW1jPTWYg3d3mVAbqvQaFC" Bounds="85,650,840,150" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The mouse is grabbed while a button is down, so dragging outside the bar still sets Value (clamped to 0..1). A press that no input item of the file takes goes on to the Interaction handlers of the element and to the elements below.&#xA;- Focus: a press on an item that calls forceActiveFocus gives it the keys. The element counts as one widget, a press elsewhere on it keeps the focus, a click outside the element gives the focus back and the frame goes.&#xA;- Left and Right change Value by Step, Enter and Return fire Committed. Keys the file does not handle go on to the parents; Esc reaches the file like any other key.&#xA;- Value (in) sends only when it changes, so the patch and the mouse do not fight over the bar. Value (out) shows the last value QML set.&#xA;- The Renderer keeps F2, F5, F6, F7 (diagnostics), F11 and Alt+Enter (fullscreen) while Enable Keyboard Shortcuts is on; switch it off and all of them reach the file.&#xA;- Hot reload during a press ends the press: the release clicks nothing. Setting the focus from the patch is not possible.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
             <p:ValueBoxSettings>
               <p:fontsize p:Type="Int32">9</p:fontsize>
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
+            </p:ValueBoxSettings>
+          </Pad>
+          <Pad Id="N080exyuifuL0yw3DZNwiW" Comment="Enable Keyboard Shortcuts" Bounds="202,560,35,35" ShowValueBox="true" isIOBox="true" Value="False">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="ImmutableTypeFlag" Name="Boolean" />
+            </p:TypeAnnotation>
+            <p:ValueBoxSettings>
+              <p:buttonmode p:Assembly="VL.UI.Forms" p:Type="VL.HDE.PatchEditor.Editors.ButtonModeEnum">Toggle</p:buttonmode>
             </p:ValueBoxSettings>
           </Pad>
         </Canvas>
@@ -156,6 +164,7 @@
           <Fragment Id="oUJO9PVJY8IttFHYSE0Tvi" Patch="AmevxoijOlH6Vr6G5tQ62G" Enabled="true" />
           <Fragment Id="js8Fdk8U82nYaDSNKn31ll" Patch="KiCWnFHqzs2bhapVDY7ZEa" Enabled="true" />
         </ProcessDefinition>
+        <Link Id="LBDI9jVywYfPPOWLiv5Jln" Ids="N080exyuifuL0yw3DZNwiW,LXn9E9fr0A48GfwYrT2ZKv" />
       </Patch>
     </Node>
   </Patch>
