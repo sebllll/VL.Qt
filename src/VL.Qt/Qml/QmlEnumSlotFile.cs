@@ -128,6 +128,9 @@ namespace VL.Qt.Qml
             var temp = path + ".tmp";
             try
             {
+                // Replacing a file by rename only needs write access to the folder on Unix, so a read-only file would be overwritten there.
+                if (File.Exists(path) && File.GetAttributes(path).HasFlag(FileAttributes.ReadOnly))
+                    return false;
                 File.WriteAllText(temp, Format(map), new UTF8Encoding(false));
                 File.Move(temp, path, overwrite: true);
                 return true;
