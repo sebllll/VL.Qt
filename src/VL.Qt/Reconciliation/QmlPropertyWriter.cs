@@ -2,6 +2,7 @@
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Wire;
+using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Reconciliation
 {
@@ -50,6 +51,14 @@ namespace VL.Qt.Reconciliation
             }
         }
 
+        private static string[] PathTexts(Spread<Path> paths)
+        {
+            var texts = new string[paths.Count];
+            for (int i = 0; i < texts.Length; i++)
+                texts[i] = paths[i]?.Value ?? string.Empty;
+            return texts;
+        }
+
         // The vector, color and rect element types are plain runs of floats (checked by a test), so they go over as floats.
         private static void WriteList(ICommandSink sink, string name, object? items)
         {
@@ -59,6 +68,8 @@ namespace VL.Qt.Reconciliation
                 case Spread<int> s: sink.QmlPropertyListI32(name, s.AsSpan()); break;
                 case Spread<bool> s: sink.QmlPropertyListBool(name, s.AsSpan()); break;
                 case Spread<string> s: sink.QmlPropertyListString(name, s.AsSpan()); break;
+                // Only when the list changed, so the array of texts is no allocation per frame.
+                case Spread<Path> s: sink.QmlPropertyListString(name, PathTexts(s)); break;
                 case Spread<Color4> s: sink.QmlPropertyListF32(name, Protocol.ValueType.Color, MemoryMarshal.Cast<Color4, float>(s.AsSpan())); break;
                 case Spread<Vector2> s: sink.QmlPropertyListF32(name, Protocol.ValueType.Vec2, MemoryMarshal.Cast<Vector2, float>(s.AsSpan())); break;
                 case Spread<Vector3> s: sink.QmlPropertyListF32(name, Protocol.ValueType.Vec3, MemoryMarshal.Cast<Vector3, float>(s.AsSpan())); break;

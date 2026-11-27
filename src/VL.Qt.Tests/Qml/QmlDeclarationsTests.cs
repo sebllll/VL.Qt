@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Qml;
+using VLPath = VL.Lib.IO.Path;
 
 namespace VL.Qt.Tests.Qml
 {
@@ -88,7 +89,7 @@ namespace VL.Qt.Tests.Qml
             var d = Parse(File.ReadAllText(Path.Combine(RepoRoot(), "src", "VL.Qt.SmokeTest", "assets", "QmlTypes.qml")));
 
             Assert.That(d.Messages, Is.Empty);
-            Assert.That(d.Properties, Has.Length.EqualTo(46));
+            Assert.That(d.Properties, Has.Length.EqualTo(50));
             var kinds = new Dictionary<string, QmlValueKind>
             {
                 ["r"] = QmlValueKind.Real, ["i"] = QmlValueKind.Int, ["b"] = QmlValueKind.Bool, ["s"] = QmlValueKind.String,
@@ -97,6 +98,7 @@ namespace VL.Qt.Tests.Qml
                 ["rl"] = QmlValueKind.RealList, ["dl"] = QmlValueKind.RealList, ["il"] = QmlValueKind.IntList, ["bl"] = QmlValueKind.BoolList,
                 ["sl"] = QmlValueKind.StringList, ["cl"] = QmlValueKind.ColorList, ["ptl"] = QmlValueKind.PointList, ["szl"] = QmlValueKind.SizeList,
                 ["v2l"] = QmlValueKind.Vector2DList, ["v3l"] = QmlValueKind.Vector3DList, ["v4l"] = QmlValueKind.Vector4DList, ["boxl"] = QmlValueKind.RectList,
+                ["u"] = QmlValueKind.Url, ["ul"] = QmlValueKind.UrlList,
             };
             foreach (var (name, kind) in kinds)
             {
@@ -118,6 +120,7 @@ namespace VL.Qt.Tests.Qml
             Assert.That(Prop(d, "sz").Default, Is.EqualTo(Vector2.Zero));
             Assert.That(Prop(d, "b").Default, Is.EqualTo(false));
             Assert.That(Prop(d, "s").Default, Is.EqualTo(string.Empty));
+            Assert.That(Prop(d, "u").Default, Is.EqualTo(new VLPath(string.Empty)));
             foreach (var (name, kind) in kinds.Where(k => QmlTypes.IsList(k.Value)))
                 Assert.That(Prop(d, name).Default, Is.InstanceOf(QmlTypes.ClrType(kind)).And.Empty, name);
             Assert.That(d.Signals.Select(x => x.Name), Is.EqualTo(new[] { "located", "measured", "tagged", "placed" }));
@@ -183,6 +186,35 @@ namespace VL.Qt.Tests.Qml
             AssertColor(new Color4(0f, 0f, 0f, 0f), Prop(d, "p").Default);
             Assert.That(((Color4)Prop(d, "q").Default).R, Is.EqualTo(169 / 255f).Within(1e-4));
             Assert.That(Prop(d, "r").Default, Is.EqualTo(5f));
+        }
+
+        [Test]
+        public void UrlLiterals_AreKeptAsWritten_ForTheLayoutToResolve()
+        {
+            var d = Parse("""
+                Item {
+                    property url a: "img/a.png"
+                    property url b: Qt.resolvedUrl("b.png")
+                    property url c: "https://example.com/c.png"
+                    property url none
+                    property url bound: other.source
+                    property url call: Qt.resolvedUrl(name)
+                    property list<url> list: ["x.png", "qrc:/y.png",]
+                    property list<url> mixed: ["x.png", 1]
+                }
+                """);
+
+            Assert.That(d.Messages, Is.Empty);
+            Assert.That(Prop(d, "a").Default, Is.EqualTo(new VLPath("img/a.png")));
+            Assert.That(Prop(d, "b").Default, Is.EqualTo(new VLPath("b.png")));
+            Assert.That(Prop(d, "c").Default, Is.EqualTo(new VLPath("https://example.com/c.png")));
+            Assert.That(Prop(d, "none").Initializer, Is.EqualTo(QmlInitializer.None));
+            Assert.That(Prop(d, "none").Default, Is.EqualTo(new VLPath(string.Empty)));
+            Assert.That(Prop(d, "bound").Initializer, Is.EqualTo(QmlInitializer.Binding));
+            Assert.That(Prop(d, "call").Initializer, Is.EqualTo(QmlInitializer.Binding));
+            Assert.That(Prop(d, "list").Default, Is.EqualTo(new[] { new VLPath("x.png"), new VLPath("qrc:/y.png") }.ToSpread()));
+            Assert.That(Prop(d, "mixed").Initializer, Is.EqualTo(QmlInitializer.Binding));
+            Assert.That(Prop(d, "mixed").Default, Is.EqualTo(Spread<VLPath>.Empty));
         }
 
         [Test]
@@ -281,14 +313,13 @@ namespace VL.Qt.Tests.Qml
                     property list<Item> kids
                     property list<var> any
                     property list<list<int>> nested
-                    property list<url> urls
                     property list<> none
                     property list<int> fine
                 }
                 """);
 
             Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "fine" }));
-            Assert.That(d.Messages, Has.Length.EqualTo(5));
+            Assert.That(d.Messages, Has.Length.EqualTo(4));
             Assert.That(d.Messages.All(m => m.Severity == QmlMessageSeverity.Info), Is.True);
         }
 
@@ -585,7 +616,6 @@ namespace VL.Qt.Tests.Qml
                     property var data
                     property list<Item> kids
                     property Item target
-                    property url source
                     property font f
                     default property alias content: row.children
                     property real fine: 1
@@ -594,7 +624,7 @@ namespace VL.Qt.Tests.Qml
                 """);
 
             Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "fine" }));
-            Assert.That(d.Messages, Has.Length.EqualTo(7));
+            Assert.That(d.Messages, Has.Length.EqualTo(6));
             Assert.That(d.Messages.All(m => m.Severity == QmlMessageSeverity.Info), Is.True);
             Assert.That(d.Messages[0].Line, Is.EqualTo(2));
             Assert.That(d.Messages[0].Text, Does.Contain("inner").And.Contain("alias"));

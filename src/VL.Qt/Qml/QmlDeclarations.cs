@@ -92,6 +92,7 @@ namespace VL.Qt.Qml
                 int i => i.ToString(CultureInfo.InvariantCulture),
                 bool b => b ? "true" : "false",
                 string s => s,
+                VL.Lib.IO.Path p => p.Value ?? string.Empty,
                 Color4 c => $"{F(c.R)},{F(c.G)},{F(c.B)},{F(c.A)}",
                 Vector2 v => $"{F(v.X)},{F(v.Y)}",
                 Vector3 v => $"{F(v.X)},{F(v.Y)},{F(v.Z)}",

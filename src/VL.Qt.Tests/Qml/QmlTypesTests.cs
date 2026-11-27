@@ -4,6 +4,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Qml;
+using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Tests.Qml
 {
@@ -51,6 +52,7 @@ namespace VL.Qt.Tests.Qml
         [TestCase("list<rect>", QmlValueKind.RectList)]
         [TestCase("list<point>", QmlValueKind.PointList)]
         [TestCase("list<size>", QmlValueKind.SizeList)]
+        [TestCase("list<url>", QmlValueKind.UrlList)]
         [TestCase("list< real >", QmlValueKind.RealList)]
         public void TryMap_ListOfASupportedType(string type, QmlValueKind expected)
         {
@@ -60,7 +62,6 @@ namespace VL.Qt.Tests.Qml
 
         [TestCase("list<Item>")]
         [TestCase("list<var>")]
-        [TestCase("list<url>")]
         [TestCase("list<list<int>>")]
         [TestCase("list<>")]
         [TestCase("list<")]
@@ -72,6 +73,44 @@ namespace VL.Qt.Tests.Qml
         public void TryMap_ListOfAnythingElse_HasNoPin(string? type)
         {
             Assert.That(QmlTypes.TryMap(type, out _), Is.False);
+        }
+
+        [Test]
+        public void Url_IsAPathPin_WithTheEmptyPathAsDefault()
+        {
+            Assert.That(QmlTypes.TryMap("url", out var kind), Is.True);
+            Assert.That(kind, Is.EqualTo(QmlValueKind.Url));
+            Assert.That(QmlTypes.ClrType(kind), Is.EqualTo(typeof(Path)));
+            Assert.That(QmlTypes.TypeDefault(kind), Is.EqualTo(new Path(string.Empty)));
+        }
+
+        [Test]
+        public void UrlToPath_FileUrlIsTheLocalPath_OtherSchemesStay_RelativeIsResolvedAgainstTheFolder()
+        {
+            var parent = System.IO.Path.GetTempPath();
+            var folder = System.IO.Path.Combine(parent, "vlqt urls");
+            var local = System.IO.Path.Combine(folder, "a b ä.png");
+            Assert.That(QmlTypes.UrlToPath(new Uri(local).AbsoluteUri, folder).Value, Is.EqualTo(local), "file URL, encoded");
+            Assert.That(QmlTypes.UrlToPath(local, folder).Value, Is.EqualTo(local), "a local path");
+            Assert.That(QmlTypes.UrlToPath("https://example.com/a.png", folder).Value, Is.EqualTo("https://example.com/a.png"));
+            Assert.That(QmlTypes.UrlToPath("qrc:/img/a.png", folder).Value, Is.EqualTo("qrc:/img/a.png"));
+            Assert.That(QmlTypes.UrlToPath("img/a.png", folder).Value, Is.EqualTo(System.IO.Path.GetFullPath(System.IO.Path.Combine(folder, "img/a.png"))));
+            Assert.That(QmlTypes.UrlToPath("../a.png", folder).Value, Is.EqualTo(System.IO.Path.Combine(parent, "a.png")));
+            Assert.That(QmlTypes.UrlToPath("img/a.png", null).Value, Is.EqualTo("img/a.png"), "no folder: stays relative");
+            Assert.That(QmlTypes.UrlToPath(string.Empty, folder).Value, Is.Empty);
+        }
+
+        [Test]
+        public void TryCoerce_Url_TakesTheTextFromQml_AndAPath()
+        {
+            var folder = System.IO.Path.GetTempPath();
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.Url, "img/a.png", out var r, folder), Is.True);
+            Assert.That(r, Is.EqualTo(QmlTypes.UrlToPath("img/a.png", folder)));
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.Url, new Path("x.png"), out r), Is.True);
+            Assert.That(r, Is.EqualTo(new Path("x.png")));
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.Url, 1f, out _), Is.False);
+            Assert.That(QmlTypes.TryCoerce(QmlValueKind.UrlList, (new[] { "https://example.com/a.png", "b.png" }).ToSpread(), out r, folder), Is.True);
+            Assert.That(r, Is.EqualTo((new[] { new Path("https://example.com/a.png"), QmlTypes.UrlToPath("b.png", folder) }).ToSpread()));
         }
 
         [Test]

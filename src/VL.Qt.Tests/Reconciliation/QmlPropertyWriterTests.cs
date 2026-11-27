@@ -89,6 +89,13 @@ namespace VL.Qt.Tests.Reconciliation
         }
 
         [Test]
+        public void Paths_AreSentAsTheirText_AlsoInAList()
+        {
+            var cmds = Write(Props(("u", new Path("C:/a b.png")), ("ul", new[] { new Path("a.png"), new Path("qrc:/b.png") }.ToSpread())), null, out _);
+            Assert.That(cmds, Is.EqualTo(new[] { "QML 7 0 u=string(C:/a b.png) ul=list<" + Protocol.ValueType.String + ">(a.png,qrc:/b.png)" }));
+        }
+
+        [Test]
         public void ListElementsOfNullString_AreEmpty()
         {
             var cmds = Write(Props(("s", new[] { "a", null!, "" }.ToSpread())), null, out _);

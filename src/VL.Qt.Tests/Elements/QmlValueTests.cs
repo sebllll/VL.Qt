@@ -34,6 +34,7 @@ namespace VL.Qt.Tests.Elements
             yield return new TestCaseData(new Vector3(1, 2, 3), Protocol.ValueType.Vec3);
             yield return new TestCaseData(new Vector4(1, 2, 3, 4), Protocol.ValueType.Vec4);
             yield return new TestCaseData(new RectangleF(1, 2, 3, 4), Protocol.ValueType.Rectf);
+            yield return new TestCaseData(new Path("C:/a.png"), Protocol.ValueType.String);
         }
 
         [TestCaseSource(nameof(Supported))]
@@ -60,6 +61,9 @@ namespace VL.Qt.Tests.Elements
             Assert.That(i.Integer, Is.EqualTo(-5));
             QmlValue.TryConvert("hi", out var s);
             Assert.That(s.Text, Is.EqualTo("hi"));
+            QmlValue.TryConvert(new Path("img/a b.png"), out var p);
+            Assert.That(p.Text, Is.EqualTo("img/a b.png"), "the text of the path, as it is");
+            Assert.That(p, Is.EqualTo(s with { Text = "img/a b.png" }), "the same wire value as the string");
         }
 
         private static IEnumerable<TestCaseData> Unsupported()
@@ -105,7 +109,7 @@ namespace VL.Qt.Tests.Elements
         public void Describe_UnsupportedType() =>
             Assert.That(QmlValue.Describe("t", 5L),
                 Is.EqualTo("Property 't': type Int64 is not supported, ignored "
-                    + "(use float, int, bool, string, Color4, Vector2/3/4 or RectangleF, or a Spread of one of them)"));
+                    + "(use float, int, bool, string, Path, Color4, Vector2/3/4 or RectangleF, or a Spread of one of them)"));
 
         [Test]
         public void Describe_UnsupportedSpread_NamesTheElementType() =>
@@ -134,6 +138,7 @@ namespace VL.Qt.Tests.Elements
             yield return new TestCaseData(new[] { new RectangleF(1, 2, 3, 4) }.ToSpread(), Protocol.ValueType.Rectf);
             yield return new TestCaseData(Spread<float>.Empty, Protocol.ValueType.F32);
             yield return new TestCaseData(Spread<string>.Empty, Protocol.ValueType.String);
+            yield return new TestCaseData(new[] { new Path("a.png"), new Path("https://example.com/b.png") }.ToSpread(), Protocol.ValueType.String);
         }
 
         [TestCaseSource(nameof(Lists))]
@@ -189,6 +194,7 @@ namespace VL.Qt.Tests.Elements
             Spread<Vector3> s => s.ToArray().ToSpread(),
             Spread<Vector4> s => s.ToArray().ToSpread(),
             Spread<RectangleF> s => s.ToArray().ToSpread(),
+            Spread<Path> s => s.ToArray().Select(x => new Path(new string(x.Value.AsSpan()))).ToArray().ToSpread(),
             _ => throw new ArgumentException(spread.GetType().Name),
         };
 

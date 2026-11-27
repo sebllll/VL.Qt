@@ -36,6 +36,8 @@ namespace VL.Qt.Qml
         Point,
         /// <summary>QML <c>size</c> → Stride Vector2 (width, height).</summary>
         Size,
+        /// <summary>QML <c>url</c> → Path (wire string; a local file is a path, any other URL its text).</summary>
+        Url,
         // The list kinds follow the element kinds in the same order: QmlTypes.ElementKind and ListKind count on it.
         /// <summary>QML <c>list&lt;real&gt;</c> or <c>list&lt;double&gt;</c> → Spread&lt;float&gt;.</summary>
         RealList,
@@ -59,5 +61,7 @@ namespace VL.Qt.Qml
         PointList,
         /// <summary>QML <c>list&lt;size&gt;</c> → Spread&lt;Vector2&gt; (width, height).</summary>
         SizeList,
+        /// <summary>QML <c>list&lt;url&gt;</c> → Spread&lt;Path&gt;.</summary>
+        UrlList,
     }
 }

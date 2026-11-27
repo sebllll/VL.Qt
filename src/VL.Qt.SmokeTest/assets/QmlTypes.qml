@@ -55,6 +55,12 @@ Item {
     property list<rect> boxl
     property list<rect> boxlOut: boxl
 
+    // A url takes the text the patch sends: an absolute local path becomes a file URL, any other text stays as written.
+    property url u: ""
+    property url uOut: u
+    property list<url> ul
+    property list<url> ulOut: ul
+
     // A signal argument of the type point arrives as a Vector2, like the property.
     signal located(point p)
     onPtChanged: located(pt)

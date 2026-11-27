@@ -2,6 +2,7 @@
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Wire;
+using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Elements
 {
@@ -10,14 +11,15 @@ namespace VL.Qt.Elements
     /// value equality is exact (<see cref="ExactComparer"/>: Stride's own is a near-equal compare) and no boxing
     /// is left after the conversion. Color and rect use <c>A..D</c> (r, g, b, a / x, y, width, height).
     /// A list (<see cref="Protocol.ValueType.List"/>) keeps the patch's spread in <see cref="Items"/> (Spread&lt;T&gt; of float, int,
-    /// bool, string, Color4, Vector2, Vector3, Vector4 or RectangleF, not copied) and the wire type of its elements in
+    /// bool, string, Path, Color4, Vector2, Vector3, Vector4 or RectangleF, not copied) and the wire type of its elements in
     /// <see cref="Integer"/>; two lists are equal when their elements are, compared exactly like the scalars.
     /// </summary>
     internal readonly record struct QmlValue(ushort ValueType, float A, float B, float C, float D, int Integer, string? Text, object? Items = null)
     {
         /// <summary>
-        /// Converts a patch value: float and double → real (f32), int, bool, string, Color4 → color, Vector2/3/4 → vector2d/3d/4d,
-        /// RectangleF → rect, a Spread of one of float, int, bool, string, Color4, Vector2/3/4 or RectangleF → list.
+        /// Converts a patch value: float and double → real (f32), int, bool, string, Path → string (QtNative makes the url of a url
+        /// property from it), Color4 → color, Vector2/3/4 → vector2d/3d/4d, RectangleF → rect, a Spread of one of float, int, bool,
+        /// string, Path, Color4, Vector2/3/4 or RectangleF → list.
         /// Anything else (also null) is not supported. No allocation.
         /// </summary>
         public static bool TryConvert(object? value, out QmlValue result)
@@ -29,6 +31,7 @@ namespace VL.Qt.Elements
                 case int i: result = new QmlValue(Protocol.ValueType.I32, 0, 0, 0, 0, i, null); return true;
                 case bool b: result = new QmlValue(Protocol.ValueType.Bool, 0, 0, 0, 0, b ? 1 : 0, null); return true;
                 case string s: result = new QmlValue(Protocol.ValueType.String, 0, 0, 0, 0, 0, s); return true;
+                case Path p: result = new QmlValue(Protocol.ValueType.String, 0, 0, 0, 0, 0, p.Value ?? string.Empty); return true;
                 case Color4 c: result = new QmlValue(Protocol.ValueType.Color, c.R, c.G, c.B, c.A, 0, null); return true;
                 case Vector2 v2: result = new QmlValue(Protocol.ValueType.Vec2, v2.X, v2.Y, 0, 0, 0, null); return true;
                 case Vector3 v3: result = new QmlValue(Protocol.ValueType.Vec3, v3.X, v3.Y, v3.Z, 0, 0, null); return true;
@@ -63,6 +66,7 @@ namespace VL.Qt.Elements
                 case Spread<int> s: elementType = Protocol.ValueType.I32; count = s.Count; return true;
                 case Spread<bool> s: elementType = Protocol.ValueType.Bool; count = s.Count; return true;
                 case Spread<string> s: elementType = Protocol.ValueType.String; count = s.Count; return true;
+                case Spread<Path> s: elementType = Protocol.ValueType.String; count = s.Count; return true;
                 case Spread<Color4> s: elementType = Protocol.ValueType.Color; count = s.Count; return true;
                 case Spread<Vector2> s: elementType = Protocol.ValueType.Vec2; count = s.Count; return true;
                 case Spread<Vector3> s: elementType = Protocol.ValueType.Vec3; count = s.Count; return true;
@@ -83,7 +87,7 @@ namespace VL.Qt.Elements
             if (TryGetListInfo(value, out _, out _))
                 return $"Property '{name}': a list can have at most {Protocol.ListValueMaxCount} elements, ignored";
             return $"Property '{name}': type {TypeName(value.GetType())} is not supported, ignored "
-                + "(use float, int, bool, string, Color4, Vector2/3/4 or RectangleF, or a Spread of one of them)";
+                + "(use float, int, bool, string, Path, Color4, Vector2/3/4 or RectangleF, or a Spread of one of them)";
         }
 
         private static string TypeName(Type type)
@@ -114,6 +118,7 @@ namespace VL.Qt.Elements
                 Spread<int> a => y is Spread<int> b && a.AsSpan().SequenceEqual(b.AsSpan()),
                 Spread<bool> a => y is Spread<bool> b && a.AsSpan().SequenceEqual(b.AsSpan()),
                 Spread<string> a => y is Spread<string> b && StringsEqual(a.AsSpan(), b.AsSpan()),
+                Spread<Path> a => y is Spread<Path> b && a.AsSpan().SequenceEqual(b.AsSpan()),
                 Spread<Color4> a => y is Spread<Color4> b && ExactComparer.FloatsEqual<Color4>(a.AsSpan(), b.AsSpan()),
                 Spread<Vector2> a => y is Spread<Vector2> b && ExactComparer.FloatsEqual<Vector2>(a.AsSpan(), b.AsSpan()),
                 Spread<Vector3> a => y is Spread<Vector3> b && ExactComparer.FloatsEqual<Vector3>(a.AsSpan(), b.AsSpan()),
@@ -144,6 +149,7 @@ namespace VL.Qt.Elements
                 case Spread<int> s: hash.Add(s.Count); foreach (var v in s.AsSpan()) hash.Add(v); break;
                 case Spread<bool> s: hash.Add(s.Count); foreach (var v in s.AsSpan()) hash.Add(v); break;
                 case Spread<string> s: hash.Add(s.Count); foreach (var v in s.AsSpan()) hash.Add(v, StringComparer.Ordinal); break;
+                case Spread<Path> s: hash.Add(s.Count); foreach (var v in s.AsSpan()) hash.Add(v); break;
                 case Spread<Color4> s: ExactComparer.HashFloats<Color4>(ref hash, s.AsSpan()); break;
                 case Spread<Vector2> s: ExactComparer.HashFloats<Vector2>(ref hash, s.AsSpan()); break;
                 case Spread<Vector3> s: ExactComparer.HashFloats<Vector3>(ref hash, s.AsSpan()); break;

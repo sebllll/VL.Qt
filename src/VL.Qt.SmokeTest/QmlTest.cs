@@ -439,6 +439,23 @@ public static class QmlTest
         recs = Poll();
         s.Check(Err(HT) == "" && Props(recs, HT, "rlOut") is [Spread<float> r5] && r5.SequenceEqual(new[] { 5f }), $"good lists clear the errors ('{Err(HT)}', {S(recs)})");
 
+        // url: the text of a Path. An absolute local path (here with a space and an umlaut) comes back as the file URL of that path;
+        // a URL with a scheme and a relative one come back as sent (QML resolves a relative url where it is used, not when it is set).
+        static bool SameUrl(string back, string sent) => System.IO.Path.IsPathFullyQualified(sent)
+            ? Uri.TryCreate(back, UriKind.Absolute, out var u) && u.IsFile && System.IO.Path.GetFullPath(u.LocalPath) == System.IO.Path.GetFullPath(sent)
+            : back == sent;
+        var localFile = System.IO.Path.Combine(work, "bilder ä", "a.png");
+        foreach (var sent in new[] { localFile, "https://example.com/a.png", "qrc:/img/a.png", "img/a.png", "" })
+        {
+            SetProps(T, p => p.String("u", sent));
+            CheckApply($"SET url '{sent}'");
+            recs = Poll();
+            s.Check(Props(recs, HT, "uOut") is [string ub] && SameUrl(ub, sent) && Err(HT) == "", $"url '{sent}' round trip ({S(recs)}; error '{Err(HT)}')");
+        }
+        var urls = new[] { localFile, "https://example.com/b.png", "img/c.png" };
+        ListRoundTrip(T, HT, "ul", "urls", p => p.ListString("ul", urls), urls, SameUrl);
+        ListRoundTrip(T, HT, "ul", "empty", p => p.ListString("ul"), Array.Empty<string>());
+
         // ---- 4c. a list in a var property, lists that QML makes itself --------------------------------------------------------
         Qml(LS, HLS, qmlLists, 500, 200);
         CheckApply("create QmlElement (QmlLists.qml)");

@@ -4,17 +4,20 @@ using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
+using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Qml
 {
     /// <summary>
     /// Pin model mapping of the QML node factory: QML type name → <see cref="QmlValueKind"/> → CLR pin type → wire value
     /// (<see cref="QmlValue"/>). A <c>list&lt;T&gt;</c> of a type listed here gets a list kind (<see cref="ListKind"/>) and a Spread pin.
-    /// Everything else (<c>alias</c>, <c>var</c>, lists of other types, <c>url</c>, <c>font</c>, enums, object types) gets no pin;
+    /// Everything else (<c>alias</c>, <c>var</c>, lists of other types, <c>font</c>, enums, object types) gets no pin;
     /// the parser reports it as an info message.
     /// </summary>
     internal static class QmlTypes
     {
+        private static readonly Path s_emptyPath = new(string.Empty);
+
         /// <summary>Returns true if <paramref name="qmlType"/> (as written in the declaration, e.g. "real") gets a pin.</summary>
         public static bool TryMap(string? qmlType, out QmlValueKind kind)
         {
@@ -48,6 +51,7 @@ namespace VL.Qt.Qml
                 case "rect": kind = QmlValueKind.Rect; return true;
                 case "point": kind = QmlValueKind.Point; return true;
                 case "size": kind = QmlValueKind.Size; return true;
+                case "url": kind = QmlValueKind.Url; return true;
                 default: kind = default; return false;
             }
         }
@@ -64,6 +68,7 @@ namespace VL.Qt.Qml
             QmlValueKind.Vector3D => typeof(Vector3),
             QmlValueKind.Vector4D => typeof(Vector4),
             QmlValueKind.Rect => typeof(RectangleF),
+            QmlValueKind.Url => typeof(Path),
             QmlValueKind.RealList => typeof(Spread<float>),
             QmlValueKind.IntList => typeof(Spread<int>),
             QmlValueKind.BoolList => typeof(Spread<bool>),
@@ -73,6 +78,7 @@ namespace VL.Qt.Qml
             QmlValueKind.Vector3DList => typeof(Spread<Vector3>),
             QmlValueKind.Vector4DList => typeof(Spread<Vector4>),
             QmlValueKind.RectList => typeof(Spread<RectangleF>),
+            QmlValueKind.UrlList => typeof(Spread<Path>),
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
 
@@ -91,7 +97,7 @@ namespace VL.Qt.Qml
 
         /// <summary>
         /// The value QML gives a property of this kind without initializer, used as pin default when the file has no literal:
-        /// 0, false, "", transparent (0, 0, 0, 0), zero vectors, point and size, empty rect, the empty spread for a list.
+        /// 0, false, "", transparent (0, 0, 0, 0), zero vectors, point and size, empty rect, the empty path, the empty spread for a list.
         /// </summary>
         public static object TypeDefault(QmlValueKind kind) => kind switch
         {
@@ -104,6 +110,7 @@ namespace VL.Qt.Qml
             QmlValueKind.Vector3D => Vector3.Zero,
             QmlValueKind.Vector4D => Vector4.Zero,
             QmlValueKind.Rect => RectangleF.Empty,
+            QmlValueKind.Url => s_emptyPath,
             QmlValueKind.RealList => Spread<float>.Empty,
             QmlValueKind.IntList => Spread<int>.Empty,
             QmlValueKind.BoolList => Spread<bool>.Empty,
@@ -113,18 +120,38 @@ namespace VL.Qt.Qml
             QmlValueKind.Vector3DList => Spread<Vector3>.Empty,
             QmlValueKind.Vector4DList => Spread<Vector4>.Empty,
             QmlValueKind.RectList => Spread<RectangleF>.Empty,
+            QmlValueKind.UrlList => Spread<Path>.Empty,
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
 
         /// <summary>
+        /// A url as QML gives it (its text), or a url literal of the file, as the Path of a pin: a local path and a <c>file:</c> URL
+        /// are the local path, a URL with another scheme (<c>http:</c>, <c>qrc:</c>, …) stays as written, and a relative one is
+        /// resolved against <paramref name="baseFolder"/> (the folder of the .qml file; null keeps it relative), as QML resolves a
+        /// url literal against its file.
+        /// </summary>
+        public static Path UrlToPath(string url, string? baseFolder)
+        {
+            if (url.Length == 0)
+                return s_emptyPath;
+            // Before the URI test: "C:/x" would read as a URL of the scheme "c".
+            if (System.IO.Path.IsPathFullyQualified(url))
+                return new Path(url);
+            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                return new Path(uri.IsFile ? uri.LocalPath : url);
+            return new Path(baseFolder is null ? url : System.IO.Path.GetFullPath(System.IO.Path.Combine(baseFolder, url)));
+        }
+
+        /// <summary>
         /// Returns true if <paramref name="value"/> (a value from QtNative: EVENT_QML_PROPERTY or a signal argument) fits a pin of
         /// <paramref name="kind"/>; <paramref name="result"/> is then of <see cref="ClrType"/>. Converts the cases QML mixes
-        /// (int ↔ float for a number), refuses everything else (e.g. a string for a color).
+        /// (int ↔ float for a number), the text of a url into a Path (<see cref="UrlToPath"/>, relative to <paramref name="baseFolder"/>),
+        /// refuses everything else (e.g. a string for a color).
         /// </summary>
-        public static bool TryCoerce(QmlValueKind kind, object? value, out object result)
+        public static bool TryCoerce(QmlValueKind kind, object? value, out object result, string? baseFolder = null)
         {
             if (IsList(kind))
-                return TryCoerceList(kind, value, out result);
+                return TryCoerceList(kind, value, out result, baseFolder);
 
             switch (kind, value)
             {
@@ -140,13 +167,16 @@ namespace VL.Qt.Qml
                 case (QmlValueKind.Vector3D, Vector3 v): result = v; return true;
                 case (QmlValueKind.Vector4D, Vector4 v): result = v; return true;
                 case (QmlValueKind.Rect, RectangleF r): result = r; return true;
+                case (QmlValueKind.Url, Path p): result = p; return true;
+                case (QmlValueKind.Url, string s): result = UrlToPath(s, baseFolder); return true;
                 default: result = TypeDefault(kind); return false;
             }
         }
 
         // A list kind takes the Spread<T> of the decoder (T = CLR element type of the wire): an empty spread fits every list kind,
-        // Spread<int> and Spread<float> convert element by element like the scalars, the rest has to be of the pin type.
-        private static bool TryCoerceList(QmlValueKind kind, object? value, out object result)
+        // Spread<int> and Spread<float> convert element by element like the scalars, the texts of urls into Paths, the rest has to be of
+        // the pin type.
+        private static bool TryCoerceList(QmlValueKind kind, object? value, out object result, string? baseFolder)
         {
             if (value is not null && value.GetType() == ClrType(kind))
             {
@@ -163,6 +193,9 @@ namespace VL.Qt.Qml
                     return true;
                 case (QmlValueKind.IntList, Spread<float> floats) when floats.All(static f => float.IsFinite(f)):
                     result = floats.Select(static f => (int)MathF.Round(f)).ToSpread();
+                    return true;
+                case (QmlValueKind.UrlList, Spread<string> urls):
+                    result = urls.Select(u => UrlToPath(u, baseFolder)).ToSpread();
                     return true;
                 default:
                     result = TypeDefault(kind);

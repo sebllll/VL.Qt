@@ -4,6 +4,7 @@
 #include "wire.h"
 
 #include <QtCore/QDebug>
+#include <QtCore/QDir>
 #include <QtCore/QJsonArray>
 #include <QtCore/QJsonDocument>
 #include <QtCore/QJsonValue>
@@ -173,6 +174,10 @@ int convertTyped(const QVariantList& in, QMetaType target, QVariant& out)
     list.reserve(in.size());
     for (const QVariant& e : in) {
         QVariant c = adaptVector2D(e, elem);
+        if constexpr (std::is_same_v<T, QUrl>) {
+            if (c.metaType() == QMetaType::fromType<QString>())
+                c = urlFromPatch(c.toString());
+        }
         if (c.metaType() != elem && !c.convert(elem))
             return 0;
         list.push_back(c.value<T>());
@@ -193,6 +198,16 @@ void listToString(const QVariantList& list, QmlWireValue& out)
 }
 
 } // namespace
+
+QUrl urlFromPatch(const QString& text)
+{
+    if (text.isEmpty())
+        return QUrl();
+    // QDir::isAbsolutePath knows drive letters and UNC paths; fromLocalFile takes both separators and encodes spaces and non-ASCII.
+    if (QDir::isAbsolutePath(text))
+        return QUrl::fromLocalFile(QDir::fromNativeSeparators(text));
+    return QUrl(text);
+}
 
 QVariant adaptVector2D(const QVariant& v, QMetaType target)
 {
@@ -262,7 +277,7 @@ bool convertListToType(const QVariantList& list, QMetaType target, QVariant& out
     }
     int result = -1;
     const auto tryTypes = [&](auto... t) { ((result = result >= 0 ? result : convertTyped<decltype(t)>(list, target, out)), ...); };
-    tryTypes(double{}, int{}, bool{}, QString{}, QColor{}, QPointF{}, QSizeF{}, QVector2D{}, QVector3D{}, QVector4D{}, QRectF{});
+    tryTypes(double{}, int{}, bool{}, QString{}, QUrl{}, QColor{}, QPointF{}, QSizeF{}, QVector2D{}, QVector3D{}, QVector4D{}, QRectF{});
     return result == 1;
 }
 

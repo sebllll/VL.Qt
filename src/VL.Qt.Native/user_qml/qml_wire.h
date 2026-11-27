@@ -3,11 +3,13 @@
  * toWireValue turns a QVariant (a root property or a signal argument) into one of the value types of the protocol:
  * bool, the integer types (clamped to i32), real (f32), string/url, color, vector2d/3d/4d, rect, and the QML types
  * `point` and `size`, which both arrive as VEC2 (x, y) and (width, height), and lists of these as LIST (protocol.h "Values").
- * The other direction of a list: listFromWire and convertListToType.
+ * The other direction of a list: listFromWire and convertListToType; a url property takes the text the patch sends through
+ * urlFromPatch.
  */
 #pragma once
 
 #include <QtCore/QByteArray>
+#include <QtCore/QUrl>
 #include <QtCore/QVariant>
 
 #include <vector>
@@ -45,8 +47,15 @@ bool toWireValueOrString(const QVariant& v, QmlWireValue& out, QString* error);
  * element type (f32 -> double, i32 -> int, bool, string, color -> QColor, rectf -> QRectF, vec2/3/4 -> QVector2D/3D/4D). */
 QVariant listFromWire(WireReader& r);
 
-/* A QVariantList from listFromWire as the type `target` of a property: QList<qreal>, <int>, <bool>, <QString>, <QColor>,
- * <QPointF>, <QSizeF> (from VEC2), <QVector2D>, <QVector3D>, <QVector4D>, <QRectF>, or QVariantList / var as they are.
+/* The url of a url property for the text the patch sends (a Path or a string): an absolute local path (drive letter or UNC, either
+ * separator) is a file URL; any other text is read as a URL, so "https:", "qrc:" and "file:" stay as written and
+ * a relative one stays relative (the item that uses it resolves it against its file, QML's rule). QVariant's own conversion would
+ * read a path with a drive letter as a URL whose scheme is the letter. */
+QUrl urlFromPatch(const QString& text);
+
+/* A QVariantList from listFromWire as the type `target` of a property: QList<qreal>, <int>, <bool>, <QString>, <QUrl> (through
+ * urlFromPatch), <QColor>, <QPointF>, <QSizeF> (from VEC2), <QVector2D>, <QVector3D>, <QVector4D>, <QRectF>, or QVariantList / var
+ * as they are.
  * false = no such list type or an element does not convert. */
 bool convertListToType(const QVariantList& list, QMetaType target, QVariant& out);
 

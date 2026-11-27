@@ -6,6 +6,7 @@ using System.Reflection;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using static VL.Qt.Qml.QmlLexer;
+using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Qml
 {
@@ -108,6 +109,20 @@ namespace VL.Qt.Qml
                         return true;
                     }
                     return false;
+                case QmlValueKind.Url:
+                    // "images/a.png" or Qt.resolvedUrl("images/a.png") as written: QmlNodeLayout resolves it against the folder of the file.
+                    if (e - s == 1 && t[s].Kind == TokenKind.String)
+                    {
+                        value = new Path(t[s].Value ?? string.Empty);
+                        return true;
+                    }
+                    if (e - s == 6 && t[s].IsIdent("Qt") && t[s + 1].IsPunct('.') && t[s + 2].IsIdent("resolvedUrl") && t[s + 3].IsPunct('(')
+                        && t[s + 4].Kind == TokenKind.String && t[s + 5].IsPunct(')'))
+                    {
+                        value = new Path(t[s + 4].Value ?? string.Empty);
+                        return true;
+                    }
+                    return false;
                 default:
                     return false;
             }
@@ -168,6 +183,7 @@ namespace VL.Qt.Qml
                 QmlValueKind.Vector3D => Build<Vector3>(items),
                 QmlValueKind.Vector4D => Build<Vector4>(items),
                 QmlValueKind.Rect => Build<RectangleF>(items),
+                QmlValueKind.Url => Build<Path>(items),
                 _ => throw new ArgumentOutOfRangeException(nameof(kind)),
             };
             return true;
