@@ -162,6 +162,34 @@ namespace VL.Qt.Tests.Qml
         }
 
         [Test]
+        public void Send_TinyChange_IsSent_NotSwallowedByStridesNearEqual()
+        {
+            var instance = Create(new[] { Prop("offset", QmlValueKind.Vector2D), Prop("frames", QmlValueKind.RectList) });
+            var tiny = new Vector2(MathF.BitIncrement(0f), 0);
+            Assume.That(tiny, Is.EqualTo(Vector2.Zero), "Stride's Equals calls the two equal");
+            Set(instance, 0, tiny);
+            var e = Frame(instance);
+            Assert.That(e.Properties.TryGetValue("offset", out var v) && v.A == tiny.X, Is.True, "tiny step away from the default: sent");
+
+            var next = new Vector2(1, 2);
+            Set(instance, 0, next);
+            Frame(instance);
+            var after = new Vector2(MathF.BitIncrement(1f), 2);
+            Assume.That(after, Is.EqualTo(next));
+            Set(instance, 0, after);
+            e = Frame(instance);
+            Assert.That(e.Properties.TryGetValue("offset", out v) && v.A == after.X, Is.True, "tiny change of a sent value: sent");
+
+            var rect = new RectangleF(0, 0, 10, 10);
+            var nearRect = new RectangleF(0, 0, MathF.BitIncrement(10f), 10);
+            Assume.That(nearRect, Is.EqualTo(rect));
+            Set(instance, 1, new[] { rect }.ToSpread());
+            var first = Frame(instance);
+            Set(instance, 1, new[] { nearRect }.ToSpread());
+            Assert.That(Frame(instance), Is.Not.SameAs(first), "tiny change of a spread element: sent");
+        }
+
+        [Test]
         public void Send_Spread_NotWhileDefault_SameContentNewInstanceIsNotSentAgain_ChangeIsSent()
         {
             var instance = Create(new[] { Prop("points", QmlValueKind.Vector2DList), Prop("names", QmlValueKind.StringList) });

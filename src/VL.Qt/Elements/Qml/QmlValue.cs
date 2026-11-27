@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Wire;
@@ -8,7 +7,7 @@ namespace VL.Qt.Elements
 {
     /// <summary>
     /// One value of a QmlElement property as it goes over the wire: wire value type and the value in plain fields, so
-    /// value equality is exact (Stride's vector equality is a near-equal compare and would swallow tiny changes) and no boxing
+    /// value equality is exact (<see cref="ExactComparer"/>: Stride's own is a near-equal compare) and no boxing
     /// is left after the conversion. Color and rect use <c>A..D</c> (r, g, b, a / x, y, width, height).
     /// A list (<see cref="Protocol.ValueType.List"/>) keeps the patch's spread in <see cref="Items"/> (Spread&lt;T&gt; of float, int,
     /// bool, string, Color4, Vector2, Vector3, Vector4 or RectangleF, not copied) and the wire type of its elements in
@@ -111,32 +110,17 @@ namespace VL.Qt.Elements
                 return true;
             return x switch
             {
-                Spread<float> a => y is Spread<float> b && FloatsEqual<float>(a.AsSpan(), b.AsSpan()),
+                Spread<float> a => y is Spread<float> b && ExactComparer.FloatsEqual<float>(a.AsSpan(), b.AsSpan()),
                 Spread<int> a => y is Spread<int> b && a.AsSpan().SequenceEqual(b.AsSpan()),
                 Spread<bool> a => y is Spread<bool> b && a.AsSpan().SequenceEqual(b.AsSpan()),
                 Spread<string> a => y is Spread<string> b && StringsEqual(a.AsSpan(), b.AsSpan()),
-                Spread<Color4> a => y is Spread<Color4> b && FloatsEqual<Color4>(a.AsSpan(), b.AsSpan()),
-                Spread<Vector2> a => y is Spread<Vector2> b && FloatsEqual<Vector2>(a.AsSpan(), b.AsSpan()),
-                Spread<Vector3> a => y is Spread<Vector3> b && FloatsEqual<Vector3>(a.AsSpan(), b.AsSpan()),
-                Spread<Vector4> a => y is Spread<Vector4> b && FloatsEqual<Vector4>(a.AsSpan(), b.AsSpan()),
-                Spread<RectangleF> a => y is Spread<RectangleF> b && FloatsEqual<RectangleF>(a.AsSpan(), b.AsSpan()),
+                Spread<Color4> a => y is Spread<Color4> b && ExactComparer.FloatsEqual<Color4>(a.AsSpan(), b.AsSpan()),
+                Spread<Vector2> a => y is Spread<Vector2> b && ExactComparer.FloatsEqual<Vector2>(a.AsSpan(), b.AsSpan()),
+                Spread<Vector3> a => y is Spread<Vector3> b && ExactComparer.FloatsEqual<Vector3>(a.AsSpan(), b.AsSpan()),
+                Spread<Vector4> a => y is Spread<Vector4> b && ExactComparer.FloatsEqual<Vector4>(a.AsSpan(), b.AsSpan()),
+                Spread<RectangleF> a => y is Spread<RectangleF> b && ExactComparer.FloatsEqual<RectangleF>(a.AsSpan(), b.AsSpan()),
                 _ => false,
             };
-        }
-
-        // These element types are plain runs of floats; Stride's own Equals is a near-equal compare, so the floats are compared.
-        private static bool FloatsEqual<T>(ReadOnlySpan<T> x, ReadOnlySpan<T> y) where T : unmanaged
-        {
-            if (x.Length != y.Length)
-                return false;
-            var a = MemoryMarshal.Cast<T, float>(x);
-            var b = MemoryMarshal.Cast<T, float>(y);
-            for (int i = 0; i < a.Length; i++)
-            {
-                if (!a[i].Equals(b[i]))
-                    return false;
-            }
-            return true;
         }
 
         private static bool StringsEqual(ReadOnlySpan<string> x, ReadOnlySpan<string> y)
@@ -156,24 +140,17 @@ namespace VL.Qt.Elements
             var hash = new HashCode();
             switch (items)
             {
-                case Spread<float> s: HashFloats<float>(ref hash, s.AsSpan()); break;
+                case Spread<float> s: ExactComparer.HashFloats<float>(ref hash, s.AsSpan()); break;
                 case Spread<int> s: hash.Add(s.Count); foreach (var v in s.AsSpan()) hash.Add(v); break;
                 case Spread<bool> s: hash.Add(s.Count); foreach (var v in s.AsSpan()) hash.Add(v); break;
                 case Spread<string> s: hash.Add(s.Count); foreach (var v in s.AsSpan()) hash.Add(v, StringComparer.Ordinal); break;
-                case Spread<Color4> s: HashFloats<Color4>(ref hash, s.AsSpan()); break;
-                case Spread<Vector2> s: HashFloats<Vector2>(ref hash, s.AsSpan()); break;
-                case Spread<Vector3> s: HashFloats<Vector3>(ref hash, s.AsSpan()); break;
-                case Spread<Vector4> s: HashFloats<Vector4>(ref hash, s.AsSpan()); break;
-                case Spread<RectangleF> s: HashFloats<RectangleF>(ref hash, s.AsSpan()); break;
+                case Spread<Color4> s: ExactComparer.HashFloats<Color4>(ref hash, s.AsSpan()); break;
+                case Spread<Vector2> s: ExactComparer.HashFloats<Vector2>(ref hash, s.AsSpan()); break;
+                case Spread<Vector3> s: ExactComparer.HashFloats<Vector3>(ref hash, s.AsSpan()); break;
+                case Spread<Vector4> s: ExactComparer.HashFloats<Vector4>(ref hash, s.AsSpan()); break;
+                case Spread<RectangleF> s: ExactComparer.HashFloats<RectangleF>(ref hash, s.AsSpan()); break;
             }
             return hash.ToHashCode();
-        }
-
-        private static void HashFloats<T>(ref HashCode hash, ReadOnlySpan<T> items) where T : unmanaged
-        {
-            hash.Add(items.Length);
-            foreach (var f in MemoryMarshal.Cast<T, float>(items))
-                hash.Add(f);
         }
     }
 }
