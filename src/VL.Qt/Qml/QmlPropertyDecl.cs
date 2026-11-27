@@ -15,6 +15,7 @@ namespace VL.Qt.Qml
     /// <param name="Line">1-based line of the declaration in <paramref name="DeclaredIn"/> (or in the file itself).</param>
     /// <param name="DeclaredIn">File name of the sibling root type that declares it ("Gauge.qml"), null for the file itself.</param>
     /// <param name="AliasOf">For <c>property alias</c>: the target as written ("label.text"), null for any other declaration.</param>
+    /// <param name="Enum">The enum of the file the int property takes its values from (its type, or its literal is one of its values), null if none.</param>
     internal sealed record QmlPropertyDecl(
         string Name,
         string QmlType,
@@ -25,7 +26,8 @@ namespace VL.Qt.Qml
         string? Summary,
         int Line,
         string? DeclaredIn = null,
-        string? AliasOf = null)
+        string? AliasOf = null,
+        QmlEnumDecl? Enum = null)
     {
         /// <summary>CLR type of the pins of this property.</summary>
         public Type ClrType => QmlTypes.ClrType(Kind);

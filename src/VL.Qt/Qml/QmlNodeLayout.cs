@@ -206,9 +206,12 @@ namespace VL.Qt.Qml
         };
 
         private static string PinSummary(QmlPropertyDecl property)
-            => property.Summary ?? (property.AliasOf is { } target
+        {
+            var summary = property.Summary ?? (property.AliasOf is { } target
                 ? $"{property.QmlType} property '{property.Name}' of the QML root, an alias of {target}."
                 : $"{(property.IsReadOnly ? "readonly " : string.Empty)}{property.QmlType} property '{property.Name}' of the QML root.");
+            return property.Enum is { } values ? $"{summary} {values.Describe()}." : summary;
+        }
 
         private static string SignalSummary(QmlSignalDecl signal)
         {

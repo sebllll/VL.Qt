@@ -176,6 +176,14 @@ Item {
 }
 ```
 
+### Enums
+
+An `enum` of the root (`enum Mode { Small, Large = 5 }`, also one of a sibling root type) gives no pin of its own; a property that takes its values gets an `int` pin:
+
+- `property Mode mode` (or `property Gauge.Mode mode`): an `int` pin, default 0.
+- `property int mode: Gauge.Large` (or `Gauge.Mode.Large`; `Gauge` is the name of the file that declares the enum, or of the file itself): an `int` pin with the value as default, here 5. An assignment `mode: Gauge.Small` in a derived file works the same way.
+- The help of the pin lists the values: `Mode: Small = 0, Large = 5.` The patch sets the number. A dropdown with the names would need a type of its own per enum in vvvv ([#431](https://github.com/sebllll/VL.Qt/issues/431)).
+
 ### Defaults, and when a value is sent
 
 - A **literal initializer** is the default of the pin: numbers (also hex and with a sign; an `int` needs a whole number, a `real` takes an integer too), `true`/`false`, strings (`"…"` or `'…'`), colours as `"#rgb"` / `"#rrggbb"` / `"#aarrggbb"` or a colour name, and `Qt.rgba`, `Qt.rgb`, `Qt.vector2d/3d/4d`, `Qt.point`, `Qt.size`, `Qt.rect` with numeric literal arguments. A **list** takes an array literal of such literals as its default (`[1, 2, 3]`, `["a", "b"]`, `[Qt.point(0, 1), Qt.point(1, 2)]`; line breaks and a trailing comma are fine, `[]` is the empty list). One element that is not a literal of the element type makes the whole initializer a binding. Colour names (`"tomato"`, case does not matter) come from Stride's colour table, with the `grey` spellings of the `gray` names, `transparent` and `rebeccapurple` added; an unknown name or hex form is not a literal. `Qt.rgba`/`Qt.rgb` take 0 to 1 per channel, a value outside that range makes it a binding.

@@ -767,6 +767,68 @@ namespace VL.Qt.Tests.Qml
             Assert.That(d.Messages.Single().Text, Does.Contain("too deep"));
         }
 
+        // ---- enums ------------------------------------------------------------------------------------------------------------
+
+        [Test]
+        public void Enums_GiveIntPins_WithTheValueAsDefault()
+        {
+            var d = Parse("""
+                Item {
+                    property int mode: Own.Large
+                    property int scoped: Own.Mode.Small
+                    property Mode typed
+                    property Own.Mode qualified: Own.Huge
+                    property int plain: 3
+                    property int other: Text.AlignLeft
+                    property int wrongEnum: Own.Other.Small
+                    enum Mode {
+                        Small,
+                        Large = 5,
+                        Huge,
+                        Negative = -2
+                    }
+                }
+                """);
+
+            Assert.That(d.Messages, Is.Empty);
+            var mode = d.Enums.Single();
+            Assert.That((mode.Type, mode.Name, mode.Describe()), Is.EqualTo(("Own", "Mode", "Mode: Small = 0, Large = 5, Huge = 6, Negative = -2")));
+            Assert.That((Prop(d, "mode").Kind, Prop(d, "mode").Initializer, Prop(d, "mode").Default, Prop(d, "mode").Enum), Is.EqualTo((QmlValueKind.Int, QmlInitializer.Literal, (object)5, mode)));
+            Assert.That((Prop(d, "scoped").Default, Prop(d, "scoped").Enum), Is.EqualTo(((object)0, mode)));
+            Assert.That((Prop(d, "typed").Kind, Prop(d, "typed").QmlType, Prop(d, "typed").Default, Prop(d, "typed").Enum), Is.EqualTo((QmlValueKind.Int, "Mode", (object)0, mode)));
+            Assert.That((Prop(d, "qualified").Default, Prop(d, "qualified").Enum), Is.EqualTo(((object)6, mode)));
+            Assert.That(Prop(d, "plain").Enum, Is.Null);
+            Assert.That((Prop(d, "other").Initializer, Prop(d, "other").Enum), Is.EqualTo((QmlInitializer.Binding, (QmlEnumDecl?)null)), "not an enum of the file");
+            Assert.That(Prop(d, "wrongEnum").Initializer, Is.EqualTo(QmlInitializer.Binding));
+        }
+
+        [Test]
+        public void Enums_OfASiblingRootType_AreKnownToTheDerivedFile()
+        {
+            var siblings = new Dictionary<string, string>
+            {
+                ["Base"] = """
+                    Item {
+                        enum Size { S, M, L }
+                        property int size: Base.M
+                    }
+                    """,
+            };
+            var d = Parse("""
+                Base {
+                    size: Own.L
+                    property int second: Base.S
+                    property alias third: child.level
+                    Item { id: child; property int level: Base.M }
+                }
+                """, siblings);
+
+            Assert.That(d.Messages, Is.Empty);
+            Assert.That((Prop(d, "size").Default, Prop(d, "size").Enum?.Name), Is.EqualTo(((object)2, "Size")));
+            Assert.That((Prop(d, "second").Default, Prop(d, "second").Enum?.Name), Is.EqualTo(((object)0, "Size")));
+            Assert.That((Prop(d, "third").Default, Prop(d, "third").Enum?.Name), Is.EqualTo(((object)1, "Size")), "an alias of an enum value");
+        }
+
         // ---- internal declarations --------------------------------------------------------------------------------------------
 
         [Test]

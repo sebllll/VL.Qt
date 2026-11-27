@@ -26,6 +26,9 @@ namespace VL.Qt.Qml
         ImmutableArray<QmlSignalDecl> Signals,
         ImmutableArray<QmlParseMessage> Messages)
     {
+        /// <summary>The enums of the root, those of sibling root types first (for a derived file and for aliases).</summary>
+        public ImmutableArray<QmlEnumDecl> Enums { get; init; } = ImmutableArray<QmlEnumDecl>.Empty;
+
         /// <summary>Nothing declared, no messages.</summary>
         public static readonly QmlDeclarations Empty = new(
             null, QmlFileHead.Empty, ImmutableArray<QmlPropertyDecl>.Empty, ImmutableArray<QmlSignalDecl>.Empty, ImmutableArray<QmlParseMessage>.Empty);
@@ -48,7 +51,7 @@ namespace VL.Qt.Qml
                 sb.Append("head").Append(sep).Append(Head.Category).Append(sep).Append(Head.Summary).Append(sep).AppendJoin(',', Head.Tags).Append('\n');
                 foreach (var p in Properties)
                     sb.Append('p').Append(sep).Append(p.Name).Append(sep).Append(p.QmlType).Append(sep).Append(p.Kind).Append(sep).Append((int)p.Flags)
-                        .Append(sep).Append(p.Initializer).Append(sep).Append(Format(p.Default)).Append(sep).Append(p.Summary).Append(sep).Append(p.AliasOf).Append('\n');
+                        .Append(sep).Append(p.Initializer).Append(sep).Append(Format(p.Default)).Append(sep).Append(p.Summary).Append(sep).Append(p.AliasOf).Append(sep).Append(p.Enum?.Describe()).Append('\n');
                 foreach (var s in Signals)
                 {
                     sb.Append('s').Append(sep).Append(s.Name).Append(sep).Append(s.Summary);
