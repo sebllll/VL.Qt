@@ -20,7 +20,7 @@ Item {
     property int bigN: 0
     property var big: { var a = []; for (var k = 0; k < bigN; ++k) a.push(k); return a }
 
-    // Lists made inside a signal; a list of mixed types is sent in its string form.
+    // Lists made inside a signal; a list of mixed types is sent as a JSON string.
     signal made(var values)
     signal oddOne(var values)
     onNChanged: {

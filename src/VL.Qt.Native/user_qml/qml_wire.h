@@ -32,8 +32,9 @@ struct QmlSignalEvent {
 };
 
 /* QVariant (property value or signal argument) to wire form. false = type not supported. A list goes as LIST when all its
- * elements have one wire type (integers and reals together as F32); `error` (when given) says why a list over
- * VLQT_LIST_VALUE_MAX_COUNT elements is not sent, and stays empty for any other reason. */
+ * elements have one wire type (integers and reals together as F32), and as a STRING in JSON form (`[1,"a"]`) when a var list has
+ * no common wire type; `error` (when given) says why a list over VLQT_LIST_VALUE_MAX_COUNT elements is not sent, and stays
+ * empty for any other reason. */
 bool toWireValue(const QVariant& v, QmlWireValue& out, QString* error = nullptr);
 
 /* toWireValue, or the string form of the value when its type has no wire form (protocol.h: "sent as their string form").

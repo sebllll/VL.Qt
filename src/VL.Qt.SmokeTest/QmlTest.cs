@@ -465,11 +465,11 @@ public static class QmlTest
         s.Check(Props(recs, HLS, "halves") is [Spread<float> h0] && h0.SequenceEqual(new[] { 0.5f, 1.5f, 2.5f }), $"var list of reals that QML made ({S(recs)})");
         s.Check(Props(recs, HLS, "strings") is [Spread<string> t0] && t0.SequenceEqual(new[] { "s", "sä€", "sä€ä€" }), $"var list of strings that QML made ({S(recs)})");
         s.Check(Props(recs, HLS, "mixedNumbers") is [Spread<float> mn] && mn.SequenceEqual(new[] { 1f, 2.5f, 3f }), $"integers and reals together go as reals ({S(recs)})");
-        s.Check(!PropNames(recs, HLS).Contains("n") && !PropNames(recs, HLS).Contains("mixedTypes"), $"n is not echoed; a list of mixed types is no list value ({string.Join(",", PropNames(recs, HLS))})");
-        s.Check(Err(HLS).Contains("mixedTypes"), $"... and its error line names the property ('{Err(HLS)}')");
+        s.Check(!PropNames(recs, HLS).Contains("n"), $"n is not echoed ({string.Join(",", PropNames(recs, HLS))})");
+        s.Check(Props(recs, HLS, "mixedTypes") is [string mt] && mt == "[1,\"a\"]" && Err(HLS) == "", $"a list of mixed types is a string in JSON form ({S(recs)}; '{Err(HLS)}')");
         sig = Signals(recs, HLS);
         s.Check(sig.Count == 2 && sig[0].Name == "made" && sig[0].Arguments is [Spread<float> mv] && mv.SequenceEqual(new[] { 3f, 3.5f }), $"a list made in a signal: made([3, 3.5]) ({S(recs)})");
-        s.Check(sig.Count == 2 && sig[1].Name == "oddOne" && sig[1].Arguments is [string odd] && odd.Contains('a'), $"a list of mixed types in a signal keeps its string form ({S(recs)})");
+        s.Check(sig.Count == 2 && sig[1].Name == "oddOne" && sig[1].Arguments is [string odd] && odd == "[1,\"a\"]", $"a list of mixed types in a signal is a string in JSON form ({S(recs)})");
         SetProps(LS, p => p.I32("n", 0));
         CheckApply("SET n = 0");
         recs = Poll();

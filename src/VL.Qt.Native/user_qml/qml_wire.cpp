@@ -4,6 +4,9 @@
 #include "wire.h"
 
 #include <QtCore/QDebug>
+#include <QtCore/QJsonArray>
+#include <QtCore/QJsonDocument>
+#include <QtCore/QJsonValue>
 #include <QtCore/QList>
 #include <QtCore/QPoint>
 #include <QtCore/QPointF>
@@ -56,6 +59,8 @@ QVariant unwrapJs(const QVariant& v)
 // ---------------------------------------------------------------------------------------------
 // Lists out of QML
 
+bool encodeValue(const QVariant& in, QmlWireValue& out, QString* error = nullptr);
+
 // The wire type of the elements of a QList<T>, for a list without elements.
 template <class T>
 constexpr quint16 declaredElementType()
@@ -99,7 +104,7 @@ bool encodeList(qsizetype count, quint16 declared, At at, QmlWireValue& out, QSt
         bool mixed = false;
         for (qsizetype i = 0; i < count; ++i) {
             QmlWireValue w;
-            if (!toWireValue(at(i), w) || w.type == VLQT_VALUE_TYPE_LIST)
+            if (!encodeValue(at(i), w) || w.type == VLQT_VALUE_TYPE_LIST)
                 return false;
             if (realOnly && w.type == VLQT_VALUE_TYPE_I32) {
                 qint32 n = 0;
@@ -176,6 +181,17 @@ int convertTyped(const QVariantList& in, QMetaType target, QVariant& out)
     return 1;
 }
 
+// A list that has no common wire type goes as a string, JSON like `[1,"a"]`. The element QML knows only as text (a color, a
+// rect) is its text there; an object or a nested list is JSON as well.
+void listToString(const QVariantList& list, QmlWireValue& out)
+{
+    const QByteArray json = QJsonDocument(QJsonValue::fromVariant(list).toArray()).toJson(QJsonDocument::Compact);
+    out.type = VLQT_VALUE_TYPE_STRING;
+    out.bytes.clear();
+    append(out.bytes, quint32(json.size()));
+    out.bytes.append(json);
+}
+
 } // namespace
 
 QVariant adaptVector2D(const QVariant& v, QMetaType target)
@@ -250,7 +266,9 @@ bool convertListToType(const QVariantList& list, QMetaType target, QVariant& out
     return result == 1;
 }
 
-bool toWireValue(const QVariant& in, QmlWireValue& out, QString* error)
+namespace {
+
+bool encodeValue(const QVariant& in, QmlWireValue& out, QString* error)
 {
     const QVariant v = unwrapJs(in);
     out.bytes.clear();
@@ -336,6 +354,23 @@ bool toWireValue(const QVariant& in, QmlWireValue& out, QString* error)
     default:
         return listToWire(v, out, error);
     }
+}
+
+} // namespace
+
+bool toWireValue(const QVariant& in, QmlWireValue& out, QString* error)
+{
+    if (encodeValue(in, out, error))
+        return true;
+    const QVariant v = unwrapJs(in);
+    if (v.metaType() != QMetaType::fromType<QVariantList>())
+        return false;
+    // A list over the limit stays unsent: its string form would be as long as the list.
+    const QVariantList list = v.toList();
+    if (list.size() > VLQT_LIST_VALUE_MAX_COUNT)
+        return false;
+    listToString(list, out);
+    return true;
 }
 
 bool toWireValueOrString(const QVariant& in, QmlWireValue& out, QString* error)
