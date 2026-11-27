@@ -78,6 +78,17 @@ The patch's own `Properties` entry is not reported back: setting `value` from th
 
 `Measured Size` reports what Qt measured, and `Debug` shows it (orange frame).
 
+## Input
+
+Pointer and keyboard input inside the file are supported, so a widget can be written in QML: a `MouseArea`, pointer handlers (`TapHandler`, `DragHandler`, …), `Keys` and focus work as in any Qt Quick scene. Results go back to the patch through properties and signals.
+
+- **Same rules as the `Interaction` pin.** The input reaches QML as ordinary Qt input, and the handlers of the `Interaction` pin are ordinary Qt handlers at the element ([input](design/input.md#grabs-and-hit-testing)). The topmost item that takes a press gets it: where a `MouseArea` of the file covers the element, a `Click` on the element gets nothing, `Hover` still reports, and elements below get nothing either (`Touch Points` with `Occlusion` included). Where the file has no input of its own, the press goes on to the element's handlers and to the elements below.
+- **Focus.** A press on an item that takes the focus (`forceActiveFocus`, `TextInput`) gives it the keys. The element counts as one widget: a press on another part of it keeps the focus, a press outside the element releases it.
+- **Esc** is a key like any other and reaches the file; the focus stays. Only the built-in `InputString` and `InputInt` use Esc to discard an edit and release the focus.
+- **Keys the renderer keeps:** F2, F5, F6 and F7 open the diagnostics (switch off with `Enable Keyboard Shortcuts`), F11 and Alt+Enter switch fullscreen.
+- **Hot reload during a press** ends the press: the new instance starts without it and the release clicks nothing.
+- **Other elements** are not reached from inside the file. A widget that acts on other elements emits a signal or changes a property, and the patch passes it on (an on-screen keyboard: a signal per key, a channel into the value of an `InputString`). Setting the focus from the patch is not possible.
+
 ## Hot reload
 
 The node watches the **folder of the file** for changes of the file itself, of any `*.qml` next to it and of `qmldir` (components the file imports by relative path). On a change QtNative clears the component cache for the file, builds a new instance and sends all property values again. A new element of a file that changed on disk since QtNative last compiled it also reads the file again, not the cached component, so a node rebuilt after a declaration change never shows the old version. The outputs start empty again (`Properties`, `Signals`), the message at the node goes when the new version compiles. Saving the file while vvvv runs is all it takes.
@@ -245,4 +256,3 @@ VL.Qt ships only the LGPL modules of Qt (see [QtNative deployment](design/deploy
 - Pins for what has no type in the table of [Value types](#value-types) (`alias`, `var`, lists of lists or of objects, objects): the `Properties` dictionary stays the interface for those, also at the generated nodes.
 - C# objects or models handed to QML as context properties (the idea of Qt Bridge for C#, see [qt-bridge.md](design/qt-bridge.md)).
 - Calling QML functions from the patch.
-- Pointer input inside the QML file (`MouseArea`, handlers) is not part of the design; use the `Interaction` pin on the element. Use signals and properties to carry results back.

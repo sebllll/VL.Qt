@@ -324,7 +324,8 @@ vlqt_scene* createHandle(QQuickWindow* window, OffscreenScene* state)
     // Change count (vlqt_scene_get_change_count); no render gate: without a platform window a scene gets no
     // UpdateRequest or Expose.
     w->changes = new SceneChangeCounter(window); // child of the window
-    // Input comes from vlqt_offscreen_send_*; Esc and a press outside release the focus as in a window.
+    // Input comes from vlqt_offscreen_send_*; a press outside (and Esc in a TextField or SpinBox) releases the focus as
+    // in a window.
     window->installEventFilter(new FocusRelease(window)); // child of the window
     initShared(w.get());
     return asHandle(w.release());
