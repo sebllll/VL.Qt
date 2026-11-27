@@ -32,7 +32,7 @@ This Code of Conduct applies in all spaces of the project: issues, pull requests
 
 Maintainers are responsible for clarifying and enforcing this Code of Conduct. They may edit, hide, lock or remove comments, issues and pull requests, and ban people from the repository, when they see conduct that breaks it. They explain the reason when they can do so without exposing the person who reported.
 
-Report unacceptable behavior privately by mail to mail@schnellebuntebilder.de, subject "VL.Qt conduct", or use "Report content" on GitHub for a single comment. All reports are reviewed and handled promptly and fairly, and the reporter's privacy and safety are respected. Please include links or screenshots, if you have them.
+Report unacceptable behavior privately by mail to sebl@schnellebuntebilder.de, subject "VL.Qt conduct", or use "Report content" on GitHub for a single comment. All reports are reviewed and handled promptly and fairly, and the reporter's privacy and safety are respected. Please include links or screenshots, if you have them.
 
 ### Enforcement guidelines
 
