@@ -1,0 +1,3 @@
+# Pool types of the QML enums of this folder, written by VL.Qt: "Gauge.Mode = 7" gives the pins of Gauge.Mode the type QmlEnum07.
+# Patches save these types: keep this file with the QML files (version control, package, export). Delete a line to free a type.
+ProfileCard.Status = 25

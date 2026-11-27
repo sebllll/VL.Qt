@@ -5,7 +5,8 @@ namespace VL.Qt.Qml
 {
     /// <summary>
     /// An <c>enum Name { A, B = 5 }</c> of a root object (of the file or of a sibling root type). A property of its type, or with one
-    /// of its values as literal (<c>Gauge.Small</c>), gets an int pin whose help lists the values.
+    /// of its values as literal (<c>Gauge.Small</c>), gets a dropdown pin of a pool type (<see cref="QmlEnumPool"/>), or an int pin
+    /// whose help lists the values when the pool has no type for it.
     /// </summary>
     /// <param name="Type">Type name of the file that declares it ("Gauge"); a value is written <c>Gauge.Small</c> or <c>Gauge.Mode.Small</c>.</param>
     /// <param name="Name">Name of the enum ("Mode").</param>
@@ -27,7 +28,10 @@ namespace VL.Qt.Qml
             return false;
         }
 
-        /// <summary>"Mode: Small = 0, Large = 5", for the help of the pin.</summary>
+        /// <summary>"Mode: Small = 0, Large = 5", for the help of an int pin and the signature of the declarations.</summary>
         public string Describe() => $"{Name}: " + string.Join(", ", Values.Select(static v => $"{v.Name} = {v.Value}"));
+
+        /// <summary>"Mode: Small, Large", for the help of a dropdown pin (the dropdown shows no numbers).</summary>
+        public string DescribeNames() => $"{Name}: " + string.Join(", ", Values.Select(static v => v.Name));
     }
 }

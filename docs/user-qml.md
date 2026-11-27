@@ -182,11 +182,24 @@ Item {
 
 ### Enums
 
-An `enum` of the root (`enum Mode { Small, Large = 5 }`, also one of a sibling root type) gives no pin of its own; a property that takes its values gets an `int` pin:
+An `enum` of the root (`enum Mode { Small, Large = 5 }`, also one of a sibling root type) gives no pin of its own; a property that takes its values gets a **dropdown pin** with the names of the entries:
 
-- `property Mode mode` (or `property Gauge.Mode mode`): an `int` pin, default 0.
-- `property int mode: Gauge.Large` (or `Gauge.Mode.Large`; `Gauge` is the name of the file that declares the enum, or of the file itself): an `int` pin with the value as default, here 5. An assignment `mode: Gauge.Small` in a derived file works the same way.
-- The help of the pin lists the values: `Mode: Small = 0, Large = 5.` The patch sets the number. A dropdown with the names would need a type of its own per enum in vvvv ([#431](https://github.com/sebllll/VL.Qt/issues/431)).
+- `property Mode mode` (or `property Gauge.Mode mode`): a dropdown, default the entry with the value 0 (the property's default is 0, as before; if no entry has that value the pin shows `0`).
+- `property int mode: Gauge.Large` (or `Gauge.Mode.Large`; `Gauge` is the name of the file that declares the enum, or of the file itself): a dropdown with that entry as default. An assignment `mode: Gauge.Small` in a derived file works the same way.
+- The help of the pin lists the entries: `Mode: Small, Large.` In a patch an IOBox without a type annotation takes the name of an entry (`Large`); QML still receives the number of the entry. An edit of the enum in the `.qml` file updates the dropdown; a name that no longer exists sends nothing, the property keeps its last value.
+
+**Pool and mapping file.** vvvv only compiles against the assemblies a patch references, so the dropdown types cannot be made at run time. VL.Qt ships a pool of 32 types (`QmlEnum01` … `QmlEnum32`), and each enum takes one of them. The mapping is the file `vlqt-enum-slots.txt` in the `qml/` folder, one line per enum, written by VL.Qt the first time the enum is used:
+
+```text
+Gauge.Mode = 7
+ProfileCard.Status = 25
+```
+
+A patch saves the type of its IOBox, so the line must stay as it is: keep the file with the `.qml` files, in Git, in a package and in an export (the build copies the whole `qml/` folder). Without the line a restored patch would find the enum on another type. Two projects that were written apart rarely pick the same type; if two `qml/` folders in one session claim the same one, one of them gets a new type and a message at its nodes.
+
+- **Package:** the `qml/` folder of an installed package is read-only and VL.Qt writes nothing there. The author of a package ships `vlqt-enum-slots.txt`, written when the package was developed from its source folder. An enum without a line in a read-only folder keeps the fallback below.
+- **Fallback:** when an enum gets no type, its pin stays an `int` with the number of the entry as before, and the node shows a message with the reason: the file cannot be written, or there is no line in a read-only folder, or the pool is full. Help of such a pin: `Mode: Small = 0, Large = 5.`
+- **Limit:** 32 enums at once, counted over all `qml/` folders in use. When all types are taken, the next enum keeps the `int` pin and the message. Delete the lines of enums that no longer exist (renamed or removed ones included) from the file and restart vvvv; their types are free again. Never delete the line of an enum a saved patch still uses.
 
 ### Defaults, and when a value is sent
 

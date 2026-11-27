@@ -423,11 +423,7 @@
             <Pin Id="TCYwNR6KUa200bkbTxgnzY" Name="Italic" Kind="InputPin" />
             <Pin Id="fdjUZkObWDeGBwd0cnTt10" Name="Output" Kind="OutputPin" />
           </Node>
-          <Pad Id="ULU7VGp5M7GG4nRGPGCO4K" Comment="Status" Bounds="1342,755,35,15" ShowValueBox="true" isIOBox="true" Value="1">
-            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
-              <Choice Kind="TypeFlag" Name="Integer32" />
-            </p:TypeAnnotation>
-          </Pad>
+          <Pad Id="ULU7VGp5M7GG4nRGPGCO4K" Comment="Status" Bounds="1342,755,35,15" ShowValueBox="true" isIOBox="true" Value="Away" />
           <Node Bounds="1200,795,145,19" Id="BvvIpXoKgL0uvvoMruNePL">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Qml" LastDependency="VL.Qt.Qml">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
@@ -461,7 +457,7 @@
             <Pin Id="wer4DvA1D21TxwRpMDCJuc" Name="Measured Size" Kind="OutputPin" IsHidden="true" />
             <Pin Id="NNeZlyYLiQ8dZlNBRhe2lQ" Name="Scene Bounds" Kind="OutputPin" IsHidden="true" />
           </Node>
-          <Pad Id="fspXyFv2d8gAo2zEKt21uX" Bounds="1223,851,481,99" ShowValueBox="true" isIOBox="true" Value="ProfileCard is generated from qml/ProfileCard.qml. Name and Background are aliases of its children (a Text and a Rectangle), Photo is a Path (its default is relative to the file), Name Font takes the Font node, Since a DateTime, Status the number of an enum value (Offline 0, Away 1, Online 2).">
+          <Pad Id="fspXyFv2d8gAo2zEKt21uX" Bounds="1223,851,481,99" ShowValueBox="true" isIOBox="true" Value="ProfileCard is generated from qml/ProfileCard.qml. Name and Background are aliases of its children (a Text and a Rectangle), Photo is a Path (its default is relative to the file), Name Font takes the Font node, Since a DateTime, Status an enum, a dropdown with Offline, Away and Online.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>

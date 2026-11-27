@@ -335,6 +335,114 @@ namespace VL.Qt.Tests.Qml
             Assert.That(allocated, Is.EqualTo(0), "bytes allocated by 100 idle frames");
         }
 
+        // --- enum pins (pool types) ---
+
+        private static QmlEnumDecl Mode()
+            => new("Gauge", "Mode", ImmutableArray.Create(new QmlEnumValue("Small", 0), new QmlEnumValue("Large", 5)));
+
+        // An instance with the int property "mode" (and "level", a real) whose pins have the pool type of Gauge.Mode.
+        private (QmlNodeInstance Instance, QmlEnumSlot Slot) CreateWithEnum(QmlPropertyFlags flags = QmlPropertyFlags.None)
+        {
+            var pool = new QmlEnumPool(QmlEnumSlotTypes.All.Take(2).ToArray());
+            var slot = pool.Claim(_file, Mode()).Slot!;
+            var layout = QmlNodeLayout.Build(_file, QmlDeclarations.Empty with
+            {
+                Properties = ImmutableArray.Create(Prop("mode", QmlValueKind.Int, flags: flags) with { Enum = Mode() }, Prop("level", QmlValueKind.Real)),
+            }, pool: pool);
+            _instance = new QmlNodeInstance(_element, layout);
+            return (_instance, slot);
+        }
+
+        [Test]
+        public void EnumPin_HasThePoolType_AndSendsTheInt()
+        {
+            var (instance, slot) = CreateWithEnum();
+            Assert.That(In(instance, QmlCommonPins.LeadingInputs.Length).GetType().GetGenericArguments()[0], Is.EqualTo(slot.Type));
+            Assert.That(((IDynamicEnum)In(instance, QmlCommonPins.LeadingInputs.Length).Value!).Value, Is.EqualTo("Small"), "the default");
+            Assert.That(Names(Frame(instance)), Is.Empty, "nothing at the default");
+
+            Set(instance, 0, slot.FromInt(5));
+            var e = Frame(instance);
+            Assert.That(e.Properties.TryGetValue("mode", out var v), Is.True);
+            Assert.That((v.ValueType, v.Integer), Is.EqualTo((Protocol.ValueType.I32, 5)), "the int of the entry on the wire");
+
+            Set(instance, 0, slot.FromInt(0));
+            e = Frame(instance);
+            Assert.That(e.Properties.TryGetValue("mode", out v) && v.Integer == 0, Is.True, "back to the default: sent, it was different once");
+        }
+
+        [Test]
+        public void EnumPin_WithoutAnEntry_SendsNothing_AndAnEntryOfTheEnumOnly()
+        {
+            var (instance, slot) = CreateWithEnum();
+            Set(instance, 0, slot.FromInt(5));
+            var first = Frame(instance);
+
+            Set(instance, 0, QmlEnumSlotTypes.All.First(t => t.Type != slot.Type).Create("Large"));
+            Assert.That(Frame(instance), Is.SameAs(first), "a value of another pool type is no value of this enum");
+            Set(instance, 0, QmlEnumSlotTypes.All.First(t => t.Type == slot.Type).Create("Gone"));
+            Assert.That(Frame(instance), Is.SameAs(first), "a name the enum does not have: the property keeps its value");
+            Set(instance, 0, null);
+            Assert.That(Frame(instance), Is.SameAs(first), "no value");
+        }
+
+        [Test]
+        public void EnumPin_Required_IsSentFromTheFirstFrame()
+        {
+            var (instance, _) = CreateWithEnum(QmlPropertyFlags.Required);
+            var e = Frame(instance);
+            Assert.That(e.Properties.TryGetValue("mode", out var v) && v.Integer == 0, Is.True);
+        }
+
+        [Test]
+        public void EnumPin_Output_IsTheEnumOfTheInt_AndOnlyNewWhenTheIntChanges()
+        {
+            var (instance, slot) = CreateWithEnum();
+            const int output = 1; // after "Output"
+            Frame(instance);
+            var initial = (IDynamicEnum)Out(instance, output).Value!;
+            Assert.That((initial.GetType(), initial.Value), Is.EqualTo((slot.Type, "Small")), "the declared default");
+
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("mode", Protocol.ValueType.I32, QmlWire.I32(5))));
+            Frame(instance);
+            var large = (IDynamicEnum)Out(instance, output).Value!;
+            Assert.That((large.GetType(), large.Value), Is.EqualTo((slot.Type, "Large")));
+
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("level", Protocol.ValueType.F32, QmlWire.F(0.5f))));
+            Frame(instance);
+            Assert.That(Out(instance, output).Value, Is.SameAs(large), "another property changed: the pin value stays the same object");
+
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("mode", Protocol.ValueType.I32, QmlWire.I32(7))));
+            Frame(instance);
+            Assert.That(((IDynamicEnum)Out(instance, output).Value!).Value, Is.EqualTo("7"), "a value without an entry has the number as its name");
+            Assert.That(slot.TryToInt(Out(instance, output).Value, out var back) && back == 7, Is.True, "and goes back in as 7");
+        }
+
+        [Test]
+        public void EnumPin_Output_AfterReload_BackToTheDefault()
+        {
+            var (instance, _) = CreateWithEnum();
+            Frame(instance);
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("mode", Protocol.ValueType.I32, QmlWire.I32(5))));
+            Frame(instance);
+            Assert.That(((IDynamicEnum)Out(instance, 1).Value!).Value, Is.EqualTo("Large"));
+
+            _events.OnNext(new FileSystemEventArgs(WatcherChangeTypes.Changed, _dir, "Gauge.qml"));
+            Frame(instance);
+            Assert.That(((IDynamicEnum)Out(instance, 1).Value!).Value, Is.EqualTo("Small"));
+        }
+
+        [Test]
+        public void EnumPin_IdleFrames_AllocateNothing()
+        {
+            var (instance, slot) = CreateWithEnum();
+            Set(instance, 0, slot.FromInt(5));
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("mode", Protocol.ValueType.I32, QmlWire.I32(5))));
+            Frame(instance);
+            var allocated = Allocations.Fewest(() => instance.Update(), frames: 100);
+            Assert.That(allocated, Is.EqualTo(0), "bytes allocated by 100 idle frames");
+        }
+
         // --- property outputs ---
 
         [Test]

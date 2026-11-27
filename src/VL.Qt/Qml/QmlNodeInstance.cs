@@ -21,7 +21,8 @@ namespace VL.Qt.Qml
     /// allocation per frame).</item>
     /// <item>QmlElementNode.Update(file, dictionary, common pins…).</item>
     /// <item>Property outputs: from its Properties output, coerced with <see cref="QmlTypes.TryCoerce"/>; until the first change and
-    /// after a reload (the dictionary starts empty again) the declared default.</item>
+    /// after a reload (the dictionary starts empty again) the declared default. A property with a QML enum has a pin of the enum's
+    /// pool type (<see cref="QmlEnumPool"/>) at input and output, an int towards QML.</item>
     /// <item>Signal outputs: its Signals output this frame, by name: bool (any emission), Spread&lt;T&gt; of the only argument, or
     /// Spread&lt;QmlSignal&gt;; empty/false in a frame without emission.</item>
     /// <item>Output, Measured Size, Scene Bounds passed on. Errors are not an output: the element node logs them and marks the node.</item>
@@ -209,7 +210,55 @@ namespace VL.Qt.Qml
             public abstract bool Poll();
 
             public static InputSlot Create(QmlInputPin pin)
-                => (InputSlot)Activator.CreateInstance(typeof(InputSlot<>).MakeGenericType(pin.Property.ClrType), pin)!;
+                => (InputSlot)Activator.CreateInstance((pin.EnumSlot is null ? typeof(InputSlot<>) : typeof(EnumInputSlot<>)).MakeGenericType(pin.PinType), pin)!;
+        }
+
+        /// <summary>
+        /// Input pin of a property with a QML enum: a dropdown of the pool type <typeparamref name="T"/>, an int on the wire. Same send
+        /// rule as <see cref="InputSlot{T}"/>, compared as ints. A value that is no entry (no value, or a name the enum no longer has
+        /// after a reload) sends nothing: the property keeps its last value.
+        /// </summary>
+        private sealed class EnumInputSlot<T> : InputSlot where T : class, IDynamicEnum
+        {
+            private readonly ValuePin<T> _pin;
+            private readonly QmlEnumSlot _enum;
+            private readonly bool _alwaysSend;
+            private readonly int _default;
+            private int _last;
+
+            public EnumInputSlot(QmlInputPin pin)
+            {
+                PropertyName = pin.Property.Name;
+                _enum = pin.EnumSlot!;
+                _alwaysSend = pin.AlwaysSend;
+                _default = pin.Property.IntDefault;
+                _last = _default;
+                _pin = new ValuePin<T>((T)_enum.FromInt(_default));
+            }
+
+            public override IVLPin Pin => _pin;
+
+            public override bool Poll()
+            {
+                if (!_enum.TryToInt(_pin.Value, out var value))
+                {
+                    // A required property is sent from the first frame, with its default if the pin has no usable value.
+                    if (IsSent || !_alwaysSend)
+                        return false;
+                    value = _default;
+                }
+                if (!IsSent)
+                {
+                    if (!_alwaysSend && value == _default)
+                        return false;
+                    IsSent = true;
+                }
+                else if (value == _last)
+                    return false;
+                _last = value;
+                Boxed = value;
+                return true;
+            }
         }
 
         private sealed class InputSlot<T> : InputSlot
@@ -264,7 +313,42 @@ namespace VL.Qt.Qml
             public abstract void Apply(Dictionary<string, object> changed);
 
             public static PropertyOutput Create(QmlOutputPin pin, string? folder)
-                => (PropertyOutput)Activator.CreateInstance(typeof(PropertyOutput<>).MakeGenericType(pin.Property.ClrType), pin, folder)!;
+                => (PropertyOutput)Activator.CreateInstance((pin.EnumSlot is null ? typeof(PropertyOutput<>) : typeof(EnumPropertyOutput<>)).MakeGenericType(pin.PinType), pin, folder)!;
+        }
+
+        /// <summary>
+        /// Output pin of a property with a QML enum: the pool value of the int QML gave. A new value is made only when the int
+        /// changes, as <see cref="Apply"/> runs whenever any property changed.
+        /// </summary>
+        private sealed class EnumPropertyOutput<T> : PropertyOutput where T : class, IDynamicEnum
+        {
+            private readonly ValuePin<T> _pin;
+            private readonly QmlEnumSlot _enum;
+            private readonly string _name;
+            private readonly T _default;
+            private readonly int _defaultInt;
+            private int _current;
+
+            public EnumPropertyOutput(QmlOutputPin pin, string? folder)
+            {
+                _enum = pin.EnumSlot!;
+                _name = pin.Property.Name;
+                _defaultInt = pin.Property.IntDefault;
+                _current = _defaultInt;
+                _default = (T)_enum.FromInt(_defaultInt);
+                _pin = new ValuePin<T>(_default);
+            }
+
+            public override IVLPin Pin => _pin;
+
+            public override void Apply(Dictionary<string, object> changed)
+            {
+                var value = changed.TryGetValue(_name, out var raw) && QmlTypes.TryCoerce(QmlValueKind.Int, raw, out var coerced) ? (int)coerced : _defaultInt;
+                if (value == _current)
+                    return;
+                _current = value;
+                _pin.Value = value == _defaultInt ? _default : (T)_enum.FromInt(value);
+            }
         }
 
         private sealed class PropertyOutput<T> : PropertyOutput
