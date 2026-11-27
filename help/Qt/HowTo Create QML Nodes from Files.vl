@@ -42,7 +42,7 @@
             <Pin Id="o10X7Ai9vjN82LU0etvZEt" Name="Node Context" Kind="InputPin" IsHidden="true" />
             <Pin Id="k9H3AgmwD6DBZtsZwW0Pg3" Name="Clock" Kind="InputPin" IsHidden="true" />
             <Pin Id="z5FA85PEIRnGB267f5r49d" Name="New Clock" Kind="InputPin" IsHidden="true" />
-            <Pin Id="aYkiZNhoG9IjxjT8k7PsdK" Name="Period" Kind="InputPin" DefaultValue="8" />
+            <Pin Id="aYkiZNhoG9IjxjT8k7PsdK" Name="Period" Kind="InputPin" DefaultValue="4" />
             <Pin Id="Q71PpjUhjRfs01cAbASbzT" Name="Phase" Kind="OutputPin" />
             <Pin Id="BZfmETxk4rLRhtUKJhwVJU" Name="Pause" Kind="InputPin" />
             <Pin Id="hvIO05MMwrnDxdfayoyPrO" Name="Reset" Kind="InputPin" />
@@ -170,7 +170,7 @@
             <Pin Id="fk7wEMw9peGtwlFRbTWXyR" Name="Translation" Kind="InputPin" DefaultValue="0.5, 1.5" />
             <Pin Id="bVAv2cwhmzFIryJzKlTi0Q" Name="Output" Kind="OutputPin" />
           </Node>
-          <Node Bounds="720,695,305,19" Id="QfG1Z2RrNLG9hwBh78G0WA">
+          <Node Bounds="720,710,305,19" Id="QfG1Z2RrNLG9hwBh78G0WA">
             <p:NodeReference LastCategoryFullName="Qt.Elements.Qml" LastDependency="VL.Qt.Qml">
               <Choice Kind="NodeFlag" Name="Node" Fixed="true" />
               <Choice Kind="ProcessNode" Name="TrendCard" />
@@ -380,7 +380,7 @@
               <Choice Kind="TypeFlag" Name="Vector2" />
             </p:TypeAnnotation>
           </Pad>
-          <Pad Id="Sxq0mdCQVjAOfjSMjlzekx" Comment="Amount" Bounds="842,635,53,15" ShowValueBox="true" isIOBox="true" Value="125">
+          <Pad Id="Sxq0mdCQVjAOfjSMjlzekx" Comment="Amount" Bounds="842,635,53,15" ShowValueBox="true" isIOBox="true" Value="129.94">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
               <Choice Kind="TypeFlag" Name="Float32" />
             </p:TypeAnnotation>
@@ -391,6 +391,11 @@
             </p:TypeAnnotation>
           </Pad>
           <ControlPoint Id="TQN3dpvp8hYPdXXRw0oFJO" Bounds="122,347" />
+          <Pad Id="ArremljQwtPO0PKH2fkSrN" Comment="Decimals" Bounds="882,695,35,15" ShowValueBox="true" isIOBox="true" Value="2">
+            <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="VL.CoreLib.vl">
+              <Choice Kind="TypeFlag" Name="Integer32" />
+            </p:TypeAnnotation>
+          </Pad>
         </Canvas>
         <Patch Id="o9Bhig5AnRMC9NmL1OYys2" Name="Create" />
         <Patch Id="yLjmRbWLxbMeut4TG6cQto" Name="Update" />
@@ -429,6 +434,7 @@
         <Link Id="QFZEC9CiZD6MjrhPYodJi9" Ids="EjZxhLKGCrDNCRPCnfBJVL,CN175N46Ky1NVpVZl8o1KO" />
         <Link Id="LFOgR6I62LcLIi2u7JEFrr" Ids="Sxq0mdCQVjAOfjSMjlzekx,johbuJCiurG77XwHC4agYC" />
         <Link Id="MZB0IWZO5YsM0aDIIII7G7" Ids="UmSpeAmhvyfOdTHHB9kw0D,vJlt9ZkUmtGYiNZTqQmyRI" />
+        <Link Id="IulB552Km1oMTy95NY7oUX" Ids="ArremljQwtPO0PKH2fkSrN,hW5hdN4PCgFEjIBIR1NflJ" />
       </Patch>
     </Node>
   </Patch>
