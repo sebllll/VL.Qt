@@ -19,7 +19,8 @@ namespace VL.Qt.Nodes
     /// <summary>
     /// Opens a Qt Quick window and shows the element tree at Input (Qt.Elements: Rectangle, Text, Group, ...).
     /// The tree is diffed against the last frame; only changes go to Qt (once per frame, in the global pump).
-    /// In the Qt window: F2 toggles the perfmeter panel, F5 the timing stats (see Enable Keyboard Shortcuts).
+    /// In the Qt window: F2 toggles the perfmeter panel, F5 the timing stats, F11 and Alt+Enter fullscreen (see Enable
+    /// Keyboard Shortcuts).
     /// </summary>
     [ProcessNode(Name = "Renderer", Category = Categories.Qt)]
     public sealed class RendererNode : IDisposable, IQtFrameParticipant
@@ -133,7 +134,8 @@ namespace VL.Qt.Nodes
         /// Save Bounds and Client Bounds stay on this node too.</param>
         /// <param name="fullscreen">Fullscreen on the screen the window is on (largest share), live; off restores
         /// position and size from before. Also applied on create, before the window is shown. F11 / Alt+Enter in the
-        /// window toggle it as well (like VL.Skia); the pin only acts when its value changes. While fullscreen, Save
+        /// window toggle it as well (like VL.Skia) while Enable Keyboard Shortcuts is on; the pin only acts when its
+        /// value changes. While fullscreen, Save
         /// Bounds writes nothing. No effect on eglfs (kiosk export, always fullscreen); Wayland: the compositor picks
         /// the screen.</param>
         /// <param name="multisampleCount">Anti-aliasing of the edges (MSAA samples per pixel), live. More samples look
@@ -142,9 +144,10 @@ namespace VL.Qt.Nodes
         /// node. Effect layers and snapshots in the window use the same count. A change recreates the window on screen
         /// once (tens of ms).</param>
         /// <param name="enableKeyboardShortcuts">On: the window takes the diagnostic keys F2 (perfmeter), F5 and Shift+F5
-        /// (timing stats), F6 (freeze) and F7 (host segments of the timeline); the scene never sees them. Off: none of
-        /// them is taken, the keys reach the elements and handlers of the scene (e.g. a TextField or your own F5
-        /// shortcut); an overlay that is open stays open. Live. F11 / Alt+Enter (Fullscreen) are not affected.</param>
+        /// (timing stats), F6 (freeze) and F7 (host segments of the timeline), and F11 and Alt+Enter (toggle
+        /// Fullscreen); the scene never sees them. Off: none of them is taken, the keys reach the elements and handlers
+        /// of the scene (e.g. a TextField or your own F5 shortcut); an overlay that is open stays open, and the window
+        /// stays fullscreen or not (the Fullscreen pin still works). Live.</param>
         // The default clear color is #202020 = 0.1254902.
         public void Update(
             [Pin(Visibility = VL.Model.PinVisibility.Optional)] out bool isVisible,

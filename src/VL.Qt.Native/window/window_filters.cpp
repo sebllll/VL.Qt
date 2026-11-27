@@ -1,4 +1,5 @@
 #include "window/window_filters.h"
+#include "window/scene_handle.h"
 #include "protocol.h"
 #include "vlqt.h"
 
@@ -19,7 +20,7 @@ bool CloseFilter::eventFilter(QObject* o, QEvent* e)
 
 bool FullscreenKeys::eventFilter(QObject* o, QEvent* e)
 {
-    if (e->type() == QEvent::KeyPress) {
+    if (e->type() == QEvent::KeyPress && asSceneHandle(m_window)->keys) {
         auto* ke = static_cast<QKeyEvent*>(e);
         const auto mods = ke->modifiers() & ~Qt::KeypadModifier;
         const bool enter = ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter;

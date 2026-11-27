@@ -19,6 +19,7 @@ protected:
 
 // F11 and Alt+Enter toggle fullscreen like VL.Skia's renderer: the same path as the Fullscreen pin
 // (vlqt_window_set_mode). The pin only acts on change, so a toggle by key stays until the pin changes.
+// Off with vlqt_window_set_keys(0) (SceneHandle::keys): both keys then reach the scene.
 class FullscreenKeys : public QObject
 {
 public:

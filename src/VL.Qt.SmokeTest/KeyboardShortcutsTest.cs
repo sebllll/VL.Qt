@@ -8,17 +8,19 @@ using VL.Qt.Interop;
 using VL.Qt.Wire;
 
 // Renderer pin Enable Keyboard Shortcuts (vlqt_window_set_keys): with the keys on (default) F2, F5, Shift+F5, F6 and F7
-// work the perf overlay and never reach the scene; with the keys off none of them is taken, the overlay stays as it is and
-// every key reaches the scene (assets/KeyProbe.qml counts them); on again, the old behaviour is back; the switch survives
-// the window swap of vlqt_window_set_samples. The overlay state is the one of vlqt_scene_get_overlay.
+// work the perf overlay, F11 and Alt+Enter toggle fullscreen, and none of them reaches the scene; with the keys off none of
+// them is taken, the overlay and the fullscreen mode stay as they are and every key reaches the scene (assets/KeyProbe.qml
+// counts them); on again, the old behaviour is back; the switch survives the window swap of vlqt_window_set_samples. The
+// overlay state is the one of vlqt_scene_get_overlay, the fullscreen mode the requested one of vlqt_window_get_mode.
 [TestFixture, NonParallelizable]
 public static class KeyboardShortcutsTest
 {
-    /// <summary>The diagnostic keys on and off.</summary>
+    /// <summary>The diagnostic and fullscreen keys on and off.</summary>
     [Test, Category("keyshortcuts")]
     public static void KeyboardShortcuts() => Scenario.Run(Run);
 
-    private const int KeyF2 = 0x01000031, KeyF5 = 0x01000034, KeyF6 = 0x01000035, KeyF7 = 0x01000036, Shift = 0x02000000;
+    private const int KeyF2 = 0x01000031, KeyF5 = 0x01000034, KeyF6 = 0x01000035, KeyF7 = 0x01000036, KeyF11 = 0x0100003A;
+    private const int KeyReturn = 0x01000004, Shift = 0x02000000, Alt = 0x08000000;
     private const int Meter = 1, Stats = 2, Freeze = 8, PageShift = 4;
     private const uint Probe = 10, ProbeHandle = 110;
 
@@ -86,6 +88,7 @@ public static class KeyboardShortcutsTest
         int Overlay() => Native.vlqt_scene_get_overlay(w);
         void Set(int flags) { NativeTest.vlqt_test_set_overlay(w, flags); Poll(); }
         void Keys(bool on) => s.Check(Native.vlqt_window_set_keys(w, on ? 1 : 0) == Native.Result.Ok, $"keyshortcuts: set_keys({on})");
+        bool Fullscreen() => (Native.vlqt_window_get_mode(w) & Protocol.WindowMode.Fullscreen) != 0;
 
         Poll();
         // Focus for the probe: a click on it (the SpinBox tests do the same); the click is no key.
@@ -111,6 +114,14 @@ public static class KeyboardShortcutsTest
         Key(KeyF5, Shift);
         s.Check((Overlay() & Stats) == 0, "keyshortcuts: on: Shift+F5 hides the stats");
         Set(0);
+        Key(KeyF11);
+        s.Check(Fullscreen(), "keyshortcuts: on: F11 switches to fullscreen");
+        Key(KeyF11);
+        s.Check(!Fullscreen(), "keyshortcuts: on: F11 switches back");
+        Key(KeyReturn, Alt);
+        s.Check(Fullscreen(), "keyshortcuts: on: Alt+Enter switches to fullscreen");
+        Key(KeyReturn, Alt);
+        s.Check(!Fullscreen(), "keyshortcuts: on: Alt+Enter switches back");
         s.Check(count == 0, $"keyshortcuts: on: no key reached the scene ({count})");
 
         // ---- keys off: every key reaches the scene, the overlay does not change -------------------------------------------
@@ -129,6 +140,10 @@ public static class KeyboardShortcutsTest
         s.Check(count == 5 && lastKey == KeyF7, $"keyshortcuts: off: F7 reaches the scene ({count})");
         s.Check((Overlay() & Stats) != 0, "keyshortcuts: off: an open overlay stays open");
         Set(0);
+        Key(KeyF11);
+        s.Check(count == 6 && lastKey == KeyF11 && !Fullscreen(), $"keyshortcuts: off: F11 reaches the scene, no fullscreen ({count})");
+        Key(KeyReturn, Alt);
+        s.Check(count == 7 && lastKey == KeyReturn && !Fullscreen(), $"keyshortcuts: off: Alt+Enter reaches the scene, no fullscreen ({count})");
 
         // ---- the switch survives the window swap of set_samples ------------------------------------------------------------
         var before = Native.vlqt_window_get_samples(w);
@@ -137,7 +152,9 @@ public static class KeyboardShortcutsTest
         if (used != before)
         {
             Key(KeyF2);
-            s.Check((Overlay() & Meter) == 0 && count == 6, $"keyshortcuts: off: still off after the window swap ({before} -> {used} samples, {count})");
+            Key(KeyF11);
+            s.Check((Overlay() & Meter) == 0 && !Fullscreen() && count == 9,
+                $"keyshortcuts: off: still off after the window swap ({before} -> {used} samples, {count})");
         }
         else
             s.Skip($"keyshortcuts: the sample count stays {before} on this device, no window swap");
