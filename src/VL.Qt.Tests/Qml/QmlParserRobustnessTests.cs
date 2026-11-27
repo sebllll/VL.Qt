@@ -43,6 +43,20 @@ namespace VL.Qt.Tests.Qml
             }
             """;
 
+        private const string lists = """
+            Item {
+                property list<real> a: [1, -2.5, 3e1,]
+                property list<point> b: [Qt.point(0, 1), Qt.point(1, 2)]
+                property list<color> c: ["red", Qt.rgba(0, 0, 0, 1), '#fff']
+                property list<string> d: ["a, b]", '[']
+                property list<int> e: [
+                    1, [2, (3)], {4}
+                ]
+                property list<rect> f: []
+                signal s(list<real> values, list<point> points)
+            }
+            """;
+
         private static IEnumerable<(string Name, string Source)> Sources()
         {
             var root = RepoRoot();
@@ -52,6 +66,7 @@ namespace VL.Qt.Tests.Qml
             foreach (var file in files.OrderBy(f => f, StringComparer.Ordinal))
                 yield return (Path.GetFileName(file), File.ReadAllText(file));
             yield return ("tricky", tricky);
+            yield return ("lists", lists);
         }
 
         [Test]
@@ -80,6 +95,25 @@ namespace VL.Qt.Tests.Qml
             }
             TestContext.Out.WriteLine($"{count} parses in {sw.ElapsedMilliseconds} ms");
             Assert.That(sw.Elapsed, Is.LessThan(TimeSpan.FromSeconds(60)));
+        }
+
+        [TestCase("[")]
+        [TestCase("[1, 2")]
+        [TestCase("[1, 2,")]
+        [TestCase("[1, 2]]")]
+        [TestCase("]")]
+        [TestCase("[1 2]")]
+        [TestCase("[Qt.point(0, 1]")]
+        [TestCase("[[[[1]]]]")]
+        [TestCase("[,]")]
+        [TestCase("[\"unterminated]")]
+        public void ListLiteral_Broken_DoesNotThrow_AndGivesTheEmptySpread(string literal)
+        {
+            // An unbalanced bracket is a parse error of the file; a balanced one that is no literal list is a binding.
+            var d = Parse("Item {\n property list<real> a: " + literal + "\n property list<point> b: " + literal + "\n}");
+            Assert.That(d.Signature, Is.Not.Null);
+            foreach (var p in d.Properties)
+                Assert.That(p.Default, Is.EqualTo(QmlTypes.TypeDefault(p.Kind)).And.Empty, p.Name);
         }
 
         [Test]

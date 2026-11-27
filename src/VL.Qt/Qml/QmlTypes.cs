@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Elements;
@@ -17,7 +18,22 @@ namespace VL.Qt.Qml
         /// <summary>Returns true if <paramref name="qmlType"/> (as written in the declaration, e.g. "real") gets a pin.</summary>
         public static bool TryMap(string? qmlType, out QmlValueKind kind)
         {
-            // TODO: map "list<T>" to ListKind of the kind of T (also "list<double>"); the parser has to hand over the whole type.
+            // list<T> of a type with a pin; a list of lists or of an unsupported type gets none.
+            if (qmlType is { Length: > 6 } && qmlType.StartsWith("list<", StringComparison.Ordinal) && qmlType.EndsWith('>'))
+            {
+                if (TryMapElement(qmlType.AsSpan(5, qmlType.Length - 6).Trim().ToString(), out var element))
+                {
+                    kind = ListKind(element);
+                    return true;
+                }
+                kind = default;
+                return false;
+            }
+            return TryMapElement(qmlType, out kind);
+        }
+
+        private static bool TryMapElement(string? qmlType, out QmlValueKind kind)
+        {
             switch (qmlType)
             {
                 case "real":
@@ -107,6 +123,9 @@ namespace VL.Qt.Qml
         /// </summary>
         public static bool TryCoerce(QmlValueKind kind, object? value, out object result)
         {
+            if (IsList(kind))
+                return TryCoerceList(kind, value, out result);
+
             switch (kind, value)
             {
                 case (QmlValueKind.Real, float f): result = f; return true;
@@ -121,9 +140,33 @@ namespace VL.Qt.Qml
                 case (QmlValueKind.Vector3D, Vector3 v): result = v; return true;
                 case (QmlValueKind.Vector4D, Vector4 v): result = v; return true;
                 case (QmlValueKind.Rect, RectangleF r): result = r; return true;
-                // TODO: a list kind takes the Spread<T> of the decoder (T = CLR element type); an empty spread fits every list kind,
-                // Spread<int> ↔ Spread<float> convert like the scalars.
                 default: result = TypeDefault(kind); return false;
+            }
+        }
+
+        // A list kind takes the Spread<T> of the decoder (T = CLR element type of the wire): an empty spread fits every list kind,
+        // Spread<int> and Spread<float> convert element by element like the scalars, the rest has to be of the pin type.
+        private static bool TryCoerceList(QmlValueKind kind, object? value, out object result)
+        {
+            if (value is not null && value.GetType() == ClrType(kind))
+            {
+                result = value;
+                return true;
+            }
+            switch (kind, value)
+            {
+                case (_, ISpread { Count: 0 }):
+                    result = TypeDefault(kind);
+                    return true;
+                case (QmlValueKind.RealList, Spread<int> ints):
+                    result = ints.Select(static i => (float)i).ToSpread();
+                    return true;
+                case (QmlValueKind.IntList, Spread<float> floats) when floats.All(static f => float.IsFinite(f)):
+                    result = floats.Select(static f => (int)MathF.Round(f)).ToSpread();
+                    return true;
+                default:
+                    result = TypeDefault(kind);
+                    return false;
             }
         }
 
