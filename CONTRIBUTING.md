@@ -1,6 +1,6 @@
 # Contributing to VL.Qt
 
-Thank you for your interest in VL.Qt. Bug reports, ideas and pull requests are welcome.
+Thank you for your interest in VL.Qt. Bug reports, ideas and pull requests are welcome. Everyone who takes part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## The short path
 
