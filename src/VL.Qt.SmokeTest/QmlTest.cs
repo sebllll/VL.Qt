@@ -20,11 +20,13 @@ using static Pixels;
 // QmlElement: a user .qml file in the element tree, raw protocol against QtNative (CREATE, SET QML_SOURCE / QML_RELOAD,
 // SET_QML_PROPERTIES, EVENT_QML_PROPERTY / EVENT_QML_SIGNAL / EVENT_ERROR). Test files: assets/QmlTest.qml (red rectangle, white progress
 // bar, properties fill / progress / shown / steps / clicks, signals clicked(int) and finished(...)), assets/QmlTypes.qml (every
-// value type in a property and in a bound copy). Files that are edited at run time live in <outDir>/qml/.
+// value type and every list<T> in a property and in a bound copy), assets/QmlLists.qml (a list in a var property, lists that QML
+// makes itself). Files that are edited at run time live in <outDir>/qml/.
 // What it covers: the picture, a property set by the patch is seen and is not echoed, what QML changes itself comes back once
 // per poll (steps, clicks, the Behavior animation of shown), signals with their arguments, animations follow vlqt_app_advance_animations
 // (not the wall clock), a Behavior retargeted by a value set every frame follows it (help example, LFO), every value type both ways,
-// property errors, compile / load errors (syntax, missing module, root is not
+// every list type both ways (also empty, strings of every padding, 65536 elements, a var list, lists made by QML, list signal
+// arguments, the limit), property errors, compile / load errors (syntax, missing module, root is not
 // an Item, missing file) and recovery, reload after a file change (also a component next to the file), Auto Size.
 // Grabs go to <outDir>/qml_*.png.
 [TestFixture, NonParallelizable]
@@ -33,8 +35,8 @@ public static class QmlTest
     [Test, Category("qml")]
     public static void Qml() => Scenario.Run(Run);
 
-    private const uint Q = 10, T = 20, R = 30, E = 40, O = 50, Extra = 99;
-    private const uint HQ = 110, HT = 120, HR = 130, HE = 140, HO = 150;
+    private const uint Q = 10, T = 20, R = 30, E = 40, O = 50, LS = 70, Extra = 99;
+    private const uint HQ = 110, HT = 120, HR = 130, HE = 140, HO = 150, HLS = 170;
 
     private static bool Near(Color c, int r, int g, int b, int tol = 10) => Math.Abs(c.R - r) < tol && Math.Abs(c.G - g) < tol && Math.Abs(c.B - b) < tol;
     private static bool IsBg(Color c) => Near(c, 0x20, 0x20, 0x20);
@@ -78,8 +80,9 @@ public static class QmlTest
     {
         var qmlTest = FindFile("src", "VL.Qt.SmokeTest", "assets", "QmlTest.qml");
         var qmlTypes = FindFile("src", "VL.Qt.SmokeTest", "assets", "QmlTypes.qml");
-        s.Check(qmlTest != null && qmlTypes != null, $"test files found ({qmlTest}, {qmlTypes})");
-        if (qmlTest == null || qmlTypes == null) return;
+        var qmlLists = FindFile("src", "VL.Qt.SmokeTest", "assets", "QmlLists.qml");
+        s.Check(qmlTest != null && qmlTypes != null && qmlLists != null, $"test files found ({qmlTest}, {qmlTypes}, {qmlLists})");
+        if (qmlTest == null || qmlTypes == null || qmlLists == null) return;
         var work = System.IO.Path.Combine(s.OutDir, "qml");
         if (Directory.Exists(work)) Directory.Delete(work, true);
         Directory.CreateDirectory(work);
@@ -89,7 +92,7 @@ public static class QmlTest
         s.Check(w != SceneHandle.Null, "window_create");
         Native.vlqt_window_show(w);
         var cmd = new CommandWriter();
-        var buf = new byte[1 << 18];
+        var buf = new byte[1 << 20]; // a list of 65536 elements is 256 KB
         var errors = new Dictionary<uint, string>(); // last EVENT_ERROR text per handle (empty = cleared)
         var measured = new Dictionary<uint, (float W, float H)>();
 
@@ -335,6 +338,160 @@ public static class QmlTest
         s.Check(Encoding.UTF8.GetByteCount(longText) > 70000 && Props(recs, HT, "sOut") is [string ls] && ls == longText && Err(HT) == "",
             $"a string of {Encoding.UTF8.GetByteCount(longText)} UTF-8 bytes arrives complete, no error ('{Err(HT)}')");
 
+        // ---- 4b. lists: every list type both ways ---------------------------------------------------------------------------
+        // One list in, its bound copy out: once, as a Spread of the element type, equal to what was sent; the list itself is not echoed.
+        List<Rec> ListRoundTrip<TE>(uint id, uint handle, string prop, string what, Action<QmlProps> write, TE[] expected, Func<TE, TE, bool>? same = null)
+        {
+            SetProps(id, write);
+            CheckApply($"SET_QML_PROPERTIES {prop} ({what})");
+            var got = Poll();
+            same ??= (a, b) => EqualityComparer<TE>.Default.Equals(a, b);
+            var copy = Props(got, handle, prop + "Out");
+            var ok = copy is [Spread<TE> list] && list.Count == expected.Length && list.Zip(expected, same).All(x => x);
+            s.Check(ok && !PropNames(got, handle).Contains(prop) && Err(handle) == "",
+                $"list {prop}, {what}: round trip as Spread<{typeof(TE).Name}> of {expected.Length}, not echoed ({S(got)}; error '{Err(handle)}')");
+            return got;
+        }
+        static bool Near2(float a, float b) => Math.Abs(a - b) <= 0.002f;
+        static bool SameColor(Color4 a, Color4 b) => Near2(a.R, b.R) && Near2(a.G, b.G) && Near2(a.B, b.B) && Near2(a.A, b.A);
+        static float[] Floats(IEnumerable<Color4> v) => v.SelectMany(x => new[] { x.R, x.G, x.B, x.A }).ToArray();
+        static float[] Floats2(IEnumerable<Vector2> v) => v.SelectMany(x => new[] { x.X, x.Y }).ToArray();
+        static float[] Floats3(IEnumerable<Vector3> v) => v.SelectMany(x => new[] { x.X, x.Y, x.Z }).ToArray();
+        static float[] Floats4(IEnumerable<Vector4> v) => v.SelectMany(x => new[] { x.X, x.Y, x.Z, x.W }).ToArray();
+        static float[] FloatsR(IEnumerable<RectangleF> v) => v.SelectMany(x => new[] { x.X, x.Y, x.Width, x.Height }).ToArray();
+        const ushort F32T = Protocol.ValueType.F32, V2T = Protocol.ValueType.Vec2, V3T = Protocol.ValueType.Vec3, V4T = Protocol.ValueType.Vec4,
+            ColorT = Protocol.ValueType.Color, RectT = Protocol.ValueType.Rectf;
+
+        // Reals: list<real> and list<double> are the same pin type; an empty list after a full one is a change and keeps the element type.
+        var reals = new[] { 0.25f, -1.5f, 1000f };
+        recs = ListRoundTrip(T, HT, "rl", "three reals", p => p.ListF32("rl", F32T, reals), reals);
+        s.Check(Signals(recs, HT) is [{ Name: "measured", Arguments: [Spread<float> sm] }] && sm.SequenceEqual(reals), $"a list argument of a signal: measured(list<real>) arrives as a Spread<float> ({S(recs)})");
+        recs = ListRoundTrip(T, HT, "rl", "empty", p => p.ListF32("rl", F32T), Array.Empty<float>());
+        s.Check(Signals(recs, HT) is [{ Name: "measured", Arguments: [Spread<float> { Count: 0 }] }], $"an empty list argument has the element type of its declaration (floats) ({S(recs)})");
+        ListRoundTrip(T, HT, "dl", "three doubles", p => p.ListF32("dl", F32T, reals), reals);
+        ListRoundTrip(T, HT, "dl", "empty", p => p.ListF32("dl", F32T), Array.Empty<float>());
+        ListRoundTrip(T, HT, "il", "ints", p => p.ListI32("il", 7, -3, int.MaxValue, int.MinValue), new[] { 7, -3, int.MaxValue, int.MinValue });
+        ListRoundTrip(T, HT, "il", "empty", p => p.ListI32("il"), Array.Empty<int>());
+        // One byte per bool: counts of every remainder modulo 4 (padding of the entry).
+        foreach (var bools in new[] { new[] { true }, new[] { true, false }, new[] { false, true, true }, new[] { true, false, true, true }, new[] { true, false, false, true, true } })
+        {
+            ListRoundTrip(T, HT, "bl", $"{bools.Length} bools", p => p.ListBool("bl", bools), bools);
+            ListRoundTrip(T, HT, "bl", "empty", p => p.ListBool("bl"), Array.Empty<bool>());
+        }
+        // Strings: lengths 0..4, umlauts, euro sign, emoji (UTF-8 of 1 to 4 bytes per character): every padding to 4 bytes, also of the last one.
+        var texts = new[] { "", "a", "ab", "abc", "abcd", "hä€😀 text", "ä", "😀", "€€" };
+        recs = ListRoundTrip(T, HT, "sl", "strings of every padding", p => p.ListString("sl", texts), texts);
+        s.Check(Signals(recs, HT) is [{ Name: "tagged", Arguments: [Spread<string> st] }] && st.SequenceEqual(texts), $"a list of strings as signal argument ({S(recs)})");
+        for (int n = 1; n <= 4; n++)
+        {
+            var one = new[] { new string('x', n) + "ä" };
+            ListRoundTrip(T, HT, "sl", $"one string of {Encoding.UTF8.GetByteCount(one[0])} bytes", p => p.ListString("sl", one), one);
+        }
+        recs = ListRoundTrip(T, HT, "sl", "empty", p => p.ListString("sl"), Array.Empty<string>());
+        s.Check(Signals(recs, HT) is [{ Name: "tagged", Arguments: [Spread<string> { Count: 0 }] }], $"an empty list of strings stays a list of strings ({S(recs)})");
+        var colors = new[] { new Color4(1, 0, 0, 1), new Color4(0.2f, 0.4f, 0.6f, 0.8f), new Color4(0, 0, 0, 0) };
+        ListRoundTrip(T, HT, "cl", "colors", p => p.ListF32("cl", ColorT, Floats(colors)), colors, SameColor);
+        ListRoundTrip(T, HT, "cl", "empty", p => p.ListF32("cl", ColorT), Array.Empty<Color4>());
+        var points = new[] { new Vector2(1, 2), new Vector2(-3.5f, 4), new Vector2(0, -0.25f) };
+        recs = ListRoundTrip(T, HT, "ptl", "points as Vector2", p => p.ListF32("ptl", V2T, Floats2(points)), points);
+        s.Check(Signals(recs, HT) is [{ Name: "placed", Arguments: [Spread<Vector2> sp] }] && sp.SequenceEqual(points), $"list<point> as signal argument is a Spread<Vector2> ({S(recs)})");
+        recs = ListRoundTrip(T, HT, "ptl", "empty", p => p.ListF32("ptl", V2T), Array.Empty<Vector2>());
+        s.Check(Signals(recs, HT) is [{ Name: "placed", Arguments: [Spread<Vector2> { Count: 0 }] }], $"an empty list<point> argument is a Spread<Vector2> ({S(recs)})");
+        ListRoundTrip(T, HT, "szl", "sizes as Vector2", p => p.ListF32("szl", V2T, Floats2(points)), points);
+        ListRoundTrip(T, HT, "szl", "empty", p => p.ListF32("szl", V2T), Array.Empty<Vector2>());
+        ListRoundTrip(T, HT, "v2l", "vector2d", p => p.ListF32("v2l", V2T, Floats2(points)), points);
+        ListRoundTrip(T, HT, "v2l", "empty", p => p.ListF32("v2l", V2T), Array.Empty<Vector2>());
+        var v3s = new[] { new Vector3(1, 2, 3), new Vector3(-4, 5.5f, 0) };
+        ListRoundTrip(T, HT, "v3l", "vector3d", p => p.ListF32("v3l", V3T, Floats3(v3s)), v3s);
+        ListRoundTrip(T, HT, "v3l", "empty", p => p.ListF32("v3l", V3T), Array.Empty<Vector3>());
+        var v4s = new[] { new Vector4(4, 3, 2, 1), new Vector4(-1, 0.5f, 8, 16), new Vector4(0, 0, 0, 1) };
+        ListRoundTrip(T, HT, "v4l", "vector4d", p => p.ListF32("v4l", V4T, Floats4(v4s)), v4s);
+        ListRoundTrip(T, HT, "v4l", "empty", p => p.ListF32("v4l", V4T), Array.Empty<Vector4>());
+        var rects = new[] { new RectangleF(10, 20, 30, 40), new RectangleF(-1, -2, 0.5f, 0.25f) };
+        ListRoundTrip(T, HT, "boxl", "rects", p => p.ListF32("boxl", RectT, FloatsR(rects)), rects);
+        ListRoundTrip(T, HT, "boxl", "empty", p => p.ListF32("boxl", RectT), Array.Empty<RectangleF>());
+        // Two lists in one command, and a list next to a single value.
+        SetProps(T, p => { p.ListI32("il", 1, 2, 3); p.F32("r", 9f); p.ListString("sl", "x", "yz"); });
+        CheckApply("SET_QML_PROPERTIES two lists and a real");
+        recs = Poll();
+        s.Check(Props(recs, HT, "ilOut") is [Spread<int> i123] && i123.SequenceEqual(new[] { 1, 2, 3 }) && Props(recs, HT, "slOut") is [Spread<string> sxy] && sxy.SequenceEqual(new[] { "x", "yz" })
+                && Props(recs, HT, "rOut") is [float r9] && r9 == 9f && Err(HT) == "", $"two lists and a real in one command ({S(recs)})");
+        // The numbers of the other kind convert like single values: ints into a list<real>, whole reals into a list<int>.
+        ListRoundTrip(T, HT, "rl", "ints into a list<real>", p => p.ListI32("rl", 1, 2, 3), new[] { 1f, 2f, 3f });
+        ListRoundTrip(T, HT, "il", "reals into a list<int>", p => p.ListF32("il", F32T, 4f, 5f), new[] { 4, 5 });
+        // The most a list can have, and the limit of the C# writer (QtNative's own limit has cases in ApplyTest).
+        var full = Enumerable.Range(0, Protocol.ListValueMaxCount).ToArray();
+        ListRoundTrip(T, HT, "il", $"{full.Length} ints", p => p.ListI32("il", full), full);
+        cmd.BeginQmlProperties(T, 0);
+        s.Check(Assert.Throws<ArgumentException>(() => cmd.QmlPropertyListI32("il", new int[Protocol.ListValueMaxCount + 1])) != null, "the writer refuses more than 65536 elements");
+        cmd.Clear();
+        // A list that does not convert: an error line with the name, nothing applied; a good list afterwards clears it.
+        SetProps(T, p => p.ListString("rl", "a", "b"));
+        CheckApply("SET strings into a list<real>");
+        recs = Poll();
+        s.Check(Err(HT).StartsWith("rl: ") && Err(HT).Contains("cannot be converted") && Props(recs, HT, "rlOut").Count == 0, $"strings into a list<real>: error line with the name, no change ('{Err(HT)}')");
+        SetProps(T, p => p.ListF32("v3l", V2T, 1, 2, 3, 4));
+        CheckApply("SET vector2d list into a list<vector3d>");
+        Poll();
+        s.Check(Err(HT).Contains("v3l: ") && Err(HT).Contains("cannot be converted"), $"vec2 elements into a list<vector3d>: error line ('{Err(HT)}')");
+        SetProps(T, p => { p.ListF32("rl", F32T, 5f); p.ListF32("v3l", V3T, 1, 2, 3); });
+        CheckApply("SET good lists again");
+        recs = Poll();
+        s.Check(Err(HT) == "" && Props(recs, HT, "rlOut") is [Spread<float> r5] && r5.SequenceEqual(new[] { 5f }), $"good lists clear the errors ('{Err(HT)}', {S(recs)})");
+
+        // ---- 4c. a list in a var property, lists that QML makes itself --------------------------------------------------------
+        Qml(LS, HLS, qmlLists, 500, 200);
+        CheckApply("create QmlElement (QmlLists.qml)");
+        Flat(Frames(2));
+        s.Check(Err(HLS) == "", $"QmlLists.qml loads ('{Err(HLS)}')");
+        // var: a JavaScript array; each element is converted like a single value, the copy goes back with its element type.
+        ListRoundTrip(LS, HLS, "v", "var: reals", p => p.ListF32("v", F32T, reals), reals);
+        ListRoundTrip(LS, HLS, "v", "var: ints", p => p.ListI32("v", 3, 2, 1), new[] { 3, 2, 1 });
+        ListRoundTrip(LS, HLS, "v", "var: bools", p => p.ListBool("v", true, false, true), new[] { true, false, true });
+        ListRoundTrip(LS, HLS, "v", "var: strings", p => p.ListString("v", texts), texts);
+        ListRoundTrip(LS, HLS, "v", "var: colors", p => p.ListF32("v", ColorT, Floats(colors)), colors, SameColor);
+        ListRoundTrip(LS, HLS, "v", "var: vector2d", p => p.ListF32("v", V2T, Floats2(points)), points);
+        ListRoundTrip(LS, HLS, "v", "var: vector3d", p => p.ListF32("v", V3T, Floats3(v3s)), v3s);
+        ListRoundTrip(LS, HLS, "v", "var: vector4d", p => p.ListF32("v", V4T, Floats4(v4s)), v4s);
+        ListRoundTrip(LS, HLS, "v", "var: rects", p => p.ListF32("v", RectT, FloatsR(rects)), rects);
+        // An empty list has no element to look at: it carries the element type F32.
+        ListRoundTrip(LS, HLS, "v", "var: empty", p => p.ListI32("v"), Array.Empty<float>());
+
+        // Lists QML makes: each property comes back once with the type of its elements; the patch only sets n.
+        SetProps(LS, p => p.I32("n", 3));
+        CheckApply("SET n = 3");
+        recs = Poll();
+        s.Check(Props(recs, HLS, "counted") is [Spread<int> c0] && c0.SequenceEqual(new[] { 0, 3, 6 }), $"list<int> that QML made: 0, 3, 6 ({S(recs)})");
+        s.Check(Props(recs, HLS, "halves") is [Spread<float> h0] && h0.SequenceEqual(new[] { 0.5f, 1.5f, 2.5f }), $"var list of reals that QML made ({S(recs)})");
+        s.Check(Props(recs, HLS, "strings") is [Spread<string> t0] && t0.SequenceEqual(new[] { "s", "sä€", "sä€ä€" }), $"var list of strings that QML made ({S(recs)})");
+        s.Check(Props(recs, HLS, "mixedNumbers") is [Spread<float> mn] && mn.SequenceEqual(new[] { 1f, 2.5f, 3f }), $"integers and reals together go as reals ({S(recs)})");
+        s.Check(!PropNames(recs, HLS).Contains("n") && !PropNames(recs, HLS).Contains("mixedTypes"), $"n is not echoed; a list of mixed types is no list value ({string.Join(",", PropNames(recs, HLS))})");
+        s.Check(Err(HLS).Contains("mixedTypes"), $"... and its error line names the property ('{Err(HLS)}')");
+        sig = Signals(recs, HLS);
+        s.Check(sig.Count == 2 && sig[0].Name == "made" && sig[0].Arguments is [Spread<float> mv] && mv.SequenceEqual(new[] { 3f, 3.5f }), $"a list made in a signal: made([3, 3.5]) ({S(recs)})");
+        s.Check(sig.Count == 2 && sig[1].Name == "oddOne" && sig[1].Arguments is [string odd] && odd.Contains('a'), $"a list of mixed types in a signal keeps its string form ({S(recs)})");
+        SetProps(LS, p => p.I32("n", 0));
+        CheckApply("SET n = 0");
+        recs = Poll();
+        s.Check(Props(recs, HLS, "counted") is [Spread<int> { Count: 0 }] && Props(recs, HLS, "halves") is [Spread<float> { Count: 0 }] && Props(recs, HLS, "strings") is [Spread<float> { Count: 0 }],
+            $"empty lists: list<int> keeps its element type, an empty var list is a Spread<float> ({S(recs)})");
+        s.Check(Signals(recs, HLS) is [{ Name: "made", Arguments: [Spread<float> { Count: 0 }] }, { Name: "oddOne", Arguments: [Spread<float> { Count: 0 }] }], $"empty list arguments ({S(recs)})");
+
+        // The limit: 65536 elements still come back, 65537 do not; the error line names the property and the limit.
+        SetProps(LS, p => p.I32("bigN", Protocol.ListValueMaxCount));
+        CheckApply("SET bigN = 65536");
+        recs = Poll();
+        s.Check(Props(recs, HLS, "big") is [Spread<int> bigList] && bigList.Count == Protocol.ListValueMaxCount && bigList[0] == 0 && bigList[^1] == Protocol.ListValueMaxCount - 1,
+            $"a list of 65536 elements made by QML comes back complete ({recs.Count} records)");
+        SetProps(LS, p => p.I32("bigN", Protocol.ListValueMaxCount + 1));
+        CheckApply("SET bigN = 65537");
+        recs = Poll();
+        s.Check(Props(recs, HLS, "big").Count == 0 && Err(HLS).Contains("big: ") && Err(HLS).Contains("65537") && Err(HLS).Contains("65536"),
+            $"a list over the limit is not sent, the error line names the property, the count and the limit ('{Err(HLS)}')");
+        cmd.Destroy(LS);
+        CheckApply("destroy the QmlLists element");
+        Flat(Frames(2));
+
         // Property errors: a value that does not convert, an unknown name, a read-only property (width of Item is writable: use a bad name).
         SetProps(T, p => p.String("i", "abc"));
         CheckApply("SET string -> int property (cannot convert)");
@@ -570,5 +727,9 @@ public static class QmlTest
         public void Vec3(string name, float x, float y, float z) => _w.QmlPropertyVec3(name, x, y, z);
         public void Vec4(string name, float x, float y, float z, float w) => _w.QmlPropertyVec4(name, x, y, z, w);
         public void Rect(string name, float x, float y, float width, float height) => _w.QmlPropertyRect(name, x, y, width, height);
+        public void ListF32(string name, ushort elementType, params float[] values) => _w.QmlPropertyListF32(name, elementType, values);
+        public void ListI32(string name, params int[] values) => _w.QmlPropertyListI32(name, values);
+        public void ListBool(string name, params bool[] values) => _w.QmlPropertyListBool(name, values);
+        public void ListString(string name, params string[] values) => _w.QmlPropertyListString(name, values);
     }
 }

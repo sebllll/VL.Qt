@@ -88,18 +88,22 @@ namespace VL.Qt.Tests.Qml
             var d = Parse(File.ReadAllText(Path.Combine(RepoRoot(), "src", "VL.Qt.SmokeTest", "assets", "QmlTypes.qml")));
 
             Assert.That(d.Messages, Is.Empty);
-            Assert.That(d.Properties, Has.Length.EqualTo(22));
+            Assert.That(d.Properties, Has.Length.EqualTo(46));
             var kinds = new Dictionary<string, QmlValueKind>
             {
                 ["r"] = QmlValueKind.Real, ["i"] = QmlValueKind.Int, ["b"] = QmlValueKind.Bool, ["s"] = QmlValueKind.String,
                 ["c"] = QmlValueKind.Color, ["v2"] = QmlValueKind.Vector2D, ["v3"] = QmlValueKind.Vector3D, ["v4"] = QmlValueKind.Vector4D,
                 ["box"] = QmlValueKind.Rect, ["pt"] = QmlValueKind.Point, ["sz"] = QmlValueKind.Size,
+                ["rl"] = QmlValueKind.RealList, ["dl"] = QmlValueKind.RealList, ["il"] = QmlValueKind.IntList, ["bl"] = QmlValueKind.BoolList,
+                ["sl"] = QmlValueKind.StringList, ["cl"] = QmlValueKind.ColorList, ["ptl"] = QmlValueKind.PointList, ["szl"] = QmlValueKind.SizeList,
+                ["v2l"] = QmlValueKind.Vector2DList, ["v3l"] = QmlValueKind.Vector3DList, ["v4l"] = QmlValueKind.Vector4DList, ["boxl"] = QmlValueKind.RectList,
             };
             foreach (var (name, kind) in kinds)
             {
                 var input = Prop(d, name);
                 Assert.That(input.Kind, Is.EqualTo(kind), name);
-                Assert.That(input.Initializer, Is.EqualTo(QmlInitializer.Literal), name);
+                // A list in the file has no initializer: its pin default is the empty spread.
+                Assert.That(input.Initializer, Is.EqualTo(QmlTypes.IsList(kind) ? QmlInitializer.None : QmlInitializer.Literal), name);
                 var output = Prop(d, name + "Out");
                 Assert.That(output.Kind, Is.EqualTo(kind), name + "Out");
                 Assert.That(output.Initializer, Is.EqualTo(QmlInitializer.Binding), name + "Out");
@@ -114,8 +118,13 @@ namespace VL.Qt.Tests.Qml
             Assert.That(Prop(d, "sz").Default, Is.EqualTo(Vector2.Zero));
             Assert.That(Prop(d, "b").Default, Is.EqualTo(false));
             Assert.That(Prop(d, "s").Default, Is.EqualTo(string.Empty));
-            Assert.That(d.Signals.Select(x => x.Name), Is.EqualTo(new[] { "located" }));
+            foreach (var (name, kind) in kinds.Where(k => QmlTypes.IsList(k.Value)))
+                Assert.That(Prop(d, name).Default, Is.InstanceOf(QmlTypes.ClrType(kind)).And.Empty, name);
+            Assert.That(d.Signals.Select(x => x.Name), Is.EqualTo(new[] { "located", "measured", "tagged", "placed" }));
             Assert.That(d.Signals[0].Args, Is.EqualTo(new[] { new QmlSignalArg("p", "point", QmlValueKind.Point) }));
+            Assert.That(d.Signals[1].Args, Is.EqualTo(new[] { new QmlSignalArg("values", "list<real>", QmlValueKind.RealList) }));
+            Assert.That(d.Signals[2].Args, Is.EqualTo(new[] { new QmlSignalArg("names", "list<string>", QmlValueKind.StringList) }));
+            Assert.That(d.Signals[3].Args, Is.EqualTo(new[] { new QmlSignalArg("points", "list<point>", QmlValueKind.PointList) }));
         }
 
         // ---- literals ---------------------------------------------------------------------------------------------------------
