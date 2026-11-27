@@ -1,8 +1,9 @@
 // Example file for the QML node factory (help patch "HowTo Interact with QML"): pointer and keyboard input
 // inside a file. A MouseArea sets the value from the mouse (click or drag) and gives the bar the keyboard focus; Keys
-// change the value with the arrow keys. The value and a signal go back to the patch through the pins.
+// change the value with the arrow keys, Enter commits and gives the focus back. The value and a signal go back to
+// the patch through the pins.
 //
-// @summary A bar you set with the mouse (click or drag) or the Left and Right keys. A click gives it the focus, a frame shows it. Fires Committed on Enter and when the mouse is released.
+// @summary A bar you set with the mouse (click or drag) or the Left and Right keys. A click gives it the focus, a frame shows it. Enter commits and releases the focus; the mouse release commits too.
 // @tags input, pointer, mouse, keyboard, focus, slider
 import QtQuick
 
@@ -28,11 +29,17 @@ Item {
 
         anchors.fill: parent
 
-        // Left and Right change Value, Enter and Return commit it. Keys that are not handled go on to the parents.
+        // Left and Right change Value, Enter and Return commit it and give the focus back: with focus off no key
+        // reaches the bar and the frame goes, like after a click outside. Other keys go on to the parents.
         Keys.onLeftPressed: root.value = Math.max(0, root.value - root.step)
         Keys.onRightPressed: root.value = Math.min(1, root.value + root.step)
-        Keys.onReturnPressed: root.committed(root.value)
-        Keys.onEnterPressed: root.committed(root.value)
+        Keys.onReturnPressed: commit()
+        Keys.onEnterPressed: commit()
+
+        function commit() {
+            root.committed(root.value)
+            bar.focus = false
+        }
 
         Rectangle {
             anchors.fill: parent

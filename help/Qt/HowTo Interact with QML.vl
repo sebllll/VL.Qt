@@ -25,7 +25,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="qCPxidbNx1pw3zcj683JOP" Bounds="85,85,640,98" ShowValueBox="true" isIOBox="true" Value="Stepper [Qt] (generated from qml/Stepper.qml)&#xA;- Mouse: press or drag on the bar sets Value, releasing fires Committed&#xA;- Keyboard: a click gives the focus (white frame), Left and Right change Value, Enter fires Committed&#xA;- Value (out) and Committed (out) report back to the patch&#xA;- MouseArea, Keys and focus in the file work as in any Qt Quick scene">
+          <Pad Id="qCPxidbNx1pw3zcj683JOP" Bounds="85,85,640,98" ShowValueBox="true" isIOBox="true" Value="Stepper [Qt] (generated from qml/Stepper.qml)&#xA;- Mouse: press or drag on the bar sets Value, releasing fires Committed&#xA;- Keyboard: a click gives the focus (white frame), Left and Right change Value, Enter commits and releases the focus&#xA;- Value (out) and Committed (out) report back to the patch&#xA;- MouseArea, Keys and focus in the file work as in any Qt Quick scene">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -85,7 +85,7 @@
           </Pad>
           <Pad Id="5HuwgQo0SzgXITxvbOr2OH" Comment="Value" Bounds="125,350,60,15" ShowValueBox="true" isIOBox="true" />
           <Pad Id="98kqVYfPSQYSmYtwGh1nYD" Comment="Committed" Bounds="148,390,60,40" ShowValueBox="true" isIOBox="true" />
-          <Pad Id="wOjevXY3BKgqWmRXacRujx" Bounds="300,389,360,20" ShowValueBox="true" isIOBox="true" Value="Committed: Value at the moment of Enter or of the mouse release">
+          <Pad Id="wOjevXY3BKgqWmRXacRujx" Bounds="300,389,360,20" ShowValueBox="true" isIOBox="true" Value="Committed: Value at the moment of Enter (which also releases the focus) or of the mouse release">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
@@ -135,7 +135,7 @@
               <p:stringtype p:Assembly="VL.Core" p:Type="VL.Core.StringType">Comment</p:stringtype>
             </p:ValueBoxSettings>
           </Pad>
-          <Pad Id="KW1jPTWYg3d3mVAbqvQaFC" Bounds="85,650,840,150" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The mouse is grabbed while a button is down, so dragging outside the bar still sets Value (clamped to 0..1). A press that no input item of the file takes goes on to the Interaction handlers of the element and to the elements below.&#xA;- Focus: a press on an item that calls forceActiveFocus gives it the keys. The element counts as one widget, a press elsewhere on it keeps the focus, a click outside the element gives the focus back and the frame goes.&#xA;- Left and Right change Value by Step, Enter and Return fire Committed. Keys the file does not handle go on to the parents; Esc reaches the file like any other key.&#xA;- Value (in) sends only when it changes, so the patch and the mouse do not fight over the bar. Value (out) shows the last value QML set.&#xA;- The Renderer keeps F2, F5, F6, F7 (diagnostics), F11 and Alt+Enter (fullscreen) while Enable Keyboard Shortcuts is on; switch it off and all of them reach the file.&#xA;- Hot reload during a press ends the press: the release clicks nothing. Setting the focus from the patch is not possible.">
+          <Pad Id="KW1jPTWYg3d3mVAbqvQaFC" Bounds="85,650,840,150" ShowValueBox="true" isIOBox="true" Value="Notes:&#xA;- The mouse is grabbed while a button is down, so dragging outside the bar still sets Value (clamped to 0..1). A press that no input item of the file takes goes on to the Interaction handlers of the element and to the elements below.&#xA;- Focus: a press on an item that calls forceActiveFocus gives it the keys. The element counts as one widget, a press elsewhere on it keeps the focus, a click outside the element gives the focus back and the frame goes. Enter does the same: the file commits and sets the focus of the bar to false, so no key reaches it any more.&#xA;- Left and Right change Value by Step, Enter and Return fire Committed and release the focus. Keys the file does not handle go on to the parents; Esc reaches the file like any other key.&#xA;- Value (in) sends only when it changes, so the patch and the mouse do not fight over the bar. Value (out) shows the last value QML set.&#xA;- The Renderer keeps F2, F5, F6, F7 (diagnostics), F11 and Alt+Enter (fullscreen) while Enable Keyboard Shortcuts is on; switch it off and all of them reach the file.&#xA;- Hot reload during a press ends the press: the release clicks nothing. Setting the focus from the patch is not possible.">
             <p:TypeAnnotation LastCategoryFullName="Primitive" LastDependency="CoreLibBasics.vl">
               <Choice Kind="TypeFlag" Name="String" />
             </p:TypeAnnotation>
