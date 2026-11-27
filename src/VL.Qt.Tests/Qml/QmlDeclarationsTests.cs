@@ -89,7 +89,7 @@ namespace VL.Qt.Tests.Qml
             var d = Parse(File.ReadAllText(Path.Combine(RepoRoot(), "src", "VL.Qt.SmokeTest", "assets", "QmlTypes.qml")));
 
             Assert.That(d.Messages, Is.Empty);
-            Assert.That(d.Properties, Has.Length.EqualTo(53));
+            Assert.That(d.Properties, Has.Length.EqualTo(59));
             var kinds = new Dictionary<string, QmlValueKind>
             {
                 ["r"] = QmlValueKind.Real, ["i"] = QmlValueKind.Int, ["b"] = QmlValueKind.Bool, ["s"] = QmlValueKind.String,
@@ -98,7 +98,8 @@ namespace VL.Qt.Tests.Qml
                 ["rl"] = QmlValueKind.RealList, ["dl"] = QmlValueKind.RealList, ["il"] = QmlValueKind.IntList, ["bl"] = QmlValueKind.BoolList,
                 ["sl"] = QmlValueKind.StringList, ["cl"] = QmlValueKind.ColorList, ["ptl"] = QmlValueKind.PointList, ["szl"] = QmlValueKind.SizeList,
                 ["v2l"] = QmlValueKind.Vector2DList, ["v3l"] = QmlValueKind.Vector3DList, ["v4l"] = QmlValueKind.Vector4DList, ["boxl"] = QmlValueKind.RectList,
-                ["u"] = QmlValueKind.Url, ["ul"] = QmlValueKind.UrlList,
+                ["u"] = QmlValueKind.Url, ["ul"] = QmlValueKind.UrlList, ["d"] = QmlValueKind.Date, ["dal"] = QmlValueKind.DateList,
+                ["fo"] = QmlValueKind.Font,
             };
             foreach (var (name, kind) in kinds)
             {
@@ -216,6 +217,40 @@ namespace VL.Qt.Tests.Qml
             Assert.That(Prop(d, "list").Default, Is.EqualTo(new[] { new VLPath("x.png"), new VLPath("qrc:/y.png") }.ToSpread()));
             Assert.That(Prop(d, "mixed").Initializer, Is.EqualTo(QmlInitializer.Binding));
             Assert.That(Prop(d, "mixed").Default, Is.EqualTo(Spread<VLPath>.Empty));
+        }
+
+        [Test]
+        public void DateAndFontLiterals()
+        {
+            var d = Parse("""
+                Item {
+                    property date day: "2024-05-01"
+                    property date moment: "2024-05-01T12:30:00"
+                    property date none
+                    property date bound: new Date()
+                    property list<date> days: ["2024-01-01", "2024-12-31"]
+                    property font plain
+                    property font title: Qt.font({ family: "Arial", pixelSize: 24, weight: Font.Bold, italic: true })
+                    property font points: Qt.font({ pointSize: 9, bold: true })
+                    property font heavy: Qt.font({ weight: 900, })
+                    property font other: Qt.font({ family: "Arial", letterSpacing: 2 })
+                    property font expr: Qt.font({ pixelSize: size })
+                }
+                """);
+
+            Assert.That(d.Messages, Is.Empty);
+            Assert.That(Prop(d, "day").Default, Is.EqualTo(new DateTime(2024, 5, 1, 0, 0, 0, DateTimeKind.Local)));
+            Assert.That(((DateTime)Prop(d, "day").Default).Kind, Is.EqualTo(DateTimeKind.Local));
+            Assert.That(Prop(d, "moment").Default, Is.EqualTo(new DateTime(2024, 5, 1, 12, 30, 0, DateTimeKind.Local)));
+            Assert.That((Prop(d, "none").Initializer, Prop(d, "none").Default), Is.EqualTo((QmlInitializer.None, (object)DateTime.MinValue)));
+            Assert.That(Prop(d, "bound").Initializer, Is.EqualTo(QmlInitializer.Binding));
+            Assert.That(Prop(d, "days").Default, Is.EqualTo(new[] { new DateTime(2024, 1, 1), new DateTime(2024, 12, 31) }.ToSpread()));
+            Assert.That(Prop(d, "plain").Default, Is.EqualTo(new VL.Qt.Elements.Font()));
+            Assert.That(Prop(d, "title").Default, Is.EqualTo(new VL.Qt.Elements.Font { Family = "Arial", Size = 0.24f, Weight = 700, Italic = true }));
+            Assert.That(Prop(d, "points").Default, Is.EqualTo(new VL.Qt.Elements.Font { Size = 0.12f, Weight = 700 }), "9 pt = 12 px");
+            Assert.That(Prop(d, "heavy").Default, Is.EqualTo(new VL.Qt.Elements.Font { Weight = 900 }));
+            Assert.That(Prop(d, "other").Initializer, Is.EqualTo(QmlInitializer.Binding), "a key the node does not take");
+            Assert.That(Prop(d, "expr").Initializer, Is.EqualTo(QmlInitializer.Binding));
         }
 
         [Test]
@@ -617,7 +652,6 @@ namespace VL.Qt.Tests.Qml
                     property var data
                     property list<Item> kids
                     property Item target
-                    property font f
                     default property alias content: row.children
                     property real fine: 1
                     Text { id: child }
@@ -625,7 +659,7 @@ namespace VL.Qt.Tests.Qml
                 """);
 
             Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "fine" }));
-            Assert.That(d.Messages, Has.Length.EqualTo(6));
+            Assert.That(d.Messages, Has.Length.EqualTo(5));
             Assert.That(d.Messages.All(m => m.Severity == QmlMessageSeverity.Info), Is.True);
             Assert.That(d.Messages[0].Line, Is.EqualTo(2));
             Assert.That(d.Messages[0].Text, Does.Contain("inner").And.Contain("alias"));

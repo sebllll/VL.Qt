@@ -26,6 +26,37 @@ VL.Qt | VL.Qt.Elements.FillMode | member Fit = 1
 VL.Qt | VL.Qt.Elements.FillMode | member Stretch = 0
 VL.Qt | VL.Qt.Elements.FillMode | member Tile = 3
 VL.Qt | VL.Qt.Elements.FillMode | type enum
+VL.Qt | VL.Qt.Elements.Font | ctor | new
+VL.Qt | VL.Qt.Elements.Font | implements System.IEquatable<VL.Qt.Elements.Font>
+VL.Qt | VL.Qt.Elements.Font | method Equals(VL.Qt.Elements.Font) | bool
+VL.Qt | VL.Qt.Elements.Font | method Equals(VL.Qt.Elements.Font) | order Other, Output
+VL.Qt | VL.Qt.Elements.Font | method Equals(VL.Qt.Elements.Font) | pin Other | in VL.Qt.Elements.Font | (other)
+VL.Qt | VL.Qt.Elements.Font | method Equals(VL.Qt.Elements.Font) | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.Font | method Equals(object) | order Obj, Output
+VL.Qt | VL.Qt.Elements.Font | method Equals(object) | override bool
+VL.Qt | VL.Qt.Elements.Font | method Equals(object) | pin Obj | in object | (obj)
+VL.Qt | VL.Qt.Elements.Font | method Equals(object) | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.Font | method GetHashCode | order Output
+VL.Qt | VL.Qt.Elements.Font | method GetHashCode | override int
+VL.Qt | VL.Qt.Elements.Font | method GetHashCode | pin Output | out int | (return)
+VL.Qt | VL.Qt.Elements.Font | method ToString | order Output
+VL.Qt | VL.Qt.Elements.Font | method ToString | override string
+VL.Qt | VL.Qt.Elements.Font | method ToString | pin Output | out string | (return)
+VL.Qt | VL.Qt.Elements.Font | method op_Equality | order Left, Right, Output
+VL.Qt | VL.Qt.Elements.Font | method op_Equality | pin Left | in VL.Qt.Elements.Font | (left)
+VL.Qt | VL.Qt.Elements.Font | method op_Equality | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.Font | method op_Equality | pin Right | in VL.Qt.Elements.Font | (right)
+VL.Qt | VL.Qt.Elements.Font | method op_Equality | static bool
+VL.Qt | VL.Qt.Elements.Font | method op_Inequality | order Left, Right, Output
+VL.Qt | VL.Qt.Elements.Font | method op_Inequality | pin Left | in VL.Qt.Elements.Font | (left)
+VL.Qt | VL.Qt.Elements.Font | method op_Inequality | pin Output | out bool | (return)
+VL.Qt | VL.Qt.Elements.Font | method op_Inequality | pin Right | in VL.Qt.Elements.Font | (right)
+VL.Qt | VL.Qt.Elements.Font | method op_Inequality | static bool
+VL.Qt | VL.Qt.Elements.Font | property Family | string { get; init }
+VL.Qt | VL.Qt.Elements.Font | property Italic | bool { get; init }
+VL.Qt | VL.Qt.Elements.Font | property Size | float { get; init }
+VL.Qt | VL.Qt.Elements.Font | property Weight | int { get; init }
+VL.Qt | VL.Qt.Elements.Font | type sealed class
 VL.Qt | VL.Qt.Elements.HorizontalAlignment | member Center = 4
 VL.Qt | VL.Qt.Elements.HorizontalAlignment | member Left = 1
 VL.Qt | VL.Qt.Elements.HorizontalAlignment | member Right = 2
@@ -798,6 +829,16 @@ VL.Qt | VL.Qt.Nodes.FileWriterNode | method Update | pin Success | out bool | (s
 VL.Qt | VL.Qt.Nodes.FileWriterNode | method Update | pin Write | in bool | (write)
 VL.Qt | VL.Qt.Nodes.FileWriterNode | method Update | void
 VL.Qt | VL.Qt.Nodes.FileWriterNode | type sealed class
+VL.Qt | VL.Qt.Nodes.FontNodes | attr Category("Qt")
+VL.Qt | VL.Qt.Nodes.FontNodes | attr SkipCategory
+VL.Qt | VL.Qt.Nodes.FontNodes | method Font | order Family, Size, Weight, Italic, Output
+VL.Qt | VL.Qt.Nodes.FontNodes | method Font | pin Family | in string = "" | (family)
+VL.Qt | VL.Qt.Nodes.FontNodes | method Font | pin Italic | in bool | (italic)
+VL.Qt | VL.Qt.Nodes.FontNodes | method Font | pin Output | out VL.Qt.Elements.Font | (return)
+VL.Qt | VL.Qt.Nodes.FontNodes | method Font | pin Size | in float = 0.12 | (size)
+VL.Qt | VL.Qt.Nodes.FontNodes | method Font | pin Weight | in int = 400 | (weight)
+VL.Qt | VL.Qt.Nodes.FontNodes | method Font | static VL.Qt.Elements.Font
+VL.Qt | VL.Qt.Nodes.FontNodes | type static class
 VL.Qt | VL.Qt.Nodes.GlowNode | attr ProcessNode(Name = "Glow", Category = "Qt.Effects")
 VL.Qt | VL.Qt.Nodes.GlowNode | ctor | new
 VL.Qt | VL.Qt.Nodes.GlowNode | ctor | order Node Context

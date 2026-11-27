@@ -1,16 +1,19 @@
 /* user_qml/qml_wire.h - values of the back channel of the QmlElement (protocol.h "QmlElement") in wire form.
  *
  * toWireValue turns a QVariant (a root property or a signal argument) into one of the value types of the protocol:
- * bool, the integer types (clamped to i32), real (f32), string/url, color, vector2d/3d/4d, rect, and the QML types
- * `point` and `size`, which both arrive as VEC2 (x, y) and (width, height), and lists of these as LIST (protocol.h "Values").
+ * bool, the integer types (clamped to i32), real (f32), string/url, color, vector2d/3d/4d, rect, date (DATE_TIME), font (FONT),
+ * and the QML types `point` and `size`, which both arrive as VEC2 (x, y) and (width, height), and lists of these (but fonts) as
+ * LIST (protocol.h "Values").
  * The other direction of a list: listFromWire and convertListToType; a url property takes the text the patch sends through
  * urlFromPatch.
  */
 #pragma once
 
 #include <QtCore/QByteArray>
+#include <QtCore/QDateTime>
 #include <QtCore/QUrl>
 #include <QtCore/QVariant>
+#include <QtGui/QFont>
 
 #include <vector>
 
@@ -53,9 +56,16 @@ QVariant listFromWire(WireReader& r);
  * read a path with a drive letter as a URL whose scheme is the letter. */
 QUrl urlFromPatch(const QString& text);
 
+/* DATE_TIME: milliseconds since 1970 UTC as a QDateTime in UTC; INT64_MIN is the invalid QDateTime (no date). */
+QDateTime dateTimeFromWire(qint64 msUtc);
+
+/* FONT at the reader (length checked by readNamedEntry): the default font of the app with the family (when not empty), the pixel
+ * size (at least 1), the weight (clamped to 1..1000) and italic of the value. */
+QFont fontFromWire(WireReader& r);
+
 /* A QVariantList from listFromWire as the type `target` of a property: QList<qreal>, <int>, <bool>, <QString>, <QUrl> (through
- * urlFromPatch), <QColor>, <QPointF>, <QSizeF> (from VEC2), <QVector2D>, <QVector3D>, <QVector4D>, <QRectF>, or QVariantList / var
- * as they are.
+ * urlFromPatch), <QColor>, <QPointF>, <QSizeF> (from VEC2), <QVector2D>, <QVector3D>, <QVector4D>, <QRectF>, <QDateTime>, or
+ * QVariantList / var as they are.
  * false = no such list type or an element does not convert. */
 bool convertListToType(const QVariantList& list, QMetaType target, QVariant& out);
 

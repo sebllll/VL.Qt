@@ -14,8 +14,11 @@
 #include <QtCore/QRectF>
 #include <QtCore/QSize>
 #include <QtCore/QSizeF>
+#include <QtCore/QTimeZone>
 #include <QtCore/QUrl>
 #include <QtGui/QColor>
+#include <QtGui/QFontInfo>
+#include <QtGui/QGuiApplication>
 #include <QtGui/QVector2D>
 #include <QtGui/QVector3D>
 #include <QtGui/QVector4D>
@@ -24,6 +27,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 #include <type_traits>
 
 namespace vlqt {
@@ -82,6 +86,8 @@ constexpr quint16 declaredElementType()
         return VLQT_VALUE_TYPE_VEC4;
     else if constexpr (std::is_same_v<T, QRectF> || std::is_same_v<T, QRect>)
         return VLQT_VALUE_TYPE_RECTF;
+    else if constexpr (std::is_same_v<T, QDateTime>)
+        return VLQT_VALUE_TYPE_DATE_TIME;
     else
         return VLQT_VALUE_TYPE_VEC2; // QVector2D, QPointF, QPoint, QSizeF, QSize
 }
@@ -156,7 +162,7 @@ bool listToWire(const QVariant& v, QmlWireValue& out, QString* error)
     int result = -1;
     const auto tryTypes = [&](auto... t) { ((result = result >= 0 ? result : encodeTyped<decltype(t)>(v, out, error)), ...); };
     tryTypes(double{}, float{}, int{}, bool{}, QString{}, QUrl{}, QColor{}, QPointF{}, QPoint{}, QSizeF{}, QSize{}, QVector2D{},
-             QVector3D{}, QVector4D{}, QRectF{}, QRect{});
+             QVector3D{}, QVector4D{}, QRectF{}, QRect{}, QDateTime{});
     return result == 1;
 }
 
@@ -207,6 +213,29 @@ QUrl urlFromPatch(const QString& text)
     if (QDir::isAbsolutePath(text))
         return QUrl::fromLocalFile(QDir::fromNativeSeparators(text));
     return QUrl(text);
+}
+
+QDateTime dateTimeFromWire(qint64 msUtc)
+{
+    return msUtc == std::numeric_limits<qint64>::min() ? QDateTime() : QDateTime::fromMSecsSinceEpoch(msUtc, QTimeZone::UTC);
+}
+
+QFont fontFromWire(WireReader& r)
+{
+    const float pixelSize = r.f32();
+    const qint32 weight = r.i32();
+    const bool italic = r.u8() != 0;
+    r.bytes(3); // reserved
+    const quint32 n = r.u32();
+    const QString family = QString::fromUtf8(reinterpret_cast<const char*>(r.bytes(n)), qsizetype(n));
+    QFont font = QGuiApplication::font();
+    if (!family.isEmpty())
+        font.setFamily(family);
+    // Clamped before the rounding, as at Text: qRound of a float above INT_MAX is undefined.
+    font.setPixelSize(qMax(1, qRound(std::clamp(pixelSize, 1.0f, 1e6f))));
+    font.setWeight(QFont::Weight(std::clamp<qint32>(weight, 1, 1000)));
+    font.setItalic(italic);
+    return font;
 }
 
 QVariant adaptVector2D(const QVariant& v, QMetaType target)
@@ -263,6 +292,7 @@ QVariant listFromWire(WireReader& r)
             r.copy(f, 16);
             list.push_back(QVector4D(f[0], f[1], f[2], f[3]));
             break;
+        case VLQT_VALUE_TYPE_DATE_TIME: list.push_back(dateTimeFromWire(qint64(r.u64()))); break;
         default: return QVariantList(); // the decoder has checked the element type
         }
     }
@@ -277,7 +307,8 @@ bool convertListToType(const QVariantList& list, QMetaType target, QVariant& out
     }
     int result = -1;
     const auto tryTypes = [&](auto... t) { ((result = result >= 0 ? result : convertTyped<decltype(t)>(list, target, out)), ...); };
-    tryTypes(double{}, int{}, bool{}, QString{}, QUrl{}, QColor{}, QPointF{}, QSizeF{}, QVector2D{}, QVector3D{}, QVector4D{}, QRectF{});
+    tryTypes(double{}, int{}, bool{}, QString{}, QUrl{}, QColor{}, QPointF{}, QSizeF{}, QVector2D{}, QVector3D{}, QVector4D{}, QRectF{},
+             QDateTime{});
     return result == 1;
 }
 
@@ -364,6 +395,27 @@ bool encodeValue(const QVariant& in, QmlWireValue& out, QString* error)
         const QRectF r = v.toRectF();
         out.type = VLQT_VALUE_TYPE_RECTF;
         appendFloats(out.bytes, {float(r.x()), float(r.y()), float(r.width()), float(r.height())});
+        return true;
+    }
+    case QMetaType::QDateTime:
+    case QMetaType::QDate: {
+        const QDateTime d = v.typeId() == QMetaType::QDate ? v.toDate().startOfDay() : v.toDateTime();
+        out.type = VLQT_VALUE_TYPE_DATE_TIME;
+        append(out.bytes, d.isValid() ? qint64(d.toMSecsSinceEpoch()) : std::numeric_limits<qint64>::min());
+        return true;
+    }
+    case QMetaType::QFont: {
+        const QFont font = v.value<QFont>();
+        // A font set in points has no pixel size; QFontInfo gives the one Qt uses.
+        const int pixelSize = font.pixelSize() > 0 ? font.pixelSize() : QFontInfo(font).pixelSize();
+        const QByteArray family = font.family().toUtf8();
+        out.type = VLQT_VALUE_TYPE_FONT;
+        append(out.bytes, float(pixelSize));
+        append(out.bytes, qint32(font.weight()));
+        out.bytes.append(char(font.italic() ? 1 : 0));
+        out.bytes.append(QByteArray(3, '\0'));
+        append(out.bytes, quint32(family.size()));
+        out.bytes.append(family);
         return true;
     }
     default:

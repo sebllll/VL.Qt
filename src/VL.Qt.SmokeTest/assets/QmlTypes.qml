@@ -61,6 +61,15 @@ Item {
     property list<url> ul
     property list<url> ulOut: ul
 
+    // A date (the patch's DateTime, milliseconds since 1970 UTC on the wire) and a font (its pixel size; the patch's units are
+    // converted in C#).
+    property date d: "2024-05-01"
+    property date dOut: d
+    property list<date> dal
+    property list<date> dalOut: dal
+    property font fo: Qt.font({ pixelSize: 12 })
+    property font foOut: fo
+
     // An alias of a child: the root's meta object has it with the type of its target, so it is set and reported like a declared
     // property. aliasFeed changes the target inside QML, which comes back as a change of the alias.
     property alias at: aliasText.text

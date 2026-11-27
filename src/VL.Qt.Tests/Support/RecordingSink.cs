@@ -143,6 +143,11 @@ namespace VL.Qt.Tests.Support
             => AppendList(name, Protocol.ValueType.Bool, Array.ConvertAll(values.ToArray(), v => v ? "1" : "0"));
         public void QmlPropertyListString(ReadOnlySpan<char> name, ReadOnlySpan<string> values)
             => AppendList(name, Protocol.ValueType.String, values.ToArray());
+        public void QmlPropertyDateTime(ReadOnlySpan<char> name, long milliseconds) => _uniforms.Append($" {name.ToString()}=date({milliseconds})");
+        public void QmlPropertyFont(ReadOnlySpan<char> name, ReadOnlySpan<char> family, float pixelSize, int weight, bool italic)
+            => _uniforms.Append($" {name.ToString()}=font({family.ToString()},{F(pixelSize)},{weight},{(italic ? 1 : 0)})");
+        public void QmlPropertyListDateTime(ReadOnlySpan<char> name, ReadOnlySpan<long> values)
+            => AppendList(name, Protocol.ValueType.DateTime, Array.ConvertAll(values.ToArray(), v => v.ToString(CultureInfo.InvariantCulture)));
         private void AppendList(ReadOnlySpan<char> name, ushort elementType, string[] items)
             => _uniforms.Append($" {name.ToString()}=list<{elementType}>({string.Join(",", items)})");
         public void EndQmlProperties() => Add(_uniforms.ToString());

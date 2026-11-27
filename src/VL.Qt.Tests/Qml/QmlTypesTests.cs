@@ -12,11 +12,13 @@ namespace VL.Qt.Tests.Qml
     [TestFixture]
     internal sealed class QmlTypesTests
     {
-        private static readonly QmlValueKind[] s_elementKinds = Enum.GetValues<QmlValueKind>().Where(k => !QmlTypes.IsList(k)).ToArray();
+        private static readonly QmlValueKind[] s_elementKinds = Enum.GetValues<QmlValueKind>().Where(QmlTypes.HasListKind).ToArray();
 
         [Test]
-        public void EveryElementKindHasOneListKind()
+        public void EveryElementKindButFontHasOneListKind()
         {
+            Assert.That(Enum.GetValues<QmlValueKind>().Where(k => !QmlTypes.IsList(k) && !QmlTypes.HasListKind(k)), Is.EqualTo(new[] { QmlValueKind.Font }));
+            Assert.Throws<ArgumentOutOfRangeException>(() => QmlTypes.ListKind(QmlValueKind.Font));
             var lists = Enum.GetValues<QmlValueKind>().Where(QmlTypes.IsList).ToArray();
             Assert.That(lists, Has.Length.EqualTo(s_elementKinds.Length));
             foreach (var element in s_elementKinds)
@@ -53,6 +55,7 @@ namespace VL.Qt.Tests.Qml
         [TestCase("list<point>", QmlValueKind.PointList)]
         [TestCase("list<size>", QmlValueKind.SizeList)]
         [TestCase("list<url>", QmlValueKind.UrlList)]
+        [TestCase("list<date>", QmlValueKind.DateList)]
         [TestCase("list< real >", QmlValueKind.RealList)]
         public void TryMap_ListOfASupportedType(string type, QmlValueKind expected)
         {
@@ -62,6 +65,7 @@ namespace VL.Qt.Tests.Qml
 
         [TestCase("list<Item>")]
         [TestCase("list<var>")]
+        [TestCase("list<font>")]
         [TestCase("list<list<int>>")]
         [TestCase("list<>")]
         [TestCase("list<")]
@@ -82,6 +86,19 @@ namespace VL.Qt.Tests.Qml
             Assert.That(kind, Is.EqualTo(QmlValueKind.Url));
             Assert.That(QmlTypes.ClrType(kind), Is.EqualTo(typeof(Path)));
             Assert.That(QmlTypes.TypeDefault(kind), Is.EqualTo(new Path(string.Empty)));
+        }
+
+        [Test]
+        public void DateAndFont_ArePinsOfTheirTypes_WithNoDateAndTheTextFontAsDefault()
+        {
+            Assert.That(QmlTypes.TryMap("date", out var date), Is.True);
+            Assert.That(QmlTypes.TryMap("font", out var font), Is.True);
+            Assert.That((QmlTypes.ClrType(date), QmlTypes.TypeDefault(date)), Is.EqualTo((typeof(DateTime), (object)DateTime.MinValue)));
+            Assert.That((QmlTypes.ClrType(font), QmlTypes.TypeDefault(font)), Is.EqualTo((typeof(VL.Qt.Elements.Font), (object)new VL.Qt.Elements.Font())));
+            Assert.That(new VL.Qt.Elements.Font(), Is.EqualTo(new VL.Qt.Elements.Font { Family = "", Size = 0.12f, Weight = 400, Italic = false }));
+            var when = new DateTime(2024, 5, 1, 12, 0, 0, DateTimeKind.Local);
+            Assert.That(QmlTypes.TryCoerce(date, when, out var r) && r.Equals(when), Is.True);
+            Assert.That(QmlTypes.TryCoerce(font, "Arial", out _), Is.False);
         }
 
         [Test]

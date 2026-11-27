@@ -38,7 +38,12 @@ namespace VL.Qt.Qml
         Size,
         /// <summary>QML <c>url</c> → Path (wire string; a local file is a path, any other URL its text).</summary>
         Url,
-        // The list kinds follow the element kinds in the same order: QmlTypes.ElementKind and ListKind count on it.
+        /// <summary>QML <c>date</c> → DateTime (local time; DateTime.MinValue = no date).</summary>
+        Date,
+        /// <summary>QML <c>font</c> → Font (size in units). The one kind without a list kind.</summary>
+        Font,
+        // The list kinds follow the element kinds in the same order (Font, the last element kind, has none): QmlTypes.ElementKind and
+        // ListKind count on it.
         /// <summary>QML <c>list&lt;real&gt;</c> or <c>list&lt;double&gt;</c> → Spread&lt;float&gt;.</summary>
         RealList,
         /// <summary>QML <c>list&lt;int&gt;</c> → Spread&lt;int&gt;.</summary>
@@ -63,5 +68,7 @@ namespace VL.Qt.Qml
         SizeList,
         /// <summary>QML <c>list&lt;url&gt;</c> → Spread&lt;Path&gt;.</summary>
         UrlList,
+        /// <summary>QML <c>list&lt;date&gt;</c> → Spread&lt;DateTime&gt;.</summary>
+        DateList,
     }
 }

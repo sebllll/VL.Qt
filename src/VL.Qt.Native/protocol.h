@@ -34,7 +34,7 @@
  *     kind SHADER: u16 template (vlqt_effect_template), u16 shaderCount, u64 shaderIds[shaderCount], 4 x f32 padding
  *               (left, top, right, bottom), f32 strength, then count uniform entries like SET_UNIFORMS
  *   SET_QML_PROPERTIES u32 id, u16 count, u16 flags (0, reserved), then count entries like SET_UNIFORMS entries
- *               (u16 valueType, u16 nameLen, name, padding to 4, value, padding to 4); STRING and LIST are allowed
+ *               (u16 valueType, u16 nameLen, name, padding to 4, value, padding to 4); STRING, LIST, DATE_TIME and FONT are allowed
  * Values: f32, i32, bool (u8), color (4 x f32, straight alpha), rectf (4 x f32: x, y, w, h),
  *         mat4 (16 x f32, row-major like Stride), string (u32 len + UTF-8), ref (u32 id), u64,
  *         vec2/vec3/vec4 (2/3/4 x f32), ivec2 (2 x i32), sampler (8 bytes: u8 filter, u8 mip filter, u8 address U,
@@ -43,9 +43,12 @@
  *         pointCount x 2 x f32; verbs: vlqt_path_verb),
  *         list (SET_QML_PROPERTIES, EVENT_QML_PROPERTY and EVENT_QML_SIGNAL only): u16 elemType, u16 0 (reserved), u32 count
  *         (0..VLQT_LIST_VALUE_MAX_COUNT), then count elements of elemType. elemType is F32, I32, BOOL, STRING, COLOR, RECTF,
- *         VEC2, VEC3 or VEC4 (never LIST). A fixed-size element is encoded like its value type, without padding between the
+ *         VEC2, VEC3, VEC4 or DATE_TIME (never LIST or FONT). A fixed-size element is encoded like its value type, without padding between the
  *         elements (BOOL: count x u8); a STRING element is u32 len + UTF-8 + zero padding to 4, the last one too. The list
  *         ends after its last element; the entry or argument around it pads it to 4 like any value.
+ *         datetime (QML values only, like list): i64 milliseconds since 1970-01-01 UTC; INT64_MIN = no date (an invalid QDateTime).
+ *         font (QML values only, like list): f32 pixel size, i32 weight (1..1000), u8 italic, 3 x u8 0 (reserved), u32 familyLen,
+ *         family UTF-8 (empty = the default family of the app); VLQT_FONT_VALUE_HEADER_SIZE bytes in front of the family.
  * Ids are u32, assigned by the C# reconciler; 0 = window root.
  *
  * Poll buffer (QtNative -> C#), per record, 4-byte aligned: u16 event, u16 flags (0), u32 len, u32 feedbackId, payload;
@@ -62,7 +65,7 @@
 
 /* One number for the command protocol (this file) and the C ABI (vlqt.h, vlqt_test.h): vlqt_app_get_abi_version() returns it.
  * Bump it on EVERY change to a constant, a struct layout or an exported signature (also additions); mirror it in Protocol.cs. */
-#define VLQT_ABI_VERSION 28
+#define VLQT_ABI_VERSION 29
 #define VLQT_COMMAND_ALIGN 4
 #define VLQT_HEADER_SIZE 8 /* command, poll record and resource record: u16 op/event, u16 flags (0), u32 len */
 #define VLQT_MAX_COMMAND_PAYLOAD 67108864 /* cap of payloadLen (64 MB) */
@@ -84,6 +87,7 @@
 #define VLQT_EFFECT_CHAIN_LINK_SHADER_FIXED_SIZE 20 /* SHADER link body after u16 template, u16 shaderCount and the shader ids: 4 x f32 padding, f32 strength */
 #define VLQT_EVENT_FIELDS_SIZE 4 /* poll record after its header: u32 feedbackId in front of the payload */
 #define VLQT_LIST_VALUE_HEADER_SIZE 8 /* LIST value: u16 elemType, u16 0, u32 count in front of the elements */
+#define VLQT_FONT_VALUE_HEADER_SIZE 16 /* FONT value: f32 pixelSize, i32 weight, u8 italic, 3 x u8 0, u32 familyLen in front of the family */
 
 /* Opcodes (u16) */
 enum vlqt_op {
@@ -117,6 +121,8 @@ enum vlqt_value_type {
     VLQT_VALUE_TYPE_F32_ARRAY = 10, /* u32 count, count x f32 (SHAPE points, dash pattern) */
     VLQT_VALUE_TYPE_PATH = 11,      /* u32 verbCount, u32 pointCount, verbs (u8, padded to 4), points (2 x f32 each) */
     VLQT_VALUE_TYPE_LIST = 12,      /* u16 elemType, u16 0, u32 count, elements (QML properties and signal arguments only) */
+    VLQT_VALUE_TYPE_DATE_TIME = 13,  /* i64 ms since 1970-01-01 UTC, INT64_MIN = no date (QML values only) */
+    VLQT_VALUE_TYPE_FONT = 14,      /* f32 pixelSize, i32 weight, u8 italic, 3 x u8 0, u32 familyLen, family (QML values only) */
     /* 16.. uniform values (SET_UNIFORMS) and MESH_RESOLUTION */
     VLQT_VALUE_TYPE_VEC2 = 16,  /* 2 x f32 */
     VLQT_VALUE_TYPE_VEC3 = 17,  /* 3 x f32 */

@@ -12,14 +12,17 @@ namespace VL.Qt.Elements
     /// is left after the conversion. Color and rect use <c>A..D</c> (r, g, b, a / x, y, width, height).
     /// A list (<see cref="Protocol.ValueType.List"/>) keeps the patch's spread in <see cref="Items"/> (Spread&lt;T&gt; of float, int,
     /// bool, string, Path, Color4, Vector2, Vector3, Vector4 or RectangleF, not copied) and the wire type of its elements in
-    /// <see cref="Integer"/>; two lists are equal when their elements are, compared exactly like the scalars.
+    /// <see cref="Integer"/>; two lists are equal when their elements are, compared exactly like the scalars. A date keeps its
+    /// milliseconds since 1970 UTC in <see cref="Long"/>; a font its family in <see cref="Text"/>, its size in units in <see cref="A"/>
+    /// (QmlPropertyWriter converts it to pixels), italic in <see cref="B"/> and its weight in <see cref="Integer"/>.
     /// </summary>
-    internal readonly record struct QmlValue(ushort ValueType, float A, float B, float C, float D, int Integer, string? Text, object? Items = null)
+    internal readonly record struct QmlValue(
+        ushort ValueType, float A, float B, float C, float D, int Integer, string? Text, object? Items = null, long Long = 0)
     {
         /// <summary>
         /// Converts a patch value: float and double → real (f32), int, bool, string, Path → string (QtNative makes the url of a url
-        /// property from it), Color4 → color, Vector2/3/4 → vector2d/3d/4d, RectangleF → rect, a Spread of one of float, int, bool,
-        /// string, Path, Color4, Vector2/3/4 or RectangleF → list.
+        /// property from it), Color4 → color, Vector2/3/4 → vector2d/3d/4d, RectangleF → rect, DateTime → date, Font → font, a Spread
+        /// of one of float, int, bool, string, Path, Color4, Vector2/3/4, RectangleF or DateTime → list.
         /// Anything else (also null) is not supported. No allocation.
         /// </summary>
         public static bool TryConvert(object? value, out QmlValue result)
@@ -37,6 +40,8 @@ namespace VL.Qt.Elements
                 case Vector3 v3: result = new QmlValue(Protocol.ValueType.Vec3, v3.X, v3.Y, v3.Z, 0, 0, null); return true;
                 case Vector4 v4: result = new QmlValue(Protocol.ValueType.Vec4, v4.X, v4.Y, v4.Z, v4.W, 0, null); return true;
                 case RectangleF r: result = new QmlValue(Protocol.ValueType.Rectf, r.X, r.Y, r.Width, r.Height, 0, null); return true;
+                case DateTime d: result = new QmlValue(Protocol.ValueType.DateTime, 0, 0, 0, 0, 0, null, null, QmlDateTime.ToWire(d)); return true;
+                case Font f: result = new QmlValue(Protocol.ValueType.Font, f.Size, f.Italic ? 1 : 0, 0, 0, f.Weight, f.Family ?? string.Empty); return true;
                 default: return TryConvertList(value, out result);
             }
         }
@@ -72,6 +77,7 @@ namespace VL.Qt.Elements
                 case Spread<Vector3> s: elementType = Protocol.ValueType.Vec3; count = s.Count; return true;
                 case Spread<Vector4> s: elementType = Protocol.ValueType.Vec4; count = s.Count; return true;
                 case Spread<RectangleF> s: elementType = Protocol.ValueType.Rectf; count = s.Count; return true;
+                case Spread<DateTime> s: elementType = Protocol.ValueType.DateTime; count = s.Count; return true;
                 default: elementType = 0; count = 0; return false;
             }
         }
@@ -87,7 +93,7 @@ namespace VL.Qt.Elements
             if (TryGetListInfo(value, out _, out _))
                 return $"Property '{name}': a list can have at most {Protocol.ListValueMaxCount} elements, ignored";
             return $"Property '{name}': type {TypeName(value.GetType())} is not supported, ignored "
-                + "(use float, int, bool, string, Path, Color4, Vector2/3/4 or RectangleF, or a Spread of one of them)";
+                + "(use float, int, bool, string, Path, Color4, Vector2/3/4, RectangleF, DateTime or Font, or a Spread of one of them but Font)";
         }
 
         private static string TypeName(Type type)
@@ -104,9 +110,9 @@ namespace VL.Qt.Elements
         /// <summary>Exact equality of every field; <see cref="Items"/> by content (the same spread instance is equal at once).</summary>
         public bool Equals(QmlValue other)
             => ValueType == other.ValueType && A.Equals(other.A) && B.Equals(other.B) && C.Equals(other.C) && D.Equals(other.D)
-                && Integer == other.Integer && string.Equals(Text, other.Text, StringComparison.Ordinal) && ItemsEqual(Items, other.Items);
+                && Integer == other.Integer && string.Equals(Text, other.Text, StringComparison.Ordinal) && Long == other.Long && ItemsEqual(Items, other.Items);
 
-        public override int GetHashCode() => HashCode.Combine(ValueType, A, B, C, D, Integer, Text, Items is null ? 0 : ItemsHash(Items));
+        public override int GetHashCode() => HashCode.Combine(ValueType, A, B, C, D, Integer, Text, HashCode.Combine(Long, Items is null ? 0 : ItemsHash(Items)));
 
         private static bool ItemsEqual(object? x, object? y)
         {
@@ -124,8 +130,22 @@ namespace VL.Qt.Elements
                 Spread<Vector3> a => y is Spread<Vector3> b && ExactComparer.FloatsEqual<Vector3>(a.AsSpan(), b.AsSpan()),
                 Spread<Vector4> a => y is Spread<Vector4> b && ExactComparer.FloatsEqual<Vector4>(a.AsSpan(), b.AsSpan()),
                 Spread<RectangleF> a => y is Spread<RectangleF> b && ExactComparer.FloatsEqual<RectangleF>(a.AsSpan(), b.AsSpan()),
+                Spread<DateTime> a => y is Spread<DateTime> b && DatesEqual(a.AsSpan(), b.AsSpan()),
                 _ => false,
             };
+        }
+
+        // As on the wire: the same instant in local time and in UTC is the same date.
+        private static bool DatesEqual(ReadOnlySpan<DateTime> x, ReadOnlySpan<DateTime> y)
+        {
+            if (x.Length != y.Length)
+                return false;
+            for (int i = 0; i < x.Length; i++)
+            {
+                if (QmlDateTime.ToWire(x[i]) != QmlDateTime.ToWire(y[i]))
+                    return false;
+            }
+            return true;
         }
 
         private static bool StringsEqual(ReadOnlySpan<string> x, ReadOnlySpan<string> y)
@@ -155,6 +175,7 @@ namespace VL.Qt.Elements
                 case Spread<Vector3> s: ExactComparer.HashFloats<Vector3>(ref hash, s.AsSpan()); break;
                 case Spread<Vector4> s: ExactComparer.HashFloats<Vector4>(ref hash, s.AsSpan()); break;
                 case Spread<RectangleF> s: ExactComparer.HashFloats<RectangleF>(ref hash, s.AsSpan()); break;
+                case Spread<DateTime> s: hash.Add(s.Count); foreach (var v in s.AsSpan()) hash.Add(QmlDateTime.ToWire(v)); break;
             }
             return hash.ToHashCode();
         }

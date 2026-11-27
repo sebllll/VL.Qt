@@ -33,7 +33,7 @@ namespace VL.Qt.Tests.Reconciliation
         private static string[] Write(QmlProperties next, QmlProperties? previous, out int sent)
         {
             var sink = new RecordingSink();
-            sent = QmlPropertyWriter.Write(sink, 7, next, previous);
+            sent = QmlPropertyWriter.Write(sink, 7, next, previous, SpaceMapping.Default, false);
             return sink.Commands.ToArray();
         }
 
@@ -93,6 +93,29 @@ namespace VL.Qt.Tests.Reconciliation
         {
             var cmds = Write(Props(("u", new Path("C:/a b.png")), ("ul", new[] { new Path("a.png"), new Path("qrc:/b.png") }.ToSpread())), null, out _);
             Assert.That(cmds, Is.EqualTo(new[] { "QML 7 0 u=string(C:/a b.png) ul=list<" + Protocol.ValueType.String + ">(a.png,qrc:/b.png)" }));
+        }
+
+        [Test]
+        public void DateAndFont_FontSizeInPixelsOfTheMapping()
+        {
+            var date = new DateTime(1970, 1, 1, 0, 0, 2, DateTimeKind.Utc);
+            var cmds = Write(Props(("d", date), ("none", DateTime.MinValue), ("dl", new[] { date }.ToSpread()),
+                ("f", new Font { Family = "Arial", Size = 0.244f, Weight = 700, Italic = true })), null, out _);
+            Assert.That(cmds, Is.EqualTo(new[]
+            {
+                $"QML 7 0 d=date(2000) none=date({long.MinValue}) dl=list<{Protocol.ValueType.DateTime}>(2000) f=font(Arial,24,700,1)",
+            }), "0.244 units = 24.4 DIP, rounded to whole pixels as at Text");
+        }
+
+        [Test]
+        public void Rescale_SendsTheFontsAgain_NothingElse()
+        {
+            var props = Props(("f", new Font()), ("r", 1f));
+            var sink = new RecordingSink();
+            var normalized = new SpaceMapping(Space.Normalized, new Vector2(800, 600), 1f);
+            QmlPropertyWriter.Write(sink, 7, props, props, normalized, true);
+            QmlPropertyWriter.Write(sink, 7, props, props, normalized, false);
+            Assert.That(sink.Commands, Is.EqualTo(new[] { "QML 7 0 f=font(,36,400,0)" }), "0.12 units at 300 DIP per unit");
         }
 
         [Test]
@@ -179,7 +202,7 @@ namespace VL.Qt.Tests.Reconciliation
         {
             var entries = Enumerable.Range(0, 8).Select(i => ($"p{i}", (object)new string('€', 6000))).ToArray(); // 3 bytes per char, 144 KB
             var w = new CommandWriter();
-            Assert.DoesNotThrow(() => QmlPropertyWriter.Write(w, 1, Props(entries), null));
+            Assert.DoesNotThrow(() => QmlPropertyWriter.Write(w, 1, Props(entries), null, SpaceMapping.Default, false));
             Assert.That(w.Count, Is.EqualTo(1));
             Assert.That(w.Length, Is.GreaterThan(ushort.MaxValue));
         }
@@ -206,7 +229,7 @@ namespace VL.Qt.Tests.Reconciliation
         private static string Encode(params (string Name, object Value)[] entries)
         {
             var w = new CommandWriter();
-            QmlPropertyWriter.Write(w, 9, Props(entries), null);
+            QmlPropertyWriter.Write(w, 9, Props(entries), null, SpaceMapping.Default, false);
             return Hex(w.Written.ToArray());
         }
 
@@ -263,7 +286,7 @@ namespace VL.Qt.Tests.Reconciliation
         public void Bytes_NothingToSend_WritesNoCommand()
         {
             var w = new CommandWriter();
-            QmlPropertyWriter.Write(w, 9, Props(("a", 1f)), Props(("a", 1f)));
+            QmlPropertyWriter.Write(w, 9, Props(("a", 1f)), Props(("a", 1f)), SpaceMapping.Default, false);
             Assert.That(w.Count, Is.EqualTo(0));
         }
     }

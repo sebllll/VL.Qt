@@ -248,8 +248,8 @@ int Scene::opSet(WireReader& r, std::string& err)
         err = "unknown value type " + std::to_string(v.type);
         return ApplyBadValue;
     }
-    if (v.type == VLQT_VALUE_TYPE_LIST) {
-        err = "value type " + std::to_string(v.type) + " (list) only goes into SET_QML_PROPERTIES";
+    if (v.type == VLQT_VALUE_TYPE_LIST || v.type == VLQT_VALUE_TYPE_DATE_TIME || v.type == VLQT_VALUE_TYPE_FONT) {
+        err = "value type " + std::to_string(v.type) + " (a QML value) only goes into SET_QML_PROPERTIES";
         return ApplyBadValue;
     }
     // Variable length: the fixed part holds the counts (64 bit, a u32 count must not overflow the comparison). A value
@@ -570,6 +570,7 @@ int Scene::opSetQmlProperties(WireReader& r, std::string& err)
     rules.noun = "QML property";
     rules.string = true;
     rules.list = true;
+    rules.qml = true;
     entryScratch.clear();
     for (int i = 0; i < count; ++i) {
         NamedEntry e;
@@ -617,6 +618,8 @@ int Scene::opSetQmlProperties(WireReader& r, std::string& err)
             item->setRootProperty(name, QVector4D(f[0], f[1], f[2], f[3]));
             break;
         case VLQT_VALUE_TYPE_LIST: item->setRootProperty(name, listFromWire(v)); break; // checked by readNamedEntry
+        case VLQT_VALUE_TYPE_DATE_TIME: item->setRootProperty(name, dateTimeFromWire(qint64(v.u64()))); break;
+        case VLQT_VALUE_TYPE_FONT: item->setRootProperty(name, fontFromWire(v)); break; // length checked by readNamedEntry
         default:
             item->rejectRootProperty(QString::fromUtf8(name), QStringLiteral("value type %1 is not supported for QML properties").arg(e.type));
             break;

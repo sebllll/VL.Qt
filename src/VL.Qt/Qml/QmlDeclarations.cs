@@ -96,6 +96,8 @@ namespace VL.Qt.Qml
                 bool b => b ? "true" : "false",
                 string s => s,
                 VL.Lib.IO.Path p => p.Value ?? string.Empty,
+                DateTime d => d.ToString("o", CultureInfo.InvariantCulture),
+                VL.Qt.Elements.Font f => $"{f.Family};{F(f.Size)};{f.Weight};{(f.Italic ? "italic" : "normal")}",
                 Color4 c => $"{F(c.R)},{F(c.G)},{F(c.B)},{F(c.A)}",
                 Vector2 v => $"{F(v.X)},{F(v.Y)}",
                 Vector3 v => $"{F(v.X)},{F(v.Y)},{F(v.Z)}",

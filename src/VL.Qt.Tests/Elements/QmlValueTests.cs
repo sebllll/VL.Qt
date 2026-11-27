@@ -35,6 +35,8 @@ namespace VL.Qt.Tests.Elements
             yield return new TestCaseData(new Vector4(1, 2, 3, 4), Protocol.ValueType.Vec4);
             yield return new TestCaseData(new RectangleF(1, 2, 3, 4), Protocol.ValueType.Rectf);
             yield return new TestCaseData(new Path("C:/a.png"), Protocol.ValueType.String);
+            yield return new TestCaseData(new DateTime(2024, 5, 1, 12, 30, 0, DateTimeKind.Utc), Protocol.ValueType.DateTime);
+            yield return new TestCaseData(new Font(), Protocol.ValueType.Font);
         }
 
         [TestCaseSource(nameof(Supported))]
@@ -61,6 +63,10 @@ namespace VL.Qt.Tests.Elements
             Assert.That(i.Integer, Is.EqualTo(-5));
             QmlValue.TryConvert("hi", out var s);
             Assert.That(s.Text, Is.EqualTo("hi"));
+            QmlValue.TryConvert(new DateTime(1970, 1, 1, 0, 0, 1, 500, DateTimeKind.Utc), out var date);
+            Assert.That(date.Long, Is.EqualTo(1500L), "milliseconds since 1970 UTC");
+            QmlValue.TryConvert(new Font { Family = "Arial", Size = 0.24f, Weight = 700, Italic = true }, out var font);
+            Assert.That((font.Text, font.A, font.Integer, font.B), Is.EqualTo(("Arial", 0.24f, 700, 1f)), "size in units, italic in B");
             QmlValue.TryConvert(new Path("img/a b.png"), out var p);
             Assert.That(p.Text, Is.EqualTo("img/a b.png"), "the text of the path, as it is");
             Assert.That(p, Is.EqualTo(s with { Text = "img/a b.png" }), "the same wire value as the string");
@@ -72,7 +78,7 @@ namespace VL.Qt.Tests.Elements
             yield return new TestCaseData(5L);
             yield return new TestCaseData((byte)1);
             yield return new TestCaseData(new object());
-            yield return new TestCaseData(DateTime.Now);
+            yield return new TestCaseData(TimeSpan.FromSeconds(1));
             yield return new TestCaseData(new Int2(1, 2));
         }
 
@@ -94,6 +100,17 @@ namespace VL.Qt.Tests.Elements
         }
 
         [Test]
+        public void Equality_Date_IsTheInstant_NotTheKind()
+        {
+            var utc = new DateTime(2024, 5, 1, 10, 0, 0, DateTimeKind.Utc);
+            QmlValue.TryConvert(utc, out var a);
+            QmlValue.TryConvert(utc.ToLocalTime(), out var b);
+            QmlValue.TryConvert(utc.AddMilliseconds(1), out var c);
+            Assert.That(a, Is.EqualTo(b));
+            Assert.That(a, Is.Not.EqualTo(c));
+        }
+
+        [Test]
         public void Equality_SameNumber_DifferentWireType()
         {
             QmlValue.TryConvert(3f, out var f);
@@ -109,7 +126,7 @@ namespace VL.Qt.Tests.Elements
         public void Describe_UnsupportedType() =>
             Assert.That(QmlValue.Describe("t", 5L),
                 Is.EqualTo("Property 't': type Int64 is not supported, ignored "
-                    + "(use float, int, bool, string, Path, Color4, Vector2/3/4 or RectangleF, or a Spread of one of them)"));
+                    + "(use float, int, bool, string, Path, Color4, Vector2/3/4, RectangleF, DateTime or Font, or a Spread of one of them but Font)"));
 
         [Test]
         public void Describe_UnsupportedSpread_NamesTheElementType() =>
@@ -139,6 +156,7 @@ namespace VL.Qt.Tests.Elements
             yield return new TestCaseData(Spread<float>.Empty, Protocol.ValueType.F32);
             yield return new TestCaseData(Spread<string>.Empty, Protocol.ValueType.String);
             yield return new TestCaseData(new[] { new Path("a.png"), new Path("https://example.com/b.png") }.ToSpread(), Protocol.ValueType.String);
+            yield return new TestCaseData(new[] { new DateTime(2024, 5, 1, 0, 0, 0, DateTimeKind.Utc), DateTime.MinValue }.ToSpread(), Protocol.ValueType.DateTime);
         }
 
         [TestCaseSource(nameof(Lists))]
@@ -195,6 +213,7 @@ namespace VL.Qt.Tests.Elements
             Spread<Vector4> s => s.ToArray().ToSpread(),
             Spread<RectangleF> s => s.ToArray().ToSpread(),
             Spread<Path> s => s.ToArray().Select(x => new Path(new string(x.Value.AsSpan()))).ToArray().ToSpread(),
+            Spread<DateTime> s => s.ToArray().ToSpread(),
             _ => throw new ArgumentException(spread.GetType().Name),
         };
 

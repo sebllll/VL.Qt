@@ -343,11 +343,11 @@ namespace VL.Qt.Reconciliation
                 case Protocol.EventId.Value:
                     return ApplyValue(r.Payload, feedback, index);
                 case Protocol.EventId.QmlProperty:
-                    if (!QmlEventDecoder.TryDecodeProperty(r.Payload, out var qmlName, out var qmlValue)) return false;
+                    if (!QmlEventDecoder.TryDecodeProperty(r.Payload, mapping, out var qmlName, out var qmlValue)) return false;
                     feedback.SetQmlProperty(index, qmlName, qmlValue);
                     return true;
                 case Protocol.EventId.QmlSignal:
-                    if (!QmlEventDecoder.TryDecodeSignal(r.Payload, out var qmlSignal)) return false;
+                    if (!QmlEventDecoder.TryDecodeSignal(r.Payload, mapping, out var qmlSignal)) return false;
                     feedback.AddQmlSignal(index, qmlSignal);
                     return true;
                 case Protocol.EventId.Error:

@@ -9,7 +9,8 @@ namespace VL.Qt.Wire
 {
     /// <summary>
     /// Decoding of the two QML events of QtNative (protocol.h "QmlElement"). Values come boxed as float, int, bool, string,
-    /// Color4 (straight alpha), Vector2/3/4 or RectangleF, in the units of QML (no unit conversion); a list comes as a
+    /// Color4 (straight alpha), Vector2/3/4, RectangleF, DateTime (local time) or Font, in the units of QML (no unit conversion)
+    /// but for the size of a font, which comes in units of the given mapping like the font size of Text; a list comes as a
     /// Spread of one of these (Spread&lt;float&gt;, Spread&lt;Vector2&gt;, ...). The events are sent on change only, so
     /// allocating the name, the box and the spread is fine.
     /// </summary>
@@ -22,6 +23,12 @@ namespace VL.Qt.Wire
         /// malformed payload, an empty name or a value type that is not supported.
         /// </summary>
         public static bool TryDecodeProperty(ReadOnlySpan<byte> payload, out string name, out object value)
+            => TryDecodeProperty(payload, SpaceMapping.Default, out name, out value);
+
+        /// <summary>
+        /// <see cref="TryDecodeProperty(ReadOnlySpan{byte}, out string, out object)"/> with the size of a font in units of <paramref name="mapping"/>.
+        /// </summary>
+        public static bool TryDecodeProperty(ReadOnlySpan<byte> payload, in SpaceMapping mapping, out string name, out object value)
         {
             name = string.Empty;
             value = null!;
@@ -32,7 +39,7 @@ namespace VL.Qt.Wire
             int valueOffset = 4 + Align(nameLength);
             if (nameLength == 0 || valueOffset > payload.Length)
                 return false;
-            if (!TryReadValue(payload.Slice(valueOffset), type, out var v, out _))
+            if (!TryReadValue(payload.Slice(valueOffset), type, mapping, out var v, out _))
                 return false;
             name = Encoding.UTF8.GetString(payload.Slice(4, nameLength));
             value = v;
@@ -45,6 +52,10 @@ namespace VL.Qt.Wire
         /// (QtNative sends unsupported QML types as strings).
         /// </summary>
         public static bool TryDecodeSignal(ReadOnlySpan<byte> payload, out QmlSignal signal)
+            => TryDecodeSignal(payload, SpaceMapping.Default, out signal);
+
+        /// <summary><see cref="TryDecodeSignal(ReadOnlySpan{byte}, out QmlSignal)"/> with the size of a font in units of <paramref name="mapping"/>.</summary>
+        public static bool TryDecodeSignal(ReadOnlySpan<byte> payload, in SpaceMapping mapping, out QmlSignal signal)
         {
             signal = null!;
             if (payload.Length < 4)
@@ -65,7 +76,7 @@ namespace VL.Qt.Wire
                         return false;
                     ushort type = BinaryPrimitives.ReadUInt16LittleEndian(payload.Slice(offset));
                     offset += 4;
-                    if (!TryReadValue(payload.Slice(offset), type, out var v, out int size))
+                    if (!TryReadValue(payload.Slice(offset), type, mapping, out var v, out int size))
                         return false;
                     builder.Add(v);
                     offset += Align(size);
@@ -78,10 +89,10 @@ namespace VL.Qt.Wire
 
         /// <summary>
         /// Reads a value encoded like SET (f32, i32, bool as u8, string as u32 length + UTF-8, color and rect 4 x f32, vec2/3/4
-        /// 2/3/4 x f32, list as in protocol.h: u16 element type, u16 0, u32 count, elements). <paramref name="size"/> is the number
-        /// of bytes read, without padding.
+        /// 2/3/4 x f32, date as i64 milliseconds since 1970 UTC, font as in protocol.h, list as in protocol.h: u16 element type,
+        /// u16 0, u32 count, elements). <paramref name="size"/> is the number of bytes read, without padding.
         /// </summary>
-        internal static bool TryReadValue(ReadOnlySpan<byte> p, ushort type, out object value, out int size)
+        internal static bool TryReadValue(ReadOnlySpan<byte> p, ushort type, in SpaceMapping mapping, out object value, out int size)
         {
             value = null!;
             size = 0;
@@ -134,6 +145,24 @@ namespace VL.Qt.Wire
                     value = new Vector4(F(p, 0), F(p, 4), F(p, 8), F(p, 12));
                     size = 16;
                     return true;
+                case Protocol.ValueType.DateTime:
+                    if (p.Length < 8) return false;
+                    value = QmlDateTime.FromWire(BinaryPrimitives.ReadInt64LittleEndian(p));
+                    size = 8;
+                    return true;
+                case Protocol.ValueType.Font:
+                    if (p.Length < Protocol.FontValueHeaderSize) return false;
+                    uint familyLength = BinaryPrimitives.ReadUInt32LittleEndian(p.Slice(12));
+                    if (familyLength > (uint)(p.Length - Protocol.FontValueHeaderSize)) return false;
+                    value = new Font
+                    {
+                        Size = mapping.FromQt(F(p, 0)),
+                        Weight = BinaryPrimitives.ReadInt32LittleEndian(p.Slice(4)),
+                        Italic = p[8] != 0,
+                        Family = Encoding.UTF8.GetString(p.Slice(Protocol.FontValueHeaderSize, (int)familyLength)),
+                    };
+                    size = Protocol.FontValueHeaderSize + (int)familyLength;
+                    return true;
                 case Protocol.ValueType.List:
                     return TryReadList(p, out value, out size);
                 default:
@@ -170,6 +199,7 @@ namespace VL.Qt.Wire
                 case Protocol.ValueType.Vec3: ok = TryReadFixed(body, n, 12, static e => new Vector3(F(e, 0), F(e, 4), F(e, 8)), out value, out bodySize); break;
                 case Protocol.ValueType.Vec4: ok = TryReadFixed(body, n, 16, static e => new Vector4(F(e, 0), F(e, 4), F(e, 8), F(e, 12)), out value, out bodySize); break;
                 case Protocol.ValueType.String: ok = TryReadStrings(body, n, out value, out bodySize); break;
+                case Protocol.ValueType.DateTime: ok = TryReadFixed(body, n, 8, static e => QmlDateTime.FromWire(BinaryPrimitives.ReadInt64LittleEndian(e)), out value, out bodySize); break;
                 default: return false;
             }
             if (!ok)

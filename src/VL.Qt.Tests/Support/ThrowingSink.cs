@@ -97,6 +97,10 @@ namespace VL.Qt.Tests.Support
         public void QmlPropertyListI32(ReadOnlySpan<char> name, ReadOnlySpan<int> values) => _inner.QmlPropertyListI32(name, values);
         public void QmlPropertyListBool(ReadOnlySpan<char> name, ReadOnlySpan<bool> values) => _inner.QmlPropertyListBool(name, values);
         public void QmlPropertyListString(ReadOnlySpan<char> name, ReadOnlySpan<string> values) => _inner.QmlPropertyListString(name, values);
+        public void QmlPropertyDateTime(ReadOnlySpan<char> name, long milliseconds) => _inner.QmlPropertyDateTime(name, milliseconds);
+        public void QmlPropertyFont(ReadOnlySpan<char> name, ReadOnlySpan<char> family, float pixelSize, int weight, bool italic)
+            => _inner.QmlPropertyFont(name, family, pixelSize, weight, italic);
+        public void QmlPropertyListDateTime(ReadOnlySpan<char> name, ReadOnlySpan<long> values) => _inner.QmlPropertyListDateTime(name, values);
         public void EndQmlProperties() => _inner.EndQmlProperties();
 
         public void BeginEffectChain(uint id) { Tick(); _inner.BeginEffectChain(id); }

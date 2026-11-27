@@ -4,6 +4,7 @@ using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Elements;
 using VL.Qt.Wire;
+using Font = VL.Qt.Elements.Font;
 using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Qml
@@ -11,12 +12,13 @@ namespace VL.Qt.Qml
     /// <summary>
     /// Pin model mapping of the QML node factory: QML type name → <see cref="QmlValueKind"/> → CLR pin type → wire value
     /// (<see cref="QmlValue"/>). A <c>list&lt;T&gt;</c> of a type listed here gets a list kind (<see cref="ListKind"/>) and a Spread pin.
-    /// Everything else (<c>alias</c>, <c>var</c>, lists of other types, <c>font</c>, enums, object types) gets no pin;
-    /// the parser reports it as an info message.
+    /// A <c>font</c> has no list kind. Everything else (<c>var</c>, lists of other types, object types) gets no pin; the parser
+    /// reports it as an info message. Aliases and enums the parser resolves to one of these kinds.
     /// </summary>
     internal static class QmlTypes
     {
         private static readonly Path s_emptyPath = new(string.Empty);
+        private static readonly Font s_defaultFont = new();
 
         /// <summary>Returns true if <paramref name="qmlType"/> (as written in the declaration, e.g. "real") gets a pin.</summary>
         public static bool TryMap(string? qmlType, out QmlValueKind kind)
@@ -24,7 +26,7 @@ namespace VL.Qt.Qml
             // list<T> of a type with a pin; a list of lists or of an unsupported type gets none.
             if (qmlType is { Length: > 6 } && qmlType.StartsWith("list<", StringComparison.Ordinal) && qmlType.EndsWith('>'))
             {
-                if (TryMapElement(qmlType.AsSpan(5, qmlType.Length - 6).Trim().ToString(), out var element))
+                if (TryMapElement(qmlType.AsSpan(5, qmlType.Length - 6).Trim().ToString(), out var element) && HasListKind(element))
                 {
                     kind = ListKind(element);
                     return true;
@@ -52,6 +54,8 @@ namespace VL.Qt.Qml
                 case "point": kind = QmlValueKind.Point; return true;
                 case "size": kind = QmlValueKind.Size; return true;
                 case "url": kind = QmlValueKind.Url; return true;
+                case "date": kind = QmlValueKind.Date; return true;
+                case "font": kind = QmlValueKind.Font; return true;
                 default: kind = default; return false;
             }
         }
@@ -69,6 +73,8 @@ namespace VL.Qt.Qml
             QmlValueKind.Vector4D => typeof(Vector4),
             QmlValueKind.Rect => typeof(RectangleF),
             QmlValueKind.Url => typeof(Path),
+            QmlValueKind.Date => typeof(DateTime),
+            QmlValueKind.Font => typeof(Font),
             QmlValueKind.RealList => typeof(Spread<float>),
             QmlValueKind.IntList => typeof(Spread<int>),
             QmlValueKind.BoolList => typeof(Spread<bool>),
@@ -79,8 +85,12 @@ namespace VL.Qt.Qml
             QmlValueKind.Vector4DList => typeof(Spread<Vector4>),
             QmlValueKind.RectList => typeof(Spread<RectangleF>),
             QmlValueKind.UrlList => typeof(Spread<Path>),
+            QmlValueKind.DateList => typeof(Spread<DateTime>),
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
+
+        /// <summary>Returns true if the element kind has a list kind (all but <see cref="QmlValueKind.Font"/>).</summary>
+        public static bool HasListKind(QmlValueKind element) => !IsList(element) && element != QmlValueKind.Font;
 
         /// <summary>Returns true if <paramref name="kind"/> is a <c>list&lt;T&gt;</c> kind.</summary>
         public static bool IsList(QmlValueKind kind) => kind >= QmlValueKind.RealList;
@@ -91,13 +101,14 @@ namespace VL.Qt.Qml
             : throw new ArgumentOutOfRangeException(nameof(list));
 
         /// <summary>The list kind of an element kind (<see cref="QmlValueKind.Point"/> → <see cref="QmlValueKind.PointList"/>).</summary>
-        public static QmlValueKind ListKind(QmlValueKind element) => !IsList(element)
+        public static QmlValueKind ListKind(QmlValueKind element) => HasListKind(element)
             ? element - QmlValueKind.Real + QmlValueKind.RealList
             : throw new ArgumentOutOfRangeException(nameof(element));
 
         /// <summary>
         /// The value QML gives a property of this kind without initializer, used as pin default when the file has no literal:
-        /// 0, false, "", transparent (0, 0, 0, 0), zero vectors, point and size, empty rect, the empty path, the empty spread for a list.
+        /// 0, false, "", transparent (0, 0, 0, 0), zero vectors, point and size, empty rect, the empty path, no date (DateTime.MinValue),
+        /// the font of Text (default family, 0.12, 400), the empty spread for a list.
         /// </summary>
         public static object TypeDefault(QmlValueKind kind) => kind switch
         {
@@ -111,6 +122,8 @@ namespace VL.Qt.Qml
             QmlValueKind.Vector4D => Vector4.Zero,
             QmlValueKind.Rect => RectangleF.Empty,
             QmlValueKind.Url => s_emptyPath,
+            QmlValueKind.Date => DateTime.MinValue,
+            QmlValueKind.Font => s_defaultFont,
             QmlValueKind.RealList => Spread<float>.Empty,
             QmlValueKind.IntList => Spread<int>.Empty,
             QmlValueKind.BoolList => Spread<bool>.Empty,
@@ -121,6 +134,7 @@ namespace VL.Qt.Qml
             QmlValueKind.Vector4DList => Spread<Vector4>.Empty,
             QmlValueKind.RectList => Spread<RectangleF>.Empty,
             QmlValueKind.UrlList => Spread<Path>.Empty,
+            QmlValueKind.DateList => Spread<DateTime>.Empty,
             _ => throw new ArgumentOutOfRangeException(nameof(kind)),
         };
 
@@ -169,6 +183,8 @@ namespace VL.Qt.Qml
                 case (QmlValueKind.Rect, RectangleF r): result = r; return true;
                 case (QmlValueKind.Url, Path p): result = p; return true;
                 case (QmlValueKind.Url, string s): result = UrlToPath(s, baseFolder); return true;
+                case (QmlValueKind.Date, DateTime d): result = d; return true;
+                case (QmlValueKind.Font, Font f): result = f; return true;
                 default: result = TypeDefault(kind); return false;
             }
         }
