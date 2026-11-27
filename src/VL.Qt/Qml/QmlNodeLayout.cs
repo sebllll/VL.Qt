@@ -6,6 +6,7 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using VL.Core;
 using VL.Core.Diagnostics;
+using VL.Lib.Collections;
 using VL.Qt.NodeFactories;
 
 namespace VL.Qt.Qml
@@ -158,10 +159,12 @@ namespace VL.Qt.Qml
                 return name;
             }
 
+            var folder = BaseFolder(filePath);
             var inputs = ImmutableArray.CreateBuilder<QmlInputPin>();
             var outputs = ImmutableArray.CreateBuilder<QmlOutputPin>();
-            foreach (var property in declarations.Properties)
+            foreach (var declared in declarations.Properties)
             {
+                var property = ResolveUrls(declared, folder);
                 var name = Unique(property.Name, "property");
                 if (!property.IsReadOnly)
                     inputs.Add(new QmlInputPin(name, property));
@@ -187,8 +190,28 @@ namespace VL.Qt.Qml
                 messages.MoveToImmutable(), declarations.Head.Summary);
         }
 
+        /// <summary>The folder a relative url of the file is resolved against, null if the path has none.</summary>
+        internal static string? BaseFolder(string filePath)
+        {
+            var folder = Path.GetDirectoryName(filePath);
+            return string.IsNullOrEmpty(folder) ? null : folder;
+        }
+
+        // A url literal is relative to the file, as in QML; the pin holds it resolved (QmlTypes.UrlToPath).
+        private static QmlPropertyDecl ResolveUrls(QmlPropertyDecl property, string? folder) => property.Default switch
+        {
+            VL.Lib.IO.Path url => property with { Default = QmlTypes.UrlToPath(url.Value ?? string.Empty, folder) },
+            Spread<VL.Lib.IO.Path> { Count: > 0 } urls => property with { Default = urls.Select(u => QmlTypes.UrlToPath(u.Value ?? string.Empty, folder)).ToSpread() },
+            _ => property,
+        };
+
         private static string PinSummary(QmlPropertyDecl property)
-            => property.Summary ?? $"{(property.IsReadOnly ? "readonly " : string.Empty)}{property.QmlType} property '{property.Name}' of the QML root.";
+        {
+            var summary = property.Summary ?? (property.AliasOf is { } target
+                ? $"{property.QmlType} property '{property.Name}' of the QML root, an alias of {target}."
+                : $"{(property.IsReadOnly ? "readonly " : string.Empty)}{property.QmlType} property '{property.Name}' of the QML root.");
+            return property.Enum is { } values ? $"{summary} {values.Describe()}." : summary;
+        }
 
         private static string SignalSummary(QmlSignalDecl signal)
         {

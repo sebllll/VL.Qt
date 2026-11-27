@@ -350,6 +350,8 @@ void QmlItem::applyProperty(const QByteArray& utf8Name, const QVariant& value, Q
                                        .arg(QString::fromLatin1(p.typeName()), name));
             return;
         }
+    } else if (target == QMetaType::fromType<QUrl>() && v.metaType() == QMetaType::fromType<QString>()) {
+        v = urlFromPatch(v.toString());
     } else {
         v = adaptVector2D(v, target);
     }

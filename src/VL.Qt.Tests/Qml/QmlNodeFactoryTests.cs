@@ -253,6 +253,33 @@ namespace VL.Qt.Tests.Qml
         private static QmlDeclarations Declare(QmlPropertyDecl[] properties, QmlSignalDecl[]? signals = null) =>
             new("Item", QmlFileHead.Empty, properties.ToImmutableArray(), (signals ?? Array.Empty<QmlSignalDecl>()).ToImmutableArray(), ImmutableArray<QmlParseMessage>.Empty);
 
+        [Test]
+        public void Layout_AliasPinHelp_NamesTheTarget_UnlessTheFileHasAComment()
+        {
+            var layout = QmlNodeLayout.Build("Card.qml", Declare(new[]
+            {
+                Prop("title", QmlValueKind.String) with { QmlType = "string", AliasOf = "label.text" },
+                Prop("fill", QmlValueKind.Color, summary: "Fill of the card.") with { AliasOf = "bg.color" },
+            }));
+            var inputs = layout.InputDescriptions().ToDictionary(i => i.Name, i => ((IInfo)i).Summary);
+            Assert.That(inputs["Title"], Is.EqualTo("string property 'title' of the QML root, an alias of label.text."));
+            Assert.That(inputs["Fill"], Is.EqualTo("Fill of the card."));
+        }
+
+        [Test]
+        public void Layout_EnumPinHelp_ListsTheValues()
+        {
+            var mode = new QmlEnumDecl("Gauge", "Mode", ImmutableArray.Create(new QmlEnumValue("Small", 0), new QmlEnumValue("Large", 5)));
+            var layout = QmlNodeLayout.Build("Gauge.qml", Declare(new[]
+            {
+                Prop("mode", QmlValueKind.Int) with { Enum = mode },
+                Prop("level", QmlValueKind.Int, summary: "Level of the gauge.") with { Enum = mode },
+            }));
+            var inputs = layout.InputDescriptions().ToDictionary(i => i.Name, i => ((IInfo)i).Summary);
+            Assert.That(inputs["Mode"], Is.EqualTo("int property 'mode' of the QML root. Mode: Small = 0, Large = 5."));
+            Assert.That(inputs["Level"], Is.EqualTo("Level of the gauge. Mode: Small = 0, Large = 5."));
+        }
+
         // The pin texts that QML nodes share with the element nodes come from CommonPins.xml (written once).
         [Test]
         public void Layout_CommonPinHelp_IsTheSharedText()

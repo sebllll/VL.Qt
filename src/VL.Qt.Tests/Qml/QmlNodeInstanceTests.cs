@@ -390,6 +390,37 @@ namespace VL.Qt.Tests.Qml
         }
 
         [Test]
+        public void Url_DefaultIsResolvedAgainstTheFolder_AndTheOutputIsALocalPath()
+        {
+            var instance = Create(new[] { Prop("source", QmlValueKind.Url, new VL.Lib.IO.Path("img/a.png")) });
+            var resolved = new VL.Lib.IO.Path(System.IO.Path.Combine(_dir, "img", "a.png"));
+            Assert.That(In(instance, QmlCommonPins.LeadingInputs.Length).Value, Is.EqualTo(resolved), "the input default");
+            Frame(instance);
+            Assert.That(Out(instance, 1).Value, Is.EqualTo(resolved), "the output default");
+
+            var file = System.IO.Path.Combine(_dir, "b ä.png");
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("source", Protocol.ValueType.String, QmlWire.Str(new Uri(file).AbsoluteUri))));
+            Frame(instance);
+            Assert.That(Out(instance, 1).Value, Is.EqualTo(new VL.Lib.IO.Path(file)), "a file URL from QML");
+
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("source", Protocol.ValueType.String, QmlWire.Str("c.png"))));
+            Frame(instance);
+            Assert.That(Out(instance, 1).Value, Is.EqualTo(new VL.Lib.IO.Path(System.IO.Path.Combine(_dir, "c.png"))), "a relative url is relative to the file");
+        }
+
+        [Test]
+        public void Url_InputIsSentAsTheTextOfThePath()
+        {
+            var instance = Create(new[] { Prop("source", QmlValueKind.Url) });
+            var file = System.IO.Path.Combine(_dir, "a.png");
+            Set(instance, 0, new VL.Lib.IO.Path(file));
+            var e = Frame(instance);
+            Assert.That(e.Properties.TryGetValue("source", out var v), Is.True);
+            Assert.That(v.ValueType, Is.EqualTo(Protocol.ValueType.String));
+            Assert.That(v.Text, Is.EqualTo(file));
+        }
+
+        [Test]
         public void PropertyOutput_Point_ArrivesAsVector2() => AssertVector2Output(QmlValueKind.Point);
 
         [Test]

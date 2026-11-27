@@ -6,6 +6,7 @@ using NUnit.Framework;
 using Stride.Core.Mathematics;
 using VL.Lib.Collections;
 using VL.Qt.Qml;
+using VLPath = VL.Lib.IO.Path;
 
 namespace VL.Qt.Tests.Qml
 {
@@ -88,7 +89,7 @@ namespace VL.Qt.Tests.Qml
             var d = Parse(File.ReadAllText(Path.Combine(RepoRoot(), "src", "VL.Qt.SmokeTest", "assets", "QmlTypes.qml")));
 
             Assert.That(d.Messages, Is.Empty);
-            Assert.That(d.Properties, Has.Length.EqualTo(46));
+            Assert.That(d.Properties, Has.Length.EqualTo(59));
             var kinds = new Dictionary<string, QmlValueKind>
             {
                 ["r"] = QmlValueKind.Real, ["i"] = QmlValueKind.Int, ["b"] = QmlValueKind.Bool, ["s"] = QmlValueKind.String,
@@ -97,6 +98,8 @@ namespace VL.Qt.Tests.Qml
                 ["rl"] = QmlValueKind.RealList, ["dl"] = QmlValueKind.RealList, ["il"] = QmlValueKind.IntList, ["bl"] = QmlValueKind.BoolList,
                 ["sl"] = QmlValueKind.StringList, ["cl"] = QmlValueKind.ColorList, ["ptl"] = QmlValueKind.PointList, ["szl"] = QmlValueKind.SizeList,
                 ["v2l"] = QmlValueKind.Vector2DList, ["v3l"] = QmlValueKind.Vector3DList, ["v4l"] = QmlValueKind.Vector4DList, ["boxl"] = QmlValueKind.RectList,
+                ["u"] = QmlValueKind.Url, ["ul"] = QmlValueKind.UrlList, ["d"] = QmlValueKind.Date, ["dal"] = QmlValueKind.DateList,
+                ["fo"] = QmlValueKind.Font,
             };
             foreach (var (name, kind) in kinds)
             {
@@ -118,6 +121,8 @@ namespace VL.Qt.Tests.Qml
             Assert.That(Prop(d, "sz").Default, Is.EqualTo(Vector2.Zero));
             Assert.That(Prop(d, "b").Default, Is.EqualTo(false));
             Assert.That(Prop(d, "s").Default, Is.EqualTo(string.Empty));
+            Assert.That(Prop(d, "u").Default, Is.EqualTo(new VLPath(string.Empty)));
+            Assert.That((Prop(d, "at").Kind, Prop(d, "at").AliasOf), Is.EqualTo((QmlValueKind.String, "aliasText.text")));
             foreach (var (name, kind) in kinds.Where(k => QmlTypes.IsList(k.Value)))
                 Assert.That(Prop(d, name).Default, Is.InstanceOf(QmlTypes.ClrType(kind)).And.Empty, name);
             Assert.That(d.Signals.Select(x => x.Name), Is.EqualTo(new[] { "located", "measured", "tagged", "placed" }));
@@ -183,6 +188,69 @@ namespace VL.Qt.Tests.Qml
             AssertColor(new Color4(0f, 0f, 0f, 0f), Prop(d, "p").Default);
             Assert.That(((Color4)Prop(d, "q").Default).R, Is.EqualTo(169 / 255f).Within(1e-4));
             Assert.That(Prop(d, "r").Default, Is.EqualTo(5f));
+        }
+
+        [Test]
+        public void UrlLiterals_AreKeptAsWritten_ForTheLayoutToResolve()
+        {
+            var d = Parse("""
+                Item {
+                    property url a: "img/a.png"
+                    property url b: Qt.resolvedUrl("b.png")
+                    property url c: "https://example.com/c.png"
+                    property url none
+                    property url bound: other.source
+                    property url call: Qt.resolvedUrl(name)
+                    property list<url> list: ["x.png", "qrc:/y.png",]
+                    property list<url> mixed: ["x.png", 1]
+                }
+                """);
+
+            Assert.That(d.Messages, Is.Empty);
+            Assert.That(Prop(d, "a").Default, Is.EqualTo(new VLPath("img/a.png")));
+            Assert.That(Prop(d, "b").Default, Is.EqualTo(new VLPath("b.png")));
+            Assert.That(Prop(d, "c").Default, Is.EqualTo(new VLPath("https://example.com/c.png")));
+            Assert.That(Prop(d, "none").Initializer, Is.EqualTo(QmlInitializer.None));
+            Assert.That(Prop(d, "none").Default, Is.EqualTo(new VLPath(string.Empty)));
+            Assert.That(Prop(d, "bound").Initializer, Is.EqualTo(QmlInitializer.Binding));
+            Assert.That(Prop(d, "call").Initializer, Is.EqualTo(QmlInitializer.Binding));
+            Assert.That(Prop(d, "list").Default, Is.EqualTo(new[] { new VLPath("x.png"), new VLPath("qrc:/y.png") }.ToSpread()));
+            Assert.That(Prop(d, "mixed").Initializer, Is.EqualTo(QmlInitializer.Binding));
+            Assert.That(Prop(d, "mixed").Default, Is.EqualTo(Spread<VLPath>.Empty));
+        }
+
+        [Test]
+        public void DateAndFontLiterals()
+        {
+            var d = Parse("""
+                Item {
+                    property date day: "2024-05-01"
+                    property date moment: "2024-05-01T12:30:00"
+                    property date none
+                    property date bound: new Date()
+                    property list<date> days: ["2024-01-01", "2024-12-31"]
+                    property font plain
+                    property font title: Qt.font({ family: "Arial", pixelSize: 24, weight: Font.Bold, italic: true })
+                    property font points: Qt.font({ pointSize: 9, bold: true })
+                    property font heavy: Qt.font({ weight: 900, })
+                    property font other: Qt.font({ family: "Arial", letterSpacing: 2 })
+                    property font expr: Qt.font({ pixelSize: size })
+                }
+                """);
+
+            Assert.That(d.Messages, Is.Empty);
+            Assert.That(Prop(d, "day").Default, Is.EqualTo(new DateTime(2024, 5, 1, 0, 0, 0, DateTimeKind.Local)));
+            Assert.That(((DateTime)Prop(d, "day").Default).Kind, Is.EqualTo(DateTimeKind.Local));
+            Assert.That(Prop(d, "moment").Default, Is.EqualTo(new DateTime(2024, 5, 1, 12, 30, 0, DateTimeKind.Local)));
+            Assert.That((Prop(d, "none").Initializer, Prop(d, "none").Default), Is.EqualTo((QmlInitializer.None, (object)DateTime.MinValue)));
+            Assert.That(Prop(d, "bound").Initializer, Is.EqualTo(QmlInitializer.Binding));
+            Assert.That(Prop(d, "days").Default, Is.EqualTo(new[] { new DateTime(2024, 1, 1), new DateTime(2024, 12, 31) }.ToSpread()));
+            Assert.That(Prop(d, "plain").Default, Is.EqualTo(new VL.Qt.Elements.Font()));
+            Assert.That(Prop(d, "title").Default, Is.EqualTo(new VL.Qt.Elements.Font { Family = "Arial", Size = 0.24f, Weight = 700, Italic = true }));
+            Assert.That(Prop(d, "points").Default, Is.EqualTo(new VL.Qt.Elements.Font { Size = 0.12f, Weight = 700 }), "9 pt = 12 px");
+            Assert.That(Prop(d, "heavy").Default, Is.EqualTo(new VL.Qt.Elements.Font { Weight = 900 }));
+            Assert.That(Prop(d, "other").Initializer, Is.EqualTo(QmlInitializer.Binding), "a key the node does not take");
+            Assert.That(Prop(d, "expr").Initializer, Is.EqualTo(QmlInitializer.Binding));
         }
 
         [Test]
@@ -281,14 +349,13 @@ namespace VL.Qt.Tests.Qml
                     property list<Item> kids
                     property list<var> any
                     property list<list<int>> nested
-                    property list<url> urls
                     property list<> none
                     property list<int> fine
                 }
                 """);
 
             Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "fine" }));
-            Assert.That(d.Messages, Has.Length.EqualTo(5));
+            Assert.That(d.Messages, Has.Length.EqualTo(4));
             Assert.That(d.Messages.All(m => m.Severity == QmlMessageSeverity.Info), Is.True);
         }
 
@@ -581,12 +648,10 @@ namespace VL.Qt.Tests.Qml
         {
             var d = Parse("""
                 Item {
-                    property alias inner: child.text
+                    property alias inner: child
                     property var data
                     property list<Item> kids
                     property Item target
-                    property url source
-                    property font f
                     default property alias content: row.children
                     property real fine: 1
                     Text { id: child }
@@ -594,7 +659,7 @@ namespace VL.Qt.Tests.Qml
                 """);
 
             Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "fine" }));
-            Assert.That(d.Messages, Has.Length.EqualTo(7));
+            Assert.That(d.Messages, Has.Length.EqualTo(5));
             Assert.That(d.Messages.All(m => m.Severity == QmlMessageSeverity.Info), Is.True);
             Assert.That(d.Messages[0].Line, Is.EqualTo(2));
             Assert.That(d.Messages[0].Text, Does.Contain("inner").And.Contain("alias"));
@@ -602,6 +667,200 @@ namespace VL.Qt.Tests.Qml
             Assert.That(d.Messages[3].Text, Does.Contain("target").And.Contain("Item"));
             // An info lists the name only: after lines move above it, a line number would point to the wrong place.
             Assert.That(d.Messages[0].ToString(), Does.Not.Contain("line"));
+        }
+
+        // ---- aliases ----------------------------------------------------------------------------------------------------------
+
+        [Test]
+        public void Alias_OfAChildProperty_TakesItsTypeAndDefault()
+        {
+            var d = Parse("""
+                Item {
+                    property alias value: bar.value
+                    property alias label: caption.text
+                    property alias fill: bg.color
+                    property alias size: bg.width
+                    property alias shown: bg.visible
+                    property alias logo: img.source
+                    property alias plain: plainRect.color
+                    // Text of the caption.
+                    readonly property alias ro: caption.text
+                    Rectangle {
+                        id: bg
+                        color: "tomato"
+                        width: parent.width
+                        Item {
+                            id: bar
+                            property real value: 0.5
+                        }
+                        Text { id: caption; text: "Hi" }
+                        Image { id: img; source: "logo.png" }
+                    }
+                    Rectangle { id: plainRect }
+                }
+                """);
+
+            Assert.That(d.Messages, Is.Empty);
+            Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "value", "label", "fill", "size", "shown", "logo", "plain", "ro" }));
+
+            var value = Prop(d, "value");
+            Assert.That((value.Kind, value.QmlType, value.Initializer, value.Default, value.AliasOf), Is.EqualTo((QmlValueKind.Real, "real", QmlInitializer.Literal, (object)0.5f, "bar.value")));
+            Assert.That((Prop(d, "label").Kind, Prop(d, "label").Initializer, Prop(d, "label").Default), Is.EqualTo((QmlValueKind.String, QmlInitializer.Literal, (object)"Hi")));
+            AssertColor(new Color4(1f, 99 / 255f, 71 / 255f, 1f), Prop(d, "fill").Default);
+            // A binding on the child: the type default and a visible output, like a bound declaration.
+            Assert.That((Prop(d, "size").Kind, Prop(d, "size").Initializer, Prop(d, "size").Default), Is.EqualTo((QmlValueKind.Real, QmlInitializer.Binding, (object)0f)));
+            // Nothing set on the child: the value Qt gives it.
+            Assert.That((Prop(d, "shown").Kind, Prop(d, "shown").Initializer, Prop(d, "shown").Default), Is.EqualTo((QmlValueKind.Bool, QmlInitializer.None, (object)true)));
+            AssertColor(new Color4(1f, 1f, 1f, 1f), Prop(d, "plain").Default);
+            Assert.That((Prop(d, "logo").Kind, Prop(d, "logo").Default), Is.EqualTo((QmlValueKind.Url, (object)new VLPath("logo.png"))));
+            Assert.That(Prop(d, "ro").IsReadOnly, Is.True);
+            Assert.That(Prop(d, "ro").Summary, Is.EqualTo("Text of the caption."));
+        }
+
+        [Test]
+        public void Alias_ThatCannotBeResolved_GivesAnInfoWithTheReason()
+        {
+            var d = Parse("""
+                Item {
+                    property alias obj: bg
+                    property alias grouped: bg.border.color
+                    property alias missing: nope.text
+                    property alias unknown: bg.antialiasing
+                    property alias expr: bg.width + 1
+                    property alias anyType: data.list
+                    property alias none
+                    property real fine: 1
+                    Rectangle { id: bg }
+                    QtObject { id: data; property var list }
+                }
+                """);
+
+            Assert.That(d.Properties.Select(p => p.Name), Is.EqualTo(new[] { "fine" }));
+            Assert.That(d.Messages.All(m => m.Severity == QmlMessageSeverity.Info), Is.True);
+            Assert.That(d.Messages.Select(m => m.Text), Is.EqualTo(new[]
+            {
+                "property 'obj' (alias of bg): an alias of the object 'bg' has no pin",
+                "property 'grouped' (alias of bg.border.color): an alias of a grouped property (border.color) has no pin",
+                "property 'missing' (alias of nope.text): 'nope' is no id in this file",
+                "property 'unknown' (alias of bg.antialiasing): 'bg.antialiasing' is no property of 'Rectangle' that the node knows (the built-in ones it knows are listed in the help)",
+                "property 'expr' (alias of bg.width+1): the target is not 'id.property'",
+                "property 'anyType' (alias of data.list): 'data.list' is of the type var, which has no pin",
+                "property 'none' (alias): the target is not 'id.property'",
+            }));
+        }
+
+        [Test]
+        public void Alias_FollowsAnAliasInTheFile_AndTheDeclarationsOfASiblingComponent()
+        {
+            var siblings = new Dictionary<string, string>
+            {
+                ["Button"] = """
+                    Rectangle {
+                        property string label: "x"
+                        property alias caption: tx.text
+                        readonly property int clicks: 0
+                        Text { id: tx; text: "cap" }
+                    }
+                    """,
+            };
+            var d = Parse("""
+                Item {
+                    property alias deep: inner.relay
+                    property alias label: btn.label
+                    property alias caption: btn.caption
+                    property alias clicks: btn.clicks
+                    property alias width2: btn.width
+                    property alias fill: btn.color
+                    Item { id: inner; property alias relay: t.text }
+                    Text { id: t; text: "deep" }
+                    Button { id: btn; label: "OK" }
+                }
+                """, siblings);
+
+            Assert.That(d.Messages, Is.Empty);
+            Assert.That((Prop(d, "deep").Default, Prop(d, "deep").AliasOf), Is.EqualTo(((object)"deep", "inner.relay")));
+            Assert.That(Prop(d, "label").Default, Is.EqualTo("OK"), "the assignment on the instance");
+            Assert.That(Prop(d, "caption").Default, Is.EqualTo("cap"), "an alias of the sibling, resolved in the sibling");
+            Assert.That(Prop(d, "clicks").IsReadOnly, Is.True, "a readonly target");
+            Assert.That(Prop(d, "width2").Kind, Is.EqualTo(QmlValueKind.Real), "Item property of the sibling's root type");
+            AssertColor(new Color4(1f, 1f, 1f, 1f), Prop(d, "fill").Default);
+        }
+
+        [Test]
+        public void Alias_Cycle_GivesAnInfo()
+        {
+            var d = Parse("""
+                Item {
+                    property alias a: x.b
+                    Item { id: x; property alias b: y.c }
+                    Item { id: y; property alias c: x.b }
+                }
+                """);
+
+            Assert.That(d.Properties, Is.Empty);
+            Assert.That(d.Messages.Single().Text, Does.Contain("too deep"));
+        }
+
+        // ---- enums ------------------------------------------------------------------------------------------------------------
+
+        [Test]
+        public void Enums_GiveIntPins_WithTheValueAsDefault()
+        {
+            var d = Parse("""
+                Item {
+                    property int mode: Own.Large
+                    property int scoped: Own.Mode.Small
+                    property Mode typed
+                    property Own.Mode qualified: Own.Huge
+                    property int plain: 3
+                    property int other: Text.AlignLeft
+                    property int wrongEnum: Own.Other.Small
+                    enum Mode {
+                        Small,
+                        Large = 5,
+                        Huge,
+                        Negative = -2
+                    }
+                }
+                """);
+
+            Assert.That(d.Messages, Is.Empty);
+            var mode = d.Enums.Single();
+            Assert.That((mode.Type, mode.Name, mode.Describe()), Is.EqualTo(("Own", "Mode", "Mode: Small = 0, Large = 5, Huge = 6, Negative = -2")));
+            Assert.That((Prop(d, "mode").Kind, Prop(d, "mode").Initializer, Prop(d, "mode").Default, Prop(d, "mode").Enum), Is.EqualTo((QmlValueKind.Int, QmlInitializer.Literal, (object)5, mode)));
+            Assert.That((Prop(d, "scoped").Default, Prop(d, "scoped").Enum), Is.EqualTo(((object)0, mode)));
+            Assert.That((Prop(d, "typed").Kind, Prop(d, "typed").QmlType, Prop(d, "typed").Default, Prop(d, "typed").Enum), Is.EqualTo((QmlValueKind.Int, "Mode", (object)0, mode)));
+            Assert.That((Prop(d, "qualified").Default, Prop(d, "qualified").Enum), Is.EqualTo(((object)6, mode)));
+            Assert.That(Prop(d, "plain").Enum, Is.Null);
+            Assert.That((Prop(d, "other").Initializer, Prop(d, "other").Enum), Is.EqualTo((QmlInitializer.Binding, (QmlEnumDecl?)null)), "not an enum of the file");
+            Assert.That(Prop(d, "wrongEnum").Initializer, Is.EqualTo(QmlInitializer.Binding));
+        }
+
+        [Test]
+        public void Enums_OfASiblingRootType_AreKnownToTheDerivedFile()
+        {
+            var siblings = new Dictionary<string, string>
+            {
+                ["Base"] = """
+                    Item {
+                        enum Size { S, M, L }
+                        property int size: Base.M
+                    }
+                    """,
+            };
+            var d = Parse("""
+                Base {
+                    size: Own.L
+                    property int second: Base.S
+                    property alias third: child.level
+                    Item { id: child; property int level: Base.M }
+                }
+                """, siblings);
+
+            Assert.That(d.Messages, Is.Empty);
+            Assert.That((Prop(d, "size").Default, Prop(d, "size").Enum?.Name), Is.EqualTo(((object)2, "Size")));
+            Assert.That((Prop(d, "second").Default, Prop(d, "second").Enum?.Name), Is.EqualTo(((object)0, "Size")));
+            Assert.That((Prop(d, "third").Default, Prop(d, "third").Enum?.Name), Is.EqualTo(((object)1, "Size")), "an alias of an enum value");
         }
 
         // ---- internal declarations --------------------------------------------------------------------------------------------

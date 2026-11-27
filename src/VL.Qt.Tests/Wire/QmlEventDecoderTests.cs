@@ -47,6 +47,41 @@ namespace VL.Qt.Tests.Wire
             Assert.That(v.GetType(), Is.EqualTo(expected.GetType()));
         }
 
+        [Test]
+        public void Property_DateTime_IsLocalTime_AndNoDateIsMinValue()
+        {
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("d", Protocol.ValueType.DateTime, QmlWire.I64(1500)), out _, out var v), Is.True);
+            Assert.That(v, Is.EqualTo(new DateTime(1970, 1, 1, 0, 0, 1, 500, DateTimeKind.Utc).ToLocalTime()));
+            Assert.That(((DateTime)v).Kind, Is.EqualTo(DateTimeKind.Local));
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("d", Protocol.ValueType.DateTime, QmlWire.I64(long.MinValue)), out _, out v), Is.True);
+            Assert.That(v, Is.EqualTo(DateTime.MinValue));
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("d", Protocol.ValueType.DateTime, QmlWire.I32(1)), out _, out _), Is.False, "short");
+        }
+
+        [Test]
+        public void Property_Font_SizeInUnitsOfTheMapping()
+        {
+            var payload = QmlWire.Property("f", Protocol.ValueType.Font, QmlWire.Font("Segoe UI", 24, 700, true));
+            Assert.That(QmlEventDecoder.TryDecodeProperty(payload, out _, out var v), Is.True);
+            Assert.That(v, Is.EqualTo(new Font { Family = "Segoe UI", Size = 0.24f, Weight = 700, Italic = true }), "DIPTopLeft: 100 DIP per unit");
+            Assert.That(QmlEventDecoder.TryDecodeProperty(payload, new SpaceMapping(Space.Normalized, new Vector2(800, 600), 1f), out _, out v), Is.True);
+            Assert.That(((Font)v).Size, Is.EqualTo(24f / 300f).Within(1e-6), "Normalized: half the scene height per unit");
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("f", Protocol.ValueType.Font, QmlWire.Font("", 12, 400, false).Take(14).ToArray()), out _, out _), Is.False, "short");
+            var longFamily = QmlWire.Font("Arial", 12, 400, false);
+            BinaryPrimitives.WriteUInt32LittleEndian(longFamily.AsSpan(12), 99);
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("f", Protocol.ValueType.Font, longFamily), out _, out _), Is.False, "family past the payload");
+        }
+
+        [Test]
+        public void Signal_FontArgument_AndDateList()
+        {
+            var payload = QmlWire.Signal("picked", (Protocol.ValueType.Font, QmlWire.Font("Arial", 12, 400, false)),
+                (Protocol.ValueType.List, QmlWire.List(Protocol.ValueType.DateTime, 2, QmlWire.I64(0), QmlWire.I64(long.MinValue))));
+            Assert.That(QmlEventDecoder.TryDecodeSignal(payload, out var signal), Is.True);
+            Assert.That(signal.Arguments[0], Is.EqualTo(new Font { Family = "Arial", Size = 0.12f }));
+            Assert.That(signal.Arguments[1], Is.EqualTo(new[] { DateTime.UnixEpoch.ToLocalTime(), DateTime.MinValue }.ToSpread()));
+        }
+
         // --- lists ---
 
         private static IEnumerable<TestCaseData> Lists()

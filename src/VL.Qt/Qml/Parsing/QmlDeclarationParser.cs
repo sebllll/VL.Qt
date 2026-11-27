@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,7 +13,8 @@ namespace VL.Qt.Qml
     /// <summary>
     /// The parser behind <see cref="QmlDeclarations"/>: scans the members of the root object at depth 1 of the tokens of
     /// <see cref="QmlLexer"/>. A member ends at a <c>;</c>, at the closing bracket that empties the nesting, or at a line break that
-    /// does not continue the expression (a line that ends with or starts with an operator continues it).
+    /// does not continue the expression (a line that ends with or starts with an operator continues it). For the aliases of the root
+    /// it also reads the nested objects: their ids, the properties they declare and their assignments (<see cref="AliasResolver"/>).
     /// </summary>
     internal static class QmlDeclarationParser
     {
@@ -63,13 +65,21 @@ namespace VL.Qt.Qml
             var rootOpen = tokens[k];
             k++;
 
-            // Declarations of a sibling root type come first.
+            // Declarations of a sibling root type come first, its enums too.
             var properties = new List<QmlPropertyDecl>();
             var signals = new List<QmlSignalDecl>();
             var messages = new List<QmlParseMessage>();
+            var enums = new EnumScope(chain.Count > 0 ? chain[^1] : string.Empty);
             if (!rootType.Contains('.') && char.IsUpper(rootType[0]))
-                Inherit(rootType, rootLine, readSibling, chain, properties, signals, messages);
+                Inherit(rootType, rootLine, readSibling, chain, properties, signals, enums, messages);
             messages.AddRange(headWarnings);
+
+            // The enums of the root may be declared after the properties that use them; the objects with an id anywhere in the file
+            // are the targets of the aliases. A body that does not scan is reported below.
+            CollectEnums(tokens, k, enums);
+            var ids = new Dictionary<string, ObjectInfo>(StringComparer.Ordinal);
+            CollectObject(tokens, k, new ObjectInfo(rootType), ids);
+            var aliases = new AliasResolver(tokens, ids, enums, readSibling, chain);
 
             var ownLine = OwnLineComments(lexed.Comments);
             var stack = new Stack<(char Open, int Line)>();
@@ -88,14 +98,17 @@ namespace VL.Qt.Qml
                 var end = ScanMember(tokens, k, stack, out var error, out var errorLine);
                 if (error != null)
                     return Fail(rootType, errorLine, error);
-                ReadMember(tokens, k, end, ownLine, inherited, properties, signals, messages);
+                ReadMember(tokens, k, end, ownLine, inherited, enums, aliases, properties, signals, messages);
                 k = end;
             }
 
             if (rootEnd + 1 < tokens.Count)
                 return Fail(rootType, tokens[rootEnd + 1].Line, "unexpected content after the root object");
 
-            return new QmlDeclarations(rootType, head, properties.ToImmutableArray(), signals.ToImmutableArray(), messages.ToImmutableArray());
+            return new QmlDeclarations(rootType, head, properties.ToImmutableArray(), signals.ToImmutableArray(), messages.ToImmutableArray())
+            {
+                Enums = enums.All.ToImmutableArray(),
+            };
         }
 
         private static void Inherit(
@@ -105,6 +118,7 @@ namespace VL.Qt.Qml
             ImmutableList<string> chain,
             List<QmlPropertyDecl> properties,
             List<QmlSignalDecl> signals,
+            EnumScope enums,
             List<QmlParseMessage> messages)
         {
             var file = rootType + ".qml";
@@ -140,6 +154,133 @@ namespace VL.Qt.Qml
                 properties.Add(p with { DeclaredIn = p.DeclaredIn ?? file });
             foreach (var s in parsed.Signals)
                 signals.Add(s with { DeclaredIn = s.DeclaredIn ?? file });
+            foreach (var x in parsed.Enums)
+                enums.Add(x);
+        }
+
+        // ---- enums ---------------------------------------------------------------------------------------------------------
+
+        private static void CollectEnums(List<Token> t, int start, EnumScope enums)
+        {
+            var stack = new Stack<(char Open, int Line)>();
+            for (var k = start; k < t.Count && !t[k].IsPunct('}');)
+            {
+                var end = ScanMember(t, k, stack, out var error, out _);
+                if (error != null)
+                    return;
+                if (t[k].IsIdent("enum") && ReadEnum(t, k, TrimSemicolons(t, k, end), enums.OwnType) is { } declared)
+                    enums.Add(declared);
+                k = end;
+            }
+        }
+
+        // enum Name { A, B = 5, C }: a value without "= n" is the one before plus 1, the first 0. Null if it does not read.
+        private static QmlEnumDecl? ReadEnum(List<Token> t, int s, int e, string type)
+        {
+            if (e - s < 4 || t[s + 1].Kind != TokenKind.Ident || !t[s + 2].IsPunct('{') || !t[e - 1].IsPunct('}'))
+                return null;
+            var values = ImmutableArray.CreateBuilder<QmlEnumValue>();
+            var next = 0;
+            var j = s + 3;
+            while (j < e - 1)
+            {
+                if (t[j].Kind != TokenKind.Ident)
+                    return null;
+                var name = t[j++].Text;
+                if (j < e - 1 && t[j].IsPunct('='))
+                {
+                    j++;
+                    var sign = 1;
+                    if (j < e - 1 && t[j].IsPunct('-'))
+                    {
+                        sign = -1;
+                        j++;
+                    }
+                    if (j >= e - 1 || t[j].Kind != TokenKind.Number
+                        || !int.TryParse(t[j].Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var n))
+                        return null;
+                    next = sign * n;
+                    j++;
+                }
+                values.Add(new QmlEnumValue(name, next++));
+                if (j < e - 1)
+                {
+                    if (!t[j].IsPunct(','))
+                        return null;
+                    j++;
+                }
+            }
+            return new QmlEnumDecl(type, t[s + 1].Text, values.ToImmutable());
+        }
+
+        /// <summary>The enums the file knows: its own and those of its sibling root types.</summary>
+        private sealed class EnumScope
+        {
+            private readonly List<QmlEnumDecl> _enums = new();
+
+            public EnumScope(string ownType) => OwnType = ownType;
+
+            /// <summary>Type name of the file itself; its name qualifies every enum it knows.</summary>
+            public string OwnType { get; }
+
+            public IReadOnlyList<QmlEnumDecl> All => _enums;
+
+            /// <summary>Adds an enum; one of the same name declared later (in a derived file) replaces it.</summary>
+            public void Add(QmlEnumDecl declared)
+            {
+                _enums.RemoveAll(x => x.Name == declared.Name);
+                _enums.Add(declared);
+            }
+
+            /// <summary>The enum a property type names ("Mode" or "Gauge.Mode"), null if none.</summary>
+            public QmlEnumDecl? OfType(string type)
+            {
+                var dot = type.LastIndexOf('.');
+                var name = type[(dot + 1)..];
+                foreach (var x in _enums)
+                {
+                    if (x.Name == name && (dot < 0 || Qualifies(type[..dot], x)))
+                        return x;
+                }
+                return null;
+            }
+
+            /// <summary>Returns true if s..e is a value of a known enum: "Gauge.Small" or "Gauge.Mode.Small".</summary>
+            public bool TryValue(List<Token> t, int s, int e, out int value, out QmlEnumDecl? declared)
+            {
+                value = 0;
+                declared = null;
+                if (e - s != 3 && e - s != 5)
+                    return false;
+                for (var j = s; j < e; j++)
+                {
+                    if ((j - s) % 2 == 0 ? t[j].Kind != TokenKind.Ident : !t[j].IsPunct('.'))
+                        return false;
+                }
+                var enumName = e - s == 5 ? t[s + 2].Text : null;
+                foreach (var x in _enums)
+                {
+                    if ((enumName is null || x.Name == enumName) && Qualifies(t[s].Text, x) && x.TryGet(t[e - 1].Text, out value))
+                    {
+                        declared = x;
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // QML reaches an enum through the type that declares it; a derived file inherits it.
+            private bool Qualifies(string qualifier, QmlEnumDecl x) => qualifier == OwnType || qualifier == x.Type;
+        }
+
+        // QmlLiteral.Evaluate, and for an int a value of a known enum, which links the enum to the property (for the help).
+        private static (QmlInitializer Initializer, object Value, QmlEnumDecl? Enum) Evaluate(
+            QmlValueKind kind, List<Token> t, int s, int e, EnumScope enums, QmlEnumDecl? linked)
+        {
+            if (kind == QmlValueKind.Int && enums.TryValue(t, s, e, out var value, out var declared))
+                return (QmlInitializer.Literal, value, declared);
+            var (initializer, literal) = QmlLiteral.Evaluate(kind, t, s, e);
+            return (initializer, literal, linked);
         }
 
         // ---- members -------------------------------------------------------------------------------------------------------
@@ -249,6 +390,8 @@ namespace VL.Qt.Qml
             int e,
             Dictionary<int, string> ownLine,
             HashSet<string> inherited,
+            EnumScope enums,
+            AliasResolver aliases,
             List<QmlPropertyDecl> properties,
             List<QmlSignalDecl> signals,
             List<QmlParseMessage> messages)
@@ -265,11 +408,11 @@ namespace VL.Qt.Qml
             }
 
             if (k < e && t[k].IsIdent("property"))
-                ReadProperty(t, s, k, e, flags, SummaryAbove(ownLine, line, out var tagged), tagged, properties, messages);
+                ReadProperty(t, s, k, e, flags, SummaryAbove(ownLine, line, out var tagged), tagged, enums, aliases, properties, messages);
             else if (t[s].IsIdent("signal") && s + 1 < e && t[s + 1].Kind == TokenKind.Ident && !(s + 2 < e && t[s + 2].IsPunct(':')))
                 ReadSignal(t, s, e, SummaryAbove(ownLine, line, out var tagged), tagged, signals);
             else if (t[s].Kind == TokenKind.Ident && s + 1 < e && t[s + 1].IsPunct(':') && inherited.Contains(t[s].Text))
-                Reassign(t, s, e, properties);
+                Reassign(t, s, e, enums, properties);
         }
 
         private static int TrimSemicolons(List<Token> t, int start, int end)
@@ -287,21 +430,75 @@ namespace VL.Qt.Qml
             QmlPropertyFlags flags,
             string? summary,
             bool tagged,
+            EnumScope enums,
+            AliasResolver aliases,
             List<QmlPropertyDecl> properties,
             List<QmlParseMessage> messages)
         {
             var line = t[s].Line;
-            var m = propertyIndex + 1;
-            if (m >= e || t[m].Kind != TokenKind.Ident)
+            if (!TryReadDeclaration(t, propertyIndex + 1, e, out var type, out var name, out var m))
             {
                 messages.Add(new QmlParseMessage(line, QmlMessageSeverity.Warning, "incomplete property declaration is skipped"));
                 return;
             }
 
-            string type;
+            if (IsInternal(tagged, name))
+            {
+                // Like a type without a pin: an inherited pin of the same name is gone.
+                properties.RemoveAll(p => p.Name == name);
+                return;
+            }
+
+            if (type == "alias")
+            {
+                ReadAlias(t, m, e, name, flags, summary, line, aliases, properties, messages);
+                return;
+            }
+
+            // A property of an enum type of the file is an int.
+            var linked = enums.OfType(type);
+            var kind = QmlValueKind.Int;
+            if (linked is null && !QmlTypes.TryMap(type, out kind))
+            {
+                // The inherited pin of the same name is gone: the property is now of a type that gets no pin.
+                properties.RemoveAll(p => p.Name == name);
+                messages.Add(new QmlParseMessage(line, QmlMessageSeverity.Info, $"property '{name}' ({type})"));
+                return;
+            }
+
+            var initializer = QmlInitializer.None;
+            var value = QmlTypes.TypeDefault(kind);
+            if (m < e && t[m].IsPunct(':'))
+            {
+                var end = TrimSemicolons(t, m + 1, e);
+                if (end > m + 1)
+                    (initializer, value, linked) = Evaluate(kind, t, m + 1, end, enums, linked);
+            }
+
+            Put(properties, new QmlPropertyDecl(name, type, kind, flags, initializer, value, summary, line, Enum: linked));
+        }
+
+        // A redeclaration replaces the inherited declaration in place.
+        private static void Put(List<QmlPropertyDecl> properties, QmlPropertyDecl decl)
+        {
+            var index = properties.FindIndex(p => p.Name == decl.Name);
+            if (index >= 0)
+                properties[index] = decl;
+            else
+                properties.Add(decl);
+        }
+
+        // "type name" from m (after "property"): next is the index after the name. The brackets of a list nest: list<list<int>> is
+        // one type (without a pin, but not a broken declaration).
+        private static bool TryReadDeclaration(List<Token> t, int m, int e, out string type, out string name, out int next)
+        {
+            type = string.Empty;
+            name = string.Empty;
+            next = m;
+            if (m >= e || t[m].Kind != TokenKind.Ident)
+                return false;
             if (t[m].Text == "list" && m + 1 < e && t[m + 1].IsPunct('<'))
             {
-                // The brackets nest: list<list<int>> is one type (without a pin, but not a broken declaration).
                 var sb = new StringBuilder("list");
                 var depth = 0;
                 m++;
@@ -325,48 +522,44 @@ namespace VL.Qt.Qml
                     m += 2;
                 }
             }
-
             if (m >= e || t[m].Kind != TokenKind.Ident)
-            {
-                messages.Add(new QmlParseMessage(line, QmlMessageSeverity.Warning, "incomplete property declaration is skipped"));
-                return;
-            }
-            var name = t[m++].Text;
+                return false;
+            name = t[m].Text;
+            next = m + 1;
+            return true;
+        }
 
-            if (IsInternal(tagged, name))
+        // "property alias name: id.property": a pin of the type of the target, or an info with the reason why there is none.
+        private static void ReadAlias(
+            List<Token> t,
+            int m,
+            int e,
+            string name,
+            QmlPropertyFlags flags,
+            string? summary,
+            int line,
+            AliasResolver aliases,
+            List<QmlPropertyDecl> properties,
+            List<QmlParseMessage> messages)
+        {
+            var from = m < e && t[m].IsPunct(':') ? m + 1 : e;
+            var to = TrimSemicolons(t, from, e);
+            if (!aliases.TryResolve(from, to, 0, out var target, out var reason))
             {
-                // Like a type without a pin: an inherited pin of the same name is gone.
+                // The inherited pin of the same name is gone, as for a type without a pin.
                 properties.RemoveAll(p => p.Name == name);
+                var of = to > from ? " of " + string.Concat(t.Skip(from).Take(to - from).Select(static x => x.Text)) : string.Empty;
+                messages.Add(new QmlParseMessage(line, QmlMessageSeverity.Info, $"property '{name}' (alias{of}): {reason}"));
                 return;
             }
-
-            if (!QmlTypes.TryMap(type, out var kind))
-            {
-                // The inherited pin of the same name is gone: the property is now of a type that gets no pin.
-                properties.RemoveAll(p => p.Name == name);
-                messages.Add(new QmlParseMessage(line, QmlMessageSeverity.Info, $"property '{name}' ({type})"));
-                return;
-            }
-
-            var initializer = QmlInitializer.None;
-            var value = QmlTypes.TypeDefault(kind);
-            if (m < e && t[m].IsPunct(':'))
-            {
-                var end = TrimSemicolons(t, m + 1, e);
-                if (end > m + 1)
-                    (initializer, value) = QmlLiteral.Evaluate(kind, t, m + 1, end);
-            }
-
-            var decl = new QmlPropertyDecl(name, type, kind, flags, initializer, value, summary, line);
-            var index = properties.FindIndex(p => p.Name == name);
-            if (index >= 0)
-                properties[index] = decl;
-            else
-                properties.Add(decl);
+            if (target.ReadOnly)
+                flags |= QmlPropertyFlags.ReadOnly;
+            Put(properties, new QmlPropertyDecl(name, target.QmlType, target.Kind, flags, target.Initializer, target.Default, summary, line,
+                AliasOf: target.Path, Enum: target.Enum));
         }
 
         // "name: value" in the root of a derived file replaces the initializer of an inherited property.
-        private static void Reassign(List<Token> t, int s, int e, List<QmlPropertyDecl> properties)
+        private static void Reassign(List<Token> t, int s, int e, EnumScope enums, List<QmlPropertyDecl> properties)
         {
             var name = t[s].Text;
             var index = properties.FindIndex(p => p.Name == name);
@@ -375,8 +568,8 @@ namespace VL.Qt.Qml
             var end = TrimSemicolons(t, s + 2, e);
             if (end <= s + 2)
                 return;
-            var (initializer, value) = QmlLiteral.Evaluate(properties[index].Kind, t, s + 2, end);
-            properties[index] = properties[index] with { Initializer = initializer, Default = value };
+            var (initializer, value, linked) = Evaluate(properties[index].Kind, t, s + 2, end, enums, properties[index].Enum);
+            properties[index] = properties[index] with { Initializer = initializer, Default = value, Enum = linked };
         }
 
         private static void ReadSignal(List<Token> t, int s, int e, string? summary, bool tagged, List<QmlSignalDecl> signals)
@@ -455,6 +648,255 @@ namespace VL.Qt.Qml
                 for (var j = from; j < to; j++)
                     sb.Append(t[j].Text);
                 return sb.ToString();
+            }
+        }
+
+        // ---- objects with an id, for the aliases of the root ---------------------------------------------------------------
+
+        /// <summary>An object of the file: its type, the properties it declares and its assignments <c>name: value</c> (token ranges).</summary>
+        private sealed class ObjectInfo
+        {
+            public ObjectInfo(string type) => Type = type;
+
+            public string Type { get; }
+
+            public Dictionary<string, (string Type, bool ReadOnly, int Start, int End)> Properties { get; } = new(StringComparer.Ordinal);
+
+            public Dictionary<string, (int Start, int End)> Assignments { get; } = new(StringComparer.Ordinal);
+        }
+
+        // Reads the members of an object body from the token after its '{', nested objects included, and lists every object that
+        // has an id. Returns the index of the closing '}', -1 if the body does not scan (the main loop reports why).
+        private static int CollectObject(List<Token> t, int start, ObjectInfo obj, Dictionary<string, ObjectInfo> ids)
+        {
+            var stack = new Stack<(char Open, int Line)>();
+            var k = start;
+            while (k < t.Count && !t[k].IsPunct('}'))
+            {
+                var end = ScanMember(t, k, stack, out var error, out _);
+                if (error != null)
+                    return -1;
+                ReadObjectMember(t, k, end, obj, ids);
+                k = end;
+            }
+            return k < t.Count ? k : -1;
+        }
+
+        private static void ReadObjectMember(List<Token> t, int s, int e, ObjectInfo obj, Dictionary<string, ObjectInfo> ids)
+        {
+            e = TrimSemicolons(t, s, e);
+            if (e - s >= 3 && t[s].Kind == TokenKind.Ident && t[s + 1].IsPunct(':'))
+            {
+                var name = t[s].Text;
+                if (name == "id")
+                {
+                    // The first object with an id wins, as the QML engine refuses a file that has one twice.
+                    if (e - s == 3 && t[s + 2].Kind == TokenKind.Ident)
+                        ids.TryAdd(t[s + 2].Text, obj);
+                    return;
+                }
+                // "name: Type { … }" is an object as the value of a property; anything else an assignment.
+                if (!TryNestedObject(t, s + 2, e, ids))
+                    obj.Assignments[name] = (s + 2, e);
+                return;
+            }
+
+            var k = s;
+            var readOnly = false;
+            for (; k < e && t[k].Kind == TokenKind.Ident && t[k].Text is "default" or "required" or "readonly"; k++)
+                readOnly |= t[k].Text == "readonly";
+            if (k < e && t[k].IsIdent("property"))
+            {
+                if (TryReadDeclaration(t, k + 1, e, out var type, out var name, out var m))
+                {
+                    var from = m < e && t[m].IsPunct(':') ? m + 1 : e;
+                    obj.Properties[name] = (type, readOnly, from, e);
+                }
+                return;
+            }
+            TryNestedObject(t, s, e, ids);
+        }
+
+        // "Type { … }" or "Module.Type { … }" over s..e: reads the object, true if it is one.
+        private static bool TryNestedObject(List<Token> t, int s, int e, Dictionary<string, ObjectInfo> ids)
+        {
+            if (s >= e || t[s].Kind != TokenKind.Ident || !char.IsUpper(t[s].Text[0]))
+                return false;
+            var type = t[s].Text;
+            var k = s + 1;
+            while (k + 1 < e && t[k].IsPunct('.') && t[k + 1].Kind == TokenKind.Ident)
+            {
+                type += "." + t[k + 1].Text;
+                k += 2;
+            }
+            if (k >= e || !t[k].IsPunct('{'))
+                return false;
+            CollectObject(t, k + 1, new ObjectInfo(type), ids);
+            return true;
+        }
+
+        /// <summary>What an alias of the root points to: the type and default of its pin.</summary>
+        private readonly record struct AliasTarget(
+            string QmlType, QmlValueKind Kind, QmlInitializer Initializer, object Default, bool ReadOnly, string Path, QmlEnumDecl? Enum);
+
+        /// <summary>
+        /// Resolves <c>property alias name: id.property</c> without a Qt engine: the property is one the object declares in the file
+        /// (an alias of it is followed), one of the built-in types of <see cref="QmlBuiltinProperties"/>, or one the sibling file of
+        /// the object's type declares (with that file's own base types). The default is the literal the object assigns to it, else
+        /// the literal of the declaration, else the value Qt gives it.
+        /// </summary>
+        private sealed class AliasResolver
+        {
+            private const int maxDepth = 8;
+            private readonly List<Token> _t;
+            private readonly Dictionary<string, ObjectInfo> _ids;
+            private readonly EnumScope _enums;
+            private readonly Func<string, string?> _readSibling;
+            private readonly ImmutableList<string> _chain;
+            private readonly Dictionary<string, QmlDeclarations?> _siblings = new(StringComparer.Ordinal);
+
+            public AliasResolver(List<Token> t, Dictionary<string, ObjectInfo> ids, EnumScope enums, Func<string, string?> readSibling, ImmutableList<string> chain)
+            {
+                _t = t;
+                _ids = ids;
+                _enums = enums;
+                _readSibling = readSibling;
+                _chain = chain;
+            }
+
+            /// <summary>
+            /// Returns true if the tokens s..e are <c>id.property</c> of a property with a pin type; else <paramref name="reason"/> says why not.
+            /// </summary>
+            public bool TryResolve(int s, int e, int depth, out AliasTarget target, out string reason)
+            {
+                target = default;
+                var parts = new List<string>();
+                for (var j = s; j < e; j++)
+                {
+                    var dot = (j - s) % 2 == 1;
+                    if (dot ? !_t[j].IsPunct('.') : _t[j].Kind != TokenKind.Ident)
+                    {
+                        reason = "the target is not 'id.property'";
+                        return false;
+                    }
+                    if (!dot)
+                        parts.Add(_t[j].Text);
+                }
+                if (parts.Count == 0 || (e - s) % 2 == 0)
+                {
+                    reason = "the target is not 'id.property'";
+                    return false;
+                }
+                if (parts.Count == 1)
+                {
+                    reason = $"an alias of the object '{parts[0]}' has no pin";
+                    return false;
+                }
+                if (parts.Count > 2)
+                {
+                    reason = $"an alias of a grouped property ({string.Join('.', parts.Skip(1))}) has no pin";
+                    return false;
+                }
+                if (!_ids.TryGetValue(parts[0], out var obj))
+                {
+                    reason = $"'{parts[0]}' is no id in this file";
+                    return false;
+                }
+                return TryProperty(obj, parts[1], parts[0] + "." + parts[1], depth, out target, out reason);
+            }
+
+            private bool TryProperty(ObjectInfo obj, string name, string path, int depth, out AliasTarget target, out string reason)
+            {
+                target = default;
+                if (depth > maxDepth)
+                {
+                    reason = "the aliases point to each other too deep";
+                    return false;
+                }
+
+                string type;
+                QmlValueKind kind;
+                QmlInitializer initializer;
+                object value;
+                bool readOnly;
+                QmlEnumDecl? linked = null;
+                if (obj.Properties.TryGetValue(name, out var declared))
+                {
+                    if (declared.Type == "alias")
+                    {
+                        if (!TryResolve(declared.Start, TrimSemicolons(_t, declared.Start, declared.End), depth + 1, out target, out reason))
+                            return false;
+                        target = target with { ReadOnly = target.ReadOnly || declared.ReadOnly, Path = path };
+                        return true;
+                    }
+                    linked = _enums.OfType(declared.Type);
+                    kind = QmlValueKind.Int;
+                    if (linked is null && !QmlTypes.TryMap(declared.Type, out kind))
+                    {
+                        reason = $"'{path}' is of the type {declared.Type}, which has no pin";
+                        return false;
+                    }
+                    type = declared.Type;
+                    readOnly = declared.ReadOnly;
+                    (initializer, value, linked) = declared.End > declared.Start
+                        ? Evaluate(kind, _t, declared.Start, declared.End, _enums, linked)
+                        : (QmlInitializer.None, QmlTypes.TypeDefault(kind), linked);
+                }
+                else if (!TryTypeProperty(obj.Type, name, depth, out type, out kind, out initializer, out value, out readOnly, out linked))
+                {
+                    reason = $"'{path}' is no property of '{obj.Type}' that the node knows (the built-in ones it knows are listed in the help)";
+                    return false;
+                }
+
+                // An assignment on the object replaces the default.
+                if (obj.Assignments.TryGetValue(name, out var assigned))
+                    (initializer, value, linked) = Evaluate(kind, _t, assigned.Start, assigned.End, _enums, linked);
+                target = new AliasTarget(type, kind, initializer, value, readOnly, path, linked);
+                reason = string.Empty;
+                return true;
+            }
+
+            // A property of a type: the built-in table, else the root declarations of the sibling file of the type, with its base type.
+            private bool TryTypeProperty(string typeName, string name, int depth, out string type, out QmlValueKind kind, out QmlInitializer initializer,
+                out object value, out bool readOnly, out QmlEnumDecl? linked)
+            {
+                initializer = QmlInitializer.None;
+                readOnly = false;
+                kind = default;
+                linked = null;
+                if (QmlBuiltinProperties.TryGet(typeName, name, out type, out value))
+                    return QmlTypes.TryMap(type, out kind);
+                if (Sibling(typeName) is not { } sibling)
+                    return false;
+                if (sibling.Properties.FirstOrDefault(p => p.Name == name) is { } p)
+                {
+                    (type, kind, initializer, value, readOnly, linked) = (p.QmlType, p.Kind, p.Initializer, p.Default, p.IsReadOnly, p.Enum);
+                    return true;
+                }
+                return sibling.RootType is { } baseType && depth < maxDepth
+                    && TryTypeProperty(baseType, name, depth + 1, out type, out kind, out initializer, out value, out readOnly, out linked);
+            }
+
+            // The declarations of <type>.qml next to the file, null if there is none, it cannot be read or it is part of the chain.
+            private QmlDeclarations? Sibling(string typeName)
+            {
+                if (_siblings.TryGetValue(typeName, out var known))
+                    return known;
+                QmlDeclarations? parsed = null;
+                if (!typeName.Contains('.') && char.IsUpper(typeName[0]) && !_chain.Contains(typeName))
+                {
+                    try
+                    {
+                        if (_readSibling(typeName) is { } source)
+                            parsed = Parse(source, _readSibling, _chain.Add(typeName), true);
+                    }
+                    catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+                    {
+                        // Like an unknown type: the alias gets no pin.
+                    }
+                }
+                _siblings[typeName] = parsed;
+                return parsed;
             }
         }
     }

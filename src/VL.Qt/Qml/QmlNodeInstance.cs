@@ -76,12 +76,14 @@ namespace VL.Qt.Qml
             _slots = new InputSlot[layout.PropertyInputs.Length];
             for (var i = 0; i < _slots.Length; i++)
                 _slots[i] = InputSlot.Create(layout.PropertyInputs[i]);
+            // A relative url that QML gives back is relative to the file, like a url literal.
+            var folder = QmlNodeLayout.BaseFolder(layout.FilePath);
             _propertyOutputs = new PropertyOutput[layout.PropertyOutputs.Length];
             for (var i = 0; i < _propertyOutputs.Length; i++)
-                _propertyOutputs[i] = PropertyOutput.Create(layout.PropertyOutputs[i]);
+                _propertyOutputs[i] = PropertyOutput.Create(layout.PropertyOutputs[i], folder);
             _signalOutputs = new SignalOutput[layout.SignalOutputs.Length];
             for (var i = 0; i < _signalOutputs.Length; i++)
-                _signalOutputs[i] = SignalOutput.Create(layout.SignalOutputs[i]);
+                _signalOutputs[i] = SignalOutput.Create(layout.SignalOutputs[i], folder);
 
             // The order of QmlNodeLayout.InputDescriptions.
             var inputs = new List<IVLPin>(_slots.Length + 11) { _autoSize, _size, _transform, _anchor };
@@ -261,19 +263,21 @@ namespace VL.Qt.Qml
             /// <summary>Takes the value of the property from <paramref name="changed"/> (QML names), the default if it is not in it or does not fit.</summary>
             public abstract void Apply(Dictionary<string, object> changed);
 
-            public static PropertyOutput Create(QmlOutputPin pin)
-                => (PropertyOutput)Activator.CreateInstance(typeof(PropertyOutput<>).MakeGenericType(pin.Property.ClrType), pin)!;
+            public static PropertyOutput Create(QmlOutputPin pin, string? folder)
+                => (PropertyOutput)Activator.CreateInstance(typeof(PropertyOutput<>).MakeGenericType(pin.Property.ClrType), pin, folder)!;
         }
 
         private sealed class PropertyOutput<T> : PropertyOutput
         {
             private readonly ValuePin<T> _pin;
             private readonly QmlPropertyDecl _property;
+            private readonly string? _folder;
             private readonly T _default;
 
-            public PropertyOutput(QmlOutputPin pin)
+            public PropertyOutput(QmlOutputPin pin, string? folder)
             {
                 _property = pin.Property;
+                _folder = folder;
                 _default = QmlTypes.TryCoerce(_property.Kind, _property.Default, out var d) ? (T)d : default!;
                 _pin = new ValuePin<T>(_default);
             }
@@ -281,7 +285,7 @@ namespace VL.Qt.Qml
             public override IVLPin Pin => _pin;
 
             public override void Apply(Dictionary<string, object> changed)
-                => _pin.Value = changed.TryGetValue(_property.Name, out var value) && QmlTypes.TryCoerce(_property.Kind, value, out var coerced) ? (T)coerced : _default;
+                => _pin.Value = changed.TryGetValue(_property.Name, out var value) && QmlTypes.TryCoerce(_property.Kind, value, out var coerced, _folder) ? (T)coerced : _default;
         }
 
         /// <summary>Output pin of a signal, see <see cref="QmlTypes.SignalPinType"/>.</summary>
@@ -295,12 +299,12 @@ namespace VL.Qt.Qml
             /// <summary>Takes the emissions of this signal from <paramref name="signals"/> (all emissions of the frame).</summary>
             public abstract void Apply(Spread<QmlSignal> signals);
 
-            public static SignalOutput Create(QmlSignalPin pin) => pin.Signal.Shape switch
+            public static SignalOutput Create(QmlSignalPin pin, string? folder) => pin.Signal.Shape switch
             {
                 QmlSignalShape.Bang => new BangOutput(pin),
                 QmlSignalShape.Values => pin.ArgumentKind is { } kind
-                    ? (SignalOutput)Activator.CreateInstance(typeof(ValuesOutput<>).MakeGenericType(QmlTypes.ClrType(kind)), pin, kind)!
-                    : new ValuesOutput<object>(pin, null),
+                    ? (SignalOutput)Activator.CreateInstance(typeof(ValuesOutput<>).MakeGenericType(QmlTypes.ClrType(kind)), pin, kind, folder)!
+                    : new ValuesOutput<object>(pin, null, folder),
                 _ => new SignalsOutput(pin),
             };
         }
@@ -336,11 +340,13 @@ namespace VL.Qt.Qml
             private readonly ValuePin<Spread<T>> _pin = new(Spread<T>.Empty);
             private readonly string _name;
             private readonly QmlValueKind? _kind;
+            private readonly string? _folder;
 
-            public ValuesOutput(QmlSignalPin pin, QmlValueKind? kind)
+            public ValuesOutput(QmlSignalPin pin, QmlValueKind? kind, string? folder)
             {
                 _name = pin.Signal.Name;
                 _kind = kind;
+                _folder = folder;
             }
 
             public override IVLPin Pin => _pin;
@@ -359,7 +365,7 @@ namespace VL.Qt.Qml
                     // An argument that does not fit its declared type is left out, like a property value at the output.
                     if (_kind is { } kind)
                     {
-                        if (!QmlTypes.TryCoerce(kind, argument, out var coerced))
+                        if (!QmlTypes.TryCoerce(kind, argument, out var coerced, _folder))
                             continue;
                         value = coerced;
                     }

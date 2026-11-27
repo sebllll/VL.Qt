@@ -61,6 +61,9 @@ namespace VL.Qt.Tests.Support
         public virtual void QmlPropertyListI32(ReadOnlySpan<char> name, ReadOnlySpan<int> values) { }
         public virtual void QmlPropertyListBool(ReadOnlySpan<char> name, ReadOnlySpan<bool> values) { }
         public virtual void QmlPropertyListString(ReadOnlySpan<char> name, ReadOnlySpan<string> values) { }
+        public virtual void QmlPropertyDateTime(ReadOnlySpan<char> name, long milliseconds) { }
+        public virtual void QmlPropertyFont(ReadOnlySpan<char> name, ReadOnlySpan<char> family, float pixelSize, int weight, bool italic) { }
+        public virtual void QmlPropertyListDateTime(ReadOnlySpan<char> name, ReadOnlySpan<long> values) { }
         public virtual void EndQmlProperties() { }
         public virtual void BeginEffectChain(uint id) { }
         public virtual void BeginMultiLink() { }

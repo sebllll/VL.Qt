@@ -18,7 +18,7 @@ Experimental (`SymbolSmell.Experimental`): pins and behavior can still change, s
 | out `Signals` | `Spread<QmlSignal>` | Signals of the root emitted since the last frame, in order. `QmlSignal` has `Name` and `Arguments` (`Spread<object>`). |
 | out `Measured Size`, `Scene Bounds` | | Optional, like on the other elements. |
 
-Property values are passed on unchanged in DIP (what QML calls units), only `Size` is in units of the renderer's `Space`.
+Property values are passed on unchanged in DIP (what QML calls units), only `Size` and the size of a `Font` are in units of the renderer's `Space`.
 
 ## Value types
 
@@ -34,11 +34,17 @@ The same types go both ways:
 | `Vector2`, `Vector3`, `Vector4` | `vector2d`, `vector3d`, `vector4d` |
 | `Vector2` | `point` (x, y), `size` (width, height) |
 | `RectangleF` | `rect` |
-| `Spread<float>`, `Spread<int>`, `Spread<bool>`, `Spread<string>`, `Spread<Color4>`, `Spread<Vector2>`, `Spread<Vector3>`, `Spread<Vector4>`, `Spread<RectangleF>` | `list<real>` (also `list<double>`), `list<int>`, `list<bool>`, `list<string>`, `list<color>`, `list<vector2d>` (also `list<point>`, `list<size>`), `list<vector3d>`, `list<vector4d>`, `list<rect>` |
+| `Path` (or `string`) | `url` |
+| `DateTime` | `date` |
+| `Font` | `font` |
+| `Spread<float>`, `Spread<int>`, `Spread<bool>`, `Spread<string>`, `Spread<Path>`, `Spread<Color4>`, `Spread<Vector2>`, `Spread<Vector3>`, `Spread<Vector4>`, `Spread<RectangleF>`, `Spread<DateTime>` | `list<real>` (also `list<double>`), `list<int>`, `list<bool>`, `list<string>`, `list<url>`, `list<color>`, `list<vector2d>` (also `list<point>`, `list<size>`), `list<vector3d>`, `list<vector4d>`, `list<rect>`, `list<date>` |
 
 - A value of another type, or `null`, is not sent: the node shows an error line and ignores the value.
 - Qt converts to the type of the QML property. A `float` set on an `int` property works, a string that is no number for a `real` property does not: error line, value ignored.
-- Back to the patch the same types arrive (integers outside the `int` range are clamped, a `url` arrives as a `string`, a `rect` as `RectangleF`, a `point` as `Vector2(x, y)`, a `size` as `Vector2(width, height)`). A signal argument of any other QML type (an object, a list of objects) arrives as its string form. A property of such a type is not reported: the node shows one line for it.
+- A `url` property takes the text of a `Path` or a `string`: an absolute local path (`C:\media\a.png`, also with spaces or umlauts) becomes the URL of that file; any other text is read as a URL, so `https:`, `qrc:` and `file:` URLs stay as written and a relative one stays relative, which the item that uses it (an `Image`) resolves against its own file.
+- A `date` takes a `DateTime`: a local or unspecified time counts as local time, a UTC time as UTC. Back to the patch a date arrives in local time; `DateTime.MinValue` stands for "no date" (a `date` property without a value) both ways.
+- A `font` takes a `Font` (node `Font` in `Qt`, next to `LoadFont`): family (empty = the default family; the `Family` output of `LoadFont` fits), size in units like the `Font Size` of `Text` (0.12 = 12 DIP, rounded to whole DIP), weight 1..1000 and italic. Back to the patch the size is in units again and the family is the one Qt uses (the default family by its name). A font has no list type.
+- Back to the patch the same types arrive (integers outside the `int` range are clamped, a `url` arrives as its text, `file:///C:/media/a.png` for a local file, a `rect` as `RectangleF`, a `point` as `Vector2(x, y)`, a `size` as `Vector2(width, height)`). A signal argument of any other QML type (an object, a list of objects) arrives as its string form. A property of such a type is not reported: the node shows one line for it.
 
 ### Lists
 
@@ -129,7 +135,7 @@ Experimental: the generated nodes can change like `QmlElement`, although vvvv sh
 
 ### Which declarations give which pins
 
-Only the declarations of the **root object** count (nested objects and functions are not read), and only the types `QmlElement` can pass:
+Only the declarations of the **root object** count (nested objects are read only for the targets of [aliases](#aliases), functions not at all), and only the types `QmlElement` can pass:
 
 | Declaration | Input pin | Output pin |
 |---|---|---|
@@ -140,19 +146,53 @@ Only the declarations of the **root object** count (nested objects and functions
 | `readonly property <type> name: …` | no | yes, **visible** |
 | `required property <type> name` | yes, always sent | optional |
 | `default property <type> name` | like `property` | like `property` |
+| `property alias name: id.prop` | like `property` of the type of the target ([Aliases](#aliases)) | like `property` |
 | `signal name` / `signal name()` | no | `bool`: true in the frame it fired |
 | `signal name(type a)` | no | `Spread<T>`: the values of the emissions of this frame (a `list<…>` argument gives a `Spread<Spread<T>>`) |
 | `signal name(type a, type b, …)` | no | `Spread<QmlSignal>`: one entry per emission, `Name` and `Arguments` |
 
-The types and their vvvv counterparts are those of [Value types](#value-types): `real`/`double` → `float`, `int`, `bool`, `string`, `color` → `Color4`, `vector2d/3d/4d` → `Vector2/3/4`, `point` and `size` → `Vector2`, `rect` → `RectangleF`, and a `list<…>` of these → a `Spread` of the type ([Lists](#lists); `list<point>` and `list<size>` give a `Spread<Vector2>`). A signal argument of a type without a pin type (`var`, a list of other types, an object) makes the pin a `Spread<object>`, the value arrives as its string form (or whatever supported type it has). Both argument spellings work: `signal moved(real x, real y)` and `signal moved(x: real, y: real)`; an argument without a name is called `arg1`, `arg2`, …
+The types and their vvvv counterparts are those of [Value types](#value-types): `real`/`double` → `float`, `int`, `bool`, `string`, `color` → `Color4`, `vector2d/3d/4d` → `Vector2/3/4`, `point` and `size` → `Vector2`, `rect` → `RectangleF`, `url` → `Path`, and a `list<…>` of these → a `Spread` of the type ([Lists](#lists); `list<point>` and `list<size>` give a `Spread<Vector2>`). A signal argument of a type without a pin type (`var`, a list of other types, an object) makes the pin a `Spread<object>`, the value arrives as its string form (or whatever supported type it has). Both argument spellings work: `signal moved(real x, real y)` and `signal moved(x: real, y: real)`; an argument without a name is called `arg1`, `arg2`, …
 
 The input and the output of one property have **the same name** ("Accent Color" in and out), vvvv tells them apart by their kind. The output starts with the declared default, shows the last value QML changed, and goes back to the default after a reload of the file. A signal output is false/empty in every frame without an emission.
 
-Not given a pin: `property alias`, `var`, a `list<…>` of another type than the table above (a list of lists, `list<Item>`), object types (`Item`, `Rectangle`, …) and value types without a counterpart (`url`, `font`, `date`, …). The node lists them in one **info message** (the dot at the node), with their lines. Use the `Properties` pin for them, see below. A declaration you mark as internal gets no pin and no message either, see [Internal declarations](#internal-declarations).
+Not given a pin: an alias that cannot be resolved ([Aliases](#aliases)), `var`, a `list<…>` of another type than the table above (a list of lists, `list<Item>`), object types (`Item`, `Rectangle`, …) and value types without a counterpart (`matrix4x4`, `quaternion`, …). The node lists them in one **info message** (the dot at the node), with their lines. Use the `Properties` pin for them, see below. A declaration you mark as internal gets no pin and no message either, see [Internal declarations](#internal-declarations).
+
+### Aliases
+
+`property alias name: id.prop` is how a component hands out a property of one of its children. The parser resolves the target without running the file, and the alias gets the pins of a `property` of the target's type:
+
+- **A property the child declares** (`Item { id: bar; property real value: 0.5 }`): its type, and its literal as the default. An alias of an alias in the same file is followed.
+- **A property of a built-in type**, from a small table: `x`, `y`, `z`, `width`, `height`, `opacity`, `rotation`, `scale` (`real`) and `visible`, `enabled` (`bool`) of every `Item` type (`Item`, `Rectangle`, `Text`, `TextInput`, `TextEdit`, `Image`, `AnimatedImage`, `BorderImage`, `Row`, `Column`, `Grid`, `Flow`, `MouseArea`, `Flickable`, `ListView`, `GridView`, `Loader`, `Canvas`, `ShaderEffect`), `color` and `radius` of `Rectangle`, `text` and `color` of `Text`, `TextInput` and `TextEdit`, `source` (`url`) of the image types. The default is the value Qt gives the property (`opacity` 1, `visible` true, a `Rectangle` white, a `Text` black, …).
+- **A property of a component of the same folder** (`MyButton { id: b }` with `MyButton.qml` next to the file): what `MyButton.qml` declares on its root, its own aliases included, then the table for its root type.
+- An assignment on the child (`Text { id: caption; text: "Hi" }`) is the default instead; a binding there (`width: parent.width`) makes the output pin visible, as at a bound declaration.
+- `readonly property alias`, or a target that is `readonly`, gives only the output pin.
+- No pin, with the reason in the info message: an alias of an object (`property alias content: row`), of a grouped property (`bg.border.color`), of an id that is not in the file, of a property that is not in the table, or of a type without a pin (`var`).
+
+```qml
+Item {
+    property alias title: caption.text      // pin "Title", string, default "Hi"
+    property alias fill: bg.color           // pin "Fill", Color4, default tomato
+    Rectangle {
+        id: bg
+        color: "tomato"
+        Text { id: caption; text: "Hi" }
+    }
+}
+```
+
+### Enums
+
+An `enum` of the root (`enum Mode { Small, Large = 5 }`, also one of a sibling root type) gives no pin of its own; a property that takes its values gets an `int` pin:
+
+- `property Mode mode` (or `property Gauge.Mode mode`): an `int` pin, default 0.
+- `property int mode: Gauge.Large` (or `Gauge.Mode.Large`; `Gauge` is the name of the file that declares the enum, or of the file itself): an `int` pin with the value as default, here 5. An assignment `mode: Gauge.Small` in a derived file works the same way.
+- The help of the pin lists the values: `Mode: Small = 0, Large = 5.` The patch sets the number. A dropdown with the names would need a type of its own per enum in vvvv ([#431](https://github.com/sebllll/VL.Qt/issues/431)).
 
 ### Defaults, and when a value is sent
 
 - A **literal initializer** is the default of the pin: numbers (also hex and with a sign; an `int` needs a whole number, a `real` takes an integer too), `true`/`false`, strings (`"…"` or `'…'`), colours as `"#rgb"` / `"#rrggbb"` / `"#aarrggbb"` or a colour name, and `Qt.rgba`, `Qt.rgb`, `Qt.vector2d/3d/4d`, `Qt.point`, `Qt.size`, `Qt.rect` with numeric literal arguments. A **list** takes an array literal of such literals as its default (`[1, 2, 3]`, `["a", "b"]`, `[Qt.point(0, 1), Qt.point(1, 2)]`; line breaks and a trailing comma are fine, `[]` is the empty list). One element that is not a literal of the element type makes the whole initializer a binding. Colour names (`"tomato"`, case does not matter) come from Stride's colour table, with the `grey` spellings of the `gray` names, `transparent` and `rebeccapurple` added; an unknown name or hex form is not a literal. `Qt.rgba`/`Qt.rgb` take 0 to 1 per channel, a value outside that range makes it a binding.
+- A **date** literal is the text QML converts (`"2024-05-01"`, `"2024-05-01T12:30:00"`), taken as local time; without one the default is "no date" (`DateTime.MinValue`). A **font** literal is `Qt.font({ … })` with the keys `family`, `pixelSize` (or `pointSize`, 4/3 pixels per point), `weight` (a number or `Font.Bold`, …), `bold` and `italic`; its size becomes units at 100 DIP per unit (the default `Space`). Without one the default is the font of `Text` (default family, 0.12, 400).
+- A **url** literal (`"images/logo.png"` or `Qt.resolvedUrl("images/logo.png")`, also in a `list<url>`) is resolved against the folder of the `.qml` file, as QML does, so the pin shows the full path; a URL with a scheme (`https:`, `qrc:`) stays as written. Back from QML, a `file:` URL arrives as its local path, a relative url resolved the same way, any other URL as its text in the `Path`.
 - A **binding** (`property real half: width / 2`), any other expression (also a literal of another type), or **no initializer** gives the default of the type (0, `false`, empty string, transparent black, an empty `Spread` for a list, …).
 - **Binding rule:** the patch sends a value only **after it differs from the declared default** (exactly, so a tiny step counts; a list: after its elements differ, not its instance); from then on every change is sent, also back to the default. Until then the pin is silent, so a binding or an initial value in the file stays alive and is not overwritten by the pin's default. Consequence: a pin that still shows its default does not "hold" that value in QML, it leaves the file in charge.
 - A value is never "reset": setting a pin back to the default sends the default, it does not restore a binding.
@@ -224,7 +264,7 @@ A change of `@category` or `@tags` moves the node: vvvv builds the node list aga
 
 ### The Properties pin (plan B)
 
-The generated node still has the optional `Properties` input (`Dictionary<string, object>`, hidden until you show it), the same as at `QmlElement`, for what gets no pin: an `alias`, a `var`, a list of another type or an object property. A pin of the node wins over a dictionary entry of the same name once the pin differs from its default. There is no `Properties` or `Signals` **output**, the typed pins replace them. Values of properties that get no pin do not come back to the patch.
+The generated node still has the optional `Properties` input (`Dictionary<string, object>`, hidden until you show it), the same as at `QmlElement`, for what gets no pin: an alias that does not resolve, a `var`, a list of another type or an object property. A pin of the node wins over a dictionary entry of the same name once the pin differs from its default. There is no `Properties` or `Signals` **output**, the typed pins replace them. Values of properties that get no pin do not come back to the patch.
 
 ### Hot reload of generated nodes
 
@@ -242,7 +282,7 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 ### Limitations of the generated nodes
 
 - **No experimental mark:** `QmlElement` carries `SymbolSmell.Experimental`, but vvvv's node building API has no smell for factory nodes. The generated nodes are experimental all the same.
-- **No pin** for `alias`, `var`, lists of lists or of objects, object types and value types such as `url` or `font` (info message at the node, use `Properties`). A list has at most 65536 elements.
+- **No pin** for aliases the parser cannot resolve ([Aliases](#aliases)), `var`, lists of lists or of objects, object types and value types without a counterpart such as `matrix4x4` (info message at the node, use `Properties`). A list has at most 65536 elements.
 - Only the **root object** is read, and only a sibling file of the same folder as root type (not an import from another folder or module).
 - The `qml/` folder is searched next to saved documents and in packages, not elsewhere. **Export:** the `qml/` folder next to the exported document is copied with its structure next to the exe (like `qtshaders/` and `fonts/`), where the node factory of the exported app finds it. The `qml/` folders of other documents and packages are not copied.
 - A node always represents one file: there is no `File` pin.
@@ -253,6 +293,6 @@ VL.Qt ships only the LGPL modules of Qt (see [QtNative deployment](design/deploy
 
 ## Out of scope
 
-- Pins for what has no type in the table of [Value types](#value-types) (`alias`, `var`, lists of lists or of objects, objects): the `Properties` dictionary stays the interface for those, also at the generated nodes.
+- Pins for what has no type in the table of [Value types](#value-types) (unresolved aliases, `var`, lists of lists or of objects, objects): the `Properties` dictionary stays the interface for those, also at the generated nodes.
 - C# objects or models handed to QML as context properties (the idea of Qt Bridge for C#, see [qt-bridge.md](design/qt-bridge.md)).
 - Calling QML functions from the patch.

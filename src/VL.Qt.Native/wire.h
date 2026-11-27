@@ -53,6 +53,8 @@ inline int valueSize(quint16 vt)
 {
     switch (vt) {
     case VLQT_VALUE_TYPE_LIST: return VLQT_LIST_VALUE_HEADER_SIZE;
+    case VLQT_VALUE_TYPE_FONT: return VLQT_FONT_VALUE_HEADER_SIZE;
+    case VLQT_VALUE_TYPE_DATE_TIME: return 8;
     case VLQT_VALUE_TYPE_F32_ARRAY: return 4;
     case VLQT_VALUE_TYPE_PATH: return 8;
     case VLQT_VALUE_TYPE_F32: return 4;
@@ -73,8 +75,8 @@ inline int valueSize(quint16 vt)
     }
 }
 
-/* Payload size of a fixed-size value, -1 = unknown or variable length (string, f32 array, path, list). The commands with
- * entries of their own (uniforms, effect chain) take only these. */
+/* Payload size of a fixed-size value, -1 = unknown, variable length (string, f32 array, path, list, font) or a QML value
+ * (datetime). The commands with entries of their own (uniforms, effect chain) take only these. */
 inline int fixedValueSize(quint16 vt)
 {
     switch (vt) {
@@ -82,6 +84,8 @@ inline int fixedValueSize(quint16 vt)
     case VLQT_VALUE_TYPE_F32_ARRAY:
     case VLQT_VALUE_TYPE_PATH:
     case VLQT_VALUE_TYPE_LIST:
+    case VLQT_VALUE_TYPE_DATE_TIME:
+    case VLQT_VALUE_TYPE_FONT:
         return -1;
     default: return valueSize(vt);
     }
@@ -109,7 +113,8 @@ inline int listElementSize(quint16 elemType)
     case VLQT_VALUE_TYPE_BOOL: return 1;
     case VLQT_VALUE_TYPE_F32:
     case VLQT_VALUE_TYPE_I32: return 4;
-    case VLQT_VALUE_TYPE_VEC2: return 8;
+    case VLQT_VALUE_TYPE_VEC2:
+    case VLQT_VALUE_TYPE_DATE_TIME: return 8;
     case VLQT_VALUE_TYPE_VEC3: return 12;
     case VLQT_VALUE_TYPE_COLOR:
     case VLQT_VALUE_TYPE_RECTF:
@@ -262,6 +267,7 @@ struct NamedEntryRules {
     bool string = false; // a STRING value is allowed (its length follows the u32); other variable-length types never are
     bool sampler = false; // a SAMPLER value is checked (samplerValueOk)
     bool list = false; // a LIST value is allowed (SET_QML_PROPERTIES; its elements are checked by readListLength)
+    bool qml = false; // DATE_TIME and FONT values are allowed (SET_QML_PROPERTIES; a FONT has its family length at byte 12)
 };
 
 /* Checks the LIST value at the start of r (protocol.h "Values") and gives its length in valueLen (header and elements,
@@ -330,7 +336,8 @@ inline int readNamedEntry(WireReader& r, const NamedEntryRules& rules, int index
             return VLQT_ERR_BAD_ARGUMENT;
         }
         if (out.type == VLQT_VALUE_TYPE_F32_ARRAY || out.type == VLQT_VALUE_TYPE_PATH
-            || (out.type == VLQT_VALUE_TYPE_LIST && !rules.list)) {
+            || (out.type == VLQT_VALUE_TYPE_LIST && !rules.list)
+            || ((out.type == VLQT_VALUE_TYPE_DATE_TIME || out.type == VLQT_VALUE_TYPE_FONT) && !rules.qml)) {
             err = label() + ": value type " + std::to_string(out.type) + " not allowed";
             return VLQT_ERR_BAD_ARGUMENT;
         }
@@ -348,6 +355,11 @@ inline int readNamedEntry(WireReader& r, const NamedEntryRules& rules, int index
     // A STRING holds its length in the first 4 bytes; with fewer left the read below fails like any other value.
     if (out.name && out.type == VLQT_VALUE_TYPE_STRING)
         valueLen += r.peek<quint32>();
+    if (out.name && out.type == VLQT_VALUE_TYPE_FONT) {
+        WireReader family = r;
+        family.bytes(VLQT_FONT_VALUE_HEADER_SIZE - 4);
+        valueLen += family.peek<quint32>();
+    }
     if (out.name && out.type == VLQT_VALUE_TYPE_LIST) {
         const int rc = readListLength(r, valueLen, err);
         if (rc != VLQT_OK) {

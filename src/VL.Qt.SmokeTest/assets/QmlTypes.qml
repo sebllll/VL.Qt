@@ -55,6 +55,29 @@ Item {
     property list<rect> boxl
     property list<rect> boxlOut: boxl
 
+    // A url takes the text the patch sends: an absolute local path becomes a file URL, any other text stays as written.
+    property url u: ""
+    property url uOut: u
+    property list<url> ul
+    property list<url> ulOut: ul
+
+    // A date (the patch's DateTime, milliseconds since 1970 UTC on the wire) and a font (its pixel size; the patch's units are
+    // converted in C#).
+    property date d: "2024-05-01"
+    property date dOut: d
+    property list<date> dal
+    property list<date> dalOut: dal
+    property font fo: Qt.font({ pixelSize: 12 })
+    property font foOut: fo
+
+    // An alias of a child: the root's meta object has it with the type of its target, so it is set and reported like a declared
+    // property. aliasFeed changes the target inside QML, which comes back as a change of the alias.
+    property alias at: aliasText.text
+    property string atOut: aliasText.text
+    property string aliasFeed: ""
+    onAliasFeedChanged: aliasText.text = aliasFeed
+    Text { id: aliasText }
+
     // A signal argument of the type point arrives as a Vector2, like the property.
     signal located(point p)
     onPtChanged: located(pt)

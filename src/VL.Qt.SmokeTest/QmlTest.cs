@@ -439,6 +439,54 @@ public static class QmlTest
         recs = Poll();
         s.Check(Err(HT) == "" && Props(recs, HT, "rlOut") is [Spread<float> r5] && r5.SequenceEqual(new[] { 5f }), $"good lists clear the errors ('{Err(HT)}', {S(recs)})");
 
+        // url: the text of a Path. An absolute local path (here with a space and an umlaut) comes back as the file URL of that path;
+        // a URL with a scheme and a relative one come back as sent (QML resolves a relative url where it is used, not when it is set).
+        static bool SameUrl(string back, string sent) => System.IO.Path.IsPathFullyQualified(sent)
+            ? Uri.TryCreate(back, UriKind.Absolute, out var u) && u.IsFile && System.IO.Path.GetFullPath(u.LocalPath) == System.IO.Path.GetFullPath(sent)
+            : back == sent;
+        var localFile = System.IO.Path.Combine(work, "bilder ä", "a.png");
+        foreach (var sent in new[] { localFile, "https://example.com/a.png", "qrc:/img/a.png", "img/a.png", "" })
+        {
+            SetProps(T, p => p.String("u", sent));
+            CheckApply($"SET url '{sent}'");
+            recs = Poll();
+            s.Check(Props(recs, HT, "uOut") is [string ub] && SameUrl(ub, sent) && Err(HT) == "", $"url '{sent}' round trip ({S(recs)}; error '{Err(HT)}')");
+        }
+        var urls = new[] { localFile, "https://example.com/b.png", "img/c.png" };
+        ListRoundTrip(T, HT, "ul", "urls", p => p.ListString("ul", urls), urls, SameUrl);
+        ListRoundTrip(T, HT, "ul", "empty", p => p.ListString("ul"), Array.Empty<string>());
+
+        // date: milliseconds since 1970 UTC both ways (back as local time), no date as long.MinValue; a list of dates.
+        var when = new DateTime(2024, 5, 1, 10, 30, 15, 250, DateTimeKind.Utc);
+        foreach (var sent in new[] { QmlDateTime.ToWire(when), long.MinValue, QmlDateTime.ToWire(new DateTime(1960, 1, 1, 0, 0, 0, DateTimeKind.Utc)) })
+        {
+            SetProps(T, p => p.DateTime("d", sent));
+            CheckApply($"SET date {sent}");
+            recs = Poll();
+            s.Check(Props(recs, HT, "dOut") is [DateTime db] && QmlDateTime.ToWire(db) == sent && Err(HT) == "", $"date {sent} round trip ({S(recs)}; error '{Err(HT)}')");
+        }
+        var dates = new[] { when.ToLocalTime(), DateTime.UnixEpoch.ToLocalTime() };
+        ListRoundTrip(T, HT, "dal", "dates", p => p.ListDateTime("dal", dates.Select(QmlDateTime.ToWire).ToArray()), dates);
+        ListRoundTrip(T, HT, "dal", "empty", p => p.ListDateTime("dal"), Array.Empty<DateTime>());
+        // font: pixel size, weight and italic as sent; an empty family is the default family of the app, which comes back by name.
+        SetProps(T, p => p.Font("fo", "", 24, 700, true));
+        CheckApply("SET font");
+        recs = Poll();
+        s.Check(Props(recs, HT, "foOut") is [VL.Qt.Elements.Font fb] && fb.Size == 0.24f && fb.Weight == 700 && fb.Italic && fb.Family.Length > 0 && Err(HT) == "",
+            $"font round trip: 24 px = 0.24 units, weight, italic, the default family by name ({S(recs)}; error '{Err(HT)}')");
+
+        // alias: the patch sets it like a declared property (not echoed) and the target follows; a change of the target inside QML
+        // comes back as a change of the alias.
+        SetProps(T, p => p.String("at", "alias ä"));
+        CheckApply("SET alias at");
+        recs = Poll();
+        s.Check(Props(recs, HT, "atOut") is [string ao] && ao == "alias ä" && !PropNames(recs, HT).Contains("at") && Err(HT) == "",
+            $"an alias sets its target and is not echoed ({S(recs)}; error '{Err(HT)}')");
+        SetProps(T, p => p.String("aliasFeed", "from qml"));
+        CheckApply("SET aliasFeed");
+        recs = Poll();
+        s.Check(Props(recs, HT, "at") is [string ai] && ai == "from qml" && Err(HT) == "", $"a change of the target inside QML comes back as the alias ({S(recs)})");
+
         // ---- 4c. a list in a var property, lists that QML makes itself --------------------------------------------------------
         Qml(LS, HLS, qmlLists, 500, 200);
         CheckApply("create QmlElement (QmlLists.qml)");
@@ -731,5 +779,8 @@ public static class QmlTest
         public void ListI32(string name, params int[] values) => _w.QmlPropertyListI32(name, values);
         public void ListBool(string name, params bool[] values) => _w.QmlPropertyListBool(name, values);
         public void ListString(string name, params string[] values) => _w.QmlPropertyListString(name, values);
+        public void ListDateTime(string name, params long[] values) => _w.QmlPropertyListDateTime(name, values);
+        public void DateTime(string name, long milliseconds) => _w.QmlPropertyDateTime(name, milliseconds);
+        public void Font(string name, string family, float pixelSize, int weight, bool italic) => _w.QmlPropertyFont(name, family, pixelSize, weight, italic);
     }
 }
