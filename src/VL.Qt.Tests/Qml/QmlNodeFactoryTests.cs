@@ -253,6 +253,19 @@ namespace VL.Qt.Tests.Qml
         private static QmlDeclarations Declare(QmlPropertyDecl[] properties, QmlSignalDecl[]? signals = null) =>
             new("Item", QmlFileHead.Empty, properties.ToImmutableArray(), (signals ?? Array.Empty<QmlSignalDecl>()).ToImmutableArray(), ImmutableArray<QmlParseMessage>.Empty);
 
+        [Test]
+        public void Layout_AliasPinHelp_NamesTheTarget_UnlessTheFileHasAComment()
+        {
+            var layout = QmlNodeLayout.Build("Card.qml", Declare(new[]
+            {
+                Prop("title", QmlValueKind.String) with { QmlType = "string", AliasOf = "label.text" },
+                Prop("fill", QmlValueKind.Color, summary: "Fill of the card.") with { AliasOf = "bg.color" },
+            }));
+            var inputs = layout.InputDescriptions().ToDictionary(i => i.Name, i => ((IInfo)i).Summary);
+            Assert.That(inputs["Title"], Is.EqualTo("string property 'title' of the QML root, an alias of label.text."));
+            Assert.That(inputs["Fill"], Is.EqualTo("Fill of the card."));
+        }
+
         // The pin texts that QML nodes share with the element nodes come from CommonPins.xml (written once).
         [Test]
         public void Layout_CommonPinHelp_IsTheSharedText()

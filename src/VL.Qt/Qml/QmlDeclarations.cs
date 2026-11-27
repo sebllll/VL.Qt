@@ -48,7 +48,7 @@ namespace VL.Qt.Qml
                 sb.Append("head").Append(sep).Append(Head.Category).Append(sep).Append(Head.Summary).Append(sep).AppendJoin(',', Head.Tags).Append('\n');
                 foreach (var p in Properties)
                     sb.Append('p').Append(sep).Append(p.Name).Append(sep).Append(p.QmlType).Append(sep).Append(p.Kind).Append(sep).Append((int)p.Flags)
-                        .Append(sep).Append(p.Initializer).Append(sep).Append(Format(p.Default)).Append(sep).Append(p.Summary).Append('\n');
+                        .Append(sep).Append(p.Initializer).Append(sep).Append(Format(p.Default)).Append(sep).Append(p.Summary).Append(sep).Append(p.AliasOf).Append('\n');
                 foreach (var s in Signals)
                 {
                     sb.Append('s').Append(sep).Append(s.Name).Append(sep).Append(s.Summary);

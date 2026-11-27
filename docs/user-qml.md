@@ -131,7 +131,7 @@ Experimental: the generated nodes can change like `QmlElement`, although vvvv sh
 
 ### Which declarations give which pins
 
-Only the declarations of the **root object** count (nested objects and functions are not read), and only the types `QmlElement` can pass:
+Only the declarations of the **root object** count (nested objects are read only for the targets of [aliases](#aliases), functions not at all), and only the types `QmlElement` can pass:
 
 | Declaration | Input pin | Output pin |
 |---|---|---|
@@ -142,6 +142,7 @@ Only the declarations of the **root object** count (nested objects and functions
 | `readonly property <type> name: …` | no | yes, **visible** |
 | `required property <type> name` | yes, always sent | optional |
 | `default property <type> name` | like `property` | like `property` |
+| `property alias name: id.prop` | like `property` of the type of the target ([Aliases](#aliases)) | like `property` |
 | `signal name` / `signal name()` | no | `bool`: true in the frame it fired |
 | `signal name(type a)` | no | `Spread<T>`: the values of the emissions of this frame (a `list<…>` argument gives a `Spread<Spread<T>>`) |
 | `signal name(type a, type b, …)` | no | `Spread<QmlSignal>`: one entry per emission, `Name` and `Arguments` |
@@ -150,7 +151,30 @@ The types and their vvvv counterparts are those of [Value types](#value-types): 
 
 The input and the output of one property have **the same name** ("Accent Color" in and out), vvvv tells them apart by their kind. The output starts with the declared default, shows the last value QML changed, and goes back to the default after a reload of the file. A signal output is false/empty in every frame without an emission.
 
-Not given a pin: `property alias`, `var`, a `list<…>` of another type than the table above (a list of lists, `list<Item>`), object types (`Item`, `Rectangle`, …) and value types without a counterpart (`font`, `date`, …). The node lists them in one **info message** (the dot at the node), with their lines. Use the `Properties` pin for them, see below. A declaration you mark as internal gets no pin and no message either, see [Internal declarations](#internal-declarations).
+Not given a pin: an alias that cannot be resolved ([Aliases](#aliases)), `var`, a `list<…>` of another type than the table above (a list of lists, `list<Item>`), object types (`Item`, `Rectangle`, …) and value types without a counterpart (`font`, `date`, …). The node lists them in one **info message** (the dot at the node), with their lines. Use the `Properties` pin for them, see below. A declaration you mark as internal gets no pin and no message either, see [Internal declarations](#internal-declarations).
+
+### Aliases
+
+`property alias name: id.prop` is how a component hands out a property of one of its children. The parser resolves the target without running the file, and the alias gets the pins of a `property` of the target's type:
+
+- **A property the child declares** (`Item { id: bar; property real value: 0.5 }`): its type, and its literal as the default. An alias of an alias in the same file is followed.
+- **A property of a built-in type**, from a small table: `x`, `y`, `z`, `width`, `height`, `opacity`, `rotation`, `scale` (`real`) and `visible`, `enabled` (`bool`) of every `Item` type (`Item`, `Rectangle`, `Text`, `TextInput`, `TextEdit`, `Image`, `AnimatedImage`, `BorderImage`, `Row`, `Column`, `Grid`, `Flow`, `MouseArea`, `Flickable`, `ListView`, `GridView`, `Loader`, `Canvas`, `ShaderEffect`), `color` and `radius` of `Rectangle`, `text` and `color` of `Text`, `TextInput` and `TextEdit`, `source` (`url`) of the image types. The default is the value Qt gives the property (`opacity` 1, `visible` true, a `Rectangle` white, a `Text` black, …).
+- **A property of a component of the same folder** (`MyButton { id: b }` with `MyButton.qml` next to the file): what `MyButton.qml` declares on its root, its own aliases included, then the table for its root type.
+- An assignment on the child (`Text { id: caption; text: "Hi" }`) is the default instead; a binding there (`width: parent.width`) makes the output pin visible, as at a bound declaration.
+- `readonly property alias`, or a target that is `readonly`, gives only the output pin.
+- No pin, with the reason in the info message: an alias of an object (`property alias content: row`), of a grouped property (`bg.border.color`), of an id that is not in the file, of a property that is not in the table, or of a type without a pin (`var`).
+
+```qml
+Item {
+    property alias title: caption.text      // pin "Title", string, default "Hi"
+    property alias fill: bg.color           // pin "Fill", Color4, default tomato
+    Rectangle {
+        id: bg
+        color: "tomato"
+        Text { id: caption; text: "Hi" }
+    }
+}
+```
 
 ### Defaults, and when a value is sent
 
@@ -227,7 +251,7 @@ A change of `@category` or `@tags` moves the node: vvvv builds the node list aga
 
 ### The Properties pin (plan B)
 
-The generated node still has the optional `Properties` input (`Dictionary<string, object>`, hidden until you show it), the same as at `QmlElement`, for what gets no pin: an `alias`, a `var`, a list of another type or an object property. A pin of the node wins over a dictionary entry of the same name once the pin differs from its default. There is no `Properties` or `Signals` **output**, the typed pins replace them. Values of properties that get no pin do not come back to the patch.
+The generated node still has the optional `Properties` input (`Dictionary<string, object>`, hidden until you show it), the same as at `QmlElement`, for what gets no pin: an alias that does not resolve, a `var`, a list of another type or an object property. A pin of the node wins over a dictionary entry of the same name once the pin differs from its default. There is no `Properties` or `Signals` **output**, the typed pins replace them. Values of properties that get no pin do not come back to the patch.
 
 ### Hot reload of generated nodes
 
@@ -245,7 +269,7 @@ The generated node still has the optional `Properties` input (`Dictionary<string
 ### Limitations of the generated nodes
 
 - **No experimental mark:** `QmlElement` carries `SymbolSmell.Experimental`, but vvvv's node building API has no smell for factory nodes. The generated nodes are experimental all the same.
-- **No pin** for `alias`, `var`, lists of lists or of objects, object types and value types such as `url` or `font` (info message at the node, use `Properties`). A list has at most 65536 elements.
+- **No pin** for aliases the parser cannot resolve ([Aliases](#aliases)), `var`, lists of lists or of objects, object types and value types such as `font` (info message at the node, use `Properties`). A list has at most 65536 elements.
 - Only the **root object** is read, and only a sibling file of the same folder as root type (not an import from another folder or module).
 - The `qml/` folder is searched next to saved documents and in packages, not elsewhere. **Export:** the `qml/` folder next to the exported document is copied with its structure next to the exe (like `qtshaders/` and `fonts/`), where the node factory of the exported app finds it. The `qml/` folders of other documents and packages are not copied.
 - A node always represents one file: there is no `File` pin.
@@ -256,6 +280,6 @@ VL.Qt ships only the LGPL modules of Qt (see [QtNative deployment](design/deploy
 
 ## Out of scope
 
-- Pins for what has no type in the table of [Value types](#value-types) (`alias`, `var`, lists of lists or of objects, objects): the `Properties` dictionary stays the interface for those, also at the generated nodes.
+- Pins for what has no type in the table of [Value types](#value-types) (unresolved aliases, `var`, lists of lists or of objects, objects): the `Properties` dictionary stays the interface for those, also at the generated nodes.
 - C# objects or models handed to QML as context properties (the idea of Qt Bridge for C#, see [qt-bridge.md](design/qt-bridge.md)).
 - Calling QML functions from the patch.

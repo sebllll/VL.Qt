@@ -456,6 +456,18 @@ public static class QmlTest
         ListRoundTrip(T, HT, "ul", "urls", p => p.ListString("ul", urls), urls, SameUrl);
         ListRoundTrip(T, HT, "ul", "empty", p => p.ListString("ul"), Array.Empty<string>());
 
+        // alias: the patch sets it like a declared property (not echoed) and the target follows; a change of the target inside QML
+        // comes back as a change of the alias.
+        SetProps(T, p => p.String("at", "alias ä"));
+        CheckApply("SET alias at");
+        recs = Poll();
+        s.Check(Props(recs, HT, "atOut") is [string ao] && ao == "alias ä" && !PropNames(recs, HT).Contains("at") && Err(HT) == "",
+            $"an alias sets its target and is not echoed ({S(recs)}; error '{Err(HT)}')");
+        SetProps(T, p => p.String("aliasFeed", "from qml"));
+        CheckApply("SET aliasFeed");
+        recs = Poll();
+        s.Check(Props(recs, HT, "at") is [string ai] && ai == "from qml" && Err(HT) == "", $"a change of the target inside QML comes back as the alias ({S(recs)})");
+
         // ---- 4c. a list in a var property, lists that QML makes itself --------------------------------------------------------
         Qml(LS, HLS, qmlLists, 500, 200);
         CheckApply("create QmlElement (QmlLists.qml)");

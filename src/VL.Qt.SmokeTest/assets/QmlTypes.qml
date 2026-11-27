@@ -61,6 +61,14 @@ Item {
     property list<url> ul
     property list<url> ulOut: ul
 
+    // An alias of a child: the root's meta object has it with the type of its target, so it is set and reported like a declared
+    // property. aliasFeed changes the target inside QML, which comes back as a change of the alias.
+    property alias at: aliasText.text
+    property string atOut: aliasText.text
+    property string aliasFeed: ""
+    onAliasFeedChanged: aliasText.text = aliasFeed
+    Text { id: aliasText }
+
     // A signal argument of the type point arrives as a Vector2, like the property.
     signal located(point p)
     onPtChanged: located(pt)
