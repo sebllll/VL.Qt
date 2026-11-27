@@ -32,6 +32,9 @@ namespace VL.Qt.Qml
         /// <summary>CLR type of the pins of this property.</summary>
         public Type ClrType => QmlTypes.ClrType(Kind);
 
+        /// <summary>The default of an int property as the int QML knows (0 for any other value).</summary>
+        public int IntDefault => Default is int value ? value : 0;
+
         /// <summary>True for a <c>list&lt;T&gt;</c> property: its pins are Spreads.</summary>
         public bool IsList => QmlTypes.IsList(Kind);
 

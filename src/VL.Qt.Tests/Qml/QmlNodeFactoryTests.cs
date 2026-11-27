@@ -280,6 +280,99 @@ namespace VL.Qt.Tests.Qml
             Assert.That(inputs["Level"], Is.EqualTo("Level of the gauge. Mode: Small = 0, Large = 5."));
         }
 
+        // --- enum pins (pool types) ---
+
+        private static QmlEnumPool Pool(int count) => new(QmlEnumSlotTypes.All.Take(count).ToArray());
+
+        private static QmlEnumDecl EnumOf(string type, string name, params (string Name, int Value)[] values)
+            => new(type, name, values.Select(v => new QmlEnumValue(v.Name, v.Value)).ToImmutableArray());
+
+        private static QmlEnumDecl Mode() => EnumOf("Gauge", "Mode", ("Small", 0), ("Large", 5));
+
+        private QmlNodeLayout BuildWith(QmlEnumPool pool, params QmlPropertyDecl[] properties)
+            => QmlNodeLayout.Build(Path.Combine(_dir, "Gauge.qml"), Declare(properties), pool: pool);
+
+        [Test]
+        public void Layout_EnumPin_HasThePoolTypeAndItsDefault()
+        {
+            var pool = Pool(4);
+            var mode = Mode();
+            var layout = BuildWith(pool,
+                Prop("mode", QmlValueKind.Int, init: QmlInitializer.Literal, value: 5) with { Enum = mode },
+                Prop("level", QmlValueKind.Int, summary: "Level of the gauge.") with { Enum = mode },
+                Prop("steps", QmlValueKind.Int));
+
+            var slot = pool.Claim(Path.Combine(_dir, "Gauge.qml"), mode).Slot!;
+            var inputs = layout.InputDescriptions().ToDictionary(i => i.Name);
+            Assert.That(inputs["Mode"].Type, Is.EqualTo(slot.Type));
+            Assert.That(((IDynamicEnum)inputs["Mode"].DefaultValue!).Value, Is.EqualTo("Large"), "the literal 5");
+            Assert.That(inputs["Level"].Type, Is.EqualTo(slot.Type), "the same enum, the same type");
+            Assert.That(((IDynamicEnum)inputs["Level"].DefaultValue!).Value, Is.EqualTo("Small"));
+            Assert.That(inputs["Steps"].Type, Is.EqualTo(typeof(int)), "no enum, no change");
+            Assert.That(layout.OutputDescriptions().Single(o => o.Name == "Mode").Type, Is.EqualTo(slot.Type));
+            Assert.That(((IInfo)inputs["Mode"]).Summary, Is.EqualTo("int property 'mode' of the QML root. Mode: Small, Large."));
+            Assert.That(((IInfo)inputs["Level"]).Summary, Is.EqualTo("Level of the gauge. Mode: Small, Large."));
+            Assert.That(layout.Messages, Is.Empty);
+        }
+
+        [Test]
+        public void Layout_EnumPin_StaysAnInt_WhenThePoolHasNoRoom_AndTheNodeSaysWhy()
+        {
+            var pool = Pool(1);
+            var status = EnumOf("Gauge", "Status", ("Online", 0), ("Away", 1));
+            var layout = BuildWith(pool,
+                Prop("mode", QmlValueKind.Int) with { Enum = Mode() },
+                Prop("status", QmlValueKind.Int, init: QmlInitializer.Literal, value: 1) with { Enum = status },
+                Prop("state", QmlValueKind.Int) with { Enum = status });
+
+            var inputs = layout.InputDescriptions().ToDictionary(i => i.Name);
+            Assert.That(inputs["Mode"].Type, Is.EqualTo(QmlEnumSlotTypes.All[0].Type));
+            Assert.That((inputs["Status"].Type, inputs["Status"].DefaultValue), Is.EqualTo((typeof(int), (object)1)));
+            Assert.That(inputs["State"].Type, Is.EqualTo(typeof(int)));
+            Assert.That(((IInfo)inputs["Status"]).Summary, Does.EndWith("Status: Online = 0, Away = 1."), "the int pin keeps the numbers");
+            var warning = layout.Messages.Single();
+            Assert.That(warning.Type, Is.EqualTo(VL.Core.Diagnostics.MessageType.Warning), "once, also for two properties of the enum");
+            Assert.That(warning.Text, Does.Contain("Gauge.Status").And.Contain("taken"));
+        }
+
+        [Test]
+        public void Layout_EnumPin_AfterHotReload_KeepsTheTypeAndFollowsTheEntries()
+        {
+            var pool = Pool(4);
+            var path = Path.Combine(_dir, "Gauge.qml");
+            Type TypeOf(QmlNodeLayout layout) => layout.InputDescriptions().Single(i => i.Name == "Mode").Type;
+
+            var first = BuildWith(pool, Prop("mode", QmlValueKind.Int) with { Enum = Mode() });
+            var grown = EnumOf("Gauge", "Mode", ("Small", 0), ("Large", 5), ("Huge", 6));
+            var second = BuildWith(pool, Prop("mode", QmlValueKind.Int) with { Enum = grown });
+
+            Assert.That(TypeOf(second), Is.EqualTo(TypeOf(first)));
+            Assert.That(pool.Claim(path, grown).Slot!.Entries.Keys, Is.EqualTo(new[] { "Small", "Large", "Huge" }));
+            // After a restart (a new pool on the same folder) the type is still the one of the mapping file.
+            Assert.That(TypeOf(BuildWith(Pool(4), Prop("mode", QmlValueKind.Int) with { Enum = grown })), Is.EqualTo(TypeOf(first)));
+        }
+
+        [Test]
+        public void Load_EnumOfTheFile_GetsThePoolType_AndNoPoolKeepsTheInt()
+        {
+            Write("Gauge.qml", """
+                import QtQuick
+                Item {
+                    property int mode: Gauge.Large
+                    enum Mode { Small, Large = 5 }
+                }
+                """);
+            var file = QmlNodeFactory.Scan(_dir).Single();
+
+            var withPool = QmlNodeLayout.Load(file, NullLogger.Instance, Pool(4)).InputDescriptions().Single(i => i.Name == "Mode");
+            Assert.That(withPool.Type.Name, Does.StartWith("QmlEnum"));
+            Assert.That(((IDynamicEnum)withPool.DefaultValue!).Value, Is.EqualTo("Large"));
+            Assert.That(File.ReadAllText(Path.Combine(_dir, QmlEnumSlotFile.FileName)), Does.Contain("Gauge.Mode = "));
+
+            var without = QmlNodeLayout.Load(file, NullLogger.Instance).InputDescriptions().Single(i => i.Name == "Mode");
+            Assert.That((without.Type, without.DefaultValue), Is.EqualTo((typeof(int), (object)5)));
+        }
+
         // The pin texts that QML nodes share with the element nodes come from CommonPins.xml (written once).
         [Test]
         public void Layout_CommonPinHelp_IsTheSharedText()
