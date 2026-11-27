@@ -81,6 +81,7 @@ Limits:
 
 - Only entries that changed since the last frame are sent, the node compares by content (changing the dictionary in place works).
 - A key that is **removed** is not reset in QML: the property keeps its last value. Set the value you want, e.g. the default, to reset it.
+- A new `File` gets all entries again and nothing of the old file: a value set for a property the new file does not declare is not carried over.
 - Unknown property names are an error line, the other entries are applied.
 
 ## Time: animations and timers

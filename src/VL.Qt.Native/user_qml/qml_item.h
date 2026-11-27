@@ -47,7 +47,8 @@ public:
     explicit QmlItem(QQuickItem* parent = nullptr);
     ~QmlItem() override;
 
-    /* QML_SOURCE: absolute path, empty = nothing loaded. Same path again: nothing. The instance is built by build(), not here. */
+    /* QML_SOURCE: absolute path, empty = nothing loaded. Same path again: nothing. Another path forgets the property values
+     * set so far. The instance is built by build(), not here. */
     void setSource(QQmlEngine* engine, const QString& path);
     /* QML_RELOAD: a counter value different from the last one (initially 0, the C# default that is never sent) asks build()
      * for a new instance with a cleared component cache when a file is loaded; without a file the value is only recorded. */
