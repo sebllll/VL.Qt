@@ -9,7 +9,7 @@ name: build
 # Tag v* = everything (all 4 RIDs win-x64/win-arm64/linux-x64/linux-arm64, tests, SmokeTest, one .nupkg VL.Qt with all
 # RIDs, release). workflow_dispatch = like a tag, without release (the way to get a .nupkg from develop or main on demand); with
 # sabotage != none only x64 matters (win-x64 + linux-x64, no arm64, no .nupkg). New jobs are gated from the start (#197):
-# arm64 never runs on PRs (private repo). pack needs shim + linux: on FULL a failed RID job (also linux-arm64) blocks the .nupkg and the
+# arm64 runs on PRs only in the public repo. pack needs shim + linux: on FULL a failed RID job (also linux-arm64) blocks the .nupkg and the
 # release; outside FULL only shim gates pack (a red linux-x64 does not hide the C# test results).
 on:
   push:

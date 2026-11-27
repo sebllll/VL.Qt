@@ -1,4 +1,3 @@
-<!-- Draft – pending legal review -->
 # VL.Qt Individual Contributor License Agreement
 
 Thank you for your interest in contributing to VL.Qt. This agreement is based on the Apache Individual Contributor License Agreement, Version 2.0, adapted to a project that is licensed under the MIT License.

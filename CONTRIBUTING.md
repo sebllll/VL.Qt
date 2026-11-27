@@ -18,7 +18,7 @@ Thank you for your interest in VL.Qt. Bug reports, ideas and pull requests are w
   - Contributors fork the repository, push the branch to their fork and open the pull request from there. The CI of a pull request from a fork starts after a maintainer approves it.
   - Maintainers push the branch to this repository instead of a fork, with the remote and branch named explicitly (`git push origin HEAD:fix/12-short-topic`). The pull request is the same.
 - Name the branch by kind, issue number and topic: `fix/…`, `feat/…`, `docs/…`.
-- Open the pull request as a draft (`gh pr create --base develop --draft`) and mark it ready when the work is complete and `tools/build.ps1 -Test` passes locally. Every push to a pull request that is not a draft starts the CI. If the CI is red afterwards: `gh pr ready --undo`, fix and check locally, `gh pr ready` again. Do not use `workflow_dispatch` as a substitute; it builds every RID and is more expensive.
+- Open the pull request as a draft (`gh pr create --base develop --draft`) and mark it ready when the work is complete and `tools/build.ps1 -Test` passes locally. Every push to a pull request that is not a draft starts the CI; if it is red, fix the cause, check locally and push again.
 - Keep pull requests focused and describe what changed and how you verified it.
 - Renaming or removing a node or pin follows [docs/versioning.md](docs/versioning.md).
 
