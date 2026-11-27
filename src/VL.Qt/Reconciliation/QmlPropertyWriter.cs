@@ -1,4 +1,7 @@
-﻿using VL.Qt.Wire;
+﻿using System.Runtime.InteropServices;
+using Stride.Core.Mathematics;
+using VL.Lib.Collections;
+using VL.Qt.Wire;
 
 namespace VL.Qt.Reconciliation
 {
@@ -43,6 +46,24 @@ namespace VL.Qt.Reconciliation
                 case Protocol.ValueType.Vec4: sink.QmlPropertyVec4(name, v.A, v.B, v.C, v.D); break;
                 case Protocol.ValueType.Rectf: sink.QmlPropertyRect(name, v.A, v.B, v.C, v.D); break;
                 case Protocol.ValueType.String: sink.QmlPropertyString(name, v.Text ?? string.Empty); break;
+                case Protocol.ValueType.List: WriteList(sink, name, v.Items); break;
+            }
+        }
+
+        // The vector, color and rect element types are plain runs of floats (checked by a test), so they go over as floats.
+        private static void WriteList(ICommandSink sink, string name, object? items)
+        {
+            switch (items)
+            {
+                case Spread<float> s: sink.QmlPropertyListF32(name, Protocol.ValueType.F32, s.AsSpan()); break;
+                case Spread<int> s: sink.QmlPropertyListI32(name, s.AsSpan()); break;
+                case Spread<bool> s: sink.QmlPropertyListBool(name, s.AsSpan()); break;
+                case Spread<string> s: sink.QmlPropertyListString(name, s.AsSpan()); break;
+                case Spread<Color4> s: sink.QmlPropertyListF32(name, Protocol.ValueType.Color, MemoryMarshal.Cast<Color4, float>(s.AsSpan())); break;
+                case Spread<Vector2> s: sink.QmlPropertyListF32(name, Protocol.ValueType.Vec2, MemoryMarshal.Cast<Vector2, float>(s.AsSpan())); break;
+                case Spread<Vector3> s: sink.QmlPropertyListF32(name, Protocol.ValueType.Vec3, MemoryMarshal.Cast<Vector3, float>(s.AsSpan())); break;
+                case Spread<Vector4> s: sink.QmlPropertyListF32(name, Protocol.ValueType.Vec4, MemoryMarshal.Cast<Vector4, float>(s.AsSpan())); break;
+                case Spread<RectangleF> s: sink.QmlPropertyListF32(name, Protocol.ValueType.Rectf, MemoryMarshal.Cast<RectangleF, float>(s.AsSpan())); break;
             }
         }
     }

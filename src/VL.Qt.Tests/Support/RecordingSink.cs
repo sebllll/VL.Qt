@@ -134,6 +134,17 @@ namespace VL.Qt.Tests.Support
         public void QmlPropertyVec4(ReadOnlySpan<char> name, float x, float y, float z, float w) => UniformVec4(name, x, y, z, w);
         public void QmlPropertyRect(ReadOnlySpan<char> name, float x, float y, float width, float height) => _uniforms.Append($" {name.ToString()}=rect({F(x)},{F(y)},{F(width)},{F(height)})");
         public void QmlPropertyString(ReadOnlySpan<char> name, ReadOnlySpan<char> value) => _uniforms.Append($" {name.ToString()}=string({value.ToString()})");
+        // A list is recorded as name=list<elementType>(a,b,c); the floats of a vector, color or rect element are flat.
+        public void QmlPropertyListF32(ReadOnlySpan<char> name, ushort elementType, ReadOnlySpan<float> values)
+            => AppendList(name, elementType, Array.ConvertAll(values.ToArray(), F));
+        public void QmlPropertyListI32(ReadOnlySpan<char> name, ReadOnlySpan<int> values)
+            => AppendList(name, Protocol.ValueType.I32, Array.ConvertAll(values.ToArray(), v => v.ToString(CultureInfo.InvariantCulture)));
+        public void QmlPropertyListBool(ReadOnlySpan<char> name, ReadOnlySpan<bool> values)
+            => AppendList(name, Protocol.ValueType.Bool, Array.ConvertAll(values.ToArray(), v => v ? "1" : "0"));
+        public void QmlPropertyListString(ReadOnlySpan<char> name, ReadOnlySpan<string> values)
+            => AppendList(name, Protocol.ValueType.String, values.ToArray());
+        private void AppendList(ReadOnlySpan<char> name, ushort elementType, string[] items)
+            => _uniforms.Append($" {name.ToString()}=list<{elementType}>({string.Join(",", items)})");
         public void EndQmlProperties() => Add(_uniforms.ToString());
 
         // SET_EFFECT_CHAIN is recorded as one line: "CHAIN id | multi prop=value ... | shader template ids pad=(l,t,r,b) strength=x name=value ...".

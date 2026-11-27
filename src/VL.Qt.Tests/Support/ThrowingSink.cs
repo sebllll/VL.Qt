@@ -93,6 +93,10 @@ namespace VL.Qt.Tests.Support
         public void QmlPropertyVec4(ReadOnlySpan<char> name, float x, float y, float z, float w) => _inner.QmlPropertyVec4(name, x, y, z, w);
         public void QmlPropertyRect(ReadOnlySpan<char> name, float x, float y, float width, float height) => _inner.QmlPropertyRect(name, x, y, width, height);
         public void QmlPropertyString(ReadOnlySpan<char> name, ReadOnlySpan<char> value) => _inner.QmlPropertyString(name, value);
+        public void QmlPropertyListF32(ReadOnlySpan<char> name, ushort elementType, ReadOnlySpan<float> values) => _inner.QmlPropertyListF32(name, elementType, values);
+        public void QmlPropertyListI32(ReadOnlySpan<char> name, ReadOnlySpan<int> values) => _inner.QmlPropertyListI32(name, values);
+        public void QmlPropertyListBool(ReadOnlySpan<char> name, ReadOnlySpan<bool> values) => _inner.QmlPropertyListBool(name, values);
+        public void QmlPropertyListString(ReadOnlySpan<char> name, ReadOnlySpan<string> values) => _inner.QmlPropertyListString(name, values);
         public void EndQmlProperties() => _inner.EndQmlProperties();
 
         public void BeginEffectChain(uint id) { Tick(); _inner.BeginEffectChain(id); }

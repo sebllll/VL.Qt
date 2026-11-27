@@ -18,7 +18,8 @@ namespace VL.Qt.Nodes
     /// element for, not a second UI model. The root of the file must be an Item. Properties sets properties of the root by name,
     /// the outputs report the properties QML changed and the signals it emitted. Only what the file declares in its root
     /// (<c>property …</c>, <c>signal …</c>) comes back, not what Item inherits. Value types both ways: float, int, bool, string,
-    /// Color4, Vector2/3/4, RectangleF. The file is reloaded when it, another *.qml next to it or qmldir changes.
+    /// Color4, Vector2/3/4, RectangleF, and a Spread of each of these for a <c>list&lt;T&gt;</c> property. The file is reloaded when it,
+    /// another *.qml next to it or qmldir changes.
     /// QML animations follow the frame clock of the renderer, a QML Timer runs on wall time. Only the LGPL Qt modules are shipped:
     /// an import of any other module (e.g. QtQuick3D, Charts) fails and shows at the node and in the log.
     /// Lengths of Size in units of the renderer's space (DIPTopLeft: 1 unit = 100 DIP); property values are passed on unchanged (QML units).
@@ -72,8 +73,9 @@ namespace VL.Qt.Nodes
         /// resolves a Path IOBox against the document). Empty = nothing loaded. The file and the *.qml and qmldir next to it are watched:
         /// saving one reloads the element and sends all properties again; the outputs start empty again.</param>
         /// <param name="properties">Values for properties of the QML root by name (float, double, int, bool, string, Color4, Vector2/3/4,
-        /// RectangleF). Only entries that changed are sent. A key that is removed is not reset in QML. Unknown names and values QML cannot
-        /// convert show at the node and in the log and are ignored; a float for an int property is converted by Qt.</param>
+        /// RectangleF, or a Spread of one of these for a list property: at most 65536 elements, compared by content). Only entries that
+        /// changed are sent. A key that is removed is not reset in QML. Unknown names and values QML cannot convert show at the node and
+        /// in the log and are ignored; a float for an int property is converted by Qt.</param>
         /// <param name="size">Size of the element (width, height), only with Auto Size off: it sets width and height of the QML root. The
         /// position comes from Transform and Anchor.</param>
         /// <param name="autoSize">On: the element takes the implicit size (implicitWidth, implicitHeight) of the QML root. Off: Size counts.</param>

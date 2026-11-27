@@ -393,6 +393,70 @@ namespace VL.Qt.Wire
             Encoding.UTF8.GetBytes(value, p.Slice(4));
         }
 
+        /// <summary>list: u16 element type, u16 0, u32 count, floats back to back (protocol.h "list").</summary>
+        public void QmlPropertyListF32(ReadOnlySpan<char> name, ushort elementType, ReadOnlySpan<float> values)
+        {
+            int perElement = elementType switch
+            {
+                Protocol.ValueType.F32 => 1,
+                Protocol.ValueType.Vec2 => 2,
+                Protocol.ValueType.Vec3 => 3,
+                Protocol.ValueType.Color or Protocol.ValueType.Rectf or Protocol.ValueType.Vec4 => 4,
+                _ => throw new ArgumentOutOfRangeException(nameof(elementType), elementType, "Not an element type made of floats."),
+            };
+            if (values.Length % perElement != 0)
+                throw new ArgumentException($"{values.Length} floats are not a whole number of elements ({perElement} floats each).", nameof(values));
+            int count = values.Length / perElement;
+            var p = QmlPropertyList(name, elementType, count, values.Length * 4);
+            for (int i = 0; i < values.Length; i++)
+                WriteF32(p.Slice(i * 4), values[i]);
+        }
+
+        /// <summary>list of i32 (<see cref="QmlPropertyListF32"/>).</summary>
+        public void QmlPropertyListI32(ReadOnlySpan<char> name, ReadOnlySpan<int> values)
+        {
+            var p = QmlPropertyList(name, Protocol.ValueType.I32, values.Length, values.Length * 4);
+            for (int i = 0; i < values.Length; i++)
+                BinaryPrimitives.WriteInt32LittleEndian(p.Slice(i * 4), values[i]);
+        }
+
+        /// <summary>list of bool, one byte each (<see cref="QmlPropertyListF32"/>).</summary>
+        public void QmlPropertyListBool(ReadOnlySpan<char> name, ReadOnlySpan<bool> values)
+        {
+            var p = QmlPropertyList(name, Protocol.ValueType.Bool, values.Length, values.Length);
+            for (int i = 0; i < values.Length; i++)
+                p[i] = values[i] ? (byte)1 : (byte)0;
+        }
+
+        /// <summary>list of string: each u32 byte length + UTF-8, zero padded to 4 (<see cref="QmlPropertyListF32"/>).</summary>
+        public void QmlPropertyListString(ReadOnlySpan<char> name, ReadOnlySpan<string> values)
+        {
+            int size = 0;
+            foreach (var s in values)
+                size += Align(4 + Encoding.UTF8.GetByteCount(s ?? string.Empty));
+            var p = QmlPropertyList(name, Protocol.ValueType.String, values.Length, size);
+            int offset = 0;
+            foreach (var s in values)
+            {
+                var text = (s ?? string.Empty).AsSpan();
+                int byteCount = Encoding.UTF8.GetByteCount(text);
+                WriteU32(p.Slice(offset), (uint)byteCount);
+                Encoding.UTF8.GetBytes(text, p.Slice(offset + 4));
+                offset += Align(4 + byteCount);
+            }
+        }
+
+        /// <summary>Appends a LIST entry with its header written and returns the span for the elements (<paramref name="elementBytes"/> long).</summary>
+        private Span<byte> QmlPropertyList(ReadOnlySpan<char> name, ushort elementType, int count, int elementBytes)
+        {
+            if (count > Protocol.ListValueMaxCount)
+                throw new ArgumentException($"A list can have at most {Protocol.ListValueMaxCount} elements, got {count}.", nameof(count));
+            var p = QmlPropertyEntry(name, Protocol.ValueType.List, Protocol.ListValueHeaderSize + elementBytes);
+            WriteU16(p, elementType);
+            WriteU32(p.Slice(4), (uint)count);
+            return p.Slice(Protocol.ListValueHeaderSize);
+        }
+
         /// <summary>Closes the SET_QML_PROPERTIES started by <see cref="BeginQmlProperties"/> (entry count, payload length).</summary>
         public void EndQmlProperties() => EndList(Open.QmlProperties, "SET_QML_PROPERTIES", "EndQmlProperties", "BeginQmlProperties");
 

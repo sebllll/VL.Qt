@@ -47,6 +47,107 @@ namespace VL.Qt.Tests.Wire
             Assert.That(v.GetType(), Is.EqualTo(expected.GetType()));
         }
 
+        // --- lists ---
+
+        private static IEnumerable<TestCaseData> Lists()
+        {
+            yield return new TestCaseData(QmlWire.List(Protocol.ValueType.F32, 2, QmlWire.F(1, 2.5f)), new[] { 1f, 2.5f }.ToSpread());
+            yield return new TestCaseData(QmlWire.List(Protocol.ValueType.I32, 3, QmlWire.I32(-1), QmlWire.I32(0), QmlWire.I32(7)), new[] { -1, 0, 7 }.ToSpread());
+            yield return new TestCaseData(QmlWire.List(Protocol.ValueType.Bool, 3, QmlWire.Bool(true), QmlWire.Bool(false), QmlWire.Bool(true)), new[] { true, false, true }.ToSpread());
+            yield return new TestCaseData(QmlWire.List(Protocol.ValueType.String, 3, QmlWire.Pad(QmlWire.Str("a")), QmlWire.Pad(QmlWire.Str("hä€")), QmlWire.Pad(QmlWire.Str(""))),
+                new[] { "a", "hä€", "" }.ToSpread());
+            yield return new TestCaseData(QmlWire.List(Protocol.ValueType.Color, 1, QmlWire.F(1, 0.5f, 0.25f, 0.75f)), new[] { new Color4(1, 0.5f, 0.25f, 0.75f) }.ToSpread());
+            yield return new TestCaseData(QmlWire.List(Protocol.ValueType.Vec2, 2, QmlWire.F(1, 2), QmlWire.F(3, 4)), new[] { new Vector2(1, 2), new Vector2(3, 4) }.ToSpread());
+            yield return new TestCaseData(QmlWire.List(Protocol.ValueType.Vec3, 1, QmlWire.F(1, 2, 3)), new[] { new Vector3(1, 2, 3) }.ToSpread());
+            yield return new TestCaseData(QmlWire.List(Protocol.ValueType.Vec4, 1, QmlWire.F(1, 2, 3, 4)), new[] { new Vector4(1, 2, 3, 4) }.ToSpread());
+            yield return new TestCaseData(QmlWire.List(Protocol.ValueType.Rectf, 1, QmlWire.F(10, 20, 30, 40)), new[] { new RectangleF(10, 20, 30, 40) }.ToSpread());
+            yield return new TestCaseData(QmlWire.List(Protocol.ValueType.F32, 0), Spread<float>.Empty);
+            yield return new TestCaseData(QmlWire.List(Protocol.ValueType.String, 0), Spread<string>.Empty);
+        }
+
+        [TestCaseSource(nameof(Lists))]
+        public void Property_List_IsASpreadOfTheElementType(byte[] value, object expected)
+        {
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("l", Protocol.ValueType.List, value), out var name, out var v), Is.True);
+            Assert.That(name, Is.EqualTo("l"));
+            Assert.That(v.GetType(), Is.EqualTo(expected.GetType()));
+            Assert.That(v, Is.EqualTo(expected));
+            // The decoded value is what QmlTypes coerces to a list pin: same type, equal content.
+            Assert.That(QmlValue.TryConvert(v, out var a) && QmlValue.TryConvert(expected, out var b) && a == b, Is.True);
+        }
+
+        [TestCaseSource(nameof(Lists))]
+        public void Signal_List_Argument_FollowedByAnother(byte[] value, object expected)
+        {
+            var payload = QmlWire.Signal("sig", (Protocol.ValueType.I32, QmlWire.I32(5)), (Protocol.ValueType.List, value), (Protocol.ValueType.Bool, QmlWire.Bool(true)));
+            Assert.That(QmlEventDecoder.TryDecodeSignal(payload, out var s), Is.True);
+            Assert.That(s.Arguments.Count, Is.EqualTo(3));
+            Assert.That(s.Arguments[0], Is.EqualTo(5));
+            Assert.That(s.Arguments[1], Is.EqualTo(expected));
+            Assert.That(s.Arguments[1].GetType(), Is.EqualTo(expected.GetType()));
+            Assert.That(s.Arguments[2], Is.EqualTo(true), "the argument after a list starts on its 4-byte boundary");
+        }
+
+        [Test]
+        public void Property_List_MaxCount_IsAccepted_MoreIsRejected()
+        {
+            var max = QmlWire.List(Protocol.ValueType.F32, Protocol.ListValueMaxCount, new byte[Protocol.ListValueMaxCount * 4]);
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("l", Protocol.ValueType.List, max), out _, out var v), Is.True);
+            Assert.That(((Spread<float>)v).Count, Is.EqualTo(Protocol.ListValueMaxCount));
+            var more = QmlWire.List(Protocol.ValueType.F32, Protocol.ListValueMaxCount + 1, new byte[(Protocol.ListValueMaxCount + 1) * 4]);
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("l", Protocol.ValueType.List, more), out _, out _), Is.False);
+            var huge = QmlWire.List(Protocol.ValueType.F32, int.MaxValue, QmlWire.F(1));
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("l", Protocol.ValueType.List, huge), out _, out _), Is.False, "a count far beyond the payload");
+            var negative = QmlWire.List(Protocol.ValueType.I32, -1, QmlWire.I32(1));
+            Assert.That(QmlEventDecoder.TryDecodeProperty(QmlWire.Property("l", Protocol.ValueType.List, negative), out _, out _), Is.False, "count with the high bit set");
+        }
+
+        [Test]
+        public void Property_List_Malformed_IsRejected()
+        {
+            bool Decodes(byte[] value) => QmlEventDecoder.TryDecodeProperty(QmlWire.Property("l", Protocol.ValueType.List, value), out _, out _);
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.Vec2, 2, QmlWire.F(1, 2), QmlWire.F(3, 4))), Is.True);
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.Vec2, 2, QmlWire.F(1, 2), QmlWire.F(3))), Is.False, "last element truncated");
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.Vec2, 3, QmlWire.F(1, 2), QmlWire.F(3, 4))), Is.False, "count larger than the elements");
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.Bool, 4, QmlWire.Bool(true), QmlWire.Bool(true), QmlWire.Bool(true))), Is.False, "bool list too short");
+            Assert.That(Decodes(new byte[] { 1, 0, 0, 0, 0, 0, 0 }), Is.False, "shorter than the list header");
+            Assert.That(Decodes(Array.Empty<byte>()), Is.False, "no list header at all");
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.List, 1, QmlWire.List(Protocol.ValueType.I32, 0))), Is.False, "a list of lists");
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.Mat4, 0)), Is.False, "element type that is not a plain value");
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.Ref, 1, QmlWire.I32(1))), Is.False, "element type Ref");
+            Assert.That(Decodes(QmlWire.List(0, 0)), Is.False, "element type 0");
+            Assert.That(Decodes(QmlWire.List(999, 0)), Is.False, "unknown element type");
+        }
+
+        [Test]
+        public void Property_List_Strings_Malformed_IsRejected()
+        {
+            bool Decodes(byte[] value) => QmlEventDecoder.TryDecodeProperty(QmlWire.Property("l", Protocol.ValueType.List, value), out _, out _);
+            var a = QmlWire.Pad(QmlWire.Str("abc"));
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.String, 2, a, a)), Is.True);
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.String, 3, a, a)), Is.False, "third string missing");
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.String, 1, QmlWire.I32(1000), new byte[] { 65, 0, 0, 0 })), Is.False, "length beyond the payload");
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.String, 1, QmlWire.I32(-1))), Is.False, "length with the high bit set");
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.String, 1, new byte[] { 3, 0 })), Is.False, "length cut off");
+            Assert.That(Decodes(QmlWire.List(Protocol.ValueType.String, 1, QmlWire.Str("abc"))), Is.False, "the padding of the last string is missing");
+        }
+
+        [Test]
+        public void Dispatch_List_Property_And_Signal()
+        {
+            var registry = new FeedbackRouter();
+            var feedback = new ElementFeedback();
+            uint h = registry.Acquire(new FeedbackSlot(feedback, 0));
+            var res = registry.Dispatch(new FeedbackRouterTests.Poll()
+                .Add(Protocol.EventId.QmlProperty, h, QmlWire.Property("pts", Protocol.ValueType.List, QmlWire.List(Protocol.ValueType.Vec2, 1, QmlWire.F(1, 2))))
+                .Add(Protocol.EventId.QmlSignal, h, QmlWire.Signal("done", (Protocol.ValueType.List, QmlWire.List(Protocol.ValueType.I32, 2, QmlWire.I32(1), QmlWire.I32(2)))))
+                .Add(Protocol.EventId.QmlProperty, h, QmlWire.Property("bad", Protocol.ValueType.List, QmlWire.List(Protocol.ValueType.Vec2, 5, QmlWire.F(1, 2)))).Bytes);
+            Assert.That(res.Applied, Is.EqualTo(2));
+            Assert.That(res.Ignored, Is.EqualTo(1));
+            Assert.That(feedback.QmlPropertyValues()!["pts"], Is.EqualTo(new[] { new Vector2(1, 2) }.ToSpread()));
+            Assert.That(feedback.TakeQmlSignals().Single().Arguments[0], Is.EqualTo(new[] { 1, 2 }.ToSpread()));
+        }
+
         [Test]
         public void Property_NamePadding_AllLengths()
         {
