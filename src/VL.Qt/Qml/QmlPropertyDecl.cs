@@ -28,6 +28,9 @@ namespace VL.Qt.Qml
         /// <summary>CLR type of the pins of this property.</summary>
         public Type ClrType => QmlTypes.ClrType(Kind);
 
+        /// <summary>True for a <c>list&lt;T&gt;</c> property: its pins are Spreads.</summary>
+        public bool IsList => QmlTypes.IsList(Kind);
+
         /// <summary>True for <c>readonly property</c>.</summary>
         public bool IsReadOnly => (Flags & QmlPropertyFlags.ReadOnly) != 0;
 

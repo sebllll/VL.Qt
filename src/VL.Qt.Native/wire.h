@@ -51,6 +51,7 @@ void writeLE(void* p, T v)
 /* Payload size of a SET value, -1 = unknown value type. Variable length (string, f32 array, path): fixed part only. */
 inline int valueSize(quint16 vt)
 {
+    // TODO: VLQT_VALUE_TYPE_LIST (fixed part VLQT_LIST_VALUE_HEADER_SIZE, SET_QML_PROPERTIES only); refused as unknown until then.
     switch (vt) {
     case VLQT_VALUE_TYPE_F32_ARRAY: return 4;
     case VLQT_VALUE_TYPE_PATH: return 8;

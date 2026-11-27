@@ -19,12 +19,48 @@ QML is used inside VL.Qt for the control style and the effects, one `QQmlEngine`
 
 ### Node factory
 
-- **Pins come from a hand-written C# parser** of the declarations of the root object (`QmlDeclarations.Parse`, `Qml/Parsing/`), because it works at node-browser time without a running Qt engine, runs no user code and is unit-tested (`QmlDeclarationsTests`). It is the same model as the annotations of the shader nodes. Supported: `property`, `readonly property`, `required property` and `default property` of `real`, `double`, `int`, `bool`, `string`, `color`, `vector2d`, `vector3d`, `vector4d`, `point`, `size`, `rect` (what the wire carries), and `signal`. `alias`, `var`, `list<…>`, object types and `url`, `font`, … get no pin and one info message at the node; the optional `Properties` input stays for them. A root type that is a `.qml` file of the same folder contributes its declarations first, with a cycle guard.
+- **Pins come from a hand-written C# parser** of the declarations of the root object (`QmlDeclarations.Parse`, `Qml/Parsing/`), because it works at node-browser time without a running Qt engine, runs no user code and is unit-tested (`QmlDeclarationsTests`). It is the same model as the annotations of the shader nodes. Supported: `property`, `readonly property`, `required property` and `default property` of `real`, `double`, `int`, `bool`, `string`, `color`, `vector2d`, `vector3d`, `vector4d`, `point`, `size`, `rect` (what the wire carries), a `list<…>` of these ([List values](#list-values)), and `signal`. `alias`, `var`, lists of other types, object types and `url`, `font`, … get no pin and one info message at the node; the optional `Properties` input stays for them. A root type that is a `.qml` file of the same folder contributes its declarations first, with a cycle guard.
 - **Defaults and sending.** A literal initializer is the default of the pin; a binding or no initializer gives the default of the type. An input is sent once it differs from the declared default and from then on on every change; a `required property` is always sent. Because of this a binding in the file stays alive until the patch really sets the value.
 - **Inputs and outputs.** An input per non-readonly property; an output per property (the last value QML changed; visible for `readonly` and bound properties); a signal gives `bool` (no arguments), `Spread<T>` (one) or `Spread<QmlSignal>` (more). Input and output of a property share the pin name, because vvvv keeps the pin kind with the pin. The common pins come from one table (`QmlCommonPins`), in the order of `QmlElement`. Errors show at the node and in the log; there is no `Error` output.
 - **Discovery** in `qml/` folders next to documents and in packages, recursive, by the `FolderNodeFactory` that the shader nodes use too. Qt projects keep their QML in `qml/`, and Qt's own deployed QML modules never sit at a document or package root. Only files whose name starts with an uppercase letter count (the QML rule for components). Node name, the `_` variant, category and the head tags `// @category`, `// @summary`, `// @tags` follow the shader nodes.
 - **Hot reload by signature.** The node description is invalidated only when the declaration signature (`QmlDeclarations.Signature`) changes; any other edit only reloads the running instance, so editing the body of a component does not rebuild the patch. vvvv keeps the links on pins with the same name.
 - **A file that does not parse keeps the last good pins and values.** `LastGood` (shared with the shader nodes) keeps the pins of the last version that worked, and the patch's values stay at the pins, so a typo does not drop the node and its links. The error shows at the node and in the log, with a note that the pins are the old ones. The instance in QtNative is rebuilt on every reload and stays empty until the file compiles. A node that never had a good version has the common pins and the messages.
+
+### List values
+
+A `list<T>` property of a supported `T`, a `Spread` in the `Properties` dictionary and a list argument of a signal travel as one value of their own, `VLQT_VALUE_TYPE_LIST` (12). It is allowed in the entries of `SET_QML_PROPERTIES`, the value of `EVENT_QML_PROPERTY` and the arguments of `EVENT_QML_SIGNAL`, nowhere else (`SET`, `SET_UNIFORMS` and the effect chain refuse it with `-7`).
+
+| Bytes | Field |
+|---|---|
+| u16 | `elemType`: `F32`, `I32`, `BOOL`, `STRING`, `COLOR`, `RECTF`, `VEC2`, `VEC3` or `VEC4` |
+| u16 | 0 (reserved) |
+| u32 | `count`, 0..`VLQT_LIST_VALUE_MAX_COUNT` (65536) |
+| … | `count` elements of `elemType` |
+
+- **Elements.** A fixed-size element is encoded like a value of its type, the elements back to back without padding: `F32`, `I32` 4 bytes, `BOOL` 1 byte, `VEC2` 8, `VEC3` 12, `COLOR` (straight alpha), `RECTF` (x, y, width, height) and `VEC4` 16. A `STRING` element is u32 length, UTF-8 and zero padding to 4, the last one too, so every length starts 4-byte aligned. The value is `VLQT_LIST_VALUE_HEADER_SIZE` (8) plus `count` × element size, or plus the padded string elements; the entry or the argument around it pads it to 4 like any value.
+- **Decoding.** Both sides check the whole value before they use it: an `elemType` outside the list (also `LIST`), a reserved field that is not 0 or a `count` above the limit is `-7` (`BAD_ARGUMENT`), elements that leave the entry are `-2` (`BAD_LENGTH`). The C# decoder drops such an event. The SmokeTest `ApplyTest` has a case for each.
+- **Into QML.** QtNative converts the list to the type the property declares: `list<real>` to `QList<qreal>`, `list<point>` and `list<size>` from `VEC2` to `QList<QPointF>` and `QList<QSizeF>`, `list<color>` to `QList<QColor>`, and so on; a `var` property gets a JavaScript array of the elements, each converted like a single value of its type.
+- **Out of QML.** A list property or argument whose elements all have one wire type is sent as `LIST`; `int` and `real` mixed are `F32`. A list with an element of another type, or of mixed types, keeps the string form of today. An empty list carries the element type of the declaration, `F32` when there is none. A list longer than the limit is not sent; the element shows an error line naming the property.
+
+The C# side models a list as a kind of its own, so every switch over `QmlValueKind` keeps one case per pin type:
+
+| QML | `QmlValueKind` | Pin | `elemType` |
+|---|---|---|---|
+| `list<real>`, `list<double>` | `RealList` | `Spread<float>` | `F32` |
+| `list<int>` | `IntList` | `Spread<int>` | `I32` |
+| `list<bool>` | `BoolList` | `Spread<bool>` | `BOOL` |
+| `list<string>` | `StringList` | `Spread<string>` | `STRING` |
+| `list<color>` | `ColorList` | `Spread<Color4>` | `COLOR` |
+| `list<vector2d>` | `Vector2DList` | `Spread<Vector2>` | `VEC2` |
+| `list<point>` | `PointList` | `Spread<Vector2>` (x, y) | `VEC2` |
+| `list<size>` | `SizeList` | `Spread<Vector2>` (width, height) | `VEC2` |
+| `list<vector3d>` | `Vector3DList` | `Spread<Vector3>` | `VEC3` |
+| `list<vector4d>` | `Vector4DList` | `Spread<Vector4>` | `VEC4` |
+| `list<rect>` | `RectList` | `Spread<RectangleF>` | `RECTF` |
+
+- **Kinds.** The list kinds follow the element kinds in the same order; `QmlTypes.IsList`, `ElementKind` and `ListKind` convert between them, `QmlPropertyDecl.IsList` tells a list property. `ClrType` gives the Spread, `TypeDefault` the empty spread; a literal array (`[1, 2, 3]`, `[Qt.point(0, 1), Qt.point(1, 2)]`) is the pin default.
+- **Patch to wire.** `QmlValue.TryConvert` takes a `Spread` of `float`, `int`, `bool`, `string`, `Color4`, `Vector2`, `Vector3`, `Vector4` or `RectangleF` (no other element type, not more than the limit) without copying it: `ValueType` is `List`, `Integer` the element wire type, `Items` the spread. Two values are equal when their elements are, compared exactly like the single values; the same spread instance is equal at once, so an unchanged pin costs no walk.
+- **Wire to patch.** `QmlEventDecoder` turns a `LIST` into a boxed `Spread<T>` of the CLR type of the element (`F32` → `Spread<float>`, `VEC2` → `Spread<Vector2>`, …). `QmlTypes.TryCoerce` takes it for a list kind: an empty spread fits every list kind, `Spread<int>` and `Spread<float>` convert like the single values. A signal with one list argument gives a `Spread<Spread<T>>` pin; in a `QmlSignal` the argument is the `Spread<T>`.
 
 ### Time
 
