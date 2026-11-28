@@ -11,7 +11,7 @@ namespace VL.Qt.Wire
     internal static class Protocol
     {
         /// <summary>Version of the command protocol and the C ABI of vlqt.h; QtApp refuses a vlqt.dll with another one.</summary>
-        public const int AbiVersion = 27;
+        public const int AbiVersion = 29;
         public const int CommandAlign = 4;
         /// <summary>Header of a command, a poll record and a resource record: u16 op/event, u16 flags (0, reserved), u32 length.</summary>
         public const int HeaderSize = 8;
@@ -20,6 +20,8 @@ namespace VL.Qt.Wire
         public const uint RootId = 0;
         /// <summary>Max UTF-8 bytes of a uniform name in <see cref="Op.SetUniforms"/>.</summary>
         public const int UniformNameMax = 255;
+        /// <summary>Max elements of a <see cref="ValueType.List"/> value; the decoders of both sides refuse more.</summary>
+        public const int ListValueMaxCount = 65536;
 
         /// <summary>Whether <paramref name="name"/> can be sent as a uniform or QML property name (1..<see cref="UniformNameMax"/> UTF-8 bytes).</summary>
         public static bool IsValidName(string? name)
@@ -42,6 +44,12 @@ namespace VL.Qt.Wire
         public const int EffectChainLinkShaderFixedSize = 20;
         /// <summary>u32 feedbackId after the header of a poll record, in front of the payload.</summary>
         public const int EventFieldsSize = 4;
+        /// <summary>u16 element type, u16 0, u32 count in front of the elements of a <see cref="ValueType.List"/> value.</summary>
+        public const int ListValueHeaderSize = 8;
+        /// <summary>
+        /// f32 pixel size, i32 weight, u8 italic, 3 x u8 0, u32 family length in front of the family of a <see cref="ValueType.Font"/> value.
+        /// </summary>
+        public const int FontValueHeaderSize = 16;
 
         /// <summary>Opcodes (u16).</summary>
         internal static class Op
@@ -65,7 +73,8 @@ namespace VL.Qt.Wire
             /// <summary>Effect chain of an element: u32 id, u16 link count, u16 flags (0), then the links (<see cref="EffectChainLink"/>).</summary>
             public const ushort SetEffectChain = 17;
             /// <summary>Properties of a <see cref="ElementType.Qml"/> element's root by name: entries like <see cref="SetUniforms"/> entries,
-            /// and <see cref="ValueType.String"/> is allowed.</summary>
+            /// and <see cref="ValueType.String"/>, <see cref="ValueType.List"/>, <see cref="ValueType.DateTime"/> and <see cref="ValueType.Font"/>
+            /// are allowed.</summary>
             public const ushort SetQmlProperties = 18;
         }
 
@@ -96,6 +105,19 @@ namespace VL.Qt.Wire
             public const ushort F32Array = 10;
             /// <summary>u32 verbCount, u32 pointCount, verbs (u8, zero padded to 4 bytes), points (2 x f32 each).</summary>
             public const ushort Path = 11;
+            /// <summary>
+            /// u16 element type (F32, I32, Bool, String, Color, Rectf, Vec2, Vec3, Vec4 or DateTime), u16 0, u32 count (at most
+            /// <see cref="ListValueMaxCount"/>), then the elements: fixed-size ones back to back (Bool: one byte each), a String
+            /// element as u32 length + UTF-8 + zero padding to 4. QML properties and signal arguments only.
+            /// </summary>
+            public const ushort List = 12;
+            /// <summary>i64 milliseconds since 1970-01-01 UTC, long.MinValue = no date. QML properties, list elements and signal arguments only.</summary>
+            public const ushort DateTime = 13;
+            /// <summary>
+            /// f32 pixel size, i32 weight (1..1000), u8 italic, 3 x u8 0, u32 family length, family UTF-8 (empty = the default family).
+            /// QML properties and signal arguments only.
+            /// </summary>
+            public const ushort Font = 14;
         }
 
         /// <summary>Path verbs of <see cref="ValueType.Path"/> (u8).</summary>
@@ -438,7 +460,8 @@ namespace VL.Qt.Wire
             public const ushort Pinch = 16;
             /// <summary>User change of a value input: u16 value type (<see cref="ValueType"/>), u16 0, value encoded like SET.</summary>
             public const ushort Value = 17;
-            /// <summary>A root property that QML changed: u16 name length, u16 value type, name, padding to 4, value like <see cref="Value"/>.</summary>
+            /// <summary>A root property that QML changed: u16 name length, u16 value type, name, padding to 4, value like SET (the types of
+            /// <see cref="Op.SetQmlProperties"/>, <see cref="ValueType.List"/> included).</summary>
             public const ushort QmlProperty = 18;
             /// <summary>A root signal: u16 name length, u16 argument count, name, padding to 4, count x (u16 value type, u16 0, value, padding).</summary>
             public const ushort QmlSignal = 19;

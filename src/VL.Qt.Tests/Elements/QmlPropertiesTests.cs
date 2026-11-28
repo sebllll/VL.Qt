@@ -72,6 +72,34 @@ namespace VL.Qt.Tests.Elements
         }
 
         [Test]
+        public void Update_SpreadWithSameContent_KeepsTheInstance()
+        {
+            var d = new Dictionary<string, object> { ["l"] = new[] { 1f, 2f }.ToSpread(), ["s"] = new[] { "a", "b" }.ToSpread() };
+            var p = QmlProperties.Update(QmlProperties.Empty, d);
+            Assert.That(p.Count, Is.EqualTo(2));
+            Assert.That(p.TryGetValue("l", out var v) && v.ValueType == Protocol.ValueType.List, Is.True);
+            Assert.That(QmlProperties.Update(p, new Dictionary<string, object> { ["l"] = new[] { 1f, 2f }.ToSpread(), ["s"] = new[] { "a", "b" }.ToSpread() }),
+                Is.SameAs(p), "new spread instances, same elements");
+            Assert.That(QmlProperties.Update(p, new Dictionary<string, object> { ["l"] = new[] { 1f, 3f }.ToSpread(), ["s"] = new[] { "a", "b" }.ToSpread() }),
+                Is.Not.SameAs(p), "another element");
+            Assert.That(QmlProperties.Update(p, new Dictionary<string, object> { ["l"] = new[] { 1, 2 }.ToSpread(), ["s"] = new[] { "a", "b" }.ToSpread() }),
+                Is.Not.SameAs(p), "another element type");
+        }
+
+        [Test]
+        public void From_TooLongList_IsAProblem_AndNotSent()
+        {
+            var p = QmlProperties.From(new() { ["ok"] = new[] { 1f }.ToSpread(), ["big"] = new float[Protocol.ListValueMaxCount + 1].ToSpread() });
+            Assert.That(p.Count, Is.EqualTo(1));
+            Assert.That(p.Problems, Is.EqualTo($"Property 'big': a list can have at most {Protocol.ListValueMaxCount} elements, ignored"));
+            var d = new Dictionary<string, object> { ["big"] = new float[Protocol.ListValueMaxCount + 5].ToSpread() };
+            var q = QmlProperties.Update(QmlProperties.Empty, d);
+            Assert.That(QmlProperties.Update(q, new Dictionary<string, object> { ["big"] = new float[Protocol.ListValueMaxCount + 9].ToSpread() }),
+                Is.SameAs(q), "a refused list of the same type keeps the snapshot");
+            Assert.That(QmlProperties.Update(q, new Dictionary<string, object> { ["big"] = new float[3].ToSpread() }).Count, Is.EqualTo(1), "shortened below the limit: sent");
+        }
+
+        [Test]
         public void Update_MutatedInPlace_IsSeen()
         {
             var d = new Dictionary<string, object> { ["a"] = 1f };

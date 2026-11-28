@@ -35,7 +35,7 @@ namespace VL.Qt.Qml
                 invalidated: QmlNodeFactory.WatchSignature(file, () => Volatile.Read(ref signature)),
                 init: context =>
                 {
-                    var loaded = QmlNodeLayout.Load(file, logger);
+                    var loaded = QmlNodeLayout.Load(file, logger, QmlEnumPool.Shared);
                     // The signature of the file as it is now, also while the node shows the last good pins: the broken file then does
                     // not invalidate again with every event, and a fix does (it differs from the broken one).
                     Volatile.Write(ref signature, loaded.Declarations.Signature);

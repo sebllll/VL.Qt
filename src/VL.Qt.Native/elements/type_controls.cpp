@@ -1,6 +1,8 @@
 #include "elements/element_types.h"
 #include "elements/geometry.h"
 
+#include <QtCore/QVariant>
+#include <QtQml/QJSValue>
 #include <QtQuick/QQuickItem>
 
 namespace vlqt {
@@ -160,6 +162,38 @@ TypeDef sliderType()
 TypeDef textFieldType()
 {
     return control(VLQT_ELEMENT_TYPE_TEXT_FIELD, "TEXT_FIELD", kTextFieldQml, textFieldProps());
+}
+
+// Esc: back to the last set or committed value, without a user signal (see "Value inputs" above). The focus loss that
+// follows finds nothing changed, so no EVENT_VALUE. Only these two inputs: Esc is not a window-wide rule.
+bool discardEdit(QQuickItem* owner)
+{
+    if (owner->inherits("QQuickTextField")) {
+        const QVariant committed = owner->property("vlqtCommitted");
+        if (committed.isValid() && owner->property("text").toString() != committed.toString())
+            owner->setProperty("text", committed);
+        return true;
+    }
+    if (owner->inherits("QQuickSpinBox")) {
+        // The typed text lives in contentItem (and displayText follows it); the focus loss would parse and commit
+        // it (valueModified). Show the value again, formatted by the control's own textFromValue: a C++ write keeps
+        // the style's binding text: control.displayText, and the value is unchanged, so no valueModified.
+        auto* content = owner->property("contentItem").value<QQuickItem*>();
+        if (!content)
+            return true;
+        const int value = owner->property("value").toInt();
+        QString shown = QString::number(value);
+        QJSValue fn = owner->property("textFromValue").value<QJSValue>();
+        if (fn.isCallable()) {
+            const QJSValue r = fn.call({QJSValue(value)});
+            if (!r.isError())
+                shown = r.toString();
+        }
+        if (content->property("text").toString() != shown)
+            content->setProperty("text", shown);
+        return true;
+    }
+    return false;
 }
 
 } // namespace vlqt

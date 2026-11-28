@@ -11,7 +11,8 @@
  * kSignalBase + j. Qt stores the id in a ushort, so both ranges end below 65536; a root with more properties or signals
  * than the ranges hold is watched only up to the limit and the owner shows one error line for it.
  *
- * Reported through the owner (QmlItem::rejectRootProperty): a property whose value has no wire type, once per property.
+ * Reported through the owner (QmlItem::rejectRootProperty): a property whose value has no wire type (or is a list over the
+ * limit), once per property; a signal with a list argument over the limit is not sent and reported at each emit.
  */
 #pragma once
 

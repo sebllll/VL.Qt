@@ -71,7 +71,8 @@
 	</Topic>
 	<Topic title="QML">
 		<VLDocument link="Qt\HowTo Use a QML file.vl" tags="qmlelement qml file hot reload signal property" />
-		<VLDocument link="Qt\HowTo Create QML Nodes from Files.vl" tags="qml node factory pins signal property component" />
+		<VLDocument link="Qt\HowTo Create QML Nodes from Files.vl" tags="qml node factory pins signal property component alias url font date enum" />
+		<VLDocument link="Qt\HowTo Interact with QML.vl" tags="qml input pointer mouse keyboard focus interaction" />
 	</Topic>
 	<Topic title="Window and Diagnostics">
 		<VLDocument link="Qt\HowTo Set a Window Icon.vl" tags="title fullscreen" />

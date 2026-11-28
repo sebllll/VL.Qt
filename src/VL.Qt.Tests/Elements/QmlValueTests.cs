@@ -34,6 +34,9 @@ namespace VL.Qt.Tests.Elements
             yield return new TestCaseData(new Vector3(1, 2, 3), Protocol.ValueType.Vec3);
             yield return new TestCaseData(new Vector4(1, 2, 3, 4), Protocol.ValueType.Vec4);
             yield return new TestCaseData(new RectangleF(1, 2, 3, 4), Protocol.ValueType.Rectf);
+            yield return new TestCaseData(new Path("C:/a.png"), Protocol.ValueType.String);
+            yield return new TestCaseData(new DateTime(2024, 5, 1, 12, 30, 0, DateTimeKind.Utc), Protocol.ValueType.DateTime);
+            yield return new TestCaseData(new Font(), Protocol.ValueType.Font);
         }
 
         [TestCaseSource(nameof(Supported))]
@@ -60,6 +63,13 @@ namespace VL.Qt.Tests.Elements
             Assert.That(i.Integer, Is.EqualTo(-5));
             QmlValue.TryConvert("hi", out var s);
             Assert.That(s.Text, Is.EqualTo("hi"));
+            QmlValue.TryConvert(new DateTime(1970, 1, 1, 0, 0, 1, 500, DateTimeKind.Utc), out var date);
+            Assert.That(date.Long, Is.EqualTo(1500L), "milliseconds since 1970 UTC");
+            QmlValue.TryConvert(new Font { Family = "Arial", Size = 0.24f, Weight = 700, Italic = true }, out var font);
+            Assert.That((font.Text, font.A, font.Integer, font.B), Is.EqualTo(("Arial", 0.24f, 700, 1f)), "size in units, italic in B");
+            QmlValue.TryConvert(new Path("img/a b.png"), out var p);
+            Assert.That(p.Text, Is.EqualTo("img/a b.png"), "the text of the path, as it is");
+            Assert.That(p, Is.EqualTo(s with { Text = "img/a b.png" }), "the same wire value as the string");
         }
 
         private static IEnumerable<TestCaseData> Unsupported()
@@ -68,7 +78,7 @@ namespace VL.Qt.Tests.Elements
             yield return new TestCaseData(5L);
             yield return new TestCaseData((byte)1);
             yield return new TestCaseData(new object());
-            yield return new TestCaseData(DateTime.Now);
+            yield return new TestCaseData(TimeSpan.FromSeconds(1));
             yield return new TestCaseData(new Int2(1, 2));
         }
 
@@ -90,6 +100,17 @@ namespace VL.Qt.Tests.Elements
         }
 
         [Test]
+        public void Equality_Date_IsTheInstant_NotTheKind()
+        {
+            var utc = new DateTime(2024, 5, 1, 10, 0, 0, DateTimeKind.Utc);
+            QmlValue.TryConvert(utc, out var a);
+            QmlValue.TryConvert(utc.ToLocalTime(), out var b);
+            QmlValue.TryConvert(utc.AddMilliseconds(1), out var c);
+            Assert.That(a, Is.EqualTo(b));
+            Assert.That(a, Is.Not.EqualTo(c));
+        }
+
+        [Test]
         public void Equality_SameNumber_DifferentWireType()
         {
             QmlValue.TryConvert(3f, out var f);
@@ -104,6 +125,153 @@ namespace VL.Qt.Tests.Elements
         [Test]
         public void Describe_UnsupportedType() =>
             Assert.That(QmlValue.Describe("t", 5L),
-                Is.EqualTo("Property 't': type Int64 is not supported, ignored (use float, int, bool, string, Color4, Vector2/3/4 or RectangleF)"));
+                Is.EqualTo("Property 't': type Int64 is not supported, ignored "
+                    + "(use float, int, bool, string, Path, Color4, Vector2/3/4, RectangleF, DateTime or Font, or a Spread of one of them but Font)"));
+
+        [Test]
+        public void Describe_UnsupportedSpread_NamesTheElementType() =>
+            Assert.That(QmlValue.Describe("t", new[] { Matrix.Identity }.ToSpread()), Does.StartWith("Property 't': type Spread<Matrix> is not supported"));
+
+        [Test]
+        public void Describe_TooLongList_DoesNotDependOnTheCount()
+        {
+            var a = QmlValue.Describe("t", new float[Protocol.ListValueMaxCount + 1].ToSpread());
+            Assert.That(a, Is.EqualTo($"Property 't': a list can have at most {Protocol.ListValueMaxCount} elements, ignored"));
+            Assert.That(QmlValue.Describe("t", new float[Protocol.ListValueMaxCount + 9].ToSpread()), Is.EqualTo(a), "QmlProperties keeps the text per name and type");
+        }
+
+        // --- lists ---
+
+        private static IEnumerable<TestCaseData> Lists()
+        {
+            yield return new TestCaseData(new[] { 1f, 2f }.ToSpread(), Protocol.ValueType.F32);
+            yield return new TestCaseData(new[] { 1, 2 }.ToSpread(), Protocol.ValueType.I32);
+            yield return new TestCaseData(new[] { true, false }.ToSpread(), Protocol.ValueType.Bool);
+            yield return new TestCaseData(new[] { "a", "b" }.ToSpread(), Protocol.ValueType.String);
+            yield return new TestCaseData(new[] { new Color4(1, 0, 0, 1) }.ToSpread(), Protocol.ValueType.Color);
+            yield return new TestCaseData(new[] { new Vector2(1, 2) }.ToSpread(), Protocol.ValueType.Vec2);
+            yield return new TestCaseData(new[] { new Vector3(1, 2, 3) }.ToSpread(), Protocol.ValueType.Vec3);
+            yield return new TestCaseData(new[] { new Vector4(1, 2, 3, 4) }.ToSpread(), Protocol.ValueType.Vec4);
+            yield return new TestCaseData(new[] { new RectangleF(1, 2, 3, 4) }.ToSpread(), Protocol.ValueType.Rectf);
+            yield return new TestCaseData(Spread<float>.Empty, Protocol.ValueType.F32);
+            yield return new TestCaseData(Spread<string>.Empty, Protocol.ValueType.String);
+            yield return new TestCaseData(new[] { new Path("a.png"), new Path("https://example.com/b.png") }.ToSpread(), Protocol.ValueType.String);
+            yield return new TestCaseData(new[] { new DateTime(2024, 5, 1, 0, 0, 0, DateTimeKind.Utc), DateTime.MinValue }.ToSpread(), Protocol.ValueType.DateTime);
+        }
+
+        [TestCaseSource(nameof(Lists))]
+        public void TryConvert_Spread_IsAListOfItsElementType(object spread, ushort elementType)
+        {
+            Assert.That(QmlValue.TryConvert(spread, out var v), Is.True);
+            Assert.That(v.ValueType, Is.EqualTo(Protocol.ValueType.List));
+            Assert.That(v.Integer, Is.EqualTo((int)elementType));
+            Assert.That(v.Items, Is.SameAs(spread), "the spread is kept, not copied");
+        }
+
+        [Test]
+        public void TryConvert_Spread_Unsupported()
+        {
+            Assert.That(QmlValue.TryConvert(new[] { 1L }.ToSpread(), out _), Is.False);
+            Assert.That(QmlValue.TryConvert(new[] { Matrix.Identity }.ToSpread(), out _), Is.False);
+            Assert.That(QmlValue.TryConvert(new object[] { 1f }.ToSpread(), out _), Is.False);
+            Assert.That(QmlValue.TryConvert(new[] { new Int2(1, 2) }.ToSpread(), out _), Is.False);
+        }
+
+        [Test]
+        public void TryConvert_ListLimit_IsTheProtocolMax()
+        {
+            Assert.That(QmlValue.TryConvert(new float[Protocol.ListValueMaxCount].ToSpread(), out _), Is.True);
+            Assert.That(QmlValue.TryConvert(new float[Protocol.ListValueMaxCount + 1].ToSpread(), out _), Is.False);
+            Assert.That(QmlValue.TryConvert(new Vector4[Protocol.ListValueMaxCount + 1].ToSpread(), out _), Is.False);
+            Assert.That(QmlValue.TryConvert(new string[Protocol.ListValueMaxCount + 1].ToSpread(), out _), Is.False);
+        }
+
+        private static QmlValue Convert(object value)
+        {
+            Assert.That(QmlValue.TryConvert(value, out var v), Is.True);
+            return v;
+        }
+
+        [TestCaseSource(nameof(Lists))]
+        public void Equality_Lists_ByContent_NotByInstance(object spread, ushort _)
+        {
+            var copy = Rebuild(spread);
+            Assert.That(Convert(copy), Is.EqualTo(Convert(spread)));
+            Assert.That(Convert(copy).GetHashCode(), Is.EqualTo(Convert(spread).GetHashCode()));
+        }
+
+        // A second instance with the same elements.
+        private static object Rebuild(object spread) => spread switch
+        {
+            Spread<float> s => s.ToArray().ToSpread(),
+            Spread<int> s => s.ToArray().ToSpread(),
+            Spread<bool> s => s.ToArray().ToSpread(),
+            Spread<string> s => s.ToArray().Select(x => new string(x.AsSpan())).ToArray().ToSpread(),
+            Spread<Color4> s => s.ToArray().ToSpread(),
+            Spread<Vector2> s => s.ToArray().ToSpread(),
+            Spread<Vector3> s => s.ToArray().ToSpread(),
+            Spread<Vector4> s => s.ToArray().ToSpread(),
+            Spread<RectangleF> s => s.ToArray().ToSpread(),
+            Spread<Path> s => s.ToArray().Select(x => new Path(new string(x.Value.AsSpan()))).ToArray().ToSpread(),
+            Spread<DateTime> s => s.ToArray().ToSpread(),
+            _ => throw new ArgumentException(spread.GetType().Name),
+        };
+
+        [Test]
+        public void Equality_Lists_DifferentElementOrCount_IsNotEqual()
+        {
+            var a = Convert(new[] { 1f, 2f, 3f }.ToSpread());
+            Assert.That(Convert(new[] { 1f, 2f, 4f }.ToSpread()), Is.Not.EqualTo(a));
+            Assert.That(Convert(new[] { 1f, 2f }.ToSpread()), Is.Not.EqualTo(a));
+            Assert.That(Convert(new[] { 1f, 2f, 3f, 3f }.ToSpread()), Is.Not.EqualTo(a));
+            Assert.That(Convert(Spread<float>.Empty), Is.Not.EqualTo(a));
+            Assert.That(Convert(Spread<float>.Empty), Is.EqualTo(Convert(Spread<float>.Empty)));
+            Assert.That(Convert(new[] { "a", "b" }.ToSpread()), Is.Not.EqualTo(Convert(new[] { "a", "B" }.ToSpread())), "strings are compared ordinal");
+            Assert.That(Convert(new[] { true, false }.ToSpread()), Is.Not.EqualTo(Convert(new[] { true, true }.ToSpread())));
+        }
+
+        [Test]
+        public void Equality_Lists_OtherElementType_SameBits_IsNotEqual()
+        {
+            Assert.That(Convert(Spread<float>.Empty), Is.Not.EqualTo(Convert(Spread<int>.Empty)));
+            Assert.That(Convert(new[] { new Vector2(1, 2) }.ToSpread()), Is.Not.EqualTo(Convert(new[] { new Vector4(1, 2, 0, 0) }.ToSpread())));
+            Assert.That(Convert(new[] { 1f }.ToSpread()), Is.Not.EqualTo(Convert(1f)));
+        }
+
+        [Test]
+        public void Equality_Lists_IsExact_NotNearEqual()
+        {
+            Assert.That(Convert(new[] { new Vector2(1, 2) }.ToSpread()),
+                Is.Not.EqualTo(Convert(new[] { new Vector2(1, MathF.BitIncrement(2)) }.ToSpread())));
+            Assert.That(Convert(new[] { new Color4(0, 0, 0, 1) }.ToSpread()),
+                Is.Not.EqualTo(Convert(new[] { new Color4(0, 0, 0, MathF.BitIncrement(1)) }.ToSpread())));
+            Assert.That(Convert(new[] { new RectangleF(1, 2, 3, 4) }.ToSpread()),
+                Is.Not.EqualTo(Convert(new[] { new RectangleF(1, 2, 3, MathF.BitIncrement(4)) }.ToSpread())));
+        }
+
+        [Test]
+        public void Equality_Lists_FloatsLikeTheScalars()
+        {
+            // float.Equals: NaN equals NaN (a NaN list does not resend every frame), 0 equals -0, like the scalar compare.
+            Assert.That(Convert(new[] { float.NaN }.ToSpread()), Is.EqualTo(Convert(new[] { float.NaN }.ToSpread())));
+            Assert.That(Convert(new[] { 0f }.ToSpread()), Is.EqualTo(Convert(new[] { -0f }.ToSpread())));
+            Assert.That(Convert(new[] { 0f }.ToSpread()).GetHashCode(), Is.EqualTo(Convert(new[] { -0f }.ToSpread()).GetHashCode()));
+            Assert.That(Convert(float.NaN), Is.EqualTo(Convert(float.NaN)));
+        }
+
+        [Test]
+        public void Equality_Lists_AllocatesNothing()
+        {
+            var a = Convert(Enumerable.Range(0, 1000).Select(i => new Vector2(i, -i)).ToArray().ToSpread());
+            var b = Convert(Enumerable.Range(0, 1000).Select(i => new Vector2(i, -i)).ToArray().ToSpread());
+            var c = Convert(Enumerable.Range(0, 1000).Select(i => i % 2 == 0 ? "a" : "b").ToArray().ToSpread());
+            var d = Convert(Enumerable.Range(0, 1000).Select(i => i % 2 == 0 ? "a" : "b").ToArray().ToSpread());
+            bool eq = a == b && c == d && QmlValue.TryConvert(a.Items, out _);
+            long before = GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 10; i++)
+                eq &= a == b && c == d && QmlValue.TryConvert(a.Items, out _);
+            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+            Assert.That(eq, Is.True);
+        }
     }
 }

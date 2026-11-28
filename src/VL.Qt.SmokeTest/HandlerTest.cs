@@ -67,6 +67,10 @@ public static partial class HandlerTest
     [Test, Category("input-latency")]
     public static void InputLatency() => Scenario.Run(RunInputLatency);
 
+    /// <summary>Pointer and keyboard input inside user QML, with handlers, stacking and focus.</summary>
+    [Test, Category("qml-input")]
+    public static void QmlInput() => Scenario.Run(RunQmlInput);
+
     private readonly record struct Rec(ushort Event, uint Handle, byte[] Payload)
     {
         public float F(int i) => BinaryPrimitives.ReadSingleLittleEndian(Payload.AsSpan(4 * i));
@@ -436,12 +440,16 @@ public static partial class HandlerTest
         /// <summary>Last EVENT_SCENE_BOUNDS per feedback of bound elements (x, y, w, h), updated by every Frame.</summary>
         public readonly Dictionary<uint, (float X, float Y, float W, float H)> Bounds = new();
 
+        /// <summary>Every record of the last Frame, not only the pointer events it returns.</summary>
+        public List<Rec> All { get; private set; } = new();
+
         public List<Rec> Frame()
         {
             _s.Pump(1);
             int n = NativeCalls.Poll(W, _buf);
             _s.Check(n >= 0, $"{_tag}: poll ({n})");
             var all = Parse(_buf.AsSpan(0, Math.Max(n, 0)), _s);
+            All = all;
             foreach (var r in all)
                 if (r.Event == Protocol.EventId.SceneBounds && r.Payload.Length == 16)
                     Bounds[r.Handle] = (r.F(0), r.F(1), r.F(2), r.F(3));

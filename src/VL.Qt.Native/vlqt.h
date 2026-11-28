@@ -269,7 +269,10 @@ VLQT_API int       vlqt_scene_get_apply_error(vlqt_scene* scene, vlqt_apply_erro
  * docs/design/events-and-interaction.md, "The way back: feedback". */
 VLQT_API int       vlqt_scene_poll(vlqt_scene* scene, unsigned char* out, int cap, int* written, int* required);
 /* Size and device pixel ratio (vlqt_scene_metrics). Live values, cheap enough for every frame. Main thread. 0,
- * VLQT_ERR_NULL_HANDLE, VLQT_ERR_BAD_ARGUMENT null out. */
+ * VLQT_ERR_NULL_HANDLE, VLQT_ERR_BAD_ARGUMENT null out. A window in the space Normalized (scale follows the height) or
+ * PixelTopLeft (follows the dpr) does not render a pump in which its size or dpr changed after the last call: the lengths
+ * of the client were scaled with the old values. The render comes in the pump after the client has called this again;
+ * a client that never calls it is not held. */
 VLQT_API int       vlqt_scene_get_metrics(vlqt_scene* scene, vlqt_scene_metrics* out);
 /* Number of frames in which the scene changed since it was created (item/reconciler/video update(), polish, resize):
  * not every pump, and not the render a grab (vlqt_snapshot_start / _fit) triggers by itself, so a static scene keeps
@@ -333,7 +336,8 @@ VLQT_API int   vlqt_window_set_icon(vlqt_scene* window, const char* utf8Path);
  *   BORDERLESS  Qt::FramelessWindowHint; the client area stays where it is.
  *   FULLSCREEN  fullscreen on the screen with the largest share of the window; off restores the geometry from
  *               before. BORDERLESS changes while fullscreen take effect on leaving fullscreen.
- *               F11 / Alt+Enter in the window toggle this bit (like VL.Skia). No effect on eglfs (always fullscreen).
+ *               F11 / Alt+Enter in the window toggle this bit (like VL.Skia) while vlqt_window_set_keys is on. No
+ *               effect on eglfs (always fullscreen).
  * EVENT_WINDOW_GEOMETRY reports the resulting state (VLQT_WINDOW_STATE_FULLSCREEN). vlqt_window_get_mode = requested
  * modes (>= 0), VLQT_ERR_NULL_HANDLE. Both do nothing on an offscreen scene (get: 0). */
 VLQT_API int   vlqt_window_set_mode(vlqt_scene* window, unsigned int mask, unsigned int value);
@@ -350,9 +354,10 @@ VLQT_API int   vlqt_window_set_samples(vlqt_scene* window, int requested);
 /* Sample count of the window: of its swap chain once it has one, else the count it will be created with. 0 on an
  * offscreen scene, VLQT_ERR_NULL_HANDLE. */
 VLQT_API int   vlqt_window_get_samples(vlqt_scene* window);
-/* The diagnostic keys of the window (Renderer [Qt] Enable Keyboard Shortcuts): on != 0 (default) = F2 (perfmeter), F5 and
- * Shift+F5 (stats), F6 (freeze), F7 (host segments) are taken by QtNative and never reach the scene; 0 = none of them is
- * taken, the keys reach the scene, and an open overlay stays as it is. Kept when the window is replaced by
+/* The keys of the window (Renderer [Qt] Enable Keyboard Shortcuts): on != 0 (default) = F2 (perfmeter), F5 and Shift+F5
+ * (stats), F6 (freeze), F7 (host segments), F11 and Alt+Enter (fullscreen, vlqt_window_set_mode) are taken by QtNative
+ * and never reach the scene; 0 = none of them is taken, the keys reach the scene, and an open overlay and the fullscreen
+ * state stay as they are. Kept when the window is replaced by
  * vlqt_window_set_samples. 0, VLQT_ERR_NULL_HANDLE; a no-op on an offscreen scene (it gets no keyboard focus). Main
  * thread. */
 VLQT_API int   vlqt_window_set_keys(vlqt_scene* window, int on);

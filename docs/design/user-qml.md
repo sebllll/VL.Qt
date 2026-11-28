@@ -15,16 +15,53 @@ QML is used inside VL.Qt for the control style and the effects, one `QQmlEngine`
 - **Only what the root declares comes back.** A `QmlWatcher` reports each `property` and `signal` that the root of the file declares, not what `Item` already has. It is connected before the bindings of the file run, so what QML derives from the initial values is reported.
 - **No echo of the value just set.** Only the value the patch has set is suppressed; a later change by QML (a `Behavior`, an animation, a binding) or a property that depends on it comes back. Because of this the patch can set a property and read it back without a feedback loop.
 - **Auto Size** takes `width` and `height` of the root, which are `implicitWidth` and `implicitHeight` unless the file sets an explicit size on its root.
+- **Input inside the file is part of the API** (issue #422), so that widgets can be written in QML. QtNative has no input routing of its own: it sends ordinary Qt events to the window, and the handlers of the `Interaction` pin are ordinary Qt handlers at the element ([input.md](input.md)), so a `MouseArea` in the file follows the same grab rules as they do. Two rules of the `FocusRelease` filter (`window/focus_release.h`) are fitted to widgets: a user QML element is one focus owner (a press inside it keeps the focus), and Esc releases the focus only in the built-in TextField and SpinBox (`discardEdit`, `elements/type_controls.cpp`); every other item gets Esc as a key. SmokeTest `qml-input`.
 - **Hot reload watches the folder of the file** (the file, `*.qml`, `qmldir`), not subfolders, `.js` files or images. On a change `QML_RELOAD` clears the component cache and rebuilds the instance. A new element of a file that changed on disk since the last compile reads the file again too (QtNative keeps size and modification time per engine), because a node rebuilt after a declaration change must not show the old version.
 
 ### Node factory
 
-- **Pins come from a hand-written C# parser** of the declarations of the root object (`QmlDeclarations.Parse`, `Qml/Parsing/`), because it works at node-browser time without a running Qt engine, runs no user code and is unit-tested (`QmlDeclarationsTests`). It is the same model as the annotations of the shader nodes. Supported: `property`, `readonly property`, `required property` and `default property` of `real`, `double`, `int`, `bool`, `string`, `color`, `vector2d`, `vector3d`, `vector4d`, `point`, `size`, `rect` (what the wire carries), and `signal`. `alias`, `var`, `list<…>`, object types and `url`, `font`, … get no pin and one info message at the node; the optional `Properties` input stays for them. A root type that is a `.qml` file of the same folder contributes its declarations first, with a cycle guard.
-- **Defaults and sending.** A literal initializer is the default of the pin; a binding or no initializer gives the default of the type. An input is sent once it differs from the declared default and from then on on every change; a `required property` is always sent. Because of this a binding in the file stays alive until the patch really sets the value.
+- **Pins come from a hand-written C# parser** of the declarations of the root object (`QmlDeclarations.Parse`, `Qml/Parsing/`), because it works at node-browser time without a running Qt engine, runs no user code and is unit-tested (`QmlDeclarationsTests`). It is the same model as the annotations of the shader nodes. Supported: `property`, `readonly property`, `required property` and `default property` of `real`, `double`, `int`, `bool`, `string`, `color`, `vector2d`, `vector3d`, `vector4d`, `point`, `size`, `rect` (what the wire carries), `date` (a `DateTime` pin, milliseconds since 1970 UTC on the wire), `font` (a `Font` pin with the fields and units of the font of `Text`; C# converts the size with the mapping of the scene both ways and sends fonts again when the unit scale changes), `url` (a `Path` pin, sent as its text; QtNative makes a local path a file URL, because Qt's own conversion would read the drive letter as a scheme), a `list<…>` of these ([List values](#list-values)), a `property alias` whose target the parser can resolve without an engine (a property a child of the file declares, a property of a small table of built-in types, a root property of a sibling component; the default comes from the child's assignment, the declaration's literal or Qt's own value), and `signal`. A declaration marked `// @internal` in its comment block, or named with a leading `_`, is dropped by the parser: it gets no pin and no message, it is not inherited from a sibling root type (a redeclaration removes the inherited pin) and it stays out of the signature. The author keeps internal state on the root, where QML code puts it, instead of in a child `QtObject` that the parser does not read. An alias that does not resolve, `var`, lists of other types, object types and value types without a counterpart (`matrix4x4`, …) get no pin and one info message at the node; the optional `Properties` input stays for them. A root type that is a `.qml` file of the same folder contributes its declarations first, with a cycle guard.
+- **Defaults and sending.** A literal initializer is the default of the pin; a binding or no initializer gives the default of the type. An input is sent once it differs from the declared default and from then on on every change; a `required property` is always sent. "Differs" is exact (`ExactComparer`, also for the elements of a list): Stride's own equality of vectors and rects is a near-equal compare and would swallow tiny changes. Because of this a binding in the file stays alive until the patch really sets the value.
 - **Inputs and outputs.** An input per non-readonly property; an output per property (the last value QML changed; visible for `readonly` and bound properties); a signal gives `bool` (no arguments), `Spread<T>` (one) or `Spread<QmlSignal>` (more). Input and output of a property share the pin name, because vvvv keeps the pin kind with the pin. The common pins come from one table (`QmlCommonPins`), in the order of `QmlElement`. Errors show at the node and in the log; there is no `Error` output.
 - **Discovery** in `qml/` folders next to documents and in packages, recursive, by the `FolderNodeFactory` that the shader nodes use too. Qt projects keep their QML in `qml/`, and Qt's own deployed QML modules never sit at a document or package root. Only files whose name starts with an uppercase letter count (the QML rule for components). Node name, the `_` variant, category and the head tags `// @category`, `// @summary`, `// @tags` follow the shader nodes.
 - **Hot reload by signature.** The node description is invalidated only when the declaration signature (`QmlDeclarations.Signature`) changes; any other edit only reloads the running instance, so editing the body of a component does not rebuild the patch. vvvv keeps the links on pins with the same name.
 - **A file that does not parse keeps the last good pins and values.** `LastGood` (shared with the shader nodes) keeps the pins of the last version that worked, and the patch's values stay at the pins, so a typo does not drop the node and its links. The error shows at the node and in the log, with a note that the pins are the old ones. The instance in QtNative is rebuilt on every reload and stays empty until the file compiles. A node that never had a good version has the common pins and the messages.
+
+### List values
+
+A `list<T>` property of a supported `T`, a `Spread` in the `Properties` dictionary and a list argument of a signal travel as one value of their own, `VLQT_VALUE_TYPE_LIST` (12). It is allowed in the entries of `SET_QML_PROPERTIES`, the value of `EVENT_QML_PROPERTY` and the arguments of `EVENT_QML_SIGNAL`, nowhere else (`SET`, `SET_UNIFORMS` and the effect chain refuse it with `-7`).
+
+| Bytes | Field |
+|---|---|
+| u16 | `elemType`: `F32`, `I32`, `BOOL`, `STRING`, `COLOR`, `RECTF`, `VEC2`, `VEC3` or `VEC4` |
+| u16 | 0 (reserved) |
+| u32 | `count`, 0..`VLQT_LIST_VALUE_MAX_COUNT` (65536) |
+| … | `count` elements of `elemType` |
+
+- **Elements.** A fixed-size element is encoded like a value of its type, the elements back to back without padding: `F32`, `I32` 4 bytes, `BOOL` 1 byte, `VEC2` 8, `VEC3` 12, `COLOR` (straight alpha), `RECTF` (x, y, width, height) and `VEC4` 16. A `STRING` element is u32 length, UTF-8 and zero padding to 4, the last one too, so every length starts 4-byte aligned. The value is `VLQT_LIST_VALUE_HEADER_SIZE` (8) plus `count` × element size, or plus the padded string elements; the entry or the argument around it pads it to 4 like any value.
+- **Decoding.** Both sides check the whole value before they use it: an `elemType` outside the list (also `LIST`), a reserved field that is not 0 or a `count` above the limit is `-7` (`BAD_ARGUMENT`), elements that leave the entry are `-2` (`BAD_LENGTH`). The C# decoder drops such an event. The SmokeTest `ApplyTest` has a case for each.
+- **Into QML.** QtNative converts the list to the type the property declares: `list<real>` to `QList<qreal>`, `list<point>` and `list<size>` from `VEC2` to `QList<QPointF>` and `QList<QSizeF>`, `list<color>` to `QList<QColor>`, and so on; a `var` property gets a JavaScript array of the elements, each converted like a single value of its type.
+- **Out of QML.** A list property or argument whose elements all have one wire type is sent as `LIST`; `int` and `real` mixed are `F32`. A list with an element of another type, or of mixed types, arrives as a string in JSON form, for example `[1,"a"]`. An empty list carries the element type of the declaration, `F32` when there is none. A list longer than the limit is not sent; the element shows an error line naming the property.
+
+The C# side models a list as a kind of its own, so every switch over `QmlValueKind` keeps one case per pin type:
+
+| QML | `QmlValueKind` | Pin | `elemType` |
+|---|---|---|---|
+| `list<real>`, `list<double>` | `RealList` | `Spread<float>` | `F32` |
+| `list<int>` | `IntList` | `Spread<int>` | `I32` |
+| `list<bool>` | `BoolList` | `Spread<bool>` | `BOOL` |
+| `list<string>` | `StringList` | `Spread<string>` | `STRING` |
+| `list<color>` | `ColorList` | `Spread<Color4>` | `COLOR` |
+| `list<vector2d>` | `Vector2DList` | `Spread<Vector2>` | `VEC2` |
+| `list<point>` | `PointList` | `Spread<Vector2>` (x, y) | `VEC2` |
+| `list<size>` | `SizeList` | `Spread<Vector2>` (width, height) | `VEC2` |
+| `list<vector3d>` | `Vector3DList` | `Spread<Vector3>` | `VEC3` |
+| `list<vector4d>` | `Vector4DList` | `Spread<Vector4>` | `VEC4` |
+| `list<rect>` | `RectList` | `Spread<RectangleF>` | `RECTF` |
+
+- **Kinds.** The list kinds follow the element kinds in the same order; `QmlTypes.IsList`, `ElementKind` and `ListKind` convert between them, `QmlPropertyDecl.IsList` tells a list property. `ClrType` gives the Spread, `TypeDefault` the empty spread; a literal array (`[1, 2, 3]`, `[Qt.point(0, 1), Qt.point(1, 2)]`) is the pin default.
+- **Patch to wire.** `QmlValue.TryConvert` takes a `Spread` of `float`, `int`, `bool`, `string`, `Color4`, `Vector2`, `Vector3`, `Vector4` or `RectangleF` (no other element type, not more than the limit) without copying it: `ValueType` is `List`, `Integer` the element wire type, `Items` the spread. Two values are equal when their elements are, compared exactly like the single values; the same spread instance is equal at once, so an unchanged pin costs no walk.
+- **Wire to patch.** `QmlEventDecoder` turns a `LIST` into a boxed `Spread<T>` of the CLR type of the element (`F32` → `Spread<float>`, `VEC2` → `Spread<Vector2>`, …). `QmlTypes.TryCoerce` takes it for a list kind: an empty spread fits every list kind, `Spread<int>` and `Spread<float>` convert like the single values. A signal with one list argument gives a `Spread<Spread<T>>` pin; in a `QmlSignal` the argument is the `Spread<T>`.
 
 ### Time
 
@@ -51,6 +88,8 @@ The rule "no JavaScript for logic" applies to the QML of the built-in elements o
 - **A native probe for the pins:** needs a running engine at node-browser time and loads user code; the parser needs neither.
 - **Animations that run free on wall time:** rejected; they follow the vvvv clock through the driver.
 - **An import filter for non-LGPL modules:** rejected; not shipping the modules is the simplest guarantee.
+- **Input only through the `Interaction` pin, QML input without guarantees:** rejected; it works through Qt's own delivery anyway, and without it a widget would have to be rebuilt from `Interaction` nodes and properties.
+- **Esc releases the focus in every element:** rejected; a keyboard-driven widget needs Esc itself. Discarding an edit belongs to the text inputs.
 
 ## Open questions
 

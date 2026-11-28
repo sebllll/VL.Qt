@@ -6,6 +6,7 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using VL.Core;
 using VL.Core.Diagnostics;
+using VL.Lib.Collections;
 using VL.Qt.NodeFactories;
 
 namespace VL.Qt.Qml
@@ -40,7 +41,7 @@ namespace VL.Qt.Qml
             foreach (var pin in QmlCommonPins.LeadingInputs)
                 inputs.Add(Describe(pin));
             foreach (var pin in PropertyInputs)
-                inputs.Add(new FilePinDescription(pin.Name, pin.Property.ClrType, pin.Property.Default, PinSummary(pin.Property)));
+                inputs.Add(new FilePinDescription(pin.Name, pin.PinType, pin.PinDefault, PinSummary(pin.Property, pin.EnumSlot)));
             inputs.Add(Describe(QmlCommonPins.Properties));
             foreach (var pin in QmlCommonPins.TrailingInputs)
                 inputs.Add(Describe(pin));
@@ -52,7 +53,7 @@ namespace VL.Qt.Qml
         {
             var outputs = new List<IVLPinDescription>(1 + PropertyOutputs.Length + SignalOutputs.Length + QmlCommonPins.TrailingOutputs.Length) { Describe(QmlCommonPins.Output) };
             foreach (var pin in PropertyOutputs)
-                outputs.Add(new FilePinDescription(pin.Name, pin.Property.ClrType, pin.Property.Default, PinSummary(pin.Property), pin.IsVisible));
+                outputs.Add(new FilePinDescription(pin.Name, pin.PinType, pin.PinDefault, PinSummary(pin.Property, pin.EnumSlot), pin.IsVisible));
             foreach (var pin in SignalOutputs)
                 outputs.Add(new FilePinDescription(pin.Name, pin.Type, null, SignalSummary(pin.Signal)));
             foreach (var pin in QmlCommonPins.TrailingOutputs)
@@ -81,9 +82,9 @@ namespace VL.Qt.Qml
 
         /// <summary>
         /// Reads and parses the file (siblings from its folder) and builds the layout. A file that cannot be read gives an
-        /// error message and only the common pins.
+        /// error message and only the common pins. <paramref name="pool"/>: see <see cref="Build"/>.
         /// </summary>
-        public static QmlNodeLayout Load(QmlFile file, ILogger logger)
+        public static QmlNodeLayout Load(QmlFile file, ILogger logger, QmlEnumPool? pool = null)
         {
             QmlDeclarations declarations;
             string? readError = null;
@@ -97,7 +98,7 @@ namespace VL.Qt.Qml
                 declarations = QmlDeclarations.Empty;
                 readError = $"{file.FilePath} cannot be read: {e.Message}";
             }
-            var layout = Build(file.FilePath, declarations, JoinErrors(file.DuplicateError, readError));
+            var layout = Build(file.FilePath, declarations, JoinErrors(file.DuplicateError, readError), pool);
             foreach (var m in layout.Messages)
             {
                 if (m.Type == MessageType.Error)
@@ -127,8 +128,13 @@ namespace VL.Qt.Qml
             }
         }
 
-        /// <summary>Builds the pins from <paramref name="declarations"/>; <paramref name="extraError"/> (duplicate file, read error) comes first.</summary>
-        public static QmlNodeLayout Build(string filePath, QmlDeclarations declarations, string? extraError = null)
+        /// <summary>
+        /// Builds the pins from <paramref name="declarations"/>; <paramref name="extraError"/> (duplicate file, read error) comes first.
+        /// With a <paramref name="pool"/> the pins of a property with a QML enum get the pool type of the enum; where the pool has
+        /// none, or without a pool, they stay int and the reason of the pool is a warning. The node description passes
+        /// <see cref="QmlEnumPool.Shared"/>; a caller that only needs the declarations passes none, so it claims nothing.
+        /// </summary>
+        public static QmlNodeLayout Build(string filePath, QmlDeclarations declarations, string? extraError = null, QmlEnumPool? pool = null)
         {
             var errors = new List<string>();
             var warnings = new List<string>();
@@ -158,14 +164,25 @@ namespace VL.Qt.Qml
                 return name;
             }
 
+            var folder = BaseFolder(filePath);
             var inputs = ImmutableArray.CreateBuilder<QmlInputPin>();
             var outputs = ImmutableArray.CreateBuilder<QmlOutputPin>();
-            foreach (var property in declarations.Properties)
+            foreach (var declared in declarations.Properties)
             {
+                var property = ResolveUrls(declared, folder);
                 var name = Unique(property.Name, "property");
+                QmlEnumSlot? slot = null;
+                if (pool != null && property.Enum is { } enumDecl)
+                {
+                    // Claimed again at every build, so a hot reload keeps the type of the enum and updates its entries.
+                    var claim = pool.Claim(filePath, enumDecl);
+                    slot = claim.Slot;
+                    if (claim.Message is { } text && !warnings.Contains(text))
+                        warnings.Add(text);
+                }
                 if (!property.IsReadOnly)
-                    inputs.Add(new QmlInputPin(name, property));
-                outputs.Add(new QmlOutputPin(name, property, property.IsReadOnly || property.Initializer == QmlInitializer.Binding));
+                    inputs.Add(new QmlInputPin(name, property, slot));
+                outputs.Add(new QmlOutputPin(name, property, property.IsReadOnly || property.Initializer == QmlInitializer.Binding, slot));
             }
 
             var signals = ImmutableArray.CreateBuilder<QmlSignalPin>();
@@ -187,8 +204,31 @@ namespace VL.Qt.Qml
                 messages.MoveToImmutable(), declarations.Head.Summary);
         }
 
-        private static string PinSummary(QmlPropertyDecl property)
-            => property.Summary ?? $"{(property.IsReadOnly ? "readonly " : string.Empty)}{property.QmlType} property '{property.Name}' of the QML root.";
+        /// <summary>The folder a relative url of the file is resolved against, null if the path has none.</summary>
+        internal static string? BaseFolder(string filePath)
+        {
+            var folder = Path.GetDirectoryName(filePath);
+            return string.IsNullOrEmpty(folder) ? null : folder;
+        }
+
+        // A url literal is relative to the file, as in QML; the pin holds it resolved (QmlTypes.UrlToPath).
+        private static QmlPropertyDecl ResolveUrls(QmlPropertyDecl property, string? folder) => property.Default switch
+        {
+            VL.Lib.IO.Path url => property with { Default = QmlTypes.UrlToPath(url.Value ?? string.Empty, folder) },
+            Spread<VL.Lib.IO.Path> { Count: > 0 } urls => property with { Default = urls.Select(u => QmlTypes.UrlToPath(u.Value ?? string.Empty, folder)).ToSpread() },
+            _ => property,
+        };
+
+        private static string PinSummary(QmlPropertyDecl property, QmlEnumSlot? slot)
+        {
+            var summary = property.Summary ?? (property.AliasOf is { } target
+                ? $"{property.QmlType} property '{property.Name}' of the QML root, an alias of {target}."
+                : $"{(property.IsReadOnly ? "readonly " : string.Empty)}{property.QmlType} property '{property.Name}' of the QML root.");
+            if (property.Enum is not { } values)
+                return summary;
+            // A dropdown shows the names; the numbers matter only where the pin is an int.
+            return $"{summary} {(slot is null ? values.Describe() : values.DescribeNames())}.";
+        }
 
         private static string SignalSummary(QmlSignalDecl signal)
         {

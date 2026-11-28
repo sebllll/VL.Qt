@@ -273,7 +273,8 @@ namespace VL.Qt
                 Native.vlqt_scene_set_debug(Window, on ? 1 : 0);
         }
 
-        /// <summary>Diagnostic keys F2, F5, F6, F7 of the window on or off (vlqt_window_set_keys); off = they reach the scene.</summary>
+        /// <summary>Keys F2, F5, F6, F7 (diagnostics), F11 and Alt+Enter (fullscreen) of the window on or off
+        /// (vlqt_window_set_keys); off = they reach the scene.</summary>
         public void SetKeys(bool on)
         {
             if (_scene.IsOpen)

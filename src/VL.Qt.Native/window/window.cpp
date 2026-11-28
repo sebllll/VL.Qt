@@ -122,6 +122,8 @@ void installWindowFilters(SceneHandle* w, QQuickWindow* win)
     w->closeFilter = new CloseFilter(win);
     win->installEventFilter(w->closeFilter);
     w->gate = new RenderGate(win);
+    // The lengths C# sent were scaled with the metrics it read; a render after a resize it has not seen would draw them wrong.
+    w->gate->setHold([w] { return w->scene && w->scene->metricsStale(); });
     win->installEventFilter(w->gate);
     w->changes = new SceneChangeCounter(win);
     vlqt::device::lockFrames(win); // windows only: a scene's render thread locks itself (offscreen/offscreen_render.cpp)
@@ -282,11 +284,10 @@ void replaceWindow(SceneHandle* w, const QSurfaceFormat& f)
     vlqt::device::attach(nw);
     w->scene->moveToWindow(nw);
     const int overlay = w->perf->overlay();
-    const bool keys = w->perf->keysEnabled();
     w->perf.reset();
     w->perf = std::make_unique<PerfMonitor>(nw, w->engine.get());
     w->perf->setScene(w->scene.get());
-    w->perf->setKeysEnabled(keys);
+    w->perf->setKeysEnabled(w->keys);
     if (overlay & (PerfMonitor::Meter | PerfMonitor::Stats))
         w->perf->setOverlay(overlay);
     for (QWindow* t : QGuiApplication::topLevelWindows())
@@ -324,7 +325,8 @@ vlqt_scene* createHandle(QQuickWindow* window, OffscreenScene* state)
     // Change count (vlqt_scene_get_change_count); no render gate: without a platform window a scene gets no
     // UpdateRequest or Expose.
     w->changes = new SceneChangeCounter(window); // child of the window
-    // Input comes from vlqt_offscreen_send_*; Esc and a press outside release the focus as in a window.
+    // Input comes from vlqt_offscreen_send_*; a press outside (and Esc in a TextField or SpinBox) releases the focus as
+    // in a window.
     window->installEventFilter(new FocusRelease(window)); // child of the window
     initShared(w.get());
     return asHandle(w.release());

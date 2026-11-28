@@ -47,6 +47,21 @@ namespace VL.Qt.Tests.Support
 
         public static byte[] Bool(bool v) => new[] { (byte)(v ? 1 : 0) };
 
+        public static byte[] I64(long v)
+        {
+            var b = new byte[8];
+            BinaryPrimitives.WriteInt64LittleEndian(b, v);
+            return b;
+        }
+
+        /// <summary>FONT value: f32 pixel size, i32 weight, u8 italic, 3 x u8 0, u32 family length, family.</summary>
+        public static byte[] Font(string family, float pixelSize, int weight, bool italic)
+            => F(pixelSize).Concat(I32(weight)).Concat(new byte[] { (byte)(italic ? 1 : 0), 0, 0, 0 }).Concat(Str(family)).ToArray();
+
+        /// <summary>LIST value: u16 element type, u16 0, u32 count, then the encoded elements back to back (a string element padded to 4).</summary>
+        public static byte[] List(ushort elementType, int count, params byte[][] elements)
+            => U16(elementType).Concat(U16(0)).Concat(I32(count)).Concat(elements.SelectMany(e => e)).ToArray();
+
         public static byte[] Pad(byte[] b) => b.Concat(new byte[(4 - b.Length % 4) % 4]).ToArray();
 
         private static byte[] U16(int v) => new[] { (byte)(v & 0xFF), (byte)(v >> 8) };

@@ -52,6 +52,9 @@ void writeLE(void* p, T v)
 inline int valueSize(quint16 vt)
 {
     switch (vt) {
+    case VLQT_VALUE_TYPE_LIST: return VLQT_LIST_VALUE_HEADER_SIZE;
+    case VLQT_VALUE_TYPE_FONT: return VLQT_FONT_VALUE_HEADER_SIZE;
+    case VLQT_VALUE_TYPE_DATE_TIME: return 8;
     case VLQT_VALUE_TYPE_F32_ARRAY: return 4;
     case VLQT_VALUE_TYPE_PATH: return 8;
     case VLQT_VALUE_TYPE_F32: return 4;
@@ -72,14 +75,17 @@ inline int valueSize(quint16 vt)
     }
 }
 
-/* Payload size of a fixed-size value, -1 = unknown or variable length (string, f32 array, path). The commands with
- * entries of their own (uniforms, effect chain) take only these. */
+/* Payload size of a fixed-size value, -1 = unknown, variable length (string, f32 array, path, list, font) or a QML value
+ * (datetime). The commands with entries of their own (uniforms, effect chain) take only these. */
 inline int fixedValueSize(quint16 vt)
 {
     switch (vt) {
     case VLQT_VALUE_TYPE_STRING:
     case VLQT_VALUE_TYPE_F32_ARRAY:
     case VLQT_VALUE_TYPE_PATH:
+    case VLQT_VALUE_TYPE_LIST:
+    case VLQT_VALUE_TYPE_DATE_TIME:
+    case VLQT_VALUE_TYPE_FONT:
         return -1;
     default: return valueSize(vt);
     }
@@ -94,6 +100,25 @@ inline int verbPoints(unsigned char verb)
     case VLQT_VERB_QUAD: return 2;
     case VLQT_VERB_CUBIC: return 3;
     case VLQT_VERB_CLOSE: return 0;
+    default: return -1;
+    }
+}
+
+/* Bytes of one element of a LIST of this element type, 0 = STRING (u32 length + UTF-8 + padding to 4), -1 = not an element
+ * type (LIST included). */
+inline int listElementSize(quint16 elemType)
+{
+    switch (elemType) {
+    case VLQT_VALUE_TYPE_STRING: return 0;
+    case VLQT_VALUE_TYPE_BOOL: return 1;
+    case VLQT_VALUE_TYPE_F32:
+    case VLQT_VALUE_TYPE_I32: return 4;
+    case VLQT_VALUE_TYPE_VEC2:
+    case VLQT_VALUE_TYPE_DATE_TIME: return 8;
+    case VLQT_VALUE_TYPE_VEC3: return 12;
+    case VLQT_VALUE_TYPE_COLOR:
+    case VLQT_VALUE_TYPE_RECTF:
+    case VLQT_VALUE_TYPE_VEC4: return 16;
     default: return -1;
     }
 }
@@ -241,7 +266,55 @@ struct NamedEntryRules {
     const char* region = "payload"; // "entry exceeds the payload / the body"
     bool string = false; // a STRING value is allowed (its length follows the u32); other variable-length types never are
     bool sampler = false; // a SAMPLER value is checked (samplerValueOk)
+    bool list = false; // a LIST value is allowed (SET_QML_PROPERTIES; its elements are checked by readListLength)
+    bool qml = false; // DATE_TIME and FONT values are allowed (SET_QML_PROPERTIES; a FONT has its family length at byte 12)
 };
+
+/* Checks the LIST value at the start of r (protocol.h "Values") and gives its length in valueLen (header and elements,
+ * without the padding). r is not advanced. VLQT_ERR_BAD_ARGUMENT: elemType not an element type, reserved field not 0 or
+ * count above VLQT_LIST_VALUE_MAX_COUNT; VLQT_ERR_BAD_LENGTH: header or elements leave r. */
+inline int readListLength(WireReader r, qint64& valueLen, std::string& err)
+{
+    if (r.remaining() < VLQT_LIST_VALUE_HEADER_SIZE) {
+        err = "list: truncated header";
+        return VLQT_ERR_BAD_LENGTH;
+    }
+    const quint16 elemType = r.u16();
+    const quint16 reserved = r.u16();
+    const quint32 count = r.u32();
+    const int elemSize = listElementSize(elemType);
+    if (elemSize < 0) {
+        err = "list: element type " + std::to_string(elemType) + " not allowed";
+        return VLQT_ERR_BAD_ARGUMENT;
+    }
+    if (reserved != 0) {
+        err = "list: reserved field is " + std::to_string(reserved) + ", not 0";
+        return VLQT_ERR_BAD_ARGUMENT;
+    }
+    if (count > quint32(VLQT_LIST_VALUE_MAX_COUNT)) {
+        err = "list: " + std::to_string(count) + " elements, more than " + std::to_string(VLQT_LIST_VALUE_MAX_COUNT);
+        return VLQT_ERR_BAD_ARGUMENT;
+    }
+    if (elemSize > 0) {
+        valueLen = VLQT_LIST_VALUE_HEADER_SIZE + qint64(count) * elemSize;
+        if (qint64(count) * elemSize > r.remaining()) {
+            err = "list: " + std::to_string(count) + " elements exceed the entry";
+            return VLQT_ERR_BAD_LENGTH;
+        }
+        return VLQT_OK;
+    }
+    // STRING elements: u32 length + UTF-8, each padded to 4.
+    const int start = r.offset() - VLQT_LIST_VALUE_HEADER_SIZE;
+    for (quint32 i = 0; i < count; ++i) {
+        const quint32 n = r.u32();
+        if (!r.ok() || !r.bytes(n, true)) {
+            err = "list: element #" + std::to_string(i) + " exceeds the entry";
+            return VLQT_ERR_BAD_LENGTH;
+        }
+    }
+    valueLen = r.offset() - start;
+    return VLQT_OK;
+}
 
 /* Reads entry number `index` and checks it (value type allowed, name length 1..VLQT_UNIFORM_NAME_MAX, name and value, each
  * with its padding, inside the reader). Returns VLQT_OK, else VLQT_ERR_BAD_LENGTH or VLQT_ERR_BAD_ARGUMENT with the reason
@@ -262,7 +335,9 @@ inline int readNamedEntry(WireReader& r, const NamedEntryRules& rules, int index
             err = label() + ": unknown value type " + std::to_string(out.type);
             return VLQT_ERR_BAD_ARGUMENT;
         }
-        if (out.type == VLQT_VALUE_TYPE_F32_ARRAY || out.type == VLQT_VALUE_TYPE_PATH) {
+        if (out.type == VLQT_VALUE_TYPE_F32_ARRAY || out.type == VLQT_VALUE_TYPE_PATH
+            || (out.type == VLQT_VALUE_TYPE_LIST && !rules.list)
+            || ((out.type == VLQT_VALUE_TYPE_DATE_TIME || out.type == VLQT_VALUE_TYPE_FONT) && !rules.qml)) {
             err = label() + ": value type " + std::to_string(out.type) + " not allowed";
             return VLQT_ERR_BAD_ARGUMENT;
         }
@@ -280,6 +355,18 @@ inline int readNamedEntry(WireReader& r, const NamedEntryRules& rules, int index
     // A STRING holds its length in the first 4 bytes; with fewer left the read below fails like any other value.
     if (out.name && out.type == VLQT_VALUE_TYPE_STRING)
         valueLen += r.peek<quint32>();
+    if (out.name && out.type == VLQT_VALUE_TYPE_FONT) {
+        WireReader family = r;
+        family.bytes(VLQT_FONT_VALUE_HEADER_SIZE - 4);
+        valueLen += family.peek<quint32>();
+    }
+    if (out.name && out.type == VLQT_VALUE_TYPE_LIST) {
+        const int rc = readListLength(r, valueLen, err);
+        if (rc != VLQT_OK) {
+            err = label() + ": " + err;
+            return rc;
+        }
+    }
     out.value = out.name ? r.bytes(valueLen, true) : nullptr;
     if (!out.value) {
         err = label() + ": entry exceeds the " + rules.region;

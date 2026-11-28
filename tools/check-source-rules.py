@@ -35,7 +35,10 @@ K1_EXCEPTIONS = [
 ]
 
 # K3 exceptions: file (relative to the repository root, forward slashes) -> reason.
-K3_EXCEPTIONS = {}
+K3_EXCEPTIONS = {
+    'src/VL.Qt/Qml/QmlEnumSlotTypes.cs':
+        'generated pool of dynamic enum types (QmlEnum01 ... and their definitions), written by QmlEnumPoolTests from one constant',
+}
 
 # K4 exceptions: file -> reason. A whole file only, never a single line: shorten the line instead.
 K4_EXCEPTIONS = {}

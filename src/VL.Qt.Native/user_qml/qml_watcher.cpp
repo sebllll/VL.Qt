@@ -78,14 +78,16 @@ void QmlWatcher::take(std::vector<QmlPropertyEvent>& properties, std::vector<Qml
         Prop& p = m_props[size_t(k)];
         p.dirty = false;
         QmlWireValue w;
+        QString error;
         const QVariant value = p.prop.read(m_root);
-        if (toWireValue(value, w)) {
+        if (toWireValue(value, w, &error)) {
             p.unsupported = false;
             properties.push_back(QmlPropertyEvent{p.name, std::move(w)});
         } else if (!p.unsupported) {
             p.unsupported = true;
-            m_owner->rejectRootProperty(QString::fromUtf8(p.name),
-                                        QStringLiteral("type '%1' cannot be sent to the patch").arg(QString::fromLatin1(value.typeName())));
+            if (error.isEmpty())
+                error = QStringLiteral("type '%1' cannot be sent to the patch").arg(QString::fromLatin1(value.typeName()));
+            m_owner->rejectRootProperty(QString::fromUtf8(p.name), error);
         }
     }
     m_dirty.clear();
@@ -135,7 +137,13 @@ void QmlWatcher::onSignal(int j, void** argv)
             v = *static_cast<const QVariant*>(argv[i + 1]);
         else
             v = QVariant(t, argv[i + 1]);
-        e.args.push_back(toWireValueOrString(v));
+        QmlWireValue w;
+        QString error;
+        if (!toWireValueOrString(v, w, &error)) { // a list over the limit: the signal is not sent
+            m_owner->rejectRootProperty(QString::fromUtf8(s.name), QStringLiteral("argument #%1: %2").arg(i + 1).arg(error));
+            return;
+        }
+        e.args.push_back(std::move(w));
     }
     m_signals.push_back(std::move(e));
 }

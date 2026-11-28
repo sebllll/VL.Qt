@@ -1,6 +1,7 @@
 #include "user_qml/qml_item.h"
 
 #include "user_qml/qml_watcher.h"
+#include "user_qml/qml_wire.h"
 
 #include <QtCore/QDateTime>
 #include <QtCore/QDir>
@@ -342,17 +343,17 @@ void QmlItem::applyProperty(const QByteArray& utf8Name, const QVariant& value, Q
     }
     QVariant v = value;
     const QMetaType target = p.metaType();
-    // The patch sends point and size as a Vector2 (VEC2); QVariant has no conversion from it.
-    if (v.metaType() == QMetaType::fromType<QVector2D>()) {
-        const QVector2D q = v.value<QVector2D>();
-        if (target == QMetaType::fromType<QPointF>())
-            v = QPointF(q.x(), q.y());
-        else if (target == QMetaType::fromType<QPoint>())
-            v = QPointF(q.x(), q.y()).toPoint();
-        else if (target == QMetaType::fromType<QSizeF>())
-            v = QSizeF(q.x(), q.y());
-        else if (target == QMetaType::fromType<QSize>())
-            v = QSizeF(q.x(), q.y()).toSize();
+    if (v.metaType() == QMetaType::fromType<QVariantList>()) { // a LIST value
+        if (!convertListToType(v.toList(), target, v)) {
+            const QString name = nameString();
+            setPropertyError(name, QStringLiteral("the list cannot be converted to the type '%1' of property '%2'")
+                                       .arg(QString::fromLatin1(p.typeName()), name));
+            return;
+        }
+    } else if (target == QMetaType::fromType<QUrl>() && v.metaType() == QMetaType::fromType<QString>()) {
+        v = urlFromPatch(v.toString());
+    } else {
+        v = adaptVector2D(v, target);
     }
     // var properties and enums take the value as it is, everything else goes through QVariant's conversion.
     if (!p.isEnumType() && target.id() != QMetaType::QVariant && v.metaType() != target && !v.convert(target)) {

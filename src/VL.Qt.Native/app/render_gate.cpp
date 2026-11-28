@@ -51,13 +51,13 @@ void RenderGate::endPump()
 bool RenderGate::eventFilter(QObject* o, QEvent* e)
 {
     if (e->type() == QEvent::UpdateRequest) {
-        if (!s_inPump || m_blocked || m_rendered) {
+        if (!s_inPump || m_blocked || m_rendered || holds()) {
             m_pending = true;
             return true;
         }
         m_pending = false;
     } else if (e->type() == QEvent::Expose && m_window->isExposed()
-               && (s_inPump ? m_blocked || m_rendered : s_delivering || !m_everRendered)) {
+               && (s_inPump ? m_blocked || m_rendered || holds() : s_delivering || !m_everRendered)) {
         // Re-expose after this pump's render (XWayland sends two Expose on show) and the initial Expose outside
         // the pump (Windows: on show) render once in the pump instead. Later Expose outside the pump
         // (live resize in Windows' modal size loop) still renders directly, except during the input delivery of

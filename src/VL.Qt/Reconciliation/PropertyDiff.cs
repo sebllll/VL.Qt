@@ -153,7 +153,7 @@ namespace VL.Qt.Reconciliation
             bool reloaded = p.Reload != n.Reload;
             if (reloaded)
                 _sink.SetI32(id, P.QmlReload, n.Reload);
-            QmlPropertyWriter.Write(_sink, id, n.Properties, sourceChanged || reloaded ? null : p.Properties);
+            QmlPropertyWriter.Write(_sink, id, n.Properties, sourceChanged || reloaded ? null : p.Properties, _mapping, _rescale);
         }
 
         /// <summary>

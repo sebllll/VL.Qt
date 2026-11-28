@@ -134,6 +134,21 @@ public static class ApplyTest
         }
         public Pay F4Entry(ushort vt, string name, int floats) => Entry(vt, name, new byte[floats * 4]);
 
+        /// <summary>A LIST value: u16 element type, u16 reserved (0), u32 count, then the elements as given (nothing is checked).</summary>
+        public static byte[] ListValue(int elementType, uint count, byte[] elements, int reserved = 0)
+            => new Pay().U16(elementType).U16(reserved).U32(count).Bytes(elements).ToArray();
+        /// <summary>STRING elements of a list: u32 length, UTF-8, zero padding to 4, each.</summary>
+        public static byte[] StringElements(params string[] values)
+        {
+            var p = new Pay();
+            foreach (var v in values)
+            {
+                var utf8 = System.Text.Encoding.UTF8.GetBytes(v);
+                p.U32((uint)utf8.Length).Bytes(utf8).Pad();
+            }
+            return p.ToArray();
+        }
+
         /// <summary>SET_UNIFORMS / SET_QML_PROPERTIES head: u32 id, u16 count, u16 flags.</summary>
         public static Pay Head(uint id, int count, int flags = 0) => new Pay().U32(id).U16(count).U16(flags);
         /// <summary>SET_EFFECT_CHAIN head: u32 id, u16 link count, u16 reserved.</summary>
@@ -185,6 +200,8 @@ public static class ApplyTest
         Case("uniforms: count larger than the entries", uni, Pay.Head(fx, 2).F4Entry(F, "a", 1), Native.Result.BadLength, "truncated entry");
         Case("uniforms: trailing bytes", uni, Pay.Head(fx, 1).F4Entry(F, "a", 1).Zeros(4), Native.Result.BadLength, "bytes after the last entry");
         Case("uniforms: STRING not allowed", uni, Pay.Head(fx, 1).Entry(Str, "a", new byte[4]), Native.Result.BadArgument, "not allowed");
+        Case("uniforms: DATE_TIME not allowed", uni, Pay.Head(fx, 1).Entry(Protocol.ValueType.DateTime, "a", new byte[8]), Native.Result.BadArgument, "not allowed");
+        Case("uniforms: FONT not allowed", uni, Pay.Head(fx, 1).Entry(Protocol.ValueType.Font, "a", new byte[Protocol.FontValueHeaderSize]), Native.Result.BadArgument, "not allowed");
         Case("uniforms: unknown value type", uni, Pay.Head(fx, 1).Entry(999, "a", new byte[4]), Native.Result.BadArgument, "not allowed");
         Case("uniforms: sampler out of range", uni, Pay.Head(fx, 1).Entry(Protocol.ValueType.Sampler, "a", new byte[] { 9, 0, 0, 0, 0, 0, 0, 0 }), Native.Result.BadArgument, "sampler state");
         Case("uniforms: unknown ref", uni, Pay.Head(fx, 1).Entry(Protocol.ValueType.Ref, "a", new byte[] { 0x39, 5, 0, 0 }), Native.Result.UnknownObject, "unknown ref id 1337");
@@ -201,9 +218,64 @@ public static class ApplyTest
         Case("qml: string without its length field", qop, Pay.Head(qml, 1).U16(Str).U16(1).Bytes((byte)'s', 0, 0, 0), Native.Result.BadLength, "exceeds the payload");
         Case("qml: count larger than the entries", qop, Pay.Head(qml, 2).F4Entry(F, "a", 1), Native.Result.BadLength, "truncated entry");
         Case("qml: trailing bytes", qop, Pay.Head(qml, 1).F4Entry(F, "a", 1).Zeros(4), Native.Result.BadLength, "bytes after the last entry");
+        // DATE_TIME and FONT (protocol.h "Values"): QML values only; a FONT has the length of its family at byte 12.
+        static byte[] FontValue(uint familyLength, params byte[] family) => new Pay().F32(24).U32(700).Bytes(1, 0, 0, 0).U32(familyLength).Bytes(family).ToArray();
+        Case("qml: DATE_TIME (control)", qop, Pay.Head(qml, 1).Entry(Protocol.ValueType.DateTime, "d", new Pay().U64(1500).ToArray()), 0, "");
+        Case("qml: FONT (control)", qop, Pay.Head(qml, 1).Entry(Protocol.ValueType.Font, "f", FontValue(5, (byte)'A', (byte)'r', (byte)'i', (byte)'a', (byte)'l')), 0, "");
+        Case("qml: FONT without a family (control)", qop, Pay.Head(qml, 1).Entry(Protocol.ValueType.Font, "f", FontValue(0)), 0, "");
+        Case("qml: FONT family past the payload", qop, Pay.Head(qml, 1).Entry(Protocol.ValueType.Font, "f", FontValue(1000, 1, 2, 3, 4)), Native.Result.BadLength, "exceeds the payload");
+        Case("qml: FONT cut before its family length", qop, Pay.Head(qml, 1).Entry(Protocol.ValueType.Font, "f", new byte[8]), Native.Result.BadLength, "exceeds the payload");
         Case("qml: unknown value type", qop, Pay.Head(qml, 1).Entry(999, "a", new byte[4]), Native.Result.BadArgument, "unknown value type");
         Case("qml: PATH not allowed", qop, Pay.Head(qml, 1).Entry(Protocol.ValueType.Path, "a", new byte[8]), Native.Result.BadArgument, "not allowed");
         Case("qml: not a QmlElement", qop, Pay.Head(rect, 0), Native.Result.UnknownProperty, "QmlElement only");
+
+        // LIST values (protocol.h "Values"): allowed in SET_QML_PROPERTIES only, checked as a whole before anything is used.
+        const ushort List = Protocol.ValueType.List;
+        var listMax = (uint)Protocol.ListValueMaxCount;
+        foreach (var (typeName, elemType, size) in new[] { ("F32", Protocol.ValueType.F32, 4), ("I32", Protocol.ValueType.I32, 4), ("BOOL", Protocol.ValueType.Bool, 1),
+                     ("COLOR", Protocol.ValueType.Color, 16), ("RECTF", Protocol.ValueType.Rectf, 16), ("VEC2", Protocol.ValueType.Vec2, 8),
+                     ("VEC3", Protocol.ValueType.Vec3, 12), ("VEC4", Protocol.ValueType.Vec4, 16), ("DATE_TIME", Protocol.ValueType.DateTime, 8) })
+        {
+            Case($"qml list: {typeName} elements (control)", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(elemType, 5, new byte[5 * size])), 0, "");
+            Case($"qml list: empty {typeName} list (control)", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(elemType, 0, Array.Empty<byte>())), 0, "");
+        }
+        Case("qml list: STRING elements of every padding (control)", qop,
+            Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(Str, 6, Pay.StringElements("", "a", "ab", "abc", "abcd", "hä€😀"))), 0, "");
+        Case("qml list: empty STRING list (control)", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(Str, 0, Array.Empty<byte>())), 0, "");
+        Case("qml list: a list and a real in one command (control)", qop,
+            Pay.Head(qml, 3).Entry(List, "l", Pay.ListValue(F, 1, new byte[4])).F4Entry(F, "a", 1).Entry(List, "m", Pay.ListValue(Protocol.ValueType.Bool, 3, new byte[3])), 0, "");
+        Case("qml list: exactly 65536 elements are accepted", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(F, listMax, new byte[listMax * 4])), 0, "");
+        Case("qml list: LIST elements (a list in a list)", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(List, 1, new byte[4])), Native.Result.BadArgument, "element type 12 not allowed");
+        Case("qml list: element type 0", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(0, 1, new byte[4])), Native.Result.BadArgument, "element type 0 not allowed");
+        Case("qml list: unknown element type", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(999, 1, new byte[4])), Native.Result.BadArgument, "element type 999 not allowed");
+        Case("qml list: MAT4 elements", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(Protocol.ValueType.Mat4, 1, new byte[64])), Native.Result.BadArgument, "element type 6 not allowed");
+        Case("qml list: REF elements", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(Protocol.ValueType.Ref, 1, new byte[4])), Native.Result.BadArgument, "element type 8 not allowed");
+        Case("qml list: FONT elements", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(Protocol.ValueType.Font, 1, new byte[16])), Native.Result.BadArgument, "element type 14 not allowed");
+        Case("qml list: F32_ARRAY elements", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(Protocol.ValueType.F32Array, 1, new byte[8])), Native.Result.BadArgument, "element type 10 not allowed");
+        Case("qml list: reserved field not 0", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(F, 1, new byte[4], reserved: 1)), Native.Result.BadArgument, "reserved field is 1");
+        Case("qml list: 65537 elements", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(F, listMax + 1, new byte[(listMax + 1) * 4])), Native.Result.BadArgument, "more than 65536");
+        Case("qml list: count 0xFFFFFFFF without elements", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(F, 0xFFFFFFFF, Array.Empty<byte>())), Native.Result.BadArgument, "more than 65536");
+        Case("qml list: elements past the entry", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(F, 3, new byte[8])), Native.Result.BadLength, "3 elements exceed the entry");
+        Case("qml list: VEC4 elements past the entry", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(Protocol.ValueType.Vec4, 2, new byte[16])), Native.Result.BadLength, "2 elements exceed the entry");
+        Case("qml list: 65536 elements, one missing", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(F, listMax, new byte[(listMax - 1) * 4])), Native.Result.BadLength, "65536 elements exceed the entry");
+        Case("qml list: truncated header", qop, Pay.Head(qml, 1).Entry(List, "l", new byte[4]), Native.Result.BadLength, "truncated header");
+        Case("qml list: no value at all", qop, Pay.Head(qml, 1).U16(List).U16(1).Bytes((byte)'l', 0, 0, 0), Native.Result.BadLength, "truncated header");
+        Case("qml list: a string element cut off", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(Str, 1, new Pay().U32(100).Bytes(1, 2, 3, 4).ToArray())), Native.Result.BadLength, "exceeds the entry");
+        Case("qml list: a string element without its length", qop,
+            Pay.Head(qml, 1).U16(List).U16(1).Bytes((byte)'l', 0, 0, 0).Bytes(Pay.ListValue(Str, 1, new byte[2])), Native.Result.BadLength, "exceeds the entry");
+        Case("qml list: second string missing", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(Str, 2, Pay.StringElements("ab"))), Native.Result.BadLength, "exceeds the entry");
+        Case("qml list: padding of the last string cut off", qop,
+            Pay.Head(qml, 1).U16(List).U16(1).Bytes((byte)'l', 0, 0, 0).Bytes(Pay.ListValue(Str, 1, new Pay().U32(1).Bytes((byte)'a').ToArray())), Native.Result.BadLength, "exceeds the entry");
+        Case("qml list: string count past the elements", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(Str, listMax, Pay.StringElements("a"))), Native.Result.BadLength, "exceeds the entry");
+        Case("qml list: trailing bytes after the entry", qop, Pay.Head(qml, 1).Entry(List, "l", Pay.ListValue(F, 1, new byte[4])).Zeros(4), Native.Result.BadLength, "bytes after the last entry");
+        // A LIST goes nowhere else.
+        Case("set: DATE_TIME value refused", Protocol.Op.Set, new Pay().U32(shape).U16(Protocol.PropertyId.ShapePath).U16(Protocol.ValueType.DateTime).U64(0), Native.Result.BadArgument, "only goes into SET_QML_PROPERTIES");
+        Case("set: LIST value refused", Protocol.Op.Set, new Pay().U32(shape).U16(Protocol.PropertyId.ShapePath).U16(List).Bytes(Pay.ListValue(F, 1, new byte[4])), Native.Result.BadArgument, "only goes into SET_QML_PROPERTIES");
+        Case("uniforms: LIST not allowed", uni, Pay.Head(fx, 1).Entry(List, "a", Pay.ListValue(F, 1, new byte[4])), Native.Result.BadArgument, "not allowed");
+        Case("chain: SHADER uniform LIST not allowed", chain,
+            Pay.ChainHead(rect, 1).Link(Protocol.EffectChainLink.Shader, 1, Pay.ShaderBody(Protocol.EffectTemplate.Single, 1).Entry(List, "a", Pay.ListValue(F, 1, new byte[4]))), Native.Result.BadArgument, "not allowed");
+        Case("chain: MULTI entry LIST not allowed", chain,
+            Pay.ChainHead(rect, 1).Link(Protocol.EffectChainLink.Multi, 1, new Pay().U16(Protocol.MultiEffectKey.BlurEnabled).U16(List).Bytes(Pay.ListValue(F, 1, new byte[4]))), Native.Result.BadArgument, "takes");
 
         // SET_EFFECT_CHAIN
         const ushort multi = Protocol.EffectChainLink.Multi, shader = Protocol.EffectChainLink.Shader, single = Protocol.EffectTemplate.Single;

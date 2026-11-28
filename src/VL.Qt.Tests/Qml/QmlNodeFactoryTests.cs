@@ -4,7 +4,9 @@ using System.IO;
 using System.Linq;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
+using Stride.Core.Mathematics;
 using VL.Core;
+using VL.Lib.Collections;
 using VL.Qt.NodeFactories;
 using VL.Qt.Qml;
 using VL.Qt.Tests.Support;
@@ -251,6 +253,126 @@ namespace VL.Qt.Tests.Qml
         private static QmlDeclarations Declare(QmlPropertyDecl[] properties, QmlSignalDecl[]? signals = null) =>
             new("Item", QmlFileHead.Empty, properties.ToImmutableArray(), (signals ?? Array.Empty<QmlSignalDecl>()).ToImmutableArray(), ImmutableArray<QmlParseMessage>.Empty);
 
+        [Test]
+        public void Layout_AliasPinHelp_NamesTheTarget_UnlessTheFileHasAComment()
+        {
+            var layout = QmlNodeLayout.Build("Card.qml", Declare(new[]
+            {
+                Prop("title", QmlValueKind.String) with { QmlType = "string", AliasOf = "label.text" },
+                Prop("fill", QmlValueKind.Color, summary: "Fill of the card.") with { AliasOf = "bg.color" },
+            }));
+            var inputs = layout.InputDescriptions().ToDictionary(i => i.Name, i => ((IInfo)i).Summary);
+            Assert.That(inputs["Title"], Is.EqualTo("string property 'title' of the QML root, an alias of label.text."));
+            Assert.That(inputs["Fill"], Is.EqualTo("Fill of the card."));
+        }
+
+        [Test]
+        public void Layout_EnumPinHelp_ListsTheValues()
+        {
+            var mode = new QmlEnumDecl("Gauge", "Mode", ImmutableArray.Create(new QmlEnumValue("Small", 0), new QmlEnumValue("Large", 5)));
+            var layout = QmlNodeLayout.Build("Gauge.qml", Declare(new[]
+            {
+                Prop("mode", QmlValueKind.Int) with { Enum = mode },
+                Prop("level", QmlValueKind.Int, summary: "Level of the gauge.") with { Enum = mode },
+            }));
+            var inputs = layout.InputDescriptions().ToDictionary(i => i.Name, i => ((IInfo)i).Summary);
+            Assert.That(inputs["Mode"], Is.EqualTo("int property 'mode' of the QML root. Mode: Small = 0, Large = 5."));
+            Assert.That(inputs["Level"], Is.EqualTo("Level of the gauge. Mode: Small = 0, Large = 5."));
+        }
+
+        // --- enum pins (pool types) ---
+
+        private static QmlEnumPool Pool(int count) => new(QmlEnumSlotTypes.All.Take(count).ToArray());
+
+        private static QmlEnumDecl EnumOf(string type, string name, params (string Name, int Value)[] values)
+            => new(type, name, values.Select(v => new QmlEnumValue(v.Name, v.Value)).ToImmutableArray());
+
+        private static QmlEnumDecl Mode() => EnumOf("Gauge", "Mode", ("Small", 0), ("Large", 5));
+
+        private QmlNodeLayout BuildWith(QmlEnumPool pool, params QmlPropertyDecl[] properties)
+            => QmlNodeLayout.Build(Path.Combine(_dir, "Gauge.qml"), Declare(properties), pool: pool);
+
+        [Test]
+        public void Layout_EnumPin_HasThePoolTypeAndItsDefault()
+        {
+            var pool = Pool(4);
+            var mode = Mode();
+            var layout = BuildWith(pool,
+                Prop("mode", QmlValueKind.Int, init: QmlInitializer.Literal, value: 5) with { Enum = mode },
+                Prop("level", QmlValueKind.Int, summary: "Level of the gauge.") with { Enum = mode },
+                Prop("steps", QmlValueKind.Int));
+
+            var slot = pool.Claim(Path.Combine(_dir, "Gauge.qml"), mode).Slot!;
+            var inputs = layout.InputDescriptions().ToDictionary(i => i.Name);
+            Assert.That(inputs["Mode"].Type, Is.EqualTo(slot.Type));
+            Assert.That(((IDynamicEnum)inputs["Mode"].DefaultValue!).Value, Is.EqualTo("Large"), "the literal 5");
+            Assert.That(inputs["Level"].Type, Is.EqualTo(slot.Type), "the same enum, the same type");
+            Assert.That(((IDynamicEnum)inputs["Level"].DefaultValue!).Value, Is.EqualTo("Small"));
+            Assert.That(inputs["Steps"].Type, Is.EqualTo(typeof(int)), "no enum, no change");
+            Assert.That(layout.OutputDescriptions().Single(o => o.Name == "Mode").Type, Is.EqualTo(slot.Type));
+            Assert.That(((IInfo)inputs["Mode"]).Summary, Is.EqualTo("int property 'mode' of the QML root. Mode: Small, Large."));
+            Assert.That(((IInfo)inputs["Level"]).Summary, Is.EqualTo("Level of the gauge. Mode: Small, Large."));
+            Assert.That(layout.Messages, Is.Empty);
+        }
+
+        [Test]
+        public void Layout_EnumPin_StaysAnInt_WhenThePoolHasNoRoom_AndTheNodeSaysWhy()
+        {
+            var pool = Pool(1);
+            var status = EnumOf("Gauge", "Status", ("Online", 0), ("Away", 1));
+            var layout = BuildWith(pool,
+                Prop("mode", QmlValueKind.Int) with { Enum = Mode() },
+                Prop("status", QmlValueKind.Int, init: QmlInitializer.Literal, value: 1) with { Enum = status },
+                Prop("state", QmlValueKind.Int) with { Enum = status });
+
+            var inputs = layout.InputDescriptions().ToDictionary(i => i.Name);
+            Assert.That(inputs["Mode"].Type, Is.EqualTo(QmlEnumSlotTypes.All[0].Type));
+            Assert.That((inputs["Status"].Type, inputs["Status"].DefaultValue), Is.EqualTo((typeof(int), (object)1)));
+            Assert.That(inputs["State"].Type, Is.EqualTo(typeof(int)));
+            Assert.That(((IInfo)inputs["Status"]).Summary, Does.EndWith("Status: Online = 0, Away = 1."), "the int pin keeps the numbers");
+            var warning = layout.Messages.Single();
+            Assert.That(warning.Type, Is.EqualTo(VL.Core.Diagnostics.MessageType.Warning), "once, also for two properties of the enum");
+            Assert.That(warning.Text, Does.Contain("Gauge.Status").And.Contain("taken"));
+        }
+
+        [Test]
+        public void Layout_EnumPin_AfterHotReload_KeepsTheTypeAndFollowsTheEntries()
+        {
+            var pool = Pool(4);
+            var path = Path.Combine(_dir, "Gauge.qml");
+            Type TypeOf(QmlNodeLayout layout) => layout.InputDescriptions().Single(i => i.Name == "Mode").Type;
+
+            var first = BuildWith(pool, Prop("mode", QmlValueKind.Int) with { Enum = Mode() });
+            var grown = EnumOf("Gauge", "Mode", ("Small", 0), ("Large", 5), ("Huge", 6));
+            var second = BuildWith(pool, Prop("mode", QmlValueKind.Int) with { Enum = grown });
+
+            Assert.That(TypeOf(second), Is.EqualTo(TypeOf(first)));
+            Assert.That(pool.Claim(path, grown).Slot!.Entries.Keys, Is.EqualTo(new[] { "Small", "Large", "Huge" }));
+            // After a restart (a new pool on the same folder) the type is still the one of the mapping file.
+            Assert.That(TypeOf(BuildWith(Pool(4), Prop("mode", QmlValueKind.Int) with { Enum = grown })), Is.EqualTo(TypeOf(first)));
+        }
+
+        [Test]
+        public void Load_EnumOfTheFile_GetsThePoolType_AndNoPoolKeepsTheInt()
+        {
+            Write("Gauge.qml", """
+                import QtQuick
+                Item {
+                    property int mode: Gauge.Large
+                    enum Mode { Small, Large = 5 }
+                }
+                """);
+            var file = QmlNodeFactory.Scan(_dir).Single();
+
+            var withPool = QmlNodeLayout.Load(file, NullLogger.Instance, Pool(4)).InputDescriptions().Single(i => i.Name == "Mode");
+            Assert.That(withPool.Type.Name, Does.StartWith("QmlEnum"));
+            Assert.That(((IDynamicEnum)withPool.DefaultValue!).Value, Is.EqualTo("Large"));
+            Assert.That(File.ReadAllText(Path.Combine(_dir, QmlEnumSlotFile.FileName)), Does.Contain("Gauge.Mode = "));
+
+            var without = QmlNodeLayout.Load(file, NullLogger.Instance).InputDescriptions().Single(i => i.Name == "Mode");
+            Assert.That((without.Type, without.DefaultValue), Is.EqualTo((typeof(int), (object)5)));
+        }
+
         // The pin texts that QML nodes share with the element nodes come from CommonPins.xml (written once).
         [Test]
         public void Layout_CommonPinHelp_IsTheSharedText()
@@ -353,6 +475,81 @@ namespace VL.Qt.Tests.Qml
             var warning = layout.Messages.Single();
             Assert.That(warning.Type, Is.EqualTo(VL.Core.Diagnostics.MessageType.Warning));
             Assert.That(warning.Text, Does.Contain("'size'").And.Contain("Size 2"));
+        }
+
+        [Test]
+        public void Layout_ListProperties_AreSpreadPins_ReadonlyOnlyAnOutput()
+        {
+            var layout = QmlNodeLayout.Build("Plot.qml", Declare(
+                new[]
+                {
+                    Prop("values", QmlValueKind.RealList, init: QmlInitializer.Literal, value: (new[] { 1f, 2f }).ToSpread()),
+                    Prop("points", QmlValueKind.PointList),
+                    Prop("names", QmlValueKind.StringList, QmlPropertyFlags.ReadOnly),
+                },
+                new[] { new QmlSignalDecl("picked", ImmutableArray.Create(new QmlSignalArg("items", "list<int>", QmlValueKind.IntList)), null, 5) }));
+
+            var inputs = layout.InputDescriptions();
+            Assert.That(inputs.Select(i => i.Name), Is.EqualTo(new[]
+            {
+                "Auto Size", "Size", "Transform", "Anchor", "Values", "Points", "Properties",
+                "Opacity", "Clip", "Debug", "Interaction", "Effect", "Enabled",
+            }));
+            Assert.That(inputs[4].Type, Is.EqualTo(typeof(Spread<float>)));
+            Assert.That(inputs[4].DefaultValue, Is.EqualTo((new[] { 1f, 2f }).ToSpread()));
+            Assert.That(inputs[5].Type, Is.EqualTo(typeof(Spread<Vector2>)));
+            Assert.That(inputs[5].DefaultValue, Is.InstanceOf<Spread<Vector2>>().And.Empty);
+
+            var outputs = layout.OutputDescriptions();
+            Assert.That(outputs.Select(o => o.Name), Is.EqualTo(new[] { "Output", "Values", "Points", "Names", "Picked", "Measured Size", "Scene Bounds" }));
+            Assert.That(outputs.Single(o => o.Name == "Names").Type, Is.EqualTo(typeof(Spread<string>)));
+            Assert.That(outputs.Single(o => o.Name == "Picked").Type, Is.EqualTo(typeof(Spread<Spread<int>>)));
+            Assert.That(layout.Messages, Is.Empty);
+        }
+
+        [Test]
+        public void ParsedListFile_GivesSpreadPinsWithTheLiteralAsDefault()
+        {
+            var declarations = QmlDeclarations.Parse(
+                "Item {\n property list<real> values: [1, 2]\n readonly property list<point> points\n signal picked(list<string> names)\n}", "Plot", _ => null);
+            var layout = QmlNodeLayout.Build("Plot.qml", declarations);
+
+            Assert.That(declarations.Messages, Is.Empty);
+            var input = layout.InputDescriptions().Single(i => i.Name == "Values");
+            Assert.That(input.Type, Is.EqualTo(typeof(Spread<float>)));
+            Assert.That(input.DefaultValue, Is.EqualTo((new[] { 1f, 2f }).ToSpread()));
+            Assert.That(layout.InputDescriptions().Any(i => i.Name == "Points"), Is.False);
+            Assert.That(layout.OutputDescriptions().Single(o => o.Name == "Points").Type, Is.EqualTo(typeof(Spread<Vector2>)));
+            Assert.That(layout.OutputDescriptions().Single(o => o.Name == "Picked").Type, Is.EqualTo(typeof(Spread<Spread<string>>)));
+        }
+
+        [Test]
+        public void ParsedFile_WithInternalDeclarations_GivesNoPinsAndNoMessageForThem()
+        {
+            var declarations = QmlDeclarations.Parse("""
+                Item {
+                    property real value: 1
+                    // @internal
+                    property real shownAmount
+                    // @internal
+                    readonly property real chartTop: 2
+                    // @internal
+                    readonly property var points
+                    readonly property real _labelY
+                    // @internal
+                    signal tick(real t)
+                    signal _quiet
+                    signal done
+                }
+                """, "Card", _ => null);
+            var layout = QmlNodeLayout.Build("Card.qml", declarations);
+
+            Assert.That(layout.Messages, Is.Empty);
+            var names = layout.InputDescriptions().Select(i => i.Name).Concat(layout.OutputDescriptions().Select(o => o.Name)).ToList();
+            Assert.That(names, Does.Contain("Value"));
+            foreach (var hidden in new[] { "Shown Amount", "Chart Top", "Points", "Label Y", "Tick", "Quiet" })
+                Assert.That(names, Does.Not.Contain(hidden), hidden);
+            Assert.That(layout.OutputDescriptions().Select(o => o.Name), Does.Contain("Value").And.Contain("Done"));
         }
 
         private sealed class FakeFactory : IVLNodeDescriptionFactory

@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices;
 using Stride.Core.Mathematics;
 using VL.Lib.Mathematics;
 using VL.Lib.Reactive;
@@ -22,7 +23,8 @@ using static Pixels;
 // (logical pixels), per space, derived here from the Space description alone:
 //   DIPTopLeft    origin top left, 100 DIP per unit            DIP      origin = centre, 100 DIP per unit
 //   Normalized    origin = centre, height -1 … 1 (H / 2 DIP)   PixelTopLeft origin top left, 100 device pixels per unit
-// Window 800 x 600, then resized to 400 x 300: origin and the Normalized scale follow. Per space and size: the pixels of
+// Window 800 x 600, then resized to 400 x 300: origin and the Normalized scale follow; then resized step by step through the
+// window system: the pump that takes a new size draws no frame, the next one draws it with the new scale. Per space and size: the pixels of
 // the grab (<OutDir>/143_space_*.png), the Scene Bounds of both rectangles in units (round trip through QtNative), the
 // position of a synthetic click in units (Point node, local to the rectangle). At the end a resync (invalid command before a
 // Space change) must restore origin and scale. The device pixel ratio is read from the scene; another one needs its own run:
@@ -32,6 +34,10 @@ public static class SpaceTest
 {
     private static readonly Color4 Bg = new(0x20 / 255f, 0x20 / 255f, 0x20 / 255f, 1);
     private const float Eps = 2e-3f;
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr FindWindow(string? cls, string title);
+    [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int cx, int cy, uint flags);
+    private const uint SwpNoMove = 0x2, SwpNoZOrder = 0x4, SwpNoActivate = 0x10;
 
 
     /// <summary>Origin (DIP) and DIP per unit of a space for a scene of w x h DIP.</summary>
@@ -107,43 +113,47 @@ public static class SpaceTest
         static Color At(Bitmap a, float x, float y, float w, float h)
             => a.GetPixel(Math.Clamp((int)(x * a.Width / w), 0, a.Width - 1), Math.Clamp((int)(y * a.Height / h), 0, a.Height - 1));
 
+        // Pixels of the window as it is now: red 1 x 1 unit at the origin, blue 0.5 x 0.5 right of it, nothing around.
+        void CheckPixels(Space sp, string tag, string file)
+        {
+            var (w, h, dpr) = Metrics();
+            var (o, k) = Layout(sp, w, h, dpr);
+            using var a = s.Grab(r.Window, file);
+            var failed = new List<string>();
+            void Expect(string what, float x, float y, int cr, int cg, int cb)
+            {
+                // Points outside the window are not part of the picture (Normalized/DIP rectangles reach beyond a small window).
+                if (x < 0 || y < 0 || x >= w || y >= h)
+                    return;
+                var c = At(a, x, y, w, h);
+                if (!Near(c, cr, cg, cb))
+                    failed.Add($"{what} ({x:F0}, {y:F0}) = {c.R},{c.G},{c.B}");
+            }
+            void Red(string what, float x, float y) => Expect(what, x, y, 255, 0, 0);
+            void Blue(string what, float x, float y) => Expect(what, x, y, 0, 0, 255);
+            void Empty(string what, float x, float y) => Expect(what, x, y, 0x20, 0x20, 0x20);
+
+            var x0 = o.X; var y0 = o.Y; var x1 = o.X + k; var y1 = o.Y + k;
+            Red("red centre", x0 + k / 2, y0 + k / 2);
+            Red("red top left", x0 + 3, y0 + 3);
+            Red("red bottom right", x1 - 3, y1 - 3);
+            Empty("left of red", x0 - 3, y0 + k / 2);
+            Empty("above red", x0 + k / 2, y0 - 3);
+            Empty("below red", x0 + k / 2, y1 + 3);
+            Blue("blue centre", x1 + k / 4, y0 + k / 4);
+            Empty("right of blue", x1 + k / 2 + 3, y0 + k / 4);
+            Empty("below blue", x1 + k / 4, y0 + k / 2 + 3);
+            Empty("right of red, below blue", x1 + 3, y0 + k * 0.75f);
+            s.Check(failed.Count == 0, $"{tag}: pixels{(failed.Count > 0 ? ": " + string.Join("; ", failed) : "")}");
+        }
+
         void CheckScene(Space sp, string size)
         {
             Frame();
             var (w, h, dpr) = Metrics();
             var (o, k) = Layout(sp, w, h, dpr);
             var tag = $"{sp} {size} (dpr {dpr:F2}, {k:F1} DIP/unit)";
-
-            // Pixels: red 1 x 1 unit at the origin, blue 0.5 x 0.5 right of it, nothing around.
-            using (var a = s.Grab(r.Window, $"143_space_{sp}_{size}.png"))
-            {
-                var failed = new List<string>();
-                void Expect(string what, float x, float y, int cr, int cg, int cb)
-                {
-                    // Points outside the window are not part of the picture (Normalized/DIP rectangles reach beyond a small window).
-                    if (x < 0 || y < 0 || x >= w || y >= h)
-                        return;
-                    var c = At(a, x, y, w, h);
-                    if (!Near(c, cr, cg, cb))
-                        failed.Add($"{what} ({x:F0}, {y:F0}) = {c.R},{c.G},{c.B}");
-                }
-                void Red(string what, float x, float y) => Expect(what, x, y, 255, 0, 0);
-                void Blue(string what, float x, float y) => Expect(what, x, y, 0, 0, 255);
-                void Empty(string what, float x, float y) => Expect(what, x, y, 0x20, 0x20, 0x20);
-
-                var x0 = o.X; var y0 = o.Y; var x1 = o.X + k; var y1 = o.Y + k;
-                Red("red centre", x0 + k / 2, y0 + k / 2);
-                Red("red top left", x0 + 3, y0 + 3);
-                Red("red bottom right", x1 - 3, y1 - 3);
-                Empty("left of red", x0 - 3, y0 + k / 2);
-                Empty("above red", x0 + k / 2, y0 - 3);
-                Empty("below red", x0 + k / 2, y1 + 3);
-                Blue("blue centre", x1 + k / 4, y0 + k / 4);
-                Empty("right of blue", x1 + k / 2 + 3, y0 + k / 4);
-                Empty("below blue", x1 + k / 4, y0 + k / 2 + 3);
-                Empty("right of red, below blue", x1 + 3, y0 + k * 0.75f);
-                s.Check(failed.Count == 0, $"{tag}: pixels{(failed.Count > 0 ? ": " + string.Join("; ", failed) : "")}");
-            }
+            CheckPixels(sp, tag, $"143_space_{sp}_{size}.png");
 
             // Scene Bounds in units, independent of the space.
             var rb = redFeedback.SceneBounds();
@@ -193,6 +203,45 @@ public static class SpaceTest
             CheckScene(sp, "400x300");
         }
 
+        // 2b) Live resize in steps, as the window system does it (SetWindowPos, not Qt's resize): Qt may take the new size in the
+        //     pump after this frame's commands went out. The frame of that pump must already have the scale of the new size.
+        if (OperatingSystem.IsWindows())
+        {
+            var hwnd = FindWindow(null, "VL.Qt space test");
+            s.Check(hwnd != IntPtr.Zero, "window handle found for the live resize");
+            space = Space.Normalized;
+            Frame();
+            var step = 0;
+            foreach (var (ow, oh) in new[] { (700, 560), (560, 700), (480, 360), (900, 640) })
+            {
+                step++;
+                var before = Metrics();
+                SetWindowPos(hwnd, IntPtr.Zero, 0, 0, ow, oh, SwpNoMove | SwpNoZOrder | SwpNoActivate);
+                var queued = Metrics();
+
+                // One host frame: Update with the metrics of this moment, commands out, then Qt's pump (takes the new size).
+                // A frame drawn in it has the new size and the commands of the old one: it must not be drawn at all.
+                r.Update(Root(), space, Bg, true, true, "VL.Qt space test");
+                r.ApplyCommands();
+                s.Pump(1);
+                Native.vlqt_scene_get_perf_sample(r.Window, out var first);
+                var after = Metrics();
+                s.Info($"live resize {step}: {before.W} x {before.H} → (after SetWindowPos {queued.W} x {queued.H}) → {after.W} x {after.H} DIP, swaps in the pump {first.swaps}");
+                s.Check(after.H != before.H, $"live resize {step}: Qt took the new size inside the pump ({before.H} → {after.H} DIP)");
+                s.Check(first.swaps == 0, $"live resize {step}: no frame in the pump that takes the new size (swaps {first.swaps})");
+                r.AfterEvents();
+
+                // The next host frame reads the new metrics and draws the new scale.
+                r.Update(Root(), space, Bg, true, true, "VL.Qt space test");
+                r.ApplyCommands();
+                s.Pump(1);
+                Native.vlqt_scene_get_perf_sample(r.Window, out var second);
+                s.Check(second.swaps == 1, $"live resize {step}: the next pump draws the frame (swaps {second.swaps})");
+                CheckPixels(Space.Normalized, $"Normalized live resize {step} ({after.W} x {after.H} DIP)", $"153_live_resize_{step}.png");
+                r.AfterEvents();
+                Frame();
+            }
+        }
         // 3) Resync: the invalid command comes before the SET_SPACE of the same frame (DIPTopLeft → DIP: same scale, other origin), QtNative drops
         //    the rest of the batch; the rebuild must send the Space again, else the origin stays where DIPTopLeft put it.
         space = Space.DIPTopLeft;

@@ -8,8 +8,7 @@ name: cla
 #  - The orphan branch `cla-signatures` holds signatures/cla.json, signatures/optout.txt and the generated
 #    CONTRIBUTORS.md (contributors.yml). Its own ruleset only forbids deletion and force pushes, so this action
 #    and contributors.yml can push to it.
-#  - When the repository goes public: add the required status check "CLA Assistant" (job name below) to the
-#    ruleset for develop and main. Not before: the job does not run while the repository is private.
+#  - The job name "CLA Assistant" is a required status check of the ruleset for develop and main; keep it.
 #  - Opt-outs for CONTRIBUTORS.md: see CONTRIBUTING.md (signatures/optout.txt on the same branch).
 # The sign phrase and the recheck comment are the defaults of the action; keep them in sync with CLA.md.
 on:

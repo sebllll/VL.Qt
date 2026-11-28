@@ -68,6 +68,11 @@
       <_Parameter1>NodeApiSnapshot</_Parameter1>
       <_Parameter2>$(MSBuildProjectDirectory)/Api/node-api.txt</_Parameter2>
     </AssemblyAttribute>
+    <!-- Generated pool types of QML enums (Qml/QmlEnumPoolTests.cs checks and rewrites the file). -->
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>QmlEnumSlotTypes</_Parameter1>
+      <_Parameter2>$(MSBuildProjectDirectory)/../VL.Qt/Qml/QmlEnumSlotTypes.cs</_Parameter2>
+    </AssemblyAttribute>
   </ItemGroup>
 
   <Target Name="CopyNodeApiAssemblies" AfterTargets="Build" Condition="'@(NodeApiAssembly)' != ''">

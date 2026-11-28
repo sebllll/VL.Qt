@@ -124,6 +124,30 @@ namespace VL.Qt.Wire
         /// <summary>string (u32 length + UTF-8).</summary>
         void QmlPropertyString(ReadOnlySpan<char> name, ReadOnlySpan<char> value);
 
+        /// <summary>date: milliseconds since 1970-01-01 UTC, long.MinValue = no date (<see cref="QmlDateTime"/>).</summary>
+        void QmlPropertyDateTime(ReadOnlySpan<char> name, long milliseconds);
+
+        /// <summary>font: family (empty = the default family), pixel size, weight 1..1000, italic.</summary>
+        void QmlPropertyFont(ReadOnlySpan<char> name, ReadOnlySpan<char> family, float pixelSize, int weight, bool italic);
+
+        /// <summary>
+        /// list of floats: <paramref name="elementType"/> is F32, Color, Rectf, Vec2, Vec3 or Vec4 and <paramref name="values"/> holds
+        /// 1, 4, 4, 2, 3 or 4 floats per element (at most <see cref="Protocol.ListValueMaxCount"/> elements).
+        /// </summary>
+        void QmlPropertyListF32(ReadOnlySpan<char> name, ushort elementType, ReadOnlySpan<float> values);
+
+        /// <summary>list of int (at most <see cref="Protocol.ListValueMaxCount"/> elements).</summary>
+        void QmlPropertyListI32(ReadOnlySpan<char> name, ReadOnlySpan<int> values);
+
+        /// <summary>list of bool, one byte each (at most <see cref="Protocol.ListValueMaxCount"/> elements).</summary>
+        void QmlPropertyListBool(ReadOnlySpan<char> name, ReadOnlySpan<bool> values);
+
+        /// <summary>list of string (at most <see cref="Protocol.ListValueMaxCount"/> elements; null counts as empty).</summary>
+        void QmlPropertyListString(ReadOnlySpan<char> name, ReadOnlySpan<string> values);
+
+        /// <summary>list of dates in milliseconds since 1970-01-01 UTC (at most <see cref="Protocol.ListValueMaxCount"/> elements).</summary>
+        void QmlPropertyListDateTime(ReadOnlySpan<char> name, ReadOnlySpan<long> values);
+
         /// <summary>Closes the SET_QML_PROPERTIES started by <see cref="BeginQmlProperties"/> (entry count, payload length).</summary>
         void EndQmlProperties();
 

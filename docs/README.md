@@ -24,6 +24,7 @@ For vvvv users. The user pages carry a contributor note only as a closing "for c
 | [tooltips.md](tooltips.md) | Preview images for `Element` and `QtImage` links in the vvvv editor. |
 | [diagnostics.md](diagnostics.md) | Performance overlays (F2/F5), the `Debug` overlay, logging and errors, GPU device loss. |
 | [versioning.md](versioning.md) | Version numbers, what counts as the API, obsolete and experimental nodes. |
+| [releases/0.10.2.md](releases/0.10.2.md) | Release notes of 0.10.2: more pin types for QML nodes, input in user QML, two keyboard rules change. |
 | [releases/0.10.1.md](releases/0.10.1.md) | Release notes of 0.10.1: bugfixes, no change for patches. |
 | [releases/0.10.0.md](releases/0.10.0.md) | Release notes of 0.10.0: what changed and what a patch saved with 0.9.x needs. |
 | [glossary.md](glossary.md) | The words of VL.Qt and of the Qt behind it (element, scene, renderer, layer, pump, QRhi ...), one sentence each. |
@@ -76,6 +77,7 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [design/qt-bridge.md](design/qt-bridge.md) | Why VL.Qt does not use Qt Bridge for C#: the comparison, the redundancy check and the sources. |
 | [design/native-boundary.md](design/native-boundary.md) | The C ABI between C# and QtNative: one command buffer per frame, events by polling, return codes and last error, the version rule and logging. |
 | [design/deployment.md](design/deployment.md) | How QtNative is licensed (LGPL), packaged and located at runtime: Qt version, private classes, platforms, the `qt/<rid>/` tree and export. |
+| [design/nodeset.md](design/nodeset.md) | Which parts of Qt Quick are nodes, which are left to user QML, the rules for a new node, the gaps with their issues, and the comparison with VL.Skia. |
 | [design/styles.md](design/styles.md) | Design of the nodes that build, merge and read styles for interactive widgets. |
 
 ## Research

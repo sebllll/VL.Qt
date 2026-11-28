@@ -424,6 +424,94 @@ namespace VL.Qt.Tests.Wire
             Assert.That(Hex(hex), Is.EqualTo(Hdr(Protocol.Op.SetQmlProperties, 8 + 24 + 16) + U32(7) + U16(2) + U16(0) + rect + text));
         }
 
+        // A list entry: u16 valueType LIST, u16 nameLen, name (padded to 4), u16 elementType, u16 0, u32 count, elements, padding to 4.
+        private static string ListEntry(string nameHex, ushort elementType, int count, string elementsHex)
+            => U16(Protocol.ValueType.List) + U16(nameHex.Length / 2) + nameHex.PadRight((nameHex.Length + 7) / 8 * 8, '0')
+                + U16(elementType) + U16(0) + U32((uint)count) + elementsHex.PadRight((elementsHex.Length + 7) / 8 * 8, '0');
+
+        private static string Qml(string entriesHex, int entryCount)
+            => Hdr(Protocol.Op.SetQmlProperties, 8 + entriesHex.Length / 2) + U32(7) + U16(entryCount) + U16(0) + entriesHex;
+
+        [Test]
+        public void QmlPropertyList_Floats()
+        {
+            var hex = Write(w =>
+            {
+                w.BeginQmlProperties(7, 0);
+                w.QmlPropertyListF32("f", Protocol.ValueType.F32, new[] { 1f, 2f, 3f });
+                w.QmlPropertyListF32("v", Protocol.ValueType.Vec2, new[] { 1f, 2f, 3f, 4f });
+                w.QmlPropertyListF32("c", Protocol.ValueType.Color, new[] { 1f, 0.5f, 0.25f, 0.75f });
+                w.QmlPropertyListF32("r", Protocol.ValueType.Rectf, ReadOnlySpan<float>.Empty);
+                w.EndQmlProperties();
+            });
+            var expected = ListEntry("66", Protocol.ValueType.F32, 3, F32(1) + F32(2) + F32(3))
+                + ListEntry("76", Protocol.ValueType.Vec2, 2, F32(1) + F32(2) + F32(3) + F32(4))
+                + ListEntry("63", Protocol.ValueType.Color, 1, F32(1) + F32(0.5f) + F32(0.25f) + F32(0.75f))
+                + ListEntry("72", Protocol.ValueType.Rectf, 0, "");
+            Assert.That(Hex(hex), Is.EqualTo(Qml(expected, 4)));
+        }
+
+        [Test]
+        public void QmlPropertyList_Ints_Bools_AndStrings_ArePaddedToFour()
+        {
+            var hex = Write(w =>
+            {
+                w.BeginQmlProperties(7, 0);
+                w.QmlPropertyListI32("i", new[] { -1, 258 });
+                w.QmlPropertyListBool("b", new[] { true, false, true });
+                w.QmlPropertyListBool("b4", new[] { true, true, true, true });
+                w.QmlPropertyListString("s", new[] { "a", "hä", "", null! });
+                w.EndQmlProperties();
+            });
+            var expected = ListEntry("69", Protocol.ValueType.I32, 2, "FFFFFFFF" + "02010000")
+                + ListEntry("62", Protocol.ValueType.Bool, 3, "010001")
+                + ListEntry("6234", Protocol.ValueType.Bool, 4, "01010101")
+                // each string: u32 length + UTF-8, padded to 4: "a" -> 8, "hä" (3 bytes) -> 8, "" -> 4, null -> 4
+                + ListEntry("73", Protocol.ValueType.String, 4, U32(1) + "61000000" + U32(3) + "68C3A400" + U32(0) + U32(0));
+            Assert.That(Hex(hex), Is.EqualTo(Qml(expected, 4)));
+        }
+
+        [Test]
+        public void QmlPropertyList_Invalid_Throws_AndLeavesTheCommandAsItWas()
+        {
+            var expected = Write(w => { w.BeginQmlProperties(7, 0); w.QmlPropertyF32("a", 1); w.QmlPropertyF32("b", 2); w.EndQmlProperties(); });
+            var actual = Write(w =>
+            {
+                w.BeginQmlProperties(7, 0);
+                w.QmlPropertyF32("a", 1);
+                Assert.Throws<ArgumentException>(() => w.QmlPropertyListF32("", Protocol.ValueType.F32, new[] { 1f }));
+                Assert.Throws<ArgumentException>(() => w.QmlPropertyListF32("l", Protocol.ValueType.Vec3, new[] { 1f, 2f }), "not a whole number of elements");
+                Assert.Throws<ArgumentOutOfRangeException>(() => w.QmlPropertyListF32("l", Protocol.ValueType.I32, new[] { 1f }), "not an element type of floats");
+                Assert.Throws<ArgumentException>(() => w.QmlPropertyListI32("l", new int[Protocol.ListValueMaxCount + 1]));
+                Assert.Throws<ArgumentException>(() => w.QmlPropertyListBool("l", new bool[Protocol.ListValueMaxCount + 1]));
+                Assert.Throws<ArgumentException>(() => w.QmlPropertyListString("l", new string[Protocol.ListValueMaxCount + 1]));
+                w.QmlPropertyF32("b", 2);
+                w.EndQmlProperties();
+            });
+            Assert.That(Hex(actual), Is.EqualTo(Hex(expected)));
+        }
+
+        [Test]
+        public void QmlPropertyList_MaxCount_IsAccepted()
+        {
+            var bytes = Write(w =>
+            {
+                w.BeginQmlProperties(7, 0);
+                w.QmlPropertyListF32("l", Protocol.ValueType.Vec4, new float[Protocol.ListValueMaxCount * 4]);
+                w.EndQmlProperties();
+            });
+            Assert.That(bytes.Length, Is.EqualTo(8 + 8 + 8 + 8 + Protocol.ListValueMaxCount * 16));
+        }
+
+        [Test]
+        public void QmlPropertyList_OutsideOfQmlProperties_Throws()
+        {
+            var w = new CommandWriter();
+            Assert.Throws<InvalidOperationException>(() => w.QmlPropertyListI32("a", new[] { 1 }));
+            w.BeginUniforms(1, 0);
+            Assert.Throws<InvalidOperationException>(() => w.QmlPropertyListString("a", new[] { "x" }));
+        }
+
         [Test]
         public void ThrowingEntry_LeavesTheOpenCommandAsItWas()
         {

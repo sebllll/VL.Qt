@@ -162,6 +162,84 @@ namespace VL.Qt.Tests.Qml
         }
 
         [Test]
+        public void Send_TinyChange_IsSent_NotSwallowedByStridesNearEqual()
+        {
+            var instance = Create(new[] { Prop("offset", QmlValueKind.Vector2D), Prop("frames", QmlValueKind.RectList) });
+            var tiny = new Vector2(MathF.BitIncrement(0f), 0);
+            Assume.That(tiny, Is.EqualTo(Vector2.Zero), "Stride's Equals calls the two equal");
+            Set(instance, 0, tiny);
+            var e = Frame(instance);
+            Assert.That(e.Properties.TryGetValue("offset", out var v) && v.A == tiny.X, Is.True, "tiny step away from the default: sent");
+
+            var next = new Vector2(1, 2);
+            Set(instance, 0, next);
+            Frame(instance);
+            var after = new Vector2(MathF.BitIncrement(1f), 2);
+            Assume.That(after, Is.EqualTo(next));
+            Set(instance, 0, after);
+            e = Frame(instance);
+            Assert.That(e.Properties.TryGetValue("offset", out v) && v.A == after.X, Is.True, "tiny change of a sent value: sent");
+
+            var rect = new RectangleF(0, 0, 10, 10);
+            var nearRect = new RectangleF(0, 0, MathF.BitIncrement(10f), 10);
+            Assume.That(nearRect, Is.EqualTo(rect));
+            Set(instance, 1, new[] { rect }.ToSpread());
+            var first = Frame(instance);
+            Set(instance, 1, new[] { nearRect }.ToSpread());
+            Assert.That(Frame(instance), Is.Not.SameAs(first), "tiny change of a spread element: sent");
+        }
+
+        [Test]
+        public void Send_Spread_NotWhileDefault_SameContentNewInstanceIsNotSentAgain_ChangeIsSent()
+        {
+            var instance = Create(new[] { Prop("points", QmlValueKind.Vector2DList), Prop("names", QmlValueKind.StringList) });
+            Assert.That(Names(Frame(instance)), Is.Empty, "nothing at the default (the empty list)");
+            Set(instance, 0, Spread<Vector2>.Empty);
+            Assert.That(Names(Frame(instance)), Is.Empty, "an empty spread is the default");
+            Set(instance, 0, null);
+            Assert.That(Names(Frame(instance)), Is.Empty, "no spread counts as the empty one");
+
+            Set(instance, 0, new[] { new Vector2(1, 2), new Vector2(3, 4) }.ToSpread());
+            var first = Frame(instance);
+            Assert.That(Names(first), Is.EqualTo(new[] { "points" }));
+            Assert.That(first.Properties.TryGetValue("points", out var v), Is.True);
+            Assert.That(v.ValueType, Is.EqualTo(Protocol.ValueType.List));
+            Assert.That(v.Integer, Is.EqualTo((int)Protocol.ValueType.Vec2));
+
+            Set(instance, 0, new[] { new Vector2(1, 2), new Vector2(3, 4) }.ToSpread());
+            Assert.That(Frame(instance), Is.SameAs(first), "a new spread with the same elements changes nothing");
+            Assert.That(Frame(instance).Properties, Is.SameAs(first.Properties));
+
+            Set(instance, 0, new[] { new Vector2(1, 2), new Vector2(3, 5) }.ToSpread());
+            var second = Frame(instance);
+            Assert.That(second, Is.Not.SameAs(first));
+            Assert.That(second.Properties.TryGetValue("points", out var w) && w != v, Is.True, "another element: sent");
+
+            Set(instance, 0, Spread<Vector2>.Empty);
+            var third = Frame(instance);
+            Assert.That(third.Properties.TryGetValue("points", out var e) && e.ValueType == Protocol.ValueType.List, Is.True, "back to the empty list: sent, it was different once");
+            Assert.That(QmlValue.TryConvert(Spread<Vector2>.Empty, out var empty) && e == empty, Is.True);
+
+            Set(instance, 1, new[] { "a", "b" }.ToSpread());
+            Set(instance, 1, new[] { "a", "b" }.ToSpread());
+            Assert.That(Names(Frame(instance)), Is.EqualTo(new[] { "names", "points" }));
+        }
+
+        [Test]
+        public void Send_Spread_FromPropertiesDictionary()
+        {
+            var instance = Create();
+            var d = new Dictionary<string, object> { ["l"] = new[] { 1f, 2f }.ToSpread(), ["tooLong"] = new float[Protocol.ListValueMaxCount + 1].ToSpread() };
+            Set(instance, 0, d);
+            var first = Frame(instance);
+            Assert.That(Names(first), Is.EqualTo(new[] { "l" }), "a list of more than the max is left out");
+            d["l"] = new[] { 1f, 2f }.ToSpread();
+            Assert.That(Frame(instance), Is.SameAs(first), "same elements in another spread instance");
+            d["l"] = new[] { 1f, 2f, 3f }.ToSpread();
+            Assert.That(Frame(instance), Is.Not.SameAs(first));
+        }
+
+        [Test]
         public void Send_KeyIsTheQmlName_NotThePinName()
         {
             var instance = Create(new[] { Prop("accentColor", QmlValueKind.Color) });
@@ -257,6 +335,114 @@ namespace VL.Qt.Tests.Qml
             Assert.That(allocated, Is.EqualTo(0), "bytes allocated by 100 idle frames");
         }
 
+        // --- enum pins (pool types) ---
+
+        private static QmlEnumDecl Mode()
+            => new("Gauge", "Mode", ImmutableArray.Create(new QmlEnumValue("Small", 0), new QmlEnumValue("Large", 5)));
+
+        // An instance with the int property "mode" (and "level", a real) whose pins have the pool type of Gauge.Mode.
+        private (QmlNodeInstance Instance, QmlEnumSlot Slot) CreateWithEnum(QmlPropertyFlags flags = QmlPropertyFlags.None)
+        {
+            var pool = new QmlEnumPool(QmlEnumSlotTypes.All.Take(2).ToArray());
+            var slot = pool.Claim(_file, Mode()).Slot!;
+            var layout = QmlNodeLayout.Build(_file, QmlDeclarations.Empty with
+            {
+                Properties = ImmutableArray.Create(Prop("mode", QmlValueKind.Int, flags: flags) with { Enum = Mode() }, Prop("level", QmlValueKind.Real)),
+            }, pool: pool);
+            _instance = new QmlNodeInstance(_element, layout);
+            return (_instance, slot);
+        }
+
+        [Test]
+        public void EnumPin_HasThePoolType_AndSendsTheInt()
+        {
+            var (instance, slot) = CreateWithEnum();
+            Assert.That(In(instance, QmlCommonPins.LeadingInputs.Length).GetType().GetGenericArguments()[0], Is.EqualTo(slot.Type));
+            Assert.That(((IDynamicEnum)In(instance, QmlCommonPins.LeadingInputs.Length).Value!).Value, Is.EqualTo("Small"), "the default");
+            Assert.That(Names(Frame(instance)), Is.Empty, "nothing at the default");
+
+            Set(instance, 0, slot.FromInt(5));
+            var e = Frame(instance);
+            Assert.That(e.Properties.TryGetValue("mode", out var v), Is.True);
+            Assert.That((v.ValueType, v.Integer), Is.EqualTo((Protocol.ValueType.I32, 5)), "the int of the entry on the wire");
+
+            Set(instance, 0, slot.FromInt(0));
+            e = Frame(instance);
+            Assert.That(e.Properties.TryGetValue("mode", out v) && v.Integer == 0, Is.True, "back to the default: sent, it was different once");
+        }
+
+        [Test]
+        public void EnumPin_WithoutAnEntry_SendsNothing_AndAnEntryOfTheEnumOnly()
+        {
+            var (instance, slot) = CreateWithEnum();
+            Set(instance, 0, slot.FromInt(5));
+            var first = Frame(instance);
+
+            Set(instance, 0, QmlEnumSlotTypes.All.First(t => t.Type != slot.Type).Create("Large"));
+            Assert.That(Frame(instance), Is.SameAs(first), "a value of another pool type is no value of this enum");
+            Set(instance, 0, QmlEnumSlotTypes.All.First(t => t.Type == slot.Type).Create("Gone"));
+            Assert.That(Frame(instance), Is.SameAs(first), "a name the enum does not have: the property keeps its value");
+            Set(instance, 0, null);
+            Assert.That(Frame(instance), Is.SameAs(first), "no value");
+        }
+
+        [Test]
+        public void EnumPin_Required_IsSentFromTheFirstFrame()
+        {
+            var (instance, _) = CreateWithEnum(QmlPropertyFlags.Required);
+            var e = Frame(instance);
+            Assert.That(e.Properties.TryGetValue("mode", out var v) && v.Integer == 0, Is.True);
+        }
+
+        [Test]
+        public void EnumPin_Output_IsTheEnumOfTheInt_AndOnlyNewWhenTheIntChanges()
+        {
+            var (instance, slot) = CreateWithEnum();
+            const int output = 1; // after "Output"
+            Frame(instance);
+            var initial = (IDynamicEnum)Out(instance, output).Value!;
+            Assert.That((initial.GetType(), initial.Value), Is.EqualTo((slot.Type, "Small")), "the declared default");
+
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("mode", Protocol.ValueType.I32, QmlWire.I32(5))));
+            Frame(instance);
+            var large = (IDynamicEnum)Out(instance, output).Value!;
+            Assert.That((large.GetType(), large.Value), Is.EqualTo((slot.Type, "Large")));
+
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("level", Protocol.ValueType.F32, QmlWire.F(0.5f))));
+            Frame(instance);
+            Assert.That(Out(instance, output).Value, Is.SameAs(large), "another property changed: the pin value stays the same object");
+
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("mode", Protocol.ValueType.I32, QmlWire.I32(7))));
+            Frame(instance);
+            Assert.That(((IDynamicEnum)Out(instance, output).Value!).Value, Is.EqualTo("7"), "a value without an entry has the number as its name");
+            Assert.That(slot.TryToInt(Out(instance, output).Value, out var back) && back == 7, Is.True, "and goes back in as 7");
+        }
+
+        [Test]
+        public void EnumPin_Output_AfterReload_BackToTheDefault()
+        {
+            var (instance, _) = CreateWithEnum();
+            Frame(instance);
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("mode", Protocol.ValueType.I32, QmlWire.I32(5))));
+            Frame(instance);
+            Assert.That(((IDynamicEnum)Out(instance, 1).Value!).Value, Is.EqualTo("Large"));
+
+            _events.OnNext(new FileSystemEventArgs(WatcherChangeTypes.Changed, _dir, "Gauge.qml"));
+            Frame(instance);
+            Assert.That(((IDynamicEnum)Out(instance, 1).Value!).Value, Is.EqualTo("Small"));
+        }
+
+        [Test]
+        public void EnumPin_IdleFrames_AllocateNothing()
+        {
+            var (instance, slot) = CreateWithEnum();
+            Set(instance, 0, slot.FromInt(5));
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("mode", Protocol.ValueType.I32, QmlWire.I32(5))));
+            Frame(instance);
+            var allocated = Allocations.Fewest(() => instance.Update(), frames: 100);
+            Assert.That(allocated, Is.EqualTo(0), "bytes allocated by 100 idle frames");
+        }
+
         // --- property outputs ---
 
         [Test]
@@ -309,6 +495,37 @@ namespace VL.Qt.Tests.Qml
             Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("value", Protocol.ValueType.Vec2, QmlWire.F(1, 2))));
             Frame(instance);
             Assert.That(Out(instance, 1).Value, Is.EqualTo(new Vector2(1, 2)));
+        }
+
+        [Test]
+        public void Url_DefaultIsResolvedAgainstTheFolder_AndTheOutputIsALocalPath()
+        {
+            var instance = Create(new[] { Prop("source", QmlValueKind.Url, new VL.Lib.IO.Path("img/a.png")) });
+            var resolved = new VL.Lib.IO.Path(System.IO.Path.Combine(_dir, "img", "a.png"));
+            Assert.That(In(instance, QmlCommonPins.LeadingInputs.Length).Value, Is.EqualTo(resolved), "the input default");
+            Frame(instance);
+            Assert.That(Out(instance, 1).Value, Is.EqualTo(resolved), "the output default");
+
+            var file = System.IO.Path.Combine(_dir, "b ä.png");
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("source", Protocol.ValueType.String, QmlWire.Str(new Uri(file).AbsoluteUri))));
+            Frame(instance);
+            Assert.That(Out(instance, 1).Value, Is.EqualTo(new VL.Lib.IO.Path(file)), "a file URL from QML");
+
+            Dispatch(NewPoll().Add(Protocol.EventId.QmlProperty, _handle, QmlWire.Property("source", Protocol.ValueType.String, QmlWire.Str("c.png"))));
+            Frame(instance);
+            Assert.That(Out(instance, 1).Value, Is.EqualTo(new VL.Lib.IO.Path(System.IO.Path.Combine(_dir, "c.png"))), "a relative url is relative to the file");
+        }
+
+        [Test]
+        public void Url_InputIsSentAsTheTextOfThePath()
+        {
+            var instance = Create(new[] { Prop("source", QmlValueKind.Url) });
+            var file = System.IO.Path.Combine(_dir, "a.png");
+            Set(instance, 0, new VL.Lib.IO.Path(file));
+            var e = Frame(instance);
+            Assert.That(e.Properties.TryGetValue("source", out var v), Is.True);
+            Assert.That(v.ValueType, Is.EqualTo(Protocol.ValueType.String));
+            Assert.That(v.Text, Is.EqualTo(file));
         }
 
         [Test]

@@ -95,6 +95,24 @@ void Scene::updateRootOrigin()
     root->setPosition(centre ? QPointF(root->width() / 2, root->height() / 2) : QPointF());
 }
 
+void Scene::noteMetricsRead(float height, float dpr)
+{
+    metricsRead = true;
+    readHeight = height;
+    readDpr = dpr;
+}
+
+bool Scene::metricsStale() const
+{
+    if (!metricsRead)
+        return false; // a client that never reads the metrics scales on its own: nothing to wait for
+    if (sceneSpace == VLQT_SPACE_NORMALIZED)
+        return float(root->height()) != readHeight;
+    if (sceneSpace == VLQT_SPACE_PIXEL_TOP_LEFT)
+        return float(window->effectiveDevicePixelRatio()) != readDpr;
+    return false;
+}
+
 void Scene::setDebugAll(bool on)
 {
     debugAll = on;

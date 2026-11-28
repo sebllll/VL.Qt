@@ -55,7 +55,7 @@ The rule is that of a window:
 
 - A press (mouse or touch) inside 0 … Size focuses the scene before the press is delivered; a press outside, or `set_focus(0)` (the host window lost focus), unfocuses it.
 - Key and text events of an unfocused scene are dropped (the result is OK).
-- The `FocusRelease` filter of windows (Esc reverts and releases, a press outside the focused element releases) is installed on scenes too.
+- The `FocusRelease` filter of windows (a press outside the focused element releases, Esc in a TextField or SpinBox reverts and releases) is installed on scenes too.
 - Several textures fed by one window: only the last one pressed has focus.
 
 ### Timing and threads

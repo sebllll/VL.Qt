@@ -4,7 +4,10 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Stride.Core.Mathematics;
+using VL.Lib.Collections;
 using static VL.Qt.Qml.QmlLexer;
+using Font = VL.Qt.Elements.Font;
+using Path = VL.Lib.IO.Path;
 
 namespace VL.Qt.Qml
 {
@@ -19,6 +22,8 @@ namespace VL.Qt.Qml
         private static bool TryEvaluate(QmlValueKind kind, List<Token> t, int s, int e, out object value)
         {
             value = QmlTypes.TypeDefault(kind);
+            if (QmlTypes.IsList(kind))
+                return TryEvaluateList(kind, t, s, e, out value);
             double d;
             double[] a;
             string fn;
@@ -105,11 +110,161 @@ namespace VL.Qt.Qml
                         return true;
                     }
                     return false;
+                case QmlValueKind.Url:
+                    // "images/a.png" or Qt.resolvedUrl("images/a.png") as written: QmlNodeLayout resolves it against the folder of the file.
+                    if (e - s == 1 && t[s].Kind == TokenKind.String)
+                    {
+                        value = new Path(t[s].Value ?? string.Empty);
+                        return true;
+                    }
+                    if (e - s == 6 && t[s].IsIdent("Qt") && t[s + 1].IsPunct('.') && t[s + 2].IsIdent("resolvedUrl") && t[s + 3].IsPunct('(')
+                        && t[s + 4].Kind == TokenKind.String && t[s + 5].IsPunct(')'))
+                    {
+                        value = new Path(t[s + 4].Value ?? string.Empty);
+                        return true;
+                    }
+                    return false;
+                case QmlValueKind.Date:
+                    // A date as text, as QML converts it ("2024-05-01", "2024-05-01T12:00:00"), in local time.
+                    if (e - s == 1 && t[s].Kind == TokenKind.String
+                        && DateTime.TryParse(t[s].Value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var date))
+                    {
+                        value = date;
+                        return true;
+                    }
+                    return false;
+                case QmlValueKind.Font:
+                    if (TryFont(t, s, e, out var font))
+                    {
+                        value = font;
+                        return true;
+                    }
+                    return false;
                 default:
                     return false;
             }
 
             static bool Finite(double[] values) => values.All(static x => float.IsFinite((float)x));
+        }
+
+        // [ element, element, ... ] over the whole range s..e (a trailing comma is allowed, [] is the empty list); every element
+        // is a literal of the element kind. One element that is not readable makes the whole list unreadable.
+        private static bool TryEvaluateList(QmlValueKind kind, List<Token> t, int s, int e, out object value)
+        {
+            value = QmlTypes.TypeDefault(kind);
+            if (e - s < 2 || !t[s].IsPunct('[') || !t[e - 1].IsPunct(']'))
+                return false;
+
+            var element = QmlTypes.ElementKind(kind);
+            var items = new List<object>();
+            var depth = 0;
+            var from = s + 1;
+            for (var j = s; j < e; j++)
+            {
+                if (t[j].Kind == TokenKind.Punct)
+                {
+                    var c = t[j].Text[0];
+                    if (c is '(' or '[' or '{')
+                        depth++;
+                    else if (c is ')' or ']' or '}')
+                        depth--;
+                    // The first bracket must close at the end: `[1] + [2]` is an expression.
+                    if (depth == 0 && j < e - 1)
+                        return false;
+                }
+                if (depth == 1 && t[j].IsPunct(',') || depth == 0 && j == e - 1)
+                {
+                    // `[]` and `[1, 2,]`: nothing between the brackets or after the last comma.
+                    if (j == from && j == e - 1)
+                    {
+                        from = j + 1;
+                        continue;
+                    }
+                    if (!TryEvaluate(element, t, from, j, out var item))
+                        return false;
+                    items.Add(item);
+                    from = j + 1;
+                }
+            }
+            if (depth != 0)
+                return false;
+
+            value = element switch
+            {
+                QmlValueKind.Real => Build<float>(items),
+                QmlValueKind.Int => Build<int>(items),
+                QmlValueKind.Bool => Build<bool>(items),
+                QmlValueKind.String => Build<string>(items),
+                QmlValueKind.Color => Build<Color4>(items),
+                QmlValueKind.Vector2D or QmlValueKind.Point or QmlValueKind.Size => Build<Vector2>(items),
+                QmlValueKind.Vector3D => Build<Vector3>(items),
+                QmlValueKind.Vector4D => Build<Vector4>(items),
+                QmlValueKind.Rect => Build<RectangleF>(items),
+                QmlValueKind.Url => Build<Path>(items),
+                QmlValueKind.Date => Build<DateTime>(items),
+                _ => throw new ArgumentOutOfRangeException(nameof(kind)),
+            };
+            return true;
+        }
+
+        private static Spread<T> Build<T>(List<object> items) => items.Count == 0 ? Spread<T>.Empty : items.Cast<T>().ToSpread();
+
+        private static readonly Dictionary<string, int> s_weights = new(StringComparer.Ordinal)
+        {
+            ["Thin"] = 100, ["ExtraLight"] = 200, ["Light"] = 300, ["Normal"] = 400, ["Medium"] = 500,
+            ["DemiBold"] = 600, ["Bold"] = 700, ["ExtraBold"] = 800, ["Black"] = 900,
+        };
+
+        // Qt.font({ family: "Arial", pixelSize: 24, weight: Font.Bold, italic: true }) over s..e; also pointSize (4/3 pixels per point
+        // at the 96 DIP per inch of Qt) and bold. The size becomes units at SpaceMapping.DipPerUnit (DIPTopLeft, the default Space). Any
+        // other key or a value that is not a literal makes it a binding.
+        private static bool TryFont(List<Token> t, int s, int e, out Font font)
+        {
+            font = new Font();
+            if (e - s < 6 || !t[s].IsIdent("Qt") || !t[s + 1].IsPunct('.') || !t[s + 2].IsIdent("font") || !t[s + 3].IsPunct('(')
+                || !t[s + 4].IsPunct('{') || !t[e - 2].IsPunct('}') || !t[e - 1].IsPunct(')'))
+                return false;
+            int? weight = null;
+            var bold = false;
+            for (var j = s + 5; j < e - 2;)
+            {
+                if (t[j].Kind != TokenKind.Ident || j + 2 >= e - 1 || !t[j + 1].IsPunct(':'))
+                    return false;
+                var key = t[j].Text;
+                var v = j + 2;
+                var end = v;
+                while (end < e - 2 && !t[end].IsPunct(','))
+                    end++;
+                switch (key)
+                {
+                    case "family" when end - v == 1 && t[v].Kind == TokenKind.String:
+                        font = font with { Family = t[v].Value ?? string.Empty };
+                        break;
+                    case "pixelSize" when TryNumber(t, v, end, out var px) && px > 0:
+                        font = font with { Size = (float)(px / SpaceMapping.DipPerUnit) };
+                        break;
+                    case "pointSize" when TryNumber(t, v, end, out var pt) && pt > 0:
+                        font = font with { Size = (float)(pt * 4 / 3 / SpaceMapping.DipPerUnit) };
+                        break;
+                    case "weight" when TryNumber(t, v, end, out var w) && w is >= 1 and <= 1000:
+                        weight = (int)w;
+                        break;
+                    case "weight" when end - v == 3 && t[v].IsIdent("Font") && t[v + 1].IsPunct('.') && s_weights.TryGetValue(t[v + 2].Text, out var named):
+                        weight = named;
+                        break;
+                    case "bold" or "italic" when end - v == 1 && (t[v].IsIdent("true") || t[v].IsIdent("false")):
+                        if (key == "bold")
+                            bold = t[v].Text == "true";
+                        else
+                            font = font with { Italic = t[v].Text == "true" };
+                        break;
+                    default:
+                        return false;
+                }
+                j = end < e - 2 ? end + 1 : end;
+            }
+            font = font with { Weight = weight ?? (bold ? 700 : 400) };
+            return true;
         }
 
         // [+|-] number
