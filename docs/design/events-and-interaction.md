@@ -101,7 +101,7 @@ An element may hang in the tree several times and in several renderers. Each occ
 ## Open questions
 
 - **Animation events** (`On Animation Finished`, `Is Animating`) belong to an animation node set built on Qt's animation system and depend on the timing decisions ([timing.md](timing.md)).
-- **Further interaction events:** keyboard and focus, drop.
+- **Further interaction events:** keyboard and focus ([#448](https://github.com/sebllll/VL.Qt/issues/448)), drop.
 - **Global renderer output:** raw mouse and keyboard data, or "the element under the cursor".
 - **A key pin** would remove the state jump on reorder ([reconciler-identity.md](reconciler-identity.md#open-questions)).
 
