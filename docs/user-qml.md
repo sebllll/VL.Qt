@@ -86,7 +86,7 @@ The patch's own `Properties` entry is not reported back: setting `value` from th
 
 ## Input
 
-Pointer and keyboard input inside the file are supported, so a widget can be written in QML: a `MouseArea`, pointer handlers (`TapHandler`, `DragHandler`, …), `Keys` and focus work as in any Qt Quick scene. Results go back to the patch through properties and signals.
+Pointer and keyboard input inside the file are supported, so a widget can be written in QML: a `MouseArea`, pointer handlers (`TapHandler`, `DragHandler`, …), `Keys` and focus work as in any Qt Quick scene. Results go back to the patch through properties and signals. The help patch `HowTo Interact with QML` shows it with `qml/Stepper.qml`: a bar set with the mouse or the arrow keys.
 
 - **Same rules as the `Interaction` pin.** The input reaches QML as ordinary Qt input, and the handlers of the `Interaction` pin are ordinary Qt handlers at the element ([input](design/input.md#grabs-and-hit-testing)). The topmost item that takes a press gets it: where a `MouseArea` of the file covers the element, a `Click` on the element gets nothing, `Hover` still reports, and elements below get nothing either (`Touch Points` with `Occlusion` included). Where the file has no input of its own, the press goes on to the element's handlers and to the elements below.
 - **Focus.** A press on an item that takes the focus (`forceActiveFocus`, `TextInput`) gives it the keys. The element counts as one widget: a press on another part of it keeps the focus, a press outside the element releases it.
