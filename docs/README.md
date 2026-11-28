@@ -76,6 +76,7 @@ Why things are built the way they are. Notes live in [design/](design/README.md)
 | [design/qt-bridge.md](design/qt-bridge.md) | Why VL.Qt does not use Qt Bridge for C#: the comparison, the redundancy check and the sources. |
 | [design/native-boundary.md](design/native-boundary.md) | The C ABI between C# and QtNative: one command buffer per frame, events by polling, return codes and last error, the version rule and logging. |
 | [design/deployment.md](design/deployment.md) | How QtNative is licensed (LGPL), packaged and located at runtime: Qt version, private classes, platforms, the `qt/<rid>/` tree and export. |
+| [design/nodeset.md](design/nodeset.md) | Which parts of Qt Quick are nodes, which are left to user QML, the rules for a new node, the gaps with their issues, and the comparison with VL.Skia. |
 | [design/styles.md](design/styles.md) | Design of the nodes that build, merge and read styles for interactive widgets. |
 
 ## Research

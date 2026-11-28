@@ -84,7 +84,7 @@ The same instance therefore means "the same description", not "the same picture"
 ## Open questions
 
 - Anchors between sibling elements (layout relations) need references between elements, which is hard to express as dataflow; no public issue exists.
-- Grid layouts and gradient fills are not covered.
+- Grid layouts ([#445](https://github.com/sebllll/VL.Qt/issues/445)) and gradient fills ([#155](https://github.com/sebllll/VL.Qt/issues/155)) are not covered. The node set as a whole is in [nodeset.md](nodeset.md).
 - Generic property access, possibly through a node factory that creates pins from Qt metadata.
 
 ## Evidence
